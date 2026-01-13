@@ -3257,6 +3257,29 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                     metadata: None,
                 }),
                 SettingsPageItem::SettingItem(SettingItem {
+                    title: "Pinned Tabs Layout",
+                    description: "Show pinned tabs in a separate row above unpinned tabs.",
+                    aliases: None,
+                    field: Box::new(SettingField {
+                        json_path: Some("tab_bar.show_pinned_tabs_in_separate_row"),
+                        pick: |settings_content| {
+                            settings_content
+                                .tab_bar
+                                .as_ref()?
+                                .show_pinned_tabs_in_separate_row
+                                .as_ref()
+                        },
+                        write: |settings_content, value| {
+                            settings_content
+                                .tab_bar
+                                .get_or_insert_default()
+                                .show_pinned_tabs_in_separate_row = value;
+                        },
+                    }),
+                    metadata: None,
+                    files: USER,
+                }),
+                SettingsPageItem::SettingItem(SettingItem {
                     title: "Show Navigation History Buttons",
                     description: "Show the navigation history buttons in the tab bar.",
                     aliases: None,

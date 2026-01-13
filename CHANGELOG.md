@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Added
 
+- Add `tab_bar.show_pinned_tabs_in_separate_row` setting to display pinned and unpinned tabs in separate rows (zed#46573)
 - Add Repology notes in docs (#470) by @koru
 - Bundle OpenMoji as emoji fallback (#478)
 - If a server binary is not found, suggest a command to install it (#485) by @xmort
