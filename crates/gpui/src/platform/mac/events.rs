@@ -1,34 +1,35 @@
+use objc2::{Message, rc::Retained, runtime::AnyObject};
+use objc2_app_kit::{NSEvent, NSEventModifierFlags, NSEventPhase, NSEventType};
+use objc2_core_foundation::CFData;
+use objc2_core_graphics::CGKeyCode;
+use objc2_foundation::NSUInteger;
+
 use crate::{
     Capslock, KeyDownEvent, KeyUpEvent, Keystroke, Modifiers, ModifiersChangedEvent, MouseButton,
     MouseDownEvent, MouseExitEvent, MouseMoveEvent, MousePressureEvent, MouseUpEvent,
     NavigationDirection, Pixels, PlatformInput, PressureStage, ScrollDelta, ScrollWheelEvent,
     TouchPhase,
     platform::mac::{
-        LMGetKbdType, NSStringExt, TISCopyCurrentKeyboardLayoutInputSource,
-        TISGetInputSourceProperty, UCKeyTranslate, kTISPropertyUnicodeKeyLayoutData,
+        LMGetKbdType, TISCopyCurrentKeyboardLayoutInputSource, TISGetInputSourceProperty,
+        UCKeyTranslate, kTISPropertyUnicodeKeyLayoutData,
     },
     point, px,
 };
-use cocoa::{
-    appkit::{NSEvent, NSEventModifierFlags, NSEventPhase, NSEventType},
-    base::{YES, id},
-    foundation::NSUInteger,
+use std::{
+    borrow::Cow,
+    ffi::{c_uint, c_void},
 };
-use core_foundation::data::{CFDataGetBytePtr, CFDataRef};
-use core_graphics::event::CGKeyCode;
-use objc::{msg_send, sel, sel_impl};
-use std::{borrow::Cow, ffi::c_void};
 
-const BACKSPACE_KEY: u16 = 0x7f;
-const SPACE_KEY: u16 = b' ' as u16;
-const ENTER_KEY: u16 = 0x0d;
-const NUMPAD_ENTER_KEY: u16 = 0x03;
-pub(crate) const ESCAPE_KEY: u16 = 0x1b;
-const TAB_KEY: u16 = 0x09;
-const SHIFT_TAB_KEY: u16 = 0x19;
+const BACKSPACE_KEY: c_uint = 0x7f;
+const SPACE_KEY: c_uint = b' ' as c_uint;
+const ENTER_KEY: c_uint = 0x0d;
+const NUMPAD_ENTER_KEY: c_uint = 0x03;
+pub(crate) const ESCAPE_KEY: c_uint = 0x1b;
+const TAB_KEY: c_uint = 0x09;
+const SHIFT_TAB_KEY: c_uint = 0x19;
 
 pub fn key_to_native(key: &str) -> Cow<'_, str> {
-    use cocoa::appkit::*;
+    use objc2_app_kit::*;
     let code = match key {
         "space" => SPACE_KEY,
         "backspace" => BACKSPACE_KEY,
@@ -80,7 +81,7 @@ pub fn key_to_native(key: &str) -> Cow<'_, str> {
         "f35" => NSF35FunctionKey,
         _ => return Cow::Borrowed(key),
     };
-    Cow::Owned(String::from_utf16(&[code]).unwrap())
+    Cow::Owned(String::from_utf16(&[code as u16]).unwrap())
 }
 
 fn is_altgr(modifiers: NSEventModifierFlags) -> bool {
@@ -88,409 +89,394 @@ fn is_altgr(modifiers: NSEventModifierFlags) -> bool {
     (modifiers.bits() & NX_DEVICERALTKEYMASK) != 0
 }
 
-unsafe fn is_altgr_held(native_event: id) -> bool {
-    unsafe { is_altgr(native_event.modifierFlags()) }
+fn is_altgr_held(native_event: &NSEvent) -> bool {
+    is_altgr(native_event.modifierFlags())
 }
 
-unsafe fn read_modifiers(native_event: id) -> Modifiers {
-    unsafe {
-        let modifiers = native_event.modifierFlags();
-        let control = modifiers.contains(NSEventModifierFlags::NSControlKeyMask);
-        let alt = modifiers.contains(NSEventModifierFlags::NSAlternateKeyMask);
-        let shift = modifiers.contains(NSEventModifierFlags::NSShiftKeyMask);
-        let command = modifiers.contains(NSEventModifierFlags::NSCommandKeyMask);
-        let function = modifiers.contains(NSEventModifierFlags::NSFunctionKeyMask);
+fn read_modifiers(native_event: &NSEvent) -> Modifiers {
+    let modifiers = native_event.modifierFlags();
+    let control = modifiers.contains(NSEventModifierFlags::Control);
+    let alt = modifiers.contains(NSEventModifierFlags::Option);
+    let shift = modifiers.contains(NSEventModifierFlags::Shift);
+    let command = modifiers.contains(NSEventModifierFlags::Command);
+    let function = modifiers.contains(NSEventModifierFlags::Function);
 
-        Modifiers {
-            control,
-            alt,
-            shift,
-            platform: command,
-            function,
-        }
+    Modifiers {
+        control,
+        alt,
+        shift,
+        platform: command,
+        function,
     }
 }
 
 impl PlatformInput {
     pub(crate) unsafe fn from_native(
-        native_event: id,
+        native_event: &NSEvent,
         window_height: Option<Pixels>,
     ) -> Option<Self> {
-        unsafe {
-            let event_type = native_event.eventType();
+        let event_type = native_event.r#type();
 
-            // Filter out event types that aren't in the NSEventType enum.
-            // See https://github.com/servo/cocoa-rs/issues/155#issuecomment-323482792 for details.
-            match event_type as u64 {
-                0 | 21 | 32 | 33 | 35 | 36 | 37 => {
-                    return None;
-                }
-                _ => {}
+        // Filter out event types that aren't in the NSEventType enum.
+        // See https://github.com/servo/cocoa-rs/issues/155#issuecomment-323482792 for details.
+        match event_type.0 as u64 {
+            0 | 21 | 32 | 33 | 35 | 36 | 37 => {
+                return None;
             }
+            _ => {}
+        }
 
-            match event_type {
-                NSEventType::NSFlagsChanged => {
-                    Some(Self::ModifiersChanged(ModifiersChangedEvent {
+        match event_type {
+            NSEventType::FlagsChanged => Some(Self::ModifiersChanged(ModifiersChangedEvent {
+                modifiers: read_modifiers(native_event),
+                capslock: Capslock {
+                    on: native_event
+                        .modifierFlags()
+                        .contains(NSEventModifierFlags::CapsLock),
+                },
+            })),
+            NSEventType::KeyDown => {
+                let keystroke = parse_keystroke(native_event);
+                let prefer_character_input = keystroke.altgr && keystroke.prefer_character_input();
+                Some(Self::KeyDown(KeyDownEvent {
+                    keystroke,
+                    is_held: native_event.isARepeat(),
+                    prefer_character_input,
+                }))
+            }
+            NSEventType::KeyUp => Some(Self::KeyUp(KeyUpEvent {
+                keystroke: parse_keystroke(native_event),
+            })),
+            NSEventType::LeftMouseDown
+            | NSEventType::RightMouseDown
+            | NSEventType::OtherMouseDown => {
+                let button = match native_event.buttonNumber() {
+                    0 => MouseButton::Left,
+                    1 => MouseButton::Right,
+                    2 => MouseButton::Middle,
+                    3 => MouseButton::Navigate(NavigationDirection::Back),
+                    4 => MouseButton::Navigate(NavigationDirection::Forward),
+                    // Other mouse buttons aren't tracked currently
+                    _ => return None,
+                };
+                window_height.map(|window_height| {
+                    Self::MouseDown(MouseDownEvent {
+                        button,
+                        position: point(
+                            px(native_event.locationInWindow().x as f32),
+                            // MacOS screen coordinates are relative to bottom left
+                            window_height - px(native_event.locationInWindow().y as f32),
+                        ),
                         modifiers: read_modifiers(native_event),
-                        capslock: Capslock {
-                            on: native_event
-                                .modifierFlags()
-                                .contains(NSEventModifierFlags::NSAlphaShiftKeyMask),
+                        click_count: native_event.clickCount() as usize,
+                        first_mouse: false,
+                    })
+                })
+            }
+            NSEventType::LeftMouseUp | NSEventType::RightMouseUp | NSEventType::OtherMouseUp => {
+                let button = match native_event.buttonNumber() {
+                    0 => MouseButton::Left,
+                    1 => MouseButton::Right,
+                    2 => MouseButton::Middle,
+                    3 => MouseButton::Navigate(NavigationDirection::Back),
+                    4 => MouseButton::Navigate(NavigationDirection::Forward),
+                    // Other mouse buttons aren't tracked currently
+                    _ => return None,
+                };
+
+                window_height.map(|window_height| {
+                    Self::MouseUp(MouseUpEvent {
+                        button,
+                        position: point(
+                            px(native_event.locationInWindow().x as f32),
+                            window_height - px(native_event.locationInWindow().y as f32),
+                        ),
+                        modifiers: read_modifiers(native_event),
+                        click_count: native_event.clickCount() as usize,
+                    })
+                })
+            }
+            NSEventType::Pressure => {
+                let stage = native_event.stage();
+                let pressure = native_event.pressure();
+
+                window_height.map(|window_height| {
+                    Self::MousePressure(MousePressureEvent {
+                        stage: match stage {
+                            1 => PressureStage::Normal,
+                            2 => PressureStage::Force,
+                            _ => PressureStage::Zero,
                         },
-                    }))
-                }
-                NSEventType::NSKeyDown => {
-                    let keystroke = parse_keystroke(native_event);
-                    let prefer_character_input =
-                        keystroke.altgr && keystroke.prefer_character_input();
-                    Some(Self::KeyDown(KeyDownEvent {
-                        keystroke,
-                        is_held: native_event.isARepeat() == YES,
-                        prefer_character_input,
-                    }))
-                }
-                NSEventType::NSKeyUp => Some(Self::KeyUp(KeyUpEvent {
-                    keystroke: parse_keystroke(native_event),
-                })),
-                NSEventType::NSLeftMouseDown
-                | NSEventType::NSRightMouseDown
-                | NSEventType::NSOtherMouseDown => {
-                    let button = match native_event.buttonNumber() {
-                        0 => MouseButton::Left,
-                        1 => MouseButton::Right,
-                        2 => MouseButton::Middle,
-                        3 => MouseButton::Navigate(NavigationDirection::Back),
-                        4 => MouseButton::Navigate(NavigationDirection::Forward),
-                        // Other mouse buttons aren't tracked currently
+                        pressure,
+                        modifiers: read_modifiers(native_event),
+                        position: point(
+                            px(native_event.locationInWindow().x as f32),
+                            window_height - px(native_event.locationInWindow().y as f32),
+                        ),
+                    })
+                })
+            }
+            // Some mice (like Logitech MX Master) send navigation buttons as swipe events
+            NSEventType::Swipe => {
+                let navigation_direction = match native_event.phase() {
+                    NSEventPhase::Ended => match native_event.deltaX() {
+                        x if x > 0.0 => Some(NavigationDirection::Back),
+                        x if x < 0.0 => Some(NavigationDirection::Forward),
                         _ => return None,
-                    };
-                    window_height.map(|window_height| {
+                    },
+                    _ => return None,
+                };
+
+                match navigation_direction {
+                    Some(direction) => window_height.map(|window_height| {
                         Self::MouseDown(MouseDownEvent {
-                            button,
+                            button: MouseButton::Navigate(direction),
                             position: point(
                                 px(native_event.locationInWindow().x as f32),
-                                // MacOS screen coordinates are relative to bottom left
                                 window_height - px(native_event.locationInWindow().y as f32),
                             ),
                             modifiers: read_modifiers(native_event),
-                            click_count: native_event.clickCount() as usize,
+                            click_count: 1,
                             first_mouse: false,
                         })
-                    })
+                    }),
+                    _ => None,
                 }
-                NSEventType::NSLeftMouseUp
-                | NSEventType::NSRightMouseUp
-                | NSEventType::NSOtherMouseUp => {
-                    let button = match native_event.buttonNumber() {
-                        0 => MouseButton::Left,
-                        1 => MouseButton::Right,
-                        2 => MouseButton::Middle,
-                        3 => MouseButton::Navigate(NavigationDirection::Back),
-                        4 => MouseButton::Navigate(NavigationDirection::Forward),
-                        // Other mouse buttons aren't tracked currently
-                        _ => return None,
-                    };
-
-                    window_height.map(|window_height| {
-                        Self::MouseUp(MouseUpEvent {
-                            button,
-                            position: point(
-                                px(native_event.locationInWindow().x as f32),
-                                window_height - px(native_event.locationInWindow().y as f32),
-                            ),
-                            modifiers: read_modifiers(native_event),
-                            click_count: native_event.clickCount() as usize,
-                        })
-                    })
-                }
-                NSEventType::NSEventTypePressure => {
-                    let stage = native_event.stage();
-                    let pressure = native_event.pressure();
-
-                    window_height.map(|window_height| {
-                        Self::MousePressure(MousePressureEvent {
-                            stage: match stage {
-                                1 => PressureStage::Normal,
-                                2 => PressureStage::Force,
-                                _ => PressureStage::Zero,
-                            },
-                            pressure,
-                            modifiers: read_modifiers(native_event),
-                            position: point(
-                                px(native_event.locationInWindow().x as f32),
-                                window_height - px(native_event.locationInWindow().y as f32),
-                            ),
-                        })
-                    })
-                }
-                // Some mice (like Logitech MX Master) send navigation buttons as swipe events
-                NSEventType::NSEventTypeSwipe => {
-                    let navigation_direction = match native_event.phase() {
-                        NSEventPhase::NSEventPhaseEnded => match native_event.deltaX() {
-                            x if x > 0.0 => Some(NavigationDirection::Back),
-                            x if x < 0.0 => Some(NavigationDirection::Forward),
-                            _ => return None,
-                        },
-                        _ => return None,
-                    };
-
-                    match navigation_direction {
-                        Some(direction) => window_height.map(|window_height| {
-                            Self::MouseDown(MouseDownEvent {
-                                button: MouseButton::Navigate(direction),
-                                position: point(
-                                    px(native_event.locationInWindow().x as f32),
-                                    window_height - px(native_event.locationInWindow().y as f32),
-                                ),
-                                modifiers: read_modifiers(native_event),
-                                click_count: 1,
-                                first_mouse: false,
-                            })
-                        }),
-                        _ => None,
-                    }
-                }
-                NSEventType::NSScrollWheel => window_height.map(|window_height| {
-                    let phase = match native_event.phase() {
-                        NSEventPhase::NSEventPhaseMayBegin | NSEventPhase::NSEventPhaseBegan => {
-                            TouchPhase::Started
-                        }
-                        NSEventPhase::NSEventPhaseEnded => TouchPhase::Ended,
-                        _ => TouchPhase::Moved,
-                    };
-
-                    let raw_data = point(
-                        native_event.scrollingDeltaX() as f32,
-                        native_event.scrollingDeltaY() as f32,
-                    );
-
-                    let delta = if native_event.hasPreciseScrollingDeltas() == YES {
-                        ScrollDelta::Pixels(raw_data.map(px))
-                    } else {
-                        ScrollDelta::Lines(raw_data)
-                    };
-
-                    Self::ScrollWheel(ScrollWheelEvent {
-                        position: point(
-                            px(native_event.locationInWindow().x as f32),
-                            window_height - px(native_event.locationInWindow().y as f32),
-                        ),
-                        delta,
-                        touch_phase: phase,
-                        modifiers: read_modifiers(native_event),
-                    })
-                }),
-                NSEventType::NSLeftMouseDragged
-                | NSEventType::NSRightMouseDragged
-                | NSEventType::NSOtherMouseDragged => {
-                    let pressed_button = match native_event.buttonNumber() {
-                        0 => MouseButton::Left,
-                        1 => MouseButton::Right,
-                        2 => MouseButton::Middle,
-                        3 => MouseButton::Navigate(NavigationDirection::Back),
-                        4 => MouseButton::Navigate(NavigationDirection::Forward),
-                        // Other mouse buttons aren't tracked currently
-                        _ => return None,
-                    };
-
-                    window_height.map(|window_height| {
-                        Self::MouseMove(MouseMoveEvent {
-                            pressed_button: Some(pressed_button),
-                            position: point(
-                                px(native_event.locationInWindow().x as f32),
-                                window_height - px(native_event.locationInWindow().y as f32),
-                            ),
-                            modifiers: read_modifiers(native_event),
-                        })
-                    })
-                }
-                NSEventType::NSMouseMoved => window_height.map(|window_height| {
-                    Self::MouseMove(MouseMoveEvent {
-                        position: point(
-                            px(native_event.locationInWindow().x as f32),
-                            window_height - px(native_event.locationInWindow().y as f32),
-                        ),
-                        pressed_button: None,
-                        modifiers: read_modifiers(native_event),
-                    })
-                }),
-                NSEventType::NSMouseExited => window_height.map(|window_height| {
-                    Self::MouseExited(MouseExitEvent {
-                        position: point(
-                            px(native_event.locationInWindow().x as f32),
-                            window_height - px(native_event.locationInWindow().y as f32),
-                        ),
-
-                        pressed_button: None,
-                        modifiers: read_modifiers(native_event),
-                    })
-                }),
-                _ => None,
             }
+            NSEventType::ScrollWheel => window_height.map(|window_height| {
+                let phase = match native_event.phase() {
+                    NSEventPhase::MayBegin | NSEventPhase::Began => TouchPhase::Started,
+                    NSEventPhase::Ended => TouchPhase::Ended,
+                    _ => TouchPhase::Moved,
+                };
+
+                let raw_data = point(
+                    native_event.scrollingDeltaX() as f32,
+                    native_event.scrollingDeltaY() as f32,
+                );
+
+                let delta = if native_event.hasPreciseScrollingDeltas() {
+                    ScrollDelta::Pixels(raw_data.map(px))
+                } else {
+                    ScrollDelta::Lines(raw_data)
+                };
+
+                Self::ScrollWheel(ScrollWheelEvent {
+                    position: point(
+                        px(native_event.locationInWindow().x as f32),
+                        window_height - px(native_event.locationInWindow().y as f32),
+                    ),
+                    delta,
+                    touch_phase: phase,
+                    modifiers: read_modifiers(native_event),
+                })
+            }),
+            NSEventType::LeftMouseDragged
+            | NSEventType::RightMouseDragged
+            | NSEventType::OtherMouseDragged => {
+                let pressed_button = match native_event.buttonNumber() {
+                    0 => MouseButton::Left,
+                    1 => MouseButton::Right,
+                    2 => MouseButton::Middle,
+                    3 => MouseButton::Navigate(NavigationDirection::Back),
+                    4 => MouseButton::Navigate(NavigationDirection::Forward),
+                    // Other mouse buttons aren't tracked currently
+                    _ => return None,
+                };
+
+                window_height.map(|window_height| {
+                    Self::MouseMove(MouseMoveEvent {
+                        pressed_button: Some(pressed_button),
+                        position: point(
+                            px(native_event.locationInWindow().x as f32),
+                            window_height - px(native_event.locationInWindow().y as f32),
+                        ),
+                        modifiers: read_modifiers(native_event),
+                    })
+                })
+            }
+            NSEventType::MouseMoved => window_height.map(|window_height| {
+                Self::MouseMove(MouseMoveEvent {
+                    position: point(
+                        px(native_event.locationInWindow().x as f32),
+                        window_height - px(native_event.locationInWindow().y as f32),
+                    ),
+                    pressed_button: None,
+                    modifiers: read_modifiers(native_event),
+                })
+            }),
+            NSEventType::MouseExited => window_height.map(|window_height| {
+                Self::MouseExited(MouseExitEvent {
+                    position: point(
+                        px(native_event.locationInWindow().x as f32),
+                        window_height - px(native_event.locationInWindow().y as f32),
+                    ),
+
+                    pressed_button: None,
+                    modifiers: read_modifiers(native_event),
+                })
+            }),
+            _ => None,
         }
     }
 }
 
-unsafe fn parse_keystroke(native_event: id) -> Keystroke {
-    unsafe {
-        use cocoa::appkit::*;
+fn parse_keystroke(native_event: &NSEvent) -> Keystroke {
+    use objc2_app_kit::*;
+    let mut characters = native_event
+        .charactersIgnoringModifiers()
+        .unwrap()
+        .to_string();
+    let mut key_char = None;
+    let first_char = characters.chars().next().map(|ch| ch as c_uint);
+    let modifiers = native_event.modifierFlags();
 
-        let mut characters = native_event
-            .charactersIgnoringModifiers()
-            .to_str()
-            .to_string();
-        let mut key_char = None;
-        let first_char = characters.chars().next().map(|ch| ch as u16);
-        let modifiers = native_event.modifierFlags();
+    let control = modifiers.contains(NSEventModifierFlags::Control);
+    let alt = modifiers.contains(NSEventModifierFlags::Option);
+    let altgr = is_altgr_held(native_event);
+    let mut shift = modifiers.contains(NSEventModifierFlags::Shift);
+    let command = modifiers.contains(NSEventModifierFlags::Command);
+    let function = modifiers.contains(NSEventModifierFlags::Function)
+        && first_char
+            .is_none_or(|ch| !(NSUpArrowFunctionKey..=NSModeSwitchFunctionKey).contains(&ch));
 
-        let control = modifiers.contains(NSEventModifierFlags::NSControlKeyMask);
-        let alt = modifiers.contains(NSEventModifierFlags::NSAlternateKeyMask);
-        let altgr = is_altgr_held(native_event);
-        let mut shift = modifiers.contains(NSEventModifierFlags::NSShiftKeyMask);
-        let command = modifiers.contains(NSEventModifierFlags::NSCommandKeyMask);
-        let function = modifiers.contains(NSEventModifierFlags::NSFunctionKeyMask)
-            && first_char
-                .is_none_or(|ch| !(NSUpArrowFunctionKey..=NSModeSwitchFunctionKey).contains(&ch));
-
-        #[allow(non_upper_case_globals)]
-        let key = match first_char {
-            Some(SPACE_KEY) => {
-                key_char = Some(" ".to_string());
-                "space".to_string()
-            }
-            Some(TAB_KEY) => {
-                key_char = Some("\t".to_string());
-                "tab".to_string()
-            }
-            Some(ENTER_KEY) | Some(NUMPAD_ENTER_KEY) => {
-                key_char = Some("\n".to_string());
-                "enter".to_string()
-            }
-            Some(BACKSPACE_KEY) => "backspace".to_string(),
-            Some(ESCAPE_KEY) => "escape".to_string(),
-            Some(SHIFT_TAB_KEY) => "tab".to_string(),
-            Some(NSUpArrowFunctionKey) => "up".to_string(),
-            Some(NSDownArrowFunctionKey) => "down".to_string(),
-            Some(NSLeftArrowFunctionKey) => "left".to_string(),
-            Some(NSRightArrowFunctionKey) => "right".to_string(),
-            Some(NSPageUpFunctionKey) => "pageup".to_string(),
-            Some(NSPageDownFunctionKey) => "pagedown".to_string(),
-            Some(NSHomeFunctionKey) => "home".to_string(),
-            Some(NSEndFunctionKey) => "end".to_string(),
-            Some(NSDeleteFunctionKey) => "delete".to_string(),
-            // Observed Insert==NSHelpFunctionKey not NSInsertFunctionKey.
-            Some(NSHelpFunctionKey) => "insert".to_string(),
-            Some(NSF1FunctionKey) => "f1".to_string(),
-            Some(NSF2FunctionKey) => "f2".to_string(),
-            Some(NSF3FunctionKey) => "f3".to_string(),
-            Some(NSF4FunctionKey) => "f4".to_string(),
-            Some(NSF5FunctionKey) => "f5".to_string(),
-            Some(NSF6FunctionKey) => "f6".to_string(),
-            Some(NSF7FunctionKey) => "f7".to_string(),
-            Some(NSF8FunctionKey) => "f8".to_string(),
-            Some(NSF9FunctionKey) => "f9".to_string(),
-            Some(NSF10FunctionKey) => "f10".to_string(),
-            Some(NSF11FunctionKey) => "f11".to_string(),
-            Some(NSF12FunctionKey) => "f12".to_string(),
-            Some(NSF13FunctionKey) => "f13".to_string(),
-            Some(NSF14FunctionKey) => "f14".to_string(),
-            Some(NSF15FunctionKey) => "f15".to_string(),
-            Some(NSF16FunctionKey) => "f16".to_string(),
-            Some(NSF17FunctionKey) => "f17".to_string(),
-            Some(NSF18FunctionKey) => "f18".to_string(),
-            Some(NSF19FunctionKey) => "f19".to_string(),
-            Some(NSF20FunctionKey) => "f20".to_string(),
-            Some(NSF21FunctionKey) => "f21".to_string(),
-            Some(NSF22FunctionKey) => "f22".to_string(),
-            Some(NSF23FunctionKey) => "f23".to_string(),
-            Some(NSF24FunctionKey) => "f24".to_string(),
-            Some(NSF25FunctionKey) => "f25".to_string(),
-            Some(NSF26FunctionKey) => "f26".to_string(),
-            Some(NSF27FunctionKey) => "f27".to_string(),
-            Some(NSF28FunctionKey) => "f28".to_string(),
-            Some(NSF29FunctionKey) => "f29".to_string(),
-            Some(NSF30FunctionKey) => "f30".to_string(),
-            Some(NSF31FunctionKey) => "f31".to_string(),
-            Some(NSF32FunctionKey) => "f32".to_string(),
-            Some(NSF33FunctionKey) => "f33".to_string(),
-            Some(NSF34FunctionKey) => "f34".to_string(),
-            Some(NSF35FunctionKey) => "f35".to_string(),
-            _ => {
-                // Cases to test when modifying this:
-                //
-                //           qwerty key | none | cmd   | cmd-shift
-                // * Armenian         s | ս    | cmd-s | cmd-shift-s  (layout is non-ASCII, so we use cmd layout)
-                // * Dvorak+QWERTY    s | o    | cmd-s | cmd-shift-s  (layout switches on cmd)
-                // * Ukrainian+QWERTY s | с    | cmd-s | cmd-shift-s  (macOS reports cmd-s instead of cmd-S)
-                // * Czech            7 | ý    | cmd-ý | cmd-7        (layout has shifted numbers)
-                // * Norwegian        7 | 7    | cmd-7 | cmd-/        (macOS reports cmd-shift-7 instead of cmd-/)
-                // * Russian          7 | 7    | cmd-7 | cmd-&        (shift-7 is . but when cmd is down, should use cmd layout)
-                // * German QWERTZ    ; | ö    | cmd-ö | cmd-Ö        (Gram's shift special case only applies to a-z)
-                //
-                let mut chars_ignoring_modifiers =
-                    chars_for_modified_key(native_event.keyCode(), NO_MOD);
-                let mut chars_with_shift =
-                    chars_for_modified_key(native_event.keyCode(), SHIFT_MOD);
-                let always_use_cmd_layout = always_use_command_layout();
-
-                // Handle Dvorak+QWERTY / Russian / Armenian
-                if command || always_use_cmd_layout {
-                    let chars_with_cmd = chars_for_modified_key(native_event.keyCode(), CMD_MOD);
-                    let chars_with_both =
-                        chars_for_modified_key(native_event.keyCode(), CMD_MOD | SHIFT_MOD);
-
-                    // We don't do this in the case that the shifted command key generates
-                    // the same character as the unshifted command key (Norwegian, e.g.)
-                    if chars_with_both != chars_with_cmd {
-                        chars_with_shift = chars_with_both;
-
-                    // Handle edge-case where cmd-shift-s reports cmd-s instead of
-                    // cmd-shift-s (Ukrainian, etc.)
-                    } else if chars_with_cmd.to_ascii_uppercase() != chars_with_cmd {
-                        chars_with_shift = chars_with_cmd.to_ascii_uppercase();
-                    }
-                    chars_ignoring_modifiers = chars_with_cmd;
-                }
-
-                if !control && !command && !function {
-                    let mut mods = NO_MOD;
-                    if shift {
-                        mods |= SHIFT_MOD;
-                    }
-                    if alt {
-                        mods |= OPTION_MOD;
-                    }
-
-                    key_char = Some(chars_for_modified_key(native_event.keyCode(), mods));
-                }
-
-                if shift
-                    && chars_ignoring_modifiers
-                        .chars()
-                        .all(|c| c.is_ascii_lowercase())
-                {
-                    chars_ignoring_modifiers
-                } else if shift {
-                    shift = false;
-                    chars_with_shift
-                } else {
-                    chars_ignoring_modifiers
-                }
-            }
-        };
-
-        Keystroke {
-            modifiers: Modifiers {
-                control,
-                alt,
-                shift,
-                platform: command,
-                function,
-            },
-            key,
-            key_char,
-            altgr,
+    #[allow(non_upper_case_globals)]
+    let key = match first_char {
+        Some(SPACE_KEY) => {
+            key_char = Some(" ".to_string());
+            "space".to_string()
         }
+        Some(TAB_KEY) => {
+            key_char = Some("\t".to_string());
+            "tab".to_string()
+        }
+        Some(ENTER_KEY) | Some(NUMPAD_ENTER_KEY) => {
+            key_char = Some("\n".to_string());
+            "enter".to_string()
+        }
+        Some(BACKSPACE_KEY) => "backspace".to_string(),
+        Some(ESCAPE_KEY) => "escape".to_string(),
+        Some(SHIFT_TAB_KEY) => "tab".to_string(),
+        Some(NSUpArrowFunctionKey) => "up".to_string(),
+        Some(NSDownArrowFunctionKey) => "down".to_string(),
+        Some(NSLeftArrowFunctionKey) => "left".to_string(),
+        Some(NSRightArrowFunctionKey) => "right".to_string(),
+        Some(NSPageUpFunctionKey) => "pageup".to_string(),
+        Some(NSPageDownFunctionKey) => "pagedown".to_string(),
+        Some(NSHomeFunctionKey) => "home".to_string(),
+        Some(NSEndFunctionKey) => "end".to_string(),
+        Some(NSDeleteFunctionKey) => "delete".to_string(),
+        // Observed Insert==NSHelpFunctionKey not NSInsertFunctionKey.
+        Some(NSHelpFunctionKey) => "insert".to_string(),
+        Some(NSF1FunctionKey) => "f1".to_string(),
+        Some(NSF2FunctionKey) => "f2".to_string(),
+        Some(NSF3FunctionKey) => "f3".to_string(),
+        Some(NSF4FunctionKey) => "f4".to_string(),
+        Some(NSF5FunctionKey) => "f5".to_string(),
+        Some(NSF6FunctionKey) => "f6".to_string(),
+        Some(NSF7FunctionKey) => "f7".to_string(),
+        Some(NSF8FunctionKey) => "f8".to_string(),
+        Some(NSF9FunctionKey) => "f9".to_string(),
+        Some(NSF10FunctionKey) => "f10".to_string(),
+        Some(NSF11FunctionKey) => "f11".to_string(),
+        Some(NSF12FunctionKey) => "f12".to_string(),
+        Some(NSF13FunctionKey) => "f13".to_string(),
+        Some(NSF14FunctionKey) => "f14".to_string(),
+        Some(NSF15FunctionKey) => "f15".to_string(),
+        Some(NSF16FunctionKey) => "f16".to_string(),
+        Some(NSF17FunctionKey) => "f17".to_string(),
+        Some(NSF18FunctionKey) => "f18".to_string(),
+        Some(NSF19FunctionKey) => "f19".to_string(),
+        Some(NSF20FunctionKey) => "f20".to_string(),
+        Some(NSF21FunctionKey) => "f21".to_string(),
+        Some(NSF22FunctionKey) => "f22".to_string(),
+        Some(NSF23FunctionKey) => "f23".to_string(),
+        Some(NSF24FunctionKey) => "f24".to_string(),
+        Some(NSF25FunctionKey) => "f25".to_string(),
+        Some(NSF26FunctionKey) => "f26".to_string(),
+        Some(NSF27FunctionKey) => "f27".to_string(),
+        Some(NSF28FunctionKey) => "f28".to_string(),
+        Some(NSF29FunctionKey) => "f29".to_string(),
+        Some(NSF30FunctionKey) => "f30".to_string(),
+        Some(NSF31FunctionKey) => "f31".to_string(),
+        Some(NSF32FunctionKey) => "f32".to_string(),
+        Some(NSF33FunctionKey) => "f33".to_string(),
+        Some(NSF34FunctionKey) => "f34".to_string(),
+        Some(NSF35FunctionKey) => "f35".to_string(),
+        _ => {
+            // Cases to test when modifying this:
+            //
+            //           qwerty key | none | cmd   | cmd-shift
+            // * Armenian         s | ս    | cmd-s | cmd-shift-s  (layout is non-ASCII, so we use cmd layout)
+            // * Dvorak+QWERTY    s | o    | cmd-s | cmd-shift-s  (layout switches on cmd)
+            // * Ukrainian+QWERTY s | с    | cmd-s | cmd-shift-s  (macOS reports cmd-s instead of cmd-S)
+            // * Czech            7 | ý    | cmd-ý | cmd-7        (layout has shifted numbers)
+            // * Norwegian        7 | 7    | cmd-7 | cmd-/        (macOS reports cmd-shift-7 instead of cmd-/)
+            // * Russian          7 | 7    | cmd-7 | cmd-&        (shift-7 is . but when cmd is down, should use cmd layout)
+            // * German QWERTZ    ; | ö    | cmd-ö | cmd-Ö        (Gram's shift special case only applies to a-z)
+            //
+            let mut chars_ignoring_modifiers =
+                chars_for_modified_key(native_event.keyCode(), NO_MOD);
+            let mut chars_with_shift = chars_for_modified_key(native_event.keyCode(), SHIFT_MOD);
+            let always_use_cmd_layout = always_use_command_layout();
+
+            // Handle Dvorak+QWERTY / Russian / Armenian
+            if command || always_use_cmd_layout {
+                let chars_with_cmd = chars_for_modified_key(native_event.keyCode(), CMD_MOD);
+                let chars_with_both =
+                    chars_for_modified_key(native_event.keyCode(), CMD_MOD | SHIFT_MOD);
+
+                // We don't do this in the case that the shifted command key generates
+                // the same character as the unshifted command key (Norwegian, e.g.)
+                if chars_with_both != chars_with_cmd {
+                    chars_with_shift = chars_with_both;
+
+                // Handle edge-case where cmd-shift-s reports cmd-s instead of
+                // cmd-shift-s (Ukrainian, etc.)
+                } else if chars_with_cmd.to_ascii_uppercase() != chars_with_cmd {
+                    chars_with_shift = chars_with_cmd.to_ascii_uppercase();
+                }
+                chars_ignoring_modifiers = chars_with_cmd;
+            }
+
+            if !control && !command && !function {
+                let mut mods = NO_MOD;
+                if shift {
+                    mods |= SHIFT_MOD;
+                }
+                if alt {
+                    mods |= OPTION_MOD;
+                }
+
+                key_char = Some(chars_for_modified_key(native_event.keyCode(), mods));
+            }
+
+            if shift
+                && chars_ignoring_modifiers
+                    .chars()
+                    .all(|c| c.is_ascii_lowercase())
+            {
+                chars_ignoring_modifiers
+            } else if shift {
+                shift = false;
+                chars_with_shift
+            } else {
+                chars_ignoring_modifiers
+            }
+        }
+    };
+
+    Keystroke {
+        modifiers: Modifiers {
+            control,
+            alt,
+            shift,
+            platform: command,
+            function,
+        },
+        key,
+        key_char,
+        altgr,
     }
 }
 
@@ -506,6 +492,17 @@ const NO_MOD: u32 = 0;
 const CMD_MOD: u32 = 1;
 const SHIFT_MOD: u32 = 2;
 const OPTION_MOD: u32 = 8;
+
+unsafe fn retained_from_raw(obj: *mut objc::runtime::Object) -> Option<Retained<AnyObject>> {
+    unsafe { Retained::from_raw(obj as *mut AnyObject) }
+}
+
+unsafe fn retained_retain<T>(obj: *mut objc::runtime::Object) -> Option<Retained<T>>
+where
+    T: Message,
+{
+    unsafe { Retained::retain(obj as *mut T) }
+}
 
 fn chars_for_modified_key(code: CGKeyCode, modifiers: u32) -> String {
     // Values from: https://github.com/phracker/MacOSX-SDKs/blob/master/MacOSX10.6.sdk/System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/Headers/Events.h#L126
@@ -523,21 +520,19 @@ fn chars_for_modified_key(code: CGKeyCode, modifiers: u32) -> String {
     let mut buffer: [u16; BUFFER_SIZE] = [0; BUFFER_SIZE];
     let mut buffer_size: usize = 0;
 
-    let keyboard = unsafe { TISCopyCurrentKeyboardLayoutInputSource() };
-    if keyboard.is_null() {
+    let Some(keyboard) = (unsafe { retained_from_raw(TISCopyCurrentKeyboardLayoutInputSource()) })
+    else {
         return "".to_string();
-    }
-    let layout_data = unsafe {
-        TISGetInputSourceProperty(keyboard, kTISPropertyUnicodeKeyLayoutData as *const c_void)
-            as CFDataRef
     };
-    if layout_data.is_null() {
-        unsafe {
-            let _: () = msg_send![keyboard, release];
-        }
+    let Some(layout_data) = (unsafe {
+        retained_retain::<CFData>(TISGetInputSourceProperty(
+            Retained::as_ptr(&keyboard) as *mut objc::runtime::Object,
+            kTISPropertyUnicodeKeyLayoutData as *const c_void,
+        ))
+    }) else {
         return "".to_string();
-    }
-    let keyboard_layout = unsafe { CFDataGetBytePtr(layout_data) };
+    };
+    let keyboard_layout = layout_data.byte_ptr();
 
     unsafe {
         UCKeyTranslate(
@@ -566,7 +561,6 @@ fn chars_for_modified_key(code: CGKeyCode, modifiers: u32) -> String {
                 &mut buffer as *mut u16,
             );
         }
-        let _: () = msg_send![keyboard, release];
     }
     String::from_utf16(&buffer[..buffer_size]).unwrap_or_default()
 }

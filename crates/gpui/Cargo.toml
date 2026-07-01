@@ -142,6 +142,7 @@ cosmic-text = { version = "0.19", optional = true }
 swash = "0.2.9"
 bytemuck = { version = "1" }
 objc2.workspace = true
+objc2-core-foundation.workspace = true
 objc2-foundation.workspace = true
 objc2-app-kit.workspace = true
 objc2-color-sync.workspace = true

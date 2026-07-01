@@ -419,12 +419,7 @@ impl GPUIView {
         let mut lock = window_state.as_ref().lock();
 
         let window_height = lock.content_size().height;
-        let event = unsafe {
-            PlatformInput::from_native(
-                native_event as *const NSEvent as cocoa::base::id,
-                Some(window_height),
-            )
-        };
+        let event = unsafe { PlatformInput::from_native(native_event, Some(window_height)) };
 
         let Some(event) = event else {
             return false;
@@ -542,12 +537,7 @@ impl GPUIView {
         let weak_window_state = Arc::downgrade(&window_state);
         let mut lock = window_state.as_ref().lock();
         let window_height = lock.content_size().height;
-        let event = unsafe {
-            PlatformInput::from_native(
-                native_event as *const NSEvent as cocoa::base::id,
-                Some(window_height),
-            )
-        };
+        let event = unsafe { PlatformInput::from_native(native_event, Some(window_height)) };
 
         if let Some(mut event) = event {
             match &mut event {
