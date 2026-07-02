@@ -82,6 +82,6 @@ fn main() {
                 |_, cx| cx.new(|_| SvgExample),
             )
             .unwrap();
-            cx.activate(true);
+            cx.activate();
         });
 }

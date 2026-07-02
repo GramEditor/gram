@@ -31,7 +31,7 @@ pub fn main() {
         theme::init(LoadThemes::JustBase, cx);
         Assets.load_fonts(cx).unwrap();
 
-        cx.activate(true);
+        cx.activate();
         let _ = cx.open_window(WindowOptions::default(), |_, cx| {
             cx.new(|cx| {
                 let markdown = cx.new(|cx| Markdown::new(MARKDOWN_EXAMPLE.into(), None, None, cx));

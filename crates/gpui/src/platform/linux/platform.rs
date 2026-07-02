@@ -174,6 +174,12 @@ impl LinuxCommon {
 
         (common, main_receiver)
     }
+
+    pub fn new_background_executor() -> BackgroundExecutor {
+        let (main_sender, main_receiver) = calloop::channel::channel::<RunnableVariant>();
+        let dispatcher = Arc::new(LinuxDispatcher::new(main_sender));
+        BackgroundExecutor::new(dispatcher.clone())
+    }
 }
 
 impl<P: LinuxClient + 'static> Platform for P {
@@ -270,7 +276,7 @@ impl<P: LinuxClient + 'static> Platform for P {
         }
     }
 
-    fn activate(&self, _ignoring_other_apps: bool) {
+    fn activate(&self) {
         log::info!("activate is not implemented on Linux, ignoring the call")
     }
 

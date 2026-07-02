@@ -871,7 +871,7 @@ fn register_actions(
                         app_state,
                         cx,
                         |workspace, window, cx| {
-                            cx.activate(true);
+                            cx.activate();
                             // Create buffer synchronously to avoid flicker
                             let project = workspace.project().clone();
                             let buffer = project.update(cx, |project, cx| {
@@ -920,7 +920,7 @@ fn register_actions(
                                     app_state,
                                     cx,
                                     |workspace, window, cx| {
-                                        cx.activate(true);
+                                        cx.activate();
                                         // Create buffer synchronously to avoid flicker
                                         let project = workspace.project().clone();
                                         let buffer = project.update(cx, |project, cx| {

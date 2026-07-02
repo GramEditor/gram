@@ -205,7 +205,7 @@ fn main() {
                 ..Default::default()
             };
             cx.open_window(options, |_, cx| {
-                cx.activate(false);
+                cx.activate();
                 cx.new(|_| ImageLoadingExample {})
             })
             .unwrap();

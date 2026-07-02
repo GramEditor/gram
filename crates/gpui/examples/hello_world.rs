@@ -101,6 +101,6 @@ fn main() {
             },
         )
         .unwrap();
-        cx.activate(true);
+        cx.activate();
     });
 }

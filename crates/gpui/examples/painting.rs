@@ -458,6 +458,6 @@ fn main() {
             cx.quit();
         })
         .detach();
-        cx.activate(true);
+        cx.activate();
     });
 }

@@ -172,6 +172,49 @@ impl WindowsPlatform {
         })
     }
 
+    pub fn background_executor() -> Result<BackgroundExecutor> {
+        unsafe {
+            OleInitialize(None).context("unable to initialize Windows OLE")?;
+        }
+        let raw_window_handles = Arc::new(RwLock::new(SmallVec::new()));
+        let validation_number = if usize::BITS == 64 {
+            rand::random::<u64>() as usize
+        } else {
+            rand::random::<u32>() as usize
+        };
+        let (main_sender, main_receiver) = flume::unbounded::<RunnableVariant>();
+        let mut context = PlatformWindowCreateContext {
+            inner: None,
+            raw_window_handles: Arc::downgrade(&raw_window_handles),
+            validation_number,
+            main_sender: Some(main_sender),
+            main_receiver: Some(main_receiver),
+            directx_devices: None,
+            dispatcher: None,
+        };
+        let result = unsafe {
+            CreateWindowExW(
+                WINDOW_EX_STYLE(0),
+                PLATFORM_WINDOW_CLASS_NAME,
+                None,
+                WINDOW_STYLE(0),
+                0,
+                0,
+                0,
+                0,
+                Some(HWND_MESSAGE),
+                None,
+                None,
+                Some(&raw const context as *const _),
+            )
+        };
+        let dispatcher = context
+            .dispatcher
+            .take()
+            .context("CreateWindowExW did not run correctly")?;
+        BackgroundExecutor::new(dispatcher)
+    }
+
     pub fn window_from_hwnd(&self, hwnd: HWND) -> Option<Rc<WindowsWindowInner>> {
         self.raw_window_handles
             .read()
@@ -420,7 +463,7 @@ impl Platform for WindowsPlatform {
         }
     }
 
-    fn activate(&self, _ignoring_other_apps: bool) {}
+    fn activate(&self) {}
 
     fn hide(&self) {}
 

@@ -118,6 +118,6 @@ fn main() {
             |_, cx| cx.new(|_| HelloWorld {}),
         )
         .unwrap();
-        cx.activate(true);
+        cx.activate();
     });
 }

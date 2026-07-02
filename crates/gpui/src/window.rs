@@ -3853,7 +3853,7 @@ impl Window {
                     })
                 }
                 FileDropEvent::Submit { position } => {
-                    cx.activate(true);
+                    cx.activate();
                     self.mouse_position = position;
                     PlatformInput::MouseUp(MouseUpEvent {
                         button: MouseButton::Left,

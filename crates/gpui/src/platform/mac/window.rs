@@ -946,7 +946,11 @@ impl PlatformWindow for MacWindow {
     fn appearance(&self) -> WindowAppearance {
         unsafe {
             let appearance: id = msg_send![self.0.lock().native_window, effectiveAppearance];
-            WindowAppearance::from_native(appearance as *mut objc2::runtime::AnyObject)
+            let obj: &objc2::runtime::AnyObject = (appearance as *mut objc2::runtime::AnyObject)
+                .as_ref()
+                .unwrap();
+            let appearance_ref = obj.downcast_ref::<objc2_app_kit::NSAppearance>().unwrap();
+            WindowAppearance::from_native(appearance_ref)
         }
     }
 
@@ -1071,7 +1075,7 @@ impl PlatformWindow for MacWindow {
             button.setTag(ix as NSInteger);
 
             if answer.is_cancel() {
-                if let Some(key) = core::char::from_u32(ESCAPE_KEY as u32) {
+                if let Some(key) = core::char::from_u32(ESCAPE_KEY) {
                     let key = NSString::from_str(&key.to_string());
                     button.setKeyEquivalent(&key);
                 }

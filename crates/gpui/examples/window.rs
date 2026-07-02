@@ -190,7 +190,7 @@ impl Render for WindowDemo {
                     .spawn(cx, async move |cx| {
                         Timer::after(std::time::Duration::from_secs(3)).await;
                         cx.update(|_, cx| {
-                            cx.activate(false);
+                            cx.activate();
                         })
                     })
                     .detach();
@@ -262,7 +262,7 @@ fn main() {
         )
         .unwrap();
 
-        cx.activate(true);
+        cx.activate();
         cx.on_action(|_: &Quit, cx| cx.quit());
         cx.bind_keys([KeyBinding::new("cmd-q", Quit, None)]);
     });

@@ -326,7 +326,7 @@ fn main() {
 
         window
             .update(cx, |_view, _window, cx| {
-                cx.activate(true);
+                cx.activate();
             })
             .unwrap();
     });

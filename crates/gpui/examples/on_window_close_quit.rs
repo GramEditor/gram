@@ -52,7 +52,7 @@ fn main() {
                 ..Default::default()
             },
             |window, cx| {
-                cx.activate(false);
+                cx.activate();
                 cx.new(|cx| {
                     let focus_handle = cx.focus_handle();
                     focus_handle.focus(window, cx);

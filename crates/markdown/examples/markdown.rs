@@ -50,7 +50,7 @@ pub fn main() {
         languages::init(language_registry.clone(), fs, node_runtime, cx);
         Assets.load_fonts(cx).unwrap();
 
-        cx.activate(true);
+        cx.activate();
         cx.open_window(WindowOptions::default(), |_, cx| {
             cx.new(|cx| MarkdownExample::new(MARKDOWN_EXAMPLE.into(), language_registry, cx))
         })

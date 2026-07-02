@@ -744,7 +744,7 @@ fn main() {
         window
             .update(cx, |view, window, cx| {
                 window.focus(&view.text_input.focus_handle(cx), cx);
-                cx.activate(true);
+                cx.activate();
             })
             .unwrap();
         cx.on_action(|_: &Quit, cx| cx.quit());

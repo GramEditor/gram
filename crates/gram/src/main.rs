@@ -636,7 +636,7 @@ pub fn main() {
         cx.set_menus(menus);
         initialize_workspace(app_state.clone(), cx);
 
-        cx.activate(true);
+        cx.activate();
 
         let urls: Vec<_> = args
             .paths_or_urls

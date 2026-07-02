@@ -36,6 +36,6 @@ fn main() {
             |_, cx| cx.new(|_| GifViewer::new(gif_path)),
         )
         .unwrap();
-        cx.activate(true);
+        cx.activate();
     });
 }

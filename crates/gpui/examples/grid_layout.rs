@@ -75,6 +75,6 @@ fn main() {
             |_, cx| cx.new(|_| HolyGrailExample {}),
         )
         .unwrap();
-        cx.activate(true);
+        cx.activate();
     });
 }

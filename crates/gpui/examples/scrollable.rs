@@ -55,6 +55,6 @@ fn main() {
             |_, cx| cx.new(|_| Scrollable {}),
         )
         .unwrap();
-        cx.activate(true);
+        cx.activate();
     });
 }

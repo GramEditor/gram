@@ -219,7 +219,7 @@ impl Platform for TestPlatform {
         }
     }
 
-    fn activate(&self, _ignoring_other_apps: bool) {
+    fn activate(&self) {
         //
     }
 

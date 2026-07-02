@@ -1,22 +1,21 @@
-use objc2::{msg_send, runtime::AnyObject};
 use objc2_app_kit::{
-    NSAppearanceName, NSAppearanceNameAqua, NSAppearanceNameDarkAqua, NSAppearanceNameVibrantDark,
+    NSAppearance, NSAppearanceNameAqua, NSAppearanceNameDarkAqua, NSAppearanceNameVibrantDark,
     NSAppearanceNameVibrantLight,
 };
 
 use crate::WindowAppearance;
 
 impl WindowAppearance {
-    pub(crate) unsafe fn from_native(appearance: *mut AnyObject) -> Self {
+    pub(crate) fn from_native(appearance: &NSAppearance) -> Self {
         unsafe {
-            let name: &NSAppearanceName = msg_send![appearance, name];
-            if name == NSAppearanceNameVibrantLight {
+            let name = appearance.name();
+            if &*name == NSAppearanceNameVibrantLight {
                 Self::VibrantLight
-            } else if name == NSAppearanceNameVibrantDark {
+            } else if &*name == NSAppearanceNameVibrantDark {
                 Self::VibrantDark
-            } else if name == NSAppearanceNameAqua {
+            } else if &*name == NSAppearanceNameAqua {
                 Self::Light
-            } else if name == NSAppearanceNameDarkAqua {
+            } else if &*name == NSAppearanceNameDarkAqua {
                 Self::Dark
             } else {
                 println!("unknown appearance");

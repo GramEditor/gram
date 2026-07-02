@@ -87,6 +87,6 @@ fn main() {
             |window, cx| cx.new(|cx| PaintingViewer::new(window, cx)),
         )
         .unwrap();
-        cx.activate(true);
+        cx.activate();
     });
 }

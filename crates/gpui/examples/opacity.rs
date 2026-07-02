@@ -170,6 +170,6 @@ fn main() {
                 |window, cx| cx.new(|cx| HelloWorld::new(window, cx)),
             )
             .unwrap();
-            cx.activate(true);
+            cx.activate();
         });
 }

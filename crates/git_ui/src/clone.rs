@@ -118,7 +118,7 @@ pub fn clone_and_open(
                                 app_state,
                                 cx,
                                 move |workspace, window, cx| {
-                                    cx.activate(true);
+                                    cx.activate();
 
                                     let create_task =
                                         workspace.project().update(cx, |project, cx| {

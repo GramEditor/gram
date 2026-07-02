@@ -493,11 +493,7 @@ const CMD_MOD: u32 = 1;
 const SHIFT_MOD: u32 = 2;
 const OPTION_MOD: u32 = 8;
 
-unsafe fn retained_from_raw(obj: *mut objc::runtime::Object) -> Option<Retained<AnyObject>> {
-    unsafe { Retained::from_raw(obj as *mut AnyObject) }
-}
-
-unsafe fn retained_retain<T>(obj: *mut objc::runtime::Object) -> Option<Retained<T>>
+unsafe fn retained_retain<T>(obj: *mut AnyObject) -> Option<Retained<T>>
 where
     T: Message,
 {
@@ -520,13 +516,13 @@ fn chars_for_modified_key(code: CGKeyCode, modifiers: u32) -> String {
     let mut buffer: [u16; BUFFER_SIZE] = [0; BUFFER_SIZE];
     let mut buffer_size: usize = 0;
 
-    let Some(keyboard) = (unsafe { retained_from_raw(TISCopyCurrentKeyboardLayoutInputSource()) })
+    let Some(keyboard) = (unsafe { Retained::from_raw(TISCopyCurrentKeyboardLayoutInputSource()) })
     else {
         return "".to_string();
     };
     let Some(layout_data) = (unsafe {
         retained_retain::<CFData>(TISGetInputSourceProperty(
-            Retained::as_ptr(&keyboard) as *mut objc::runtime::Object,
+            Retained::as_ptr(&keyboard) as *mut AnyObject,
             kTISPropertyUnicodeKeyLayoutData as *const c_void,
         ))
     }) else {

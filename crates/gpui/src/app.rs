@@ -999,8 +999,8 @@ impl App {
     }
 
     /// Instructs the platform to activate the application by bringing it to the foreground.
-    pub fn activate(&self, ignoring_other_apps: bool) {
-        self.platform.activate(ignoring_other_apps);
+    pub fn activate(&self) {
+        self.platform.activate();
     }
 
     /// Hide the application at the platform level.
