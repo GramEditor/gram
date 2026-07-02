@@ -29,9 +29,14 @@ impl WgpuContext {
         #[cfg(target_os = "macos")]
         let backends = wgpu::Backends::METAL;
 
+        #[cfg(target_os = "macos")]
+        let flags = wgpu::InstanceFlags::default() - wgpu::InstanceFlags::VALIDATION_INDIRECT_CALL;
+        #[cfg(not(target_os = "macos"))]
+        let flags = wgpu::InstanceFlags::default();
+
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends,
-            flags: wgpu::InstanceFlags::default(),
+            flags,
             backend_options: wgpu::BackendOptions::default(),
             memory_budget_thresholds: wgpu::MemoryBudgetThresholds::default(),
             display: None,
