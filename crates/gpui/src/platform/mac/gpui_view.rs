@@ -8,7 +8,7 @@ use objc2::{
     rc::Retained,
     runtime::{AnyObject, Sel},
 };
-use objc2_app_kit::{NSEvent, NSTextInputClient, NSView, NSWindow, NSWindowStyleMask};
+use objc2_app_kit::{NSEvent, NSTextInputClient, NSView, NSWindowStyleMask};
 use objc2_foundation::{
     NSArray, NSAttributedString, NSAttributedStringKey, NSNotFound, NSObjectProtocol, NSPoint,
     NSRange, NSRangePointer, NSRect, NSSize, NSString,
@@ -157,7 +157,7 @@ define_class!(
                 if let Some(adjusted) = adjusted
                     && adjusted != range
                 {
-                    unsafe { (actual_range as *mut NSRange).write(NSRange::from(adjusted)) };
+                    unsafe { actual_range.write(NSRange::from(adjusted)) };
                 }
                 let selected_text = NSString::from_str(&selected_text);
                 let string = NSAttributedString::initWithString(
@@ -356,10 +356,6 @@ impl GPUIView {
         unsafe { msg_send![super(this), initWithFrame: frame] }
     }
 
-    pub fn as_obj_ptr(this: Retained<Self>) -> cocoa::base::id {
-        Retained::into_raw(this) as cocoa::base::id
-    }
-
     pub fn window_state(&self) -> Arc<Mutex<MacWindowState>> {
         self.ivars().window_state.borrow().as_ref().unwrap().clone()
     }
@@ -371,10 +367,10 @@ impl GPUIView {
     fn get_window_frame(&self) -> NSRect {
         let state = self.window_state();
         let lock = state.lock();
-        let window_ref: &NSWindow = unsafe { &*(lock.native_window as *const NSWindow) };
-        let mut frame = window_ref.frame();
-        let content_layout_rect = window_ref.contentLayoutRect();
-        let style_mask = window_ref.styleMask();
+        let window = &lock.native_window;
+        let mut frame = window.frame();
+        let content_layout_rect = window.contentLayoutRect();
+        let style_mask = window.styleMask();
         if !style_mask.contains(NSWindowStyleMask::FullSizeContentView) {
             frame.origin.y -= frame.size.height - content_layout_rect.size.height;
         }

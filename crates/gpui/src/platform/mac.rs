@@ -8,90 +8,20 @@ mod keyboard;
 mod pasteboard;
 
 mod blurred_view;
-mod gpui_panel;
 mod gpui_view;
 mod platform;
 mod window;
 mod window_appearance;
 
 use crate::{DevicePixels, Pixels, Size, px, size};
-use cocoa::{
-    base::{id, nil},
-    foundation::{NSAutoreleasePool, NSRect, NSSize, NSString, NSUInteger},
-};
-
-use objc::runtime::{BOOL, NO, YES};
-use std::{
-    ffi::{CStr, c_char},
-    ops::Range,
-};
 
 pub(crate) use dispatcher::*;
 pub(crate) use display::*;
 pub(crate) use display_link::*;
 pub(crate) use keyboard::*;
+use objc2_foundation::{NSRect, NSSize};
 pub(crate) use platform::*;
 pub(crate) use window::*;
-
-trait BoolExt {
-    fn to_objc(self) -> BOOL;
-}
-
-impl BoolExt for bool {
-    fn to_objc(self) -> BOOL {
-        if self { YES } else { NO }
-    }
-}
-
-trait NSStringExt {
-    unsafe fn to_str(&self) -> &str;
-}
-
-impl NSStringExt for id {
-    unsafe fn to_str(&self) -> &str {
-        unsafe {
-            let cstr = self.UTF8String();
-            if cstr.is_null() {
-                ""
-            } else {
-                CStr::from_ptr(cstr as *mut c_char).to_str().unwrap()
-            }
-        }
-    }
-}
-
-#[repr(C)]
-#[derive(Copy, Clone, Debug)]
-struct NSRange {
-    pub location: NSUInteger,
-    pub length: NSUInteger,
-}
-
-impl From<Range<usize>> for NSRange {
-    fn from(range: Range<usize>) -> Self {
-        NSRange {
-            location: range.start as NSUInteger,
-            length: range.len() as NSUInteger,
-        }
-    }
-}
-
-unsafe impl objc::Encode for NSRange {
-    fn encode() -> objc::Encoding {
-        let encoding = format!(
-            "{{NSRange={}{}}}",
-            NSUInteger::encode().as_str(),
-            NSUInteger::encode().as_str()
-        );
-        unsafe { objc::Encoding::from_str(&encoding) }
-    }
-}
-
-/// Allow NSString::alloc use here because it sets autorelease
-#[allow(clippy::disallowed_methods)]
-unsafe fn ns_string(string: &str) -> id {
-    unsafe { NSString::alloc(nil).init_str(string).autorelease() }
-}
 
 impl From<NSSize> for Size<Pixels> {
     fn from(value: NSSize) -> Self {
@@ -112,29 +42,6 @@ impl From<NSRect> for Size<Pixels> {
 impl From<NSRect> for Size<DevicePixels> {
     fn from(rect: NSRect) -> Self {
         let NSSize { width, height } = rect.size;
-        size(DevicePixels(width as i32), DevicePixels(height as i32))
-    }
-}
-
-impl From<objc2_foundation::NSSize> for Size<Pixels> {
-    fn from(value: objc2_foundation::NSSize) -> Self {
-        Size {
-            width: px(value.width as f32),
-            height: px(value.height as f32),
-        }
-    }
-}
-
-impl From<objc2_foundation::NSRect> for Size<Pixels> {
-    fn from(rect: objc2_foundation::NSRect) -> Self {
-        let objc2_foundation::NSSize { width, height } = rect.size;
-        size(width.into(), height.into())
-    }
-}
-
-impl From<objc2_foundation::NSRect> for Size<DevicePixels> {
-    fn from(rect: objc2_foundation::NSRect) -> Self {
-        let objc2_foundation::NSSize { width, height } = rect.size;
         size(DevicePixels(width as i32), DevicePixels(height as i32))
     }
 }

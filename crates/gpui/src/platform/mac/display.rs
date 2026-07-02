@@ -126,7 +126,7 @@ impl MacDisplay {
     }
 }
 
-fn screen_display_id(screen: &Retained<NSScreen>) -> CGDirectDisplayID {
+pub fn screen_display_id(screen: &NSScreen) -> CGDirectDisplayID {
     let device_description = screen.deviceDescription();
     let Some(display_number) = device_description.objectForKey(ns_string!("NSScreenNumber")) else {
         return kCGNullDirectDisplay;

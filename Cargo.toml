@@ -351,9 +351,7 @@ chardetng = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
 circular-buffer = "1.0"
 clap = { version = "4.4", features = ["derive", "wrap_help"] }
-cocoa = "=0.26.0"
 convert_case = "0.11.0"
-core-video = { version = "0.4.3", features = ["metal"] }
 crash-handler = "0.7"
 criterion = { version = "0.8", features = ["html_reports"] }
 ctor = "0.12"
@@ -413,7 +411,6 @@ nix = "0.31"
 notify = "=9.0.0-rc.3"
 num-format = "0.4.4"
 num-traits = "0.2"
-objc = "=0.2.6"
 objc2 = "0.6"
 objc2-app-kit = "0.3"
 objc2-foundation = "0.3"

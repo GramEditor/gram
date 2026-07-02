@@ -882,12 +882,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "block"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d8c1fef690941d3e7788d328517591fecc684c084084702d6ff1641e993699a"
-
-[[package]]
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1439,36 +1433,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fa961b519f0b462e3a3b4a34b64d119eeaca1d59af726fe450bbba07a9fc0a1"
 dependencies = [
  "thiserror 2.0.18",
-]
-
-[[package]]
-name = "cocoa"
-version = "0.26.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f79398230a6e2c08f5c9760610eb6924b52aa9e7950a619602baba59dcbbdbb2"
-dependencies = [
- "bitflags 2.13.0",
- "block",
- "cocoa-foundation",
- "core-foundation 0.10.0",
- "core-graphics",
- "foreign-types 0.5.0",
- "libc",
- "objc",
-]
-
-[[package]]
-name = "cocoa-foundation"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e14045fb83be07b5acf1c0884b2180461635b433455fa35d1cd6f17f1450679d"
-dependencies = [
- "bitflags 2.13.0",
- "block",
- "core-foundation 0.10.0",
- "core-graphics-types",
- "libc",
- "objc",
 ]
 
 [[package]]
@@ -3998,9 +3962,7 @@ dependencies = [
  "calloop-wayland-source",
  "cbindgen",
  "circular-buffer",
- "cocoa",
  "collections",
- "core-graphics",
  "cosmic-text",
  "ctor",
  "derive_more",
@@ -4020,7 +3982,6 @@ dependencies = [
  "log",
  "lyon",
  "num_cpus",
- "objc",
  "objc2",
  "objc2-app-kit",
  "objc2-color-sync",
@@ -5819,15 +5780,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "malloc_buf"
-version = "0.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62bb907fe88d54d8d9ce32a3cceab4218ed2f6b7d35617cafe9adf84e43919cb"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "markdown"
 version = "3.0.1"
 dependencies = [
@@ -6574,15 +6526,6 @@ dependencies = [
  "rmpv",
  "tokio",
  "tokio-util",
-]
-
-[[package]]
-name = "objc"
-version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31d20fd2b37e07cf5125be68357b588672e8cefe9a96f8c17a9d46053b3e590d"
-dependencies = [
- "malloc_buf",
 ]
 
 [[package]]

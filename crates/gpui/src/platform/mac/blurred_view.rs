@@ -15,7 +15,7 @@ define_class!(
         fn update_layer(&self) {
             let _: () = unsafe { msg_send![super(self, NSVisualEffectView::class()), updateLayer] };
             if let Some(layer) = self.layer() {
-                unsafe { remove_layer_background(Retained::as_ptr(&layer) as cocoa::base::id) };
+                remove_layer_background(&layer)
             }
         }
     }
