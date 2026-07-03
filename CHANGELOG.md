@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Fixed
 
 - Disable indirect call validation on Mac OS (#360)
+- Update root_path for compatibility with language servers (zed#48587) (#362)
 
 ## [3.0.1] - 2026-06-30
 
