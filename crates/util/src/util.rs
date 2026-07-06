@@ -370,6 +370,12 @@ pub async fn load_login_shell_environment() -> Result<()> {
     // into shell's `cd` command (and hooks) to manipulate env.
     // We do this so that we get the env a user would have when spawning a shell
     // in home directory.
+
+    // Save the current PATH before the shell env capture overwrites it.
+    // This preserves PATH entries injected by a wrapper script (e.g. Nix's wrapProgram), which
+    // the system shell does not know about.
+    let original_path = std::env::var("PATH").unwrap_or_default();
+
     for (name, value) in shell_env::capture(get_system_shell(), &[], paths::home_dir())
         .await
         .with_context(|| format!("capturing environment with {:?}", get_system_shell()))?
@@ -381,7 +387,22 @@ pub async fn load_login_shell_environment() -> Result<()> {
         if name == "SHLVL" {
             continue;
         }
-        unsafe { env::set_var(&name, &value) };
+        if name == "PATH" && !original_path.is_empty() {
+            // Prepend any original PATH entries not already present in the system shell's PATH.
+            let shell_entries: Vec<&str> = value.split(':').collect();
+            let mut combined = original_path
+                .split(':')
+                .filter(|p| !p.is_empty() && !shell_entries.contains(p))
+                .collect::<Vec<&str>>()
+                .join(":");
+            if !combined.is_empty() && !value.is_empty() {
+                combined.push(':');
+            }
+            combined.push_str(&value);
+            unsafe { env::set_var("PATH", &combined) };
+        } else {
+            unsafe { env::set_var(&name, &value) };
+        }
     }
 
     log::info!(

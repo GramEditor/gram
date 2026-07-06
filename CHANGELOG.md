@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Changed
+
+- Preserve process PATH during shell environment capture (#366) by @dnlzro
+
 ## Fixed
 
 - Disable indirect call validation on Mac OS (#360)
