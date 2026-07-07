@@ -151,7 +151,7 @@ version="$(script/get-crate-version gram)"
 RELEASE_VERSION="${version}"
 export RELEASE_VERSION
 
-musl_triple=${target_triple%-gnu}-musl
+musl_triple=${target_triple/-gnu/-musl}
 remote_server_triple=${REMOTE_SERVER_TARGET:-"${musl_triple}"}
 
 if command -v rustup >/dev/null 2>&1; then
