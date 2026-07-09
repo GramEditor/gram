@@ -127,18 +127,21 @@ export GRAM_BUNDLE=true
 
 arch=$(uname -m)
 
-# work around incompatibility with newer GCC:
-# https://github.com/zed-industries/zed/issues/24880
-currentversion="$(gcc -dumpversion)"
-requiredversion="14"
 version_info=$(rustc --version --verbose)
 host_line=$(echo "$version_info" | grep host)
 target_triple=${host_line#*: }
 export target_triple
-if [ "$(printf '%s\n' "$requiredversion" "$currentversion" | sort -V | head -n1)" = "$requiredversion" ]; then
-    echo "Handle GCC version 14+ when compiling remote server..."
-    export AWS_LC_SYS_CC=clang
-    export REMOTE_SERVER_TARGET=$target_triple
+
+if command -v gcc >/dev/null; then
+    # work around incompatibility with newer GCC:
+    # https://github.com/zed-industries/zed/issues/24880
+    currentversion="$(gcc -dumpversion)"
+    requiredversion="14"
+    if [ "$(printf '%s\n' "$requiredversion" "$currentversion" | sort -V | head -n1)" = "$requiredversion" ]; then
+        echo "Handle GCC version 14+ when compiling remote server..."
+        export AWS_LC_SYS_CC=clang
+        export REMOTE_SERVER_TARGET=$target_triple
+    fi
 fi
 
 channel=$(<crates/gram/RELEASE_CHANNEL)
@@ -148,7 +151,7 @@ version="$(script/get-crate-version gram)"
 RELEASE_VERSION="${version}"
 export RELEASE_VERSION
 
-musl_triple=${target_triple%-gnu}-musl
+musl_triple=${target_triple/-gnu/-musl}
 remote_server_triple=${REMOTE_SERVER_TARGET:-"${musl_triple}"}
 
 if command -v rustup >/dev/null 2>&1; then
