@@ -7,15 +7,7 @@
       "name": "Dracula",
       "appearance": "dark",
       "style": {
-        "accents": [
-          "#bd93f9ff",
-          "#ff79c6ff",
-          "#8be9fdff",
-          "#50fa7bff",
-          "#ffb86cff",
-          "#f1fa8cff",
-          "#ff5555ff"
-        ],
+        "accents": ["#bd93f9ff", "#ff79c6ff", "#8be9fdff", "#50fa7bff", "#ffb86cff", "#f1fa8cff", "#ff5555ff"],
         "background.appearance": "blurred",
         "border": "#3c324bcc",
         "border.variant": "#C9A8F933",
@@ -423,15 +415,7 @@
       "name": "Dracula Solid",
       "appearance": "dark",
       "style": {
-        "accents": [
-          "#bd93f9ff",
-          "#ff79c6ff",
-          "#8be9fdff",
-          "#50fa7bff",
-          "#ffb86cff",
-          "#f1fa8cff",
-          "#ff5555ff"
-        ],
+        "accents": ["#bd93f9ff", "#ff79c6ff", "#8be9fdff", "#50fa7bff", "#ffb86cff", "#f1fa8cff", "#ff5555ff"],
         "background.appearance": "opaque",
         "border": "#3c324bff",
         "border.variant": "#504364ff",
@@ -830,15 +814,7 @@
       "name": "Dracula Light (Alucard)",
       "appearance": "light",
       "style": {
-        "accents": [
-          "#644AC9",
-          "#A3144D",
-          "#036A96",
-          "#14710A",
-          "#A34D14",
-          "#846E15",
-          "#CB3A2A"
-        ],
+        "accents": ["#644AC9", "#A3144D", "#036A96", "#14710A", "#A34D14", "#846E15", "#CB3A2A"],
         "background.appearance": "opaque",
         "border": "#d1c9efff",
         "border.variant": "#e4e4e4ff",
