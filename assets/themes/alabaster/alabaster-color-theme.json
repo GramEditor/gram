@@ -7,15 +7,7 @@
       "name": "Alabaster",
       "appearance": "light",
       "style": {
-        "accents": [
-          "#007accff",
-          "#cb9000ff",
-          "#7a3e9dff",
-          "#0083b2ff",
-          "#aa3731ff",
-          "#f05050ff",
-          "#60cb00ff"
-        ],
+        "accents": ["#007accff", "#cb9000ff", "#7a3e9dff", "#0083b2ff", "#aa3731ff", "#f05050ff", "#60cb00ff"],
         "border": "#d2d2d2ff",
         "border.variant": "#dadadaff",
         "border.focused": "#c8c8c8ff",
@@ -271,15 +263,7 @@
       "name": "Alabaster Dark",
       "appearance": "dark",
       "style": {
-        "accents": [
-          "#cd974b",
-          "#71ade7",
-          "#915caf",
-          "#23acdd",
-          "#e25d56",
-          "#73ca50",
-          "#e9bf57"
-        ],
+        "accents": ["#cd974b", "#71ade7", "#915caf", "#23acdd", "#e25d56", "#73ca50", "#e9bf57"],
         "border": "#484e50ff",
         "border.variant": "#3e4446ff",
         "border.focused": "#5a6264ff",
@@ -799,15 +783,7 @@
       "name": "Alabaster Dark Mono",
       "appearance": "dark",
       "style": {
-        "accents": [
-          "#cd974b",
-          "#71ade7",
-          "#915caf",
-          "#23acdd",
-          "#e25d56",
-          "#73ca50",
-          "#e9bf57"
-        ],
+        "accents": ["#cd974b", "#71ade7", "#915caf", "#23acdd", "#e25d56", "#73ca50", "#e9bf57"],
         "border": "#484e50ff",
         "border.variant": "#3e4446ff",
         "border.focused": "#5a6264ff",
@@ -1070,15 +1046,7 @@
       "name": "Alabaster BG",
       "appearance": "light",
       "style": {
-        "accents": [
-          "#007accff",
-          "#cb9000ff",
-          "#7a3e9dff",
-          "#0083b2ff",
-          "#aa3731ff",
-          "#f05050ff",
-          "#60cb00ff"
-        ],
+        "accents": ["#007accff", "#cb9000ff", "#7a3e9dff", "#0083b2ff", "#aa3731ff", "#f05050ff", "#60cb00ff"],
         "border": "#d2d2d2ff",
         "border.variant": "#dadadaff",
         "border.focused": "#c8c8c8ff",

@@ -7,15 +7,7 @@
       "name": "Tokyo Night",
       "appearance": "dark",
       "style": {
-        "accents": [
-          "#bb9af766",
-          "#7aa2f766", 
-          "#9ece6a66",
-          "#73daca66",
-          "#e0af6866",
-          "#ff9e6466",
-          "#f7768e66"
-        ],
+        "accents": ["#bb9af766", "#7aa2f766", "#9ece6a66", "#73daca66", "#e0af6866", "#ff9e6466", "#f7768e66"],
         "background.appearance": "opaque",
         "border": "#101014",
         "border.variant": "#101014",
@@ -661,15 +653,7 @@
       "name": "Tokyo Night Light",
       "appearance": "light",
       "style": {
-        "accents": [
-          "#5a4a7866",
-          "#34548a66",
-          "#485e3066",
-          "#33635c66",
-          "#8f5e1566",
-          "#96502766",
-          "#8c435166"
-        ],
+        "accents": ["#5a4a7866", "#34548a66", "#485e3066", "#33635c66", "#8f5e1566", "#96502766", "#8c435166"],
         "background.appearance": "opaque",
         "border": "#c1c2c7",
         "border.variant": "#c1c2c7",
@@ -1296,15 +1280,7 @@
       "name": "Tokyo Night Storm",
       "appearance": "dark",
       "style": {
-        "accents": [
-          "#bb9af766",
-          "#7aa2f766",
-          "#9ece6a66", 
-          "#73daca66",
-          "#e0af6866",
-          "#ff9e6466",
-          "#f7768e66"
-        ],
+        "accents": ["#bb9af766", "#7aa2f766", "#9ece6a66", "#73daca66", "#e0af6866", "#ff9e6466", "#f7768e66"],
         "background.appearance": "opaque",
         "border": "#1b1e2e",
         "border.variant": "#1b1e2e",
@@ -1931,15 +1907,7 @@
       "name": "Tokyo Night Moon",
       "appearance": "dark",
       "style": {
-        "accents": [
-          "#c099ff66",
-          "#82aaff66",
-          "#c3e88d66",
-          "#4fd6be66",
-          "#ffc77766",
-          "#ff966c66",
-          "#ff757f66"
-        ],
+        "accents": ["#c099ff66", "#82aaff66", "#c3e88d66", "#4fd6be66", "#ffc77766", "#ff966c66", "#ff757f66"],
         "background.appearance": "opaque",
         "border": "#1b1e2e",
         "border.variant": "#1b1e2e",
