@@ -477,6 +477,7 @@ impl EditorElement {
         register_action(editor, window, Editor::toggle_relative_line_numbers);
         register_action(editor, window, Editor::toggle_indent_guides);
         register_action(editor, window, Editor::toggle_inlay_hints);
+        register_action(editor, window, Editor::toggle_inline_values);
         if editor.read(cx).diagnostics_enabled() {
             register_action(editor, window, Editor::toggle_diagnostics);
         }
