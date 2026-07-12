@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Added
+
+- Add [ferra](https://github.com/casperstorm/ferra) and
+  [zedokai](https://github.com/slymax/zedokai) themes (#371) by @koru
+
 ## Changed
 
 - Preserve process PATH during shell environment capture (#366) by @dnlzro
