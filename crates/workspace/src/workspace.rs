@@ -2038,6 +2038,11 @@ impl Workspace {
         self.debugger_provider.clone()
     }
 
+    pub fn clear_titlebar_item(&mut self, _: &mut Window, cx: &mut Context<Self>) {
+        self.titlebar_item = None;
+        cx.notify();
+    }
+
     pub fn prompt_for_open_path(
         &mut self,
         path_prompt_options: PathPromptOptions,
