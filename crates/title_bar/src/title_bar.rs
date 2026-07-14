@@ -2,7 +2,7 @@ mod application_menu;
 pub mod platform_title_bar;
 mod platforms;
 mod system_window_tabs;
-pub mod title_bar_settings;
+mod title_bar_settings;
 
 #[cfg(feature = "stories")]
 mod stories;
