@@ -205,6 +205,7 @@ As far as I know, these editors are completely free of AI-generated code.
 
 - [Vim Classic](https://vim-classic.org)
 - [Emacs](https://www.gnu.org/software/emacs/)
+- [fred](https://fred-dev.tech) - Has committed to be and remain AI-free.
 
 These editors may not be AI free, but I am still OK with recommending them.
 
