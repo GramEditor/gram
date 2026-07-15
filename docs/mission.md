@@ -196,10 +196,10 @@ foremost _text editors_, and do not push or endorse LLM services. Some of them
 are also strict about the use of LLMs to develop the editors themselves, but
 not all of them are.
 
-> *Note:* Gram is also not AI free. I have not and do not think it is feasible to
-remove all generated code from the code base. Not all of it is clearly marked as
-such. We also merge patches from upstream sometimes, mainly to fix bugs. This
-stance may change in the future.
+> _Note:_ Gram is also not AI free. I have not and do not think it is feasible to
+> remove all generated code from the code base. Not all of it is clearly marked as
+> such. We also merge patches from upstream sometimes, mainly to fix bugs. This
+> stance may change in the future.
 
 As far as I know, these editors are completely free of AI-generated code.
 
@@ -215,3 +215,5 @@ These editors may not be AI free, but I am still OK with recommending them.
   editor with planned collaboration features.
 - [Helix](https://helix-editor.com)
 - [Kakoune](https://kakoune.org)
+
+> _Note:_ Also see: [ethical-foss/open-slopware](https://codeberg.org/ethical-foss/open-slopware#text-and-code-editors).
