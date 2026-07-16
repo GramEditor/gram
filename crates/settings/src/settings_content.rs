@@ -219,21 +219,13 @@ impl strum::VariantNames for BaseKeymapContent {
     ];
 }
 
-#[derive(Clone, Copy, PartialEq, Default, Serialize, Deserialize, JsonSchema, MergeFrom, Debug)]
-#[serde(rename_all = "snake_case")]
-pub enum TitleBarVisibility {
-    #[default]
-    Always,
-    Never,
-    HideInFullScreen,
-}
 #[with_fallible_options]
 #[derive(Clone, PartialEq, Default, Serialize, Deserialize, JsonSchema, MergeFrom, Debug)]
 pub struct TitleBarSettingsContent {
-    /// Controls when the title bar is visible: "always" | "never" | "hide_in_full_screen".
+    /// Whether to show the title bar
     ///
-    /// Default: "always"
-    pub show: Option<TitleBarVisibility>,
+    /// Default: "true"
+    pub show: Option<bool>,
     /// Whether to show the branch icon beside branch switcher in the title bar.
     ///
     /// Default: false

@@ -25,7 +25,7 @@ use gpui::{
 };
 use project::{Project, git_store::GitStoreEvent};
 use remote::RemoteConnectionOptions;
-use settings::{Settings, TitleBarVisibility};
+use settings::Settings;
 use theme::ActiveTheme;
 use title_bar_settings::TitleBarSettings;
 use ui::{
@@ -46,12 +46,7 @@ fn apply_title_bar_visibility(
     window: &mut Window,
     cx: &mut Context<Workspace>,
 ) {
-    let should_show = match TitleBarSettings::get_global(cx).show {
-        TitleBarVisibility::Always => true,
-        TitleBarVisibility::Never => false,
-        TitleBarVisibility::HideInFullScreen => !window.is_fullscreen(),
-    };
-    let has_titlebar = workspace.titlebar_item().is_some();
+    let should_show = TitleBarSettings::get_global(cx).show;
 
     if should_show {
         if workspace.titlebar_item().is_none() {
@@ -74,22 +69,9 @@ pub fn init(cx: &mut App) {
             log::debug!("titlebar: Didn't get a window for some reason");
             return;
         };
-        let should_show = match TitleBarSettings::get_global(cx).show {
-            TitleBarVisibility::Always => true,
-            TitleBarVisibility::Never => false,
-            TitleBarVisibility::HideInFullScreen => !window.is_fullscreen(),
-        };
-        if should_show {
-            let item = cx.new(|cx| TitleBar::new("title-bar", workspace, window, cx));
-            workspace.set_titlebar_item(item.into(), window, cx);
-        }
+        apply_title_bar_visibility(workspace, window, cx);
         // React to settings changes
         cx.observe_global_in::<settings::SettingsStore>(window, |workspace, window, cx| {
-            apply_title_bar_visibility(workspace, window, cx);
-        })
-        .detach();
-
-        cx.observe_window_bounds(window, |workspace, window, cx| {
             apply_title_bar_visibility(workspace, window, cx);
         })
         .detach();

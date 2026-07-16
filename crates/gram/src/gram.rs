@@ -709,17 +709,12 @@ fn register_actions(
             .detach()
         })
         .register_action({
-            use settings::TitleBarVisibility::{Always, Never};
 
             let fs = app_state.fs.clone();
             move |_, _: &ToggleTitleBar, _window, cx| {
                 let current_show = TitleBarSettings::get_global(cx).show;
                 update_settings_file(fs.clone(), cx, move |settings, _| {
-                    match current_show{
-                        Always=>settings.title_bar.get_or_insert_default().show = Some(Never),
-                        Never=>settings.title_bar.get_or_insert_default().show=Some(Always),
-                        _=>{}
-                    }
+                    settings.title_bar.get_or_insert_default().show = Some(!current_show);
                 });
             }
         })

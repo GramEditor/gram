@@ -1,8 +1,8 @@
-use settings::{RegisterSetting, Settings, SettingsContent, TitleBarVisibility};
+use settings::{RegisterSetting, Settings, SettingsContent};
 
 #[derive(Copy, Clone, Debug, RegisterSetting)]
 pub struct TitleBarSettings {
-    pub show: TitleBarVisibility,
+    pub show: bool,
     pub show_branch_icon: bool,
     pub show_branch_name: bool,
     pub show_project_items: bool,
