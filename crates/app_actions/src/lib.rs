@@ -68,6 +68,8 @@ actions!(
         OpenPerformanceProfiler,
         /// Opens the onboarding view.
         OpenOnboarding,
+        /// Toggles the title bar visibility
+        ToggleTitleBar
     ]
 );
 

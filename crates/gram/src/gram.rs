@@ -9,7 +9,9 @@ mod quick_action_bar;
 pub(crate) mod windows_only_instance;
 
 use anyhow::Context as _;
-use app_actions::{About, OpenBrowser, OpenGramUrl, OpenServerSettings, OpenSettingsFile, Quit};
+use app_actions::{
+    About, OpenBrowser, OpenGramUrl, OpenServerSettings, OpenSettingsFile, Quit, ToggleTitleBar,
+};
 pub use app_menus::*;
 use assets::Assets;
 use breadcrumbs::Breadcrumbs;
@@ -64,6 +66,7 @@ use std::{
 use system_specs::CopySystemSpecsIntoClipboard;
 use terminal_view::terminal_panel::{self, TerminalPanel};
 use theme::{ActiveTheme, Appearance, GlobalTheme, SystemAppearance, ThemeRegistry, ThemeSettings};
+use title_bar::title_bar_settings::TitleBarSettings;
 use ui::{
     ButtonLink, CopyButton, Navigable, NavigableEntry, PopoverMenuHandle, TintColor, Vector,
     VectorName, prelude::*,
@@ -704,6 +707,21 @@ fn register_actions(
                 }
             })
             .detach()
+        })
+        .register_action({
+            use settings::TitleBarVisibility::{Always, Never};
+
+            let fs = app_state.fs.clone();
+            move |_, _: &ToggleTitleBar, _window, cx| {
+                let current_show = TitleBarSettings::get_global(cx).show;
+                update_settings_file(fs.clone(), cx, move |settings, _| {
+                    match current_show{
+                        Always=>settings.title_bar.get_or_insert_default().show = Some(Never),
+                        Never=>settings.title_bar.get_or_insert_default().show=Some(Always),
+                        _=>{}
+                    }
+                });
+            }
         })
         .register_action({
             let fs = app_state.fs.clone();
