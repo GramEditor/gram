@@ -41,6 +41,31 @@ const MAX_PROJECT_NAME_LENGTH: usize = 40;
 const MAX_BRANCH_NAME_LENGTH: usize = 40;
 const MAX_SHORT_SHA_LENGTH: usize = 8;
 
+fn apply_title_bar_visibility(
+    workspace: &mut Workspace,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+) {
+    let should_show = match TitleBarSettings::get_global(cx).show {
+        TitleBarVisibility::Always => true,
+        TitleBarVisibility::Never => false,
+        TitleBarVisibility::HideInFullScreen => !window.is_fullscreen(),
+    };
+    let has_titlebar = workspace.titlebar_item().is_some();
+
+    if should_show {
+        if workspace.titlebar_item().is_none() {
+            let item = cx.new(|cx| TitleBar::new("title-bar", workspace, window, cx));
+            workspace.set_titlebar_item(item.into(), window, cx);
+        }
+    } else {
+        workspace.clear_titlebar_item(window, cx);
+    }
+
+    #[cfg(target_os = "macos")]
+    window.set_traffic_light_visible(should_show);
+}
+
 pub fn init(cx: &mut App) {
     SystemWindowTabs::init(cx);
 
@@ -60,36 +85,12 @@ pub fn init(cx: &mut App) {
         }
         // React to settings changes
         cx.observe_global_in::<settings::SettingsStore>(window, |workspace, window, cx| {
-            let should_show = match TitleBarSettings::get_global(cx).show {
-                TitleBarVisibility::Always => true,
-                TitleBarVisibility::Never => false,
-                TitleBarVisibility::HideInFullScreen => !window.is_fullscreen(),
-            };
-            if should_show {
-                if workspace.titlebar_item().is_none() {
-                    let item = cx.new(|cx| TitleBar::new("title-bar", workspace, window, cx));
-                    workspace.set_titlebar_item(item.into(), window, cx);
-                }
-            } else {
-                workspace.clear_titlebar_item(window, cx);
-            }
+            apply_title_bar_visibility(workspace, window, cx);
         })
         .detach();
 
         cx.observe_window_bounds(window, |workspace, window, cx| {
-            let should_show = match TitleBarSettings::get_global(cx).show {
-                TitleBarVisibility::Always => true,
-                TitleBarVisibility::Never => false,
-                TitleBarVisibility::HideInFullScreen => !window.is_fullscreen(),
-            };
-            if should_show {
-                if workspace.titlebar_item().is_none() {
-                    let item = cx.new(|cx| TitleBar::new("title-bar", workspace, window, cx));
-                    workspace.set_titlebar_item(item.into(), window, cx);
-                }
-            } else {
-                workspace.clear_titlebar_item(window, cx);
-            }
+            apply_title_bar_visibility(workspace, window, cx);
         })
         .detach();
 

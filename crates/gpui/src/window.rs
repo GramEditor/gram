@@ -4702,6 +4702,12 @@ impl Window {
             .set_tabbing_identifier(tabbing_identifier)
     }
 
+    /// Toggle visibility of the native macOS traffic-light controls
+    /// This is macOS specific
+    pub fn set_traffic_light_visible(&self, visible: bool) {
+        self.platform_window.set_traffic_light_visible(visible);
+    }
+
     /// Toggles the inspector mode on this window.
     #[cfg(any(feature = "inspector", debug_assertions))]
     pub fn toggle_inspector(&mut self, cx: &mut App) {

@@ -666,6 +666,28 @@ impl MacWindowState {
         origin.x += button_spacing;
     }
 
+    fn set_traffic_light_visible(&self, visible: bool) {
+        let native_window = self.native_window;
+        let hidden = if visible { NO } else { YES };
+        self.executor
+            .spawn(async move {
+                unsafe {
+                    let buttons = [
+                        NSWindowButton::NSWindowCloseButton,
+                        NSWindowButton::NSWindowMiniaturizeButton,
+                        NSWindowButton::NSWindowZoomButton,
+                    ];
+                    for button in buttons {
+                        let view: id = msg_send![native_window, standardWindowButton: button];
+                        if !view.is_null() {
+                            let _: () = msg_send![view, setHidden: hidden];
+                        }
+                    }
+                }
+            })
+            .detach();
+    }
+
     pub fn start_display_link(&mut self) {
         self.stop_display_link();
         if !self
