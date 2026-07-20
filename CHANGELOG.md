@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add [ferra](https://github.com/casperstorm/ferra) and
   [zedokai](https://github.com/slymax/zedokai) themes (#371) by @koru
+- Add notes about `ethical-foss/open-slopware` (#376) by @koru
 
 ## Changed
 
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Disable indirect call validation on Mac OS (#360)
 - Update root_path for compatibility with language servers (zed#48587) (#362)
 - Register toggle inline values action (zed#58921) (#373)
+- Fix emoji rendering on macOS (#378) from @Petrosz007
 
 ## [3.0.1] - 2026-06-30
 
