@@ -6,19 +6,48 @@
 
 Clone down the Gram [repository](https://codeberg.org/GramEditor/gram).
 
+> [!NOTE]
+>
+> No idea if the Windows build still works, or what is required to get it
+> working. Windows builds are also signed, so you will need a certificate.
+
+Maybe something like this?
+
+```powershell
+.\script\bundle-windows.ps1
+```
+
 ## Dependencies
 
 - Install [rustup](https://www.rust-lang.org/tools/install)
 
-- Install either [Visual Studio](https://visualstudio.microsoft.com/downloads/) with the optional components `MSVC v*** - VS YYYY C++ x64/x86 build tools` and `MSVC v*** - VS YYYY C++ x64/x86 Spectre-mitigated libs (latest)` (`v***` is your VS version and `YYYY` is year when your VS was released. Pay attention to the architecture and change it to yours if needed.)
-- Or, if you prefer to have a slimmer installer of only the MSVC compiler tools, you can install the [build tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (+libs as above) and the "Desktop development with C++" workload.
-  But beware this installation is not automatically picked up by rustup. You must initialize your environment variables by first launching the "developer" shell (cmd/powershell) this installation places in the start menu or in Windows Terminal and then compile.
-- Install Windows 11 or 10 SDK depending on your system, but ensure that at least `Windows 10 SDK version 2104 (10.0.20348.0)` is installed on your machine. You can download it from the [Windows SDK Archive](https://developer.microsoft.com/windows/downloads/windows-sdk/)
-- Install [CMake](https://cmake.org/download) (required by [a dependency](https://docs.rs/wasmtime-c-api-impl/latest/wasmtime_c_api/)). Or you can install it through Visual Studio Installer, then manually add the `bin` directory to your `PATH`, for example: `C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin`.
+- Install either [Visual Studio](https://visualstudio.microsoft.com/downloads)
+  with the optional components `MSVC v*** - VS YYYY C++ x64/x86 build tools` and
+  `MSVC v*** - VS YYYY C++ x64/x86 Spectre-mitigated libs (latest)` (`v***` is
+  your VS version and `YYYY` is year when your VS was released. Pay attention to
+  the architecture and change it to yours if needed.)
+- Or, if you prefer to have a slimmer installer of only the MSVC compiler tools,
+  you can install the
+  [build tools](https://visualstudio.microsoft.com/visual-cpp-build-tools)
+  (+libs as above) and the "Desktop development with C++" workload. But beware
+  this installation is not automatically picked up by rustup. You must
+  initialize your environment variables by first launching the "developer" shell
+  (cmd/powershell) this installation places in the start menu or in Windows
+  Terminal and then compile.
+- Install Windows 11 or 10 SDK depending on your system, but ensure that at
+  least `Windows 10 SDK version 2104 (10.0.20348.0)` is installed on your
+  machine. You can download it from the
+  [Windows SDK Archive](https://developer.microsoft.com/windows/downloads/windows-sdk)
+- Install [CMake](https://cmake.org/download) (required by
+  [a dependency](https://docs.rs/wasmtime-c-api-impl/latest/wasmtime_c_api)). Or
+  you can install it through Visual Studio Installer, then manually add the
+  `bin` directory to your `PATH`, for example:
+  `C:\Program Files\Microsoft Visual Studio\2022\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin`.
 
-If you can't compile Gram, make sure that you have at least the following components installed in case of a Visual Studio installation:
+If you can't compile Gram, make sure that you have at least the following
+components installed in case of a Visual Studio installation:
 
-```jsonc
+```json
 {
   "version": "1.0",
   "components": [
@@ -28,15 +57,15 @@ If you can't compile Gram, make sure that you have at least the following compon
     "Microsoft.VisualStudio.ComponentGroup.WebToolsExtensions.CMake",
     "Microsoft.VisualStudio.Component.VC.CMake.Project",
     "Microsoft.VisualStudio.Component.Windows11SDK.26100",
-    "Microsoft.VisualStudio.Component.VC.Runtimes.x86.x64.Spectre",
+    "Microsoft.VisualStudio.Component.VC.Runtimes.x86.x64.Spectre"
   ],
-  "extensions": [],
+  "extensions": []
 }
 ```
 
 Or if in case of just Build Tools, the following components:
 
-```jsonc
+```json
 {
   "version": "1.0",
   "components": [
@@ -54,9 +83,9 @@ Or if in case of just Build Tools, the following components:
     "Microsoft.VisualStudio.Component.VC.CoreIde",
     "Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core",
     "Microsoft.VisualStudio.Workload.VCTools",
-    "Microsoft.VisualStudio.Component.VC.Runtimes.x86.x64.Spectre",
+    "Microsoft.VisualStudio.Component.VC.Runtimes.x86.x64.Spectre"
   ],
-  "extensions": [],
+  "extensions": []
 }
 ```
 
@@ -68,43 +97,55 @@ The list can be obtained as follows:
 
 ### Notes
 
-You should modify the `pg_hba.conf` file in the `data` directory to use `trust` instead of `scram-sha-256` for the `host` method. Otherwise, the connection will fail with the error `password authentication failed`. The `pg_hba.conf` file typically locates at `C:\Program Files\PostgreSQL\17\data\pg_hba.conf`. After the modification, the file should look like this:
+You should modify the `pg_hba.conf` file in the `data` directory to use `trust`
+instead of `scram-sha-256` for the `host` method. Otherwise, the connection will
+fail with the error `password authentication failed`. The `pg_hba.conf` file
+typically locates at `C:\Program Files\PostgreSQL\17\data\pg_hba.conf`. After
+the modification, the file should look like this:
 
-```conf
+```ini
 # IPv4 local connections:
 host    all             all             127.0.0.1/32            trust
 # IPv6 local connections:
 host    all             all             ::1/128                 trust
 ```
 
-Also, if you are using a non-latin Windows version, you must modify the`lc_messages` parameter in the `postgresql.conf` file in the `data` directory to `English_United States.1252` (or whatever UTF8-compatible encoding you have). Otherwise, the database will panic. The `postgresql.conf` file should look like this:
+Also, if you are using a non-latin Windows version, you must modify
+the`lc_messages` parameter in the `postgresql.conf` file in the `data` directory
+to `English_United States.1252` (or whatever UTF8-compatible encoding you have).
+Otherwise, the database will panic. The `postgresql.conf` file should look like
+this:
 
-```conf
+```ini
 # lc_messages = 'Chinese (Simplified)_China.936' # locale for system error message strings
 lc_messages = 'English_United States.1252'
 ```
 
-After this, you should restart the `postgresql` service. Press the `win` key + `R` to launch the `Run` window. Type the `services.msc` and hit the `OK` button to open the Services Manager. Then, find the `postgresql-x64-XX` service, right-click on it, and select `Restart`.
+After this, you should restart the `postgresql` service. Press the `win` key +
+`R` to launch the `Run` window. Type the `services.msc` and hit the `OK` button
+to open the Services Manager. Then, find the `postgresql-x64-XX` service,
+right-click on it, and select `Restart`.
 
 ## Building from source
 
-Once you have the dependencies installed, you can build Gram using [Cargo](https://doc.rust-lang.org/cargo/).
+Once you have the dependencies installed, you can build Gram using
+[Cargo](https://doc.rust-lang.org/cargo).
 
 For a debug build:
 
-```sh
+```powershell
 cargo run
 ```
 
 For a release build:
 
-```sh
+```powershell
 cargo run --release
 ```
 
 And to run the tests:
 
-```sh
+```powershell
 cargo test --workspace
 ```
 
@@ -113,17 +154,21 @@ cargo test --workspace
 Gram does not support unofficial MSYS2 Gram packages built for Mingw-w64, and
 instead uses [mingw-w64-zed](https://packages.msys2.org/base/mingw-w64-zed).
 
-Please refer to [MSYS2 documentation](https://www.msys2.org/docs/ides-editors/#zed) first.
+Please refer to
+[MSYS2 documentation](https://www.msys2.org/docs/ides-editors/#zed) first.
 
 ## Troubleshooting
 
 ### Setting `RUSTFLAGS` env var breaks builds
 
-If you set the `RUSTFLAGS` env var, it will override the `rustflags` settings in `.cargo/config.toml` which is required to properly build Gram.
+If you set the `RUSTFLAGS` env var, it will override the `rustflags` settings in
+`.cargo/config.toml` which is required to properly build Gram.
 
-Since these settings can vary from time to time, the build errors you receive may vary from linker errors, to other stranger errors.
+Since these settings can vary from time to time, the build errors you receive
+may vary from linker errors, to other stranger errors.
 
-If you'd like to add extra rust flags, you may do 1 of the following in `.cargo/config.toml`:
+If you'd like to add extra rust flags, you may do 1 of the following in
+`.cargo/config.toml`:
 
 Add your flags in the build section
 
@@ -144,9 +189,11 @@ rustflags = [
 ]
 ```
 
-Or, you can create a new `.cargo/config.toml` in the same folder as the Gram repo (see below). This is particularly useful if you are doing CI builds since you don't have to edit the original `.cargo/config.toml`.
+Or, you can create a new `.cargo/config.toml` in the same folder as the Gram
+repo (see below). This is particularly useful if you are doing CI builds since
+you don't have to edit the original `.cargo/config.toml`.
 
-```
+```tree
 upper_dir
 ├── .cargo          // <-- Make this folder
 │   └── config.toml // <-- Make this file
@@ -157,7 +204,8 @@ upper_dir
         └── ...
 ```
 
-In the new (above) `.cargo/config.toml`, if we wanted to add `--cfg gles` to our rustflags, it would look like this
+In the new (above) `.cargo/config.toml`, if we wanted to add `--cfg gles` to our
+rustflags, it would look like this
 
 ```toml
 [target.'cfg(all())']
@@ -170,17 +218,22 @@ Try `cargo clean` and `cargo build`.
 
 ### `STATUS_ACCESS_VIOLATION`
 
-This error can happen if you are using the "rust-lld.exe" linker. Consider trying a different linker.
+This error can happen if you are using the "rust-lld.exe" linker. Consider
+trying a different linker.
 
-If you are using a global config, consider moving the Gram repository to a nested directory and add a `.cargo/config.toml` with a custom linker config in the parent directory.
+If you are using a global config, consider moving the Gram repository to a
+nested directory and add a `.cargo/config.toml` with a custom linker config in
+the parent directory.
 
-See this issue for more information [#12041](https://github.com/zed-industries/zed/issues/12041)
+See this issue for more information
+[#12041](https://github.com/zed-industries/zed/issues/12041)
 
 ### Invalid RC path selected
 
-Sometimes, depending on the security rules applied to your laptop, you may get the following error while compiling Gram:
+Sometimes, depending on the security rules applied to your laptop, you may get
+the following error while compiling Gram:
 
-```
+```powershell
 error: failed to run custom build command for `gram(C:\Users\USER\src\gram\crates\gram)`
 
 Caused by:
@@ -198,16 +251,18 @@ Caused by:
 warning: build failed, waiting for other jobs to finish...
 ```
 
-In order to fix this issue, you can manually set the `GRAM_RC_TOOLKIT_PATH` environment variable to the RC toolkit path. Usually, you can set it to:
+In order to fix this issue, you can manually set the `GRAM_RC_TOOLKIT_PATH`
+environment variable to the RC toolkit path. Usually, you can set it to:
 `C:\Program Files (x86)\Windows Kits\10\bin\<SDK_version>\x64`.
 
-See this [issue](https://github.com/zed-industries/zed/issues/18393) for more information.
+See this [issue](https://github.com/zed-industries/zed/issues/18393) for more
+information.
 
 ### Build fails: Path too long
 
 You may receive an error like the following when building
 
-```
+```powershell
 error: failed to get `pet` as a dependency of package `languages v0.1.0 (D:\a\gram-windows-builds\gram-windows-builds\crates\languages)`
 
 Caused by:
@@ -230,7 +285,8 @@ And for Windows with this PS command:
 New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
 ```
 
-For more information on this, please see [win32 docs](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=powershell)
+For more information on this, please see
+[win32 docs](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=powershell)
 
 (note that you will need to restart your system after enabling longpath support)
 
@@ -238,10 +294,11 @@ For more information on this, please see [win32 docs](https://learn.microsoft.co
 
 #### Gram fails to launch
 
-Currently, Gram uses Vulkan as its graphics API on Windows. However, Vulkan isn't always the most reliable on Windows, so if Gram fails to launch, it's likely a Vulkan-related issue.
+Currently, Gram uses Vulkan as its graphics API on Windows. However, Vulkan
+isn't always the most reliable on Windows, so if Gram fails to launch, it's
+likely a Vulkan-related issue.
 
-You can check the Gram log at:
-`C:\Users\YOU\AppData\Local\Gram\logs\Gram.log`
+You can check the Gram log at: `C:\Users\YOU\AppData\Local\Gram\logs\Gram.log`
 
 If you see messages like:
 
@@ -250,6 +307,8 @@ If you see messages like:
 - `GPU Crashed`
 - `ERROR_SURFACE_LOST_KHR`
 
-Then Vulkan might not be working properly on your system. In most cases, updating your GPU drivers may help resolve this.
+Then Vulkan might not be working properly on your system. In most cases,
+updating your GPU drivers may help resolve this.
 
-If there's nothing Vulkan-related in the logs and you happen to have Bandicam installed, try uninstalling it. Gram is currently not compatible with Bandicam.
+If there's nothing Vulkan-related in the logs and you happen to have Bandicam
+installed, try uninstalling it. Gram is currently not compatible with Bandicam.
