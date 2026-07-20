@@ -2933,6 +2933,28 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                 }),
                 SettingsPageItem::SectionHeader("Title Bar"),
                 SettingsPageItem::SettingItem(SettingItem {
+                    title: "Show Title Bar",
+                    description: "Show or hide the entire title bar.",
+                    field: Box::new(SettingField {
+                        json_path: Some("title_bar.show"),
+                        pick: |settings_content| {
+                            settings_content
+                                .title_bar
+                                .as_ref()?
+                                .show
+                                .as_ref()
+                        },
+                        write: |settings_content, value| {
+                            settings_content
+                                .title_bar
+                                .get_or_insert_default()
+                                .show = value;
+                        },
+                    }),
+                    metadata: None,
+                    files: USER,
+                }),
+                SettingsPageItem::SettingItem(SettingItem {
                     title: "Show Branch Icon",
                     description: "Show the branch icon beside branch switcher in the titlebar.",
                     field: Box::new(SettingField {

@@ -111,7 +111,7 @@ To disable this behavior use:
 ```jsonc
   // Control which items are shown/hidden in the title bar
   "title_bar": {
-    "show": true,               // When to show: always | never | hide_in_full_screen
+    "show": true,                   // Show/hide the title bar itself
     "show_branch_icon": false,      // Show/hide branch icon beside branch switcher
     "show_branch_name": true,       // Show/hide branch name
     "show_project_items": true,     // Show/hide project host and name
