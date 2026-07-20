@@ -411,7 +411,7 @@ impl Render for WelcomePage {
                                     .justify_center()
                                     .mb_4()
                                     .gap_4()
-                                    .child(Vector::square(image, rems_from_px(90.)))
+                                    .child(Vector::square(image, rems_from_px(90.0_f32)))
                                     .child(
                                         v_flex()
                                             .child(Headline::new("Gram").size(HeadlineSize::Large))

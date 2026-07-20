@@ -252,7 +252,7 @@ impl TransportDelegate {
         let mut line = String::new();
 
         loop {
-            line.truncate(0);
+            line.clear();
 
             match reader.read_line(&mut line).await {
                 Ok(0) => break,
@@ -403,7 +403,7 @@ impl TransportDelegate {
     {
         let mut content_length = None;
         loop {
-            buffer.truncate(0);
+            buffer.clear();
             match reader.read_line(buffer).await {
                 Ok(0) => return ConnectionResult::ConnectionReset,
                 Ok(_) => {}

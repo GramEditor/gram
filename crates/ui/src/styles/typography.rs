@@ -136,10 +136,10 @@ impl TextSize {
         let theme_settings = ThemeSettings::get_global(cx);
 
         match self {
-            Self::Large => rems_from_px(18.),
-            Self::Default => rems_from_px(16.),
-            Self::Small => rems_from_px(14.),
-            Self::XSmall => rems_from_px(12.),
+            Self::Large => rems_from_px(18.0_f32),
+            Self::Default => rems_from_px(16.0_f32),
+            Self::Small => rems_from_px(14.0_f32),
+            Self::XSmall => rems_from_px(12.0_f32),
             Self::Ui => rems_from_px(theme_settings.ui_font_size(cx)),
             Self::Editor => rems_from_px(theme_settings.buffer_font_size(cx)),
         }
@@ -181,11 +181,11 @@ impl HeadlineSize {
     /// Returns the headline size in rems.
     pub fn rems(self) -> Rems {
         match self {
-            Self::XSmall => rems_from_px(16.),
-            Self::Small => rems_from_px(18.),
-            Self::Medium => rems_from_px(20.),
-            Self::Large => rems_from_px(22.),
-            Self::XLarge => rems_from_px(24.),
+            Self::XSmall => rems_from_px(16.0_f32),
+            Self::Small => rems_from_px(18.0_f32),
+            Self::Medium => rems_from_px(20.0_f32),
+            Self::Large => rems_from_px(22.0_f32),
+            Self::XLarge => rems_from_px(24.0_f32),
         }
     }
 

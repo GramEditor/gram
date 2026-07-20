@@ -25,7 +25,7 @@ impl StatusBarIconSize {
     pub fn icon_size(&self) -> ui::IconSize {
         match self {
             StatusBarIconSize::Default => ui::IconSize::Small,
-            StatusBarIconSize::Large => ui::IconSize::Custom(rems_from_px(18.)),
+            StatusBarIconSize::Large => ui::IconSize::Custom(rems_from_px(18.0_f32)),
         }
     }
 

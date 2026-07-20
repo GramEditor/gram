@@ -1293,7 +1293,7 @@ fn build_command(
         )?;
         for arg in input_args {
             let arg = ssh_shell_kind.try_quote(&arg).context("shell quoting")?;
-            write!(exec, " {}", &arg)?;
+            write!(exec, " {}", arg)?;
         }
     } else {
         write!(exec, "{ssh_shell} -l")?;

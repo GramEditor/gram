@@ -1553,7 +1553,7 @@ pub(crate) fn resolve_path(path: &mut String) {
         *path = format!(
             "$GRAM_WORKTREE_ROOT{}{}",
             std::path::MAIN_SEPARATOR,
-            &strip_path
+            strip_path
         );
     };
 }

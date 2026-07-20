@@ -2040,7 +2040,7 @@ fn randomly_mutate_worktree(
                     Ok(())
                 })
             } else {
-                log::info!("overwriting file {:?} ({})", &entry.path, entry.id.0);
+                log::info!("overwriting file {:?} ({})", entry.path, entry.id.0);
                 let task = worktree.write_file(
                     entry.path.clone(),
                     "".into(),

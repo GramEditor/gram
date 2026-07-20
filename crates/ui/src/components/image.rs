@@ -109,7 +109,7 @@ impl Component for Vector {
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
-        let size = rems_from_px(60.);
+        let size = rems_from_px(60.0_f32);
 
         Some(
             v_flex()
@@ -125,12 +125,12 @@ impl Component for Vector {
                             single_example(
                                 "Custom Size",
                                 h_flex()
-                                    .h(rems_from_px(120.))
+                                    .h(rems_from_px(120.0_f32))
                                     .justify_center()
                                     .child(Vector::new(
                                         VectorName::LogoDark,
-                                        rems_from_px(120.),
-                                        rems_from_px(200.),
+                                        rems_from_px(120.0_f32),
+                                        rems_from_px(200.0_f32),
                                     ))
                                     .into_any_element(),
                             ),
@@ -157,7 +157,7 @@ impl Component for Vector {
                         "Different Vectors",
                         vec![single_example(
                             "Gram Logo",
-                            Vector::square(VectorName::LogoDark, rems_from_px(8.))
+                            Vector::square(VectorName::LogoDark, rems_from_px(8.0_f32))
                                 .into_any_element(),
                         )],
                     ),

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Preserve process PATH during shell environment capture (#366) by @dnlzro
 - Complete the objc2 rewrite of the Mac gpui platform layer
+- Update to rust 1.97
 
 ## Fixed
 

@@ -471,11 +471,11 @@ pub enum ButtonSize {
 impl ButtonSize {
     pub fn rems(self) -> Rems {
         match self {
-            ButtonSize::Large => rems_from_px(32.),
-            ButtonSize::Medium => rems_from_px(28.),
-            ButtonSize::Default => rems_from_px(22.),
-            ButtonSize::Compact => rems_from_px(18.),
-            ButtonSize::None => rems_from_px(16.),
+            ButtonSize::Large => rems_from_px(32.0_f32),
+            ButtonSize::Medium => rems_from_px(28.0_f32),
+            ButtonSize::Default => rems_from_px(22.0_f32),
+            ButtonSize::Compact => rems_from_px(18.0_f32),
+            ButtonSize::None => rems_from_px(16.0_f32),
         }
     }
 }
