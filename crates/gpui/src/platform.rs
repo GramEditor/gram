@@ -82,11 +82,13 @@ pub fn platform_background_executor() -> BackgroundExecutor {
     MacPlatform::new_background_executor()
 }
 
+/// Returns a background executor for the current platform.
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
 pub fn platform_background_executor() -> BackgroundExecutor {
     LinuxCommon::new_background_executor()
 }
 
+/// Returns a background executor for the current platform.
 #[cfg(target_os = "windows")]
 pub fn platform_background_executor() -> BackgroundExecutor {
     WindowsPlatform::background_executor().unwrap()

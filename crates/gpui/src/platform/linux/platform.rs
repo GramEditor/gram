@@ -176,7 +176,7 @@ impl LinuxCommon {
     }
 
     pub fn new_background_executor() -> BackgroundExecutor {
-        let (main_sender, main_receiver) = calloop::channel::channel::<RunnableVariant>();
+        let (main_sender, _main_receiver) = calloop::channel::channel::<RunnableVariant>();
         let dispatcher = Arc::new(LinuxDispatcher::new(main_sender));
         BackgroundExecutor::new(dispatcher.clone())
     }

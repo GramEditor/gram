@@ -212,6 +212,7 @@ impl WindowsPlatform {
             .dispatcher
             .take()
             .context("CreateWindowExW did not run correctly")?;
+        let _handle = result?;
         BackgroundExecutor::new(dispatcher)
     }
 
