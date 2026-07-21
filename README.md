@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./assets/images/docs_logo.svg" alt="" align="center"/>
+  <img src="./assets/images/docs_logo.png" alt="" align="center"/>
 
 # [Gram](https://gram-editor.com)
 
