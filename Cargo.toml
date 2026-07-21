@@ -1,170 +1,171 @@
+#:schema https://www.schemastore.org/cargo.json
+
 [workspace]
 resolver = "2"
 members = [
-    "crates/activity_indicator",
-    "crates/app_actions",
-    "crates/askpass",
-    "crates/assets",
-    "crates/breadcrumbs",
-    "crates/buffer_diff",
-    "crates/cli",
-    "crates/client",
-    "crates/clock",
-    "crates/collections",
-    "crates/command_palette",
-    "crates/command_palette_hooks",
-    "crates/component",
-    "crates/crashes",
-    "crates/dap",
-    "crates/dap_adapters",
-    "crates/db",
-    "crates/debug_adapter_extension",
-    "crates/debugger_tools",
-    "crates/debugger_ui",
-    "crates/diagnostics",
-    "crates/docs",
-    "crates/editor",
-    "crates/encoding_selector",
-    "crates/explorer_command_injector",
-    "crates/extension",
-    "crates/extension_api",
-    "crates/extension_cli",
-    "crates/extension_host",
-    "crates/extensions_ui",
-    "crates/file_finder",
-    "crates/file_icons",
-    "crates/fs",
-    "crates/fs_benchmarks",
-    "crates/fuzzy",
-    "crates/git",
-    "crates/git_graph",
-    "crates/git_hosting_providers",
-    "crates/git_ui",
-    "crates/go_to_line",
-    "crates/gpui",
-    "crates/gpui_macros",
-    "crates/gpui_tokio",
-    "crates/html_to_markdown",
-    "crates/http_client",
-    "crates/http_client_tls",
-    "crates/icons",
-    "crates/image_viewer",
-    "crates/inspector_ui",
-    "crates/install_cli",
-    "crates/journal",
-    "crates/json_schema_store",
-    "crates/keymap_editor",
-    "crates/language",
-    "crates/language_extension",
-    "crates/language_selector",
-    "crates/language_tools",
-    "crates/languages",
-    "crates/line_ending_selector",
-    "crates/lsp",
-    "crates/markdown",
-    "crates/markdown_preview",
-    "crates/menu",
-    "crates/migrator",
-    "crates/miniprofiler_ui",
-    "crates/multi_buffer",
-    "crates/nc",
-    "crates/net",
-    "crates/node_runtime",
-    "crates/notifications",
-    "crates/onboarding",
-    "crates/outline",
-    "crates/outline_panel",
-    "crates/panel",
-    "crates/paths",
-    "crates/picker",
-    "crates/prettier",
-    "crates/project",
-    "crates/project_benchmarks",
-    "crates/project_panel",
-    "crates/project_symbols",
-    "crates/proto",
-    "crates/recent_files",
-    "crates/recent_projects",
-    "crates/refineable",
-    "crates/refineable/derive_refineable",
-    "crates/release_channel",
-    "crates/remote",
-    "crates/remote_server",
-    "crates/repl",
-    "crates/reqwest_client",
-    "crates/rope",
-    "crates/rpc",
-    "crates/scheduler",
-    "crates/schema_generator",
-    "crates/search",
-    "crates/session",
-    "crates/settings",
-    "crates/settings_json",
-    "crates/settings_macros",
-    "crates/settings_profile_selector",
-    "crates/settings_ui",
-    "crates/snippet",
-    "crates/snippet_provider",
-    "crates/snippets_ui",
-    "crates/sqlez",
-    "crates/sqlez_macros",
-    "crates/story",
-    "crates/streaming_diff",
-    "crates/sum_tree",
-    "crates/svg_preview",
-    "crates/system_specs",
-    "crates/tab_switcher",
-    "crates/task",
-    "crates/tasks_ui",
-    "crates/gram",
-    "crates/terminal",
-    "crates/terminal_view",
-    "crates/text",
-    "crates/theme",
-    "crates/theme_extension",
-    "crates/theme_importer",
-    "crates/theme_selector",
-    "crates/time_format",
-    "crates/title_bar",
-    "crates/toolchain_selector",
-    "crates/ui",
-    "crates/ui_input",
-    "crates/ui_macros",
-    "crates/ui_prompt",
-    "crates/util",
-    "crates/util_macros",
-    "crates/vim",
-    "crates/vim_mode_setting",
-    "crates/which_key",
-    "crates/watch",
-    "crates/workspace",
-    "crates/worktree",
-    "crates/zlog",
-    "crates/zlog_settings",
+  "crates/activity_indicator",
+  "crates/app_actions",
+  "crates/askpass",
+  "crates/assets",
+  "crates/breadcrumbs",
+  "crates/buffer_diff",
+  "crates/cli",
+  "crates/client",
+  "crates/clock",
+  "crates/collections",
+  "crates/command_palette",
+  "crates/command_palette_hooks",
+  "crates/component",
+  "crates/crashes",
+  "crates/dap",
+  "crates/dap_adapters",
+  "crates/db",
+  "crates/debug_adapter_extension",
+  "crates/debugger_tools",
+  "crates/debugger_ui",
+  "crates/diagnostics",
+  "crates/docs",
+  "crates/editor",
+  "crates/encoding_selector",
+  "crates/explorer_command_injector",
+  "crates/extension",
+  "crates/extension_api",
+  "crates/extension_cli",
+  "crates/extension_host",
+  "crates/extensions_ui",
+  "crates/file_finder",
+  "crates/file_icons",
+  "crates/fs",
+  "crates/fs_benchmarks",
+  "crates/fuzzy",
+  "crates/git",
+  "crates/git_graph",
+  "crates/git_hosting_providers",
+  "crates/git_ui",
+  "crates/go_to_line",
+  "crates/gpui",
+  "crates/gpui_macros",
+  "crates/gpui_tokio",
+  "crates/gram",
+  "crates/html_to_markdown",
+  "crates/http_client",
+  "crates/http_client_tls",
+  "crates/icons",
+  "crates/image_viewer",
+  "crates/inspector_ui",
+  "crates/install_cli",
+  "crates/journal",
+  "crates/json_schema_store",
+  "crates/keymap_editor",
+  "crates/language",
+  "crates/language_extension",
+  "crates/language_selector",
+  "crates/language_tools",
+  "crates/languages",
+  "crates/line_ending_selector",
+  "crates/lsp",
+  "crates/markdown",
+  "crates/markdown_preview",
+  "crates/menu",
+  "crates/migrator",
+  "crates/miniprofiler_ui",
+  "crates/multi_buffer",
+  "crates/nc",
+  "crates/net",
+  "crates/node_runtime",
+  "crates/notifications",
+  "crates/onboarding",
+  "crates/outline",
+  "crates/outline_panel",
+  "crates/panel",
+  "crates/paths",
+  "crates/picker",
+  "crates/prettier",
+  "crates/project",
+  "crates/project_benchmarks",
+  "crates/project_panel",
+  "crates/project_symbols",
+  "crates/proto",
+  "crates/recent_files",
+  "crates/recent_projects",
+  "crates/refineable",
+  "crates/refineable/derive_refineable",
+  "crates/release_channel",
+  "crates/remote",
+  "crates/remote_server",
+  "crates/repl",
+  "crates/reqwest_client",
+  "crates/rope",
+  "crates/rpc",
+  "crates/scheduler",
+  "crates/schema_generator",
+  "crates/search",
+  "crates/session",
+  "crates/settings",
+  "crates/settings_json",
+  "crates/settings_macros",
+  "crates/settings_profile_selector",
+  "crates/settings_ui",
+  "crates/snippet",
+  "crates/snippet_provider",
+  "crates/snippets_ui",
+  "crates/sqlez",
+  "crates/sqlez_macros",
+  "crates/story",
+  "crates/streaming_diff",
+  "crates/sum_tree",
+  "crates/svg_preview",
+  "crates/system_specs",
+  "crates/tab_switcher",
+  "crates/task",
+  "crates/tasks_ui",
+  "crates/terminal",
+  "crates/terminal_view",
+  "crates/text",
+  "crates/theme",
+  "crates/theme_extension",
+  "crates/theme_importer",
+  "crates/theme_selector",
+  "crates/time_format",
+  "crates/title_bar",
+  "crates/toolchain_selector",
+  "crates/ui",
+  "crates/ui_input",
+  "crates/ui_macros",
+  "crates/ui_prompt",
+  "crates/util",
+  "crates/util_macros",
+  "crates/vim",
+  "crates/vim_mode_setting",
+  "crates/watch",
+  "crates/which_key",
+  "crates/workspace",
+  "crates/worktree",
+  "crates/zlog",
+  "crates/zlog_settings",
 
-    #
-    # Extensions
-    #
+  #
+  # Extensions
+  #
 
-    "extensions/test-extension",
+  "extensions/test-extension",
 
-    #
-    # Tooling
-    #
+  #
+  # Tooling
+  #
 
-    "tooling/perf",
+  "tooling/perf",
 ]
 default-members = ["crates/gram"]
 
 [workspace.package]
-publish = false
-edition = "2024"
-repository = "https://codeberg.org/GramEditor/gram"
 version = "3.0.1"
 authors = ["The Gram Project"]
+edition = "2024"
+repository = "https://codeberg.org/GramEditor/gram"
+publish = false
 
 [workspace.dependencies]
-
 #
 # Workspace member crates
 #
@@ -210,6 +211,7 @@ go_to_line = { path = "crates/go_to_line" }
 gpui = { path = "crates/gpui", default-features = false }
 gpui_macros = { path = "crates/gpui_macros" }
 gpui_tokio = { path = "crates/gpui_tokio" }
+gram = { path = "crates/gram" }
 html_to_markdown = { path = "crates/html_to_markdown" }
 http_client = { path = "crates/http_client" }
 http_client_tls = { path = "crates/http_client_tls" }
@@ -282,7 +284,6 @@ system_specs = { path = "crates/system_specs" }
 tab_switcher = { path = "crates/tab_switcher" }
 task = { path = "crates/task" }
 tasks_ui = { path = "crates/tasks_ui" }
-gram = { path = "crates/gram" }
 terminal = { path = "crates/terminal" }
 terminal_view = { path = "crates/terminal_view" }
 text = { path = "crates/text" }
@@ -301,8 +302,8 @@ util = { path = "crates/util" }
 util_macros = { path = "crates/util_macros" }
 vim = { path = "crates/vim" }
 vim_mode_setting = { path = "crates/vim_mode_setting" }
-which_key = { path = "crates/which_key" }
 watch = { path = "crates/watch" }
+which_key = { path = "crates/which_key" }
 workspace = { path = "crates/workspace" }
 worktree = { path = "crates/worktree" }
 zlog = { path = "crates/zlog" }
@@ -317,24 +318,34 @@ naga = { version = "29.0.3", features = ["wgsl-in"] }
 wgpu = "29.0.3"
 
 aho-corasick = "1.1"
-alacritty_terminal = { git = "https://github.com/alacritty/alacritty", rev = "48ff32f7c6bbe2c084f1abc39470487510687323" }
+alacritty_terminal = {
+  git = "https://github.com/alacritty/alacritty",
+  rev = "48ff32f7c6bbe2c084f1abc39470487510687323"
+}
 any_vec = "0.15"
 anyhow = "1.0"
 arrayvec = { version = "0.7.4", features = ["serde"] }
-ashpd = { version = "0.13", default-features = false, features = [
+ashpd = {
+  version = "0.13",
+  default-features = false,
+  features = [
     "async-io",
+    "file_chooser",
     "notification",
     "open_uri",
-    "file_chooser",
     "settings",
     "trash"
-] }
+  ]
+}
 async-compat = "0.2.1"
-async-compression = { version = "0.4", features = ["gzip", "futures-io"] }
+async-compression = { version = "0.4", features = ["futures-io", "gzip"] }
 async-dispatcher = "0.1"
 async-fs = "2.1"
 async-lock = "3.4"
-async-pipe = { git = "https://github.com/zed-industries/async-pipe-rs", rev = "82d00a04211cf4e1236029aa03e6b6ce2a74c553" }
+async-pipe = {
+  git = "https://github.com/zed-industries/async-pipe-rs",
+  rev = "82d00a04211cf4e1236029aa03e6b6ce2a74c553"
+}
 async-recursion = "1.0.0"
 async-tar = "0.5.0"
 async-task = "4.7"
@@ -345,6 +356,7 @@ backtrace = "0.3"
 base64 = "0.22"
 bitcode = { version = "0.6", features = ["serde"] }
 bitflags = "2.6.0"
+block2 = "0.6"
 brotli = "8.0.2"
 bytes = "1.0"
 chardetng = "1.0"
@@ -355,15 +367,18 @@ convert_case = "0.11.0"
 crash-handler = "0.7"
 criterion = { version = "0.8", features = ["html_reports"] }
 ctor = "0.12"
-dap-types = { git = "https://github.com/zed-industries/dap-types", rev = "1b461b310481d01e02b2603c16d7144b926339f8" }
+dap-types = {
+  git = "https://github.com/zed-industries/dap-types",
+  rev = "1b461b310481d01e02b2603c16d7144b926339f8"
+}
 dashmap = "6.1"
 derive_more = { version = "2.1", features = ["full"] }
 dirs = "6.0"
 documented = "0.9.1"
 dotenvy = "0.15.0"
 ec4rs = "1.1"
-env_logger = "0.11"
 encoding_rs = "0.8"
+env_logger = "0.11"
 exec = "0.3.1"
 fancy-regex = "0.18.0"
 fork = "0.7.0"
@@ -376,10 +391,10 @@ hashbrown = "0.16.1"
 heck = "0.5"
 heed = { version = "0.21.0", features = ["read-txn-no-tls"] }
 hex = "0.4.3"
-human_bytes = "0.4.1"
 html5ever = "0.38.0"
 http = "1.1"
 http-body = "1.0"
+human_bytes = "0.4.1"
 hyper = "1.9"
 ignore = "0.4.22"
 image = "0.25.1"
@@ -398,7 +413,10 @@ libc = "0.2"
 libsqlite3-sys = { version = "0.37", features = ["bundled"] }
 linkify = "0.11"
 log = { version = "0.4.16", features = ["kv_unstable_serde", "serde"] }
-lsp-types = { git = "https://github.com/zed-industries/lsp-types", rev = "b71ab4eeb27d9758be8092020a46fe33fbca4e33" }
+lsp-types = {
+  git = "https://github.com/zed-industries/lsp-types",
+  rev = "b71ab4eeb27d9758be8092020a46fe33fbca4e33"
+}
 mach2 = "0.6"
 markup5ever_rcdom = "0.38.0"
 mermaid-rs-renderer = "0.2.1"
@@ -413,29 +431,49 @@ num-format = "0.4.4"
 num-traits = "0.2"
 objc2 = "0.6"
 objc2-app-kit = "0.3"
+objc2-color-sync = "0.3"
+objc2-core-foundation = "0.3"
+objc2-core-graphics = "0.3"
+objc2-core-services = "0.3"
 objc2-foundation = "0.3"
 objc2-metal = "0.3"
-objc2-color-sync = "0.3"
 objc2-quartz-core = "0.3"
-objc2-core-foundation = "0.3"
-objc2-core-services = "0.3"
-objc2-core-graphics = "0.3"
-block2 = "0.6"
 open = "5.3.3"
 ordered-float = "5.2.0"
 palette = { version = "0.7.6", default-features = false, features = ["std"] }
 parking_lot = "0.12.1"
-partial-json-fixer = "0.5.3"
 parse_int = "0.9"
-pciid-parser = "0.8.1"
+partial-json-fixer = "0.5.3"
 pathdiff = "0.2"
-pet = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
-pet-conda = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
-pet-core = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
-pet-fs = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
-pet-poetry = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
-pet-reporter = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
-pet-virtualenv = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
+pciid-parser = "0.8.1"
+pet = {
+  git = "https://github.com/microsoft/python-environment-tools.git",
+  rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1"
+}
+pet-conda = {
+  git = "https://github.com/microsoft/python-environment-tools.git",
+  rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1"
+}
+pet-core = {
+  git = "https://github.com/microsoft/python-environment-tools.git",
+  rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1"
+}
+pet-fs = {
+  git = "https://github.com/microsoft/python-environment-tools.git",
+  rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1"
+}
+pet-poetry = {
+  git = "https://github.com/microsoft/python-environment-tools.git",
+  rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1"
+}
+pet-reporter = {
+  git = "https://github.com/microsoft/python-environment-tools.git",
+  rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1"
+}
+pet-virtualenv = {
+  git = "https://github.com/microsoft/python-environment-tools.git",
+  rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1"
+}
 postage = { version = "0.5", features = ["futures-traits"] }
 pretty_assertions = { version = "1.3.0", features = ["unstable"] }
 proc-macro2 = "1.0.93"
@@ -450,7 +488,13 @@ rand = "0.10"
 rayon = "1.11"
 ref-cast = "1.0.25"
 regex = "1.12.3"
-reqwest = { git = "https://github.com/zed-industries/reqwest.git", rev = "c15662463bda39148ba154100dd44d3fba5873a4", default-features = false, features = [
+reqwest = {
+  package = "zed-reqwest",
+  git = "https://github.com/zed-industries/reqwest.git",
+  rev = "c15662463bda39148ba154100dd44d3fba5873a4",
+  version = "0.12.15-zed",
+  default-features = false,
+  features = [
     "charset",
     "http2",
     "macos-system-configuration",
@@ -458,11 +502,14 @@ reqwest = { git = "https://github.com/zed-industries/reqwest.git", rev = "c15662
     "rustls-tls-native-roots",
     "socks",
     "stream",
-  ], package = "zed-reqwest", version = "0.12.15-zed" }
+  ]
+}
 rsa = "0.9.10"
-runtimelib = { version = "1.1.0", default-features = false, features = [
-    "async-dispatcher-runtime", "aws-lc-rs"
-] }
+runtimelib = {
+  version = "1.1.0",
+  default-features = false,
+  features = ["async-dispatcher-runtime", "aws-lc-rs"]
+}
 rust-embed = { version = "8.11", features = ["include-exclude"] }
 rustc-hash = "2.1.0"
 rustls = { version = "0.23.26" }
@@ -472,10 +519,13 @@ semver = { version = "1.0", features = ["serde"] }
 serde = { version = "1.0.221", features = ["derive", "rc"] }
 serde_derive = "1.0.221"
 serde_json = { version = "1.0.149", features = ["preserve_order", "raw_value"] }
-serde_json_lenient = { version = "0.2", features = [
+serde_json_lenient = {
+  version = "0.2",
+  features = [
     "preserve_order",
     "raw_value",
-] }
+  ]
+}
 serde_path_to_error = "0.1.17"
 serde_repr = "0.1"
 serde_urlencoded = "0.7"
@@ -485,7 +535,7 @@ shlex = "1.3.0"
 similar = "2.6"
 simplelog = "0.12.2"
 slotmap = "1.0.6"
-smallvec = { version = "1.6", features = ["union", "const_new"] }
+smallvec = { version = "1.6", features = ["const_new", "union"] }
 smol = "2.0"
 sqlformat = "0.2"
 stacksafe = "1.0"
@@ -493,78 +543,141 @@ streaming-iterator = "0.1"
 strsim = "0.11"
 strum = { version = "0.28", features = ["derive"] }
 subtle = "2.5.0"
-syn = { version = "2.0.101", features = ["full", "extra-traits", "visit-mut"] }
+syn = { version = "2.0.101", features = ["extra-traits", "full", "visit-mut"] }
 sys-locale = "0.3.1"
 sysinfo = "0.38"
 take-until = "0.2.0"
 tempfile = "3.20.0"
 thiserror = "2.0.12"
-time = { version = "0.3", features = [
+time = {
+  version = "0.3",
+  features = [
+    "formatting",
+    "local-offset",
     "macros",
     "parsing",
     "serde",
     "serde-well-known",
-    "formatting",
-    "local-offset",
-] }
+  ]
+}
 tokio = "1"
 toml = "1.1"
 trash = "5.2"
 tree-sitter = { version = "0.26.8", features = ["wasm"] }
 tree-sitter-bash = "0.25.1"
 tree-sitter-c = "0.24.1"
-tree-sitter-cpp = { git = "https://github.com/tree-sitter/tree-sitter-cpp", rev = "8b5b49eb196bec7040441bee33b2c9a4838d6967" }
+tree-sitter-cpp = {
+  git = "https://github.com/tree-sitter/tree-sitter-cpp",
+  rev = "8b5b49eb196bec7040441bee33b2c9a4838d6967"
+}
 tree-sitter-css = "0.25"
 tree-sitter-diff = "0.1.0"
 tree-sitter-elixir = "0.3"
 tree-sitter-embedded-template = "0.25"
-tree-sitter-erlang = { git = "https://github.com/WhatsApp/tree-sitter-erlang", rev = "2ace143dea47c872b334660956742dda4efa4ea3" }
-tree-sitter-gitcommit = { git = "https://github.com/gbprod/tree-sitter-gitcommit", rev = "fae7e726b8ea7f669264887aa8d9d7e9dffa8a5e" }
-tree-sitter-git-rebase = { git = "https://github.com/the-mikedavis/tree-sitter-git-rebase", rev = "3db1f61fb928433381253bc5159c40f7d10c57b1" }
-tree-sitter-gleam = { git = "https://github.com/gleam-lang/tree-sitter-gleam", rev = "4e4643c2215c2b2343d9ec179c798818c132c9cc" }
+tree-sitter-erlang = {
+  git = "https://github.com/WhatsApp/tree-sitter-erlang",
+  rev = "2ace143dea47c872b334660956742dda4efa4ea3"
+}
+tree-sitter-git-rebase = {
+  git = "https://github.com/the-mikedavis/tree-sitter-git-rebase",
+  rev = "3db1f61fb928433381253bc5159c40f7d10c57b1"
+}
+tree-sitter-gitcommit = {
+  git = "https://github.com/gbprod/tree-sitter-gitcommit",
+  rev = "fae7e726b8ea7f669264887aa8d9d7e9dffa8a5e"
+}
+tree-sitter-gleam = {
+  git = "https://github.com/gleam-lang/tree-sitter-gleam",
+  rev = "4e4643c2215c2b2343d9ec179c798818c132c9cc"
+}
 tree-sitter-go = "0.25"
-tree-sitter-go-mod = { git = "https://github.com/camdencheek/tree-sitter-go-mod", rev = "2e886870578eeba1927a2dc4bd2e2b3f598c5f9a", package = "tree-sitter-gomod" }
-tree-sitter-gowork = { git = "https://github.com/zed-industries/tree-sitter-go-work", rev = "acb0617bf7f4fda02c6217676cc64acb89536dc7" }
+tree-sitter-go-mod = {
+  package = "tree-sitter-gomod",
+  git = "https://github.com/camdencheek/tree-sitter-go-mod",
+  rev = "2e886870578eeba1927a2dc4bd2e2b3f598c5f9a"
+}
+tree-sitter-gowork = {
+  git = "https://github.com/zed-industries/tree-sitter-go-work",
+  rev = "acb0617bf7f4fda02c6217676cc64acb89536dc7"
+}
 tree-sitter-hcl = "1.1.0"
-tree-sitter-heex = { git = "https://github.com/phoenixframework/tree-sitter-heex", rev = "5842537f734d7c12685bf27d6005313e3e5a47a0" }
+tree-sitter-heex = {
+  git = "https://github.com/phoenixframework/tree-sitter-heex",
+  rev = "5842537f734d7c12685bf27d6005313e3e5a47a0"
+}
 tree-sitter-html = "0.23"
 tree-sitter-jsdoc = "0.25"
 tree-sitter-json = "0.24"
-tree-sitter-lua = { git = "https://github.com/tree-sitter-grammars/tree-sitter-lua", rev = "10fe0054734eec83049514ea2e718b2a56acd0c9" }
-tree-sitter-nix = { git = "https://github.com/nix-community/tree-sitter-nix", rev = "eabf96807ea4ab6d6c7f09b671a88cd483542840" }
-tree-sitter-md = { git = "https://github.com/tree-sitter-grammars/tree-sitter-markdown", rev = "f969cd3ae3f9fbd4e43205431d0ae286014c05b5" }
-tree-sitter-odin = { git = "https://github.com/tree-sitter-grammars/tree-sitter-odin", rev = "d2ca8efb4487e156a60d5bd6db2598b872629403" }
+tree-sitter-lua = {
+  git = "https://github.com/tree-sitter-grammars/tree-sitter-lua",
+  rev = "10fe0054734eec83049514ea2e718b2a56acd0c9"
+}
+tree-sitter-md = {
+  git = "https://github.com/tree-sitter-grammars/tree-sitter-markdown",
+  rev = "f969cd3ae3f9fbd4e43205431d0ae286014c05b5"
+}
+tree-sitter-nix = {
+  git = "https://github.com/nix-community/tree-sitter-nix",
+  rev = "eabf96807ea4ab6d6c7f09b671a88cd483542840"
+}
+tree-sitter-odin = {
+  git = "https://github.com/tree-sitter-grammars/tree-sitter-odin",
+  rev = "d2ca8efb4487e156a60d5bd6db2598b872629403"
+}
 tree-sitter-python = "0.25"
 tree-sitter-regex = "0.25"
-tree-sitter-roto = { git = "https://codeberg.org/NLnetLabs/tree-sitter-roto", rev = "05c92730f7edc34b82b2b19d536bddc0ed75641e" }
+tree-sitter-roto = {
+  git = "https://codeberg.org/NLnetLabs/tree-sitter-roto",
+  rev = "05c92730f7edc34b82b2b19d536bddc0ed75641e"
+}
 tree-sitter-ruby = "0.23"
 tree-sitter-rust = "0.24"
-tree-sitter-scheme = { git = "https://github.com/6cdh/tree-sitter-scheme", rev = "c6cb7c7d7a04b3f5d999c28e2e9c0c31b2d50ece" }
-tree-sitter-sql = { git = "https://github.com/DerekStride/tree-sitter-sql", rev = "851e9cb257ba7c66cc8c14214a31c44d2f1e954e", package = "tree-sitter-sequel" }
-tree-sitter-toml = { version = "0.1", package = "adot-tree-sitter-toml" }
-tree-sitter-typescript = { git = "https://github.com/zed-industries/tree-sitter-typescript", rev = "e2c53597d6a5d9cf7bbe8dccde576fe1e46c5899" } # https://github.com/tree-sitter/tree-sitter-typescript/pull/347
+tree-sitter-scheme = {
+  git = "https://github.com/6cdh/tree-sitter-scheme",
+  rev = "c6cb7c7d7a04b3f5d999c28e2e9c0c31b2d50ece"
+}
+tree-sitter-sql = {
+  package = "tree-sitter-sequel",
+  git = "https://github.com/DerekStride/tree-sitter-sql",
+  rev = "851e9cb257ba7c66cc8c14214a31c44d2f1e954e"
+}
+tree-sitter-toml = { package = "adot-tree-sitter-toml", version = "0.1" }
+tree-sitter-typescript = {
+  git = "https://github.com/zed-industries/tree-sitter-typescript",
+  rev = "e2c53597d6a5d9cf7bbe8dccde576fe1e46c5899"
+}  # https://github.com/tree-sitter/tree-sitter-typescript/pull/347
 tree-sitter-xml = "0.7.0"
-tree-sitter-yaml = { git = "https://github.com/zed-industries/tree-sitter-yaml", rev = "baff0b51c64ef6a1fb1f8390f3ad6015b83ec13a" }
-tree-sitter-zig = { git = "https://github.com/tree-sitter-grammars/tree-sitter-zig", rev = "6479aa13f32f701c383083d8b28360ebd682fb7d" }
+tree-sitter-yaml = {
+  git = "https://github.com/zed-industries/tree-sitter-yaml",
+  rev = "baff0b51c64ef6a1fb1f8390f3ad6015b83ec13a"
+}
+tree-sitter-zig = {
+  git = "https://github.com/tree-sitter-grammars/tree-sitter-zig",
+  rev = "6479aa13f32f701c383083d8b28360ebd682fb7d"
+}
 unicase = "2.6"
 unicode-script = "0.5.7"
 unicode-segmentation = "1.10"
 unindent = "0.2.0"
 url = "2.2"
 urlencoding = "2.1.2"
-uuid = { version = "1.1.2", features = ["v4", "v5", "v7", "serde"] }
+uuid = { version = "1.1.2", features = ["serde", "v4", "v5", "v7"] }
 walkdir = "2.5"
 wasm-encoder = "0.221"
 wasmparser = "0.221"
-wasmtime = { version = "36", default-features = false, features = [
+wasmtime = {
+  version = "36",
+  default-features = false,
+  features = [
     "async",
-    "demangle",
-    "runtime",
-    "cranelift",
     "component-model",
+    "cranelift",
+    "demangle",
     "incremental-cache",
     "parallel-compilation",
-] }
+    "runtime",
+  ]
+}
 wasmtime-wasi = "36"
 wax = "0.7"
 which = "8.0.2"
@@ -574,89 +687,129 @@ yawc = "0.2.5"
 zeroize = "1.8"
 zstd = "0.13"
 
-
 [workspace.dependencies.windows]
 version = "0.61"
 features = [
-    "Foundation_Numerics",
-    "Storage_Search",
-    "Storage_Streams",
-    "System_Threading",
-    "UI_ViewManagement",
-    "Wdk_System_SystemServices",
-    "Win32_Globalization",
-    "Win32_Graphics_Direct3D",
-    "Win32_Graphics_Direct3D11",
-    "Win32_Graphics_Direct3D_Fxc",
-    "Win32_Graphics_DirectComposition",
-    "Win32_Graphics_DirectWrite",
-    "Win32_Graphics_Dwm",
-    "Win32_Graphics_Dxgi",
-    "Win32_Graphics_Dxgi_Common",
-    "Win32_Graphics_Gdi",
-    "Win32_Graphics_Imaging",
-    "Win32_Graphics_Hlsl",
-    "Win32_Networking_WinSock",
-    "Win32_Security",
-    "Win32_Security_Credentials",
-    "Win32_Security_Cryptography",
-    "Win32_Storage_FileSystem",
-    "Win32_System_Com",
-    "Win32_System_Com_StructuredStorage",
-    "Win32_System_Console",
-    "Win32_System_DataExchange",
-    "Win32_System_IO",
-    "Win32_System_LibraryLoader",
-    "Win32_System_Memory",
-    "Win32_System_Ole",
-    "Win32_System_Performance",
-    "Win32_System_Pipes",
-    "Win32_System_SystemInformation",
-    "Win32_System_SystemServices",
-    "Win32_System_Threading",
-    "Win32_System_Variant",
-    "Win32_System_WinRT",
-    "Win32_UI_Controls",
-    "Win32_UI_HiDpi",
-    "Win32_UI_Input_Ime",
-    "Win32_UI_Input_KeyboardAndMouse",
-    "Win32_UI_Shell",
-    "Win32_UI_Shell_Common",
-    "Win32_UI_Shell_PropertiesSystem",
-    "Win32_UI_WindowsAndMessaging",
+  "Foundation_Numerics",
+  "Storage_Search",
+  "Storage_Streams",
+  "System_Threading",
+  "UI_ViewManagement",
+  "Wdk_System_SystemServices",
+  "Win32_Globalization",
+  "Win32_Graphics_Direct3D",
+  "Win32_Graphics_Direct3D_Fxc",
+  "Win32_Graphics_Direct3D11",
+  "Win32_Graphics_DirectComposition",
+  "Win32_Graphics_DirectWrite",
+  "Win32_Graphics_Dwm",
+  "Win32_Graphics_Dxgi",
+  "Win32_Graphics_Dxgi_Common",
+  "Win32_Graphics_Gdi",
+  "Win32_Graphics_Hlsl",
+  "Win32_Graphics_Imaging",
+  "Win32_Networking_WinSock",
+  "Win32_Security",
+  "Win32_Security_Credentials",
+  "Win32_Security_Cryptography",
+  "Win32_Storage_FileSystem",
+  "Win32_System_Com",
+  "Win32_System_Com_StructuredStorage",
+  "Win32_System_Console",
+  "Win32_System_DataExchange",
+  "Win32_System_IO",
+  "Win32_System_LibraryLoader",
+  "Win32_System_Memory",
+  "Win32_System_Ole",
+  "Win32_System_Performance",
+  "Win32_System_Pipes",
+  "Win32_System_SystemInformation",
+  "Win32_System_SystemServices",
+  "Win32_System_Threading",
+  "Win32_System_Variant",
+  "Win32_System_WinRT",
+  "Win32_UI_Controls",
+  "Win32_UI_HiDpi",
+  "Win32_UI_Input_Ime",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_Shell",
+  "Win32_UI_Shell_Common",
+  "Win32_UI_Shell_PropertiesSystem",
+  "Win32_UI_WindowsAndMessaging",
+]
+
+[workspace.lints.clippy]
+dbg_macro = "deny"
+declare_interior_mutable_const = "deny"
+disallowed_methods = "deny"
+redundant_clone = "deny"
+todo = "deny"
+
+# Style rules are not enforced.
+style = { level = "allow", priority = -1 }
+
+let_underscore_future = "allow"
+# Individual rules that have violations in the codebase:
+type_complexity = "allow"
+
+# Motivation: We use `vec![a..b]` a lot when dealing with ranges in text, so
+# warning on this rule produces a lot of noise.
+single_range_in_vec_init = "allow"
+
+# in Rust it can be very tedious to reduce argument count without
+# running afoul of the borrow checker.
+too_many_arguments = "allow"
+
+# We often have large enum variants yet we rarely actually bother with splitting them up.
+large_enum_variant = "allow"
+
+# Boolean expressions can be hard to read, requiring only the minimal form gets in the way
+nonminimal_bool = "allow"
+
+[workspace.lints.rust]
+unexpected_cfgs = { level = "allow" }
+
+[workspace.metadata.cargo-machete]
+ignored = [
+  "bindgen",
+  "cbindgen",
+  "prost_build",
+  "serde",
+  "component",
+  "documented",
+  "sea-orm-macros",
 ]
 
 [patch.crates-io]
-async-task = { git = "https://github.com/smol-rs/async-task.git", rev = "b4486cd71e4e94fbda54ce6302444de14f4d190e" }
+async-task = {
+  git = "https://github.com/smol-rs/async-task.git",
+  rev = "b4486cd71e4e94fbda54ce6302444de14f4d190e"
+}
 calloop = { git = "https://github.com/zed-industries/calloop" }
-protobuf-src = { git = "https://codeberg.org/GramEditor/rust-protobuf-native", rev = "a70e2d9986e931f2b883b661bf8f4471c5398b7e" }
+protobuf-src = {
+  git = "https://codeberg.org/GramEditor/rust-protobuf-native",
+  rev = "a70e2d9986e931f2b883b661bf8f4471c5398b7e"
+}
 
 [profile.dev]
+opt-level = 1
+debug = "limited"
 split-debuginfo = "unpacked"
 incremental = true
 codegen-units = 16
-debug = "limited"
-opt-level = 1
-
-# mirror configuration for crates compiled for the build platform
-# (without this cargo will compile ~400 crates twice)
-[profile.dev.build-override]
-codegen-units = 16
-split-debuginfo = "unpacked"
-debug = "limited"
 
 [profile.dev.package]
+derive_refineable = { opt-level = 3 }
 # proc-macros start
 gpui_macros = { opt-level = 3 }
-derive_refineable = { opt-level = 3 }
+proc-macro2 = { opt-level = 3 }
+quote = { opt-level = 3 }
+serde_derive = { opt-level = 3 }
 settings_macros = { opt-level = 3 }
 sqlez_macros = { opt-level = 3, codegen-units = 1 }
+syn = { opt-level = 3 }
 ui_macros = { opt-level = 3 }
 util_macros = { opt-level = 3 }
-serde_derive = { opt-level = 3 }
-quote = { opt-level = 3 }
-syn = { opt-level = 3 }
-proc-macro2 = { opt-level = 3 }
 # proc-macros end
 
 cranelift-codegen = { opt-level = 3 }
@@ -704,6 +857,13 @@ theme_selector = { codegen-units = 1 }
 time_format = { codegen-units = 1 }
 ui_input = { codegen-units = 1 }
 
+# mirror configuration for crates compiled for the build platform
+# (without this cargo will compile ~400 crates twice)
+[profile.dev.build-override]
+debug = "limited"
+split-debuginfo = "unpacked"
+codegen-units = 16
+
 [profile.release]
 debug = "limited"
 lto = "thin"
@@ -717,45 +877,3 @@ inherits = "release"
 debug = "full"
 lto = false
 codegen-units = 16
-
-[workspace.lints.rust]
-unexpected_cfgs = { level = "allow" }
-
-[workspace.lints.clippy]
-dbg_macro = "deny"
-todo = "deny"
-declare_interior_mutable_const = "deny"
-redundant_clone = "deny"
-disallowed_methods = "deny"
-
-# Style rules are not enforced.
-style = { level = "allow", priority = -1 }
-
-# Individual rules that have violations in the codebase:
-type_complexity = "allow"
-let_underscore_future = "allow"
-
-# Motivation: We use `vec![a..b]` a lot when dealing with ranges in text, so
-# warning on this rule produces a lot of noise.
-single_range_in_vec_init = "allow"
-
-# in Rust it can be very tedious to reduce argument count without
-# running afoul of the borrow checker.
-too_many_arguments = "allow"
-
-# We often have large enum variants yet we rarely actually bother with splitting them up.
-large_enum_variant = "allow"
-
-# Boolean expressions can be hard to read, requiring only the minimal form gets in the way
-nonminimal_bool = "allow"
-
-[workspace.metadata.cargo-machete]
-ignored = [
-    "bindgen",
-    "cbindgen",
-    "prost_build",
-    "serde",
-    "component",
-    "documented",
-    "sea-orm-macros",
-]

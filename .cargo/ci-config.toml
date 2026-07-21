@@ -10,10 +10,6 @@
 [target.'cfg(all())']
 rustflags = ["-D", "warnings"]
 
-# Don't need fullest debug information for dev stuff (tests etc.) in CI.
-[profile.dev]
-debug = "limited"
-
 # Use Mold on Linux, because it's faster than GNU ld and LLD.
 #
 # Don't set this in the default `config.toml` so that developers can opt in to Wild, which
@@ -33,3 +29,7 @@ rustflags = ["-C", "link-arg=-fuse-ld=mold"]
 [target.aarch64-unknown-linux-musl]
 linker = "clang"
 rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+
+# Don't need fullest debug information for dev stuff (tests etc.) in CI.
+[profile.dev]
+debug = "limited"
