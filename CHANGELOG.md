@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   [zedokai](https://github.com/slymax/zedokai) themes (#371) by @koru
 - Add notes about `ethical-foss/open-slopware` (#376) by @koru
 - Add option to hide the title bar (#375) (zed#37428) by @ycna07
+- node_runtime: Fix npm v12 output deserialization (zed#60798)
 
 ## Changed
 

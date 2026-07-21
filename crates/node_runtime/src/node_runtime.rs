@@ -252,7 +252,13 @@ impl NodeRuntime {
             )
             .await?;
 
-        let mut info: NpmInfo = serde_json::from_slice(&output.stdout)?;
+        let mut info: NpmInfo =
+            deserialize_npm_info_from_response(&output.stdout).map_err(|e| {
+                anyhow::anyhow!(
+                    "failed to parse npm info response: {e}\nstdout: {}",
+                    String::from_utf8_lossy(&output.stdout)
+                )
+            })?;
         info.dist_tags
             .latest
             .or_else(|| info.versions.pop())
@@ -361,6 +367,21 @@ impl NodeRuntime {
             }
         }
     }
+}
+
+/// Parse NpmInfo from npm info --json output, handling both v11 and >= v12 formats.
+fn deserialize_npm_info_from_response(data: &[u8]) -> Result<NpmInfo, serde_json::Error> {
+    let value: serde_json::Value = serde_json::from_slice(data)?;
+
+    // npm >= 12 returns an array with one object: [ { ... } ]
+    if let serde_json::Value::Array(arr) = &value {
+        if arr.len() == 1 {
+            return NpmInfo::deserialize(&arr[0]);
+        }
+    }
+
+    // npm <= v11 returns a bare JSON object: { ... }
+    NpmInfo::deserialize(value)
 }
 
 enum ArchiveType {
@@ -865,6 +886,8 @@ fn configure_npm_command(
 mod tests {
     use http_client::Url;
 
+    use crate::deserialize_npm_info_from_response;
+
     use super::configure_npm_command;
 
     // Map localhost to 127.0.0.1
@@ -901,5 +924,48 @@ mod tests {
                 "Incorrectly mapped localhost to 127.0.0.1"
             );
         }
+    }
+
+    #[test]
+    fn test_deserialize_npm_info_npm11_format() -> anyhow::Result<()> {
+        let json = r#"{
+                "dist-tags": { "latest": "3.0.0" },
+                "versions": ["1.0.0", "2.0.0", "3.0.0"]
+            }"#;
+
+        let info = deserialize_npm_info_from_response(json.as_bytes())?;
+        assert_eq!(info.dist_tags.latest, Some("3.0.0".to_string()));
+        assert_eq!(
+            info.versions,
+            vec![
+                "1.0.0".to_string(),
+                "2.0.0".to_string(),
+                "3.0.0".to_string(),
+            ]
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_deserialize_npm_v12_format() -> anyhow::Result<()> {
+        let json = r#"[
+                {
+                    "dist-tags": { "latest": "3.0.0" },
+                    "versions": ["1.0.0", "2.0.0", "3.0.0"]
+                }
+            ]"#;
+
+        let info = deserialize_npm_info_from_response(json.as_bytes())?;
+        assert_eq!(info.dist_tags.latest, Some("3.0.0".into()));
+        assert_eq!(
+            info.versions,
+            vec![
+                "1.0.0".to_string(),
+                "2.0.0".to_string(),
+                "3.0.0".to_string(),
+            ]
+        );
+        Ok(())
     }
 }
