@@ -4,52 +4,73 @@
 
 Clone down the [Gram repository](https://codeberg.org/GramEditor/gram).
 
+```zsh
+# Your apple ID (email)
+export APPLE_ID=""
+# App-specific password (create in account.apple.com)
+export APPLE_PASSWORD_GRAM=""
+# Apple Team ID (find it in XCode)
+export APPLE_TEAM_ID=""
+# Apple signing key: security find-identity -p codesigning
+export APPLE_SIGNING_KEY=""
+# Build, sign and notarise the app bundle
+./script/bundle-mac
+```
+
 ## Dependencies
 
 - Install [rustup](https://www.rust-lang.org/tools/install)
 
-- Install [Xcode](https://apps.apple.com/us/app/xcode/id497799835?mt=12) from the macOS App Store, or from the [Apple Developer](https://developer.apple.com/download/all/) website. Note this requires a developer account.
+- Install [Xcode](https://apps.apple.com/us/app/xcode/id497799835?mt=12) from
+  the macOS App Store, or from the
+  [Apple Developer](https://developer.apple.com/download/all/) website. Note
+  this requires a developer account.
 
-> Ensure you launch Xcode after installing, and install the macOS components, which is the default option.
+> Ensure you launch Xcode after installing, and install the macOS components,
+> which is the default option.
 
-- Install [Xcode command line tools](https://developer.apple.com/xcode/resources/)
+- Install
+  [Xcode command line tools](https://developer.apple.com/xcode/resources/)
 
-  ```sh
+  ```zsh
   xcode-select --install
   ```
 
-- Ensure that the Xcode command line tools are using your newly installed copy of Xcode:
+- Ensure that the Xcode command line tools are using your newly installed copy
+  of Xcode:
 
-  ```sh
+  ```zsh
   sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
   sudo xcodebuild -license accept
   ```
 
-- Install `cmake` (required by [a dependency](https://docs.rs/wasmtime-c-api-impl/latest/wasmtime_c_api/))
+- Install `cmake` (required by
+  [a dependency](https://docs.rs/wasmtime-c-api-impl/latest/wasmtime_c_api/))
 
-  ```sh
+  ```zsh
   brew install cmake
   ```
 
 ## Building Gram from Source
 
-Once you have the dependencies installed, you can build Gram using [Cargo](https://doc.rust-lang.org/cargo/).
+Once you have the dependencies installed, you can build Gram using
+[Cargo](https://doc.rust-lang.org/cargo/).
 
 For a debug build:
 
-```sh
+```zsh
 cargo run
 ```
 
 For a release build:
 
-```sh
+```zsh
 cargo run --release
 ```
 
 And to run the tests:
 
-```sh
+```zsh
 cargo test --workspace
 ```
 
@@ -57,9 +78,8 @@ cargo test --workspace
 
 ### Error compiling metal shaders
 
-```sh
+```zsh
 error: failed to run custom build command for gpui v0.1.0 (/Users/path/to/gram)`**
-
 xcrun: error: unable to find utility "metal", not a developer tool or in PATH
 ```
 
@@ -75,7 +95,7 @@ Try `cargo clean` and `cargo build`.
 
 If you encounter an error similar to:
 
-```sh
+```zsh
 src/platform/mac/dispatch.h:1:10: fatal error: 'dispatch/dispatch.h' file not found
 
 Caused by:
@@ -90,29 +110,31 @@ Caused by:
   cargo:rerun-if-env-changed=BINDGEN_EXTRA_CLANG_ARGS
 ```
 
-This file is part of Xcode. Ensure you have installed the Xcode command line tools and set the correct path:
+This file is part of Xcode. Ensure you have installed the Xcode command line
+tools and set the correct path:
 
-```sh
+```zsh
 xcode-select --install
 sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 ```
 
 Additionally, set the `BINDGEN_EXTRA_CLANG_ARGS` environment variable:
 
-```sh
+```zsh
 export BINDGEN_EXTRA_CLANG_ARGS="--sysroot=$(xcrun --show-sdk-path)"
 ```
 
 Then clean and rebuild the project:
 
-```sh
+```zsh
 cargo clean
 cargo run
 ```
 
 ### Tests failing due to `Too many open files (os error 24)`
 
-This error seems to be caused by OS resource constraints. Installing and running tests with `cargo-nextest` should resolve the issue.
+This error seems to be caused by OS resource constraints. Installing and running
+tests with `cargo-nextest` should resolve the issue.
 
 - `cargo install cargo-nextest --locked`
 - `cargo nextest run --workspace --no-fail-fast`
@@ -121,16 +143,17 @@ This error seems to be caused by OS resource constraints. Installing and running
 
 ### Avoiding continual rebuilds
 
-If you are finding that Gram is continually rebuilding root crates, it may be because
-you are pointing your development Gram at the codebase itself.
+If you are finding that Gram is continually rebuilding root crates, it may be
+because you are pointing your development Gram at the codebase itself.
 
 This causes problems because `cargo run` exports a bunch of environment
-variables which are picked up by the `rust-analyzer` that runs in the development
-build of Gram. These environment variables are in turn passed to `cargo check`, which
-invalidates the build cache of some of the crates we depend on.
+variables which are picked up by the `rust-analyzer` that runs in the
+development build of Gram. These environment variables are in turn passed to
+`cargo check`, which invalidates the build cache of some of the crates we depend
+on.
 
-You can easily avoid running the built binary on the checked-out Gram codebase using `cargo run
-~/path/to/other/project` to ensure that you don't hit this.
+You can easily avoid running the built binary on the checked-out Gram codebase
+using `cargo run ~/path/to/other/project` to ensure that you don't hit this.
 
 ### Speeding up verification
 
@@ -139,8 +162,12 @@ builds which can add a few seconds to your iteration cycles.
 
 To fix this, you can:
 
-- Run `sudo spctl developer-mode enable-terminal` to enable the Developer Tools panel in System Settings.
-- In System Settings, search for "Developer Tools" and add your terminal (e.g. iTerm or Ghostty) to the list under "Allow applications to use developer tools"
+- Run `sudo spctl developer-mode enable-terminal` to enable the Developer Tools
+  panel in System Settings.
+- In System Settings, search for "Developer Tools" and add your terminal (e.g.
+  iTerm or Ghostty) to the list under "Allow applications to use developer
+  tools"
 - Restart your terminal.
 
-Thanks to the nextest developers for publishing [this](https://nexte.st/docs/installation/macos/#gatekeeper).
+Thanks to the nextest developers for publishing
+[this](https://nexte.st/docs/installation/macos/#gatekeeper).
