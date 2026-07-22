@@ -1,2 +1,0 @@
-#:schema https://www.schemastore.org/rustfmt.json
-# this empty config forces using default config instead of globally defined user's one.
