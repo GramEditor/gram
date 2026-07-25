@@ -282,7 +282,7 @@ impl RemoteBufferStore {
             let buffer_id = BufferId::new(response.buffer_id)?;
 
             let buffer = this
-                .update(cx, { |this, cx| this.wait_for_remote_buffer(buffer_id, cx) })?
+                .update(cx, |this, cx| this.wait_for_remote_buffer(buffer_id, cx) )?
                 .await?;
 
             Ok(buffer)

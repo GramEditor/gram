@@ -1885,7 +1885,7 @@ mod tests {
                                     None
                                 }
                             })
-                            .or({ if offset > 0 && start_ix == 0 { Some(0) } else { None } });
+                            .or(if offset > 0 && start_ix == 0 { Some(0) } else { None } );
 
                         let moved = chunks.prev_line();
                         assert_eq!(
