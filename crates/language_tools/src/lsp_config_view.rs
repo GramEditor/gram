@@ -424,7 +424,6 @@ impl LspConfigView {
     }
 
     fn render_node_settings(&self, settings: &NodeBinarySettings, cx: &Context<Self>) -> impl IntoElement {
-        let allow = settings.allow_binary_download;
         v_flex()
             .p_2()
             .gap_4()
@@ -433,11 +432,13 @@ impl LspConfigView {
                     .gap_2()
                     .items_center()
                     .child(
-                        Switch::new("allow-binary-download-node", ToggleState::from(allow)).on_click(cx.listener(
-                            move |this, _, window, cx| {
-                                this.toggle_allow_download_node(window, cx);
-                            },
-                        )),
+                        Switch::new(
+                            "allow-binary-download-node",
+                            ToggleState::from(settings.allow_binary_download),
+                        )
+                        .on_click(cx.listener(move |this, _, window, cx| {
+                            this.toggle_allow_download_node(window, cx);
+                        })),
                     )
                     .child(
                         v_flex().gap_1p5().child(Label::new("Download Node.js")).child(
@@ -452,11 +453,13 @@ impl LspConfigView {
                     .gap_2()
                     .items_center()
                     .child(
-                        Switch::new("allow-binary-download-prettier", ToggleState::from(allow)).on_click(cx.listener(
-                            move |this, _, window, cx| {
-                                this.toggle_allow_download_prettier(window, cx);
-                            },
-                        )),
+                        Switch::new(
+                            "allow-binary-download-prettier",
+                            ToggleState::from(settings.allow_prettier_download),
+                        )
+                        .on_click(cx.listener(move |this, _, window, cx| {
+                            this.toggle_allow_download_prettier(window, cx);
+                        })),
                     )
                     .child(
                         v_flex().gap_1p5().child(Label::new("Download Prettier")).child(
@@ -471,11 +474,11 @@ impl LspConfigView {
                     .gap_2()
                     .items_center()
                     .child(
-                        Switch::new("allow-npm-install", ToggleState::from(allow)).on_click(cx.listener(
-                            move |this, _, window, cx| {
+                        Switch::new("allow-npm-install", ToggleState::from(settings.allow_npm_install)).on_click(
+                            cx.listener(move |this, _, window, cx| {
                                 this.toggle_allow_npm_install(window, cx);
-                            },
-                        )),
+                            }),
+                        ),
                     )
                     .child(
                         v_flex().gap_1p5().child(Label::new("Allow npm install")).child(

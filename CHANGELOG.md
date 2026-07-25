@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Register toggle inline values action (zed#58921) (#373)
 - Fix emoji rendering on macOS (#378) from @Petrosz007
 - Fix npm v12 output deserialization (#381) (zed#60798)
+- Fix broken language server settings UI for Node.js (#379)
 
 ## [3.0.1] - 2026-06-30
 
