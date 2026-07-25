@@ -26,11 +26,7 @@ pub trait EntityInputHandler: 'static + Sized {
     ) -> Option<UTF16Selection>;
 
     /// See [`InputHandler::marked_text_range`] for details
-    fn marked_text_range(
-        &self,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Option<Range<usize>>;
+    fn marked_text_range(&self, window: &mut Window, cx: &mut Context<Self>) -> Option<Range<usize>>;
 
     /// See [`InputHandler::unmark_text`] for details
     fn unmark_text(&mut self, window: &mut Window, cx: &mut Context<Self>);
@@ -89,10 +85,7 @@ impl<V: 'static> ElementInputHandler<V> {
     ///
     /// [element_paint]: crate::Element::paint
     pub fn new(element_bounds: Bounds<Pixels>, view: Entity<V>) -> Self {
-        ElementInputHandler {
-            view,
-            element_bounds,
-        }
+        ElementInputHandler { view, element_bounds }
     }
 }
 
@@ -109,8 +102,7 @@ impl<V: EntityInputHandler> InputHandler for ElementInputHandler<V> {
     }
 
     fn marked_text_range(&mut self, window: &mut Window, cx: &mut App) -> Option<Range<usize>> {
-        self.view
-            .update(cx, |view, cx| view.marked_text_range(window, cx))
+        self.view.update(cx, |view, cx| view.marked_text_range(window, cx))
     }
 
     fn text_for_range(
@@ -146,19 +138,12 @@ impl<V: EntityInputHandler> InputHandler for ElementInputHandler<V> {
         cx: &mut App,
     ) {
         self.view.update(cx, |view, cx| {
-            view.replace_and_mark_text_in_range(
-                range_utf16,
-                new_text,
-                new_selected_range,
-                window,
-                cx,
-            )
+            view.replace_and_mark_text_in_range(range_utf16, new_text, new_selected_range, window, cx)
         });
     }
 
     fn unmark_text(&mut self, window: &mut Window, cx: &mut App) {
-        self.view
-            .update(cx, |view, cx| view.unmark_text(window, cx));
+        self.view.update(cx, |view, cx| view.unmark_text(window, cx));
     }
 
     fn bounds_for_range(
@@ -178,13 +163,11 @@ impl<V: EntityInputHandler> InputHandler for ElementInputHandler<V> {
         window: &mut Window,
         cx: &mut App,
     ) -> Option<usize> {
-        self.view.update(cx, |view, cx| {
-            view.character_index_for_point(point, window, cx)
-        })
+        self.view
+            .update(cx, |view, cx| view.character_index_for_point(point, window, cx))
     }
 
     fn accepts_text_input(&mut self, window: &mut Window, cx: &mut App) -> bool {
-        self.view
-            .update(cx, |view, cx| view.accepts_text_input(window, cx))
+        self.view.update(cx, |view, cx| view.accepts_text_input(window, cx))
     }
 }

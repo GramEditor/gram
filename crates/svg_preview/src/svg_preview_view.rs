@@ -3,8 +3,8 @@ use std::sync::Arc;
 
 use file_icons::FileIcons;
 use gpui::{
-    App, Context, Entity, EventEmitter, FocusHandle, Focusable, IntoElement, ParentElement, Render,
-    RenderImage, Styled, Subscription, Task, WeakEntity, Window, div, img,
+    App, Context, Entity, EventEmitter, FocusHandle, Focusable, IntoElement, ParentElement, Render, RenderImage,
+    Styled, Subscription, Task, WeakEntity, Window, div, img,
 };
 use language::{Buffer, BufferEvent};
 use multi_buffer::MultiBuffer;
@@ -68,11 +68,7 @@ impl SvgPreviewView {
         })
     }
 
-    fn subscribe_to_workspace(
-        workspace: Entity<Workspace>,
-        window: &Window,
-        cx: &mut Context<Self>,
-    ) -> Subscription {
+    fn subscribe_to_workspace(workspace: Entity<Workspace>, window: &Window, cx: &mut Context<Self>) -> Subscription {
         cx.subscribe_in(
             &workspace,
             window,
@@ -87,8 +83,7 @@ impl SvgPreviewView {
                             return;
                         };
                         if this.buffer.as_ref() != Some(&buffer) {
-                            this._buffer_subscription =
-                                Some(Self::create_buffer_subscription(&buffer, window, cx));
+                            this._buffer_subscription = Some(Self::create_buffer_subscription(&buffer, window, cx));
                             this.buffer = Some(buffer);
                             this.render_image(window, cx);
                             cx.notify();
@@ -109,9 +104,10 @@ impl SvgPreviewView {
 
         let renderer = cx.svg_renderer();
         let content = buffer.read(cx).snapshot();
-        let background_task = cx.background_spawn(async move {
-            renderer.render_single_frame(content.text().as_bytes(), SCALE_FACTOR, true)
-        });
+        let background_task =
+            cx.background_spawn(
+                async move { renderer.render_single_frame(content.text().as_bytes(), SCALE_FACTOR, true) },
+            );
 
         self._refresh = cx.spawn_in(window, async move |this, cx| {
             let result = background_task.await;
@@ -136,11 +132,7 @@ impl SvgPreviewView {
         cx.notify();
     }
 
-    fn find_existing_preview_item_idx(
-        pane: &Pane,
-        buffer: &Entity<MultiBuffer>,
-        cx: &App,
-    ) -> Option<usize> {
+    fn find_existing_preview_item_idx(pane: &Pane, buffer: &Entity<MultiBuffer>, cx: &App) -> Option<usize> {
         let buffer_id = buffer.entity_id();
         pane.items_of_type::<SvgPreviewView>()
             .find(|view| {
@@ -173,11 +165,7 @@ impl SvgPreviewView {
         SvgPreviewView::new(mode, buffer, workspace_handle, window, cx)
     }
 
-    fn create_buffer_subscription(
-        buffer: &Entity<Buffer>,
-        window: &Window,
-        cx: &mut Context<Self>,
-    ) -> Subscription {
+    fn create_buffer_subscription(buffer: &Entity<Buffer>, window: &Window, cx: &mut Context<Self>) -> Subscription {
         cx.subscribe_in(
             buffer,
             window,
@@ -207,17 +195,9 @@ impl SvgPreviewView {
             if let Some(buffer) = Self::resolve_active_item_as_svg_buffer(workspace, cx)
                 && Self::is_svg_file(&buffer, cx)
             {
-                let view = Self::create_svg_view(
-                    SvgPreviewMode::Default,
-                    workspace,
-                    buffer.clone(),
-                    window,
-                    cx,
-                );
+                let view = Self::create_svg_view(SvgPreviewMode::Default, workspace, buffer.clone(), window, cx);
                 workspace.active_pane().update(cx, |pane, cx| {
-                    if let Some(existing_view_idx) =
-                        Self::find_existing_preview_item_idx(pane, &buffer, cx)
-                    {
+                    if let Some(existing_view_idx) = Self::find_existing_preview_item_idx(pane, &buffer, cx) {
                         pane.activate_item(existing_view_idx, true, true, window, cx);
                     } else {
                         pane.add_item(Box::new(view), true, true, None, window, cx)
@@ -232,13 +212,7 @@ impl SvgPreviewView {
                 && Self::is_svg_file(&editor, cx)
             {
                 let editor_clone = editor.clone();
-                let view = Self::create_svg_view(
-                    SvgPreviewMode::Default,
-                    workspace,
-                    editor_clone,
-                    window,
-                    cx,
-                );
+                let view = Self::create_svg_view(SvgPreviewMode::Default, workspace, editor_clone, window, cx);
                 let pane = workspace
                     .find_pane_in_direction(workspace::SplitDirection::Right, cx)
                     .unwrap_or_else(|| {
@@ -250,9 +224,7 @@ impl SvgPreviewView {
                         )
                     });
                 pane.update(cx, |pane, cx| {
-                    if let Some(existing_view_idx) =
-                        Self::find_existing_preview_item_idx(pane, &editor, cx)
-                    {
+                    if let Some(existing_view_idx) = Self::find_existing_preview_item_idx(pane, &editor, cx) {
                         pane.activate_item(existing_view_idx, true, true, window, cx);
                     } else {
                         pane.add_item(Box::new(view), false, false, None, window, cx)
@@ -266,8 +238,7 @@ impl SvgPreviewView {
             if let Some(editor) = Self::resolve_active_item_as_svg_buffer(workspace, cx)
                 && Self::is_svg_file(&editor, cx)
             {
-                let view =
-                    Self::create_svg_view(SvgPreviewMode::Follow, workspace, editor, window, cx);
+                let view = Self::create_svg_view(SvgPreviewMode::Follow, workspace, editor, window, cx);
                 workspace.active_pane().update(cx, |pane, cx| {
                     pane.add_item(Box::new(view), true, true, None, window, cx)
                 });
@@ -289,16 +260,14 @@ impl Render for SvgPreviewView {
             .justify_center()
             .items_center()
             .map(|this| match self.current_svg.clone() {
-                Some(Ok(image)) => {
-                    this.child(img(image).max_w_full().max_h_full().with_fallback(|| {
-                        h_flex()
-                            .p_4()
-                            .gap_2()
-                            .child(Icon::new(IconName::Warning))
-                            .child("Failed to load SVG image")
-                            .into_any_element()
-                    }))
-                }
+                Some(Ok(image)) => this.child(img(image).max_w_full().max_h_full().with_fallback(|| {
+                    h_flex()
+                        .p_4()
+                        .gap_2()
+                        .child(Icon::new(IconName::Warning))
+                        .child("Failed to load SVG image")
+                        .into_any_element()
+                })),
                 Some(Err(e)) => this.child(div().p_4().child(e).into_any_element()),
                 None => this.child(div().p_4().child("No SVG file selected")),
             })

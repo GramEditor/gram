@@ -22,15 +22,14 @@ impl ParsedCommitMessage {
         remote_url: Option<&str>,
         provider_registry: Option<Arc<GitHostingProviderRegistry>>,
     ) -> Self {
-        if let Some((hosting_provider, remote)) = provider_registry
-            .and_then(|reg| remote_url.and_then(|url| parse_git_remote_url(reg, url)))
+        if let Some((hosting_provider, remote)) =
+            provider_registry.and_then(|reg| remote_url.and_then(|url| parse_git_remote_url(reg, url)))
         {
             let pull_request = hosting_provider.extract_pull_request(&remote, &message);
             Self {
                 message: message.into(),
                 permalink: Some(
-                    hosting_provider
-                        .build_commit_permalink(&remote, BuildCommitPermalinkParams { sha: &sha }),
+                    hosting_provider.build_commit_permalink(&remote, BuildCommitPermalinkParams { sha: &sha }),
                 ),
                 pull_request,
                 remote: Some(GitRemote {
@@ -71,11 +70,7 @@ pub async fn get_messages(git: &GitBinary, shas: &[Oid]) -> Result<HashMap<Oid, 
         get_messages_impl(git, shas).await?
     };
 
-    Ok(shas
-        .iter()
-        .cloned()
-        .zip(output)
-        .collect::<HashMap<Oid, String>>())
+    Ok(shas.iter().cloned().zip(output).collect::<HashMap<Oid, String>>())
 }
 
 async fn get_messages_impl(git: &GitBinary, shas: &[Oid]) -> Result<Vec<String>> {
@@ -146,16 +141,10 @@ mod tests {
                 ("crates/project/src/buffer_store.rs", StatusCode::Modified),
                 ("crates/project/src/git.rs", StatusCode::Deleted),
                 ("crates/project/src/git_store.rs", StatusCode::Added),
-                (
-                    "crates/project/src/git_store/git_traversal.rs",
-                    StatusCode::Added,
-                ),
+                ("crates/project/src/git_store/git_traversal.rs", StatusCode::Added,),
                 ("crates/project/src/project.rs", StatusCode::Modified),
                 ("crates/project/src/worktree_store.rs", StatusCode::Modified),
-                (
-                    "crates/project_panel/src/project_panel.rs",
-                    StatusCode::Modified
-                ),
+                ("crates/project_panel/src/project_panel.rs", StatusCode::Modified),
             ]
         );
     }

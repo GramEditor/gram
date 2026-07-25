@@ -338,10 +338,7 @@ fn test_block_with_timeout() {
             .block_with_timeout(Duration::from_millis(50), task);
         results.insert(output.ok());
     });
-    assert_eq!(
-        results.into_iter().collect::<Vec<_>>(),
-        vec![None, Some(42)]
-    );
+    assert_eq!(results.into_iter().collect::<Vec<_>>(), vec![None, Some(42)]);
 }
 
 // When calling block, we shouldn't make progress on foreground-spawned futures with the same session id.

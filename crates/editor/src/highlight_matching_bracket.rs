@@ -7,11 +7,7 @@ use theme::ActiveTheme;
 enum MatchingBracketHighlight {}
 
 impl Editor {
-    pub fn refresh_matching_bracket_highlights(
-        &mut self,
-        window: &Window,
-        cx: &mut Context<Editor>,
-    ) {
+    pub fn refresh_matching_bracket_highlights(&mut self, window: &Window, cx: &mut Context<Editor>) {
         self.clear_highlights::<MatchingBracketHighlight>(cx);
 
         let snapshot = self.snapshot(window, cx);
@@ -46,11 +42,7 @@ impl Editor {
                     closing_range.to_anchors(&buffer_snapshot),
                 ],
                 HighlightStyle {
-                    background_color: Some(
-                        cx.theme()
-                            .colors()
-                            .editor_document_highlight_bracket_background,
-                    ),
+                    background_color: Some(cx.theme().colors().editor_document_highlight_bracket_background),
                     ..Default::default()
                 },
                 cx,

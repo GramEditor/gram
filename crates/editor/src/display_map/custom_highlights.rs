@@ -41,11 +41,7 @@ impl<'a> CustomHighlightsChunks<'a> {
             buffer_chunk: None,
             offset: range.start,
             text_highlights,
-            highlight_endpoints: create_highlight_endpoints(
-                &range,
-                text_highlights,
-                multibuffer_snapshot,
-            ),
+            highlight_endpoints: create_highlight_endpoints(&range, text_highlights, multibuffer_snapshot),
             active_highlights: Default::default(),
             multibuffer_snapshot,
         }
@@ -78,9 +74,7 @@ fn create_highlight_endpoints(
                 .binary_search_by(|probe| probe.end.cmp(&start, buffer).then(cmp::Ordering::Less))
                 .unwrap_or_else(|i| i);
             let end_ix = ranges[start_ix..]
-                .binary_search_by(|probe| {
-                    probe.start.cmp(&end, buffer).then(cmp::Ordering::Greater)
-                })
+                .binary_search_by(|probe| probe.start.cmp(&end, buffer).then(cmp::Ordering::Greater))
                 .unwrap_or_else(|i| i);
 
             highlight_endpoints.reserve(2 * end_ix);
@@ -223,9 +217,7 @@ mod tests {
                     continue;
                 }
 
-                let mut start = rng.random_range(
-                    MultiBufferOffset(0)..=buffer_snapshot.len().saturating_sub_usize(10),
-                );
+                let mut start = rng.random_range(MultiBufferOffset(0)..=buffer_snapshot.len().saturating_sub_usize(10));
 
                 while !text.is_char_boundary(start.0) {
                     start = start.saturating_sub_usize(1);
@@ -264,10 +256,7 @@ mod tests {
 
             // Check empty chunks have empty bitmaps
             if chunk_text.is_empty() {
-                assert_eq!(
-                    chars_bitmap, 0,
-                    "Empty chunk should have empty chars bitmap"
-                );
+                assert_eq!(chars_bitmap, 0, "Empty chunk should have empty chars bitmap");
                 assert_eq!(tabs_bitmap, 0, "Empty chunk should have empty tabs bitmap");
                 continue;
             }
@@ -280,10 +269,7 @@ mod tests {
             );
 
             // Verify chars bitmap
-            let char_indices = chunk_text
-                .char_indices()
-                .map(|(i, _)| i)
-                .collect::<Vec<_>>();
+            let char_indices = chunk_text.char_indices().map(|(i, _)| i).collect::<Vec<_>>();
 
             for byte_idx in 0..chunk_text.len() {
                 let should_have_bit = char_indices.contains(&byte_idx);

@@ -27,11 +27,7 @@ impl UnixStream {
             let inner = UnixSocket::new()?;
             let (addr, len) = sockaddr_un(path)?;
 
-            map_ret(connect(
-                inner.as_raw(),
-                &addr as *const _ as *const _,
-                len as i32,
-            ))?;
+            map_ret(connect(inner.as_raw(), &addr as *const _ as *const _, len as i32))?;
             Ok(Self(inner))
         }
     }

@@ -34,9 +34,7 @@ fn address() -> SocketAddr {
     let mut sys = System::new_all();
     sys.refresh_all();
     if let Ok(current_pid) = sysinfo::get_current_pid()
-        && let Some(uid) = sys
-            .process(current_pid)
-            .and_then(|process| process.user_id())
+        && let Some(uid) = sys.process(current_pid).and_then(|process| process.user_id())
     {
         let uid_u32 = get_uid_as_u32(uid);
         // Ensure that the user ID is not too large to avoid overflow when

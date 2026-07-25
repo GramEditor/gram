@@ -1,9 +1,7 @@
 use editor::{
     Anchor, Bias, BufferOffset, DisplayPoint, Editor, MultiBufferOffset, RowExt, ToOffset,
     display_map::{DisplayRow, DisplaySnapshot, FoldPoint, ToDisplayPoint},
-    movement::{
-        self, FindRange, TextLayoutDetails, find_boundary, find_preceding_boundary_display_point,
-    },
+    movement::{self, FindRange, TextLayoutDetails, find_boundary, find_preceding_boundary_display_point},
 };
 use gpui::{Action, Context, Window, actions, px};
 use language::{CharKind, Point, Selection, SelectionGoal};
@@ -449,19 +447,15 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
     Vim::action(editor, cx, |vim, _: &WrappingRight, window, cx| {
         vim.motion(Motion::WrappingRight, window, cx)
     });
-    Vim::action(
-        editor,
-        cx,
-        |vim, action: &FirstNonWhitespace, window, cx| {
-            vim.motion(
-                Motion::FirstNonWhitespace {
-                    display_lines: action.display_lines,
-                },
-                window,
-                cx,
-            )
-        },
-    );
+    Vim::action(editor, cx, |vim, action: &FirstNonWhitespace, window, cx| {
+        vim.motion(
+            Motion::FirstNonWhitespace {
+                display_lines: action.display_lines,
+            },
+            window,
+            cx,
+        )
+    });
     Vim::action(editor, cx, |vim, action: &StartOfLine, window, cx| {
         vim.motion(
             Motion::StartOfLine {
@@ -511,13 +505,9 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
     Vim::action(editor, cx, |vim, _: &EndOfDocument, window, cx| {
         vim.motion(Motion::EndOfDocument, window, cx)
     });
-    Vim::action(
-        editor,
-        cx,
-        |vim, &Matching { match_quotes }: &Matching, window, cx| {
-            vim.motion(Motion::Matching { match_quotes }, window, cx)
-        },
-    );
+    Vim::action(editor, cx, |vim, &Matching { match_quotes }: &Matching, window, cx| {
+        vim.motion(Motion::Matching { match_quotes }, window, cx)
+    });
 
     Vim::action(editor, cx, |vim, _: &GoToPercentage, window, cx| {
         vim.motion(Motion::GoToPercentage, window, cx)
@@ -582,22 +572,14 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
         editor,
         cx,
         |vim, &PreviousSubwordStart { ignore_punctuation }: &PreviousSubwordStart, window, cx| {
-            vim.motion(
-                Motion::PreviousSubwordStart { ignore_punctuation },
-                window,
-                cx,
-            )
+            vim.motion(Motion::PreviousSubwordStart { ignore_punctuation }, window, cx)
         },
     );
     Vim::action(
         editor,
         cx,
         |vim, &PreviousSubwordEnd { ignore_punctuation }, window, cx| {
-            vim.motion(
-                Motion::PreviousSubwordEnd { ignore_punctuation },
-                window,
-                cx,
-            )
+            vim.motion(Motion::PreviousSubwordEnd { ignore_punctuation }, window, cx)
         },
     );
     Vim::action(editor, cx, |vim, &NextLineStart, window, cx| {
@@ -689,10 +671,7 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
 
 impl Vim {
     pub(crate) fn search_motion(&mut self, m: Motion, window: &mut Window, cx: &mut Context<Self>) {
-        if let Motion::GramSearchResult {
-            prior_selections, ..
-        } = &m
-        {
+        if let Motion::GramSearchResult { prior_selections, .. } = &m {
             match self.mode {
                 Mode::Visual | Mode::VisualLine | Mode::VisualBlock => {
                     if !prior_selections.is_empty() {
@@ -738,9 +717,7 @@ impl Vim {
                     self.normal_motion(motion, active_operator, count, forced_motion, window, cx)
                 }
             }
-            Mode::Visual | Mode::VisualLine | Mode::VisualBlock => {
-                self.visual_motion(motion, count, window, cx)
-            }
+            Mode::Visual | Mode::VisualLine | Mode::VisualBlock => self.visual_motion(motion, count, window, cx),
 
             Mode::HelixNormal => self.helix_normal_motion(motion, count, window, cx),
             Mode::HelixSelect => self.helix_select_motion(motion, count, window, cx),
@@ -819,9 +796,7 @@ impl Motion {
             | SneakBackward { .. }
             | Jump { .. }
             | GramSearchResult { .. } => MotionKind::Exclusive,
-            RepeatFind { last_find: motion } | RepeatFindReversed { last_find: motion } => {
-                motion.default_kind()
-            }
+            RepeatFind { last_find: motion } | RepeatFindReversed { last_find: motion } => motion.default_kind(),
         }
     }
 
@@ -975,18 +950,12 @@ impl Motion {
         let (new_point, goal) = match self {
             Left => (left(map, point, times), SelectionGoal::None),
             WrappingLeft => (wrapping_left(map, point, times), SelectionGoal::None),
-            Down {
-                display_lines: false,
-            } => up_down_buffer_rows(map, point, goal, times as isize, text_layout_details),
-            Down {
-                display_lines: true,
-            } => down_display(map, point, goal, times, text_layout_details),
-            Up {
-                display_lines: false,
-            } => up_down_buffer_rows(map, point, goal, 0 - times as isize, text_layout_details),
-            Up {
-                display_lines: true,
-            } => up_display(map, point, goal, times, text_layout_details),
+            Down { display_lines: false } => up_down_buffer_rows(map, point, goal, times as isize, text_layout_details),
+            Down { display_lines: true } => down_display(map, point, goal, times, text_layout_details),
+            Up { display_lines: false } => {
+                up_down_buffer_rows(map, point, goal, 0 - times as isize, text_layout_details)
+            }
+            Up { display_lines: true } => up_display(map, point, goal, times, text_layout_details),
             Right => (right(map, point, times), SelectionGoal::None),
             WrappingRight => (wrapping_right(map, point, times), SelectionGoal::None),
             NextWordStart { ignore_punctuation } => (
@@ -1021,14 +990,10 @@ impl Motion {
                 previous_subword_end(map, point, *ignore_punctuation, times),
                 SelectionGoal::None,
             ),
-            FirstNonWhitespace { display_lines } => (
-                first_non_whitespace(map, *display_lines, point),
-                SelectionGoal::None,
-            ),
-            StartOfLine { display_lines } => (
-                start_of_line(map, *display_lines, point),
-                SelectionGoal::None,
-            ),
+            FirstNonWhitespace { display_lines } => {
+                (first_non_whitespace(map, *display_lines, point), SelectionGoal::None)
+            }
+            StartOfLine { display_lines } => (start_of_line(map, *display_lines, point), SelectionGoal::None),
             MiddleOfLine { display_lines } => (
                 middle_of_line(map, *display_lines, point, maybe_times),
                 SelectionGoal::None,
@@ -1039,33 +1004,18 @@ impl Motion {
             ),
             SentenceBackward => (sentence_backwards(map, point, times), SelectionGoal::None),
             SentenceForward => (sentence_forwards(map, point, times), SelectionGoal::None),
-            StartOfParagraph => (
-                movement::start_of_paragraph(map, point, times),
-                SelectionGoal::None,
-            ),
+            StartOfParagraph => (movement::start_of_paragraph(map, point, times), SelectionGoal::None),
             EndOfParagraph => (
                 map.clip_at_line_end(movement::end_of_paragraph(map, point, times)),
                 SelectionGoal::None,
             ),
             CurrentLine => (next_line_end(map, point, times), SelectionGoal::None),
-            StartOfDocument => (
-                start_of_document(map, point, maybe_times),
-                SelectionGoal::None,
-            ),
-            EndOfDocument => (
-                end_of_document(map, point, maybe_times),
-                SelectionGoal::None,
-            ),
+            StartOfDocument => (start_of_document(map, point, maybe_times), SelectionGoal::None),
+            EndOfDocument => (end_of_document(map, point, maybe_times), SelectionGoal::None),
             Matching { match_quotes } => (matching(map, point, *match_quotes), SelectionGoal::None),
             GoToPercentage => (go_to_percentage(map, point, times), SelectionGoal::None),
-            UnmatchedForward { char } => (
-                unmatched_forward(map, point, *char, times),
-                SelectionGoal::None,
-            ),
-            UnmatchedBackward { char } => (
-                unmatched_backward(map, point, *char, times),
-                SelectionGoal::None,
-            ),
+            UnmatchedForward { char } => (unmatched_forward(map, point, *char, times), SelectionGoal::None),
+            UnmatchedBackward { char } => (unmatched_backward(map, point, *char, times), SelectionGoal::None),
             // t f
             FindForward {
                 before,
@@ -1110,11 +1060,9 @@ impl Motion {
                     mode,
                     smartcase,
                 } => {
-                    let mut new_point =
-                        find_forward(map, point, before, char, times, mode, smartcase);
+                    let mut new_point = find_forward(map, point, before, char, times, mode, smartcase);
                     if new_point == Some(point) {
-                        new_point =
-                            find_forward(map, point, before, char, times + 1, mode, smartcase);
+                        new_point = find_forward(map, point, before, char, times + 1, mode, smartcase);
                     }
 
                     return new_point.map(|new_point| (new_point, SelectionGoal::None));
@@ -1126,11 +1074,9 @@ impl Motion {
                     mode,
                     smartcase,
                 } => {
-                    let mut new_point =
-                        find_backward(map, point, after, char, times, mode, smartcase);
+                    let mut new_point = find_backward(map, point, after, char, times, mode, smartcase);
                     if new_point == point {
-                        new_point =
-                            find_backward(map, point, after, char, times + 1, mode, smartcase);
+                        new_point = find_backward(map, point, after, char, times + 1, mode, smartcase);
                     }
 
                     (new_point, SelectionGoal::None)
@@ -1140,11 +1086,9 @@ impl Motion {
                     second_char,
                     smartcase,
                 } => {
-                    let mut new_point =
-                        sneak(map, point, first_char, second_char, times, smartcase);
+                    let mut new_point = sneak(map, point, first_char, second_char, times, smartcase);
                     if new_point == Some(point) {
-                        new_point =
-                            sneak(map, point, first_char, second_char, times + 1, smartcase);
+                        new_point = sneak(map, point, first_char, second_char, times + 1, smartcase);
                     }
 
                     return new_point.map(|new_point| (new_point, SelectionGoal::None));
@@ -1155,17 +1099,9 @@ impl Motion {
                     second_char,
                     smartcase,
                 } => {
-                    let mut new_point =
-                        sneak_backward(map, point, first_char, second_char, times, smartcase);
+                    let mut new_point = sneak_backward(map, point, first_char, second_char, times, smartcase);
                     if new_point == Some(point) {
-                        new_point = sneak_backward(
-                            map,
-                            point,
-                            first_char,
-                            second_char,
-                            times + 1,
-                            smartcase,
-                        );
+                        new_point = sneak_backward(map, point, first_char, second_char, times + 1, smartcase);
                     }
 
                     return new_point.map(|new_point| (new_point, SelectionGoal::None));
@@ -1180,11 +1116,9 @@ impl Motion {
                     mode,
                     smartcase,
                 } => {
-                    let mut new_point =
-                        find_backward(map, point, before, char, times, mode, smartcase);
+                    let mut new_point = find_backward(map, point, before, char, times, mode, smartcase);
                     if new_point == point {
-                        new_point =
-                            find_backward(map, point, before, char, times + 1, mode, smartcase);
+                        new_point = find_backward(map, point, before, char, times + 1, mode, smartcase);
                     }
 
                     (new_point, SelectionGoal::None)
@@ -1196,11 +1130,9 @@ impl Motion {
                     mode,
                     smartcase,
                 } => {
-                    let mut new_point =
-                        find_forward(map, point, after, char, times, mode, smartcase);
+                    let mut new_point = find_forward(map, point, after, char, times, mode, smartcase);
                     if new_point == Some(point) {
-                        new_point =
-                            find_forward(map, point, after, char, times + 1, mode, smartcase);
+                        new_point = find_forward(map, point, after, char, times + 1, mode, smartcase);
                     }
 
                     return new_point.map(|new_point| (new_point, SelectionGoal::None));
@@ -1211,17 +1143,9 @@ impl Motion {
                     second_char,
                     smartcase,
                 } => {
-                    let mut new_point =
-                        sneak_backward(map, point, first_char, second_char, times, smartcase);
+                    let mut new_point = sneak_backward(map, point, first_char, second_char, times, smartcase);
                     if new_point == Some(point) {
-                        new_point = sneak_backward(
-                            map,
-                            point,
-                            first_char,
-                            second_char,
-                            times + 1,
-                            smartcase,
-                        );
+                        new_point = sneak_backward(map, point, first_char, second_char, times + 1, smartcase);
                     }
 
                     return new_point.map(|new_point| (new_point, SelectionGoal::None));
@@ -1232,11 +1156,9 @@ impl Motion {
                     second_char,
                     smartcase,
                 } => {
-                    let mut new_point =
-                        sneak(map, point, first_char, second_char, times, smartcase);
+                    let mut new_point = sneak(map, point, first_char, second_char, times, smartcase);
                     if new_point == Some(point) {
-                        new_point =
-                            sneak(map, point, first_char, second_char, times + 1, smartcase);
+                        new_point = sneak(map, point, first_char, second_char, times + 1, smartcase);
                     }
 
                     return new_point.map(|new_point| (new_point, SelectionGoal::None));
@@ -1256,10 +1178,7 @@ impl Motion {
                 // There will be only one selection, as
                 // Search::SelectNextMatch selects a single match.
                 if let Some(new_selection) = new_selections.first() {
-                    (
-                        new_selection.start.to_display_point(map),
-                        SelectionGoal::None,
-                    )
+                    (new_selection.start.to_display_point(map), SelectionGoal::None)
                 } else {
                     return None;
                 }
@@ -1297,14 +1216,8 @@ impl Motion {
                 method_motion(map, point, times, Direction::Prev, false),
                 SelectionGoal::None,
             ),
-            NextComment => (
-                comment_motion(map, point, times, Direction::Next),
-                SelectionGoal::None,
-            ),
-            PreviousComment => (
-                comment_motion(map, point, times, Direction::Prev),
-                SelectionGoal::None,
-            ),
+            NextComment => (comment_motion(map, point, times, Direction::Next), SelectionGoal::None),
+            PreviousComment => (comment_motion(map, point, times, Direction::Prev), SelectionGoal::None),
             PreviousLesserIndent => (
                 indent_motion(map, point, times, Direction::Prev, IndentType::Lesser),
                 SelectionGoal::None,
@@ -1347,9 +1260,7 @@ impl Motion {
             new_selections,
         } = self
         {
-            if let Some((prior_selection, new_selection)) =
-                prior_selections.first().zip(new_selections.first())
-            {
+            if let Some((prior_selection, new_selection)) = prior_selections.first().zip(new_selections.first()) {
                 let start = prior_selection
                     .start
                     .to_display_point(map)
@@ -1368,13 +1279,7 @@ impl Motion {
                 return None;
             }
         }
-        let maybe_new_point = self.move_point(
-            map,
-            selection.head(),
-            selection.goal,
-            times,
-            text_layout_details,
-        );
+        let maybe_new_point = self.move_point(map, selection.head(), selection.goal, times, text_layout_details);
 
         let (new_head, goal) = match (maybe_new_point, forced_motion) {
             (Some((p, g)), _) => Some((p, g)),
@@ -1391,10 +1296,7 @@ impl Motion {
             (kind, false) => kind,
         };
 
-        if let Motion::NextWordStart {
-            ignore_punctuation: _,
-        } = self
-        {
+        if let Motion::NextWordStart { ignore_punctuation: _ } = self {
             // Another special case: When using the "w" motion in combination with an
             // operator and the last word moved over is at the end of a line, the end of
             // that word becomes the end of the operated text, not the first word in the
@@ -1403,8 +1305,8 @@ impl Motion {
             let end = selection.end.to_point(map);
             let start_row = MultiBufferRow(selection.start.to_point(map).row);
             if end.row > start.row {
-                selection.end = Point::new(start_row.0, map.buffer_snapshot().line_len(start_row))
-                    .to_display_point(map);
+                selection.end =
+                    Point::new(start_row.0, map.buffer_snapshot().line_len(start_row)).to_display_point(map);
 
                 // a bit of a hack, we need `cw` on a blank line to not delete the newline,
                 // but dw on a blank line should. The `Linewise` returned from this method
@@ -1479,13 +1381,7 @@ impl Motion {
         text_layout_details: &TextLayoutDetails,
         forced_motion: bool,
     ) -> Option<MotionKind> {
-        let (range, kind) = self.range(
-            map,
-            selection.clone(),
-            times,
-            text_layout_details,
-            forced_motion,
-        )?;
+        let (range, kind) = self.range(map, selection.clone(), times, text_layout_details, forced_motion)?;
         selection.start = range.start;
         selection.end = range.end;
         Some(kind)
@@ -1502,11 +1398,7 @@ fn left(map: &DisplaySnapshot, mut point: DisplayPoint, times: usize) -> Display
     point
 }
 
-pub(crate) fn wrapping_left(
-    map: &DisplaySnapshot,
-    mut point: DisplayPoint,
-    times: usize,
-) -> DisplayPoint {
+pub(crate) fn wrapping_left(map: &DisplaySnapshot, mut point: DisplayPoint, times: usize) -> DisplayPoint {
     for _ in 0..times {
         point = movement::left(map, point);
         if point.is_zero() {
@@ -1583,19 +1475,13 @@ fn up_down_buffer_rows(
     let target = start.row() as isize + times;
     let new_row = (target.max(0) as u32).min(map.fold_snapshot().max_point().row());
 
-    let mut begin_folded_line = map.fold_point_to_display_point(
-        map.fold_snapshot()
-            .clip_point(FoldPoint::new(new_row, 0), bias),
-    );
+    let mut begin_folded_line =
+        map.fold_point_to_display_point(map.fold_snapshot().clip_point(FoldPoint::new(new_row, 0), bias));
 
     let mut i = 0;
     while i < goal_wrap && begin_folded_line.row() < map.max_point().row() {
         let next_folded_line = DisplayPoint::new(begin_folded_line.row().next_row(), 0);
-        if map
-            .display_point_to_fold_point(next_folded_line, bias)
-            .row()
-            == new_row
-        {
+        if map.display_point_to_fold_point(next_folded_line, bias).row() == new_row {
             i += 1;
             begin_folded_line = next_folded_line;
         } else {
@@ -1664,11 +1550,7 @@ pub(crate) fn right(map: &DisplaySnapshot, mut point: DisplayPoint, times: usize
     point
 }
 
-pub(crate) fn next_char(
-    map: &DisplaySnapshot,
-    point: DisplayPoint,
-    allow_cross_newline: bool,
-) -> DisplayPoint {
+pub(crate) fn next_char(map: &DisplaySnapshot, point: DisplayPoint, allow_cross_newline: bool) -> DisplayPoint {
     let mut new_point = point;
     let mut max_column = map.line_len(new_point.row());
     if !allow_cross_newline {
@@ -1730,21 +1612,16 @@ fn next_end_impl(
         } else {
             point
         };
-        let new_point = movement::find_boundary_exclusive(
-            map,
-            new_point,
-            FindRange::MultiLine,
-            |left, right| {
-                let at_newline = right == '\n';
+        let new_point = movement::find_boundary_exclusive(map, new_point, FindRange::MultiLine, |left, right| {
+            let at_newline = right == '\n';
 
-                if !allow_cross_newline && at_newline {
-                    need_next_char = true;
-                    return true;
-                }
+            if !allow_cross_newline && at_newline {
+                need_next_char = true;
+                return true;
+            }
 
-                is_boundary(left, right)
-            },
-        );
+            is_boundary(left, right)
+        });
         let new_point = if need_next_char {
             next_char(map, new_point, true)
         } else {
@@ -1772,18 +1649,11 @@ pub(crate) fn next_word_end(
         .char_classifier_at(point.to_point(map))
         .ignore_punctuation(ignore_punctuation);
 
-    next_end_impl(
-        map,
-        point,
-        times,
-        allow_cross_newline,
-        always_advance,
-        |left, right| {
-            let left_kind = classifier.kind(left);
-            let right_kind = classifier.kind(right);
-            left_kind != right_kind && left_kind != CharKind::Whitespace
-        },
-    )
+    next_end_impl(map, point, times, allow_cross_newline, always_advance, |left, right| {
+        let left_kind = classifier.kind(left);
+        let right_kind = classifier.kind(right);
+        left_kind != right_kind && left_kind != CharKind::Whitespace
+    })
 }
 
 pub(crate) fn next_subword_end(
@@ -1798,23 +1668,15 @@ pub(crate) fn next_subword_end(
         .char_classifier_at(point.to_point(map))
         .ignore_punctuation(ignore_punctuation);
 
-    next_end_impl(
-        map,
-        point,
-        times,
-        allow_cross_newline,
-        true,
-        |left, right| {
-            let left_kind = classifier.kind(left);
-            let right_kind = classifier.kind(right);
-            let is_stopping_punct = |c: char| ".\"'{}[]()<>".contains(c);
-            let found_subword_end = is_subword_end(left, right, "_-");
-            let is_word_end = (left_kind != right_kind)
-                && (!left.is_ascii_punctuation() || is_stopping_punct(left));
+    next_end_impl(map, point, times, allow_cross_newline, true, |left, right| {
+        let left_kind = classifier.kind(left);
+        let right_kind = classifier.kind(right);
+        let is_stopping_punct = |c: char| ".\"'{}[]()<>".contains(c);
+        let found_subword_end = is_subword_end(left, right, "_-");
+        let is_word_end = (left_kind != right_kind) && (!left.is_ascii_punctuation() || is_stopping_punct(left));
 
-            !left.is_whitespace() && (is_word_end || found_subword_end)
-        },
-    )
+        !left.is_whitespace() && (is_word_end || found_subword_end)
+    })
 }
 
 fn previous_word_start(
@@ -1830,17 +1692,13 @@ fn previous_word_start(
     for _ in 0..times {
         // This works even though find_preceding_boundary is called for every character in the line containing
         // cursor because the newline is checked only once.
-        let new_point = movement::find_preceding_boundary_display_point(
-            map,
-            point,
-            FindRange::MultiLine,
-            |left, right| {
+        let new_point =
+            movement::find_preceding_boundary_display_point(map, point, FindRange::MultiLine, |left, right| {
                 let left_kind = classifier.kind(left);
                 let right_kind = classifier.kind(right);
 
                 (left_kind != right_kind && !right.is_whitespace()) || left == '\n'
-            },
-        );
+            });
         if point == new_point {
             break;
         }
@@ -1924,8 +1782,8 @@ fn next_subword_start(
             let at_newline = right == '\n';
             let is_stopping_punct = |c: char| "\"'{}[]()<>".contains(c);
             let found_subword_start = is_subword_start(left, right, "._-");
-            let is_word_start = (left_kind != right_kind)
-                && (!right.is_ascii_punctuation() || is_stopping_punct(right));
+            let is_word_start =
+                (left_kind != right_kind) && (!right.is_ascii_punctuation() || is_stopping_punct(right));
             let found = (!right.is_whitespace() && (is_word_start || found_subword_start))
                 || at_newline && crossed_newline
                 || at_newline && left == '\n'; // Prevents skipping repeated empty lines
@@ -1955,18 +1813,15 @@ fn previous_subword_start(
         let mut crossed_newline = false;
         // This works even though find_preceding_boundary is called for every character in the line containing
         // cursor because the newline is checked only once.
-        let new_point = movement::find_preceding_boundary_display_point(
-            map,
-            point,
-            FindRange::MultiLine,
-            |left, right| {
+        let new_point =
+            movement::find_preceding_boundary_display_point(map, point, FindRange::MultiLine, |left, right| {
                 let left_kind = classifier.kind(left);
                 let right_kind = classifier.kind(right);
                 let at_newline = right == '\n';
 
                 let is_stopping_punct = |c: char| ".\"'{}[]()<>".contains(c);
-                let is_word_start = (left_kind != right_kind)
-                    && (is_stopping_punct(right) || !right.is_ascii_punctuation());
+                let is_word_start =
+                    (left_kind != right_kind) && (is_stopping_punct(right) || !right.is_ascii_punctuation());
                 let found_subword_start = is_subword_start(left, right, "._-");
 
                 let found = (!right.is_whitespace() && (is_word_start || found_subword_start))
@@ -1976,8 +1831,7 @@ fn previous_subword_start(
                 crossed_newline |= at_newline;
 
                 found
-            },
-        );
+            });
         if point == new_point {
             break;
         }
@@ -2020,8 +1874,7 @@ fn previous_subword_end(
                 }
 
                 match (left_kind, right_kind) {
-                    (CharKind::Word, CharKind::Whitespace)
-                    | (CharKind::Word, CharKind::Punctuation) => true,
+                    (CharKind::Word, CharKind::Whitespace) | (CharKind::Word, CharKind::Punctuation) => true,
                     (CharKind::Punctuation, _) if is_stopping_punct(left) => true,
                     (CharKind::Whitespace, CharKind::Whitespace) => left == '\n' && right == '\n',
                     _ => false,
@@ -2036,11 +1889,7 @@ fn previous_subword_end(
     movement::saturating_left(map, point.to_display_point(map))
 }
 
-pub(crate) fn first_non_whitespace(
-    map: &DisplaySnapshot,
-    display_lines: bool,
-    from: DisplayPoint,
-) -> DisplayPoint {
+pub(crate) fn first_non_whitespace(map: &DisplaySnapshot, display_lines: bool, from: DisplayPoint) -> DisplayPoint {
     let mut start_offset = start_of_line(map, display_lines, from).to_offset(map, Bias::Left);
     let classifier = map.buffer_snapshot().char_classifier_at(from.to_point(map));
     for (ch, offset) in map.buffer_chars_at(start_offset) {
@@ -2058,11 +1907,7 @@ pub(crate) fn first_non_whitespace(
     start_offset.to_display_point(map)
 }
 
-pub(crate) fn last_non_whitespace(
-    map: &DisplaySnapshot,
-    from: DisplayPoint,
-    count: usize,
-) -> DisplayPoint {
+pub(crate) fn last_non_whitespace(map: &DisplaySnapshot, from: DisplayPoint, count: usize) -> DisplayPoint {
     let mut end_of_line = end_of_line(map, false, from, count).to_offset(map, Bias::Left);
     let classifier = map.buffer_snapshot().char_classifier_at(from.to_point(map));
 
@@ -2086,11 +1931,7 @@ pub(crate) fn last_non_whitespace(
     end_of_line.to_display_point(map)
 }
 
-pub(crate) fn start_of_line(
-    map: &DisplaySnapshot,
-    display_lines: bool,
-    point: DisplayPoint,
-) -> DisplayPoint {
+pub(crate) fn start_of_line(map: &DisplaySnapshot, display_lines: bool, point: DisplayPoint) -> DisplayPoint {
     if display_lines {
         map.clip_point(DisplayPoint::new(point.row(), 0), Bias::Right)
     } else {
@@ -2111,18 +1952,13 @@ pub(crate) fn middle_of_line(
     };
     if display_lines {
         map.clip_point(
-            DisplayPoint::new(
-                point.row(),
-                (map.line_len(point.row()) as f64 * percent) as u32,
-            ),
+            DisplayPoint::new(point.row(), (map.line_len(point.row()) as f64 * percent) as u32),
             Bias::Left,
         )
     } else {
         let mut buffer_point = point.to_point(map);
-        buffer_point.column = (map
-            .buffer_snapshot()
-            .line_len(MultiBufferRow(buffer_point.row)) as f64
-            * percent) as u32;
+        buffer_point.column =
+            (map.buffer_snapshot().line_len(MultiBufferRow(buffer_point.row)) as f64 * percent) as u32;
 
         map.clip_point(buffer_point.to_display_point(map), Bias::Left)
     }
@@ -2138,27 +1974,17 @@ pub(crate) fn end_of_line(
         point = map.start_of_relative_buffer_row(point, times as isize - 1);
     }
     if display_lines {
-        map.clip_point(
-            DisplayPoint::new(point.row(), map.line_len(point.row())),
-            Bias::Left,
-        )
+        map.clip_point(DisplayPoint::new(point.row(), map.line_len(point.row())), Bias::Left)
     } else {
         map.clip_point(map.next_line_boundary(point.to_point(map)).1, Bias::Left)
     }
 }
 
-pub(crate) fn sentence_backwards(
-    map: &DisplaySnapshot,
-    point: DisplayPoint,
-    mut times: usize,
-) -> DisplayPoint {
+pub(crate) fn sentence_backwards(map: &DisplaySnapshot, point: DisplayPoint, mut times: usize) -> DisplayPoint {
     let mut start = point.to_point(map).to_offset(&map.buffer_snapshot());
     let mut chars = map.reverse_buffer_chars_at(start).peekable();
 
-    let mut was_newline = map
-        .buffer_chars_at(start)
-        .next()
-        .is_some_and(|(c, _)| c == '\n');
+    let mut was_newline = map.buffer_chars_at(start).next().is_some_and(|(c, _)| c == '\n');
 
     while let Some((ch, offset)) = chars.next() {
         let start_of_next_sentence = if was_newline && ch == '\n' {
@@ -2193,11 +2019,7 @@ pub(crate) fn sentence_backwards(
     DisplayPoint::zero()
 }
 
-pub(crate) fn sentence_forwards(
-    map: &DisplaySnapshot,
-    point: DisplayPoint,
-    mut times: usize,
-) -> DisplayPoint {
+pub(crate) fn sentence_forwards(map: &DisplaySnapshot, point: DisplayPoint, mut times: usize) -> DisplayPoint {
     let start = point.to_point(map).to_offset(&map.buffer_snapshot());
     let mut chars = map.buffer_chars_at(start).peekable();
 
@@ -2251,10 +2073,7 @@ fn next_non_blank(map: &DisplaySnapshot, start: MultiBufferOffset) -> MultiBuffe
 
 // given the offset after a ., !, or ? find the start of the next sentence.
 // if this is not a sentence boundary, returns None.
-fn start_of_next_sentence(
-    map: &DisplaySnapshot,
-    end_of_sentence: MultiBufferOffset,
-) -> Option<MultiBufferOffset> {
+fn start_of_next_sentence(map: &DisplaySnapshot, end_of_sentence: MultiBufferOffset) -> Option<MultiBufferOffset> {
     let chars = map.buffer_chars_at(end_of_sentence);
     let mut seen_space = false;
 
@@ -2308,19 +2127,12 @@ fn go_to_line(map: &DisplaySnapshot, display_point: DisplayPoint, line: usize) -
     }
 
     map.clip_point(
-        map.point_to_display_point(
-            map.buffer_snapshot().clip_point(point, Bias::Left),
-            Bias::Left,
-        ),
+        map.point_to_display_point(map.buffer_snapshot().clip_point(point, Bias::Left), Bias::Left),
         Bias::Left,
     )
 }
 
-fn start_of_document(
-    map: &DisplaySnapshot,
-    display_point: DisplayPoint,
-    maybe_times: Option<usize>,
-) -> DisplayPoint {
+fn start_of_document(map: &DisplaySnapshot, display_point: DisplayPoint, maybe_times: Option<usize>) -> DisplayPoint {
     if let Some(times) = maybe_times {
         return go_to_line(map, display_point, times);
     }
@@ -2330,19 +2142,12 @@ fn start_of_document(
     first_point.column = point.column;
 
     map.clip_point(
-        map.point_to_display_point(
-            map.buffer_snapshot().clip_point(first_point, Bias::Left),
-            Bias::Left,
-        ),
+        map.point_to_display_point(map.buffer_snapshot().clip_point(first_point, Bias::Left), Bias::Left),
         Bias::Left,
     )
 }
 
-fn end_of_document(
-    map: &DisplaySnapshot,
-    display_point: DisplayPoint,
-    maybe_times: Option<usize>,
-) -> DisplayPoint {
+fn end_of_document(map: &DisplaySnapshot, display_point: DisplayPoint, maybe_times: Option<usize>) -> DisplayPoint {
     if let Some(times) = maybe_times {
         return go_to_line(map, display_point, times);
     };
@@ -2351,10 +2156,7 @@ fn end_of_document(
     last_point.column = point.column;
 
     map.clip_point(
-        map.point_to_display_point(
-            map.buffer_snapshot().clip_point(last_point, Bias::Left),
-            Bias::Left,
-        ),
+        map.point_to_display_point(map.buffer_snapshot().clip_point(last_point, Bias::Left), Bias::Left),
         Bias::Left,
     )
 }
@@ -2439,11 +2241,7 @@ fn find_matching_bracket_text_based(
     None
 }
 
-fn matching(
-    map: &DisplaySnapshot,
-    display_point: DisplayPoint,
-    match_quotes: bool,
-) -> DisplayPoint {
+fn matching(map: &DisplaySnapshot, display_point: DisplayPoint, match_quotes: bool) -> DisplayPoint {
     if !map.is_singleton() {
         return display_point;
     }
@@ -2465,20 +2263,14 @@ fn matching(
         move |buffer: &language::BufferSnapshot,
               opening_range: Range<BufferOffset>,
               closing_range: Range<BufferOffset>| {
-            if !match_quotes
-                && buffer
-                    .chars_at(opening_range.start)
-                    .next()
-                    .is_some_and(is_quote_char)
-            {
+            if !match_quotes && buffer.chars_at(opening_range.start).next().is_some_and(is_quote_char) {
                 return false;
             }
 
             if require_on_bracket {
                 // Attempt to find the smallest enclosing bracket range that also contains
                 // the offset, which only happens if the cursor is currently in a bracket.
-                opening_range.contains(&BufferOffset(offset.0))
-                    || closing_range.contains(&BufferOffset(offset.0))
+                opening_range.contains(&BufferOffset(offset.0)) || closing_range.contains(&BufferOffset(offset.0))
             } else {
                 true
             }
@@ -2487,10 +2279,7 @@ fn matching(
 
     let bracket_ranges = snapshot
         .innermost_enclosing_bracket_ranges(offset..offset, Some(&make_range_filter(true)))
-        .or_else(|| {
-            snapshot
-                .innermost_enclosing_bracket_ranges(offset..offset, Some(&make_range_filter(false)))
-        });
+        .or_else(|| snapshot.innermost_enclosing_bracket_ranges(offset..offset, Some(&make_range_filter(false))));
 
     if let Some((opening_range, closing_range)) = bracket_ranges {
         let mut chars = map.buffer_snapshot().chars_at(offset);
@@ -2507,10 +2296,9 @@ fn matching(
     }
 
     let line_range = map.prev_line_boundary(point).0..line_end;
-    let visible_line_range =
-        line_range.start..Point::new(line_range.end.row, line_range.end.column.saturating_sub(1));
-    let line_range = line_range.start.to_offset(&map.buffer_snapshot())
-        ..line_range.end.to_offset(&map.buffer_snapshot());
+    let visible_line_range = line_range.start..Point::new(line_range.end.row, line_range.end.column.saturating_sub(1));
+    let line_range =
+        line_range.start.to_offset(&map.buffer_snapshot())..line_range.end.to_offset(&map.buffer_snapshot());
     let ranges = map.buffer_snapshot().bracket_ranges(visible_line_range);
     if let Some(ranges) = ranges {
         let mut closest_pair_destination = None;
@@ -2543,9 +2331,7 @@ fn matching(
                 }
             }
 
-            if (open_range.contains(&offset) || open_range.start >= offset)
-                && line_range.contains(&open_range.start)
-            {
+            if (open_range.contains(&offset) || open_range.start >= offset) && line_range.contains(&open_range.start) {
                 let distance = open_range.start.saturating_sub(offset);
                 if distance < closest_distance {
                     closest_pair_destination = Some(close_range.start);
@@ -2553,8 +2339,7 @@ fn matching(
                 }
             }
 
-            if (close_range.contains(&offset) || close_range.start >= offset)
-                && line_range.contains(&close_range.start)
+            if (close_range.contains(&offset) || close_range.start >= offset) && line_range.contains(&close_range.start)
             {
                 let distance = close_range.start.saturating_sub(offset);
                 if distance < closest_distance {
@@ -2589,19 +2374,11 @@ fn matching(
 fn go_to_percentage(map: &DisplaySnapshot, point: DisplayPoint, count: usize) -> DisplayPoint {
     let total_lines = map.buffer_snapshot().max_point().row + 1;
     let target_line = (count * total_lines as usize).div_ceil(100);
-    let target_point = DisplayPoint::new(
-        DisplayRow(target_line.saturating_sub(1) as u32),
-        point.column(),
-    );
+    let target_point = DisplayPoint::new(DisplayRow(target_line.saturating_sub(1) as u32), point.column());
     map.clip_point(target_point, Bias::Left)
 }
 
-fn unmatched_forward(
-    map: &DisplaySnapshot,
-    mut display_point: DisplayPoint,
-    char: char,
-    times: usize,
-) -> DisplayPoint {
+fn unmatched_forward(map: &DisplaySnapshot, mut display_point: DisplayPoint, char: char, times: usize) -> DisplayPoint {
     for _ in 0..times {
         // https://github.com/vim/vim/blob/1d87e11a1ef201b26ed87585fba70182ad0c468a/runtime/doc/motion.txt#L1245
         let point = display_point.to_point(map);
@@ -2782,27 +2559,18 @@ fn sneak(
 
     for _ in 0..times {
         found = false;
-        let new_to = find_boundary(
-            map,
-            movement::right(map, to),
-            FindRange::MultiLine,
-            |left, right| {
-                found = is_character_match(first_target, left, smartcase)
-                    && is_character_match(second_target, right, smartcase);
-                found
-            },
-        );
+        let new_to = find_boundary(map, movement::right(map, to), FindRange::MultiLine, |left, right| {
+            found = is_character_match(first_target, left, smartcase)
+                && is_character_match(second_target, right, smartcase);
+            found
+        });
         if to == new_to {
             break;
         }
         to = new_to;
     }
 
-    if found {
-        Some(movement::left(map, to))
-    } else {
-        None
-    }
+    if found { Some(movement::left(map, to)) } else { None }
 }
 
 fn sneak_backward(
@@ -2818,23 +2586,18 @@ fn sneak_backward(
 
     for _ in 0..times {
         found = false;
-        let new_to =
-            find_preceding_boundary_display_point(map, to, FindRange::MultiLine, |left, right| {
-                found = is_character_match(first_target, left, smartcase)
-                    && is_character_match(second_target, right, smartcase);
-                found
-            });
+        let new_to = find_preceding_boundary_display_point(map, to, FindRange::MultiLine, |left, right| {
+            found = is_character_match(first_target, left, smartcase)
+                && is_character_match(second_target, right, smartcase);
+            found
+        });
         if to == new_to {
             break;
         }
         to = new_to;
     }
 
-    if found {
-        Some(movement::left(map, to))
-    } else {
-        None
-    }
+    if found { Some(movement::left(map, to)) } else { None }
 }
 
 fn next_line_start(map: &DisplaySnapshot, point: DisplayPoint, times: usize) -> DisplayPoint {
@@ -2852,11 +2615,7 @@ fn go_to_column(map: &DisplaySnapshot, point: DisplayPoint, times: usize) -> Dis
     right(map, correct_line, times.saturating_sub(1))
 }
 
-pub(crate) fn next_line_end(
-    map: &DisplaySnapshot,
-    mut point: DisplayPoint,
-    times: usize,
-) -> DisplayPoint {
+pub(crate) fn next_line_end(map: &DisplaySnapshot, mut point: DisplayPoint, times: usize) -> DisplayPoint {
     if times > 1 {
         point = map.start_of_relative_buffer_row(point, times as isize - 1);
     }
@@ -2869,14 +2628,9 @@ fn window_top(
     text_layout_details: &TextLayoutDetails,
     mut times: usize,
 ) -> (DisplayPoint, SelectionGoal) {
-    let first_visible_line = text_layout_details
-        .scroll_anchor
-        .anchor
-        .to_display_point(map);
+    let first_visible_line = text_layout_details.scroll_anchor.anchor.to_display_point(map);
 
-    if first_visible_line.row() != DisplayRow(0)
-        && text_layout_details.vertical_scroll_margin as usize > times
-    {
+    if first_visible_line.row() != DisplayRow(0) && text_layout_details.vertical_scroll_margin as usize > times {
         times = text_layout_details.vertical_scroll_margin.ceil() as usize;
     }
 
@@ -2890,8 +2644,7 @@ fn window_top(
         let new_point = DisplayPoint::new(DisplayRow(new_row), new_col);
         (map.clip_point(new_point, Bias::Left), SelectionGoal::None)
     } else {
-        let new_row =
-            DisplayRow((first_visible_line.row().0 + (times as u32)).min(map.max_point().row().0));
+        let new_row = DisplayRow((first_visible_line.row().0 + (times as u32)).min(map.max_point().row().0));
         let new_col = point.column().min(map.line_len(first_visible_line.row()));
 
         let new_point = DisplayPoint::new(new_row, new_col);
@@ -2905,16 +2658,11 @@ fn window_middle(
     text_layout_details: &TextLayoutDetails,
 ) -> (DisplayPoint, SelectionGoal) {
     if let Some(visible_rows) = text_layout_details.visible_rows {
-        let first_visible_line = text_layout_details
-            .scroll_anchor
-            .anchor
-            .to_display_point(map);
+        let first_visible_line = text_layout_details.scroll_anchor.anchor.to_display_point(map);
 
-        let max_visible_rows =
-            (visible_rows as u32).min(map.max_point().row().0 - first_visible_line.row().0);
+        let max_visible_rows = (visible_rows as u32).min(map.max_point().row().0 - first_visible_line.row().0);
 
-        let new_row =
-            (first_visible_line.row().0 + (max_visible_rows / 2)).min(map.max_point().row().0);
+        let new_row = (first_visible_line.row().0 + (max_visible_rows / 2)).min(map.max_point().row().0);
         let new_row = DisplayRow(new_row);
         let new_col = point.column().min(map.line_len(new_row));
         let new_point = DisplayPoint::new(new_row, new_col);
@@ -2931,20 +2679,14 @@ fn window_bottom(
     mut times: usize,
 ) -> (DisplayPoint, SelectionGoal) {
     if let Some(visible_rows) = text_layout_details.visible_rows {
-        let first_visible_line = text_layout_details
-            .scroll_anchor
-            .anchor
-            .to_display_point(map);
+        let first_visible_line = text_layout_details.scroll_anchor.anchor.to_display_point(map);
         let bottom_row = first_visible_line.row().0
             + (visible_rows + text_layout_details.scroll_anchor.offset.y - 1.).floor() as u32;
-        if bottom_row < map.max_point().row().0
-            && text_layout_details.vertical_scroll_margin as usize > times
-        {
+        if bottom_row < map.max_point().row().0 && text_layout_details.vertical_scroll_margin as usize > times {
             times = text_layout_details.vertical_scroll_margin.ceil() as usize;
         }
         let bottom_row_capped = bottom_row.min(map.max_point().row().0);
-        let new_row = if bottom_row_capped.saturating_sub(times as u32) < first_visible_line.row().0
-        {
+        let new_row = if bottom_row_capped.saturating_sub(times as u32) < first_visible_line.row().0 {
             first_visible_line.row()
         } else {
             DisplayRow(bottom_row_capped.saturating_sub(times as u32))
@@ -3097,8 +2839,7 @@ fn section_motion(
             possibilities.sort_by_key(|(range_a, _)| range_a.start);
             let mut prev_end = None;
             let possibilities = possibilities.into_iter().filter_map(|(range, t)| {
-                if t == language::TextObject::AroundFunction
-                    && prev_end.is_some_and(|prev_end| prev_end > range.start)
+                if t == language::TextObject::AroundFunction && prev_end.is_some_and(|prev_end| prev_end > range.start)
                 {
                     return None;
                 }
@@ -3150,16 +2891,9 @@ fn matches_indent_type(
     indent_type: IndentType,
 ) -> bool {
     match indent_type {
-        IndentType::Lesser => {
-            target_indent.spaces < current_indent.spaces || target_indent.tabs < current_indent.tabs
-        }
-        IndentType::Greater => {
-            target_indent.spaces > current_indent.spaces || target_indent.tabs > current_indent.tabs
-        }
-        IndentType::Same => {
-            target_indent.spaces == current_indent.spaces
-                && target_indent.tabs == current_indent.tabs
-        }
+        IndentType::Lesser => target_indent.spaces < current_indent.spaces || target_indent.tabs < current_indent.tabs,
+        IndentType::Greater => target_indent.spaces > current_indent.spaces || target_indent.tabs > current_indent.tabs,
+        IndentType::Same => target_indent.spaces == current_indent.spaces && target_indent.tabs == current_indent.tabs,
     }
 }
 
@@ -3184,13 +2918,11 @@ fn indent_motion(
         let target_row = match direction {
             Direction::Next => (current_buffer_row + 1..=max_row).find(|&row| {
                 let indent = map.line_indent_for_buffer_row(MultiBufferRow(row));
-                !indent.is_line_empty()
-                    && matches_indent_type(&indent, &current_indent, indent_type)
+                !indent.is_line_empty() && matches_indent_type(&indent, &current_indent, indent_type)
             }),
             Direction::Prev => (0..current_buffer_row).rev().find(|&row| {
                 let indent = map.line_indent_for_buffer_row(MultiBufferRow(row));
-                !indent.is_line_empty()
-                    && matches_indent_type(&indent, &current_indent, indent_type)
+                !indent.is_line_empty() && matches_indent_type(&indent, &current_indent, indent_type)
             }),
         }
         .unwrap_or(current_buffer_row);
@@ -3296,8 +3028,7 @@ mod test {
         // Test that whitespace-only lines are NOT treated as paragraph boundaries
         // Per vim's :help paragraph - only truly empty lines are boundaries
         // Line 2 has 4 spaces (whitespace-only), line 4 is truly empty
-        cx.set_shared_state("ˇfirst\n    \nstill first\n\nsecond")
-            .await;
+        cx.set_shared_state("ˇfirst\n    \nstill first\n\nsecond").await;
         cx.simulate_shared_keystrokes("}").await;
 
         // Should skip whitespace-only line and stop at truly empty line
@@ -3321,9 +3052,7 @@ mod test {
             }"})
             .await;
         cx.simulate_shared_keystrokes("%").await;
-        cx.shared_state()
-            .await
-            .assert_eq(indoc! {r"func (a stringˇ) {
+        cx.shared_state().await.assert_eq(indoc! {r"func (a stringˇ) {
                 do(something(with<Types>.and_arrays[0, 2]))
             }"});
 
@@ -3333,9 +3062,7 @@ mod test {
             }"})
             .await;
         cx.simulate_shared_keystrokes("%").await;
-        cx.shared_state()
-            .await
-            .assert_eq(indoc! {r"func (a string) {
+        cx.shared_state().await.assert_eq(indoc! {r"func (a string) {
             do(something(with<Types>.and_arrays[0, 2]))
             ˇ}"});
 
@@ -3364,13 +3091,7 @@ mod test {
         // Bind % to Matching with match_quotes: false to match Neovim's behavior
         // (Neovim's % doesn't match quotes by default)
         cx.update(|_, cx| {
-            cx.bind_keys([KeyBinding::new(
-                "%",
-                Matching {
-                    match_quotes: false,
-                },
-                None,
-            )]);
+            cx.bind_keys([KeyBinding::new("%", Matching { match_quotes: false }, None)]);
         });
 
         cx.set_shared_state("one {two 'thˇree' four}").await;
@@ -3398,9 +3119,7 @@ mod test {
             }"})
             .await;
         cx.simulate_shared_keystrokes("%").await;
-        cx.shared_state()
-            .await
-            .assert_eq(indoc! {r"func (a string) {
+        cx.shared_state().await.assert_eq(indoc! {r"func (a string) {
                 doˇ('something'))
             }"});
     }
@@ -3455,9 +3174,7 @@ mod test {
             }"})
             .await;
         cx.simulate_shared_keystrokes("] }").await;
-        cx.shared_state()
-            .await
-            .assert_eq(indoc! {r"func (a string) {
+        cx.shared_state().await.assert_eq(indoc! {r"func (a string) {
                 do(something(with<Types>.and_arrays[0, 2]))
             ˇ}"});
 
@@ -3467,14 +3184,11 @@ mod test {
             }"})
             .await;
         cx.simulate_shared_keystrokes("] )").await;
-        cx.shared_state()
-            .await
-            .assert_eq(indoc! {r"func (a string) {
+        cx.shared_state().await.assert_eq(indoc! {r"func (a string) {
                 do(something(with<Types>.and_arrays[0, 2])ˇ)
             }"});
 
-        cx.set_shared_state(indoc! {r"func (a string) { a((b, cˇ))}"})
-            .await;
+        cx.set_shared_state(indoc! {r"func (a string) { a((b, cˇ))}"}).await;
         cx.simulate_shared_keystrokes("] )").await;
         cx.shared_state()
             .await
@@ -3507,9 +3221,7 @@ mod test {
             }"})
             .await;
         cx.simulate_shared_keystrokes("[ {").await;
-        cx.shared_state()
-            .await
-            .assert_eq(indoc! {r"func (a string) ˇ{
+        cx.shared_state().await.assert_eq(indoc! {r"func (a string) ˇ{
                 do(something(with<Types>.and_arrays[0, 2]))
             }"});
 
@@ -3519,9 +3231,7 @@ mod test {
             }"})
             .await;
         cx.simulate_shared_keystrokes("[ (").await;
-        cx.shared_state()
-            .await
-            .assert_eq(indoc! {r"func (a string) {
+        cx.shared_state().await.assert_eq(indoc! {r"func (a string) {
                 doˇ(something(with<Types>.and_arrays[0, 2]))
             }"});
 
@@ -3640,15 +3350,11 @@ mod test {
 
         cx.set_shared_state(indoc! {r"<bˇody></body>"}).await;
         cx.simulate_shared_keystrokes("%").await;
-        cx.shared_state()
-            .await
-            .assert_eq(indoc! {r"<body><ˇ/body>"});
+        cx.shared_state().await.assert_eq(indoc! {r"<body><ˇ/body>"});
         cx.simulate_shared_keystrokes("%").await;
 
         // test jumping backwards
-        cx.shared_state()
-            .await
-            .assert_eq(indoc! {r"<ˇbody></body>"});
+        cx.shared_state().await.assert_eq(indoc! {r"<ˇbody></body>"});
 
         // test self-closing tags
         cx.set_shared_state(indoc! {r"<a><bˇr/></a>"}).await;
@@ -3661,9 +3367,7 @@ mod test {
             "})
             .await;
         cx.simulate_shared_keystrokes("%").await;
-        cx.shared_state()
-            .await
-            .assert_eq(indoc! {r"<div class='test' id='main'>
+        cx.shared_state().await.assert_eq(indoc! {r"<div class='test' id='main'>
             <ˇ/div>
             "});
 
@@ -3703,13 +3407,7 @@ mod test {
     async fn test_matching_tag_with_quotes(cx: &mut gpui::TestAppContext) {
         let mut cx = NeovimBackedTestContext::new_html(cx).await;
         cx.update(|_, cx| {
-            cx.bind_keys([KeyBinding::new(
-                "%",
-                Matching {
-                    match_quotes: false,
-                },
-                None,
-            )]);
+            cx.bind_keys([KeyBinding::new("%", Matching { match_quotes: false }, None)]);
         });
 
         cx.neovim.exec("set filetype=html").await;
@@ -3718,9 +3416,7 @@ mod test {
             "})
             .await;
         cx.simulate_shared_keystrokes("%").await;
-        cx.shared_state()
-            .await
-            .assert_eq(indoc! {r"<div class='test' id='main'>
+        cx.shared_state().await.assert_eq(indoc! {r"<div class='test' id='main'>
             <ˇ/div>
             "});
 
@@ -3733,9 +3429,7 @@ mod test {
             "})
             .await;
         cx.simulate_shared_keystrokes("%").await;
-        cx.shared_state()
-            .await
-            .assert_eq(indoc! {r"<div class='test' id='main'>
+        cx.shared_state().await.assert_eq(indoc! {r"<div class='test' id='main'>
             <ˇ/div>
             "});
     }

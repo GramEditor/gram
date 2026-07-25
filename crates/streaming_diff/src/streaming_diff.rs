@@ -44,11 +44,7 @@ impl Matrix {
 
         unsafe {
             let ptr = self.cells.as_mut_ptr();
-            std::ptr::swap_nonoverlapping(
-                ptr.add(col1 * self.rows),
-                ptr.add(col2 * self.rows),
-                self.rows,
-            );
+            std::ptr::swap_nonoverlapping(ptr.add(col1 * self.rows), ptr.add(col2 * self.rows), self.rows);
         }
     }
 
@@ -139,8 +135,7 @@ impl StreamingDiff {
         for j in self.new_text_ix + 1..=self.new.len() {
             let relative_j = j - self.new_text_ix;
 
-            self.scores
-                .set(0, relative_j, j as f64 * Self::INSERTION_SCORE);
+            self.scores.set(0, relative_j, j as f64 * Self::INSERTION_SCORE);
             for i in 1..=self.old.len() {
                 let insertion_score = self.scores.get(i, relative_j - 1) + Self::INSERTION_SCORE;
                 let deletion_score = self.scores.get(i - 1, relative_j) + Self::DELETION_SCORE;
@@ -183,16 +178,8 @@ impl StreamingDiff {
         let mut i = old_text_ix;
         let mut j = new_text_ix;
         while (i, j) != (self.old_text_ix, self.new_text_ix) {
-            let insertion_score = if j > self.new_text_ix {
-                Some((i, j - 1))
-            } else {
-                None
-            };
-            let deletion_score = if i > self.old_text_ix {
-                Some((i - 1, j))
-            } else {
-                None
-            };
+            let insertion_score = if j > self.new_text_ix { Some((i, j - 1)) } else { None };
+            let deletion_score = if i > self.old_text_ix { Some((i - 1, j)) } else { None };
             let equality_score = if i > self.old_text_ix && j > self.new_text_ix {
                 if self.old[i - 1] == self.new[j - 1] {
                     Some((i - 1, j - 1))
@@ -205,9 +192,7 @@ impl StreamingDiff {
 
             let (prev_i, prev_j) = [insertion_score, deletion_score, equality_score]
                 .iter()
-                .max_by_key(|cell| {
-                    cell.map(|(i, j)| OrderedFloat(self.scores.get(i, j - self.new_text_ix)))
-                })
+                .max_by_key(|cell| cell.map(|(i, j)| OrderedFloat(self.scores.get(i, j - self.new_text_ix))))
                 .unwrap()
                 .unwrap();
 
@@ -349,8 +334,7 @@ impl LineDiff {
             }
         } else if is_line_end(self.old_end, old_text) {
             if self.buffered_insert.starts_with('\n') {
-                self.inserted_rows
-                    .extend(new_start.row + 1..=self.new_end.row);
+                self.inserted_rows.extend(new_start.row + 1..=self.new_end.row);
                 self.inserted_newline_at_end = true;
             } else {
                 if !self.inserted_newline_at_end {
@@ -372,12 +356,10 @@ impl LineDiff {
         }
 
         let old_start = self.old_end;
-        self.old_end =
-            old_text.offset_to_point(old_text.point_to_offset(self.old_end) + self.buffered_delete);
+        self.old_end = old_text.offset_to_point(old_text.point_to_offset(self.old_end) + self.buffered_delete);
 
         if is_line_end(old_start, old_text) && is_line_end(self.old_end, old_text) {
-            self.deleted_rows
-                .extend(old_start.row + 1..=self.old_end.row);
+            self.deleted_rows.extend(old_start.row + 1..=self.old_end.row);
         } else if is_line_start(old_start)
             && (is_line_start(self.old_end) && self.old_end < old_text.max_point())
             && self.new_end.column == 0
@@ -397,8 +379,7 @@ impl LineDiff {
             return;
         }
 
-        let lines =
-            old_text.offset_to_point(old_text.point_to_offset(self.old_end) + bytes) - self.old_end;
+        let lines = old_text.offset_to_point(old_text.point_to_offset(self.old_end) + bytes) - self.old_end;
         self.old_end += lines;
         self.new_end += lines;
         self.inserted_newline_at_end = false;
@@ -465,15 +446,9 @@ impl LineDiff {
                 inserted_rows.next();
             } else {
                 // Keep lines until the next deletion, insertion, or the end of the old text.
-                let lines_to_next_deletion = inserted_rows
-                    .peek()
-                    .copied()
-                    .unwrap_or(self.new_end.row + 1)
-                    - new_row;
-                let lines_to_next_insertion =
-                    deleted_rows.peek().copied().unwrap_or(self.old_end.row + 1) - old_row;
-                let kept_lines =
-                    cmp::max(1, cmp::min(lines_to_next_insertion, lines_to_next_deletion));
+                let lines_to_next_deletion = inserted_rows.peek().copied().unwrap_or(self.new_end.row + 1) - new_row;
+                let lines_to_next_insertion = deleted_rows.peek().copied().unwrap_or(self.old_end.row + 1) - old_row;
+                let kept_lines = cmp::max(1, cmp::min(lines_to_next_insertion, lines_to_next_deletion));
                 if kept_lines > 0 {
                     ops.push(LineOperation::Keep { lines: kept_lines });
                     old_row += kept_lines;
@@ -509,19 +484,10 @@ mod tests {
     #[test]
     fn test_delete_first_of_two_lines() {
         let old_text = "aaaa\nbbbb";
-        let char_ops = vec![
-            CharOperation::Delete { bytes: 5 },
-            CharOperation::Keep { bytes: 4 },
-        ];
-        let expected_line_ops = vec![
-            LineOperation::Delete { lines: 1 },
-            LineOperation::Keep { lines: 1 },
-        ];
+        let char_ops = vec![CharOperation::Delete { bytes: 5 }, CharOperation::Keep { bytes: 4 }];
+        let expected_line_ops = vec![LineOperation::Delete { lines: 1 }, LineOperation::Keep { lines: 1 }];
         let new_text = apply_char_operations(old_text, &char_ops);
-        assert_eq!(
-            new_text,
-            apply_line_operations(old_text, &new_text, &expected_line_ops)
-        );
+        assert_eq!(new_text, apply_line_operations(old_text, &new_text, &expected_line_ops));
 
         let line_ops = char_ops_to_line_ops(old_text, &char_ops);
         assert_eq!(line_ops, expected_line_ops);
@@ -530,10 +496,7 @@ mod tests {
     #[test]
     fn test_delete_second_of_two_lines() {
         let old_text = "aaaa\nbbbb";
-        let char_ops = vec![
-            CharOperation::Keep { bytes: 5 },
-            CharOperation::Delete { bytes: 4 },
-        ];
+        let char_ops = vec![CharOperation::Keep { bytes: 5 }, CharOperation::Delete { bytes: 4 }];
         let line_ops = char_ops_to_line_ops(old_text, &char_ops);
         assert_eq!(
             line_ops,
@@ -544,10 +507,7 @@ mod tests {
             ]
         );
         let new_text = apply_char_operations(old_text, &char_ops);
-        assert_eq!(
-            new_text,
-            apply_line_operations(old_text, &new_text, &line_ops)
-        );
+        assert_eq!(new_text, apply_line_operations(old_text, &new_text, &line_ops));
     }
 
     #[test]
@@ -555,23 +515,15 @@ mod tests {
         let old_text = "aaaa\nbbbb";
         let char_ops = vec![
             CharOperation::Keep { bytes: 9 },
-            CharOperation::Insert {
-                text: "\ncccc".into(),
-            },
+            CharOperation::Insert { text: "\ncccc".into() },
         ];
         let line_ops = char_ops_to_line_ops(old_text, &char_ops);
         assert_eq!(
             line_ops,
-            vec![
-                LineOperation::Keep { lines: 2 },
-                LineOperation::Insert { lines: 1 }
-            ]
+            vec![LineOperation::Keep { lines: 2 }, LineOperation::Insert { lines: 1 }]
         );
         let new_text = apply_char_operations(old_text, &char_ops);
-        assert_eq!(
-            new_text,
-            apply_line_operations(old_text, &new_text, &line_ops)
-        );
+        assert_eq!(new_text, apply_line_operations(old_text, &new_text, &line_ops));
     }
 
     #[test]
@@ -592,10 +544,7 @@ mod tests {
             ]
         );
         let new_text = apply_char_operations(old_text, &char_ops);
-        assert_eq!(
-            new_text,
-            apply_line_operations(old_text, &new_text, &line_ops)
-        );
+        assert_eq!(new_text, apply_line_operations(old_text, &new_text, &line_ops));
     }
 
     #[test]
@@ -604,9 +553,7 @@ mod tests {
         let char_ops = vec![
             CharOperation::Keep { bytes: 5 },
             CharOperation::Delete { bytes: 4 },
-            CharOperation::Insert {
-                text: "BBBB".into(),
-            },
+            CharOperation::Insert { text: "BBBB".into() },
             CharOperation::Keep { bytes: 5 },
         ];
         let line_ops = char_ops_to_line_ops(old_text, &char_ops);
@@ -620,10 +567,7 @@ mod tests {
             ]
         );
         let new_text = apply_char_operations(old_text, &char_ops);
-        assert_eq!(
-            new_text,
-            apply_line_operations(old_text, &new_text, &line_ops)
-        );
+        assert_eq!(new_text, apply_line_operations(old_text, &new_text, &line_ops));
     }
 
     #[test]
@@ -634,9 +578,7 @@ mod tests {
             CharOperation::Keep { bytes: 9 },
             CharOperation::Delete { bytes: 5 },
             CharOperation::Keep { bytes: 4 },
-            CharOperation::Insert {
-                text: "\nEEEE".into(),
-            },
+            CharOperation::Insert { text: "\nEEEE".into() },
         ];
         let line_ops = char_ops_to_line_ops(old_text, &char_ops);
         assert_eq!(
@@ -650,10 +592,7 @@ mod tests {
             ]
         );
         let new_text = apply_char_operations(old_text, &char_ops);
-        assert_eq!(
-            new_text,
-            apply_line_operations(old_text, &new_text, &line_ops)
-        );
+        assert_eq!(new_text, apply_line_operations(old_text, &new_text, &line_ops));
     }
 
     #[test]
@@ -674,10 +613,7 @@ mod tests {
             ]
         );
         let new_text = apply_char_operations(old_text, &char_ops);
-        assert_eq!(
-            new_text,
-            apply_line_operations(old_text, &new_text, &line_ops)
-        );
+        assert_eq!(new_text, apply_line_operations(old_text, &new_text, &line_ops));
     }
 
     #[test]
@@ -692,15 +628,9 @@ mod tests {
         let line_ops = char_ops_to_line_ops(old_text, &char_ops);
         assert_eq!(
             line_ops,
-            vec![
-                LineOperation::Delete { lines: 1 },
-                LineOperation::Insert { lines: 2 }
-            ]
+            vec![LineOperation::Delete { lines: 1 }, LineOperation::Insert { lines: 2 }]
         );
-        assert_eq!(
-            new_text,
-            apply_line_operations(old_text, &new_text, &line_ops)
-        );
+        assert_eq!(new_text, apply_line_operations(old_text, &new_text, &line_ops));
     }
 
     #[test]
@@ -713,16 +643,10 @@ mod tests {
         let line_ops = char_ops_to_line_ops(old_text, &char_ops);
         assert_eq!(
             line_ops,
-            vec![
-                LineOperation::Insert { lines: 1 },
-                LineOperation::Keep { lines: 2 }
-            ]
+            vec![LineOperation::Insert { lines: 1 }, LineOperation::Keep { lines: 2 }]
         );
         let new_text = apply_char_operations(old_text, &char_ops);
-        assert_eq!(
-            new_text,
-            apply_line_operations(old_text, &new_text, &line_ops)
-        );
+        assert_eq!(new_text, apply_line_operations(old_text, &new_text, &line_ops));
     }
 
     #[test]
@@ -736,17 +660,11 @@ mod tests {
         let line_ops = char_ops_to_line_ops(old_text, &char_ops);
         assert_eq!(
             line_ops,
-            vec![
-                LineOperation::Delete { lines: 2 },
-                LineOperation::Insert { lines: 1 }
-            ]
+            vec![LineOperation::Delete { lines: 2 }, LineOperation::Insert { lines: 1 }]
         );
 
         let new_text = apply_char_operations(old_text, &char_ops);
-        assert_eq!(
-            new_text,
-            apply_line_operations(old_text, &new_text, &line_ops)
-        );
+        assert_eq!(new_text, apply_line_operations(old_text, &new_text, &line_ops));
     }
 
     #[test]
@@ -754,9 +672,7 @@ mod tests {
         let old_text = "aaaa\nbbbb";
         let char_ops = vec![
             CharOperation::Keep { bytes: 5 },
-            CharOperation::Insert {
-                text: "\n\n".into(),
-            },
+            CharOperation::Insert { text: "\n\n".into() },
             CharOperation::Keep { bytes: 4 },
         ];
         let line_ops = char_ops_to_line_ops(old_text, &char_ops);
@@ -769,10 +685,7 @@ mod tests {
             ]
         );
         let new_text = apply_char_operations(old_text, &char_ops);
-        assert_eq!(
-            new_text,
-            apply_line_operations(old_text, &new_text, &line_ops)
-        );
+        assert_eq!(new_text, apply_line_operations(old_text, &new_text, &line_ops));
     }
 
     #[test]
@@ -793,10 +706,7 @@ mod tests {
             ]
         );
         let new_text = apply_char_operations(old_text, &char_ops);
-        assert_eq!(
-            new_text,
-            apply_line_operations(old_text, &new_text, &line_ops)
-        );
+        assert_eq!(new_text, apply_line_operations(old_text, &new_text, &line_ops));
     }
 
     #[test]
@@ -828,10 +738,7 @@ mod tests {
         );
         let new_text = apply_char_operations(old_text, &char_ops);
         assert_eq!(new_text, "line1\ninserted\nline3\nnewline\nline4");
-        assert_eq!(
-            apply_line_operations(old_text, &new_text, &line_ops),
-            new_text,
-        );
+        assert_eq!(apply_line_operations(old_text, &new_text, &line_ops), new_text,);
     }
 
     #[test]
@@ -845,9 +752,7 @@ mod tests {
         let char_ops = [
             CharOperation::Keep { bytes: 8 },
             CharOperation::Insert { text: "let".into() },
-            CharOperation::Insert {
-                text: " mut".into(),
-            },
+            CharOperation::Insert { text: " mut".into() },
             CharOperation::Insert { text: " y".into() },
             CharOperation::Insert { text: " =".into() },
             CharOperation::Insert { text: " 0".into() },
@@ -857,9 +762,7 @@ mod tests {
                 text: "        while".into(),
             },
             CharOperation::Insert { text: " y".into() },
-            CharOperation::Insert {
-                text: " < size".into(),
-            },
+            CharOperation::Insert { text: " < size".into() },
             CharOperation::Insert { text: ".".into() },
             CharOperation::Insert { text: "y".into() },
             CharOperation::Insert { text: "()".into() },
@@ -871,9 +774,7 @@ mod tests {
             CharOperation::Keep { bytes: 23 },
             CharOperation::Keep { bytes: 1 },
             CharOperation::Keep { bytes: 8 },
-            CharOperation::Insert {
-                text: "    y".into(),
-            },
+            CharOperation::Insert { text: "    y".into() },
             CharOperation::Insert { text: " +=".into() },
             CharOperation::Insert { text: " 1".into() },
             CharOperation::Insert { text: ";".into() },
@@ -895,10 +796,7 @@ mod tests {
             ]
         );
         let new_text = apply_char_operations(old_text, &char_ops);
-        assert_eq!(
-            new_text,
-            apply_line_operations(old_text, &new_text, &line_ops)
-        );
+        assert_eq!(new_text, apply_line_operations(old_text, &new_text, &line_ops));
     }
 
     #[test]
@@ -971,10 +869,7 @@ mod tests {
             .map(|s| s.parse().expect("invalid `SEED` variable"))
             .unwrap_or(0);
 
-        println!(
-            "Running test with {} iterations and seed {}",
-            iterations, seed
-        );
+        println!("Running test with {} iterations and seed {}", iterations, seed);
 
         for i in 0..iterations {
             println!("Iteration {}", i + 1);

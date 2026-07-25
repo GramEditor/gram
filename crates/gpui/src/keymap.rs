@@ -94,14 +94,11 @@ impl Keymap {
                 if null_ix > ix {
                     let null_binding = &self.bindings[*null_ix];
                     if null_binding.keystrokes == binding.keystrokes {
-                        let null_binding_matches =
-                            match (&null_binding.context_predicate, &binding.context_predicate) {
-                                (None, _) => true,
-                                (Some(_), None) => false,
-                                (Some(null_predicate), Some(predicate)) => {
-                                    null_predicate.is_superset(predicate)
-                                }
-                            };
+                        let null_binding_matches = match (&null_binding.context_predicate, &binding.context_predicate) {
+                            (None, _) => true,
+                            (Some(_), None) => false,
+                            (Some(null_predicate), Some(predicate)) => null_predicate.is_superset(predicate),
+                        };
                         if null_binding_matches {
                             return None;
                         }
@@ -118,11 +115,7 @@ impl Keymap {
     pub fn all_bindings_for_input(&self, input: &[Keystroke]) -> Vec<KeyBinding> {
         self.bindings()
             .rev()
-            .filter(|binding| {
-                binding
-                    .match_keystrokes(input)
-                    .is_some_and(|pending| !pending)
-            })
+            .filter(|binding| binding.match_keystrokes(input).is_some_and(|pending| !pending))
             .cloned()
             .collect()
     }
@@ -164,9 +157,7 @@ impl Keymap {
             }
         }
 
-        matched_bindings.sort_by(|(depth_a, ix_a, _), (depth_b, ix_b, _)| {
-            depth_b.cmp(depth_a).then(ix_b.cmp(ix_a))
-        });
+        matched_bindings.sort_by(|(depth_a, ix_a, _), (depth_b, ix_b, _)| depth_b.cmp(depth_a).then(ix_b.cmp(ix_a)));
 
         let mut bindings: SmallVec<[_; 1]> = SmallVec::new();
         let mut first_binding_index = None;
@@ -241,9 +232,7 @@ impl Keymap {
             })
             .collect::<Vec<_>>();
 
-        bindings.sort_by(|(depth_a, ix_a, _), (depth_b, ix_b, _)| {
-            depth_b.cmp(depth_a).then(ix_b.cmp(ix_a))
-        });
+        bindings.sort_by(|(depth_a, ix_a, _), (depth_b, ix_b, _)| depth_b.cmp(depth_a).then(ix_b.cmp(ix_a)));
 
         bindings
             .into_iter()
@@ -258,10 +247,7 @@ mod tests {
     use crate as gpui;
     use gpui::NoAction;
 
-    actions!(
-        test_only,
-        [ActionAlpha, ActionBeta, ActionGamma, ActionDelta,]
-    );
+    actions!(test_only, [ActionAlpha, ActionBeta, ActionGamma, ActionDelta,]);
 
     #[test]
     fn test_keymap() {
@@ -296,10 +282,7 @@ mod tests {
             None
         );
         assert_eq!(
-            keymap.binding_enabled(
-                &bindings[2],
-                &[KeyContext::parse("editor mode=full").unwrap()]
-            ),
+            keymap.binding_enabled(&bindings[2], &[KeyContext::parse("editor mode=full").unwrap()]),
             Some(1)
         );
     }
@@ -316,10 +299,7 @@ mod tests {
 
         let (result, pending) = keymap.bindings_for_input(
             &[Keystroke::parse("ctrl-a").unwrap()],
-            &[
-                KeyContext::parse("pane").unwrap(),
-                KeyContext::parse("editor").unwrap(),
-            ],
+            &[KeyContext::parse("pane").unwrap(), KeyContext::parse("editor").unwrap()],
         );
 
         assert!(!pending);

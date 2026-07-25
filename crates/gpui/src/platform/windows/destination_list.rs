@@ -79,10 +79,8 @@ const PKEY_TITLE: PROPERTYKEY = PROPERTYKEY {
     pid: 2,
 };
 
-fn create_destination_list() -> anyhow::Result<(ICustomDestinationList, Vec<SmallVec<[PathBuf; 2]>>)>
-{
-    let list: ICustomDestinationList =
-        unsafe { CoCreateInstance(&DestinationList, None, CLSCTX_INPROC_SERVER) }?;
+fn create_destination_list() -> anyhow::Result<(ICustomDestinationList, Vec<SmallVec<[PathBuf; 2]>>)> {
+    let list: ICustomDestinationList = unsafe { CoCreateInstance(&DestinationList, None, CLSCTX_INPROC_SERVER) }?;
 
     let mut slots = 0;
     let user_removed: IObjectArray = unsafe { list.BeginList(&mut slots) }?;
@@ -111,13 +109,9 @@ fn create_destination_list() -> anyhow::Result<(ICustomDestinationList, Vec<Smal
     Ok((list, removed))
 }
 
-fn add_dock_menu(
-    list: &ICustomDestinationList,
-    dock_menus: &[(SharedString, SharedString)],
-) -> anyhow::Result<()> {
+fn add_dock_menu(list: &ICustomDestinationList, dock_menus: &[(SharedString, SharedString)]) -> anyhow::Result<()> {
     unsafe {
-        let tasks: IObjectCollection =
-            CoCreateInstance(&EnumerableObjectCollection, None, CLSCTX_INPROC_SERVER)?;
+        let tasks: IObjectCollection = CoCreateInstance(&EnumerableObjectCollection, None, CLSCTX_INPROC_SERVER)?;
         for (idx, (name, description)) in dock_menus.iter().enumerate() {
             let argument = HSTRING::from(format!("--dock-action {}", idx));
             let description = HSTRING::from(description.as_str());
@@ -136,8 +130,7 @@ fn add_recent_folders(
     removed: &Vec<SmallVec<[PathBuf; 2]>>,
 ) -> anyhow::Result<()> {
     unsafe {
-        let tasks: IObjectCollection =
-            CoCreateInstance(&EnumerableObjectCollection, None, CLSCTX_INPROC_SERVER)?;
+        let tasks: IObjectCollection = CoCreateInstance(&EnumerableObjectCollection, None, CLSCTX_INPROC_SERVER)?;
 
         for folder_path in entries.iter().filter(|path| !removed.contains(path)) {
             let argument = HSTRING::from(
@@ -167,12 +160,7 @@ fn add_recent_folders(
                 })
                 .join(", ");
 
-            tasks.AddObject(&create_shell_link(
-                argument,
-                description,
-                Some(icon),
-                &display,
-            )?)?;
+            tasks.AddObject(&create_shell_link(argument, description, Some(icon), &display)?)?;
         }
 
         if tasks.GetCount().unwrap_or(0) > 0 {

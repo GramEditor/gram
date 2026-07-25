@@ -1,6 +1,5 @@
 use gpui::{
-    App, Application, Bounds, Context, Hsla, Window, WindowBounds, WindowOptions, div, prelude::*,
-    px, rgb, size,
+    App, Application, Bounds, Context, Hsla, Window, WindowBounds, WindowOptions, div, prelude::*, px, rgb, size,
 };
 
 // https://en.wikipedia.org/wiki/Holy_grail_(web_design)
@@ -29,24 +28,9 @@ impl Render for HolyGrailExample {
             .size_full()
             .grid_cols(5)
             .grid_rows(5)
-            .child(
-                block(gpui::white())
-                    .row_span(1)
-                    .col_span_full()
-                    .child("Header"),
-            )
-            .child(
-                block(gpui::red())
-                    .col_span(1)
-                    .h_56()
-                    .child("Table of contents"),
-            )
-            .child(
-                block(gpui::green())
-                    .col_span(3)
-                    .row_span(3)
-                    .child("Content"),
-            )
+            .child(block(gpui::white()).row_span(1).col_span_full().child("Header"))
+            .child(block(gpui::red()).col_span(1).h_56().child("Table of contents"))
+            .child(block(gpui::green()).col_span(3).row_span(3).child("Content"))
             .child(
                 block(gpui::blue())
                     .col_span(1)

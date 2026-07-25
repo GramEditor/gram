@@ -62,20 +62,12 @@ impl VsCodeSettings {
                     .join("\n")
             ));
         };
-        let content = fs.load(&path).await.with_context(|| {
-            format!(
-                "Error loading {} settings file from {}",
-                source,
-                path.display()
-            )
-        })?;
-        let content = serde_json_lenient::from_str(&content).with_context(|| {
-            format!(
-                "Error parsing {} settings file from {}",
-                source,
-                path.display()
-            )
-        })?;
+        let content = fs
+            .load(&path)
+            .await
+            .with_context(|| format!("Error loading {} settings file from {}", source, path.display()))?;
+        let content = serde_json_lenient::from_str(&content)
+            .with_context(|| format!("Error parsing {} settings file from {}", source, path.display()))?;
         Ok(Self {
             source,
             path: path.into(),
@@ -92,9 +84,7 @@ impl VsCodeSettings {
     }
 
     fn read_string(&self, setting: &str) -> Option<String> {
-        self.read_value(setting)
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_owned())
+        self.read_value(setting).and_then(|v| v.as_str()).map(|s| s.to_owned())
     }
 
     fn read_bool(&self, setting: &str) -> Option<bool> {
@@ -102,9 +92,7 @@ impl VsCodeSettings {
     }
 
     fn read_f32(&self, setting: &str) -> Option<f32> {
-        self.read_value(setting)
-            .and_then(|v| v.as_f64())
-            .map(|v| v as f32)
+        self.read_value(setting).and_then(|v| v.as_f64()).map(|v| v as f32)
     }
 
     fn read_u64(&self, setting: &str) -> Option<u64> {
@@ -265,15 +253,12 @@ impl VsCodeSettings {
             scrollbar: self.scrollbar_content(),
             search: self.search_content(),
             search_wrap: None,
-            seed_search_query_from_cursor: self.read_enum(
-                "editor.find.seedSearchStringFromSelection",
-                |s| match s {
-                    "always" => Some(SeedQuerySetting::Always),
-                    "selection" => Some(SeedQuerySetting::Selection),
-                    "never" => Some(SeedQuerySetting::Never),
-                    _ => None,
-                },
-            ),
+            seed_search_query_from_cursor: self.read_enum("editor.find.seedSearchStringFromSelection", |s| match s {
+                "always" => Some(SeedQuerySetting::Always),
+                "selection" => Some(SeedQuerySetting::Selection),
+                "never" => Some(SeedQuerySetting::Never),
+                _ => None,
+            }),
             selection_highlight: self.read_bool("editor.selectionHighlight"),
             show_signature_help_after_edits: self.read_bool("editor.parameterHints.enabled"),
             snippet_sort_order: None,
@@ -415,13 +400,9 @@ impl VsCodeSettings {
             enable_language_server: None,
             ensure_final_newline_on_save: self.read_bool("files.insertFinalNewline"),
             extend_comment_on_newline: None,
-            format_on_save: self.read_bool("editor.guides.formatOnSave").map(|b| {
-                if b {
-                    FormatOnSave::On
-                } else {
-                    FormatOnSave::Off
-                }
-            }),
+            format_on_save: self
+                .read_bool("editor.guides.formatOnSave")
+                .map(|b| if b { FormatOnSave::On } else { FormatOnSave::Off }),
             formatter: None,
             hard_tabs: self.read_bool("editor.insertSpaces").map(|v| !v),
             indent_guides: skip_default(IndentGuideSettingsContent {
@@ -455,9 +436,7 @@ impl VsCodeSettings {
                 "off" => Some(SoftWrap::None),
                 _ => None,
             }),
-            tab_size: self
-                .read_u32("editor.tabSize")
-                .and_then(|n| NonZeroU32::new(n)),
+            tab_size: self.read_u32("editor.tabSize").and_then(|n| NonZeroU32::new(n)),
             tasks: None,
             use_auto_surround: self.read_enum("editor.autoSurround", |s| match s {
                 "languageDefined" | "quotes" | "brackets" => Some(true),
@@ -470,11 +449,7 @@ impl VsCodeSettings {
             wrap_guides: self
                 .read_value("editor.rulers")
                 .and_then(|v| v.as_array())
-                .map(|v| {
-                    v.iter()
-                        .flat_map(|n| n.as_u64().map(|n| n as usize))
-                        .collect()
-                }),
+                .map(|v| v.iter().flat_map(|n| n.as_u64().map(|n| n as usize)).collect()),
             word_diff_enabled: None,
         }
     }
@@ -531,25 +506,21 @@ impl VsCodeSettings {
                 _ => None,
             }),
             file_icons: self.read_bool("workbench.editor.showIcons"),
-            activate_on_close: self
-                .read_bool("workbench.editor.focusRecentEditorAfterClose")
-                .map(|b| {
-                    if b {
-                        ActivateOnClose::History
-                    } else {
-                        ActivateOnClose::LeftNeighbour
-                    }
-                }),
+            activate_on_close: self.read_bool("workbench.editor.focusRecentEditorAfterClose").map(|b| {
+                if b {
+                    ActivateOnClose::History
+                } else {
+                    ActivateOnClose::LeftNeighbour
+                }
+            }),
             show_diagnostics: None,
-            show_close_button: self
-                .read_bool("workbench.editor.tabActionCloseVisibility")
-                .map(|b| {
-                    if b {
-                        ShowCloseButton::Always
-                    } else {
-                        ShowCloseButton::Hidden
-                    }
-                }),
+            show_close_button: self.read_bool("workbench.editor.tabActionCloseVisibility").map(|b| {
+                if b {
+                    ShowCloseButton::Always
+                } else {
+                    ShowCloseButton::Hidden
+                }
+            }),
             show_unsaved_indicator: None,
         })
     }
@@ -558,13 +529,11 @@ impl VsCodeSettings {
         skip_default(PreviewTabsSettingsContent {
             enabled: self.read_bool("workbench.editor.enablePreview"),
             enable_preview_from_project_panel: None,
-            enable_preview_from_file_finder: self
-                .read_bool("workbench.editor.enablePreviewFromQuickOpen"),
+            enable_preview_from_file_finder: self.read_bool("workbench.editor.enablePreviewFromQuickOpen"),
             enable_preview_from_multibuffer: None,
             enable_preview_multibuffer_from_code_navigation: None,
             enable_preview_file_from_code_navigation: None,
-            enable_keep_preview_on_code_navigation: self
-                .read_bool("workbench.editor.enablePreviewFromCodeNavigation"),
+            enable_keep_preview_on_code_navigation: self.read_bool("workbench.editor.enablePreviewFromCodeNavigation"),
         })
     }
 
@@ -639,13 +608,7 @@ impl VsCodeSettings {
             alternate_scroll: None,
             blinking: self
                 .read_bool("terminal.integrated.cursorBlinking")
-                .map(|b| {
-                    if b {
-                        TerminalBlink::On
-                    } else {
-                        TerminalBlink::Off
-                    }
-                }),
+                .map(|b| if b { TerminalBlink::On } else { TerminalBlink::Off }),
             button: None,
             copy_on_select: self.read_bool("terminal.integrated.copyOnSelection"),
             cursor_shape: self.read_enum("terminal.integrated.cursorStyle", |s| match s {
@@ -660,9 +623,7 @@ impl VsCodeSettings {
             font_fallbacks,
             font_family,
             font_features: None,
-            font_size: self
-                .read_f32("terminal.integrated.fontSize")
-                .map(FontSize::from),
+            font_size: self.read_f32("terminal.integrated.fontSize").map(FontSize::from),
             font_weight: None,
             keep_selection_on_copy: None,
             line_height: self
@@ -835,9 +796,5 @@ impl VsCodeSettings {
 }
 
 fn skip_default<T: Default + PartialEq>(value: T) -> Option<T> {
-    if value == T::default() {
-        None
-    } else {
-        Some(value)
-    }
+    if value == T::default() { None } else { Some(value) }
 }

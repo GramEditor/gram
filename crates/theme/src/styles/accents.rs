@@ -1,10 +1,7 @@
 use gpui::Hsla;
 use serde::Deserialize;
 
-use crate::{
-    amber, blue, cyan, gold, grass, indigo, iris, jade, lime, orange, pink, purple, tomato,
-    try_parse_color,
-};
+use crate::{amber, blue, cyan, gold, grass, indigo, iris, jade, lime, orange, pink, purple, tomato, try_parse_color};
 
 /// A collection of colors that are used to color indent aware lines in the editor.
 #[derive(Clone, Debug, Deserialize, PartialEq)]
@@ -73,12 +70,7 @@ impl AccentColors {
 
         let colors = accent_colors
             .iter()
-            .filter_map(|accent_color| {
-                accent_color
-                    .0
-                    .as_ref()
-                    .and_then(|color| try_parse_color(color).ok())
-            })
+            .filter_map(|accent_color| accent_color.0.as_ref().and_then(|color| try_parse_color(color).ok()))
             .collect::<Vec<_>>();
 
         if !colors.is_empty() {

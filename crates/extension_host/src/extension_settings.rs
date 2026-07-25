@@ -1,6 +1,4 @@
-use extension::{
-    DownloadFileCapability, ExtensionCapability, NpmInstallPackageCapability, ProcessExecCapability,
-};
+use extension::{DownloadFileCapability, ExtensionCapability, NpmInstallPackageCapability, ProcessExecCapability};
 use settings::{RegisterSetting, Settings};
 
 #[derive(Debug, Default, Clone, RegisterSetting)]
@@ -25,9 +23,7 @@ impl Settings for ExtensionSettings {
                         ExtensionCapability::DownloadFile(DownloadFileCapability { host, path })
                     }
                     settings::ExtensionCapabilityContent::NpmInstallPackage { package } => {
-                        ExtensionCapability::NpmInstallPackage(NpmInstallPackageCapability {
-                            package,
-                        })
+                        ExtensionCapability::NpmInstallPackage(NpmInstallPackageCapability { package })
                     }
                 })
                 .collect(),

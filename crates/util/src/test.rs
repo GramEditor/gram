@@ -21,10 +21,7 @@ impl TempTree {
         let path = std::fs::canonicalize(dir.path()).unwrap();
         write_tree(path.as_path(), tree);
 
-        Self {
-            _temp_dir: dir,
-            path,
-        }
+        Self { _temp_dir: dir, path }
     }
 
     pub fn path(&self) -> &Path {

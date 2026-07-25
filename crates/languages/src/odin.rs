@@ -89,19 +89,10 @@ impl LspInstaller for OdinLspAdapter {
         pre_release: bool,
         _cx: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        let release = latest_github_release(
-            "DanielGavin/ols",
-            pre_release,
-            false,
-            delegate.http_client(),
-        )
-        .await?;
+        let release = latest_github_release("DanielGavin/ols", pre_release, false, delegate.http_client()).await?;
 
         let Some(binary_name) = Self::ols_binary_name() else {
-            return Err(anyhow!(
-                "unsupported architecture: {}",
-                std::env::consts::ARCH
-            ));
+            return Err(anyhow!("unsupported architecture: {}", std::env::consts::ARCH));
         };
 
         let asset_name = format!("{}.zip", binary_name);
@@ -229,40 +220,22 @@ impl LspAdapter for OdinLspAdapter {
 
             CompletionItemKind::VARIABLE | CompletionItemKind::FIELD => {
                 let type_name = completion.detail.unwrap_or_else(|| "type".to_string());
-                Some(create_label(
-                    format!("{}: {}", label, type_name),
-                    filter_len,
-                    language,
-                ))
+                Some(create_label(format!("{}: {}", label, type_name), filter_len, language))
             }
 
             CompletionItemKind::CONSTANT => {
                 let value = completion.detail.unwrap_or_else(|| "value".to_string());
-                Some(create_label(
-                    format!("{} :: {}", label, value),
-                    filter_len,
-                    language,
-                ))
+                Some(create_label(format!("{} :: {}", label, value), filter_len, language))
             }
 
             CompletionItemKind::ENUM_MEMBER => {
                 let code = format!(".{}", label);
-                Some(create_label_with_span(
-                    code,
-                    1..label.len() + 1,
-                    filter_len,
-                    language,
-                ))
+                Some(create_label_with_span(code, 1..label.len() + 1, filter_len, language))
             }
 
             CompletionItemKind::PROPERTY => {
                 let code = format!(".{}", label);
-                Some(create_label_with_span(
-                    code,
-                    1..label.len() + 1,
-                    filter_len,
-                    language,
-                ))
+                Some(create_label_with_span(code, 1..label.len() + 1, filter_len, language))
             }
 
             CompletionItemKind::KEYWORD => {
@@ -275,57 +248,27 @@ impl LspAdapter for OdinLspAdapter {
 
             CompletionItemKind::MODULE => {
                 let code = format!("package {}", label);
-                Some(create_label_with_span(
-                    code,
-                    8..label.len() + 8,
-                    filter_len,
-                    language,
-                ))
+                Some(create_label_with_span(code, 8..label.len() + 8, filter_len, language))
             }
 
             _ => None,
         }
     }
 
-    async fn label_for_symbol(
-        &self,
-        name: &str,
-        kind: SymbolKind,
-        language: &Arc<Language>,
-    ) -> Option<CodeLabel> {
+    async fn label_for_symbol(&self, name: &str, kind: SymbolKind, language: &Arc<Language>) -> Option<CodeLabel> {
         // NOTE: Symbol navigation has limited type information compared to completions.
         // The LSP Symbol type only provides 'name' and 'kind', without detailed type info.
 
         let filter_len = name.len();
 
         match kind {
-            SymbolKind::FUNCTION => Some(create_label(
-                format!("{} :: proc", name),
-                filter_len,
-                language,
-            )),
-            SymbolKind::VARIABLE => Some(create_label(
-                format!("{}: type", name),
-                filter_len,
-                language,
-            )),
-            SymbolKind::STRUCT => Some(create_label(
-                format!("{} :: struct", name),
-                filter_len,
-                language,
-            )),
+            SymbolKind::FUNCTION => Some(create_label(format!("{} :: proc", name), filter_len, language)),
+            SymbolKind::VARIABLE => Some(create_label(format!("{}: type", name), filter_len, language)),
+            SymbolKind::STRUCT => Some(create_label(format!("{} :: struct", name), filter_len, language)),
             // OLS sends both enums and unions as Enum kind (cannot distinguish in symbols)
-            SymbolKind::ENUM => Some(create_label(
-                format!("{} :: enum", name),
-                filter_len,
-                language,
-            )),
+            SymbolKind::ENUM => Some(create_label(format!("{} :: enum", name), filter_len, language)),
             // Struct and union fields
-            SymbolKind::FIELD => Some(create_label(
-                format!("{}: type", name),
-                filter_len,
-                language,
-            )),
+            SymbolKind::FIELD => Some(create_label(format!("{}: type", name), filter_len, language)),
             _ => None,
         }
     }

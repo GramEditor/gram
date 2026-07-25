@@ -20,13 +20,7 @@ fn editor_input_with_1000_cursors(bencher: &mut Bencher<'_>, cx: &TestAppContext
             let mut editor = Editor::new(EditorMode::full(), buffer, None, window, cx);
             editor.set_style(editor::EditorStyle::default(), window, cx);
             editor.select_all(&SelectAll, window, cx);
-            editor.split_selection_into_lines(
-                &SplitSelectionIntoLines {
-                    keep_selections: true,
-                },
-                window,
-                cx,
-            );
+            editor.split_selection_into_lines(&SplitSelectionIntoLines { keep_selections: true }, window, cx);
             editor
         });
         window.focus(&editor.focus_handle(cx), cx);
@@ -84,9 +78,7 @@ fn editor_render(bencher: &mut Bencher<'_>, cx: &TestAppContext) {
         let mut rng = StdRng::seed_from_u64(1);
         let text_len = rng.random_range(10000..90000);
         if rng.random() {
-            let text = RandomCharIter::new(&mut rng)
-                .take(text_len)
-                .collect::<String>();
+            let text = RandomCharIter::new(&mut rng).take(text_len).collect::<String>();
             MultiBuffer::build_simple(&text, cx)
         } else {
             MultiBuffer::build_random(&mut rng, cx)
@@ -127,16 +119,11 @@ pub fn benches() {
         editor::init(cx);
     });
 
-    let mut criterion: criterion::Criterion<_> =
-        (criterion::Criterion::default()).configure_from_args();
+    let mut criterion: criterion::Criterion<_> = (criterion::Criterion::default()).configure_from_args();
 
     // setup app context
     let mut group = criterion.benchmark_group("Time to render");
-    group.bench_with_input(
-        BenchmarkId::new("editor_render", "TestAppContext"),
-        &cx,
-        editor_render,
-    );
+    group.bench_with_input(BenchmarkId::new("editor_render", "TestAppContext"), &cx, editor_render);
 
     group.finish();
 
@@ -161,7 +148,5 @@ pub fn benches() {
 
 fn main() {
     benches();
-    criterion::Criterion::default()
-        .configure_from_args()
-        .final_summary();
+    criterion::Criterion::default().configure_from_args().final_summary();
 }

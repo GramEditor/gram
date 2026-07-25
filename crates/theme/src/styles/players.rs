@@ -156,18 +156,9 @@ impl PlayerColors {
         }
 
         for (idx, player) in user_player_colors.iter().enumerate() {
-            let cursor = player
-                .cursor
-                .as_ref()
-                .and_then(|color| try_parse_color(color).ok());
-            let background = player
-                .background
-                .as_ref()
-                .and_then(|color| try_parse_color(color).ok());
-            let selection = player
-                .selection
-                .as_ref()
-                .and_then(|color| try_parse_color(color).ok());
+            let cursor = player.cursor.as_ref().and_then(|color| try_parse_color(color).ok());
+            let background = player.background.as_ref().and_then(|color| try_parse_color(color).ok());
+            let selection = player.selection.as_ref().and_then(|color| try_parse_color(color).ok());
 
             if let Some(player_color) = self.0.get_mut(idx) {
                 *player_color = PlayerColor {

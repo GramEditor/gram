@@ -43,10 +43,7 @@ impl ListHeader {
         self
     }
 
-    pub fn on_toggle(
-        mut self,
-        on_toggle: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
-    ) -> Self {
+    pub fn on_toggle(mut self, on_toggle: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static) -> Self {
         self.on_toggle = Some(Arc::new(on_toggle));
         self
     }
@@ -108,8 +105,7 @@ impl RenderOnce for ListHeader {
                         h_flex()
                             .gap(DynamicSpacing::Base04.rems(cx))
                             .children(self.toggle.map(|is_open| {
-                                Disclosure::new("toggle", is_open)
-                                    .on_toggle_expanded(self.on_toggle.clone())
+                                Disclosure::new("toggle", is_open).on_toggle_expanded(self.on_toggle.clone())
                             }))
                             .child(
                                 div()
@@ -120,9 +116,7 @@ impl RenderOnce for ListHeader {
                                     .children(self.start_slot)
                                     .child(Label::new(self.label.clone()).color(Color::Muted))
                                     .when_some(self.on_toggle, |this, on_toggle| {
-                                        this.on_click(move |event, window, cx| {
-                                            on_toggle(event, window, cx)
-                                        })
+                                        this.on_click(move |event, window, cx| on_toggle(event, window, cx))
                                     }),
                             ),
                     )
@@ -146,9 +140,7 @@ impl Component for ListHeader {
     }
 
     fn description() -> Option<&'static str> {
-        Some(
-            "A header component for lists with support for icons, actions, and collapsible sections.",
-        )
+        Some("A header component for lists with support for icons, actions, and collapsible sections.")
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
@@ -159,10 +151,7 @@ impl Component for ListHeader {
                     example_group_with_title(
                         "Basic Headers",
                         vec![
-                            single_example(
-                                "Simple",
-                                ListHeader::new("Section Header").into_any_element(),
-                            ),
+                            single_example("Simple", ListHeader::new("Section Header").into_any_element()),
                             single_example(
                                 "With Icon",
                                 ListHeader::new("Files")
@@ -199,16 +188,9 @@ impl Component for ListHeader {
                         vec![
                             single_example(
                                 "Selected",
-                                ListHeader::new("Selected Header")
-                                    .toggle_state(true)
-                                    .into_any_element(),
+                                ListHeader::new("Selected Header").toggle_state(true).into_any_element(),
                             ),
-                            single_example(
-                                "Inset",
-                                ListHeader::new("Inset Header")
-                                    .inset(true)
-                                    .into_any_element(),
-                            ),
+                            single_example("Inset", ListHeader::new("Inset Header").inset(true).into_any_element()),
                         ],
                     ),
                 ])

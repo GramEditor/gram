@@ -31,19 +31,13 @@ pub fn is_inactive_region(diag: &Diagnostic) -> bool {
     diag.is_unnecessary
         && diag.severity == INACTIVE_DIAGNOSTIC_SEVERITY
         && diag.message == INACTIVE_REGION_MESSAGE
-        && diag
-            .source
-            .as_ref()
-            .is_some_and(|v| v == &CLANGD_SERVER_NAME.0)
+        && diag.source.as_ref().is_some_and(|v| v == &CLANGD_SERVER_NAME.0)
 }
 
 pub fn is_lsp_inactive_region(diag: &lsp::Diagnostic) -> bool {
     diag.severity == Some(INACTIVE_DIAGNOSTIC_SEVERITY)
         && diag.message == INACTIVE_REGION_MESSAGE
-        && diag
-            .source
-            .as_ref()
-            .is_some_and(|v| v == &CLANGD_SERVER_NAME.0)
+        && diag.source.as_ref().is_some_and(|v| v == &CLANGD_SERVER_NAME.0)
 }
 
 pub fn register_notifications(
@@ -87,9 +81,7 @@ pub fn register_notifications(
                             server_id,
                             diagnostics: mapped_diagnostics,
                             result_id: None,
-                            disk_based_sources: Cow::Borrowed(
-                                &adapter.disk_based_diagnostic_sources,
-                            ),
+                            disk_based_sources: Cow::Borrowed(&adapter.disk_based_diagnostic_sources),
                             registration_id: None,
                         }],
                         |_, diag, _| !is_inactive_region(diag),

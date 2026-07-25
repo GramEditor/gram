@@ -197,9 +197,8 @@ impl TryFrom<&'_ str> for Rgba {
                 )?;
                 let a = if hex.len() == RGBA {
                     u8::from_str_radix(
-                        hex.get(3..4).with_context(|| {
-                            format!("{INVALID_UNICODE}: a component of #rgba for value: '{value}'")
-                        })?,
+                        hex.get(3..4)
+                            .with_context(|| format!("{INVALID_UNICODE}: a component of #rgba for value: '{value}'"))?,
                         16,
                     )?
                 } else {
@@ -226,26 +225,20 @@ impl TryFrom<&'_ str> for Rgba {
                 )?;
                 let g = u8::from_str_radix(
                     hex.get(2..4).with_context(|| {
-                        format!(
-                            "{INVALID_UNICODE}: g component of #rrggbb/#rrggbbaa for value: '{value}'"
-                        )
+                        format!("{INVALID_UNICODE}: g component of #rrggbb/#rrggbbaa for value: '{value}'")
                     })?,
                     16,
                 )?;
                 let b = u8::from_str_radix(
                     hex.get(4..6).with_context(|| {
-                        format!(
-                            "{INVALID_UNICODE}: b component of #rrggbb/#rrggbbaa for value: '{value}'"
-                        )
+                        format!("{INVALID_UNICODE}: b component of #rrggbb/#rrggbbaa for value: '{value}'")
                     })?,
                     16,
                 )?;
                 let a = if hex.len() == RRGGBBAA {
                     u8::from_str_radix(
                         hex.get(6..8).with_context(|| {
-                            format!(
-                                "{INVALID_UNICODE}: a component of #rrggbbaa for value: '{value}'"
-                            )
+                            format!("{INVALID_UNICODE}: a component of #rrggbbaa for value: '{value}'")
                         })?,
                         16,
                     )?
@@ -615,12 +608,7 @@ impl From<Rgba> for Hsla {
             ((r - g) / delta + 4.0) / 6.0
         };
 
-        Hsla {
-            h,
-            s,
-            l,
-            a: color.a,
-        }
+        Hsla { h, s, l, a: color.a }
     }
 }
 
@@ -762,11 +750,7 @@ pub fn solid_background(color: impl Into<Hsla>) -> Background {
 /// The `angle` is in degrees value in the range 0.0 to 360.0.
 ///
 /// <https://developer.mozilla.org/en-US/docs/Web/CSS/gradient/linear-gradient>
-pub fn linear_gradient(
-    angle: f32,
-    from: impl Into<LinearColorStop>,
-    to: impl Into<LinearColorStop>,
-) -> Background {
+pub fn linear_gradient(angle: f32, from: impl Into<LinearColorStop>, to: impl Into<LinearColorStop>) -> Background {
     Background {
         tag: BackgroundTag::LinearGradient,
         gradient_angle_or_pattern_height: angle,
@@ -820,10 +804,7 @@ impl Background {
     pub fn opacity(&self, factor: f32) -> Self {
         let mut background = *self;
         background.solid = background.solid.opacity(factor);
-        background.colors = [
-            self.colors[0].opacity(factor),
-            self.colors[1].opacity(factor),
-        ];
+        background.colors = [self.colors[0].opacity(factor), self.colors[1].opacity(factor)];
         background
     }
 

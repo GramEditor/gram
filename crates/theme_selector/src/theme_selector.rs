@@ -4,15 +4,14 @@ use app_actions::{ExtensionCategoryFilter, Extensions};
 use fs::Fs;
 use fuzzy::{StringMatch, StringMatchCandidate, match_strings};
 use gpui::{
-    App, Context, DismissEvent, Entity, EventEmitter, Focusable, Render, UpdateGlobal, WeakEntity,
-    Window, actions,
+    App, Context, DismissEvent, Entity, EventEmitter, Focusable, Render, UpdateGlobal, WeakEntity, Window, actions,
 };
 use picker::{Picker, PickerDelegate};
 use settings::{Settings, SettingsStore, update_settings_file};
 use std::sync::Arc;
 use theme::{
-    Appearance, SystemAppearance, Theme, ThemeAppearanceMode, ThemeMeta, ThemeName, ThemeRegistry,
-    ThemeSelection, ThemeSettings,
+    Appearance, SystemAppearance, Theme, ThemeAppearanceMode, ThemeMeta, ThemeName, ThemeRegistry, ThemeSelection,
+    ThemeSettings,
 };
 use ui::{ListItem, ListItemSpacing, prelude::*, v_flex};
 use util::ResultExt;
@@ -51,12 +50,7 @@ fn toggle_theme_selector(
 ) {
     let fs = workspace.app_state().fs.clone();
     workspace.toggle_modal(window, cx, |window, cx| {
-        let delegate = ThemeSelectorDelegate::new(
-            cx.entity().downgrade(),
-            fs,
-            toggle.themes_filter.as_ref(),
-            cx,
-        );
+        let delegate = ThemeSelectorDelegate::new(cx.entity().downgrade(), fs, toggle.themes_filter.as_ref(), cx);
         ThemeSelector::new(delegate, window, cx)
     });
 }
@@ -69,12 +63,7 @@ fn toggle_icon_theme_selector(
 ) {
     let fs = workspace.app_state().fs.clone();
     workspace.toggle_modal(window, cx, |window, cx| {
-        let delegate = IconThemeSelectorDelegate::new(
-            cx.entity().downgrade(),
-            fs,
-            toggle.themes_filter.as_ref(),
-            cx,
-        );
+        let delegate = IconThemeSelectorDelegate::new(cx.entity().downgrade(), fs, toggle.themes_filter.as_ref(), cx);
         IconThemeSelector::new(delegate, window, cx)
     });
 }
@@ -103,11 +92,7 @@ impl Render for ThemeSelector {
 }
 
 impl ThemeSelector {
-    pub fn new(
-        delegate: ThemeSelectorDelegate,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn new(delegate: ThemeSelectorDelegate, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let picker = cx.new(|cx| Picker::uniform_list(delegate, window, cx));
         Self { picker }
     }
@@ -188,10 +173,7 @@ impl ThemeSelectorDelegate {
         }
     }
 
-    fn show_selected_theme(
-        &mut self,
-        cx: &mut Context<Picker<ThemeSelectorDelegate>>,
-    ) -> Option<Arc<Theme>> {
+    fn show_selected_theme(&mut self, cx: &mut Context<Picker<ThemeSelectorDelegate>>) -> Option<Arc<Theme>> {
         if let Some(mat) = self.matches.get(self.selected_index) {
             let registry = ThemeRegistry::global(cx);
 
@@ -263,13 +245,8 @@ fn override_global_theme(
                 new_appearance,
             );
 
-            let updated_theme = retain_original_opposing_theme(
-                new_theme_is_light,
-                new_mode,
-                theme_name,
-                original_light,
-                original_dark,
-            );
+            let updated_theme =
+                retain_original_opposing_theme(new_theme_is_light, new_mode, theme_name, original_light, original_dark);
 
             curr_theme_settings.theme = updated_theme;
         }
@@ -340,12 +317,7 @@ impl PickerDelegate for ThemeSelectorDelegate {
         self.matches.len()
     }
 
-    fn confirm(
-        &mut self,
-        _secondary: bool,
-        _window: &mut Window,
-        cx: &mut Context<Picker<ThemeSelectorDelegate>>,
-    ) {
+    fn confirm(&mut self, _secondary: bool, _window: &mut Window, cx: &mut Context<Picker<ThemeSelectorDelegate>>) {
         self.selection_completed = true;
 
         let theme_name: Arc<str> = self.new_theme.name.as_str().into();
@@ -371,21 +343,14 @@ impl PickerDelegate for ThemeSelectorDelegate {
             self.selection_completed = true;
         }
 
-        self.selector
-            .update(cx, |_, cx| cx.emit(DismissEvent))
-            .log_err();
+        self.selector.update(cx, |_, cx| cx.emit(DismissEvent)).log_err();
     }
 
     fn selected_index(&self) -> usize {
         self.selected_index
     }
 
-    fn set_selected_index(
-        &mut self,
-        ix: usize,
-        _: &mut Window,
-        cx: &mut Context<Picker<ThemeSelectorDelegate>>,
-    ) {
+    fn set_selected_index(&mut self, ix: usize, _: &mut Window, cx: &mut Context<Picker<ThemeSelectorDelegate>>) {
         self.selected_index = ix;
         self.selected_theme = self.show_selected_theme(cx);
     }
@@ -417,16 +382,7 @@ impl PickerDelegate for ThemeSelectorDelegate {
                     })
                     .collect()
             } else {
-                match_strings(
-                    &candidates,
-                    &query,
-                    false,
-                    true,
-                    100,
-                    &Default::default(),
-                    background,
-                )
-                .await
+                match_strings(&candidates, &query, false, true, 100, &Default::default(), background).await
             };
 
             this.update(cx, |this, cx| {
@@ -475,11 +431,7 @@ impl PickerDelegate for ThemeSelectorDelegate {
         )
     }
 
-    fn render_footer(
-        &self,
-        _: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) -> Option<gpui::AnyElement> {
+    fn render_footer(&self, _: &mut Window, cx: &mut Context<Picker<Self>>) -> Option<gpui::AnyElement> {
         Some(
             h_flex()
                 .p_2()
@@ -498,19 +450,17 @@ impl PickerDelegate for ThemeSelectorDelegate {
                             cx.open_url("gram://docs/themes");
                         })),
                 )
-                .child(
-                    Button::new("more-themes", "Install Themes").on_click(cx.listener({
-                        move |_, _, window, cx| {
-                            window.dispatch_action(
-                                Box::new(Extensions {
-                                    category_filter: Some(ExtensionCategoryFilter::Themes),
-                                    id: None,
-                                }),
-                                cx,
-                            );
-                        }
-                    })),
-                )
+                .child(Button::new("more-themes", "Install Themes").on_click(cx.listener({
+                    move |_, _, window, cx| {
+                        window.dispatch_action(
+                            Box::new(Extensions {
+                                category_filter: Some(ExtensionCategoryFilter::Themes),
+                                id: None,
+                            }),
+                            cx,
+                        );
+                    }
+                })))
                 .into_any_element(),
         )
     }

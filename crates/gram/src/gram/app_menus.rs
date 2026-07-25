@@ -8,22 +8,10 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
     use app_actions::Quit;
 
     let mut view_items = vec![
-        MenuItem::action(
-            "Zoom In",
-            app_actions::IncreaseBufferFontSize { persist: false },
-        ),
-        MenuItem::action(
-            "Zoom Out",
-            app_actions::DecreaseBufferFontSize { persist: false },
-        ),
-        MenuItem::action(
-            "Reset Zoom",
-            app_actions::ResetBufferFontSize { persist: false },
-        ),
-        MenuItem::action(
-            "Reset All Zoom",
-            app_actions::ResetAllZoom { persist: false },
-        ),
+        MenuItem::action("Zoom In", app_actions::IncreaseBufferFontSize { persist: false }),
+        MenuItem::action("Zoom Out", app_actions::DecreaseBufferFontSize { persist: false }),
+        MenuItem::action("Reset Zoom", app_actions::ResetBufferFontSize { persist: false }),
+        MenuItem::action("Reset All Zoom", app_actions::ResetAllZoom { persist: false }),
         MenuItem::separator(),
         MenuItem::action("Toggle Left Dock", workspace::ToggleLeftDock),
         MenuItem::action("Toggle Right Dock", workspace::ToggleRightDock),
@@ -49,10 +37,7 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
     ];
 
     if ReleaseChannel::try_global(cx) == Some(ReleaseChannel::Dev) {
-        view_items.push(MenuItem::action(
-            "Toggle GPUI Inspector",
-            dev::ToggleInspector,
-        ));
+        view_items.push(MenuItem::action("Toggle GPUI Inspector", dev::ToggleInspector));
         view_items.push(MenuItem::separator());
     }
 
@@ -68,24 +53,15 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                         MenuItem::action("Open Settings", app_actions::OpenSettings),
                         MenuItem::action("Open Settings File", super::OpenSettingsFile),
                         MenuItem::action("Open Project Settings", app_actions::OpenProjectSettings),
-                        MenuItem::action(
-                            "Open Project Settings File",
-                            super::OpenProjectSettingsFile,
-                        ),
+                        MenuItem::action("Open Project Settings File", super::OpenProjectSettingsFile),
                         MenuItem::action("Open Default Settings", super::OpenDefaultSettings),
                         MenuItem::action("Language Servers", OpenLanguageServerConfig),
                         MenuItem::separator(),
                         MenuItem::action("Open Keymap", app_actions::OpenKeymap),
                         MenuItem::action("Open Keymap File", app_actions::OpenKeymapFile),
-                        MenuItem::action(
-                            "Open Default Key Bindings",
-                            app_actions::OpenDefaultKeymap,
-                        ),
+                        MenuItem::action("Open Default Key Bindings", app_actions::OpenDefaultKeymap),
                         MenuItem::separator(),
-                        MenuItem::action(
-                            "Select Theme...",
-                            app_actions::theme_selector::Toggle::default(),
-                        ),
+                        MenuItem::action("Select Theme...", app_actions::theme_selector::Toggle::default()),
                         MenuItem::action(
                             "Select Icon Theme...",
                             app_actions::icon_theme_selector::Toggle::default(),
@@ -171,51 +147,33 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                 MenuItem::action("Find", search::buffer_search::Deploy::find()),
                 MenuItem::action("Find in Project", workspace::DeploySearch::find()),
                 MenuItem::separator(),
-                MenuItem::action(
-                    "Toggle Line Comment",
-                    editor::actions::ToggleComments::default(),
-                ),
+                MenuItem::action("Toggle Line Comment", editor::actions::ToggleComments::default()),
             ],
         },
         Menu {
             name: "Selection".into(),
             items: vec![
-                MenuItem::os_action(
-                    "Select All",
-                    editor::actions::SelectAll,
-                    OsAction::SelectAll,
-                ),
+                MenuItem::os_action("Select All", editor::actions::SelectAll, OsAction::SelectAll),
                 MenuItem::action("Expand Selection", editor::actions::SelectLargerSyntaxNode),
                 MenuItem::action("Shrink Selection", editor::actions::SelectSmallerSyntaxNode),
                 MenuItem::action("Select Next Sibling", editor::actions::SelectNextSyntaxNode),
-                MenuItem::action(
-                    "Select Previous Sibling",
-                    editor::actions::SelectPreviousSyntaxNode,
-                ),
+                MenuItem::action("Select Previous Sibling", editor::actions::SelectPreviousSyntaxNode),
                 MenuItem::separator(),
                 MenuItem::action(
                     "Add Cursor Above",
-                    editor::actions::AddSelectionAbove {
-                        skip_soft_wrap: true,
-                    },
+                    editor::actions::AddSelectionAbove { skip_soft_wrap: true },
                 ),
                 MenuItem::action(
                     "Add Cursor Below",
-                    editor::actions::AddSelectionBelow {
-                        skip_soft_wrap: true,
-                    },
+                    editor::actions::AddSelectionBelow { skip_soft_wrap: true },
                 ),
                 MenuItem::action(
                     "Select Next Occurrence",
-                    editor::actions::SelectNext {
-                        replace_newest: false,
-                    },
+                    editor::actions::SelectNext { replace_newest: false },
                 ),
                 MenuItem::action(
                     "Select Previous Occurrence",
-                    editor::actions::SelectPrevious {
-                        replace_newest: false,
-                    },
+                    editor::actions::SelectPrevious { replace_newest: false },
                 ),
                 MenuItem::action("Select All Occurrences", editor::actions::SelectAllMatches),
                 MenuItem::separator(),
@@ -238,36 +196,22 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                 MenuItem::separator(),
                 MenuItem::action("Go to File...", workspace::ToggleFileFinder::default()),
                 // MenuItem::action("Go to Symbol in Project", project_symbols::Toggle),
-                MenuItem::action(
-                    "Go to Symbol in Editor...",
-                    app_actions::outline::ToggleOutline,
-                ),
+                MenuItem::action("Go to Symbol in Editor...", app_actions::outline::ToggleOutline),
                 MenuItem::action("Go to Line/Column...", editor::actions::ToggleGoToLine),
                 MenuItem::separator(),
                 MenuItem::action("Go to Definition", editor::actions::GoToDefinition),
                 MenuItem::action("Go to Declaration", editor::actions::GoToDeclaration),
                 MenuItem::action("Go to Type Definition", editor::actions::GoToTypeDefinition),
-                MenuItem::action(
-                    "Find All References",
-                    editor::actions::FindAllReferences::default(),
-                ),
+                MenuItem::action("Find All References", editor::actions::FindAllReferences::default()),
                 MenuItem::separator(),
                 MenuItem::action("Next Problem", editor::actions::GoToDiagnostic::default()),
-                MenuItem::action(
-                    "Previous Problem",
-                    editor::actions::GoToPreviousDiagnostic::default(),
-                ),
+                MenuItem::action("Previous Problem", editor::actions::GoToPreviousDiagnostic::default()),
             ],
         },
         Menu {
             name: "Run".into(),
             items: vec![
-                MenuItem::action(
-                    "Spawn Task",
-                    app_actions::Spawn::ViaModal {
-                        reveal_target: None,
-                    },
-                ),
+                MenuItem::action("Spawn Task", app_actions::Spawn::ViaModal { reveal_target: None }),
                 MenuItem::action("Start Debugger", debugger_ui::Start),
                 MenuItem::separator(),
                 MenuItem::action("Edit tasks.jsonc...", crate::gram::OpenProjectTasks),

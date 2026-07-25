@@ -2,8 +2,8 @@ use anyhow::Result;
 use collections::IndexMap;
 use strum::IntoEnumIterator;
 use theme::{
-    FontStyleContent, FontWeightContent, HighlightStyleContent, StatusColorsContent,
-    ThemeColorsContent, ThemeContent, ThemeStyleContent, WindowBackgroundContent,
+    FontStyleContent, FontWeightContent, HighlightStyleContent, StatusColorsContent, ThemeColorsContent, ThemeContent,
+    ThemeStyleContent, WindowBackgroundContent,
 };
 
 use crate::ThemeMetadata;
@@ -75,10 +75,7 @@ impl VsCodeThemeConverter {
         };
 
         Ok(StatusColorsContent {
-            conflict: vscode_colors
-                .git_decoration
-                .conflicting_resource_foreground
-                .clone(),
+            conflict: vscode_colors.git_decoration.conflicting_resource_foreground.clone(),
             created: vscode_colors.editor_gutter.added_background.clone(),
             deleted: vscode_colors.editor_gutter.deleted_background.clone(),
             error: vscode_colors.editor_error.foreground.clone(),
@@ -91,10 +88,7 @@ impl VsCodeThemeConverter {
                 .clone()
                 .or(vscode_base_status_colors.hint),
             hint_border: vscode_colors.editor_hint.border.clone(),
-            ignored: vscode_colors
-                .git_decoration
-                .ignored_resource_foreground
-                .clone(),
+            ignored: vscode_colors.git_decoration.ignored_resource_foreground.clone(),
             info: vscode_colors.editor_info.foreground.clone(),
             info_background: vscode_colors.editor_info.background.clone(),
             info_border: vscode_colors.editor_info.border.clone(),
@@ -163,14 +157,8 @@ impl VsCodeThemeConverter {
             panel_background: vscode_colors.panel.background.clone(),
             pane_group_border: vscode_colors.editor_group.border.clone(),
             scrollbar_thumb_background: vscode_scrollbar_slider_background.clone(),
-            scrollbar_thumb_hover_background: vscode_colors
-                .scrollbar_slider
-                .hover_background
-                .clone(),
-            scrollbar_thumb_active_background: vscode_colors
-                .scrollbar_slider
-                .active_background
-                .clone(),
+            scrollbar_thumb_hover_background: vscode_colors.scrollbar_slider.hover_background.clone(),
+            scrollbar_thumb_active_background: vscode_colors.scrollbar_slider.active_background.clone(),
             scrollbar_thumb_border: vscode_scrollbar_slider_background,
             scrollbar_track_background: vscode_editor_background.clone(),
             scrollbar_track_border: vscode_colors.editor_overview_ruler.border.clone(),
@@ -185,10 +173,7 @@ impl VsCodeThemeConverter {
             editor_active_line_number: vscode_colors.editor.foreground.clone(),
             editor_wrap_guide: vscode_panel_border.clone(),
             editor_active_wrap_guide: vscode_panel_border,
-            editor_document_highlight_bracket_background: vscode_colors
-                .editor_bracket_match
-                .background
-                .clone(),
+            editor_document_highlight_bracket_background: vscode_colors.editor_bracket_match.background.clone(),
             terminal_background: vscode_colors.terminal.background.clone(),
             terminal_ansi_black: vscode_colors.terminal.ansi_black.clone(),
             terminal_ansi_bright_black: vscode_colors.terminal.ansi_bright_black.clone(),
@@ -215,21 +200,20 @@ impl VsCodeThemeConverter {
         let mut highlight_styles = IndexMap::default();
 
         for syntax_token in GramSyntaxToken::iter() {
-            let override_match = self
-                .syntax_overrides
-                .get(&syntax_token.to_string())
-                .and_then(|scope| {
-                    self.theme.token_colors.iter().find(|token_color| {
-                        token_color.scope == Some(VsCodeTokenScope::Many(scope.clone()))
-                    })
-                });
+            let override_match = self.syntax_overrides.get(&syntax_token.to_string()).and_then(|scope| {
+                self.theme
+                    .token_colors
+                    .iter()
+                    .find(|token_color| token_color.scope == Some(VsCodeTokenScope::Many(scope.clone())))
+            });
 
             let best_match = override_match
                 .or_else(|| syntax_token.find_best_token_color_match(&self.theme.token_colors))
                 .or_else(|| {
-                    syntax_token.fallbacks().iter().find_map(|fallback| {
-                        fallback.find_best_token_color_match(&self.theme.token_colors)
-                    })
+                    syntax_token
+                        .fallbacks()
+                        .iter()
+                        .find_map(|fallback| fallback.find_best_token_color_match(&self.theme.token_colors))
                 });
 
             let Some(token_color) = best_match else {
@@ -242,10 +226,7 @@ impl VsCodeThemeConverter {
                 token_color
                     .name
                     .clone()
-                    .or_else(|| token_color
-                        .scope
-                        .as_ref()
-                        .map(|scope| format!("{:?}", scope)))
+                    .or_else(|| token_color.scope.as_ref().map(|scope| format!("{:?}", scope)))
                     .unwrap_or_else(|| "no identifier".to_string())
             );
 

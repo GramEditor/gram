@@ -176,16 +176,7 @@ pub struct TerminalSettingsContent {
 
 /// Shell configuration to open the terminal with.
 #[derive(
-    Clone,
-    Debug,
-    Default,
-    Serialize,
-    Deserialize,
-    PartialEq,
-    Eq,
-    JsonSchema,
-    MergeFrom,
-    strum::EnumDiscriminants,
+    Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, JsonSchema, MergeFrom, strum::EnumDiscriminants,
 )]
 #[strum_discriminants(derive(strum::VariantArray, strum::VariantNames, strum::FromRepr))]
 #[serde(rename_all = "snake_case")]
@@ -206,17 +197,7 @@ pub enum Shell {
     },
 }
 
-#[derive(
-    Clone,
-    Debug,
-    Serialize,
-    Deserialize,
-    PartialEq,
-    Eq,
-    JsonSchema,
-    MergeFrom,
-    strum::EnumDiscriminants,
-)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, JsonSchema, MergeFrom, strum::EnumDiscriminants)]
 #[strum_discriminants(derive(strum::VariantArray, strum::VariantNames, strum::FromRepr))]
 #[serde(rename_all = "snake_case")]
 pub enum WorkingDirectory {
@@ -235,9 +216,7 @@ pub enum WorkingDirectory {
 }
 
 #[with_fallible_options]
-#[derive(
-    Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, Eq, Default,
-)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, Eq, Default)]
 pub struct ScrollbarSettingsContent {
     /// When to show the scrollbar in the terminal.
     ///
@@ -385,9 +364,7 @@ pub struct TerminalToolbarContent {
     pub breadcrumbs: Option<bool>,
 }
 
-#[derive(
-    Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema, MergeFrom,
-)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema, MergeFrom)]
 #[serde(rename_all = "snake_case")]
 pub enum CondaManager {
     /// Automatically detect the conda manager
@@ -493,15 +470,12 @@ mod test {
 
     #[test]
     fn test_project_settings() {
-        let project_content =
-            json!({"terminal": {"shell": {"program": "/bin/project"}}, "option_as_meta": true});
+        let project_content = json!({"terminal": {"shell": {"program": "/bin/project"}}, "option_as_meta": true});
 
-        let user_content =
-            json!({"terminal": {"shell": {"program": "/bin/user"}}, "option_as_meta": false});
+        let user_content = json!({"terminal": {"shell": {"program": "/bin/user"}}, "option_as_meta": false});
 
         let user_settings = serde_json::from_value::<UserSettingsContent>(user_content).unwrap();
-        let project_settings =
-            serde_json::from_value::<ProjectSettingsContent>(project_content).unwrap();
+        let project_settings = serde_json::from_value::<ProjectSettingsContent>(project_content).unwrap();
 
         assert_eq!(
             user_settings.content.terminal.unwrap().project.shell,

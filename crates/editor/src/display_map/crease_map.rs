@@ -95,10 +95,7 @@ impl CreaseSnapshot {
         })
     }
 
-    pub fn crease_items_with_offsets(
-        &self,
-        snapshot: &MultiBufferSnapshot,
-    ) -> Vec<(CreaseId, Range<Point>)> {
+    pub fn crease_items_with_offsets(&self, snapshot: &MultiBufferSnapshot) -> Vec<(CreaseId, Range<Point>)> {
         let mut cursor = self.creases.cursor::<ItemSummary>(snapshot);
         let mut results = Vec::new();
 
@@ -126,8 +123,7 @@ type RenderToggleFn = Arc<
             &mut App,
         ) -> AnyElement,
 >;
-type RenderTrailerFn =
-    Arc<dyn Send + Sync + Fn(MultiBufferRow, bool, &mut Window, &mut App) -> AnyElement>;
+type RenderTrailerFn = Arc<dyn Send + Sync + Fn(MultiBufferRow, bool, &mut Window, &mut App) -> AnyElement>;
 
 #[derive(Clone)]
 pub enum Crease<T> {
@@ -196,11 +192,8 @@ impl<T> Crease<T> {
             ) -> ToggleElement
             + 'static,
         ToggleElement: IntoElement,
-        RenderTrailer: 'static
-            + Send
-            + Sync
-            + Fn(MultiBufferRow, bool, &mut Window, &mut App) -> TrailerElement
-            + 'static,
+        RenderTrailer:
+            'static + Send + Sync + Fn(MultiBufferRow, bool, &mut Window, &mut App) -> TrailerElement + 'static,
         TrailerElement: IntoElement,
     {
         Crease::Inline {
@@ -256,17 +249,13 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Crease::Inline {
-                range, metadata, ..
-            } => f
+            Crease::Inline { range, metadata, .. } => f
                 .debug_struct("Crease::Inline")
                 .field("range", range)
                 .field("metadata", metadata)
                 .finish_non_exhaustive(),
             Crease::Block {
-                range,
-                block_height,
-                ..
+                range, block_height, ..
             } => f
                 .debug_struct("Crease::Block")
                 .field("range", range)
@@ -432,32 +421,16 @@ mod test {
 
         // Verify creases are inserted
         let crease_snapshot = crease_map.snapshot();
-        assert!(
-            crease_snapshot
-                .query_row(MultiBufferRow(1), &snapshot)
-                .is_some()
-        );
-        assert!(
-            crease_snapshot
-                .query_row(MultiBufferRow(3), &snapshot)
-                .is_some()
-        );
+        assert!(crease_snapshot.query_row(MultiBufferRow(1), &snapshot).is_some());
+        assert!(crease_snapshot.query_row(MultiBufferRow(3), &snapshot).is_some());
 
         // Remove creases
         crease_map.remove(crease_ids, &snapshot);
 
         // Verify creases are removed
         let crease_snapshot = crease_map.snapshot();
-        assert!(
-            crease_snapshot
-                .query_row(MultiBufferRow(1), &snapshot)
-                .is_none()
-        );
-        assert!(
-            crease_snapshot
-                .query_row(MultiBufferRow(3), &snapshot)
-                .is_none()
-        );
+        assert!(crease_snapshot.query_row(MultiBufferRow(1), &snapshot).is_none());
+        assert!(crease_snapshot.query_row(MultiBufferRow(3), &snapshot).is_none());
     }
 
     #[gpui::test]

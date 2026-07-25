@@ -5,12 +5,10 @@ use language::CursorShape;
 use project::project_settings::DiagnosticSeverity;
 pub use settings::{
     CurrentLineHighlight, DelayMs, DisplayIn, DocumentColorsRenderMode, DoubleClickInMultibuffer,
-    GoToDefinitionFallback, HideMouseMode, MinimapThumb, MinimapThumbBorder, MultiCursorModifier,
-    ScrollBeyondLastLine, ScrollbarDiagnostics, SeedQuerySetting, ShowMinimap, SnippetSortOrder,
+    GoToDefinitionFallback, HideMouseMode, MinimapThumb, MinimapThumbBorder, MultiCursorModifier, ScrollBeyondLastLine,
+    ScrollbarDiagnostics, SeedQuerySetting, ShowMinimap, SnippetSortOrder,
 };
-use settings::{
-    LineNumberScale, RegisterSetting, RelativeLineNumbers, Settings, SupertabFallback, SyncKillRing,
-};
+use settings::{LineNumberScale, RegisterSetting, RelativeLineNumbers, Settings, SupertabFallback, SyncKillRing};
 use ui::scrollbars::{ScrollbarVisibility, ShowScrollbar};
 
 /// Imports from the VSCode settings at

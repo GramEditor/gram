@@ -89,35 +89,21 @@ impl<'a> Matcher<'a> {
                 continue;
             }
 
-            let matrix_len =
-                self.query.len() * (lowercase_prefix.len() + lowercase_candidate_chars.len());
+            let matrix_len = self.query.len() * (lowercase_prefix.len() + lowercase_candidate_chars.len());
             self.score_matrix.clear();
             self.score_matrix.resize(matrix_len, None);
             self.best_position_matrix.clear();
             self.best_position_matrix.resize(matrix_len, 0);
 
-            let score = self.score_match(
-                &candidate_chars,
-                &lowercase_candidate_chars,
-                prefix,
-                lowercase_prefix,
-            );
+            let score = self.score_match(&candidate_chars, &lowercase_candidate_chars, prefix, lowercase_prefix);
 
             if score > 0.0 {
-                results.push(build_match(
-                    candidate.borrow(),
-                    score,
-                    &self.match_positions,
-                ));
+                results.push(build_match(candidate.borrow(), score, &self.match_positions));
             }
         }
     }
 
-    fn find_last_positions(
-        &mut self,
-        lowercase_prefix: &[char],
-        lowercase_candidate: &[char],
-    ) -> bool {
+    fn find_last_positions(&mut self, lowercase_prefix: &[char], lowercase_candidate: &[char]) -> bool {
         let mut lowercase_prefix = lowercase_prefix.iter();
         let mut lowercase_candidate = lowercase_candidate.iter();
         for (i, char) in self.lowercase_query.iter().enumerate().rev() {
@@ -256,10 +242,8 @@ impl<'a> Matcher<'a> {
                     } else if query_idx == 0 {
                         char_score = BASE_DISTANCE_PENALTY;
                     } else {
-                        char_score = MIN_DISTANCE_PENALTY.max(
-                            BASE_DISTANCE_PENALTY
-                                - (j - path_idx - 1) as f64 * ADDITIONAL_DISTANCE_PENALTY,
-                        );
+                        char_score = MIN_DISTANCE_PENALTY
+                            .max(BASE_DISTANCE_PENALTY - (j - path_idx - 1) as f64 * ADDITIONAL_DISTANCE_PENALTY);
                     }
                 }
 
@@ -411,19 +395,11 @@ mod tests {
 
     #[test]
     fn test_match_multibyte_path_entries() {
-        let paths = vec![
-            "aαbβ/cγdδ",
-            "αβγδ/bcde",
-            "c1️⃣2️⃣3️⃣/d4️⃣5️⃣6️⃣/e7️⃣8️⃣9️⃣/f",
-            "d/🆒/h",
-        ];
+        let paths = vec!["aαbβ/cγdδ", "αβγδ/bcde", "c1️⃣2️⃣3️⃣/d4️⃣5️⃣6️⃣/e7️⃣8️⃣9️⃣/f", "d/🆒/h"];
         assert_eq!("1️⃣".len(), 7);
         assert_eq!(
             match_single_path_query("bcd", false, &paths),
-            vec![
-                ("αβγδ/bcde", vec![9, 10, 11]),
-                ("aαbβ/cγdδ", vec![3, 7, 10]),
-            ]
+            vec![("αβγδ/bcde", vec![9, 10, 11]), ("aαbβ/cγdδ", vec![3, 7, 10]),]
         );
         assert_eq!(
             match_single_path_query("cde", false, &paths),
@@ -565,19 +541,12 @@ mod tests {
         }
     }
 
-    fn match_single_path_query<'a>(
-        query: &str,
-        smart_case: bool,
-        paths: &[&'a str],
-    ) -> Vec<(&'a str, Vec<usize>)> {
+    fn match_single_path_query<'a>(query: &str, smart_case: bool, paths: &[&'a str]) -> Vec<(&'a str, Vec<usize>)> {
         let lowercase_query = query.chars().map(simple_lowercase).collect::<Vec<_>>();
         let query = query.chars().collect::<Vec<_>>();
         let query_chars = CharBag::from(&lowercase_query[..]);
 
-        let path_arcs: Vec<Arc<RelPath>> = paths
-            .iter()
-            .map(|path| Arc::from(rel_path(path)))
-            .collect::<Vec<_>>();
+        let path_arcs: Vec<Arc<RelPath>> = paths.iter().map(|path| Arc::from(rel_path(path))).collect::<Vec<_>>();
         let mut path_entries = Vec::new();
         for (i, path) in paths.iter().enumerate() {
             let lowercase_path: Vec<char> = path.chars().map(simple_lowercase).collect();

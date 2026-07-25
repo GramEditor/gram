@@ -111,12 +111,7 @@ impl StringMatch {
     }
 
     fn split_at(&self, ix: usize) -> (StringMatch, Option<StringMatch>) {
-        let pos_ix = self
-            .positions
-            .iter()
-            .copied()
-            .position(|pos| pos >= ix)
-            .unwrap_or(0);
+        let pos_ix = self.positions.iter().copied().position(|pos| pos >= ix).unwrap_or(0);
         (
             StringMatch {
                 candidate_id: self.candidate_id,
@@ -212,20 +207,12 @@ where
                 scope.spawn(async move {
                     let segment_start = cmp::min(segment_idx * segment_size, candidates.len());
                     let segment_end = cmp::min(segment_start + segment_size, candidates.len());
-                    let mut matcher = Matcher::new(
-                        query,
-                        lowercase_query,
-                        query_char_bag,
-                        smart_case,
-                        penalize_length,
-                    );
+                    let mut matcher = Matcher::new(query, lowercase_query, query_char_bag, smart_case, penalize_length);
 
                     matcher.match_candidates(
                         &[],
                         &[],
-                        candidates[segment_start..segment_end]
-                            .iter()
-                            .map(|c| c.borrow()),
+                        candidates[segment_start..segment_end].iter().map(|c| c.borrow()),
                         results,
                         cancel_flag,
                         |candidate: &&StringMatchCandidate, score, positions| StringMatch {

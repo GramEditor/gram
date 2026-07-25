@@ -3,15 +3,15 @@ use etagere::BucketedAtlasAllocator;
 use parking_lot::Mutex;
 use windows::Win32::Graphics::{
     Direct3D11::{
-        D3D11_BIND_SHADER_RESOURCE, D3D11_BOX, D3D11_TEXTURE2D_DESC, D3D11_USAGE_DEFAULT,
-        ID3D11Device, ID3D11DeviceContext, ID3D11ShaderResourceView, ID3D11Texture2D,
+        D3D11_BIND_SHADER_RESOURCE, D3D11_BOX, D3D11_TEXTURE2D_DESC, D3D11_USAGE_DEFAULT, ID3D11Device,
+        ID3D11DeviceContext, ID3D11ShaderResourceView, ID3D11Texture2D,
     },
     Dxgi::Common::*,
 };
 
 use crate::{
-    AtlasKey, AtlasTextureId, AtlasTextureKind, AtlasTile, Bounds, DevicePixels, PlatformAtlas,
-    Point, Size, platform::AtlasTextureList,
+    AtlasKey, AtlasTextureId, AtlasTextureKind, AtlasTile, Bounds, DevicePixels, PlatformAtlas, Point, Size,
+    platform::AtlasTextureList,
 };
 
 pub(crate) struct DirectXAtlas(Mutex<DirectXAtlasState>);
@@ -46,20 +46,13 @@ impl DirectXAtlas {
         }))
     }
 
-    pub(crate) fn get_texture_view(
-        &self,
-        id: AtlasTextureId,
-    ) -> [Option<ID3D11ShaderResourceView>; 1] {
+    pub(crate) fn get_texture_view(&self, id: AtlasTextureId) -> [Option<ID3D11ShaderResourceView>; 1] {
         let lock = self.0.lock();
         let tex = lock.texture(id);
         tex.view.clone()
     }
 
-    pub(crate) fn handle_device_lost(
-        &self,
-        device: &ID3D11Device,
-        device_context: &ID3D11DeviceContext,
-    ) {
+    pub(crate) fn handle_device_lost(&self, device: &ID3D11Device, device_context: &ID3D11DeviceContext) {
         let mut lock = self.0.lock();
         lock.device = device.clone();
         lock.device_context = device_context.clone();
@@ -74,9 +67,7 @@ impl PlatformAtlas for DirectXAtlas {
     fn get_or_insert_with<'a>(
         &self,
         key: &AtlasKey,
-        build: &mut dyn FnMut() -> anyhow::Result<
-            Option<(Size<DevicePixels>, std::borrow::Cow<'a, [u8]>)>,
-        >,
+        build: &mut dyn FnMut() -> anyhow::Result<Option<(Size<DevicePixels>, std::borrow::Cow<'a, [u8]>)>>,
     ) -> anyhow::Result<Option<AtlasTile>> {
         let mut lock = self.0.lock();
         if let Some(tile) = lock.tiles_by_key.get(key) {
@@ -125,11 +116,7 @@ impl PlatformAtlas for DirectXAtlas {
 }
 
 impl DirectXAtlasState {
-    fn allocate(
-        &mut self,
-        size: Size<DevicePixels>,
-        texture_kind: AtlasTextureKind,
-    ) -> Option<AtlasTile> {
+    fn allocate(&mut self, size: Size<DevicePixels>, texture_kind: AtlasTextureKind) -> Option<AtlasTile> {
         {
             let textures = match texture_kind {
                 AtlasTextureKind::Monochrome => &mut self.monochrome_textures,
@@ -137,11 +124,7 @@ impl DirectXAtlasState {
                 AtlasTextureKind::Subpixel => &mut self.subpixel_textures,
             };
 
-            if let Some(tile) = textures
-                .iter_mut()
-                .rev()
-                .find_map(|texture| texture.allocate(size))
-            {
+            if let Some(tile) = textures.iter_mut().rev().find_map(|texture| texture.allocate(size)) {
                 return Some(tile);
             }
         }
@@ -192,10 +175,7 @@ impl DirectXAtlasState {
             MipLevels: 1,
             ArraySize: 1,
             Format: pixel_format,
-            SampleDesc: DXGI_SAMPLE_DESC {
-                Count: 1,
-                Quality: 0,
-            },
+            SampleDesc: DXGI_SAMPLE_DESC { Count: 1, Quality: 0 },
             Usage: D3D11_USAGE_DEFAULT,
             BindFlags: bind_flag.0 as u32,
             CPUAccessFlags: 0,
@@ -246,15 +226,9 @@ impl DirectXAtlasState {
 
     fn texture(&self, id: AtlasTextureId) -> &DirectXAtlasTexture {
         match id.kind {
-            crate::AtlasTextureKind::Monochrome => &self.monochrome_textures[id.index as usize]
-                .as_ref()
-                .unwrap(),
-            crate::AtlasTextureKind::Polychrome => &self.polychrome_textures[id.index as usize]
-                .as_ref()
-                .unwrap(),
-            crate::AtlasTextureKind::Subpixel => {
-                &self.subpixel_textures[id.index as usize].as_ref().unwrap()
-            }
+            crate::AtlasTextureKind::Monochrome => &self.monochrome_textures[id.index as usize].as_ref().unwrap(),
+            crate::AtlasTextureKind::Polychrome => &self.polychrome_textures[id.index as usize].as_ref().unwrap(),
+            crate::AtlasTextureKind::Subpixel => &self.subpixel_textures[id.index as usize].as_ref().unwrap(),
         }
     }
 }
@@ -275,12 +249,7 @@ impl DirectXAtlasTexture {
         Some(tile)
     }
 
-    fn upload(
-        &self,
-        device_context: &ID3D11DeviceContext,
-        bounds: Bounds<DevicePixels>,
-        bytes: &[u8],
-    ) {
+    fn upload(&self, device_context: &ID3D11DeviceContext, bounds: Bounds<DevicePixels>, bytes: &[u8]) {
         unsafe {
             device_context.UpdateSubresource(
                 &self.texture,

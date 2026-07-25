@@ -88,12 +88,7 @@ fn distance_in_seconds(date: NaiveDateTime, base_date: NaiveDateTime) -> i64 {
 }
 
 /// Generates a string describing the time distance between two dates in a human-readable way.
-fn distance_string(
-    distance: i64,
-    include_seconds: bool,
-    add_suffix: bool,
-    hide_prefix: bool,
-) -> String {
+fn distance_string(distance: i64, include_seconds: bool, add_suffix: bool, hide_prefix: bool) -> String {
     let suffix = if distance < 0 { " from now" } else { " ago" };
 
     let distance = distance.abs();
@@ -127,32 +122,17 @@ fn distance_string(
     } else if distance < 40 && include_seconds {
         "half a minute".to_string()
     } else if distance < 60 && include_seconds {
-        if hide_prefix {
-            "a minute"
-        } else {
-            "less than a minute"
-        }
-        .to_string()
+        if hide_prefix { "a minute" } else { "less than a minute" }.to_string()
     } else if distance < 90 && include_seconds {
         "1 minute".to_string()
     } else if distance < 30 {
-        if hide_prefix {
-            "a minute"
-        } else {
-            "less than a minute"
-        }
-        .to_string()
+        if hide_prefix { "a minute" } else { "less than a minute" }.to_string()
     } else if distance < 90 {
         "1 minute".to_string()
     } else if distance < 2_700 {
         format!("{} minutes", minutes)
     } else if distance < 5_400 {
-        if hide_prefix {
-            "1 hour"
-        } else {
-            "about 1 hour"
-        }
-        .to_string()
+        if hide_prefix { "1 hour" } else { "about 1 hour" }.to_string()
     } else if distance < 86_400 {
         if hide_prefix {
             format!("{} hours", hours)
@@ -164,37 +144,17 @@ fn distance_string(
     } else if distance < 2_592_000 {
         format!("{} days", days)
     } else if distance < 5_184_000 {
-        if hide_prefix {
-            "1 month"
-        } else {
-            "about 1 month"
-        }
-        .to_string()
+        if hide_prefix { "1 month" } else { "about 1 month" }.to_string()
     } else if distance < 7_776_000 {
-        if hide_prefix {
-            "2 months"
-        } else {
-            "about 2 months"
-        }
-        .to_string()
+        if hide_prefix { "2 months" } else { "about 2 months" }.to_string()
     } else if distance < 31_540_000 {
         format!("{} months", months)
     } else if distance < 39_425_000 {
-        if hide_prefix {
-            "1 year"
-        } else {
-            "about 1 year"
-        }
-        .to_string()
+        if hide_prefix { "1 year" } else { "about 1 year" }.to_string()
     } else if distance < 55_195_000 {
         if hide_prefix { "1 year" } else { "over 1 year" }.to_string()
     } else if distance < 63_080_000 {
-        if hide_prefix {
-            "2 years"
-        } else {
-            "almost 2 years"
-        }
-        .to_string()
+        if hide_prefix { "2 years" } else { "almost 2 years" }.to_string()
     } else {
         let years = distance / 31_536_000;
         let remaining_months = (distance % 31_536_000) / 2_592_000;
@@ -314,22 +274,10 @@ mod tests {
 
     #[test]
     fn test_format_distance_string() {
-        assert_eq!(
-            distance_string(3, false, false, false),
-            "less than a minute"
-        );
-        assert_eq!(
-            distance_string(7, false, false, false),
-            "less than a minute"
-        );
-        assert_eq!(
-            distance_string(13, false, false, false),
-            "less than a minute"
-        );
-        assert_eq!(
-            distance_string(21, false, false, false),
-            "less than a minute"
-        );
+        assert_eq!(distance_string(3, false, false, false), "less than a minute");
+        assert_eq!(distance_string(7, false, false, false), "less than a minute");
+        assert_eq!(distance_string(13, false, false, false), "less than a minute");
+        assert_eq!(distance_string(21, false, false, false), "less than a minute");
         assert_eq!(distance_string(45, false, false, false), "1 minute");
         assert_eq!(distance_string(61, false, false, false), "1 minute");
         assert_eq!(distance_string(1920, false, false, false), "32 minutes");
@@ -337,60 +285,24 @@ mod tests {
         assert_eq!(distance_string(18002, false, false, false), "about 5 hours");
         assert_eq!(distance_string(86470, false, false, false), "1 day");
         assert_eq!(distance_string(345880, false, false, false), "4 days");
-        assert_eq!(
-            distance_string(2764800, false, false, false),
-            "about 1 month"
-        );
-        assert_eq!(
-            distance_string(5184000, false, false, false),
-            "about 2 months"
-        );
+        assert_eq!(distance_string(2764800, false, false, false), "about 1 month");
+        assert_eq!(distance_string(5184000, false, false, false), "about 2 months");
         assert_eq!(distance_string(10368000, false, false, false), "4 months");
-        assert_eq!(
-            distance_string(34694000, false, false, false),
-            "about 1 year"
-        );
-        assert_eq!(
-            distance_string(47310000, false, false, false),
-            "over 1 year"
-        );
-        assert_eq!(
-            distance_string(61503000, false, false, false),
-            "almost 2 years"
-        );
-        assert_eq!(
-            distance_string(160854000, false, false, false),
-            "about 5 years"
-        );
-        assert_eq!(
-            distance_string(236550000, false, false, false),
-            "over 7 years"
-        );
-        assert_eq!(
-            distance_string(249166000, false, false, false),
-            "almost 8 years"
-        );
+        assert_eq!(distance_string(34694000, false, false, false), "about 1 year");
+        assert_eq!(distance_string(47310000, false, false, false), "over 1 year");
+        assert_eq!(distance_string(61503000, false, false, false), "almost 2 years");
+        assert_eq!(distance_string(160854000, false, false, false), "about 5 years");
+        assert_eq!(distance_string(236550000, false, false, false), "over 7 years");
+        assert_eq!(distance_string(249166000, false, false, false), "almost 8 years");
     }
 
     #[test]
     fn test_format_distance_string_include_seconds() {
-        assert_eq!(
-            distance_string(3, true, false, false),
-            "less than 5 seconds"
-        );
-        assert_eq!(
-            distance_string(7, true, false, false),
-            "less than 10 seconds"
-        );
-        assert_eq!(
-            distance_string(13, true, false, false),
-            "less than 20 seconds"
-        );
+        assert_eq!(distance_string(3, true, false, false), "less than 5 seconds");
+        assert_eq!(distance_string(7, true, false, false), "less than 10 seconds");
+        assert_eq!(distance_string(13, true, false, false), "less than 20 seconds");
         assert_eq!(distance_string(21, true, false, false), "half a minute");
-        assert_eq!(
-            distance_string(45, true, false, false),
-            "less than a minute"
-        );
+        assert_eq!(distance_string(45, true, false, false), "less than a minute");
         assert_eq!(distance_string(61, true, false, false), "1 minute");
     }
 }

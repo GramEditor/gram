@@ -15,8 +15,7 @@ use std::time::Duration;
 use anyhow::{Context as _, Result};
 use futures::channel::{mpsc, oneshot};
 use futures::{
-    AsyncBufReadExt as _, AsyncWriteExt as _, FutureExt as _, SinkExt, StreamExt, io::BufReader,
-    select_biased,
+    AsyncBufReadExt as _, AsyncWriteExt as _, FutureExt as _, SinkExt, StreamExt, io::BufReader, select_biased,
 };
 use gpui::{AsyncApp, BackgroundExecutor, Task};
 use smol::fs;
@@ -43,10 +42,7 @@ pub struct AskPassDelegate {
 impl AskPassDelegate {
     pub fn new(
         cx: &mut AsyncApp,
-        password_prompt: impl Fn(String, oneshot::Sender<EncryptedPassword>, &mut AsyncApp)
-        + Send
-        + Sync
-        + 'static,
+        password_prompt: impl Fn(String, oneshot::Sender<EncryptedPassword>, &mut AsyncApp) + Send + Sync + 'static,
     ) -> Self {
         let (tx, mut rx) = mpsc::unbounded::<(String, oneshot::Sender<_>)>();
         let task = cx.spawn(async move |cx: &mut AsyncApp| {
@@ -148,10 +144,7 @@ impl AskPassSession {
         // This is the default timeout setting used by VSCode.
         let connection_timeout = Duration::from_secs(17);
         let askpass_opened_rx = self.askpass_opened_rx.take().expect("Only call run once");
-        let askpass_kill_master_rx = self
-            .askpass_kill_master_rx
-            .take()
-            .expect("Only call run once");
+        let askpass_kill_master_rx = self.askpass_kill_master_rx.take().expect("Only call run once");
 
         select_biased! {
             _ = askpass_opened_rx.fuse() => {
@@ -187,17 +180,13 @@ pub struct PasswordProxy {
 
 impl PasswordProxy {
     pub async fn new(
-        mut get_password: impl FnMut(String) -> Task<ControlFlow<(), Result<EncryptedPassword>>>
-        + 'static
-        + Send
-        + Sync,
+        mut get_password: impl FnMut(String) -> Task<ControlFlow<(), Result<EncryptedPassword>>> + 'static + Send + Sync,
         executor: BackgroundExecutor,
     ) -> Result<Self> {
         let temp_dir = tempfile::Builder::new().prefix("gram-askpass").tempdir()?;
         let askpass_socket = temp_dir.path().join("askpass.sock");
         let askpass_script_path = temp_dir.path().join(ASKPASS_SCRIPT_NAME);
-        let current_exec =
-            std::env::current_exe().context("Failed to determine current executable path.")?;
+        let current_exec = std::env::current_exe().context("Failed to determine current executable path.")?;
 
         // TODO: inferred from the use of powershell.exe in askpass_helper_script
         let shell_kind = if cfg!(windows) {
@@ -210,8 +199,7 @@ impl PasswordProxy {
         let askpass_script = generate_askpass_script(shell_kind, askpass_program, &askpass_socket)?;
         let _task = executor.spawn(async move {
             maybe!(async move {
-                let listener =
-                    UnixListener::bind(&askpass_socket).context("creating askpass socket")?;
+                let listener = UnixListener::bind(&askpass_socket).context("creating askpass socket")?;
 
                 while let Ok((mut stream, _)) = listener.accept().await {
                     let mut buffer = Vec::new();
@@ -224,8 +212,7 @@ impl PasswordProxy {
                     match password {
                         ControlFlow::Continue(password) => {
                             if let Ok(password) = password
-                                && let Ok(decrypted) =
-                                    password.decrypt(IKnowWhatIAmDoingAndIHaveReadTheDocs)
+                                && let Ok(decrypted) = password.decrypt(IKnowWhatIAmDoingAndIHaveReadTheDocs)
                             {
                                 stream.write_all(decrypted.as_bytes()).await.log_err();
                             }
@@ -251,9 +238,7 @@ impl PasswordProxy {
             .with_context(|| format!("creating askpass script at {askpass_script_path:?}"))?;
         make_file_executable(&askpass_script_path)
             .await
-            .with_context(|| {
-                format!("marking askpass script executable at {askpass_script_path:?}")
-            })?;
+            .with_context(|| format!("marking askpass script executable at {askpass_script_path:?}"))?;
         // todo(shell): There might be no powershell on the system
         #[cfg(target_os = "windows")]
         let askpass_helper = format!(

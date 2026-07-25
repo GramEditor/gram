@@ -8,11 +8,7 @@ impl HandleTag for WebpageChromeRemover {
         matches!(tag, "head" | "script" | "style" | "nav")
     }
 
-    fn handle_tag_start(
-        &mut self,
-        tag: &HtmlElement,
-        _writer: &mut MarkdownWriter,
-    ) -> StartTagOutcome {
+    fn handle_tag_start(&mut self, tag: &HtmlElement, _writer: &mut MarkdownWriter) -> StartTagOutcome {
         match tag.tag() {
             "head" | "script" | "style" | "nav" => return StartTagOutcome::Skip,
             _ => {}
@@ -29,17 +25,11 @@ impl HandleTag for ParagraphHandler {
         true
     }
 
-    fn handle_tag_start(
-        &mut self,
-        tag: &HtmlElement,
-        writer: &mut MarkdownWriter,
-    ) -> StartTagOutcome {
+    fn handle_tag_start(&mut self, tag: &HtmlElement, writer: &mut MarkdownWriter) -> StartTagOutcome {
         if tag.is_inline()
             && writer.is_inside("p")
             && let Some(parent) = writer.current_element_stack().iter().last()
-            && !(parent.is_inline()
-                || writer.markdown.ends_with(' ')
-                || writer.markdown.ends_with('\n'))
+            && !(parent.is_inline() || writer.markdown.ends_with(' ') || writer.markdown.ends_with('\n'))
         {
             writer.push_str(" ");
         }
@@ -58,11 +48,7 @@ impl HandleTag for HeadingHandler {
         matches!(tag, "h1" | "h2" | "h3" | "h4" | "h5" | "h6")
     }
 
-    fn handle_tag_start(
-        &mut self,
-        tag: &HtmlElement,
-        writer: &mut MarkdownWriter,
-    ) -> StartTagOutcome {
+    fn handle_tag_start(&mut self, tag: &HtmlElement, writer: &mut MarkdownWriter) -> StartTagOutcome {
         match tag.tag() {
             "h1" => writer.push_str("\n\n# "),
             "h2" => writer.push_str("\n\n## "),
@@ -91,11 +77,7 @@ impl HandleTag for ListHandler {
         matches!(tag, "ul" | "ol" | "li")
     }
 
-    fn handle_tag_start(
-        &mut self,
-        tag: &HtmlElement,
-        writer: &mut MarkdownWriter,
-    ) -> StartTagOutcome {
+    fn handle_tag_start(&mut self, tag: &HtmlElement, writer: &mut MarkdownWriter) -> StartTagOutcome {
         match tag.tag() {
             "ul" | "ol" => writer.push_newline(),
             "li" => writer.push_str("- "),
@@ -142,11 +124,7 @@ impl HandleTag for TableHandler {
         matches!(tag, "table" | "thead" | "tbody" | "tr" | "th" | "td")
     }
 
-    fn handle_tag_start(
-        &mut self,
-        tag: &HtmlElement,
-        writer: &mut MarkdownWriter,
-    ) -> StartTagOutcome {
+    fn handle_tag_start(&mut self, tag: &HtmlElement, writer: &mut MarkdownWriter) -> StartTagOutcome {
         match tag.tag() {
             "thead" => writer.push_blank_line(),
             "tr" => writer.push_newline(),
@@ -205,11 +183,7 @@ impl HandleTag for StyledTextHandler {
         matches!(tag, "strong" | "em")
     }
 
-    fn handle_tag_start(
-        &mut self,
-        tag: &HtmlElement,
-        writer: &mut MarkdownWriter,
-    ) -> StartTagOutcome {
+    fn handle_tag_start(&mut self, tag: &HtmlElement, writer: &mut MarkdownWriter) -> StartTagOutcome {
         match tag.tag() {
             "strong" => writer.push_str("**"),
             "em" => writer.push_str("_"),
@@ -235,11 +209,7 @@ impl HandleTag for CodeHandler {
         matches!(tag, "pre" | "code")
     }
 
-    fn handle_tag_start(
-        &mut self,
-        tag: &HtmlElement,
-        writer: &mut MarkdownWriter,
-    ) -> StartTagOutcome {
+    fn handle_tag_start(&mut self, tag: &HtmlElement, writer: &mut MarkdownWriter) -> StartTagOutcome {
         match tag.tag() {
             "code" => {
                 if !writer.is_inside("pre") {

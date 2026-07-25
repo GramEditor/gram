@@ -18,8 +18,7 @@ use text::{BufferId, OffsetRangeExt};
 use util::ResultExt;
 
 use crate::{
-    BasicContextProvider, Inventory, ProjectEnvironment, buffer_store::BufferStore,
-    worktree_store::WorktreeStore,
+    BasicContextProvider, Inventory, ProjectEnvironment, buffer_store::BufferStore, worktree_store::WorktreeStore,
 };
 
 // platform-dependent warning
@@ -147,9 +146,7 @@ impl TaskStore {
         let task_context = context_task.await.unwrap_or_default();
         Ok(proto::TaskContext {
             project_env: task_context.project_env.into_iter().collect(),
-            cwd: task_context
-                .cwd
-                .map(|cwd| cwd.to_string_lossy().into_owned()),
+            cwd: task_context.cwd.map(|cwd| cwd.to_string_lossy().into_owned()),
             task_variables: task_context
                 .task_variables
                 .into_iter()
@@ -239,9 +236,7 @@ impl TaskStore {
 
     pub fn shared(&mut self, remote_id: u64, new_downstream_client: AnyProtoClient, _cx: &mut App) {
         if let Self::Functional(StoreState {
-            mode: StoreMode::Local {
-                downstream_client, ..
-            },
+            mode: StoreMode::Local { downstream_client, .. },
             ..
         }) = self
         {
@@ -251,9 +246,7 @@ impl TaskStore {
 
     pub fn unshared(&mut self, _: &mut Context<Self>) {
         if let Self::Functional(StoreState {
-            mode: StoreMode::Local {
-                downstream_client, ..
-            },
+            mode: StoreMode::Local { downstream_client, .. },
             ..
         }) = self
         {
@@ -271,9 +264,7 @@ impl TaskStore {
             TaskStore::Functional(state) => &state.task_inventory,
             TaskStore::Noop => return Ok(()),
         };
-        let raw_tasks_json = raw_tasks_json
-            .map(|json| json.trim())
-            .filter(|json| !json.is_empty());
+        let raw_tasks_json = raw_tasks_json.map(|json| json.trim()).filter(|json| !json.is_empty());
 
         task_inventory.update(cx, |inventory, _| {
             inventory.update_file_based_tasks(location, raw_tasks_json)
@@ -290,9 +281,7 @@ impl TaskStore {
             TaskStore::Functional(state) => &state.task_inventory,
             TaskStore::Noop => return Ok(()),
         };
-        let raw_tasks_json = raw_tasks_json
-            .map(|json| json.trim())
-            .filter(|json| !json.is_empty());
+        let raw_tasks_json = raw_tasks_json.map(|json| json.trim()).filter(|json| !json.is_empty());
 
         task_inventory.update(cx, |inventory, _| {
             inventory.update_file_based_scenarios(location, raw_tasks_json)
@@ -382,9 +371,7 @@ fn remote_task_context_for_location(
             .unwrap_or_default();
         remote_context.extend(captured_variables);
 
-        let buffer_id = cx
-            .update(|cx| location.buffer.read(cx).remote_id().to_proto())
-            .ok()?;
+        let buffer_id = cx.update(|cx| location.buffer.read(cx).remote_id().to_proto()).ok()?;
         let context_task = upstream_client.request(proto::TaskContextForLocation {
             project_id,
             location: Some(proto::Location {
@@ -392,10 +379,7 @@ fn remote_task_context_for_location(
                 start: Some(serialize_anchor(&location.range.start)),
                 end: Some(serialize_anchor(&location.range.end)),
             }),
-            task_variables: remote_context
-                .into_iter()
-                .map(|(k, v)| (k.to_string(), v))
-                .collect(),
+            task_variables: remote_context.into_iter().map(|(k, v)| (k.to_string(), v)).collect(),
         });
         let task_context = context_task.await.log_err()?;
         Some(TaskContext {
@@ -403,26 +387,20 @@ fn remote_task_context_for_location(
             task_variables: task_context
                 .task_variables
                 .into_iter()
-                .filter_map(
-                    |(variable_name, variable_value)| match variable_name.parse() {
-                        Ok(variable_name) => Some((variable_name, variable_value)),
-                        Err(()) => {
-                            log::error!("Unknown variable name: {variable_name}");
-                            None
-                        }
-                    },
-                )
+                .filter_map(|(variable_name, variable_value)| match variable_name.parse() {
+                    Ok(variable_name) => Some((variable_name, variable_value)),
+                    Err(()) => {
+                        log::error!("Unknown variable name: {variable_name}");
+                        None
+                    }
+                })
                 .collect(),
             project_env: task_context.project_env.into_iter().collect(),
         })
     })
 }
 
-fn worktree_root(
-    worktree_store: &Entity<WorktreeStore>,
-    location: &Location,
-    cx: &mut App,
-) -> Option<PathBuf> {
+fn worktree_root(worktree_store: &Entity<WorktreeStore>, location: &Location, cx: &mut App) -> Option<PathBuf> {
     location
         .buffer
         .read(cx)

@@ -22,8 +22,7 @@ pub struct WorktreeSettings {
 
 impl WorktreeSettings {
     pub fn is_path_private(&self, path: &RelPath) -> bool {
-        path.ancestors()
-            .any(|ancestor| self.private_files.is_match(ancestor))
+        path.ancestors().any(|ancestor| self.private_files.is_match(ancestor))
     }
 
     pub fn is_path_excluded(&self, path: &RelPath) -> bool {
@@ -40,8 +39,7 @@ impl WorktreeSettings {
     }
 
     pub fn is_path_hidden(&self, path: &RelPath) -> bool {
-        path.ancestors()
-            .any(|ancestor| self.hidden_files.is_match(ancestor))
+        path.ancestors().any(|ancestor| self.hidden_files.is_match(ancestor))
     }
 }
 
@@ -55,12 +53,7 @@ impl Settings for WorktreeSettings {
         let file_watcher = worktree.file_watcher.unwrap();
         let parsed_file_scan_inclusions: Vec<String> = file_scan_inclusions
             .iter()
-            .flat_map(|glob| {
-                Path::new(glob)
-                    .ancestors()
-                    .skip(1)
-                    .map(|a| a.to_string_lossy().into())
-            })
+            .flat_map(|glob| Path::new(glob).ancestors().skip(1).map(|a| a.to_string_lossy().into()))
             .filter(|p: &String| !p.is_empty())
             .collect();
 
@@ -68,13 +61,8 @@ impl Settings for WorktreeSettings {
             file_scan_exclusions: path_matchers(file_scan_exclusions, "file_scan_exclusions")
                 .log_err()
                 .unwrap_or_default(),
-            parent_dir_scan_inclusions: path_matchers(
-                parsed_file_scan_inclusions,
-                "file_scan_inclusions",
-            )
-            .unwrap(),
-            file_scan_inclusions: path_matchers(file_scan_inclusions, "file_scan_inclusions")
-                .unwrap(),
+            parent_dir_scan_inclusions: path_matchers(parsed_file_scan_inclusions, "file_scan_inclusions").unwrap(),
+            file_scan_inclusions: path_matchers(file_scan_inclusions, "file_scan_inclusions").unwrap(),
             private_files: path_matchers(private_files, "private_files")
                 .log_err()
                 .unwrap_or_default(),
@@ -83,10 +71,7 @@ impl Settings for WorktreeSettings {
                 .unwrap_or_default(),
             file_watcher: match file_watcher.mode {
                 Some(FileWatcherMode::Poll) => fs::fs_watcher::WatcherMode::Poll {
-                    interval_ms: file_watcher
-                        .poll_interval_ms
-                        .unwrap_or_default()
-                        .clamp(500, 30_000),
+                    interval_ms: file_watcher.poll_interval_ms.unwrap_or_default().clamp(500, 30_000),
                 },
                 _ => fs::fs_watcher::WatcherMode::Native,
             },
@@ -96,6 +81,5 @@ impl Settings for WorktreeSettings {
 
 fn path_matchers(mut values: Vec<String>, context: &'static str) -> anyhow::Result<PathMatcher> {
     values.sort();
-    PathMatcher::new(values, PathStyle::local())
-        .with_context(|| format!("Failed to parse globs from {}", context))
+    PathMatcher::new(values, PathStyle::local()).with_context(|| format!("Failed to parse globs from {}", context))
 }

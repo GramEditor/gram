@@ -13,10 +13,7 @@ pub struct GitTraversal<'a> {
     traversal: Traversal<'a>,
     current_entry_summary: Option<GitSummary>,
     repo_root_to_snapshot: BTreeMap<&'a Path, &'a RepositorySnapshot>,
-    repo_location: Option<(
-        RepositoryId,
-        Cursor<'a, 'static, StatusEntry, PathProgress<'a>>,
-    )>,
+    repo_location: Option<(RepositoryId, Cursor<'a, 'static, StatusEntry, PathProgress<'a>>)>,
 }
 
 impl<'a> GitTraversal<'a> {
@@ -48,10 +45,7 @@ impl<'a> GitTraversal<'a> {
         //   our_query.txt
         let query = path.ancestors();
         for query in query {
-            let (_, snapshot) = self
-                .repo_root_to_snapshot
-                .range(Path::new("")..=query)
-                .last()?;
+            let (_, snapshot) = self.repo_root_to_snapshot.range(Path::new("")..=query).last()?;
 
             let stripped = snapshot
                 .abs_path_to_repo_path(path)
@@ -79,13 +73,7 @@ impl<'a> GitTraversal<'a> {
         };
 
         // Update our state if we changed repositories.
-        if reset
-            || self
-                .repo_location
-                .as_ref()
-                .map(|(prev_repo_id, _)| *prev_repo_id)
-                != Some(repo.id)
-        {
+        if reset || self.repo_location.as_ref().map(|(prev_repo_id, _)| *prev_repo_id) != Some(repo.id) {
             self.repo_location = Some((repo.id, repo.statuses_by_path.cursor::<PathProgress>(())));
         }
 
@@ -172,10 +160,7 @@ impl<'a> ChildEntriesGitIter<'a> {
             worktree_snapshot.traverse_from_path(true, true, true, parent_path),
         );
         traversal.advance();
-        ChildEntriesGitIter {
-            parent_path,
-            traversal,
-        }
+        ChildEntriesGitIter { parent_path, traversal }
     }
 }
 
@@ -415,11 +400,7 @@ mod tests {
         check_git_statuses(
             &repo_snapshots,
             &worktree_snapshot,
-            &[
-                ("z", ADDED),
-                ("z/z1.txt", GitSummary::UNCHANGED),
-                ("z/z2.txt", ADDED),
-            ],
+            &[("z", ADDED), ("z/z1.txt", GitSummary::UNCHANGED), ("z/z2.txt", ADDED)],
         );
 
         // Test one of the fundamental cases of propagation blocking, the transition from one git repository to another
@@ -617,10 +598,7 @@ mod tests {
         );
         fs.set_status_for_repo(
             Path::new(path!("/root/y/.git")),
-            &[
-                ("y1.txt", CONFLICT),
-                ("y2.txt", StatusCode::Modified.index()),
-            ],
+            &[("y1.txt", CONFLICT), ("y2.txt", StatusCode::Modified.index())],
         );
         fs.set_status_for_repo(
             Path::new(path!("/root/z/.git")),
@@ -761,11 +739,7 @@ mod tests {
         check_git_statuses(
             &repo_snapshots,
             &worktree_snapshot,
-            &[
-                ("", MODIFIED),
-                ("a.txt", GitSummary::UNCHANGED),
-                ("b/c.txt", MODIFIED),
-            ],
+            &[("", MODIFIED), ("a.txt", GitSummary::UNCHANGED), ("b/c.txt", MODIFIED)],
         );
     }
 

@@ -25,10 +25,7 @@ use serde::Serializer;
 /// #[derive(Serialize)]
 /// struct ExampleStruct(#[serde(serialize_with = "serialize_f32_with_two_decimal_places")] f32);
 /// ```
-pub fn serialize_f32_with_two_decimal_places<S>(
-    value: &f32,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
+pub fn serialize_f32_with_two_decimal_places<S>(value: &f32, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
@@ -72,10 +69,7 @@ where
 ///     optional_value: Option<f32>,
 /// }
 /// ```
-pub fn serialize_optional_f32_with_two_decimal_places<S>(
-    value: &Option<f32>,
-    serializer: S,
-) -> Result<S::Ok, S::Error>
+pub fn serialize_optional_f32_with_two_decimal_places<S>(value: &Option<f32>, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {

@@ -156,9 +156,7 @@ async fn test_diagnostics(cx: &mut TestAppContext) {
     // Cursor is at the first diagnostic
     editor.update(cx, |editor, cx| {
         assert_eq!(
-            editor
-                .selections
-                .display_ranges(&editor.display_snapshot(cx)),
+            editor.selections.display_ranges(&editor.display_snapshot(cx)),
             [DisplayPoint::new(DisplayRow(3), 8)..DisplayPoint::new(DisplayRow(3), 8)]
         );
     });
@@ -172,10 +170,7 @@ async fn test_diagnostics(cx: &mut TestAppContext) {
                 lsp::PublishDiagnosticsParams {
                     uri: lsp::Uri::from_file_path(path!("/test/consts.rs")).unwrap(),
                     diagnostics: vec![lsp::Diagnostic {
-                        range: lsp::Range::new(
-                            lsp::Position::new(0, 15),
-                            lsp::Position::new(0, 15),
-                        ),
+                        range: lsp::Range::new(lsp::Position::new(0, 15), lsp::Position::new(0, 15)),
                         severity: Some(lsp::DiagnosticSeverity::ERROR),
                         message: "mismatched types expected `usize`, found `char`".to_string(),
                         ..Default::default()
@@ -234,9 +229,7 @@ async fn test_diagnostics(cx: &mut TestAppContext) {
     // Cursor keeps its position.
     editor.update(cx, |editor, cx| {
         assert_eq!(
-            editor
-                .selections
-                .display_ranges(&editor.display_snapshot(cx)),
+            editor.selections.display_ranges(&editor.display_snapshot(cx)),
             [DisplayPoint::new(DisplayRow(8), 8)..DisplayPoint::new(DisplayRow(8), 8)]
         );
     });
@@ -251,19 +244,13 @@ async fn test_diagnostics(cx: &mut TestAppContext) {
                     uri: lsp::Uri::from_file_path(path!("/test/consts.rs")).unwrap(),
                     diagnostics: vec![
                         lsp::Diagnostic {
-                            range: lsp::Range::new(
-                                lsp::Position::new(0, 15),
-                                lsp::Position::new(0, 15),
-                            ),
+                            range: lsp::Range::new(lsp::Position::new(0, 15), lsp::Position::new(0, 15)),
                             severity: Some(lsp::DiagnosticSeverity::ERROR),
                             message: "mismatched types expected `usize`, found `char`".to_string(),
                             ..Default::default()
                         },
                         lsp::Diagnostic {
-                            range: lsp::Range::new(
-                                lsp::Position::new(1, 15),
-                                lsp::Position::new(1, 15),
-                            ),
+                            range: lsp::Range::new(lsp::Position::new(1, 15), lsp::Position::new(1, 15)),
                             severity: Some(lsp::DiagnosticSeverity::ERROR),
                             message: "unresolved name `c`".to_string(),
                             ..Default::default()
@@ -369,10 +356,7 @@ async fn test_diagnostics_with_folds(cx: &mut TestAppContext) {
                         related_information: Some(vec![lsp::DiagnosticRelatedInformation {
                             location: lsp::Location::new(
                                 lsp::Uri::from_file_path(path!("/test/main.js")).unwrap(),
-                                lsp::Range::new(
-                                    lsp::Position::new(0, 9),
-                                    lsp::Position::new(0, 13),
-                                ),
+                                lsp::Range::new(lsp::Position::new(0, 9), lsp::Position::new(0, 13)),
                             ),
                             message: "method `test` defined here".to_string(),
                         }]),
@@ -683,8 +667,7 @@ async fn test_random_diagnostics_blocks(cx: &mut TestAppContext, mut rng: StdRng
     let mut next_filename = 0;
     let mut language_server_ids = vec![LanguageServerId(0)];
     let mut updated_language_servers = HashSet::default();
-    let mut current_diagnostics: HashMap<(PathBuf, LanguageServerId), Vec<lsp::Diagnostic>> =
-        Default::default();
+    let mut current_diagnostics: HashMap<(PathBuf, LanguageServerId), Vec<lsp::Diagnostic>> = Default::default();
 
     for _ in 0..operations {
         match rng.random_range(0..100) {
@@ -703,57 +686,47 @@ async fn test_random_diagnostics_blocks(cx: &mut TestAppContext, mut rng: StdRng
 
             // language server updates diagnostics
             _ => {
-                let (path, server_id, diagnostics) =
-                    match current_diagnostics.iter_mut().choose(&mut rng) {
-                        // update existing set of diagnostics
-                        Some(((path, server_id), diagnostics)) if rng.random_bool(0.5) => {
-                            (path.clone(), *server_id, diagnostics)
-                        }
+                let (path, server_id, diagnostics) = match current_diagnostics.iter_mut().choose(&mut rng) {
+                    // update existing set of diagnostics
+                    Some(((path, server_id), diagnostics)) if rng.random_bool(0.5) => {
+                        (path.clone(), *server_id, diagnostics)
+                    }
 
-                        // insert a set of diagnostics for a new path
-                        _ => {
-                            let path: PathBuf =
-                                format!(path!("/test/{}.rs"), post_inc(&mut next_filename)).into();
-                            let len = rng.random_range(128..256);
-                            let content =
-                                RandomCharIter::new(&mut rng).take(len).collect::<String>();
-                            fs.insert_file(&path, content.into_bytes()).await;
+                    // insert a set of diagnostics for a new path
+                    _ => {
+                        let path: PathBuf = format!(path!("/test/{}.rs"), post_inc(&mut next_filename)).into();
+                        let len = rng.random_range(128..256);
+                        let content = RandomCharIter::new(&mut rng).take(len).collect::<String>();
+                        fs.insert_file(&path, content.into_bytes()).await;
 
-                            let server_id = match language_server_ids.iter().choose(&mut rng) {
-                                Some(server_id) if rng.random_bool(0.5) => *server_id,
-                                _ => {
-                                    let id = LanguageServerId(language_server_ids.len());
-                                    language_server_ids.push(id);
-                                    id
-                                }
-                            };
+                        let server_id = match language_server_ids.iter().choose(&mut rng) {
+                            Some(server_id) if rng.random_bool(0.5) => *server_id,
+                            _ => {
+                                let id = LanguageServerId(language_server_ids.len());
+                                language_server_ids.push(id);
+                                id
+                            }
+                        };
 
-                            (
-                                path.clone(),
-                                server_id,
-                                current_diagnostics.entry((path, server_id)).or_default(),
-                            )
-                        }
-                    };
+                        (
+                            path.clone(),
+                            server_id,
+                            current_diagnostics.entry((path, server_id)).or_default(),
+                        )
+                    }
+                };
 
                 updated_language_servers.insert(server_id);
 
                 lsp_store.update(cx, |lsp_store, cx| {
                     log::info!("updating diagnostics. language server {server_id} path {path:?}");
-                    randomly_update_diagnostics_for_path(
-                        &fs,
-                        &path,
-                        diagnostics,
-                        &mut next_id,
-                        &mut rng,
-                    );
+                    randomly_update_diagnostics_for_path(&fs, &path, diagnostics, &mut next_id, &mut rng);
                     lsp_store
                         .update_diagnostics(
                             server_id,
                             lsp::PublishDiagnosticsParams {
-                                uri: lsp::Uri::from_file_path(&path).unwrap_or_else(|_| {
-                                    lsp::Uri::from_str("file:///test/fallback.rs").unwrap()
-                                }),
+                                uri: lsp::Uri::from_file_path(&path)
+                                    .unwrap_or_else(|_| lsp::Uri::from_str("file:///test/fallback.rs").unwrap()),
                                 diagnostics: diagnostics.clone(),
                                 version: None,
                             },
@@ -785,20 +758,14 @@ async fn test_random_diagnostics_blocks(cx: &mut TestAppContext, mut rng: StdRng
         .advance_clock(DIAGNOSTICS_UPDATE_DEBOUNCE + Duration::from_millis(10));
     cx.run_until_parked();
 
-    let mutated_excerpts =
-        editor_content_with_blocks(&mutated_diagnostics.update(cx, |d, _| d.editor.clone()), cx);
-    let reference_excerpts = editor_content_with_blocks(
-        &reference_diagnostics.update(cx, |d, _| d.editor.clone()),
-        cx,
-    );
+    let mutated_excerpts = editor_content_with_blocks(&mutated_diagnostics.update(cx, |d, _| d.editor.clone()), cx);
+    let reference_excerpts = editor_content_with_blocks(&reference_diagnostics.update(cx, |d, _| d.editor.clone()), cx);
 
     // The mutated view may contain more than the reference view as
     // we don't currently shrink excerpts when diagnostics were removed.
     let mut ref_iter = reference_excerpts.lines().filter(|line| {
         // ignore $ ---- and $ <file>.rs
-        !line.starts_with('§')
-            || line.starts_with("§ diagnostic")
-            || line.starts_with("§ related info")
+        !line.starts_with('§') || line.starts_with("§ diagnostic") || line.starts_with("§ related info")
     });
     let mut next_ref_line = ref_iter.next();
     let mut skipped_block = false;
@@ -828,8 +795,7 @@ async fn active_diagnostics_dismiss_after_invalidation(cx: &mut TestAppContext) 
     init_test(cx);
 
     let mut cx = EditorTestContext::new(cx).await;
-    let lsp_store =
-        cx.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).lsp_store());
+    let lsp_store = cx.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).lsp_store());
 
     cx.set_state(indoc! {"
         ˇfn func(abc def: i32) -> u32 {
@@ -846,10 +812,7 @@ async fn active_diagnostics_dismiss_after_invalidation(cx: &mut TestAppContext) 
                         uri: lsp::Uri::from_file_path(path!("/root/file")).unwrap(),
                         version: None,
                         diagnostics: vec![lsp::Diagnostic {
-                            range: lsp::Range::new(
-                                lsp::Position::new(0, 11),
-                                lsp::Position::new(0, 12),
-                            ),
+                            range: lsp::Range::new(lsp::Position::new(0, 11), lsp::Position::new(0, 12)),
                             severity: Some(lsp::DiagnosticSeverity::ERROR),
                             message: message.to_string(),
                             ..Default::default()
@@ -922,8 +885,7 @@ async fn cycle_through_same_place_diagnostics(cx: &mut TestAppContext) {
     init_test(cx);
 
     let mut cx = EditorTestContext::new(cx).await;
-    let lsp_store =
-        cx.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).lsp_store());
+    let lsp_store = cx.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).lsp_store());
 
     cx.set_state(indoc! {"
         ˇfn func(abc def: i32) -> u32 {
@@ -940,34 +902,22 @@ async fn cycle_through_same_place_diagnostics(cx: &mut TestAppContext) {
                         version: None,
                         diagnostics: vec![
                             lsp::Diagnostic {
-                                range: lsp::Range::new(
-                                    lsp::Position::new(0, 11),
-                                    lsp::Position::new(0, 12),
-                                ),
+                                range: lsp::Range::new(lsp::Position::new(0, 11), lsp::Position::new(0, 12)),
                                 severity: Some(lsp::DiagnosticSeverity::ERROR),
                                 ..Default::default()
                             },
                             lsp::Diagnostic {
-                                range: lsp::Range::new(
-                                    lsp::Position::new(0, 12),
-                                    lsp::Position::new(0, 15),
-                                ),
+                                range: lsp::Range::new(lsp::Position::new(0, 12), lsp::Position::new(0, 15)),
                                 severity: Some(lsp::DiagnosticSeverity::ERROR),
                                 ..Default::default()
                             },
                             lsp::Diagnostic {
-                                range: lsp::Range::new(
-                                    lsp::Position::new(0, 12),
-                                    lsp::Position::new(0, 15),
-                                ),
+                                range: lsp::Range::new(lsp::Position::new(0, 12), lsp::Position::new(0, 15)),
                                 severity: Some(lsp::DiagnosticSeverity::ERROR),
                                 ..Default::default()
                             },
                             lsp::Diagnostic {
-                                range: lsp::Range::new(
-                                    lsp::Position::new(0, 25),
-                                    lsp::Position::new(0, 28),
-                                ),
+                                range: lsp::Range::new(lsp::Position::new(0, 25), lsp::Position::new(0, 28)),
                                 severity: Some(lsp::DiagnosticSeverity::ERROR),
                                 ..Default::default()
                             },
@@ -1096,8 +1046,7 @@ async fn test_diagnostics_with_links(cx: &mut TestAppContext) {
         fn func(abˇc def: i32) -> u32 {
         }
     "});
-    let lsp_store =
-        cx.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).lsp_store());
+    let lsp_store = cx.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).lsp_store());
 
     cx.update(|_, cx| {
         lsp_store.update(cx, |lsp_store, cx| {
@@ -1109,7 +1058,8 @@ async fn test_diagnostics_with_links(cx: &mut TestAppContext) {
                     diagnostics: vec![lsp::Diagnostic {
                         range: lsp::Range::new(lsp::Position::new(0, 8), lsp::Position::new(0, 12)),
                         severity: Some(lsp::DiagnosticSeverity::ERROR),
-                        message: "we've had problems with <https://link.one>, and <https://link.two> is broken".to_string(),
+                        message: "we've had problems with <https://link.one>, and <https://link.two> is broken"
+                            .to_string(),
                         ..Default::default()
                     }],
                 },
@@ -1119,11 +1069,10 @@ async fn test_diagnostics_with_links(cx: &mut TestAppContext) {
                 cx,
             )
         })
-    }).unwrap();
+    })
+    .unwrap();
     cx.run_until_parked();
-    cx.update_editor(|editor, window, cx| {
-        editor::hover_popover::hover(editor, &Default::default(), window, cx)
-    });
+    cx.update_editor(|editor, window, cx| editor::hover_popover::hover(editor, &Default::default(), window, cx));
     cx.run_until_parked();
     cx.update_editor(|editor, _, _| assert!(editor.hover_state.diagnostic_popover.is_some()))
 }
@@ -1150,8 +1099,7 @@ async fn test_hover_diagnostic_and_info_popovers(cx: &mut gpui::TestAppContext) 
     let range = cx.lsp_range(indoc! {"
         fn «test»() { println!(); }
     "});
-    let lsp_store =
-        cx.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).lsp_store());
+    let lsp_store = cx.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).lsp_store());
     cx.update(|_, cx| {
         lsp_store.update(cx, |lsp_store, cx| {
             lsp_store.update_diagnostics(
@@ -1199,8 +1147,7 @@ async fn test_hover_diagnostic_and_info_popovers(cx: &mut gpui::TestAppContext) 
         }))
     });
     let delay = cx.update(|_, cx| EditorSettings::get_global(cx).hover_popover_delay.0 + 1);
-    cx.background_executor
-        .advance_clock(Duration::from_millis(delay));
+    cx.background_executor.advance_clock(Duration::from_millis(delay));
 
     cx.background_executor.run_until_parked();
     cx.editor(|Editor { hover_state, .. }, _, _| {
@@ -1245,10 +1192,7 @@ async fn test_diagnostics_with_code(cx: &mut TestAppContext) {
                     uri: uri.clone(),
                     diagnostics: vec![
                         lsp::Diagnostic {
-                            range: lsp::Range::new(
-                                lsp::Position::new(1, 4),
-                                lsp::Position::new(1, 14),
-                            ),
+                            range: lsp::Range::new(lsp::Position::new(1, 4), lsp::Position::new(1, 14)),
                             severity: Some(lsp::DiagnosticSeverity::WARNING),
                             code: Some(lsp::NumberOrString::String("no-unused-vars".to_string())),
                             source: Some("eslint".to_string()),
@@ -1256,10 +1200,7 @@ async fn test_diagnostics_with_code(cx: &mut TestAppContext) {
                             ..Default::default()
                         },
                         lsp::Diagnostic {
-                            range: lsp::Range::new(
-                                lsp::Position::new(2, 4),
-                                lsp::Position::new(2, 14),
-                            ),
+                            range: lsp::Range::new(lsp::Position::new(2, 4), lsp::Position::new(2, 14)),
                             severity: Some(lsp::DiagnosticSeverity::WARNING),
                             code: Some(lsp::NumberOrString::String("no-unused-vars".to_string())),
                             source: Some("eslint".to_string()),
@@ -1307,8 +1248,7 @@ async fn go_to_diagnostic_with_severity(cx: &mut TestAppContext) {
     init_test(cx);
 
     let mut cx = EditorTestContext::new(cx).await;
-    let lsp_store =
-        cx.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).lsp_store());
+    let lsp_store = cx.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).lsp_store());
 
     cx.set_state(indoc! {"error warning info hiˇnt"});
 
@@ -1322,34 +1262,22 @@ async fn go_to_diagnostic_with_severity(cx: &mut TestAppContext) {
                         version: None,
                         diagnostics: vec![
                             lsp::Diagnostic {
-                                range: lsp::Range::new(
-                                    lsp::Position::new(0, 0),
-                                    lsp::Position::new(0, 5),
-                                ),
+                                range: lsp::Range::new(lsp::Position::new(0, 0), lsp::Position::new(0, 5)),
                                 severity: Some(lsp::DiagnosticSeverity::ERROR),
                                 ..Default::default()
                             },
                             lsp::Diagnostic {
-                                range: lsp::Range::new(
-                                    lsp::Position::new(0, 6),
-                                    lsp::Position::new(0, 13),
-                                ),
+                                range: lsp::Range::new(lsp::Position::new(0, 6), lsp::Position::new(0, 13)),
                                 severity: Some(lsp::DiagnosticSeverity::WARNING),
                                 ..Default::default()
                             },
                             lsp::Diagnostic {
-                                range: lsp::Range::new(
-                                    lsp::Position::new(0, 14),
-                                    lsp::Position::new(0, 18),
-                                ),
+                                range: lsp::Range::new(lsp::Position::new(0, 14), lsp::Position::new(0, 18)),
                                 severity: Some(lsp::DiagnosticSeverity::INFORMATION),
                                 ..Default::default()
                             },
                             lsp::Diagnostic {
-                                range: lsp::Range::new(
-                                    lsp::Position::new(0, 19),
-                                    lsp::Position::new(0, 23),
-                                ),
+                                range: lsp::Range::new(lsp::Position::new(0, 19), lsp::Position::new(0, 23)),
                                 severity: Some(lsp::DiagnosticSeverity::HINT),
                                 ..Default::default()
                             },
@@ -1368,13 +1296,7 @@ async fn go_to_diagnostic_with_severity(cx: &mut TestAppContext) {
     macro_rules! go {
         ($severity:expr) => {
             cx.update_editor(|editor, window, cx| {
-                editor.go_to_diagnostic(
-                    &GoToDiagnostic {
-                        severity: $severity,
-                    },
-                    window,
-                    cx,
-                );
+                editor.go_to_diagnostic(&GoToDiagnostic { severity: $severity }, window, cx);
             });
         };
     }
@@ -1463,15 +1385,11 @@ async fn test_buffer_diagnostics(cx: &mut TestAppContext) {
     let window = cx.add_window(|window, cx| Workspace::test_new(project.clone(), window, cx));
     let cx = &mut VisualTestContext::from_window(*window, cx);
     let project_path = project::ProjectPath {
-        worktree_id: project.read_with(cx, |project, cx| {
-            project.worktrees(cx).next().unwrap().read(cx).id()
-        }),
+        worktree_id: project.read_with(cx, |project, cx| project.worktrees(cx).next().unwrap().read(cx).id()),
         path: rel_path("main.rs").into(),
     };
     let buffer = project
-        .update(cx, |project, cx| {
-            project.open_buffer(project_path.clone(), cx)
-        })
+        .update(cx, |project, cx| project.open_buffer(project_path.clone(), cx))
         .await
         .ok();
 
@@ -1544,18 +1462,9 @@ async fn test_buffer_diagnostics(cx: &mut TestAppContext) {
     });
 
     let buffer_diagnostics = window.build_entity(cx, |window, cx| {
-        BufferDiagnosticsEditor::new(
-            project_path.clone(),
-            project.clone(),
-            buffer,
-            true,
-            window,
-            cx,
-        )
+        BufferDiagnosticsEditor::new(project_path.clone(), project.clone(), buffer, true, window, cx)
     });
-    let editor = buffer_diagnostics.update(cx, |buffer_diagnostics, _| {
-        buffer_diagnostics.editor().clone()
-    });
+    let editor = buffer_diagnostics.update(cx, |buffer_diagnostics, _| buffer_diagnostics.editor().clone());
 
     // Since the excerpt updates is handled by a background task, we need to
     // wait a little bit to ensure that the buffer diagnostic's editor content
@@ -1617,15 +1526,11 @@ async fn test_buffer_diagnostics_without_warnings(cx: &mut TestAppContext) {
     let window = cx.add_window(|window, cx| Workspace::test_new(project.clone(), window, cx));
     let cx = &mut VisualTestContext::from_window(*window, cx);
     let project_path = project::ProjectPath {
-        worktree_id: project.read_with(cx, |project, cx| {
-            project.worktrees(cx).next().unwrap().read(cx).id()
-        }),
+        worktree_id: project.read_with(cx, |project, cx| project.worktrees(cx).next().unwrap().read(cx).id()),
         path: rel_path("main.rs").into(),
     };
     let buffer = project
-        .update(cx, |project, cx| {
-            project.open_buffer(project_path.clone(), cx)
-        })
+        .update(cx, |project, cx| project.open_buffer(project_path.clone(), cx))
         .await
         .ok();
 
@@ -1686,9 +1591,7 @@ async fn test_buffer_diagnostics_without_warnings(cx: &mut TestAppContext) {
         )
     });
 
-    let editor = buffer_diagnostics.update(cx, |buffer_diagnostics, _cx| {
-        buffer_diagnostics.editor().clone()
-    });
+    let editor = buffer_diagnostics.update(cx, |buffer_diagnostics, _cx| buffer_diagnostics.editor().clone());
 
     // Since the excerpt updates is handled by a background task, we need to
     // wait a little bit to ensure that the buffer diagnostic's editor content
@@ -1746,15 +1649,11 @@ async fn test_buffer_diagnostics_multiple_servers(cx: &mut TestAppContext) {
     let window = cx.add_window(|window, cx| Workspace::test_new(project.clone(), window, cx));
     let cx = &mut VisualTestContext::from_window(*window, cx);
     let project_path = project::ProjectPath {
-        worktree_id: project.read_with(cx, |project, cx| {
-            project.worktrees(cx).next().unwrap().read(cx).id()
-        }),
+        worktree_id: project.read_with(cx, |project, cx| project.worktrees(cx).next().unwrap().read(cx).id()),
         path: rel_path("main.rs").into(),
     };
     let buffer = project
-        .update(cx, |project, cx| {
-            project.open_buffer(project_path.clone(), cx)
-        })
+        .update(cx, |project, cx| project.open_buffer(project_path.clone(), cx))
         .await
         .ok();
 
@@ -1811,18 +1710,9 @@ async fn test_buffer_diagnostics_multiple_servers(cx: &mut TestAppContext) {
     });
 
     let buffer_diagnostics = window.build_entity(cx, |window, cx| {
-        BufferDiagnosticsEditor::new(
-            project_path.clone(),
-            project.clone(),
-            buffer,
-            true,
-            window,
-            cx,
-        )
+        BufferDiagnosticsEditor::new(project_path.clone(), project.clone(), buffer, true, window, cx)
     });
-    let editor = buffer_diagnostics.update(cx, |buffer_diagnostics, _| {
-        buffer_diagnostics.editor().clone()
-    });
+    let editor = buffer_diagnostics.update(cx, |buffer_diagnostics, _| buffer_diagnostics.editor().clone());
 
     // Since the excerpt updates is handled by a background task, we need to
     // wait a little bit to ensure that the buffer diagnostic's editor content
@@ -1912,12 +1802,7 @@ fn randomly_update_diagnostics_for_path(
     }
 }
 
-fn random_lsp_diagnostic(
-    rng: &mut impl Rng,
-    fs: &FakeFs,
-    path: &Path,
-    unique_id: usize,
-) -> lsp::Diagnostic {
+fn random_lsp_diagnostic(rng: &mut impl Rng, fs: &FakeFs, path: &Path, unique_id: usize) -> lsp::Diagnostic {
     // Intentionally allow erroneous ranges some of the time (that run off the end of the file),
     // because language servers can potentially give us those, and we should handle them gracefully.
     const ERROR_MARGIN: usize = 10;
@@ -1950,8 +1835,7 @@ fn random_lsp_diagnostic(
 
         for i in 0..info_count {
             let info_start = rng.random_range(0..file_text.len().saturating_add(ERROR_MARGIN));
-            let info_end =
-                rng.random_range(info_start..file_text.len().saturating_add(ERROR_MARGIN));
+            let info_end = rng.random_range(info_start..file_text.len().saturating_add(ERROR_MARGIN));
 
             let info_start_point = file_text.offset_to_point_utf16(info_start);
             let info_end_point = file_text.offset_to_point_utf16(info_end);

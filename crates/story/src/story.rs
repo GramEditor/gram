@@ -1,6 +1,4 @@
-use gpui::{
-    AnyElement, App, Div, SharedString, Window, colors::DefaultColors, div, prelude::*, px, rems,
-};
+use gpui::{AnyElement, App, Div, SharedString, Window, colors::DefaultColors, div, prelude::*, px, rems};
 use itertools::Itertools;
 use smallvec::SmallVec;
 
@@ -20,10 +18,7 @@ impl Story {
     }
 
     pub fn title(title: impl Into<SharedString>, cx: &App) -> impl Element {
-        div()
-            .text_xs()
-            .text_color(cx.default_colors().text)
-            .child(title.into())
+        div().text_xs().text_color(cx.default_colors().text).child(title.into())
     }
 
     pub fn title_for<T>(cx: &App) -> impl Element {
@@ -31,11 +26,7 @@ impl Story {
     }
 
     pub fn section(cx: &App) -> Div {
-        div()
-            .p_4()
-            .m_4()
-            .border_1()
-            .border_color(cx.default_colors().separator)
+        div().p_4().m_4().border_1().border_color(cx.default_colors().separator)
     }
 
     pub fn section_title(cx: &App) -> Div {
@@ -72,10 +63,7 @@ impl Story {
     }
 
     pub fn label(label: impl Into<SharedString>, cx: &App) -> impl Element {
-        div()
-            .text_xs()
-            .text_color(cx.default_colors().text)
-            .child(label.into())
+        div().text_xs().text_color(cx.default_colors().text).child(label.into())
     }
 
     /// Note: Not `ui::v_flex` as the `story` crate doesn't depend on the `ui` crate.
@@ -185,10 +173,10 @@ impl StorySection {
 
 impl RenderOnce for StorySection {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let children: SmallVec<[AnyElement; 2]> = SmallVec::from_iter(Itertools::intersperse_with(
-            self.children.into_iter(),
-            || Story::divider(cx).into_any_element(),
-        ));
+        let children: SmallVec<[AnyElement; 2]> =
+            SmallVec::from_iter(Itertools::intersperse_with(self.children.into_iter(), || {
+                Story::divider(cx).into_any_element()
+            }));
 
         Story::section(cx)
             // Section title

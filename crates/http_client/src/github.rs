@@ -55,10 +55,7 @@ pub async fn latest_github_release(
         })
         .body(Default::default())?;
 
-    let mut response = http
-        .send(request)
-        .await
-        .context("error fetching latest release")?;
+    let mut response = http.send(request).await.context("error fetching latest release")?;
 
     let mut body = Vec::new();
     response
@@ -69,21 +66,17 @@ pub async fn latest_github_release(
 
     if response.status().is_client_error() {
         let text = String::from_utf8_lossy(body.as_slice());
-        bail!(
-            "status error {}, response: {text:?}",
-            response.status().as_u16()
-        );
+        bail!("status error {}, response: {text:?}", response.status().as_u16());
     }
 
-    let releases =
-        serde_json::from_slice::<Vec<GithubRelease>>(body.as_slice()).map_err(|err| {
-            log::error!("Error deserializing: {err:?}");
-            log::error!(
-                "GitHub API response text: {:?}",
-                String::from_utf8_lossy(body.as_slice())
-            );
-            anyhow!("error deserializing latest release: {err:?}")
-        })?;
+    let releases = serde_json::from_slice::<Vec<GithubRelease>>(body.as_slice()).map_err(|err| {
+        log::error!("Error deserializing: {err:?}");
+        log::error!(
+            "GitHub API response text: {:?}",
+            String::from_utf8_lossy(body.as_slice())
+        );
+        anyhow!("error deserializing latest release: {err:?}")
+    })?;
 
     let mut release = releases
         .into_iter()
@@ -125,10 +118,7 @@ pub async fn get_release_by_tag_name(
         })
         .body(Default::default())?;
 
-    let mut response = http
-        .send(request)
-        .await
-        .context("error fetching release by tag")?;
+    let mut response = http.send(request).await.context("error fetching release by tag")?;
 
     let mut body = Vec::new();
     let status = response.status();
@@ -140,10 +130,7 @@ pub async fn get_release_by_tag_name(
 
     if status.is_client_error() {
         let text = String::from_utf8_lossy(body.as_slice());
-        bail!(
-            "status error {}, response: {text:?}",
-            response.status().as_u16()
-        );
+        bail!("status error {}, response: {text:?}", response.status().as_u16());
     }
 
     let release = serde_json::from_slice::<GithubRelease>(body.as_slice()).map_err(|err| {
@@ -166,9 +153,7 @@ pub enum AssetKind {
 }
 
 pub fn build_asset_url(repo_name_with_owner: &str, tag: &str, kind: AssetKind) -> Result<String> {
-    let mut url = Url::parse(&format!(
-        "https://github.com/{repo_name_with_owner}/archive/refs/tags",
-    ))?;
+    let mut url = Url::parse(&format!("https://github.com/{repo_name_with_owner}/archive/refs/tags",))?;
     // We're pushing this here, because tags may contain `/` and other characters
     // that need to be escaped.
     let asset_filename = format!(

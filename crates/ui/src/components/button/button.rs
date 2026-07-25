@@ -4,8 +4,7 @@ use ui_macros::RegisterComponent;
 
 use crate::{ButtonCommon, ButtonLike, ButtonSize, ButtonStyle, IconName, IconSize, Label};
 use crate::{
-    Color, DynamicSpacing, ElevationIndex, IconPosition, KeyBinding, KeybindingPosition, TintColor,
-    prelude::*,
+    Color, DynamicSpacing, ElevationIndex, IconPosition, KeyBinding, KeybindingPosition, TintColor, prelude::*,
 };
 
 use super::button_icon::ButtonIcon;
@@ -285,20 +284,14 @@ impl Disableable for Button {
     /// This results in a button that is disabled and does not respond to click events.
     fn disabled(mut self, disabled: bool) -> Self {
         self.base = self.base.disabled(disabled);
-        self.key_binding = self
-            .key_binding
-            .take()
-            .map(|binding| binding.disabled(disabled));
+        self.key_binding = self.key_binding.take().map(|binding| binding.disabled(disabled));
         self
     }
 }
 
 impl Clickable for Button {
     /// Sets the click event handler for the button.
-    fn on_click(
-        mut self,
-        handler: impl Fn(&gpui::ClickEvent, &mut Window, &mut App) + 'static,
-    ) -> Self {
+    fn on_click(mut self, handler: impl Fn(&gpui::ClickEvent, &mut Window, &mut App) + 'static) -> Self {
         self.base = self.base.on_click(handler);
         self
     }
@@ -419,10 +412,7 @@ impl RenderOnce for Button {
         let is_disabled = self.base.disabled;
         let is_selected = self.base.selected;
 
-        let label = self
-            .selected_label
-            .filter(|_| is_selected)
-            .unwrap_or(self.label);
+        let label = self.selected_label.filter(|_| is_selected).unwrap_or(self.label);
 
         let label_color = if is_disabled {
             Color::Disabled
@@ -448,10 +438,9 @@ impl RenderOnce for Button {
                 })
                 .child(
                     h_flex()
-                        .when(
-                            self.key_binding_position == KeybindingPosition::Start,
-                            |this| this.flex_row_reverse(),
-                        )
+                        .when(self.key_binding_position == KeybindingPosition::Start, |this| {
+                            this.flex_row_reverse()
+                        })
                         .gap(DynamicSpacing::Base06.rems(cx))
                         .justify_between()
                         .child(
@@ -499,10 +488,7 @@ impl Component for Button {
                     example_group_with_title(
                         "Button Styles",
                         vec![
-                            single_example(
-                                "Default",
-                                Button::new("default", "Default").into_any_element(),
-                            ),
+                            single_example("Default", Button::new("default", "Default").into_any_element()),
                             single_example(
                                 "Filled",
                                 Button::new("filled", "Filled")
@@ -561,15 +547,10 @@ impl Component for Button {
                     example_group_with_title(
                         "Special States",
                         vec![
-                            single_example(
-                                "Default",
-                                Button::new("default_state", "Default").into_any_element(),
-                            ),
+                            single_example("Default", Button::new("default_state", "Default").into_any_element()),
                             single_example(
                                 "Disabled",
-                                Button::new("disabled", "Disabled")
-                                    .disabled(true)
-                                    .into_any_element(),
+                                Button::new("disabled", "Disabled").disabled(true).into_any_element(),
                             ),
                             single_example(
                                 "Selected",

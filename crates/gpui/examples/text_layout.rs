@@ -1,6 +1,6 @@
 use gpui::{
-    App, Application, Bounds, Context, FontStyle, FontWeight, StyledText, Window, WindowBounds,
-    WindowOptions, div, prelude::*, px, size,
+    App, Application, Bounds, Context, FontStyle, FontWeight, StyledText, Window, WindowBounds, WindowOptions, div,
+    prelude::*, px, size,
 };
 
 struct HelloWorld {}
@@ -18,31 +18,11 @@ impl Render for HelloWorld {
             .child(div().text_center().child("Text center"))
             .child(div().text_right().child("Text right"))
             .child(div().text_decoration_1().child("Text left (underline)"))
-            .child(
-                div()
-                    .text_center()
-                    .text_decoration_1()
-                    .child("Text center (underline)"),
-            )
-            .child(
-                div()
-                    .text_right()
-                    .text_decoration_1()
-                    .child("Text right (underline)"),
-            )
+            .child(div().text_center().text_decoration_1().child("Text center (underline)"))
+            .child(div().text_right().text_decoration_1().child("Text right (underline)"))
             .child(div().line_through().child("Text left (line_through)"))
-            .child(
-                div()
-                    .text_center()
-                    .line_through()
-                    .child("Text center (line_through)"),
-            )
-            .child(
-                div()
-                    .text_right()
-                    .line_through()
-                    .child("Text right (line_through)"),
-            )
+            .child(div().text_center().line_through().child("Text center (line_through)"))
+            .child(div().text_right().line_through().child("Text right (line_through)"))
             .child(
                 div()
                     .flex()
@@ -71,12 +51,12 @@ impl Render for HelloWorld {
                             .child("100%"),
                     ),
             )
-            .child(div().flex().gap_2().justify_between().child(
-                StyledText::new("ABCD").with_highlights([
-                    (0..1, FontWeight::EXTRA_BOLD.into()),
-                    (2..3, FontStyle::Italic.into()),
-                ]),
-            ))
+            .child(
+                div().flex().gap_2().justify_between().child(
+                    StyledText::new("ABCD")
+                        .with_highlights([(0..1, FontWeight::EXTRA_BOLD.into()), (2..3, FontStyle::Italic.into())]),
+                ),
+            )
     }
 }
 

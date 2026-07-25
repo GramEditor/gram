@@ -1,10 +1,9 @@
 use super::{MacKeyboardLayout, MacKeyboardMapper, events::key_to_native};
 use crate::{
-    Action, AnyWindowHandle, BackgroundExecutor, ClipboardItem, CursorStyle, ForegroundExecutor,
-    KeyContext, Keymap, MacDispatcher, MacDisplay, MacWindow, Menu, MenuItem, OsMenu, OwnedMenu,
-    PathPromptOptions, Platform, PlatformDisplay, PlatformKeyboardLayout, PlatformKeyboardMapper,
-    PlatformTextSystem, PlatformWindow, Result, SystemMenuType, Task, WindowAppearance,
-    WindowParams,
+    Action, AnyWindowHandle, BackgroundExecutor, ClipboardItem, CursorStyle, ForegroundExecutor, KeyContext, Keymap,
+    MacDispatcher, MacDisplay, MacWindow, Menu, MenuItem, OsMenu, OwnedMenu, PathPromptOptions, Platform,
+    PlatformDisplay, PlatformKeyboardLayout, PlatformKeyboardMapper, PlatformTextSystem, PlatformWindow, Result,
+    SystemMenuType, Task, WindowAppearance, WindowParams,
     platform::{mac::pasteboard::Pasteboard, wgpu::WgpuContext},
 };
 use anyhow::{Context, anyhow};
@@ -18,17 +17,15 @@ use objc2::{
     sel,
 };
 use objc2_app_kit::{
-    NSApplication, NSApplicationActivationPolicy, NSApplicationDelegate,
-    NSApplicationDelegateReply, NSCursor, NSCursorFrameResizeDirections,
-    NSCursorFrameResizePosition, NSDocumentController, NSEventModifierFlags, NSMenu,
-    NSMenuDelegate, NSMenuItem, NSMenuItemValidation, NSModalResponse, NSModalResponseOK,
-    NSOpenPanel, NSResponder, NSSavePanel, NSScroller, NSScrollerStyle, NSVisualEffectState,
-    NSWorkspace,
+    NSApplication, NSApplicationActivationPolicy, NSApplicationDelegate, NSApplicationDelegateReply, NSCursor,
+    NSCursorFrameResizeDirections, NSCursorFrameResizePosition, NSDocumentController, NSEventModifierFlags, NSMenu,
+    NSMenuDelegate, NSMenuItem, NSMenuItemValidation, NSModalResponse, NSModalResponseOK, NSOpenPanel, NSResponder,
+    NSSavePanel, NSScroller, NSScrollerStyle, NSVisualEffectState, NSWorkspace,
 };
 use objc2_core_foundation::{CFRunLoop, CFString};
 use objc2_foundation::{
-    NSArray, NSBundle, NSError, NSInteger, NSNotification, NSNotificationCenter, NSNumber,
-    NSObjectProtocol, NSProcessInfo, NSString, NSURL, NSUserDefaults, ns_string,
+    NSArray, NSBundle, NSError, NSInteger, NSNotification, NSNotificationCenter, NSNumber, NSObjectProtocol,
+    NSProcessInfo, NSString, NSURL, NSUserDefaults, ns_string,
 };
 use parking_lot::Mutex;
 use semver::Version as SemanticVersion;
@@ -343,9 +340,7 @@ impl MacPlatform {
             text_system,
             background_executor: BackgroundExecutor::new(dispatcher.clone()),
             foreground_executor: ForegroundExecutor::new(dispatcher),
-            renderer_context: WgpuContext::new()
-                .context("Unable to init GPU context")
-                .unwrap(),
+            renderer_context: WgpuContext::new().context("Unable to init GPU context").unwrap(),
             general_pasteboard: Pasteboard::general(),
             find_pasteboard: Pasteboard::find(),
             reopen: None,
@@ -481,10 +476,7 @@ impl MacPlatform {
                             let keystroke = &keystrokes[0];
                             let mut mask = NSEventModifierFlags::empty();
                             for (modifier, flag) in &[
-                                (
-                                    keystroke.modifiers().platform,
-                                    NSEventModifierFlags::Command,
-                                ),
+                                (keystroke.modifiers().platform, NSEventModifierFlags::Command),
                                 (keystroke.modifiers().control, NSEventModifierFlags::Control),
                                 (keystroke.modifiers().alt, NSEventModifierFlags::Option),
                                 (keystroke.modifiers().shift, NSEventModifierFlags::Shift),
@@ -494,8 +486,7 @@ impl MacPlatform {
                                 }
                             }
 
-                            let char_code =
-                                NSString::from_str(key_to_native(keystroke.key()).as_ref());
+                            let char_code = NSString::from_str(key_to_native(keystroke.key()).as_ref());
                             item = NSMenuItem::initWithTitle_action_keyEquivalent(
                                 NSMenuItem::alloc(mtm),
                                 &name_str,
@@ -537,8 +528,7 @@ impl MacPlatform {
                     let submenu = NSMenu::new(mtm);
                     submenu.setDelegate(Some(delegate));
                     for item in items {
-                        submenu
-                            .addItem(&self.create_menu_item(mtm, item, delegate, actions, keymap));
+                        submenu.addItem(&self.create_menu_item(mtm, item, delegate, actions, keymap));
                     }
                     item.setSubmenu(Some(&*submenu));
                     item.setTitle(&NSString::from_str(&name));
@@ -692,9 +682,7 @@ impl Platform for MacPlatform {
     }
 
     fn displays(&self) -> Vec<Rc<dyn PlatformDisplay>> {
-        MacDisplay::all()
-            .map(|screen| Rc::new(screen) as Rc<_>)
-            .collect()
+        MacDisplay::all().map(|screen| Rc::new(screen) as Rc<_>).collect()
     }
 
     fn active_window(&self) -> Option<AnyWindowHandle> {
@@ -707,11 +695,7 @@ impl Platform for MacPlatform {
         Some(MacWindow::ordered_windows())
     }
 
-    fn open_window(
-        &self,
-        handle: AnyWindowHandle,
-        options: WindowParams,
-    ) -> Result<Box<dyn PlatformWindow>> {
+    fn open_window(&self, handle: AnyWindowHandle, options: WindowParams) -> Result<Box<dyn PlatformWindow>> {
         let mut state = self.0.lock();
 
         let window = MacWindow::open(
@@ -744,9 +728,7 @@ impl Platform for MacPlatform {
         // https://developer.apple.com/documentation/appkit/nsworkspace/3753004-setdefaultapplicationaturl
         let (done_tx, done_rx) = oneshot::channel();
         if Self::os_version() < SemanticVersion::new(12, 0, 0) {
-            return Task::ready(Err(anyhow!(
-                "macOS 12.0 or later is required to register URL schemes"
-            )));
+            return Task::ready(Err(anyhow!("macOS 12.0 or later is required to register URL schemes")));
         }
 
         let Some(bundle_id) = NSBundle::mainBundle().bundleIdentifier() else {
@@ -756,9 +738,7 @@ impl Platform for MacPlatform {
         let workspace = NSWorkspace::sharedWorkspace();
         let scheme = NSString::from_str(scheme);
         let Some(app) = workspace.URLForApplicationWithBundleIdentifier(&bundle_id) else {
-            return Task::ready(Err(anyhow!(
-                "Cannot register URL scheme until app is installed"
-            )));
+            return Task::ready(Err(anyhow!("Cannot register URL scheme until app is installed")));
         };
         let done_tx = Cell::new(Some(done_tx));
         let block = RcBlock::new(move |error: *mut NSError| {
@@ -773,11 +753,7 @@ impl Platform for MacPlatform {
                 let _ = done_tx.send(result);
             }
         });
-        workspace.setDefaultApplicationAtURL_toOpenURLsWithScheme_completionHandler(
-            &app,
-            &scheme,
-            Some(&block),
-        );
+        workspace.setDefaultApplicationAtURL_toOpenURLsWithScheme_completionHandler(&app, &scheme, Some(&block));
 
         self.background_executor()
             .spawn(async { crate::Flatten::flatten(done_rx.await.map_err(|e| anyhow!(e))) })
@@ -787,10 +763,7 @@ impl Platform for MacPlatform {
         self.0.lock().open_urls = Some(callback);
     }
 
-    fn prompt_for_paths(
-        &self,
-        options: PathPromptOptions,
-    ) -> oneshot::Receiver<Result<Option<Vec<PathBuf>>>> {
+    fn prompt_for_paths(&self, options: PathPromptOptions) -> oneshot::Receiver<Result<Option<Vec<PathBuf>>>> {
         let (done_tx, done_rx) = oneshot::channel();
         self.foreground_executor()
             .spawn(async move {
@@ -872,10 +845,7 @@ impl Platform for MacPlatform {
                                 let Some(filename) = result.file_name() else {
                                     return result;
                                 };
-                                let chunks = filename
-                                    .as_bytes()
-                                    .split(|&b| b == b'.')
-                                    .collect::<Vec<_>>();
+                                let chunks = filename.as_bytes().split(|&b| b == b'.').collect::<Vec<_>>();
 
                                 // https://github.com/zed-industries/zed/issues/16969
                                 // Workaround a bug in macOS Sequoia that adds an extra file-extension
@@ -889,8 +859,7 @@ impl Platform for MacPlatform {
                                     && Self::os_version() >= SemanticVersion::new(15, 0, 0)
                                 {
                                     let new_filename = OsStr::from_bytes(
-                                        &filename.as_bytes()
-                                            [..chunks[0].len() + 1 + chunks[1].len()],
+                                        &filename.as_bytes()[..chunks[0].len() + 1 + chunks[1].len()],
                                     )
                                     .to_owned();
                                     result.set_file_name(&new_filename);
@@ -924,10 +893,7 @@ impl Platform for MacPlatform {
                 let full_path = path.to_str().map(NSString::from_str);
                 let root_full_path = ns_string!("");
                 let workspace = NSWorkspace::sharedWorkspace();
-                workspace.selectFile_inFileViewerRootedAtPath(
-                    full_path.as_deref(),
-                    root_full_path,
-                );
+                workspace.selectFile_inFileViewerRootedAtPath(full_path.as_deref(), root_full_path);
             })
             .detach();
     }
@@ -993,8 +959,7 @@ impl Platform for MacPlatform {
         let mut state = self.0.lock();
         let actions = &mut state.menu_actions;
         let delegate = app.delegate().unwrap();
-        let menu_delegate: Retained<ProtocolObject<dyn NSMenuDelegate>> =
-            unsafe { Retained::cast_unchecked(delegate) };
+        let menu_delegate: Retained<ProtocolObject<dyn NSMenuDelegate>> = unsafe { Retained::cast_unchecked(delegate) };
         let menu = self.create_menu_bar(mtm, &menus, &menu_delegate, actions, keymap);
         drop(state);
         app.setMainMenu(Some(&*menu));
@@ -1011,8 +976,7 @@ impl Platform for MacPlatform {
         let mut state = self.0.lock();
         let actions = &mut state.menu_actions;
         let delegate = app.delegate().unwrap();
-        let menu_delegate: Retained<ProtocolObject<dyn NSMenuDelegate>> =
-            unsafe { Retained::cast_unchecked(delegate) };
+        let menu_delegate: Retained<ProtocolObject<dyn NSMenuDelegate>> = unsafe { Retained::cast_unchecked(delegate) };
         let new = self.create_dock_menu(mtm, menu, &menu_delegate, actions, keymap);
         let _ = state.dock_menu.replace(new);
     }
@@ -1029,9 +993,7 @@ impl Platform for MacPlatform {
     fn path_for_auxiliary_executable(&self, name: &str) -> Result<PathBuf> {
         let bundle = NSBundle::mainBundle();
         let name = NSString::from_str(name);
-        let url = bundle
-            .URLForAuxiliaryExecutable(&name)
-            .expect("resource not found");
+        let url = bundle.URLForAuxiliaryExecutable(&name).expect("resource not found");
         unsafe { ns_url_to_path(&url) }
     }
 
@@ -1059,18 +1021,14 @@ impl Platform for MacPlatform {
             CursorStyle::ResizeRow => NSCursor::resizeUpDownCursor(),
             CursorStyle::ResizeUp => NSCursor::resizeUpCursor(),
             CursorStyle::ResizeDown => NSCursor::resizeDownCursor(),
-            CursorStyle::ResizeUpLeftDownRight => {
-                NSCursor::frameResizeCursorFromPosition_inDirections(
-                    NSCursorFrameResizePosition::TopLeft,
-                    NSCursorFrameResizeDirections::All,
-                )
-            }
-            CursorStyle::ResizeUpRightDownLeft => {
-                NSCursor::frameResizeCursorFromPosition_inDirections(
-                    NSCursorFrameResizePosition::TopRight,
-                    NSCursorFrameResizeDirections::All,
-                )
-            }
+            CursorStyle::ResizeUpLeftDownRight => NSCursor::frameResizeCursorFromPosition_inDirections(
+                NSCursorFrameResizePosition::TopLeft,
+                NSCursorFrameResizeDirections::All,
+            ),
+            CursorStyle::ResizeUpRightDownLeft => NSCursor::frameResizeCursorFromPosition_inDirections(
+                NSCursorFrameResizePosition::TopRight,
+                NSCursorFrameResizeDirections::All,
+            ),
             CursorStyle::IBeamCursorForVerticalLayout => NSCursor::IBeamCursorForVerticalLayout(),
             CursorStyle::OperationNotAllowed => NSCursor::operationNotAllowedCursor(),
             CursorStyle::DragLink => NSCursor::dragLinkCursor(),
@@ -1125,10 +1083,7 @@ unsafe fn ns_url_to_path(url: &NSURL) -> Result<PathBuf> {
 #[link(name = "Carbon", kind = "framework")]
 unsafe extern "C" {
     pub(super) fn TISCopyCurrentKeyboardLayoutInputSource() -> *mut AnyObject;
-    pub(super) fn TISGetInputSourceProperty(
-        inputSource: *mut AnyObject,
-        propertyKey: *const c_void,
-    ) -> *mut AnyObject;
+    pub(super) fn TISGetInputSourceProperty(inputSource: *mut AnyObject, propertyKey: *const c_void) -> *mut AnyObject;
 
     pub(super) fn UCKeyTranslate(
         keyLayoutPtr: *const ::std::os::raw::c_void,

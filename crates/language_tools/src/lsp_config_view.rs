@@ -16,8 +16,8 @@ use proto::{
 use settings::{BinarySettings, Settings, SettingsStore};
 use theme::Theme;
 use ui::{
-    ActiveTheme as _, App, Context, IntoElement, Label, LabelSize, Render, Switch, ToggleState,
-    Tooltip, Window, WithScrollbar as _, prelude::*,
+    ActiveTheme as _, App, Context, IntoElement, Label, LabelSize, Render, Switch, ToggleState, Tooltip, Window,
+    WithScrollbar as _, prelude::*,
 };
 use workspace::{Item, ItemHandle as _, Workspace};
 
@@ -57,22 +57,14 @@ pub(crate) struct LspConfigView {
 }
 
 impl LspConfigView {
-    pub fn register(
-        workspace: &mut Workspace,
-        _window: Option<&mut Window>,
-        _cx: &mut Context<Workspace>,
-    ) {
+    pub fn register(workspace: &mut Workspace, _window: Option<&mut Window>, _cx: &mut Context<Workspace>) {
         workspace.register_action(move |workspace, _: &OpenLanguageServerConfig, window, cx| {
             LspConfigView::open(workspace, window, cx);
             cx.notify();
         });
     }
 
-    fn init_workspace_tracking(
-        workspace: &mut Workspace,
-        window: &mut Window,
-        cx: &mut Context<Workspace>,
-    ) {
+    fn init_workspace_tracking(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>) {
         let lsp_store = workspace.project().read(cx).lsp_store();
 
         let server_statuses: Vec<_> = lsp_store
@@ -84,93 +76,71 @@ impl LspConfigView {
         {
             let state = cx.global_mut::<LspConfigState>();
             for name in server_statuses {
-                state
-                    .binary_statuses
-                    .insert(name, (BinaryStatus::None, None));
+                state.binary_statuses.insert(name, (BinaryStatus::None, None));
             }
         }
 
-        cx.subscribe_in(
-            &lsp_store,
-            window,
-            |_workspace, _lsp_store, event, _window, cx| {
-                let state = cx.global_mut::<LspConfigState>();
-                match event {
-                    LspStoreEvent::LanguageServerAdded(_server_id, name, _) => {
+        cx.subscribe_in(&lsp_store, window, |_workspace, _lsp_store, event, _window, cx| {
+            let state = cx.global_mut::<LspConfigState>();
+            match event {
+                LspStoreEvent::LanguageServerAdded(_server_id, name, _) => {
+                    state
+                        .binary_statuses
+                        .entry(name.clone())
+                        .or_insert((BinaryStatus::None, None));
+                }
+                LspStoreEvent::LanguageServerUpdate {
+                    name,
+                    message: RegisteredForBuffer(_),
+                    ..
+                } => {
+                    if let Some(name) = name {
                         state
                             .binary_statuses
                             .entry(name.clone())
                             .or_insert((BinaryStatus::None, None));
                     }
-                    LspStoreEvent::LanguageServerUpdate {
-                        name,
-                        message: RegisteredForBuffer(_),
-                        ..
-                    } => {
-                        if let Some(name) = name {
-                            state
-                                .binary_statuses
-                                .entry(name.clone())
-                                .or_insert((BinaryStatus::None, None));
-                        }
-                    }
-                    LspStoreEvent::LanguageServerUpdate {
-                        name,
-                        message: StatusUpdate(status_update),
-                        ..
-                    } => {
-                        if let Some(Status::Binary(binary_status_proto)) = &status_update.status {
-                            if let Some(name) = name.as_ref() {
-                                if let Ok(binary_status) =
-                                    ServerBinaryStatus::try_from(*binary_status_proto)
-                                {
-                                    let status = match binary_status {
-                                        ServerBinaryStatus::None => BinaryStatus::None,
-                                        ServerBinaryStatus::CheckingForUpdate => {
-                                            BinaryStatus::CheckingForUpdate
-                                        }
-                                        ServerBinaryStatus::Downloading => {
-                                            BinaryStatus::Downloading
-                                        }
-                                        ServerBinaryStatus::Starting => BinaryStatus::Starting,
-                                        ServerBinaryStatus::Stopping => BinaryStatus::Stopping,
-                                        ServerBinaryStatus::Stopped => BinaryStatus::Stopped,
-                                        ServerBinaryStatus::Failed => {
-                                            if let Some(error) = status_update.message.clone() {
-                                                BinaryStatus::Failed { error }
-                                            } else {
-                                                BinaryStatus::Failed {
-                                                    error: "Unknown error".to_string(),
-                                                }
+                }
+                LspStoreEvent::LanguageServerUpdate {
+                    name,
+                    message: StatusUpdate(status_update),
+                    ..
+                } => {
+                    if let Some(Status::Binary(binary_status_proto)) = &status_update.status {
+                        if let Some(name) = name.as_ref() {
+                            if let Ok(binary_status) = ServerBinaryStatus::try_from(*binary_status_proto) {
+                                let status = match binary_status {
+                                    ServerBinaryStatus::None => BinaryStatus::None,
+                                    ServerBinaryStatus::CheckingForUpdate => BinaryStatus::CheckingForUpdate,
+                                    ServerBinaryStatus::Downloading => BinaryStatus::Downloading,
+                                    ServerBinaryStatus::Starting => BinaryStatus::Starting,
+                                    ServerBinaryStatus::Stopping => BinaryStatus::Stopping,
+                                    ServerBinaryStatus::Stopped => BinaryStatus::Stopped,
+                                    ServerBinaryStatus::Failed => {
+                                        if let Some(error) = status_update.message.clone() {
+                                            BinaryStatus::Failed { error }
+                                        } else {
+                                            BinaryStatus::Failed {
+                                                error: "Unknown error".to_string(),
                                             }
                                         }
-                                    };
-                                    state.binary_statuses.insert(
-                                        name.clone(),
-                                        (
-                                            status,
-                                            status_update
-                                                .message
-                                                .as_ref()
-                                                .map(|s| s.clone().into()),
-                                        ),
-                                    );
-                                }
+                                    }
+                                };
+                                state.binary_statuses.insert(
+                                    name.clone(),
+                                    (status, status_update.message.as_ref().map(|s| s.clone().into())),
+                                );
                             }
                         }
                     }
-                    _ => {}
                 }
-            },
-        )
+                _ => {}
+            }
+        })
         .detach();
     }
 
-    pub(crate) fn open(
-        workspace: &mut Workspace,
-        window: &mut Window,
-        cx: &mut Context<'_, Workspace>,
-    ) {
+    pub(crate) fn open(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<'_, Workspace>) {
         if let Some(existing) = workspace.item_of_type::<LspConfigView>(cx) {
             let is_active = workspace
                 .active_item(cx)
@@ -225,8 +195,7 @@ impl LspConfigView {
     fn toggle_allow_download_prettier(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.toggle_node_setting(
             |node| {
-                node.allow_prettier_download =
-                    Some(!node.allow_prettier_download.unwrap_or_default());
+                node.allow_prettier_download = Some(!node.allow_prettier_download.unwrap_or_default());
             },
             window,
             cx,
@@ -350,15 +319,10 @@ impl LspConfigView {
                         }),
                     )
                     .child(
-                        v_flex()
-                        .gap_1p5()
-                        .child(Label::new("Allow Download"))
-                        .child(
-                            Label::new(
-                                "Allow the editor to download a language server binary (if available)",
-                            )
-                            .size(LabelSize::Small)
-                            .color(Color::Muted),
+                        v_flex().gap_1p5().child(Label::new("Allow Download")).child(
+                            Label::new("Allow the editor to download a language server binary (if available)")
+                                .size(LabelSize::Small)
+                                .color(Color::Muted),
                         ),
                     ),
             )
@@ -387,15 +351,10 @@ impl LspConfigView {
                         }),
                     )
                     .child(
-                        v_flex()
-                        .gap_1p5()
-                        .child(Label::new("Ignore System Version"))
-                        .child(
-                            Label::new(
-                                "Ignore any language server binary installed system-wide",
-                            )
-                            .size(LabelSize::Small)
-                            .color(Color::Muted),
+                        v_flex().gap_1p5().child(Label::new("Ignore System Version")).child(
+                            Label::new("Ignore any language server binary installed system-wide")
+                                .size(LabelSize::Small)
+                                .color(Color::Muted),
                         ),
                     ),
             )
@@ -414,7 +373,8 @@ impl LspConfigView {
                                 this.update_binary_setting(
                                     server_name.clone(),
                                     |binary| {
-                                        binary.enable_auto_updates = Some(!binary.enable_auto_updates.unwrap_or_default());
+                                        binary.enable_auto_updates =
+                                            Some(!binary.enable_auto_updates.unwrap_or_default());
                                     },
                                     window,
                                     cx,
@@ -423,15 +383,10 @@ impl LspConfigView {
                         }),
                     )
                     .child(
-                        v_flex()
-                        .gap_1p5()
-                        .child(Label::new("Auto Update"))
-                        .child(
-                            Label::new(
-                                "Automatically download new versions of the language server when released",
-                            )
-                            .size(LabelSize::Small)
-                            .color(Color::Muted),
+                        v_flex().gap_1p5().child(Label::new("Auto Update")).child(
+                            Label::new("Automatically download new versions of the language server when released")
+                                .size(LabelSize::Small)
+                                .color(Color::Muted),
                         ),
                     ),
             )
@@ -452,12 +407,7 @@ impl LspConfigView {
             )
     }
 
-    fn render_node(
-        &self,
-        settings: &NodeBinarySettings,
-        theme: &Arc<Theme>,
-        cx: &Context<Self>,
-    ) -> impl IntoElement {
+    fn render_node(&self, settings: &NodeBinarySettings, theme: &Arc<Theme>, cx: &Context<Self>) -> impl IntoElement {
         v_flex()
             .p_3()
             .gap_2()
@@ -465,102 +415,76 @@ impl LspConfigView {
             .border_color(theme.colors().border)
             .rounded_md()
             .bg(theme.colors().element_background)
-            .child(
-                self.render_server_header(
-                    "Node.js".into(),
-                    settings
-                        .path
-                        .clone()
-                        .unwrap_or("Node.js".to_string())
-                        .into(),
-                    Color::Default,
-                ),
-            )
-            .child(
-                v_flex()
-                    .gap_2()
-                    .child(self.render_node_settings(settings, cx)),
-            )
+            .child(self.render_server_header(
+                "Node.js".into(),
+                settings.path.clone().unwrap_or("Node.js".to_string()).into(),
+                Color::Default,
+            ))
+            .child(v_flex().gap_2().child(self.render_node_settings(settings, cx)))
     }
 
-    fn render_node_settings(
-        &self,
-        settings: &NodeBinarySettings,
-        cx: &Context<Self>,
-    ) -> impl IntoElement {
+    fn render_node_settings(&self, settings: &NodeBinarySettings, cx: &Context<Self>) -> impl IntoElement {
         let allow = settings.allow_binary_download;
-        v_flex().p_2().gap_4().child(
-            h_flex()
-                .gap_2()
-                .items_center()
-                .child(
-                    Switch::new("allow-binary-download-node", ToggleState::from(allow)).on_click(
-                        cx.listener(move |this, _, window, cx| {
-                            this.toggle_allow_download_node(window, cx);
-                        }),
+        v_flex()
+            .p_2()
+            .gap_4()
+            .child(
+                h_flex()
+                    .gap_2()
+                    .items_center()
+                    .child(
+                        Switch::new("allow-binary-download-node", ToggleState::from(allow)).on_click(cx.listener(
+                            move |this, _, window, cx| {
+                                this.toggle_allow_download_node(window, cx);
+                            },
+                        )),
+                    )
+                    .child(
+                        v_flex().gap_1p5().child(Label::new("Download Node.js")).child(
+                            Label::new("Allow the editor to download a Node.js binary if it can't find one.")
+                                .size(LabelSize::Small)
+                                .color(Color::Muted),
+                        ),
                     ),
-                )
-                .child(
-                    v_flex()
-                        .gap_1p5()
-                        .child(Label::new("Download Node.js"))
-                        .child(
-                        Label::new(
-                            "Allow the editor to download a Node.js binary if it can't find one.",
-                        )
-                        .size(LabelSize::Small)
-                        .color(Color::Muted),
+            )
+            .child(
+                h_flex()
+                    .gap_2()
+                    .items_center()
+                    .child(
+                        Switch::new("allow-binary-download-prettier", ToggleState::from(allow)).on_click(cx.listener(
+                            move |this, _, window, cx| {
+                                this.toggle_allow_download_prettier(window, cx);
+                            },
+                        )),
+                    )
+                    .child(
+                        v_flex().gap_1p5().child(Label::new("Download Prettier")).child(
+                            Label::new("Allow the editor to download the Prettier formatter unless already available.")
+                                .size(LabelSize::Small)
+                                .color(Color::Muted),
+                        ),
                     ),
-                ),
-        )
-        .child(
-            h_flex()
-                .gap_2()
-                .items_center()
-                .child(
-                    Switch::new("allow-binary-download-prettier", ToggleState::from(allow)).on_click(
-                        cx.listener(move |this, _, window, cx| {
-                            this.toggle_allow_download_prettier(window, cx);
-                        }),
+            )
+            .child(
+                h_flex()
+                    .gap_2()
+                    .items_center()
+                    .child(
+                        Switch::new("allow-npm-install", ToggleState::from(allow)).on_click(cx.listener(
+                            move |this, _, window, cx| {
+                                this.toggle_allow_npm_install(window, cx);
+                            },
+                        )),
+                    )
+                    .child(
+                        v_flex().gap_1p5().child(Label::new("Allow npm install")).child(
+                            Label::new("Allow the editor to install NPM packages.")
+                                .size(LabelSize::Small)
+                                .color(Color::Muted),
+                        ),
                     ),
-                )
-                .child(
-                    v_flex()
-                        .gap_1p5()
-                        .child(Label::new("Download Prettier"))
-                        .child(
-                        Label::new(
-                            "Allow the editor to download the Prettier formatter unless already available.",
-                        )
-                        .size(LabelSize::Small)
-                        .color(Color::Muted),
-                    ),
-                ),
-        )
-        .child(
-            h_flex()
-                .gap_2()
-                .items_center()
-                .child(
-                    Switch::new("allow-npm-install", ToggleState::from(allow)).on_click(
-                        cx.listener(move |this, _, window, cx| {
-                            this.toggle_allow_npm_install(window, cx);
-                        }),
-                    ),
-                )
-                .child(
-                    v_flex()
-                        .gap_1p5()
-                        .child(Label::new("Allow npm install"))
-                        .child(
-                        Label::new(
-                            "Allow the editor to install NPM packages.",
-                        )
-                        .size(LabelSize::Small)
-                        .color(Color::Muted),
-                    ),
-                ),
-        )
+            )
     }
 }
 
@@ -593,45 +517,36 @@ impl Render for LspConfigView {
                     .track_scroll(&self.scroll_handle)
                     .child(self.render_header())
                     .child(self.render_node(&project_settings.node, theme, cx))
-                    .children(
-                        binary_statuses
-                            .iter()
-                            .map(|(server_name, (status, _message))| {
-                                let server_name = server_name.clone();
+                    .children(binary_statuses.iter().map(|(server_name, (status, _message))| {
+                        let server_name = server_name.clone();
 
-                                let binary_settings = project_settings
-                                    .lsp
-                                    .get(&server_name)
-                                    .and_then(|lsp| lsp.binary.clone())
-                                    .unwrap_or_default();
-                                let (status_text, status_color) = Self::get_status_info(status);
-                                let error_message = if let BinaryStatus::Failed { error } = &status
-                                {
-                                    Some(error.clone())
-                                } else {
-                                    None
-                                };
+                        let binary_settings = project_settings
+                            .lsp
+                            .get(&server_name)
+                            .and_then(|lsp| lsp.binary.clone())
+                            .unwrap_or_default();
+                        let (status_text, status_color) = Self::get_status_info(status);
+                        let error_message = if let BinaryStatus::Failed { error } = &status {
+                            Some(error.clone())
+                        } else {
+                            None
+                        };
 
-                                v_flex()
-                                    .p_3()
-                                    .gap_2()
-                                    .border_1()
-                                    .border_color(border_color)
-                                    .rounded_md()
-                                    .bg(element_background)
-                                    .child(self.render_server_header(
-                                        server_name.0.clone(),
-                                        status_text,
-                                        status_color,
-                                    ))
-                                    .child(v_flex().gap_2().child(self.render_binary_settings(
-                                        &server_name,
-                                        &binary_settings,
-                                        cx,
-                                    )))
-                                    .child(Self::render_error_message(&error_message))
-                            }),
-                    ),
+                        v_flex()
+                            .p_3()
+                            .gap_2()
+                            .border_1()
+                            .border_color(border_color)
+                            .rounded_md()
+                            .bg(element_background)
+                            .child(self.render_server_header(server_name.0.clone(), status_text, status_color))
+                            .child(v_flex().gap_2().child(self.render_binary_settings(
+                                &server_name,
+                                &binary_settings,
+                                cx,
+                            )))
+                            .child(Self::render_error_message(&error_message))
+                    })),
             )
             .vertical_scrollbar_for(&self.scroll_handle, window, cx)
     }

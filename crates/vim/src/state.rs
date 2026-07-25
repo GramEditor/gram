@@ -14,8 +14,8 @@ use db::{
 use editor::display_map::{is_invisible, replacement};
 use editor::{Anchor, ClipboardSelection, Editor, MultiBuffer, ToPoint as EditorToPoint};
 use gpui::{
-    Action, App, AppContext, BorrowAppContext, ClipboardEntry, ClipboardItem, DismissEvent, Entity,
-    EntityId, Global, HighlightStyle, StyledText, Subscription, Task, TextStyle, WeakEntity,
+    Action, App, AppContext, BorrowAppContext, ClipboardEntry, ClipboardItem, DismissEvent, Entity, EntityId, Global,
+    HighlightStyle, StyledText, Subscription, Task, TextStyle, WeakEntity,
 };
 use language::{Buffer, BufferEvent, BufferId, Chunk, Point};
 use multi_buffer::MultiBufferRow;
@@ -30,8 +30,8 @@ use std::{fmt::Display, ops::Range, sync::Arc};
 use text::{Bias, ToPoint};
 use theme::ThemeSettings;
 use ui::{
-    ActiveTheme, Context, Div, FluentBuilder, KeyBinding, ParentElement, SharedString, Styled,
-    StyledTypography, Window, h_flex, rems,
+    ActiveTheme, Context, Div, FluentBuilder, KeyBinding, ParentElement, SharedString, Styled, StyledTypography,
+    Window, h_flex, rems,
 };
 use util::ResultExt;
 use util::rel_path::RelPath;
@@ -318,8 +318,7 @@ impl MarksState {
                 })
                 .await
                 .log_err()?;
-            this.update(cx, |this, cx| this.loaded(marks, paths, cx))
-                .ok()
+            this.update(cx, |this, cx| this.loaded(marks, paths, cx)).ok()
         })
         .detach();
     }
@@ -342,8 +341,7 @@ impl MarksState {
         }
 
         for (name, path) in global_mark_paths {
-            self.global_marks
-                .insert(name, MarkLocation::Path(path.clone()));
+            self.global_marks.insert(name, MarkLocation::Path(path.clone()));
 
             let project_path = project
                 .read(cx)
@@ -357,8 +355,8 @@ impl MarksState {
                     })
                 })
                 .next();
-            if let Some(buffer) = project_path
-                .and_then(|project_path| project.read(cx).get_open_buffer(&project_path, cx))
+            if let Some(buffer) =
+                project_path.and_then(|project_path| project.read(cx).get_open_buffer(&project_path, cx))
             {
                 self.on_buffer_loaded(&buffer, cx)
             }
@@ -396,12 +394,7 @@ impl MarksState {
         self.watch_buffer(MarkLocation::Path(abs_path), buffer_handle, cx)
     }
 
-    fn serialize_buffer_marks(
-        &mut self,
-        path: Arc<Path>,
-        buffer: &Entity<Buffer>,
-        cx: &mut Context<Self>,
-    ) {
+    fn serialize_buffer_marks(&mut self, path: Arc<Path>, buffer: &Entity<Buffer>, cx: &mut Context<Self>) {
         let new_points: HashMap<String, Vec<Point>> =
             if let Some(anchors) = self.buffer_marks.get(&buffer.read(cx).remote_id()) {
                 anchors
@@ -409,10 +402,7 @@ impl MarksState {
                     .map(|(name, anchors)| {
                         (
                             name.clone(),
-                            buffer
-                                .read(cx)
-                                .summaries_for_anchors::<Point, _>(anchors)
-                                .collect(),
+                            buffer.read(cx).summaries_for_anchors::<Point, _>(anchors).collect(),
                         )
                     })
                     .collect()
@@ -426,20 +416,15 @@ impl MarksState {
         let mut to_write = HashMap::default();
 
         for (key, value) in &new_points {
-            if self.is_global_mark(key)
-                && self.global_marks.get(key) != Some(&MarkLocation::Path(path.clone()))
-            {
+            if self.is_global_mark(key) && self.global_marks.get(key) != Some(&MarkLocation::Path(path.clone())) {
                 if let Some(workspace_id) = self.workspace_id(cx) {
                     let path = path.clone();
                     let key = key.clone();
-                    cx.background_spawn(async move {
-                        DB.set_global_mark_path(workspace_id, key, path).await
-                    })
-                    .detach_and_log_err(cx);
+                    cx.background_spawn(async move { DB.set_global_mark_path(workspace_id, key, path).await })
+                        .detach_and_log_err(cx);
                 }
 
-                self.global_marks
-                    .insert(key.clone(), MarkLocation::Path(path.clone()));
+                self.global_marks.insert(key.clone(), MarkLocation::Path(path.clone()));
             }
             if old_points.and_then(|o| o.get(key)) != Some(value) {
                 to_write.insert(key.clone(), value.clone());
@@ -458,9 +443,7 @@ impl MarksState {
     }
 
     fn is_global_mark(&self, key: &str) -> bool {
-        key.chars()
-            .next()
-            .is_some_and(|c| c.is_uppercase() || c.is_digit(10))
+        key.chars().next().is_some_and(|c| c.is_uppercase() || c.is_digit(10))
     }
 
     fn rename_buffer(
@@ -477,8 +460,7 @@ impl MarksState {
                 .into_iter()
                 .map(|(k, v)| (k, v.into_iter().map(|anchor| anchor.text_anchor).collect()))
                 .collect();
-            self.buffer_marks
-                .insert(buffer.read(cx).remote_id(), buffer_marks);
+            self.buffer_marks.insert(buffer.read(cx).remote_id(), buffer_marks);
         }
         self.watch_buffer(MarkLocation::Path(new_path.clone()), buffer, cx);
         self.serialize_buffer_marks(new_path, buffer, cx);
@@ -491,12 +473,7 @@ impl MarksState {
         Some(abs_path.into())
     }
 
-    fn points_at(
-        &self,
-        location: &MarkLocation,
-        multi_buffer: &Entity<MultiBuffer>,
-        cx: &App,
-    ) -> bool {
+    fn points_at(&self, location: &MarkLocation, multi_buffer: &Entity<MultiBuffer>, cx: &App) -> bool {
         match location {
             MarkLocation::Buffer(entity_id) => entity_id == &multi_buffer.entity_id(),
             MarkLocation::Path(path) => {
@@ -583,31 +560,21 @@ impl MarksState {
         let buffer_id = buffer.read(cx).remote_id();
         self.buffer_marks.entry(buffer_id).or_default().insert(
             name.clone(),
-            anchors
-                .into_iter()
-                .map(|anchor| anchor.text_anchor)
-                .collect(),
+            anchors.into_iter().map(|anchor| anchor.text_anchor).collect(),
         );
         if !self.watched_buffers.contains_key(&buffer_id) {
             self.watch_buffer(MarkLocation::Path(abs_path.clone()), &buffer, cx)
         }
         if self.is_global_mark(&name) {
-            self.global_marks
-                .insert(name, MarkLocation::Path(abs_path.clone()));
+            self.global_marks.insert(name, MarkLocation::Path(abs_path.clone()));
         }
         self.serialize_buffer_marks(abs_path, &buffer, cx)
     }
 
-    pub fn get_mark(
-        &self,
-        name: &str,
-        multi_buffer: &Entity<MultiBuffer>,
-        cx: &App,
-    ) -> Option<Mark> {
+    pub fn get_mark(&self, name: &str, multi_buffer: &Entity<MultiBuffer>, cx: &App) -> Option<Mark> {
         let target = self.global_marks.get(name);
 
-        if !self.is_global_mark(name) || target.is_some_and(|t| self.points_at(t, multi_buffer, cx))
-        {
+        if !self.is_global_mark(name) || target.is_some_and(|t| self.points_at(t, multi_buffer, cx)) {
             if let Some(anchors) = self.multibuffer_marks.get(&multi_buffer.entity_id()) {
                 return Some(Mark::Local(anchors.get(name)?.clone()));
             }
@@ -636,19 +603,12 @@ impl MarksState {
             }
         }
     }
-    pub fn delete_mark(
-        &mut self,
-        mark_name: String,
-        multi_buffer: &Entity<MultiBuffer>,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn delete_mark(&mut self, mark_name: String, multi_buffer: &Entity<MultiBuffer>, cx: &mut Context<Self>) {
         let path = if let Some(target) = self.global_marks.get(&mark_name.clone()) {
             let name = mark_name.clone();
             if let Some(workspace_id) = self.workspace_id(cx) {
-                cx.background_spawn(async move {
-                    DB.delete_global_marks_path(workspace_id, name).await
-                })
-                .detach_and_log_err(cx);
+                cx.background_spawn(async move { DB.delete_global_marks_path(workspace_id, name).await })
+                    .detach_and_log_err(cx);
             }
             self.buffer_marks.iter_mut().for_each(|(_, m)| {
                 m.remove(&mark_name.clone());
@@ -734,9 +694,7 @@ impl VimGlobals {
                     if let Some(workspace) = window.downcast::<Workspace>() {
                         workspace
                             .update(cx, |workspace, _, cx| {
-                                Vim::update_globals(cx, |globals, cx| {
-                                    globals.register_workspace(workspace, cx)
-                                });
+                                Vim::update_globals(cx, |globals, cx| globals.register_workspace(workspace, cx));
                             })
                             .ok();
                     }
@@ -811,9 +769,7 @@ impl VimGlobals {
             }
         } else {
             let setting = VimSettings::get_global(cx).use_system_clipboard;
-            if setting == UseSystemClipboard::Always
-                || setting == UseSystemClipboard::OnYank && is_yank
-            {
+            if setting == UseSystemClipboard::Always || setting == UseSystemClipboard::OnYank && is_yank {
                 self.last_yank.replace(content.text.clone());
                 cx.write_to_clipboard(content.clone().into());
             } else {
@@ -874,14 +830,8 @@ impl VimGlobals {
                 }
             }
             '%' => editor.and_then(|editor| {
-                let selection = editor
-                    .selections
-                    .newest::<Point>(&editor.display_snapshot(cx));
-                if let Some((_, buffer, _)) = editor
-                    .buffer()
-                    .read(cx)
-                    .excerpt_containing(selection.head(), cx)
-                {
+                let selection = editor.selections.newest::<Point>(&editor.display_snapshot(cx));
+                if let Some((_, buffer, _)) = editor.buffer().read(cx).excerpt_containing(selection.head(), cx) {
                     buffer
                         .read(cx)
                         .file()
@@ -895,13 +845,12 @@ impl VimGlobals {
     }
 
     fn system_clipboard_is_newer(&self, cx: &App) -> bool {
-        cx.read_from_clipboard().is_some_and(|item| {
-            match (item.text().as_deref(), &self.last_yank) {
+        cx.read_from_clipboard()
+            .is_some_and(|item| match (item.text().as_deref(), &self.last_yank) {
                 (Some(new), Some(last)) => last.as_ref() != new,
                 (Some(_), None) => true,
                 (None, _) => false,
-            }
-        })
+            })
     }
 
     pub fn observe_action(&mut self, action: Box<dyn Action>) {
@@ -944,12 +893,13 @@ impl VimGlobals {
             }
         }
         if let Some(recording_register) = self.recording_register {
-            self.recordings.entry(recording_register).or_default().push(
-                ReplayableAction::Insertion {
+            self.recordings
+                .entry(recording_register)
+                .or_default()
+                .push(ReplayableAction::Insertion {
                     text: text.clone(),
                     utf16_range_to_replace: range_to_replace,
-                },
-            );
+                });
         }
     }
 
@@ -1068,21 +1018,15 @@ impl Operator {
             Operator::Digraph {
                 first_char: Some(first_char),
             } => format!("^K{}", make_visible(&first_char.to_string())),
-            Operator::Literal {
-                prefix: Some(prefix),
-            } => format!("^V{}", make_visible(prefix)),
+            Operator::Literal { prefix: Some(prefix) } => format!("^V{}", make_visible(prefix)),
             Operator::AutoIndent => "=".to_string(),
             Operator::ShellCommand => "=".to_string(),
             Operator::HelixMatch => "m".to_string(),
             Operator::HelixNext { .. } => "]".to_string(),
             Operator::HelixPrevious { .. } => "[".to_string(),
             Operator::HelixSurroundAdd => "ms".to_string(),
-            Operator::HelixSurroundReplace {
-                replaced_char: None,
-            } => "mr".to_string(),
-            Operator::HelixSurroundReplace {
-                replaced_char: Some(c),
-            } => format!("mr{}", c),
+            Operator::HelixSurroundReplace { replaced_char: None } => "mr".to_string(),
+            Operator::HelixSurroundReplace { replaced_char: Some(c) } => format!("mr{}", c),
             Operator::HelixSurroundDelete => "md".to_string(),
             _ => self.id().to_string(),
         }
@@ -1103,9 +1047,7 @@ impl Operator {
             | Operator::Replace
             | Operator::Digraph { .. }
             | Operator::Literal { .. }
-            | Operator::ChangeSurrounds {
-                target: Some(_), ..
-            }
+            | Operator::ChangeSurrounds { target: Some(_), .. }
             | Operator::DeleteSurrounds => true,
             Operator::Change
             | Operator::Delete
@@ -1128,9 +1070,7 @@ impl Operator {
             | Operator::HelixMatch
             | Operator::HelixNext { .. }
             | Operator::HelixPrevious { .. } => false,
-            Operator::HelixSurroundAdd
-            | Operator::HelixSurroundReplace { .. }
-            | Operator::HelixSurroundDelete => true,
+            Operator::HelixSurroundAdd | Operator::HelixSurroundReplace { .. } | Operator::HelixSurroundDelete => true,
         }
     }
 
@@ -1210,12 +1150,7 @@ impl PickerDelegate for RegistersViewDelegate {
         Arc::default()
     }
 
-    fn update_matches(
-        &mut self,
-        _: String,
-        _: &mut Window,
-        _: &mut Context<Picker<Self>>,
-    ) -> gpui::Task<()> {
+    fn update_matches(&mut self, _: String, _: &mut Window, _: &mut Context<Picker<Self>>) -> gpui::Task<()> {
         Task::ready(())
     }
 
@@ -1236,10 +1171,7 @@ impl PickerDelegate for RegistersViewDelegate {
         let mut runs = Vec::new();
         output.push('"');
         output.push(register_match.name);
-        runs.push((
-            0..output.len(),
-            HighlightStyle::color(cx.theme().colors().text_accent),
-        ));
+        runs.push((0..output.len(), HighlightStyle::color(cx.theme().colors().text_accent)));
         output.push(' ');
         output.push(' ');
         let mut base = output.len();
@@ -1308,12 +1240,8 @@ impl RegistersView {
     }
 
     pub fn toggle(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>) {
-        let editor = workspace
-            .active_item(cx)
-            .and_then(|item| item.act_as::<Editor>(cx));
-        workspace.toggle_modal(window, cx, move |window, cx| {
-            RegistersView::new(editor, window, cx)
-        });
+        let editor = workspace.active_item(cx).and_then(|item| item.act_as::<Editor>(cx));
+        workspace.toggle_modal(window, cx, move |window, cx| RegistersView::new(editor, window, cx));
     }
 
     fn new(
@@ -1332,9 +1260,7 @@ impl RegistersView {
                 }
             }
             if let Some(editor) = editor {
-                let register = editor.update(cx, |editor, cx| {
-                    globals.read_register(Some('%'), Some(editor), cx)
-                });
+                let register = editor.update(cx, |editor, cx| globals.read_register(Some('%'), Some(editor), cx));
                 if let Some(register) = register {
                     matches.push(RegisterMatch {
                         name: '%',
@@ -1424,12 +1350,7 @@ impl PickerDelegate for MarksViewDelegate {
         Arc::default()
     }
 
-    fn update_matches(
-        &mut self,
-        _: String,
-        _: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) -> gpui::Task<()> {
+    fn update_matches(&mut self, _: String, _: &mut Window, cx: &mut Context<Picker<Self>>) -> gpui::Task<()> {
         let Some(workspace) = self.workspace.upgrade() else {
             return Task::ready(());
         };
@@ -1437,10 +1358,7 @@ impl PickerDelegate for MarksViewDelegate {
             let mut matches = Vec::new();
             let _ = workspace.update(cx, |workspace, cx| {
                 let entity_id = cx.entity_id();
-                let Some(editor) = workspace
-                    .active_item(cx)
-                    .and_then(|item| item.act_as::<Editor>(cx))
-                else {
+                let Some(editor) = workspace.active_item(cx).and_then(|item| item.act_as::<Editor>(cx)) else {
                     return;
                 };
                 let editor = editor.read(cx);
@@ -1450,10 +1368,7 @@ impl PickerDelegate for MarksViewDelegate {
                 };
                 let marks_state = marks_state.read(cx);
 
-                if let Some(map) = marks_state
-                    .multibuffer_marks
-                    .get(&editor.buffer().entity_id())
-                {
+                if let Some(map) = marks_state.multibuffer_marks.get(&editor.buffer().entity_id()) {
                     for (name, anchors) in map {
                         if has_seen.contains(name) {
                             continue;
@@ -1468,10 +1383,7 @@ impl PickerDelegate for MarksViewDelegate {
 
                         let chunks = snapshot.chunks(
                             Point::new(position.row, 0)
-                                ..Point::new(
-                                    position.row,
-                                    snapshot.line_len(MultiBufferRow(position.row)),
-                                ),
+                                ..Point::new(position.row, snapshot.line_len(MultiBufferRow(position.row))),
                             true,
                         );
                         matches.push(MarksMatch {
@@ -1496,8 +1408,7 @@ impl PickerDelegate for MarksViewDelegate {
                             let snapshot = buffer.snapshot();
                             let position = anchor.to_point(&snapshot);
                             let chunks = snapshot.chunks(
-                                Point::new(position.row, 0)
-                                    ..Point::new(position.row, snapshot.line_len(position.row)),
+                                Point::new(position.row, 0)..Point::new(position.row, snapshot.line_len(position.row)),
                                 true,
                             );
 
@@ -1531,9 +1442,7 @@ impl PickerDelegate for MarksViewDelegate {
                                     .find(|buffer| buffer.entity_id().eq(entity_id))
                                     .map(|buffer| {
                                         (
-                                            MarksMatchInfo::Title(
-                                                buffer.read(cx).title(cx).to_string(),
-                                            ),
+                                            MarksMatchInfo::Title(buffer.read(cx).title(cx).to_string()),
                                             buffer.read(cx).snapshot(cx),
                                         )
                                     })
@@ -1566,12 +1475,7 @@ impl PickerDelegate for MarksViewDelegate {
                 }
             });
             let _ = picker.update(cx, |picker, cx| {
-                matches.sort_by_key(|a| {
-                    (
-                        a.name.chars().next().map(|c| c.is_ascii_uppercase()),
-                        a.name.clone(),
-                    )
-                });
+                matches.sort_by_key(|a| (a.name.chars().next().map(|c| c.is_ascii_uppercase()), a.name.clone()));
                 let digits = matches
                     .iter()
                     .map(|m| (m.position.row + 1).ilog10() + (m.position.column + 1).ilog10())
@@ -1631,11 +1535,7 @@ impl PickerDelegate for MarksViewDelegate {
         ));
         left_output.push(' ');
         left_output.push(' ');
-        let point_column = format!(
-            "{},{}",
-            mark_match.position.row + 1,
-            mark_match.position.column + 1
-        );
+        let point_column = format!("{},{}", mark_match.position.row + 1, mark_match.position.column + 1);
         left_output.push_str(&point_column);
         if let Some(padding) = self.point_column_width.checked_sub(point_column.len()) {
             left_output.push_str(&" ".repeat(padding));
@@ -1651,10 +1551,7 @@ impl PickerDelegate for MarksViewDelegate {
             }
             MarksMatchInfo::Title(title) => (
                 title.clone(),
-                vec![(
-                    0..title.len(),
-                    HighlightStyle::color(cx.theme().colors().text),
-                )],
+                vec![(0..title.len(), HighlightStyle::color(cx.theme().colors().text))],
             ),
             MarksMatchInfo::Content { line, highlights } => (line.clone(), highlights.clone()),
         };
@@ -1680,9 +1577,7 @@ impl PickerDelegate for MarksViewDelegate {
                 .h(theme.buffer_font_size(cx) * theme.line_height())
                 .px_2()
                 .child(StyledText::new(left_output).with_default_highlights(&text_style, left_runs))
-                .child(
-                    StyledText::new(right_output).with_default_highlights(&text_style, right_runs),
-                ),
+                .child(StyledText::new(right_output).with_default_highlights(&text_style, right_runs)),
         )
     }
 }
@@ -1698,9 +1593,7 @@ impl MarksView {
 
     pub fn toggle(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>) {
         let handle = cx.weak_entity();
-        workspace.toggle_modal(window, cx, move |window, cx| {
-            MarksView::new(handle, window, cx)
-        });
+        workspace.toggle_modal(window, cx, move |window, cx| MarksView::new(handle, window, cx));
     }
 
     fn new(
@@ -1773,10 +1666,7 @@ impl VimDb {
                     (?, ?, ?, ?)
             ))?;
             for (mark_name, value) in marks {
-                let pairs: Vec<(u32, u32)> = value
-                    .into_iter()
-                    .map(|point| (point.row, point.column))
-                    .collect();
+                let pairs: Vec<(u32, u32)> = value.into_iter().map(|point| (point.row, point.column)).collect();
                 let serialized = serde_json::to_string(&pairs)?;
                 query((workspace_id, mark_name, path.clone(), serialized))?;
             }
@@ -1798,10 +1688,7 @@ impl VimDb {
                 Some(SerializedMark {
                     path,
                     name,
-                    points: pairs
-                        .into_iter()
-                        .map(|(row, column)| Point { row, column })
-                        .collect(),
+                    points: pairs.into_iter().map(|(row, column)| Point { row, column }).collect(),
                 })
             })
             .collect())
@@ -1840,21 +1727,14 @@ impl VimDb {
         .await
     }
 
-    pub fn get_global_marks_paths(
-        &self,
-        workspace_id: WorkspaceId,
-    ) -> Result<Vec<(String, Arc<Path>)>> {
+    pub fn get_global_marks_paths(&self, workspace_id: WorkspaceId) -> Result<Vec<(String, Arc<Path>)>> {
         self.select_bound(sql!(
         SELECT mark_name, path FROM vim_global_marks_paths
             WHERE workspace_id = ?
         ))?(workspace_id)
     }
 
-    pub(crate) async fn delete_global_marks_path(
-        &self,
-        workspace_id: WorkspaceId,
-        mark_name: String,
-    ) -> Result<()> {
+    pub(crate) async fn delete_global_marks_path(&self, workspace_id: WorkspaceId, mark_name: String) -> Result<()> {
         self.write(move |conn| {
             conn.exec_bound(sql!(
                 DELETE FROM vim_global_marks_paths

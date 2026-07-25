@@ -1,9 +1,8 @@
 use smallvec::SmallVec;
 
 use crate::{
-    AnyElement, App, Axis, Bounds, Corner, Display, Edges, Element, GlobalElementId,
-    InspectorElementId, IntoElement, LayoutId, ParentElement, Pixels, Point, Position, Size, Style,
-    Window, point, px,
+    AnyElement, App, Axis, Bounds, Corner, Display, Edges, Element, GlobalElementId, InspectorElementId, IntoElement,
+    LayoutId, ParentElement, Pixels, Point, Position, Size, Style, Window, point, px,
 };
 
 /// The state that the anchored element element uses to track its children.
@@ -158,11 +157,8 @@ impl Element for Anchored {
             let mut anchor_corner = self.anchor_corner;
 
             if desired.left() < limits.left() || desired.right() > limits.right() {
-                let switched = Bounds::from_corner_and_size(
-                    anchor_corner.other_side_corner_along(Axis::Horizontal),
-                    origin,
-                    size,
-                );
+                let switched =
+                    Bounds::from_corner_and_size(anchor_corner.other_side_corner_along(Axis::Horizontal), origin, size);
                 if !(switched.left() < limits.left() || switched.right() > limits.right()) {
                     anchor_corner = anchor_corner.other_side_corner_along(Axis::Horizontal);
                     desired = switched
@@ -170,11 +166,8 @@ impl Element for Anchored {
             }
 
             if desired.top() < limits.top() || desired.bottom() > limits.bottom() {
-                let switched = Bounds::from_corner_and_size(
-                    anchor_corner.other_side_corner_along(Axis::Vertical),
-                    origin,
-                    size,
-                );
+                let switched =
+                    Bounds::from_corner_and_size(anchor_corner.other_side_corner_along(Axis::Vertical), origin, size);
                 if !(switched.top() < limits.top() || switched.bottom() > limits.bottom()) {
                     desired = switched;
                 }
@@ -274,17 +267,13 @@ impl AnchoredPositionMode {
         match self {
             AnchoredPositionMode::Window => {
                 let anchor_position = anchor_position.unwrap_or(bounds.origin);
-                let bounds =
-                    Bounds::from_corner_and_size(anchor_corner, anchor_position + offset, size);
+                let bounds = Bounds::from_corner_and_size(anchor_corner, anchor_position + offset, size);
                 (anchor_position, bounds)
             }
             AnchoredPositionMode::Local => {
                 let anchor_position = anchor_position.unwrap_or_default();
-                let bounds = Bounds::from_corner_and_size(
-                    anchor_corner,
-                    bounds.origin + anchor_position + offset,
-                    size,
-                );
+                let bounds =
+                    Bounds::from_corner_and_size(anchor_corner, bounds.origin + anchor_position + offset, size);
                 (anchor_position, bounds)
             }
         }

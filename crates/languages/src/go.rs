@@ -40,9 +40,8 @@ impl GoLspAdapter {
 static VERSION_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"\d+\.\d+\.\d+").expect("Failed to create VERSION_REGEX"));
 
-static GO_ESCAPE_SUBTEST_NAME_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r#"[.*+?^${}()|\[\]\\"']"#).expect("Failed to create GO_ESCAPE_SUBTEST_NAME_REGEX")
-});
+static GO_ESCAPE_SUBTEST_NAME_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r#"[.*+?^${}()|\[\]\\"']"#).expect("Failed to create GO_ESCAPE_SUBTEST_NAME_REGEX"));
 
 const BINARY: &str = if cfg!(target_os = "windows") {
     "gopls.exe"
@@ -73,13 +72,10 @@ impl LspInstaller for GoLspAdapter {
                     delegate.show_notification(NOTIFICATION_MESSAGE, cx);
                 })?
             }
-            anyhow::bail!(
-                "Could not install the Go language server `gopls`, because `go` was not found."
-            );
+            anyhow::bail!("Could not install the Go language server `gopls`, because `go` was not found.");
         }
 
-        let release =
-            latest_github_release("golang/tools", false, false, delegate.http_client()).await?;
+        let release = latest_github_release("golang/tools", false, false, delegate.http_client()).await?;
         let version: Option<String> = release.tag_name.strip_prefix("gopls/v").map(str::to_string);
         if version.is_none() {
             log::warn!(
@@ -228,20 +224,13 @@ impl LspAdapter for GoLspAdapter {
                 let filter_range = completion
                     .filter_text
                     .as_deref()
-                    .and_then(|filter_text| {
-                        text.find(filter_text)
-                            .map(|start| start..start + filter_text.len())
-                    })
+                    .and_then(|filter_text| text.find(filter_text).map(|start| start..start + filter_text.len()))
                     .unwrap_or(0..label.len());
                 return Some(CodeLabel::new(text, filter_range, runs));
             }
-            Some((
-                lsp::CompletionItemKind::CONSTANT | lsp::CompletionItemKind::VARIABLE,
-                detail,
-            )) => {
+            Some((lsp::CompletionItemKind::CONSTANT | lsp::CompletionItemKind::VARIABLE, detail)) => {
                 let text = format!("{label} {detail}");
-                let source =
-                    Rope::from(format!("var {} {}", &text[name_offset..], detail).as_str());
+                let source = Rope::from(format!("var {} {}", &text[name_offset..], detail).as_str());
                 let runs = adjust_runs(
                     name_offset,
                     language.highlight_text(&source, 4..4 + text[name_offset..].len()),
@@ -249,10 +238,7 @@ impl LspAdapter for GoLspAdapter {
                 let filter_range = completion
                     .filter_text
                     .as_deref()
-                    .and_then(|filter_text| {
-                        text.find(filter_text)
-                            .map(|start| start..start + filter_text.len())
-                    })
+                    .and_then(|filter_text| text.find(filter_text).map(|start| start..start + filter_text.len()))
                     .unwrap_or(0..label.len());
                 return Some(CodeLabel::new(text, filter_range, runs));
             }
@@ -266,10 +252,7 @@ impl LspAdapter for GoLspAdapter {
                 let filter_range = completion
                     .filter_text
                     .as_deref()
-                    .and_then(|filter_text| {
-                        text.find(filter_text)
-                            .map(|start| start..start + filter_text.len())
-                    })
+                    .and_then(|filter_text| text.find(filter_text).map(|start| start..start + filter_text.len()))
                     .unwrap_or(0..label.len());
                 return Some(CodeLabel::new(text, filter_range, runs));
             }
@@ -283,17 +266,13 @@ impl LspAdapter for GoLspAdapter {
                 let filter_range = completion
                     .filter_text
                     .as_deref()
-                    .and_then(|filter_text| {
-                        text.find(filter_text)
-                            .map(|start| start..start + filter_text.len())
-                    })
+                    .and_then(|filter_text| text.find(filter_text).map(|start| start..start + filter_text.len()))
                     .unwrap_or(0..label.len());
                 return Some(CodeLabel::new(text, filter_range, runs));
             }
             Some((lsp::CompletionItemKind::FIELD, detail)) => {
                 let text = format!("{label} {detail}");
-                let source =
-                    Rope::from(format!("type T struct {{ {} }}", &text[name_offset..]).as_str());
+                let source = Rope::from(format!("type T struct {{ {} }}", &text[name_offset..]).as_str());
                 let runs = adjust_runs(
                     name_offset,
                     language.highlight_text(&source, 16..16 + text[name_offset..].len()),
@@ -301,10 +280,7 @@ impl LspAdapter for GoLspAdapter {
                 let filter_range = completion
                     .filter_text
                     .as_deref()
-                    .and_then(|filter_text| {
-                        text.find(filter_text)
-                            .map(|start| start..start + filter_text.len())
-                    })
+                    .and_then(|filter_text| text.find(filter_text).map(|start| start..start + filter_text.len()))
                     .unwrap_or(0..label.len());
                 return Some(CodeLabel::new(text, filter_range, runs));
             }
@@ -319,10 +295,7 @@ impl LspAdapter for GoLspAdapter {
                     let filter_range = completion
                         .filter_text
                         .as_deref()
-                        .and_then(|filter_text| {
-                            text.find(filter_text)
-                                .map(|start| start..start + filter_text.len())
-                        })
+                        .and_then(|filter_text| text.find(filter_text).map(|start| start..start + filter_text.len()))
                         .unwrap_or(0..label.len());
                     return Some(CodeLabel::new(text, filter_range, runs));
                 }
@@ -332,12 +305,7 @@ impl LspAdapter for GoLspAdapter {
         None
     }
 
-    async fn label_for_symbol(
-        &self,
-        name: &str,
-        kind: lsp::SymbolKind,
-        language: &Arc<Language>,
-    ) -> Option<CodeLabel> {
+    async fn label_for_symbol(&self, name: &str, kind: lsp::SymbolKind, language: &Arc<Language>) -> Option<CodeLabel> {
         let (text, filter_range, display_range) = match kind {
             lsp::SymbolKind::METHOD | lsp::SymbolKind::FUNCTION => {
                 let text = format!("func {} () {{}}", name);
@@ -392,15 +360,13 @@ impl LspAdapter for GoLspAdapter {
     }
 
     fn diagnostic_message_to_markdown(&self, message: &str) -> Option<String> {
-        static REGEX: LazyLock<Regex> =
-            LazyLock::new(|| Regex::new(r"(?m)\n\s*").expect("Failed to create REGEX"));
+        static REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?m)\n\s*").expect("Failed to create REGEX"));
         Some(REGEX.replace_all(message, "\n\n").to_string())
     }
 }
 
 fn parse_version_output(output: &Output) -> Result<&str> {
-    let version_stdout =
-        str::from_utf8(&output.stdout).context("version command produced invalid utf8 output")?;
+    let version_stdout = str::from_utf8(&output.stdout).context("version command produced invalid utf8 output")?;
 
     let version = VERSION_REGEX
         .find(version_stdout)
@@ -437,10 +403,7 @@ async fn get_cached_server_binary(container_dir: &Path) -> Option<LanguageServer
     .log_err()
 }
 
-fn adjust_runs(
-    delta: usize,
-    mut runs: Vec<(Range<usize>, HighlightId)>,
-) -> Vec<(Range<usize>, HighlightId)> {
+fn adjust_runs(delta: usize, mut runs: Vec<(Range<usize>, HighlightId)>) -> Vec<(Range<usize>, HighlightId)> {
     for (range, _) in &mut runs {
         range.start += delta;
         range.end += delta;
@@ -451,14 +414,11 @@ fn adjust_runs(
 pub(crate) struct GoContextProvider;
 
 const GO_PACKAGE_TASK_VARIABLE: VariableName = VariableName::Custom(Cow::Borrowed("GO_PACKAGE"));
-const GO_MODULE_ROOT_TASK_VARIABLE: VariableName =
-    VariableName::Custom(Cow::Borrowed("GO_MODULE_ROOT"));
-const GO_SUBTEST_NAME_TASK_VARIABLE: VariableName =
-    VariableName::Custom(Cow::Borrowed("GO_SUBTEST_NAME"));
+const GO_MODULE_ROOT_TASK_VARIABLE: VariableName = VariableName::Custom(Cow::Borrowed("GO_MODULE_ROOT"));
+const GO_SUBTEST_NAME_TASK_VARIABLE: VariableName = VariableName::Custom(Cow::Borrowed("GO_SUBTEST_NAME"));
 const GO_TABLE_TEST_CASE_NAME_TASK_VARIABLE: VariableName =
     VariableName::Custom(Cow::Borrowed("GO_TABLE_TEST_CASE_NAME"));
-const GO_SUITE_NAME_TASK_VARIABLE: VariableName =
-    VariableName::Custom(Cow::Borrowed("GO_SUITE_NAME"));
+const GO_SUITE_NAME_TASK_VARIABLE: VariableName = VariableName::Custom(Cow::Borrowed("GO_SUITE_NAME"));
 
 impl ContextProvider for GoContextProvider {
     fn build_context(
@@ -517,9 +477,7 @@ impl ContextProvider for GoContextProvider {
         let go_subtest_variable = extract_subtest_name(_subtest_name.unwrap_or(""))
             .map(|subtest_name| (GO_SUBTEST_NAME_TASK_VARIABLE.clone(), subtest_name));
 
-        let _table_test_case_name = variables.get(&VariableName::Custom(Cow::Borrowed(
-            "_table_test_case_name",
-        )));
+        let _table_test_case_name = variables.get(&VariableName::Custom(Cow::Borrowed("_table_test_case_name")));
 
         let go_table_test_case_variable = _table_test_case_name
             .and_then(extract_subtest_name)
@@ -744,9 +702,7 @@ fn extract_subtest_name(input: &str) -> Option<String> {
 
     Some(
         GO_ESCAPE_SUBTEST_NAME_REGEX
-            .replace_all(&processed, |caps: &regex::Captures| {
-                format!("\\{}", &caps[0])
-            })
+            .replace_all(&processed, |caps: &regex::Captures| format!("\\{}", &caps[0]))
             .to_string(),
     )
 }
@@ -873,8 +829,7 @@ mod tests {
         }
         "#;
 
-        let buffer = cx
-            .new(|cx| crate::Buffer::local(testify_suite, cx).with_language(language.clone(), cx));
+        let buffer = cx.new(|cx| crate::Buffer::local(testify_suite, cx).with_language(language.clone(), cx));
         cx.executor().run_until_parked();
 
         let runnables: Vec<_> = buffer.update(cx, |buffer, _| {
@@ -930,16 +885,13 @@ mod tests {
         }
         "#;
 
-        let buffer = cx.new(|cx| {
-            crate::Buffer::local(interpreted_string_subtest, cx).with_language(language.clone(), cx)
-        });
+        let buffer =
+            cx.new(|cx| crate::Buffer::local(interpreted_string_subtest, cx).with_language(language.clone(), cx));
         cx.executor().run_until_parked();
 
         let runnables: Vec<_> = buffer.update(cx, |buffer, _| {
             let snapshot = buffer.snapshot();
-            snapshot
-                .runnable_ranges(0..interpreted_string_subtest.len())
-                .collect()
+            snapshot.runnable_ranges(0..interpreted_string_subtest.len()).collect()
         });
 
         let tag_strings: Vec<String> = runnables
@@ -959,16 +911,12 @@ mod tests {
             tag_strings
         );
 
-        let buffer = cx.new(|cx| {
-            crate::Buffer::local(raw_string_subtest, cx).with_language(language.clone(), cx)
-        });
+        let buffer = cx.new(|cx| crate::Buffer::local(raw_string_subtest, cx).with_language(language.clone(), cx));
         cx.executor().run_until_parked();
 
         let runnables: Vec<_> = buffer.update(cx, |buffer, _| {
             let snapshot = buffer.snapshot();
-            snapshot
-                .runnable_ranges(0..raw_string_subtest.len())
-                .collect()
+            snapshot.runnable_ranges(0..raw_string_subtest.len()).collect()
         });
 
         let tag_strings: Vec<String> = runnables
@@ -1004,8 +952,7 @@ mod tests {
         }
         "#;
 
-        let buffer =
-            cx.new(|cx| crate::Buffer::local(example_test, cx).with_language(language.clone(), cx));
+        let buffer = cx.new(|cx| crate::Buffer::local(example_test, cx).with_language(language.clone(), cx));
         cx.executor().run_until_parked();
 
         let runnables: Vec<_> = buffer.update(cx, |buffer, _| {
@@ -1075,8 +1022,7 @@ mod tests {
         }
         "#;
 
-        let buffer =
-            cx.new(|cx| crate::Buffer::local(table_test, cx).with_language(language.clone(), cx));
+        let buffer = cx.new(|cx| crate::Buffer::local(table_test, cx).with_language(language.clone(), cx));
         cx.executor().run_until_parked();
 
         let runnables: Vec<_> = buffer.update(cx, |buffer, _| {
@@ -1154,8 +1100,7 @@ mod tests {
         }
         "#;
 
-        let buffer =
-            cx.new(|cx| crate::Buffer::local(table_test, cx).with_language(language.clone(), cx));
+        let buffer = cx.new(|cx| crate::Buffer::local(table_test, cx).with_language(language.clone(), cx));
         cx.executor().run_until_parked();
 
         let runnables: Vec<_> = buffer.update(cx, |buffer, _| {
@@ -1219,8 +1164,7 @@ mod tests {
         }
         "#;
 
-        let buffer =
-            cx.new(|cx| crate::Buffer::local(table_test, cx).with_language(language.clone(), cx));
+        let buffer = cx.new(|cx| crate::Buffer::local(table_test, cx).with_language(language.clone(), cx));
         cx.executor().run_until_parked();
 
         let runnables: Vec<_> = buffer.update(cx, |buffer, _| {
@@ -1286,8 +1230,7 @@ mod tests {
         }
         "#;
 
-        let buffer =
-            cx.new(|cx| crate::Buffer::local(table_test, cx).with_language(language.clone(), cx));
+        let buffer = cx.new(|cx| crate::Buffer::local(table_test, cx).with_language(language.clone(), cx));
         cx.executor().run_until_parked();
 
         let runnables: Vec<_> = buffer.update(cx, |buffer, _| {
@@ -1358,8 +1301,7 @@ mod tests {
         }
         "#;
 
-        let buffer =
-            cx.new(|cx| crate::Buffer::local(table_test, cx).with_language(language.clone(), cx));
+        let buffer = cx.new(|cx| crate::Buffer::local(table_test, cx).with_language(language.clone(), cx));
         cx.executor().run_until_parked();
 
         let runnables: Vec<_> = buffer.update(cx, |buffer, _| {
@@ -1385,10 +1327,7 @@ mod tests {
         );
 
         let go_test_count = tag_strings.iter().filter(|&tag| tag == "go-test").count();
-        let go_table_test_count = tag_strings
-            .iter()
-            .filter(|&tag| tag == "go-table-test-case")
-            .count();
+        let go_table_test_count = tag_strings.iter().filter(|&tag| tag == "go-table-test-case").count();
 
         assert!(
             go_test_count == 1,
@@ -1425,8 +1364,7 @@ mod tests {
         }
         "#;
 
-        let buffer =
-            cx.new(|cx| crate::Buffer::local(table_test, cx).with_language(language.clone(), cx));
+        let buffer = cx.new(|cx| crate::Buffer::local(table_test, cx).with_language(language.clone(), cx));
         cx.executor().run_until_parked();
 
         let runnables: Vec<_> = buffer.update(cx, |buffer, _| {
@@ -1470,10 +1408,7 @@ mod tests {
 
         let input_raw_with_quotes = r#"`test with "quotes" and other chars`"#;
         let result = extract_subtest_name(input_raw_with_quotes);
-        assert_eq!(
-            result,
-            Some(r#"test_with_\"quotes\"_and_other_chars"#.to_string())
-        );
+        assert_eq!(result, Some(r#"test_with_\"quotes\"_and_other_chars"#.to_string()));
 
         let input_multiline = r#"`subtest with
         multiline

@@ -75,13 +75,7 @@ impl LspInstaller for SuperhtmlLspAdapter {
         _pre_release: bool,
         _cx: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        let release = latest_github_release(
-            "kristoff-it/superhtml",
-            false,
-            false,
-            delegate.http_client(),
-        )
-        .await?;
+        let release = latest_github_release("kristoff-it/superhtml", false, false, delegate.http_client()).await?;
 
         let arch = match std::env::consts::ARCH {
             "aarch64" => "aarch64",
@@ -193,8 +187,7 @@ impl LspAdapter for SuperhtmlLspAdapter {
     }
 }
 
-const SERVER_PATH: &str =
-    "node_modules/@zed-industries/vscode-langservers-extracted/bin/vscode-html-language-server";
+const SERVER_PATH: &str = "node_modules/@zed-industries/vscode-langservers-extracted/bin/vscode-html-language-server";
 
 fn server_binary_arguments(server_path: &Path) -> Vec<OsString> {
     vec![server_path.into(), "--stdio".into()]
@@ -221,9 +214,7 @@ impl LspInstaller for HtmlLspAdapter {
         _: bool,
         _: &mut AsyncApp,
     ) -> Result<String> {
-        self.node
-            .npm_package_latest_version(Self::PACKAGE_NAME)
-            .await
+        self.node.npm_package_latest_version(Self::PACKAGE_NAME).await
     }
 
     async fn check_if_user_installed(
@@ -232,9 +223,7 @@ impl LspInstaller for HtmlLspAdapter {
         _: Option<Toolchain>,
         _: &AsyncApp,
     ) -> Option<LanguageServerBinary> {
-        let path = delegate
-            .which(with_exe("vscode-html-language-server").as_ref())
-            .await?;
+        let path = delegate.which(with_exe("vscode-html-language-server").as_ref()).await?;
         let env = delegate.shell_env().await;
 
         Some(LanguageServerBinary {
@@ -253,10 +242,7 @@ impl LspInstaller for HtmlLspAdapter {
         let server_path = container_dir.join(SERVER_PATH);
 
         self.node
-            .npm_install_packages(
-                &container_dir,
-                &[(Self::PACKAGE_NAME, latest_version.as_str())],
-            )
+            .npm_install_packages(&container_dir, &[(Self::PACKAGE_NAME, latest_version.as_str())])
             .await?;
 
         Ok(LanguageServerBinary {
@@ -320,16 +306,10 @@ impl LspAdapter for HtmlLspAdapter {
     }
 }
 
-async fn get_cached_server_binary(
-    container_dir: PathBuf,
-    node: &NodeRuntime,
-) -> Option<LanguageServerBinary> {
+async fn get_cached_server_binary(container_dir: PathBuf, node: &NodeRuntime) -> Option<LanguageServerBinary> {
     maybe!(async {
         let server_path = container_dir.join(SERVER_PATH);
-        anyhow::ensure!(
-            server_path.exists(),
-            "missing executable in directory {server_path:?}"
-        );
+        anyhow::ensure!(server_path.exists(), "missing executable in directory {server_path:?}");
         Ok(LanguageServerBinary {
             path: node.binary_path().await?,
             env: None,

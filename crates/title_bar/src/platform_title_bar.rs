@@ -1,6 +1,6 @@
 use gpui::{
-    AnyElement, Context, Decorations, Entity, Hsla, InteractiveElement, IntoElement, MouseButton,
-    ParentElement, Pixels, StatefulInteractiveElement, Styled, Window, WindowControlArea, div, px,
+    AnyElement, Context, Decorations, Entity, Hsla, InteractiveElement, IntoElement, MouseButton, ParentElement,
+    Pixels, StatefulInteractiveElement, Styled, Window, WindowControlArea, div, px,
 };
 use settings::Settings;
 use smallvec::SmallVec;
@@ -158,27 +158,22 @@ impl Render for PlatformTitleBar {
                     .w_full()
                     .children(children),
             )
-            .when(!window.is_fullscreen(), |title_bar| {
-                match self.platform_style {
-                    PlatformStyle::Mac => title_bar,
-                    PlatformStyle::Linux => {
-                        if matches!(decorations, Decorations::Client { .. }) {
-                            title_bar
-                                .child(platform_linux::LinuxWindowControls::new(close_action))
-                                .when(supported_controls.window_menu, |titlebar| {
-                                    titlebar
-                                        .on_mouse_down(MouseButton::Right, move |ev, window, _| {
-                                            window.show_window_menu(ev.position)
-                                        })
+            .when(!window.is_fullscreen(), |title_bar| match self.platform_style {
+                PlatformStyle::Mac => title_bar,
+                PlatformStyle::Linux => {
+                    if matches!(decorations, Decorations::Client { .. }) {
+                        title_bar
+                            .child(platform_linux::LinuxWindowControls::new(close_action))
+                            .when(supported_controls.window_menu, |titlebar| {
+                                titlebar.on_mouse_down(MouseButton::Right, move |ev, window, _| {
+                                    window.show_window_menu(ev.position)
                                 })
-                        } else {
-                            title_bar
-                        }
-                    }
-                    PlatformStyle::Windows => {
-                        title_bar.child(platform_windows::WindowsWindowControls::new(height))
+                            })
+                    } else {
+                        title_bar
                     }
                 }
+                PlatformStyle::Windows => title_bar.child(platform_windows::WindowsWindowControls::new(height)),
             });
 
         v_flex()

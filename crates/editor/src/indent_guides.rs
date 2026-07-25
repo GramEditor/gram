@@ -37,13 +37,9 @@ impl Editor {
     ) -> Option<Vec<IndentGuide>> {
         let show_indent_guides = self.should_show_indent_guides().unwrap_or_else(|| {
             if let Some(buffer) = self.buffer().read(cx).as_singleton() {
-                language_settings(
-                    buffer.read(cx).language().map(|l| l.name()),
-                    buffer.read(cx).file(),
-                    cx,
-                )
-                .indent_guides
-                .enabled
+                language_settings(buffer.read(cx).language().map(|l| l.name()), buffer.read(cx).file(), cx)
+                    .indent_guides
+                    .enabled
             } else {
                 true
             }
@@ -78,12 +74,7 @@ impl Editor {
             .active_indent_range
             .as_ref()
             .map(|active_indent_range| {
-                should_recalculate_indented_range(
-                    state.cursor_row,
-                    cursor_row,
-                    active_indent_range,
-                    snapshot,
-                )
+                should_recalculate_indented_range(state.cursor_row, cursor_row, active_indent_range, snapshot)
             })
             .unwrap_or(true)
         {
@@ -127,12 +118,9 @@ impl Editor {
 
         let active_indent_range = state.active_indent_range.as_ref()?;
 
-        let candidates = indent_guides
-            .iter()
-            .enumerate()
-            .filter(|(_, indent_guide)| {
-                indent_guide.indent_level() == active_indent_range.indent.len(indent_guide.tab_size)
-            });
+        let candidates = indent_guides.iter().enumerate().filter(|(_, indent_guide)| {
+            indent_guide.indent_level() == active_indent_range.indent.len(indent_guide.tab_size)
+        });
 
         let mut matches = HashSet::default();
         for (i, indent) in candidates {
@@ -206,10 +194,7 @@ pub fn indent_guides_in_range(
         .collect()
 }
 
-async fn resolve_indented_range(
-    snapshot: DisplaySnapshot,
-    buffer_row: MultiBufferRow,
-) -> Option<ActiveIndentedRange> {
+async fn resolve_indented_range(snapshot: DisplaySnapshot, buffer_row: MultiBufferRow) -> Option<ActiveIndentedRange> {
     snapshot
         .buffer_snapshot()
         .enclosing_indent(buffer_row)

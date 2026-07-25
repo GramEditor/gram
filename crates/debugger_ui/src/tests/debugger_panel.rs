@@ -4,13 +4,13 @@ use crate::{
     *,
 };
 use dap::{
-    ErrorResponse, Message, RunInTerminalRequestArguments, SourceBreakpoint,
-    StartDebuggingRequestArguments, StartDebuggingRequestArgumentsRequest,
+    ErrorResponse, Message, RunInTerminalRequestArguments, SourceBreakpoint, StartDebuggingRequestArguments,
+    StartDebuggingRequestArgumentsRequest,
     adapters::DebugTaskDefinition,
     client::SessionId,
     requests::{
-        Continue, Disconnect, Launch, Next, RunInTerminal, SetBreakpoints, StackTrace,
-        StartDebugging, StepBack, StepIn, StepOut, Threads,
+        Continue, Disconnect, Launch, Next, RunInTerminal, SetBreakpoints, StackTrace, StartDebugging, StepBack,
+        StepIn, StepOut, Threads,
     },
 };
 use editor::{
@@ -80,12 +80,9 @@ async fn test_basic_show_debug_panel(executor: BackgroundExecutor, cx: &mut Test
     workspace
         .update(cx, |workspace, _window, cx| {
             let debug_panel = workspace.panel::<DebugPanel>(cx).unwrap();
-            let active_session =
-                debug_panel.update(cx, |debug_panel, _| debug_panel.active_session().unwrap());
+            let active_session = debug_panel.update(cx, |debug_panel, _| debug_panel.active_session().unwrap());
 
-            let running_state = active_session.update(cx, |active_session, _| {
-                active_session.running_state().clone()
-            });
+            let running_state = active_session.update(cx, |active_session, _| active_session.running_state().clone());
 
             debug_panel.update(cx, |this, cx| {
                 assert!(this.active_session().is_some());
@@ -111,19 +108,12 @@ async fn test_basic_show_debug_panel(executor: BackgroundExecutor, cx: &mut Test
     workspace
         .update(cx, |workspace, _window, cx| {
             let debug_panel = workspace.panel::<DebugPanel>(cx).unwrap();
-            let active_session = debug_panel
-                .update(cx, |this, _| this.active_session())
-                .unwrap();
+            let active_session = debug_panel.update(cx, |this, _| this.active_session()).unwrap();
 
-            let running_state = active_session.update(cx, |active_session, _| {
-                active_session.running_state().clone()
-            });
+            let running_state = active_session.update(cx, |active_session, _| active_session.running_state().clone());
 
             assert_eq!(client.id(), running_state.read(cx).session_id());
-            assert_eq!(
-                ThreadId(1),
-                running_state.read(cx).selected_thread_id().unwrap()
-            );
+            assert_eq!(ThreadId(1), running_state.read(cx).selected_thread_id().unwrap());
         })
         .unwrap();
 
@@ -140,20 +130,13 @@ async fn test_basic_show_debug_panel(executor: BackgroundExecutor, cx: &mut Test
         .update(cx, |workspace, _window, cx| {
             let debug_panel = workspace.panel::<DebugPanel>(cx).unwrap();
 
-            let active_session = debug_panel
-                .update(cx, |this, _| this.active_session())
-                .unwrap();
+            let active_session = debug_panel.update(cx, |this, _| this.active_session()).unwrap();
 
-            let running_state = active_session.update(cx, |active_session, _| {
-                active_session.running_state().clone()
-            });
+            let running_state = active_session.update(cx, |active_session, _| active_session.running_state().clone());
 
             debug_panel.update(cx, |this, cx| {
                 assert!(this.active_session().is_some());
-                assert_eq!(
-                    ThreadId(1),
-                    running_state.read(cx).selected_thread_id().unwrap()
-                );
+                assert_eq!(ThreadId(1), running_state.read(cx).selected_thread_id().unwrap());
             });
         })
         .unwrap();
@@ -161,10 +144,7 @@ async fn test_basic_show_debug_panel(executor: BackgroundExecutor, cx: &mut Test
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
-async fn test_we_can_only_have_one_panel_per_debug_session(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_we_can_only_have_one_panel_per_debug_session(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let fs = FakeFs::new(executor.clone());
@@ -231,19 +211,12 @@ async fn test_we_can_only_have_one_panel_per_debug_session(
     workspace
         .update(cx, |workspace, _window, cx| {
             let debug_panel = workspace.panel::<DebugPanel>(cx).unwrap();
-            let active_session = debug_panel
-                .update(cx, |this, _| this.active_session())
-                .unwrap();
+            let active_session = debug_panel.update(cx, |this, _| this.active_session()).unwrap();
 
-            let running_state = active_session.update(cx, |active_session, _| {
-                active_session.running_state().clone()
-            });
+            let running_state = active_session.update(cx, |active_session, _| active_session.running_state().clone());
 
             assert_eq!(client.id(), active_session.read(cx).session_id(cx));
-            assert_eq!(
-                ThreadId(1),
-                running_state.read(cx).selected_thread_id().unwrap()
-            );
+            assert_eq!(ThreadId(1), running_state.read(cx).selected_thread_id().unwrap());
         })
         .unwrap();
 
@@ -264,19 +237,12 @@ async fn test_we_can_only_have_one_panel_per_debug_session(
     workspace
         .update(cx, |workspace, _window, cx| {
             let debug_panel = workspace.panel::<DebugPanel>(cx).unwrap();
-            let active_session = debug_panel
-                .update(cx, |this, _| this.active_session())
-                .unwrap();
+            let active_session = debug_panel.update(cx, |this, _| this.active_session()).unwrap();
 
-            let running_state = active_session.update(cx, |active_session, _| {
-                active_session.running_state().clone()
-            });
+            let running_state = active_session.update(cx, |active_session, _| active_session.running_state().clone());
 
             assert_eq!(client.id(), active_session.read(cx).session_id(cx));
-            assert_eq!(
-                ThreadId(1),
-                running_state.read(cx).selected_thread_id().unwrap()
-            );
+            assert_eq!(ThreadId(1), running_state.read(cx).selected_thread_id().unwrap());
         })
         .unwrap();
 
@@ -292,30 +258,20 @@ async fn test_we_can_only_have_one_panel_per_debug_session(
     workspace
         .update(cx, |workspace, _window, cx| {
             let debug_panel = workspace.panel::<DebugPanel>(cx).unwrap();
-            let active_session = debug_panel
-                .update(cx, |this, _| this.active_session())
-                .unwrap();
+            let active_session = debug_panel.update(cx, |this, _| this.active_session()).unwrap();
 
-            let running_state = active_session.update(cx, |active_session, _| {
-                active_session.running_state().clone()
-            });
+            let running_state = active_session.update(cx, |active_session, _| active_session.running_state().clone());
 
             debug_panel.update(cx, |this, cx| {
                 assert!(this.active_session().is_some());
-                assert_eq!(
-                    ThreadId(1),
-                    running_state.read(cx).selected_thread_id().unwrap()
-                );
+                assert_eq!(ThreadId(1), running_state.read(cx).selected_thread_id().unwrap());
             });
         })
         .unwrap();
 }
 
 #[gpui::test]
-async fn test_handle_successful_run_in_terminal_reverse_request(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_handle_successful_run_in_terminal_reverse_request(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let send_response = Arc::new(AtomicBool::new(false));
@@ -373,10 +329,7 @@ async fn test_handle_successful_run_in_terminal_reverse_request(
             let session = debug_panel.read(cx).active_session().unwrap();
             let running = session.read(cx).running_state();
             assert_eq!(
-                running
-                    .read(cx)
-                    .pane_items_status(cx)
-                    .get(&DebuggerPaneItem::Terminal),
+                running.read(cx).pane_items_status(cx).get(&DebuggerPaneItem::Terminal),
                 Some(&true)
             );
             assert!(running.read(cx).debug_terminal.read(cx).terminal.is_some());
@@ -386,10 +339,7 @@ async fn test_handle_successful_run_in_terminal_reverse_request(
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
-async fn test_handle_start_debugging_request(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_handle_start_debugging_request(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let fs = FakeFs::new(executor.clone());
@@ -448,12 +398,7 @@ async fn test_handle_start_debugging_request(
             let debug_panel = workspace.panel::<DebugPanel>(cx).unwrap();
 
             // Active session changes on spawn, as the parent has never stopped.
-            let active_session = debug_panel
-                .read(cx)
-                .active_session()
-                .unwrap()
-                .read(cx)
-                .session(cx);
+            let active_session = debug_panel.read(cx).active_session().unwrap().read(cx).session(cx);
             let current_sessions = debug_panel.read(cx).sessions().collect::<Vec<_>>();
             assert_eq!(active_session, current_sessions[1].read(cx).session(cx));
             assert_eq!(
@@ -481,12 +426,7 @@ async fn test_handle_start_debugging_request(
             };
 
             assert_eq!(
-                current_sessions[1]
-                    .read(cx)
-                    .session(cx)
-                    .read(cx)
-                    .binary()
-                    .unwrap(),
+                current_sessions[1].read(cx).session(cx).read(cx).binary().unwrap(),
                 &original_binary
             );
         })
@@ -498,10 +438,7 @@ async fn test_handle_start_debugging_request(
 // // covers that we always send a response back, if something when wrong,
 // // while spawning the terminal
 #[gpui::test]
-async fn test_handle_error_run_in_terminal_reverse_request(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_handle_error_run_in_terminal_reverse_request(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let send_response = Arc::new(AtomicBool::new(false));
@@ -557,20 +494,14 @@ async fn test_handle_error_run_in_terminal_reverse_request(
         .update(cx, |workspace, _window, cx| {
             let terminal_panel = workspace.panel::<TerminalPanel>(cx).unwrap();
 
-            assert_eq!(
-                0,
-                terminal_panel.read(cx).pane().unwrap().read(cx).items_len()
-            );
+            assert_eq!(0, terminal_panel.read(cx).pane().unwrap().read(cx).items_len());
         })
         .unwrap();
 }
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
-async fn test_handle_start_debugging_reverse_request(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_handle_start_debugging_reverse_request(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let send_response = Arc::new(AtomicBool::new(false));
@@ -613,8 +544,7 @@ async fn test_handle_start_debugging_reverse_request(
         })
         .await;
     // Set up handlers for sessions spawned with reverse request too.
-    let _reverse_request_subscription =
-        project::debugger::test::intercept_debug_sessions(cx, |_| {});
+    let _reverse_request_subscription = project::debugger::test::intercept_debug_sessions(cx, |_| {});
     client
         .fake_reverse_request::<StartDebugging>(StartDebuggingRequestArguments {
             configuration: json!({}),
@@ -625,11 +555,7 @@ async fn test_handle_start_debugging_reverse_request(
     cx.run_until_parked();
 
     let child_session = project.update(cx, |project, cx| {
-        project
-            .dap_store()
-            .read(cx)
-            .session_by_id(SessionId(1))
-            .unwrap()
+        project.dap_store().read(cx).session_by_id(SessionId(1)).unwrap()
     });
     let child_client = child_session.update(cx, |session, _| session.adapter_client().unwrap());
 
@@ -666,10 +592,7 @@ async fn test_handle_start_debugging_reverse_request(
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
-async fn test_shutdown_children_when_parent_session_shutdown(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_shutdown_children_when_parent_session_shutdown(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let fs = FakeFs::new(executor.clone());
@@ -701,8 +624,7 @@ async fn test_shutdown_children_when_parent_session_shutdown(
 
     client.on_response::<StartDebugging, _>(move |_| {}).await;
     // Set up handlers for sessions spawned with reverse request too.
-    let _reverse_request_subscription =
-        project::debugger::test::intercept_debug_sessions(cx, |_| {});
+    let _reverse_request_subscription = project::debugger::test::intercept_debug_sessions(cx, |_| {});
     // start first child session
     client
         .fake_reverse_request::<StartDebugging>(StartDebuggingRequestArguments {
@@ -724,20 +646,14 @@ async fn test_shutdown_children_when_parent_session_shutdown(
     cx.run_until_parked();
 
     // configure first child session
-    let first_child_session = dap_store.read_with(cx, |dap_store, _| {
-        dap_store.session_by_id(SessionId(1)).unwrap()
-    });
-    let first_child_client =
-        first_child_session.update(cx, |session, _| session.adapter_client().unwrap());
+    let first_child_session = dap_store.read_with(cx, |dap_store, _| dap_store.session_by_id(SessionId(1)).unwrap());
+    let first_child_client = first_child_session.update(cx, |session, _| session.adapter_client().unwrap());
 
     first_child_client.on_request::<Disconnect, _>(move |_, _| Ok(()));
 
     // configure second child session
-    let second_child_session = dap_store.read_with(cx, |dap_store, _| {
-        dap_store.session_by_id(SessionId(2)).unwrap()
-    });
-    let second_child_client =
-        second_child_session.update(cx, |session, _| session.adapter_client().unwrap());
+    let second_child_session = dap_store.read_with(cx, |dap_store, _| dap_store.session_by_id(SessionId(2)).unwrap());
+    let second_child_client = second_child_session.update(cx, |session, _| session.adapter_client().unwrap());
 
     second_child_client.on_request::<Disconnect, _>(move |_, _| Ok(()));
 
@@ -753,11 +669,7 @@ async fn test_shutdown_children_when_parent_session_shutdown(
 
     // assert parent session and all children sessions are shutdown
     dap_store.update(cx, |dap_store, cx| {
-        assert!(
-            dap_store
-                .session_by_id(parent_session.read(cx).session_id())
-                .is_none()
-        );
+        assert!(dap_store.session_by_id(parent_session.read(cx).session_id()).is_none());
         assert!(
             dap_store
                 .session_by_id(first_child_session.read(cx).session_id())
@@ -799,8 +711,7 @@ async fn test_shutdown_parent_session_if_all_children_are_shutdown(
 
     client.on_response::<StartDebugging, _>(move |_| {}).await;
     // Set up handlers for sessions spawned with reverse request too.
-    let _reverse_request_subscription =
-        project::debugger::test::intercept_debug_sessions(cx, |_| {});
+    let _reverse_request_subscription = project::debugger::test::intercept_debug_sessions(cx, |_| {});
     // start first child session
     client
         .fake_reverse_request::<StartDebugging>(StartDebuggingRequestArguments {
@@ -822,20 +733,14 @@ async fn test_shutdown_parent_session_if_all_children_are_shutdown(
     cx.run_until_parked();
 
     // configure first child session
-    let first_child_session = dap_store.read_with(cx, |dap_store, _| {
-        dap_store.session_by_id(SessionId(1)).unwrap()
-    });
-    let first_child_client =
-        first_child_session.update(cx, |session, _| session.adapter_client().unwrap());
+    let first_child_session = dap_store.read_with(cx, |dap_store, _| dap_store.session_by_id(SessionId(1)).unwrap());
+    let first_child_client = first_child_session.update(cx, |session, _| session.adapter_client().unwrap());
 
     first_child_client.on_request::<Disconnect, _>(move |_, _| Ok(()));
 
     // configure second child session
-    let second_child_session = dap_store.read_with(cx, |dap_store, _| {
-        dap_store.session_by_id(SessionId(2)).unwrap()
-    });
-    let second_child_client =
-        second_child_session.update(cx, |session, _| session.adapter_client().unwrap());
+    let second_child_session = dap_store.read_with(cx, |dap_store, _| dap_store.session_by_id(SessionId(2)).unwrap());
+    let second_child_client = second_child_session.update(cx, |session, _| session.adapter_client().unwrap());
 
     second_child_client.on_request::<Disconnect, _>(move |_, _| Ok(()));
 
@@ -851,11 +756,7 @@ async fn test_shutdown_parent_session_if_all_children_are_shutdown(
 
     // assert parent session and second child session still exist
     dap_store.update(cx, |dap_store, cx| {
-        assert!(
-            dap_store
-                .session_by_id(parent_session.read(cx).session_id())
-                .is_some()
-        );
+        assert!(dap_store.session_by_id(parent_session.read(cx).session_id()).is_some());
         assert!(
             dap_store
                 .session_by_id(first_child_session.read(cx).session_id())
@@ -879,11 +780,7 @@ async fn test_shutdown_parent_session_if_all_children_are_shutdown(
     // assert parent session got shutdown by second child session
     // because it was the last child
     dap_store.update(cx, |dap_store, cx| {
-        assert!(
-            dap_store
-                .session_by_id(parent_session.read(cx).session_id())
-                .is_none()
-        );
+        assert!(dap_store.session_by_id(parent_session.read(cx).session_id()).is_none());
         assert!(
             dap_store
                 .session_by_id(second_child_session.read(cx).session_id())
@@ -894,10 +791,7 @@ async fn test_shutdown_parent_session_if_all_children_are_shutdown(
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
-async fn test_debug_panel_item_thread_status_reset_on_failure(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_debug_panel_item_thread_status_reset_on_failure(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let fs = FakeFs::new(executor.clone());
@@ -1029,19 +923,12 @@ async fn test_debug_panel_item_thread_status_reset_on_failure(
 
     cx.run_until_parked();
 
-    let running_state = active_debug_session_panel(workspace, cx)
-        .read_with(cx, |item, _| item.running_state().clone());
+    let running_state = active_debug_session_panel(workspace, cx).read_with(cx, |item, _| item.running_state().clone());
 
     cx.run_until_parked();
     let thread_id = ThreadId(1);
 
-    for operation in &[
-        "step_over",
-        "continue_thread",
-        "step_back",
-        "step_in",
-        "step_out",
-    ] {
+    for operation in &["step_over", "continue_thread", "step_back", "step_in", "step_out"] {
         running_state.update(cx, |running_state, cx| match *operation {
             "step_over" => running_state.step_over(cx),
             "continue_thread" => running_state.continue_thread(cx),
@@ -1088,10 +975,7 @@ async fn test_debug_panel_item_thread_status_reset_on_failure(
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
-async fn test_send_breakpoints_when_editor_has_been_saved(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_send_breakpoints_when_editor_has_been_saved(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let fs = FakeFs::new(executor.clone());
@@ -1113,9 +997,7 @@ async fn test_send_breakpoints_when_editor_has_been_saved(
         .expect("This worktree should exist in project")
         .0;
 
-    let worktree_id = workspace
-        .update(cx, |_, _, cx| worktree.read(cx).id())
-        .unwrap();
+    let worktree_id = workspace.update(cx, |_, _, cx| worktree.read(cx).id()).unwrap();
 
     let session = start_debug_session(&workspace, cx, |_| {}).unwrap();
     let client = session.update(cx, |session, _| session.adapter_client().unwrap());
@@ -1252,10 +1134,7 @@ async fn test_send_breakpoints_when_editor_has_been_saved(
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
-async fn test_unsetting_breakpoints_on_clear_breakpoint_action(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_unsetting_breakpoints_on_clear_breakpoint_action(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let fs = FakeFs::new(executor.clone());
@@ -1279,9 +1158,7 @@ async fn test_unsetting_breakpoints_on_clear_breakpoint_action(
         .expect("This worktree should exist in project")
         .0;
 
-    let worktree_id = workspace
-        .update(cx, |_, _, cx| worktree.read(cx).id())
-        .unwrap();
+    let worktree_id = workspace.update(cx, |_, _, cx| worktree.read(cx).id()).unwrap();
 
     let first = project
         .update(cx, |project, cx| {
@@ -1420,10 +1297,7 @@ async fn test_debug_session_is_shutdown_when_attach_and_launch_request_fails(
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
-async fn test_we_send_arguments_from_user_config(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_we_send_arguments_from_user_config(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let fs = FakeFs::new(executor.clone());
@@ -1505,9 +1379,7 @@ async fn test_active_debug_line_setting(executor: BackgroundExecutor, cx: &mut T
         .expect("This worktree should exist in project")
         .0;
 
-    let worktree_id = workspace
-        .update(cx, |_, _, cx| worktree.read(cx).id())
-        .unwrap();
+    let worktree_id = workspace.update(cx, |_, _, cx| worktree.read(cx).id()).unwrap();
 
     let main_buffer = project
         .update(cx, |project, cx| {
@@ -1555,11 +1427,7 @@ async fn test_active_debug_line_setting(executor: BackgroundExecutor, cx: &mut T
         })
     });
 
-    client.on_request::<dap::requests::Scopes, _>(move |_, _| {
-        Ok(dap::ScopesResponse {
-            scopes: Vec::default(),
-        })
-    });
+    client.on_request::<dap::requests::Scopes, _>(move |_, _| Ok(dap::ScopesResponse { scopes: Vec::default() }));
 
     client.on_request::<StackTrace, _>(move |_, args| {
         assert_eq!(args.thread_id, 1);
@@ -1768,10 +1636,7 @@ async fn test_active_debug_line_setting(executor: BackgroundExecutor, cx: &mut T
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
-async fn test_debug_adapters_shutdown_on_app_quit(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_debug_adapters_shutdown_on_app_quit(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let fs = FakeFs::new(executor.clone());
@@ -1805,10 +1670,7 @@ async fn test_debug_adapters_shutdown_on_app_quit(
         .update(cx, |workspace, _, cx| {
             let panel = workspace.panel::<DebugPanel>(cx).unwrap();
             panel.read_with(cx, |panel, _| {
-                assert!(
-                    panel.sessions().next().is_some(),
-                    "Debug session should be active"
-                );
+                assert!(panel.sessions().next().is_some(), "Debug session should be active");
             });
         })
         .unwrap();
@@ -1825,10 +1687,7 @@ async fn test_debug_adapters_shutdown_on_app_quit(
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
-async fn test_adapter_shutdown_with_child_sessions_on_app_quit(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_adapter_shutdown_with_child_sessions_on_app_quit(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let fs = FakeFs::new(executor.clone());
@@ -1868,9 +1727,7 @@ async fn test_adapter_shutdown_with_child_sessions_on_app_quit(
         Ok(())
     });
 
-    parent_client
-        .on_response::<StartDebugging, _>(move |_| {})
-        .await;
+    parent_client.on_response::<StartDebugging, _>(move |_| {}).await;
     let _subscription = project::debugger::test::intercept_debug_sessions(cx, |_| {});
 
     parent_client
@@ -1883,11 +1740,7 @@ async fn test_adapter_shutdown_with_child_sessions_on_app_quit(
     cx.run_until_parked();
 
     let child_session = project.update(cx, |project, cx| {
-        project
-            .dap_store()
-            .read(cx)
-            .session_by_id(SessionId(1))
-            .unwrap()
+        project.dap_store().read(cx).session_by_id(SessionId(1)).unwrap()
     });
     let child_session_id = cx.read(|cx| child_session.read(cx).session_id());
     let child_client = child_session.update(cx, |session, _| session.adapter_client().unwrap());
@@ -1931,9 +1784,7 @@ async fn test_adapter_shutdown_with_child_sessions_on_app_quit(
 
             // We only have 100ms to shutdown the app
             for _ in 0..100 {
-                if parent_disconnect.load(Ordering::SeqCst)
-                    && child_disconnect.load(Ordering::SeqCst)
-                {
+                if parent_disconnect.load(Ordering::SeqCst) && child_disconnect.load(Ordering::SeqCst) {
                     return true;
                 }
 

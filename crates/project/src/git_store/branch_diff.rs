@@ -7,8 +7,7 @@ use git::{
     status::{DiffTreeType, FileStatus, StatusCode, TrackedStatus, TreeDiff, TreeDiffStatus},
 };
 use gpui::{
-    App, AsyncWindowContext, Context, Entity, EventEmitter, SharedString, Subscription, Task,
-    WeakEntity, Window,
+    App, AsyncWindowContext, Context, Entity, EventEmitter, SharedString, Subscription, Task, WeakEntity, Window,
 };
 
 use language::Buffer;
@@ -51,12 +50,7 @@ pub enum BranchDiffEvent {
 impl EventEmitter<BranchDiffEvent> for BranchDiff {}
 
 impl BranchDiff {
-    pub fn new(
-        source: DiffBase,
-        project: Entity<Project>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn new(source: DiffBase, project: Entity<Project>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let git_store = project.read(cx).git_store().clone();
         let git_store_subscription = cx.subscribe_in(
             &git_store,
@@ -105,12 +99,7 @@ impl BranchDiff {
         while recv.next().await.is_some() {
             let Ok(needs_update) = this.update(cx, |this, cx| {
                 let mut needs_update = false;
-                let active_repo = this
-                    .project
-                    .read(cx)
-                    .git_store()
-                    .read(cx)
-                    .active_repository();
+                let active_repo = this.project.read(cx).git_store().read(cx).active_repository();
                 if active_repo != this.repo {
                     needs_update = true;
                     this.repo = active_repo;
@@ -152,12 +141,8 @@ impl BranchDiff {
             .repository_and_path_for_buffer_id(buffer_id, cx)?;
         if self.repo() == Some(&repo) {
             return self.merge_statuses(
-                repo.read(cx)
-                    .status_for_path(&path)
-                    .map(|status| status.status),
-                self.tree_diff
-                    .as_ref()
-                    .and_then(|diff| diff.entries.get(&path)),
+                repo.read(cx).status_for_path(&path).map(|status| status.status),
+                self.tree_diff.as_ref().and_then(|diff| diff.entries.get(&path)),
             );
         }
         None
@@ -199,29 +184,22 @@ impl BranchDiff {
 
             // file exists in HEAD
             // and *does* exist in work-tree
-            (Some(FileStatus::Tracked(_)), Some(tree_status)) => {
-                Some(FileStatus::Tracked(TrackedStatus {
-                    index_status: match tree_status {
-                        TreeDiffStatus::Added { .. } => StatusCode::Added,
-                        _ => StatusCode::Modified,
-                    },
-                    worktree_status: match tree_status {
-                        TreeDiffStatus::Added => StatusCode::Added,
-                        _ => StatusCode::Modified,
-                    },
-                }))
-            }
+            (Some(FileStatus::Tracked(_)), Some(tree_status)) => Some(FileStatus::Tracked(TrackedStatus {
+                index_status: match tree_status {
+                    TreeDiffStatus::Added { .. } => StatusCode::Added,
+                    _ => StatusCode::Modified,
+                },
+                worktree_status: match tree_status {
+                    TreeDiffStatus::Added => StatusCode::Added,
+                    _ => StatusCode::Modified,
+                },
+            })),
 
-            (_, Some(diff_from_merge_base)) => {
-                Some(diff_status_to_file_status(diff_from_merge_base))
-            }
+            (_, Some(diff_from_merge_base)) => Some(diff_status_to_file_status(diff_from_merge_base)),
         }
     }
 
-    pub async fn reload_tree_diff(
-        this: WeakEntity<Self>,
-        cx: &mut AsyncWindowContext,
-    ) -> Result<()> {
+    pub async fn reload_tree_diff(this: WeakEntity<Self>, cx: &mut AsyncWindowContext) -> Result<()> {
         let task = this.update(cx, |this, cx| {
             let DiffBase::Merge { base_ref } = this.diff_base.clone() else {
                 return None;
@@ -270,17 +248,14 @@ impl BranchDiff {
                     .as_ref()
                     .and_then(|t| t.entries.get(&item.repo_path))
                     .cloned();
-                let Some(status) = self.merge_statuses(Some(item.status), branch_diff.as_ref())
-                else {
+                let Some(status) = self.merge_statuses(Some(item.status), branch_diff.as_ref()) else {
                     continue;
                 };
                 if !status.has_changes() {
                     continue;
                 }
 
-                let Some(project_path) =
-                    repo.read(cx).repo_path_to_project_path(&item.repo_path, cx)
-                else {
+                let Some(project_path) = repo.read(cx).repo_path_to_project_path(&item.repo_path, cx) else {
                     continue;
                 };
                 let task = Self::load_buffer(branch_diff, project_path, repo.clone(), cx);
@@ -303,8 +278,7 @@ impl BranchDiff {
                 let Some(project_path) = repo.read(cx).repo_path_to_project_path(&path, cx) else {
                     continue;
                 };
-                let task =
-                    Self::load_buffer(Some(branch_diff.clone()), project_path, repo.clone(), cx);
+                let task = Self::load_buffer(Some(branch_diff.clone()), project_path, repo.clone(), cx);
 
                 let file_status = diff_status_to_file_status(branch_diff);
 
@@ -344,9 +318,7 @@ impl BranchDiff {
                     .await?
             } else {
                 project
-                    .update(cx, |project, cx| {
-                        project.open_uncommitted_diff(buffer.clone(), cx)
-                    })?
+                    .update(cx, |project, cx| project.open_uncommitted_diff(buffer.clone(), cx))?
                     .await?
             };
             Ok((buffer, changes))

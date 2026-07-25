@@ -198,24 +198,15 @@ impl GramSyntaxToken {
             GramSyntaxToken::CommentDoc => vec!["comment.block.documentation"],
             GramSyntaxToken::Constant => vec!["constant", "constant.language", "constant.character"],
             GramSyntaxToken::Constructor => {
-                vec![
-                    "entity.name.tag",
-                    "entity.name.function.definition.special.constructor",
-                ]
+                vec!["entity.name.tag", "entity.name.function.definition.special.constructor"]
             }
             GramSyntaxToken::Embedded => vec!["meta.embedded"],
             GramSyntaxToken::Emphasis => vec!["markup.italic"],
-            GramSyntaxToken::EmphasisStrong => vec![
-                "markup.bold",
-                "markup.italic markup.bold",
-                "markup.bold markup.italic",
-            ],
+            GramSyntaxToken::EmphasisStrong => {
+                vec!["markup.bold", "markup.italic markup.bold", "markup.bold markup.italic"]
+            }
             GramSyntaxToken::Enum => vec!["support.type.enum"],
-            GramSyntaxToken::Function => vec![
-                "entity.function",
-                "entity.name.function",
-                "variable.function",
-            ],
+            GramSyntaxToken::Function => vec!["entity.function", "entity.name.function", "variable.function"],
             GramSyntaxToken::Hint => vec![],
             GramSyntaxToken::Keyword => vec![
                 "keyword",
@@ -226,22 +217,13 @@ impl GramSyntaxToken {
                 "punctuation.accessor",
                 "entity.name.tag",
             ],
-            GramSyntaxToken::Label => vec![
-                "label",
-                "entity.name",
-                "entity.name.import",
-                "entity.name.package",
-            ],
+            GramSyntaxToken::Label => vec!["label", "entity.name", "entity.name.import", "entity.name.package"],
             GramSyntaxToken::LinkText => vec!["markup.underline.link", "string.other.link"],
             GramSyntaxToken::LinkUri => vec!["markup.underline.link", "string.other.link"],
             GramSyntaxToken::Number => vec!["constant.numeric", "number"],
             GramSyntaxToken::Operator => vec!["operator", "keyword.operator"],
             GramSyntaxToken::Predictive => vec![],
-            GramSyntaxToken::Preproc => vec![
-                "preproc",
-                "meta.preprocessor",
-                "punctuation.definition.preprocessor",
-            ],
+            GramSyntaxToken::Preproc => vec!["preproc", "meta.preprocessor", "punctuation.definition.preprocessor"],
             GramSyntaxToken::Primary => vec![],
             GramSyntaxToken::Property => vec![
                 "variable.member",

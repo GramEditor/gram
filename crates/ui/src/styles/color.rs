@@ -5,16 +5,7 @@ use theme::ActiveTheme;
 
 /// Sets a color that has a consistent meaning across all themes.
 #[derive(
-    Debug,
-    Default,
-    Eq,
-    PartialEq,
-    Copy,
-    Clone,
-    RegisterComponent,
-    Documented,
-    DocumentedFields,
-    DocumentedVariants,
+    Debug, Default, Eq, PartialEq, Copy, Clone, RegisterComponent, Documented, DocumentedFields, DocumentedVariants,
 )]
 pub enum Color {
     #[default]
@@ -150,16 +141,12 @@ impl Component for Color {
                             .description(Color::Default.get_variant_docs()),
                             single_example(
                                 "Muted",
-                                Label::new("Muted text color")
-                                    .color(Color::Muted)
-                                    .into_any_element(),
+                                Label::new("Muted text color").color(Color::Muted).into_any_element(),
                             )
                             .description(Color::Muted.get_variant_docs()),
                             single_example(
                                 "Accent",
-                                Label::new("Accent text color")
-                                    .color(Color::Accent)
-                                    .into_any_element(),
+                                Label::new("Accent text color").color(Color::Accent).into_any_element(),
                             )
                             .description(Color::Accent.get_variant_docs()),
                             single_example(
@@ -176,32 +163,21 @@ impl Component for Color {
                         vec![
                             single_example(
                                 "Success",
-                                Label::new("Success status")
-                                    .color(Color::Success)
-                                    .into_any_element(),
+                                Label::new("Success status").color(Color::Success).into_any_element(),
                             )
                             .description(Color::Success.get_variant_docs()),
                             single_example(
                                 "Warning",
-                                Label::new("Warning status")
-                                    .color(Color::Warning)
-                                    .into_any_element(),
+                                Label::new("Warning status").color(Color::Warning).into_any_element(),
                             )
                             .description(Color::Warning.get_variant_docs()),
                             single_example(
                                 "Error",
-                                Label::new("Error status")
-                                    .color(Color::Error)
-                                    .into_any_element(),
+                                Label::new("Error status").color(Color::Error).into_any_element(),
                             )
                             .description(Color::Error.get_variant_docs()),
-                            single_example(
-                                "Info",
-                                Label::new("Info status")
-                                    .color(Color::Info)
-                                    .into_any_element(),
-                            )
-                            .description(Color::Info.get_variant_docs()),
+                            single_example("Info", Label::new("Info status").color(Color::Info).into_any_element())
+                                .description(Color::Info.get_variant_docs()),
                         ],
                     ),
                     example_group_with_title(
@@ -209,30 +185,22 @@ impl Component for Color {
                         vec![
                             single_example(
                                 "Created",
-                                Label::new("Created item")
-                                    .color(Color::Created)
-                                    .into_any_element(),
+                                Label::new("Created item").color(Color::Created).into_any_element(),
                             )
                             .description(Color::Created.get_variant_docs()),
                             single_example(
                                 "Modified",
-                                Label::new("Modified item")
-                                    .color(Color::Modified)
-                                    .into_any_element(),
+                                Label::new("Modified item").color(Color::Modified).into_any_element(),
                             )
                             .description(Color::Modified.get_variant_docs()),
                             single_example(
                                 "Deleted",
-                                Label::new("Deleted item")
-                                    .color(Color::Deleted)
-                                    .into_any_element(),
+                                Label::new("Deleted item").color(Color::Deleted).into_any_element(),
                             )
                             .description(Color::Deleted.get_variant_docs()),
                             single_example(
                                 "Conflict",
-                                Label::new("Conflict item")
-                                    .color(Color::Conflict)
-                                    .into_any_element(),
+                                Label::new("Conflict item").color(Color::Conflict).into_any_element(),
                             )
                             .description(Color::Conflict.get_variant_docs()),
                         ],

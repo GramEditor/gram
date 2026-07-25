@@ -1,6 +1,5 @@
 use crate::{
-    BufferId, BufferSnapshot, Point, PointUtf16, TextDimension, ToOffset, ToPoint, ToPointUtf16,
-    locator::Locator,
+    BufferId, BufferSnapshot, Point, PointUtf16, TextDimension, ToOffset, ToPoint, ToPointUtf16, locator::Locator,
 };
 use std::{cmp::Ordering, fmt::Debug, ops::Range};
 use sum_tree::{Bias, Dimensions};
@@ -98,19 +97,11 @@ impl Anchor {
     }
 
     pub fn min<'a>(&'a self, other: &'a Self, buffer: &BufferSnapshot) -> &'a Self {
-        if self.cmp(other, buffer).is_le() {
-            self
-        } else {
-            other
-        }
+        if self.cmp(other, buffer).is_le() { self } else { other }
     }
 
     pub fn max<'a>(&'a self, other: &'a Self, buffer: &BufferSnapshot) -> &'a Self {
-        if self.cmp(other, buffer).is_ge() {
-            self
-        } else {
-            other
-        }
+        if self.cmp(other, buffer).is_ge() { self } else { other }
     }
 
     pub fn bias(&self, bias: Bias, buffer: &BufferSnapshot) -> Anchor {
@@ -151,27 +142,20 @@ impl Anchor {
             let Some(fragment_id) = buffer.try_fragment_id_for_anchor(self) else {
                 return false;
             };
-            let (.., item) = buffer
-                .fragments
-                .find::<Dimensions<Option<&Locator>, usize>, _>(
-                    &None,
-                    &Some(fragment_id),
-                    Bias::Left,
-                );
+            let (.., item) =
+                buffer
+                    .fragments
+                    .find::<Dimensions<Option<&Locator>, usize>, _>(&None, &Some(fragment_id), Bias::Left);
             item.is_some_and(|fragment| fragment.visible)
         }
     }
 
     pub fn is_min(&self) -> bool {
-        self.timestamp == clock::Lamport::MIN
-            && self.offset == usize::MIN
-            && self.bias == Bias::Left
+        self.timestamp == clock::Lamport::MIN && self.offset == usize::MIN && self.bias == Bias::Left
     }
 
     pub fn is_max(&self) -> bool {
-        self.timestamp == clock::Lamport::MAX
-            && self.offset == usize::MAX
-            && self.bias == Bias::Right
+        self.timestamp == clock::Lamport::MAX && self.offset == usize::MAX && self.bias == Bias::Right
     }
 }
 
@@ -190,13 +174,11 @@ where
     }
 
     fn to_point(&self, snapshot: &BufferSnapshot) -> Range<Point> {
-        self.start.to_offset(snapshot).to_point(snapshot)
-            ..self.end.to_offset(snapshot).to_point(snapshot)
+        self.start.to_offset(snapshot).to_point(snapshot)..self.end.to_offset(snapshot).to_point(snapshot)
     }
 
     fn to_point_utf16(&self, snapshot: &BufferSnapshot) -> Range<PointUtf16> {
-        self.start.to_offset(snapshot).to_point_utf16(snapshot)
-            ..self.end.to_offset(snapshot).to_point_utf16(snapshot)
+        self.start.to_offset(snapshot).to_point_utf16(snapshot)..self.end.to_offset(snapshot).to_point_utf16(snapshot)
     }
 }
 

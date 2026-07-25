@@ -1,9 +1,9 @@
 use futures::FutureExt;
 use gpui::{
-    App, AppContext, Application, Asset as _, AssetLogger, Bounds, ClickEvent, Context, ElementId,
-    Entity, ImageAssetLoader, ImageCache, ImageCacheProvider, KeyBinding, Menu, MenuItem,
-    RetainAllImageCache, SharedString, TitlebarOptions, Window, WindowBounds, WindowOptions,
-    actions, div, hash, image_cache, img, prelude::*, px, rgb, size,
+    App, AppContext, Application, Asset as _, AssetLogger, Bounds, ClickEvent, Context, ElementId, Entity,
+    ImageAssetLoader, ImageCache, ImageCacheProvider, KeyBinding, Menu, MenuItem, RetainAllImageCache, SharedString,
+    TitlebarOptions, Window, WindowBounds, WindowOptions, actions, div, hash, image_cache, img, prelude::*, px, rgb,
+    size,
 };
 use reqwest_client::ReqwestClient;
 use std::{collections::HashMap, sync::Arc};
@@ -35,8 +35,7 @@ impl ImageGallery {
 
 impl Render for ImageGallery {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let image_url: SharedString =
-            format!("https://picsum.photos/400/200?t={}", self.image_key).into();
+        let image_url: SharedString = format!("https://picsum.photos/400/200?t={}", self.image_key).into();
 
         div()
             .flex()
@@ -89,42 +88,38 @@ impl Render for ImageGallery {
                             .gap_x_4()
                             .gap_y_2()
                             .justify_around()
-                            .children(
-                                (0..self.items_count)
-                                    .map(|ix| img(format!("{}-{}", image_url, ix)).size_20()),
-                            ),
+                            .children((0..self.items_count).map(|ix| img(format!("{}-{}", image_url, ix)).size_20())),
                     ),
             )
+            .child("Automatically managed image cache:")
             .child(
-                "Automatically managed image cache:"
+                image_cache(simple_lru_cache("lru-cache", IMAGES_IN_GALLERY)).child(
+                    div()
+                        .id("main")
+                        .bg(rgb(0xE9E9E9))
+                        .text_color(gpui::black())
+                        .overflow_y_scroll()
+                        .p_4()
+                        .size_full()
+                        .flex()
+                        .flex_col()
+                        .items_center()
+                        .gap_2()
+                        .child(
+                            div()
+                                .id("image-gallery")
+                                .flex()
+                                .flex_row()
+                                .flex_wrap()
+                                .gap_x_4()
+                                .gap_y_2()
+                                .justify_around()
+                                .children(
+                                    (0..self.items_count).map(|ix| img(format!("{}-{}", image_url, ix)).size_20()),
+                                ),
+                        ),
+                ),
             )
-            .child(image_cache(simple_lru_cache("lru-cache", IMAGES_IN_GALLERY)).child(
-                div()
-                    .id("main")
-                    .bg(rgb(0xE9E9E9))
-                    .text_color(gpui::black())
-                    .overflow_y_scroll()
-                    .p_4()
-                    .size_full()
-                    .flex()
-                    .flex_col()
-                    .items_center()
-                    .gap_2()
-                    .child(
-                        div()
-                            .id("image-gallery")
-                            .flex()
-                            .flex_row()
-                            .flex_wrap()
-                            .gap_x_4()
-                            .gap_y_2()
-                            .justify_around()
-                            .children(
-                                (0..self.items_count)
-                                    .map(|ix| img(format!("{}-{}", image_url, ix)).size_20()),
-                            ),
-                    )
-            ))
     }
 }
 
@@ -144,18 +139,14 @@ impl ImageCacheProvider for SimpleLruCacheProvider {
     fn provide(&mut self, window: &mut Window, cx: &mut App) -> gpui::AnyImageCache {
         window
             .with_global_id(self.id.clone(), |global_id, window| {
-                window.with_element_state::<Entity<SimpleLruCache>, _>(
-                    global_id,
-                    |lru_cache, _window| {
-                        let mut lru_cache = lru_cache.unwrap_or_else(|| {
-                            cx.new(|cx| SimpleLruCache::new(self.max_items, cx))
-                        });
-                        if lru_cache.read(cx).max_items != self.max_items {
-                            lru_cache = cx.new(|cx| SimpleLruCache::new(self.max_items, cx));
-                        }
-                        (lru_cache.clone(), lru_cache)
-                    },
-                )
+                window.with_element_state::<Entity<SimpleLruCache>, _>(global_id, |lru_cache, _window| {
+                    let mut lru_cache =
+                        lru_cache.unwrap_or_else(|| cx.new(|cx| SimpleLruCache::new(self.max_items, cx)));
+                    if lru_cache.read(cx).max_items != self.max_items {
+                        lru_cache = cx.new(|cx| SimpleLruCache::new(self.max_items, cx));
+                    }
+                    (lru_cache.clone(), lru_cache)
+                })
             })
             .into()
     }
@@ -214,16 +205,12 @@ impl ImageCache for SimpleLruCache {
         let task = cx.background_executor().spawn(fut).shared();
         if self.usages.len() == self.max_items {
             let oldest = self.usages.pop().unwrap();
-            let mut image = self
-                .cache
-                .remove(&oldest)
-                .expect("cache and usages must be in sync");
+            let mut image = self.cache.remove(&oldest).expect("cache and usages must be in sync");
             if let Some(Ok(image)) = image.get() {
                 cx.drop_image(image, Some(window));
             }
         }
-        self.cache
-            .insert(hash, gpui::ImageCacheItem::Loading(task.clone()));
+        self.cache.insert(hash, gpui::ImageCacheItem::Loading(task.clone()));
         self.usages.insert(0, hash);
 
         let entity = window.current_view();

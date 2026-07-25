@@ -5,9 +5,7 @@ use smallvec::SmallVec;
 use ui::{App, Context};
 use util::{ResultExt, paths::PathExt};
 
-use crate::{
-    NewWindow, SerializedWorkspaceLocation, WORKSPACE_DB, WorkspaceId, path_list::PathList,
-};
+use crate::{NewWindow, SerializedWorkspaceLocation, WORKSPACE_DB, WorkspaceId, path_list::PathList};
 
 pub fn init(cx: &mut App) {
     let manager = cx.new(|_| HistoryManager::new());
@@ -33,9 +31,7 @@ impl Global for GlobalHistoryManager {}
 
 impl HistoryManager {
     fn new() -> Self {
-        Self {
-            history: Vec::new(),
-        }
+        Self { history: Vec::new() }
     }
 
     fn init(this: Entity<HistoryManager>, cx: &App) {
@@ -63,8 +59,7 @@ impl HistoryManager {
     }
 
     pub fn global(cx: &App) -> Option<Entity<Self>> {
-        cx.try_global::<GlobalHistoryManager>()
-            .map(|model| model.0.clone())
+        cx.try_global::<GlobalHistoryManager>().map(|model| model.0.clone())
     }
 
     fn set_global(history_manager: Entity<Self>, cx: &mut App) {

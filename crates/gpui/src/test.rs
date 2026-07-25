@@ -85,10 +85,7 @@ pub fn run_test(
     }
 }
 
-fn calculate_seeds(
-    iterations: u64,
-    explicit_seeds: &[u64],
-) -> (impl Iterator<Item = u64> + '_, bool) {
+fn calculate_seeds(iterations: u64, explicit_seeds: &[u64]) -> (impl Iterator<Item = u64> + '_, bool) {
     let iterations = env::var("ITERATIONS")
         .ok()
         .map(|var| var.parse().expect("invalid ITERATIONS variable"))
@@ -119,15 +116,9 @@ fn calculate_seeds(
         };
 
         // if `SEED` is set, ignore `explicit_seeds`
-        let explicit_seeds = if env_num.is_some() {
-            &[]
-        } else {
-            explicit_seeds
-        };
+        let explicit_seeds = if env_num.is_some() { &[] } else { explicit_seeds };
 
-        env_range
-            .chain(iterations_range)
-            .chain(explicit_seeds.iter().copied())
+        env_range.chain(iterations_range).chain(explicit_seeds.iter().copied())
     };
     let is_multiple_runs = iter.clone().nth(1).is_some();
     (iter, is_multiple_runs)

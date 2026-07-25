@@ -106,9 +106,7 @@ impl TableView {
 
         for field in table.schema.fields.iter() {
             runs[0].len = field.name.len();
-            let mut width = text_system
-                .layout_line(&field.name, font_size, &runs, None)
-                .width;
+            let mut width = text_system.layout_line(&field.name, font_size, &runs, None).width;
 
             let Some(data) = table.data.as_ref() else {
                 widths.push(width);
@@ -118,10 +116,7 @@ impl TableView {
             for row in data {
                 let content = cell_content(row, &field.name);
                 runs[0].len = content.len();
-                let cell_width = window
-                    .text_system()
-                    .layout_line(&content, font_size, &runs, None)
-                    .width;
+                let cell_width = window.text_system().layout_line(&content, font_size, &runs, None).width;
 
                 width = width.max(cell_width)
             }
@@ -239,10 +234,7 @@ impl TableView {
             total_width += *width + px(22.);
         }
 
-        h_flex()
-            .w(total_width)
-            .children(row_cells)
-            .into_any_element()
+        h_flex().w(total_width).children(row_cells).into_any_element()
     }
 }
 
@@ -257,13 +249,7 @@ impl Render for TableView {
         for field in &self.table.schema.fields {
             headings.insert(field.name.clone(), Value::String(field.name.clone()));
         }
-        let header = self.render_row(
-            &self.table.schema,
-            true,
-            &Value::Object(headings),
-            window,
-            cx,
-        );
+        let header = self.render_row(&self.table.schema, true, &Value::Object(headings), window, cx);
 
         let body = data
             .iter()

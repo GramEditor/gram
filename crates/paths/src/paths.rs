@@ -31,15 +31,13 @@ static CONFIG_DIR: OnceLock<PathBuf> = OnceLock::new();
 
 /// Returns the relative path to the gram_server directory on the ssh host.
 pub fn remote_server_dir_relative() -> &'static RelPath {
-    static CACHED: LazyLock<&'static RelPath> =
-        LazyLock::new(|| RelPath::unix(".gram_server").unwrap());
+    static CACHED: LazyLock<&'static RelPath> = LazyLock::new(|| RelPath::unix(".gram_server").unwrap());
     *CACHED
 }
 
 /// Returns the relative path to the gram_wsl_server directory on the wsl host.
 pub fn remote_wsl_server_dir_relative() -> &'static RelPath {
-    static CACHED: LazyLock<&'static RelPath> =
-        LazyLock::new(|| RelPath::unix(".gram_wsl_server").unwrap());
+    static CACHED: LazyLock<&'static RelPath> = LazyLock::new(|| RelPath::unix(".gram_wsl_server").unwrap());
     *CACHED
 }
 
@@ -200,9 +198,7 @@ pub fn database_dir() -> &'static PathBuf {
 /// Returns the path to the crashes directory, if it exists for the current platform.
 pub fn crashes_dir() -> &'static Option<PathBuf> {
     static CRASHES_DIR: OnceLock<Option<PathBuf>> = OnceLock::new();
-    CRASHES_DIR.get_or_init(|| {
-        cfg!(target_os = "macos").then_some(home_dir().join("Library/Logs/DiagnosticReports"))
-    })
+    CRASHES_DIR.get_or_init(|| cfg!(target_os = "macos").then_some(home_dir().join("Library/Logs/DiagnosticReports")))
 }
 
 /// Returns the path to the `settings.jsonc` file.
@@ -324,29 +320,25 @@ pub fn local_vscodium_folder_name() -> &'static str {
 
 /// Returns the relative path to a `settings.jsonc` file within a project.
 pub fn local_settings_file_relative_path() -> &'static RelPath {
-    static CACHED: LazyLock<&'static RelPath> =
-        LazyLock::new(|| RelPath::unix(".gram/settings.jsonc").unwrap());
+    static CACHED: LazyLock<&'static RelPath> = LazyLock::new(|| RelPath::unix(".gram/settings.jsonc").unwrap());
     *CACHED
 }
 
 /// Returns the relative path to a `tasks.jsonc` file within a project.
 pub fn local_tasks_file_relative_path() -> &'static RelPath {
-    static CACHED: LazyLock<&'static RelPath> =
-        LazyLock::new(|| RelPath::unix(".gram/tasks.jsonc").unwrap());
+    static CACHED: LazyLock<&'static RelPath> = LazyLock::new(|| RelPath::unix(".gram/tasks.jsonc").unwrap());
     *CACHED
 }
 
 /// Returns the relative path to a `.vscode/tasks.json` file within a project.
 pub fn local_vscode_tasks_file_relative_path() -> &'static RelPath {
-    static CACHED: LazyLock<&'static RelPath> =
-        LazyLock::new(|| RelPath::unix(".vscode/tasks.json").unwrap());
+    static CACHED: LazyLock<&'static RelPath> = LazyLock::new(|| RelPath::unix(".vscode/tasks.json").unwrap());
     *CACHED
 }
 
 /// Returns the relative path to a `.vscode/tasks.json` file within a project.
 pub fn local_vscodium_tasks_file_relative_path() -> &'static RelPath {
-    static CACHED: LazyLock<&'static RelPath> =
-        LazyLock::new(|| RelPath::unix(".vscodium/tasks.json").unwrap());
+    static CACHED: LazyLock<&'static RelPath> = LazyLock::new(|| RelPath::unix(".vscodium/tasks.json").unwrap());
     *CACHED
 }
 
@@ -361,22 +353,19 @@ pub fn task_file_name() -> &'static str {
 /// Returns the relative path to a `debug.json` file within a project.
 /// .gram/debug.json
 pub fn local_debug_file_relative_path() -> &'static RelPath {
-    static CACHED: LazyLock<&'static RelPath> =
-        LazyLock::new(|| RelPath::unix(".gram/debug.jsonc").unwrap());
+    static CACHED: LazyLock<&'static RelPath> = LazyLock::new(|| RelPath::unix(".gram/debug.jsonc").unwrap());
     *CACHED
 }
 
 /// Returns the relative path to a `.vscode/launch.json` file within a project.
 pub fn local_vscode_launch_file_relative_path() -> &'static RelPath {
-    static CACHED: LazyLock<&'static RelPath> =
-        LazyLock::new(|| RelPath::unix(".vscode/launch.json").unwrap());
+    static CACHED: LazyLock<&'static RelPath> = LazyLock::new(|| RelPath::unix(".vscode/launch.json").unwrap());
     *CACHED
 }
 
 /// Returns the relative path to a `.vscode/launch.json` file within a project.
 pub fn local_vscodium_launch_file_relative_path() -> &'static RelPath {
-    static CACHED: LazyLock<&'static RelPath> =
-        LazyLock::new(|| RelPath::unix(".vscodium/launch.json").unwrap());
+    static CACHED: LazyLock<&'static RelPath> = LazyLock::new(|| RelPath::unix(".vscodium/launch.json").unwrap());
     *CACHED
 }
 
@@ -443,11 +432,7 @@ fn cursor_user_data_paths() -> Vec<PathBuf> {
 
 fn add_vscode_user_data_paths(paths: &mut Vec<PathBuf>, product_name: &str) {
     if cfg!(target_os = "macos") {
-        paths.push(
-            home_dir()
-                .join("Library/Application Support")
-                .join(product_name),
-        );
+        paths.push(home_dir().join("Library/Application Support").join(product_name));
     } else if cfg!(target_os = "windows") {
         if let Some(data_local_dir) = dirs::data_local_dir() {
             paths.push(data_local_dir.join(product_name));

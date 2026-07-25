@@ -174,9 +174,7 @@ pub trait Action: Any + Send {
 
 impl std::fmt::Debug for dyn Action {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("dyn Action")
-            .field("name", &self.name())
-            .finish()
+        f.debug_struct("dyn Action").field("name", &self.name()).finish()
     }
 }
 
@@ -364,15 +362,11 @@ impl ActionRegistry {
         let build_action = self
             .by_name
             .get(name)
-            .ok_or_else(|| ActionBuildError::NotFound {
-                name: name.to_owned(),
-            })?
+            .ok_or_else(|| ActionBuildError::NotFound { name: name.to_owned() })?
             .build;
-        (build_action)(params.unwrap_or_else(|| json!({}))).map_err(|e| {
-            ActionBuildError::BuildError {
-                name: name.to_owned(),
-                error: e,
-            }
+        (build_action)(params.unwrap_or_else(|| json!({}))).map_err(|e| ActionBuildError::BuildError {
+            name: name.to_owned(),
+            error: e,
         })
     }
 

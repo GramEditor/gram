@@ -80,16 +80,7 @@ pub struct ThemeSettingsContent {
 
 /// A font size value in pixels, wrapping around `f32` for custom settings UI rendering.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    MergeFrom,
-    PartialEq,
-    PartialOrd,
-    derive_more::FromStr,
+    Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, PartialOrd, derive_more::FromStr,
 )]
 #[serde(transparent)]
 pub struct FontSize(#[serde(serialize_with = "serialize_f32_with_two_decimal_places")] pub f32);
@@ -119,16 +110,7 @@ impl From<Pixels> for FontSize {
 }
 
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    MergeFrom,
-    PartialEq,
-    PartialOrd,
-    derive_more::FromStr,
+    Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, PartialOrd, derive_more::FromStr,
 )]
 #[serde(transparent)]
 pub struct CodeFade(#[serde(serialize_with = "serialize_f32_with_two_decimal_places")] pub f32);
@@ -146,16 +128,7 @@ impl From<f32> for CodeFade {
 }
 
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    MergeFrom,
-    PartialEq,
-    PartialOrd,
-    derive_more::FromStr,
+    Clone, Copy, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, PartialOrd, derive_more::FromStr,
 )]
 #[serde(transparent)]
 pub struct Decoration(pub f32);
@@ -185,17 +158,7 @@ fn default_buffer_font_weight() -> Option<FontWeight> {
 }
 
 /// Represents the selection of a theme, which can be either static or dynamic.
-#[derive(
-    Clone,
-    Debug,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    MergeFrom,
-    PartialEq,
-    Eq,
-    strum::EnumDiscriminants,
-)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, Eq, strum::EnumDiscriminants)]
 #[strum_discriminants(derive(strum::VariantArray, strum::VariantNames, strum::FromRepr))]
 #[serde(untagged)]
 pub enum ThemeSelection {
@@ -214,17 +177,7 @@ pub enum ThemeSelection {
 }
 
 /// Represents the selection of an icon theme, which can be either static or dynamic.
-#[derive(
-    Clone,
-    Debug,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    MergeFrom,
-    PartialEq,
-    Eq,
-    strum::EnumDiscriminants,
-)]
+#[derive(Clone, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, Eq, strum::EnumDiscriminants)]
 #[strum_discriminants(derive(strum::VariantArray, strum::VariantNames, strum::FromRepr))]
 #[serde(untagged)]
 pub enum IconThemeSelection {
@@ -277,19 +230,7 @@ pub enum ThemeAppearanceMode {
 /// Specifies the density of the UI.
 /// Note: This setting is still experimental. See [this tracking issue](https://github.com/zed-industries/zed/issues/18078)
 #[derive(
-    Debug,
-    Default,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Hash,
-    Clone,
-    Copy,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    MergeFrom,
+    Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, Serialize, Deserialize, JsonSchema, MergeFrom,
 )]
 #[serde(rename_all = "snake_case")]
 pub enum UiDensity {
@@ -355,16 +296,7 @@ impl From<FontFamilyName> for String {
 
 /// The buffer's line height.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Serialize,
-    Deserialize,
-    PartialEq,
-    JsonSchema,
-    MergeFrom,
-    Default,
-    strum::EnumDiscriminants,
+    Clone, Copy, Debug, Serialize, Deserialize, PartialEq, JsonSchema, MergeFrom, Default, strum::EnumDiscriminants,
 )]
 #[strum_discriminants(derive(strum::VariantArray, strum::VariantNames, strum::FromRepr))]
 #[serde(rename_all = "snake_case")]
@@ -989,22 +921,13 @@ pub struct ThemeColorsContent {
 pub struct HighlightStyleContent {
     pub color: Option<String>,
 
-    #[serde(
-        skip_serializing_if = "Option::is_none",
-        deserialize_with = "treat_error_as_none"
-    )]
+    #[serde(skip_serializing_if = "Option::is_none", deserialize_with = "treat_error_as_none")]
     pub background_color: Option<String>,
 
-    #[serde(
-        skip_serializing_if = "Option::is_none",
-        deserialize_with = "treat_error_as_none"
-    )]
+    #[serde(skip_serializing_if = "Option::is_none", deserialize_with = "treat_error_as_none")]
     pub font_style: Option<FontStyleContent>,
 
-    #[serde(
-        skip_serializing_if = "Option::is_none",
-        deserialize_with = "treat_error_as_none"
-    )]
+    #[serde(skip_serializing_if = "Option::is_none", deserialize_with = "treat_error_as_none")]
     pub font_weight: Option<FontWeightContent>,
 }
 
@@ -1209,9 +1132,7 @@ impl From<FontStyleContent> for FontStyle {
     }
 }
 
-#[derive(
-    Debug, Clone, Copy, Serialize_repr, Deserialize_repr, JsonSchema_repr, PartialEq, MergeFrom,
-)]
+#[derive(Debug, Clone, Copy, Serialize_repr, Deserialize_repr, JsonSchema_repr, PartialEq, MergeFrom)]
 #[repr(u16)]
 pub enum FontWeightContent {
     Thin = 100,

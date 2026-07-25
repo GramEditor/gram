@@ -184,13 +184,11 @@ impl Search {
                     _ = grab_buffer_snapshot_tx.send(buffer).await;
                 }
 
-                let (find_all_matches_tx, find_all_matches_rx) =
-                    bounded(MAX_CONCURRENT_BUFFER_OPENS);
+                let (find_all_matches_tx, find_all_matches_rx) = bounded(MAX_CONCURRENT_BUFFER_OPENS);
                 let query = Arc::new(query);
                 let (candidate_searcher, tasks) = match self.kind {
                     SearchKind::OpenBuffersOnly => {
-                        let Ok(open_buffers) = cx.update(|cx| self.all_loaded_buffers(&query, cx))
-                        else {
+                        let Ok(open_buffers) = cx.update(|cx| self.all_loaded_buffers(&query, cx)) else {
                             return;
                         };
                         let fill_requests = cx
@@ -204,14 +202,9 @@ impl Search {
                             .boxed_local();
                         (FindSearchCandidates::OpenBuffersOnly, vec![fill_requests])
                     }
-                    SearchKind::Local {
-                        fs,
-                        ref mut worktrees,
-                    } => {
-                        let (get_buffer_for_full_scan_tx, get_buffer_for_full_scan_rx) =
-                            unbounded();
-                        let (confirm_contents_will_match_tx, confirm_contents_will_match_rx) =
-                            bounded(64);
+                    SearchKind::Local { fs, ref mut worktrees } => {
+                        let (get_buffer_for_full_scan_tx, get_buffer_for_full_scan_rx) = unbounded();
+                        let (confirm_contents_will_match_tx, confirm_contents_will_match_rx) = bounded(64);
                         let (sorted_search_results_tx, sorted_search_results_rx) = unbounded();
 
                         let (input_paths_tx, input_paths_rx) = unbounded();
@@ -291,10 +284,7 @@ impl Search {
                                 .log_err();
                             })
                             .boxed_local();
-                        (
-                            FindSearchCandidates::Remote,
-                            vec![issue_remote_buffers_request],
-                        )
+                        (FindSearchCandidates::Remote, vec![issue_remote_buffers_request])
                     }
                 };
 
@@ -346,10 +336,7 @@ impl Search {
                     None
                 };
                 let ensure_matches_are_reported_in_order = if should_find_all_matches {
-                    Some(
-                        Self::ensure_matched_ranges_are_reported_in_order(sorted_matches_rx, tx)
-                            .boxed_local(),
-                    )
+                    Some(Self::ensure_matched_ranges_are_reported_in_order(sorted_matches_rx, tx).boxed_local())
                 } else {
                     drop(tx);
                     None
@@ -385,20 +372,14 @@ impl Search {
                 let include_ignored = query.include_ignored();
                 for worktree in worktrees {
                     let (mut snapshot, worktree_settings) = worktree
-                        .read_with(cx, |this, _| {
-                            Some((this.snapshot(), this.as_local()?.settings()))
-                        })?
+                        .read_with(cx, |this, _| Some((this.snapshot(), this.as_local()?.settings())))?
                         .context("The worktree is not local")?;
                     if query.include_ignored() {
                         // Pre-fetch all of the ignored directories as they're going to be searched.
                         let mut entries_to_refresh = vec![];
 
                         for entry in snapshot.entries(query.include_ignored(), 0) {
-                            if gitignored_tracker.should_scan_gitignored_dir(
-                                entry,
-                                &snapshot,
-                                &worktree_settings,
-                            ) {
+                            if gitignored_tracker.should_scan_gitignored_dir(entry, &snapshot, &worktree_settings) {
                                 entries_to_refresh.push(entry.path.clone());
                             }
                         }
@@ -532,9 +513,7 @@ impl Search {
                     continue;
                 };
 
-                if matched_buffers > Search::MAX_SEARCH_RESULT_FILES
-                    || matches > Search::MAX_SEARCH_RESULT_RANGES
-                {
+                if matched_buffers > Search::MAX_SEARCH_RESULT_FILES || matches > Search::MAX_SEARCH_RESULT_RANGES {
                     _ = tx.send(SearchResult::LimitReached).await;
                     break;
                 }
@@ -603,27 +582,23 @@ struct Worker {
 
 impl Worker {
     async fn run(self) {
-        let (
-            input_paths_rx,
-            confirm_contents_will_match_rx,
-            mut confirm_contents_will_match_tx,
-            fs,
-        ) = match self.candidates {
-            FindSearchCandidates::Local {
-                fs,
-                input_paths_rx,
-                confirm_contents_will_match_rx,
-                confirm_contents_will_match_tx,
-            } => (
-                input_paths_rx,
-                confirm_contents_will_match_rx,
-                confirm_contents_will_match_tx,
-                Some(fs),
-            ),
-            FindSearchCandidates::Remote | FindSearchCandidates::OpenBuffersOnly => {
-                (unbounded().1, unbounded().1, unbounded().0, None)
-            }
-        };
+        let (input_paths_rx, confirm_contents_will_match_rx, mut confirm_contents_will_match_tx, fs) =
+            match self.candidates {
+                FindSearchCandidates::Local {
+                    fs,
+                    input_paths_rx,
+                    confirm_contents_will_match_rx,
+                    confirm_contents_will_match_tx,
+                } => (
+                    input_paths_rx,
+                    confirm_contents_will_match_rx,
+                    confirm_contents_will_match_tx,
+                    Some(fs),
+                ),
+                FindSearchCandidates::Remote | FindSearchCandidates::OpenBuffersOnly => {
+                    (unbounded().1, unbounded().1, unbounded().0, None)
+                }
+            };
         // WorkerA: grabs a request for "find all matches in file/a" <- takes 5 minutes
         // right after: WorkerB: grabs a request for "find all matches in file/b" <- takes 5 seconds
         let mut find_all_matches = pin!(self.find_all_matches_rx.fuse());
@@ -699,23 +674,25 @@ impl RequestHandler<'_> {
     }
 
     async fn handle_find_first_match(&self, mut entry: MatchingEntry) {
-        _=maybe!(async move {
+        _ = maybe!(async move {
             let abs_path = entry.worktree_root.join(entry.path.path.as_std_path());
-            let Some(file) = self.fs.context("Trying to query filesystem in remote project search")?.open_sync(&abs_path).await.log_err() else {
+            let Some(file) = self
+                .fs
+                .context("Trying to query filesystem in remote project search")?
+                .open_sync(&abs_path)
+                .await
+                .log_err()
+            else {
                 return anyhow::Ok(());
             };
 
             let mut file = BufReader::new(file);
             let file_start = file.fill_buf()?;
 
-            if let Err(Some(starting_position)) =
-            std::str::from_utf8(file_start).map_err(|e| e.error_len())
-            {
+            if let Err(Some(starting_position)) = std::str::from_utf8(file_start).map_err(|e| e.error_len()) {
                 // Before attempting to match the file content, throw away files that have invalid UTF-8 sequences early on;
                 // That way we can still match files in a streaming fashion without having look at "obviously binary" files.
-                log::debug!(
-                    "Invalid UTF-8 sequence in file {abs_path:?} at byte position {starting_position}"
-                );
+                log::debug!("Invalid UTF-8 sequence in file {abs_path:?} at byte position {starting_position}");
                 return Ok(());
             }
 
@@ -724,7 +701,8 @@ impl RequestHandler<'_> {
                 entry.should_scan_tx.send(entry.path).await?;
             }
             Ok(())
-        }).await;
+        })
+        .await;
     }
 
     async fn handle_scan_path(&self, req: InputPath) {
@@ -856,16 +834,10 @@ impl PathInclusionMatcher {
         // OR if the current path is an ancestor of an include prefix (we need to go deeper to find it).
         let is_included = self.included.iter().any(|prefix| {
             let (prefix_matches_entry, entry_matches_prefix) = if prefix.is_absolute() {
-                (
-                    prefix.starts_with(&**as_abs_path),
-                    as_abs_path.starts_with(prefix),
-                )
+                (prefix.starts_with(&**as_abs_path), as_abs_path.starts_with(prefix))
             } else {
                 RelPath::new(prefix, snapshot.path_style()).map_or((false, false), |prefix| {
-                    (
-                        prefix.starts_with(entry_path),
-                        entry_path.starts_with(&prefix),
-                    )
+                    (prefix.starts_with(entry_path), entry_path.starts_with(&prefix))
                 })
             };
 
@@ -912,10 +884,7 @@ mod tests {
     };
     use worktree::{Entry, EntryKind, WorktreeSettings};
 
-    use crate::{
-        Project, project_search::PathInclusionMatcher, project_tests::init_test,
-        search::SearchQuery,
-    };
+    use crate::{Project, project_search::PathInclusionMatcher, project_tests::init_test, search::SearchQuery};
 
     #[gpui::test]
     async fn test_path_inclusion_matcher(cx: &mut gpui::TestAppContext) {
@@ -986,11 +955,7 @@ mod tests {
         .unwrap();
 
         let path_matcher = PathInclusionMatcher::new(Arc::new(search_query));
-        assert!(path_matcher.should_scan_gitignored_dir(
-            &entry,
-            &worktree_snapshot,
-            &worktree_settings
-        ));
+        assert!(path_matcher.should_scan_gitignored_dir(&entry, &worktree_snapshot, &worktree_settings));
 
         // 2. Test searching for `field`, including ignored files but updating
         // `files_to_include` to only include files under `src/lib`.
@@ -1011,10 +976,6 @@ mod tests {
         .unwrap();
 
         let path_matcher = PathInclusionMatcher::new(Arc::new(search_query));
-        assert!(!path_matcher.should_scan_gitignored_dir(
-            &entry,
-            &worktree_snapshot,
-            &worktree_settings
-        ));
+        assert!(!path_matcher.should_scan_gitignored_dir(&entry, &worktree_snapshot, &worktree_settings));
     }
 }

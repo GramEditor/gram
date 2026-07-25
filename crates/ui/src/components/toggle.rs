@@ -1,6 +1,6 @@
 use gpui::{
-    AnyElement, AnyView, ClickEvent, ElementId, Hsla, IntoElement, KeybindingKeystroke, Keystroke,
-    Styled, Window, div, hsla, prelude::*,
+    AnyElement, AnyView, ClickEvent, ElementId, Hsla, IntoElement, KeybindingKeystroke, Keystroke, Styled, Window, div,
+    hsla, prelude::*,
 };
 use settings::KeybindSource;
 use std::{rc::Rc, sync::Arc};
@@ -88,13 +88,8 @@ impl Checkbox {
     }
 
     /// Binds a handler to the [`Checkbox`] that will be called when clicked.
-    pub fn on_click(
-        mut self,
-        handler: impl Fn(&ToggleState, &mut Window, &mut App) + 'static,
-    ) -> Self {
-        self.on_click = Some(Box::new(move |state, _, window, cx| {
-            handler(state, window, cx)
-        }));
+    pub fn on_click(mut self, handler: impl Fn(&ToggleState, &mut Window, &mut App) + 'static) -> Self {
+        self.on_click = Some(Box::new(move |state, _, window, cx| handler(state, window, cx)));
         self
     }
 
@@ -198,16 +193,10 @@ impl RenderOnce for Checkbox {
                 if self.placeholder {
                     None
                 } else {
-                    Some(
-                        Icon::new(IconName::Check)
-                            .size(IconSize::Small)
-                            .color(color),
-                    )
+                    Some(Icon::new(IconName::Check).size(IconSize::Small).color(color))
                 }
             }
-            ToggleState::Indeterminate => {
-                Some(Icon::new(IconName::Dash).size(IconSize::Small).color(color))
-            }
+            ToggleState::Indeterminate => Some(Icon::new(IconName::Dash).size(IconSize::Small).color(color)),
             ToggleState::Unselected => None,
         };
 
@@ -267,23 +256,14 @@ impl RenderOnce for Checkbox {
             .gap(DynamicSpacing::Base06.rems(cx))
             .child(checkbox)
             .when_some(self.label, |this, label| {
-                this.child(
-                    Label::new(label)
-                        .color(self.label_color)
-                        .size(self.label_size),
-                )
+                this.child(Label::new(label).color(self.label_color).size(self.label_size))
             })
             .when_some(self.tooltip, |this, tooltip| {
                 this.tooltip(move |window, cx| tooltip(window, cx))
             })
-            .when_some(
-                self.on_click.filter(|_| !self.disabled),
-                |this, on_click| {
-                    this.on_click(move |click, window, cx| {
-                        on_click(&self.toggle_state.inverse(), click, window, cx)
-                    })
-                },
-            )
+            .when_some(self.on_click.filter(|_| !self.disabled), |this, on_click| {
+                this.on_click(move |click, window, cx| on_click(&self.toggle_state.inverse(), click, window, cx))
+            })
     }
 }
 
@@ -298,10 +278,7 @@ pub enum SwitchColor {
 impl SwitchColor {
     fn get_colors(&self, is_on: bool, cx: &App) -> (Hsla, Hsla) {
         if !is_on {
-            return (
-                cx.theme().colors().element_disabled,
-                cx.theme().colors().border,
-            );
+            return (cx.theme().colors().element_disabled, cx.theme().colors().border);
         }
 
         match self {
@@ -381,10 +358,7 @@ impl Switch {
     }
 
     /// Binds a handler to the [`Switch`] that will be called when clicked.
-    pub fn on_click(
-        mut self,
-        handler: impl Fn(&ToggleState, &mut Window, &mut App) + 'static,
-    ) -> Self {
+    pub fn on_click(mut self, handler: impl Fn(&ToggleState, &mut Window, &mut App) + 'static) -> Self {
         self.on_click = Some(Rc::new(handler));
         self
     }
@@ -395,10 +369,7 @@ impl Switch {
         self
     }
 
-    pub fn label_position(
-        mut self,
-        label_position: impl Into<Option<SwitchLabelPosition>>,
-    ) -> Self {
+    pub fn label_position(mut self, label_position: impl Into<Option<SwitchLabelPosition>>) -> Self {
         self.label_position = label_position.into();
         self
     }
@@ -455,21 +426,16 @@ impl RenderOnce for Switch {
             .border_2()
             .border_color(cx.theme().colors().border_transparent)
             .rounded_full()
-            .when_some(
-                self.tab_index.filter(|_| !self.disabled),
-                |this, tab_index| {
-                    this.tab_index(tab_index)
-                        .focus_visible(|mut style| {
-                            style.border_color = Some(cx.theme().colors().border_focused);
-                            style
-                        })
-                        .when_some(self.on_click.clone(), |this, on_click| {
-                            this.on_click(move |_, window, cx| {
-                                on_click(&self.toggle_state.inverse(), window, cx)
-                            })
-                        })
-                },
-            )
+            .when_some(self.tab_index.filter(|_| !self.disabled), |this, tab_index| {
+                this.tab_index(tab_index)
+                    .focus_visible(|mut style| {
+                        style.border_color = Some(cx.theme().colors().border_focused);
+                        style
+                    })
+                    .when_some(self.on_click.clone(), |this, on_click| {
+                        this.on_click(move |_, window, cx| on_click(&self.toggle_state.inverse(), window, cx))
+                    })
+            })
             .child(
                 h_flex()
                     .w(DynamicSpacing::Base32.rems(cx))
@@ -503,32 +469,19 @@ impl RenderOnce for Switch {
             .cursor_pointer()
             .gap(DynamicSpacing::Base06.rems(cx))
             .when(self.full_width, |this| this.w_full().justify_between())
-            .when(
-                self.label_position == Some(SwitchLabelPosition::Start),
-                |this| {
-                    this.when_some(label.clone(), |this, label| {
-                        this.child(Label::new(label).size(self.label_size))
-                    })
-                },
-            )
+            .when(self.label_position == Some(SwitchLabelPosition::Start), |this| {
+                this.when_some(label.clone(), |this, label| {
+                    this.child(Label::new(label).size(self.label_size))
+                })
+            })
             .child(switch)
-            .when(
-                self.label_position == Some(SwitchLabelPosition::End),
-                |this| {
-                    this.when_some(label, |this, label| {
-                        this.child(Label::new(label).size(self.label_size))
-                    })
-                },
-            )
+            .when(self.label_position == Some(SwitchLabelPosition::End), |this| {
+                this.when_some(label, |this, label| this.child(Label::new(label).size(self.label_size)))
+            })
             .children(self.key_binding)
-            .when_some(
-                self.on_click.filter(|_| !self.disabled),
-                |this, on_click| {
-                    this.on_click(move |_, window, cx| {
-                        on_click(&self.toggle_state.inverse(), window, cx)
-                    })
-                },
-            )
+            .when_some(self.on_click.filter(|_| !self.disabled), |this, on_click| {
+                this.on_click(move |_, window, cx| on_click(&self.toggle_state.inverse(), window, cx))
+            })
     }
 }
 
@@ -616,29 +569,24 @@ impl SwitchField {
 
 impl RenderOnce for SwitchField {
     fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
-        let tooltip = self
-            .tooltip
-            .zip(self.label.clone())
-            .map(|(tooltip_fn, label)| {
-                h_flex().gap_0p5().child(Label::new(label)).child(
-                    IconButton::new("tooltip_button", IconName::Info)
-                        .icon_size(IconSize::XSmall)
-                        .icon_color(Color::Muted)
-                        .shape(crate::IconButtonShape::Square)
-                        .style(ButtonStyle::Transparent)
-                        .tooltip({
-                            let tooltip = tooltip_fn.clone();
-                            move |window, cx| tooltip(window, cx)
-                        })
-                        .on_click(|_, _, _| {}), // Intentional empty on click handler so that clicking on the info tooltip icon doesn't trigger the switch toggle
-                )
-            });
+        let tooltip = self.tooltip.zip(self.label.clone()).map(|(tooltip_fn, label)| {
+            h_flex().gap_0p5().child(Label::new(label)).child(
+                IconButton::new("tooltip_button", IconName::Info)
+                    .icon_size(IconSize::XSmall)
+                    .icon_color(Color::Muted)
+                    .shape(crate::IconButtonShape::Square)
+                    .style(ButtonStyle::Transparent)
+                    .tooltip({
+                        let tooltip = tooltip_fn.clone();
+                        move |window, cx| tooltip(window, cx)
+                    })
+                    .on_click(|_, _, _| {}), // Intentional empty on click handler so that clicking on the info tooltip icon doesn't trigger the switch toggle
+            )
+        });
 
         h_flex()
             .id((self.id.clone(), "container"))
-            .when(!self.disabled, |this| {
-                this.hover(|this| this.cursor_pointer())
-            })
+            .when(!self.disabled, |this| this.hover(|this| this.cursor_pointer()))
             .w_full()
             .gap_4()
             .justify_between()
@@ -669,10 +617,9 @@ impl RenderOnce for SwitchField {
                 Switch::new((self.id.clone(), "switch"), self.toggle_state)
                     .color(self.color)
                     .disabled(self.disabled)
-                    .when_some(
-                        self.tab_index.filter(|_| !self.disabled),
-                        |this, tab_index| this.tab_index(tab_index),
-                    )
+                    .when_some(self.tab_index.filter(|_| !self.disabled), |this, tab_index| {
+                        this.tab_index(tab_index)
+                    })
                     .on_click({
                         let on_click = self.on_click.clone();
                         move |state, window, cx| {
@@ -844,8 +791,7 @@ impl Component for Checkbox {
                         vec![
                             single_example(
                                 "Unselected",
-                                Checkbox::new("checkbox_unselected", ToggleState::Unselected)
-                                    .into_any_element(),
+                                Checkbox::new("checkbox_unselected", ToggleState::Unselected).into_any_element(),
                             ),
                             single_example(
                                 "Placeholder",
@@ -855,13 +801,11 @@ impl Component for Checkbox {
                             ),
                             single_example(
                                 "Indeterminate",
-                                Checkbox::new("checkbox_indeterminate", ToggleState::Indeterminate)
-                                    .into_any_element(),
+                                Checkbox::new("checkbox_indeterminate", ToggleState::Indeterminate).into_any_element(),
                             ),
                             single_example(
                                 "Selected",
-                                Checkbox::new("checkbox_selected", ToggleState::Selected)
-                                    .into_any_element(),
+                                Checkbox::new("checkbox_selected", ToggleState::Selected).into_any_element(),
                             ),
                         ],
                     ),
@@ -870,8 +814,7 @@ impl Component for Checkbox {
                         vec![
                             single_example(
                                 "Default",
-                                Checkbox::new("checkbox_default", ToggleState::Selected)
-                                    .into_any_element(),
+                                Checkbox::new("checkbox_default", ToggleState::Selected).into_any_element(),
                             ),
                             single_example(
                                 "Filled",
@@ -882,9 +825,7 @@ impl Component for Checkbox {
                             single_example(
                                 "ElevationBased",
                                 Checkbox::new("checkbox_elevation", ToggleState::Selected)
-                                    .style(ToggleStyle::ElevationBased(
-                                        ElevationIndex::EditorSurface,
-                                    ))
+                                    .style(ToggleStyle::ElevationBased(ElevationIndex::EditorSurface))
                                     .into_any_element(),
                             ),
                             single_example(
@@ -900,12 +841,9 @@ impl Component for Checkbox {
                         vec![
                             single_example(
                                 "Unselected",
-                                Checkbox::new(
-                                    "checkbox_disabled_unselected",
-                                    ToggleState::Unselected,
-                                )
-                                .disabled(true)
-                                .into_any_element(),
+                                Checkbox::new("checkbox_disabled_unselected", ToggleState::Unselected)
+                                    .disabled(true)
+                                    .into_any_element(),
                             ),
                             single_example(
                                 "Selected",
@@ -1024,13 +962,10 @@ impl Component for Switch {
                             ),
                             single_example(
                                 "Default Size Label",
-                                Switch::new(
-                                    "switch_with_label_default_size",
-                                    ToggleState::Selected,
-                                )
-                                .label("Always save on quit")
-                                .label_size(LabelSize::Default)
-                                .into_any_element(),
+                                Switch::new("switch_with_label_default_size", ToggleState::Selected)
+                                    .label("Always save on quit")
+                                    .label_size(LabelSize::Default)
+                                    .into_any_element(),
                             ),
                             single_example(
                                 "Small Size Label",
@@ -1047,10 +982,8 @@ impl Component for Switch {
                             "Keybinding",
                             Switch::new("switch_with_keybinding", ToggleState::Selected)
                                 .key_binding(Some(KeyBinding::from_keystrokes(
-                                    vec![KeybindingKeystroke::from_keystroke(
-                                        Keystroke::parse("cmd-s").unwrap(),
-                                    )]
-                                    .into(),
+                                    vec![KeybindingKeystroke::from_keystroke(Keystroke::parse("cmd-s").unwrap())]
+                                        .into(),
                                     KeybindSource::Base,
                                 )))
                                 .into_any_element(),

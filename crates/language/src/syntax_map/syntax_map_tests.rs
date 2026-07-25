@@ -15,31 +15,19 @@ use util::test::marked_text_ranges;
 fn test_splice_included_ranges() {
     let ranges = vec![ts_range(20..30), ts_range(50..60), ts_range(80..90)];
 
-    let (new_ranges, change) = splice_included_ranges(
-        ranges.clone(),
-        &[54..56, 58..68],
-        &[ts_range(50..54), ts_range(59..67)],
-    );
+    let (new_ranges, change) =
+        splice_included_ranges(ranges.clone(), &[54..56, 58..68], &[ts_range(50..54), ts_range(59..67)]);
     assert_eq!(
         new_ranges,
-        &[
-            ts_range(20..30),
-            ts_range(50..54),
-            ts_range(59..67),
-            ts_range(80..90),
-        ]
+        &[ts_range(20..30), ts_range(50..54), ts_range(59..67), ts_range(80..90),]
     );
     assert_eq!(change, 1..3);
 
     let (new_ranges, change) = splice_included_ranges(ranges.clone(), &[70..71, 91..100], &[]);
-    assert_eq!(
-        new_ranges,
-        &[ts_range(20..30), ts_range(50..60), ts_range(80..90)]
-    );
+    assert_eq!(new_ranges, &[ts_range(20..30), ts_range(50..60), ts_range(80..90)]);
     assert_eq!(change, 2..3);
 
-    let (new_ranges, change) =
-        splice_included_ranges(ranges.clone(), &[], &[ts_range(0..2), ts_range(70..75)]);
+    let (new_ranges, change) = splice_included_ranges(ranges.clone(), &[], &[ts_range(0..2), ts_range(70..75)]);
     assert_eq!(
         new_ranges,
         &[
@@ -52,17 +40,13 @@ fn test_splice_included_ranges() {
     );
     assert_eq!(change, 0..4);
 
-    let (new_ranges, change) =
-        splice_included_ranges(ranges.clone(), &[30..50], &[ts_range(25..55)]);
+    let (new_ranges, change) = splice_included_ranges(ranges.clone(), &[30..50], &[ts_range(25..55)]);
     assert_eq!(new_ranges, &[ts_range(25..55), ts_range(80..90)]);
     assert_eq!(change, 0..1);
 
     // does not create overlapping ranges
     let (new_ranges, change) = splice_included_ranges(ranges, &[0..18], &[ts_range(20..32)]);
-    assert_eq!(
-        new_ranges,
-        &[ts_range(20..32), ts_range(50..60), ts_range(80..90)]
-    );
+    assert_eq!(new_ranges, &[ts_range(20..32), ts_range(50..60), ts_range(80..90)]);
     assert_eq!(change, 0..1);
 
     fn ts_range(range: Range<usize>) -> tree_sitter::Range {
@@ -968,12 +952,7 @@ fn test_random_syntax_map_edits_with_heex(rng: StdRng, cx: &mut App) {
     test_random_edits(text, registry, language, rng);
 }
 
-fn test_random_edits(
-    text: String,
-    registry: Arc<LanguageRegistry>,
-    language: Arc<Language>,
-    mut rng: StdRng,
-) {
+fn test_random_edits(text: String, registry: Arc<LanguageRegistry>, language: Arc<Language>, mut rng: StdRng) {
     let operations = env::var("OPERATIONS")
         .map(|i| i.parse().expect("invalid `OPERATIONS` variable"))
         .unwrap_or(10);
@@ -1026,10 +1005,7 @@ fn test_random_edits(
     let layers = syntax_map.layers(&buffer);
     let reference_layers = reference_syntax_map.layers(&buffer);
     for (edited_layer, reference_layer) in layers.into_iter().zip(reference_layers) {
-        assert_eq!(
-            edited_layer.node().to_sexp(),
-            reference_layer.node().to_sexp()
-        );
+        assert_eq!(edited_layer.node().to_sexp(), reference_layer.node().to_sexp());
         assert_eq!(edited_layer.node().range(), reference_layer.node().range());
     }
 }
@@ -1044,11 +1020,7 @@ fn check_interpolation(
         .edits_since::<usize>(old_buffer.version())
         .collect::<Vec<_>>();
 
-    for (old_layer, new_layer) in old_syntax_map
-        .layers
-        .iter()
-        .zip(new_syntax_map.layers.iter())
-    {
+    for (old_layer, new_layer) in old_syntax_map.layers.iter().zip(new_syntax_map.layers.iter()) {
         assert_eq!(old_layer.range, new_layer.range);
         let Some(old_tree) = old_layer.content.tree() else {
             continue;
@@ -1109,12 +1081,8 @@ fn check_interpolation(
 
         if !new_node.has_changes() {
             assert_eq!(
-                old_buffer
-                    .text_for_range(old_range.clone())
-                    .collect::<String>(),
-                new_buffer
-                    .text_for_range(new_range.clone())
-                    .collect::<String>(),
+                old_buffer.text_for_range(old_range.clone()).collect::<String>(),
+                new_buffer.text_for_range(new_range.clone()).collect::<String>(),
                 concat!(
                     "mismatched text for node\n",
                     "layer depth: {}, old layer range: {:?}, new layer range: {:?},\n",
@@ -1188,9 +1156,7 @@ fn test_edit_sequence(language_name: &str, steps: &[&str], cx: &mut App) -> (Buf
             reference_layers.len(),
             "wrong number of layers at step {i}"
         );
-        for (edited_layer, reference_layer) in
-            mutated_layers.into_iter().zip(reference_layers)
-        {
+        for (edited_layer, reference_layer) in mutated_layers.into_iter().zip(reference_layers) {
             assert_eq!(
                 edited_layer.node().to_sexp(),
                 reference_layer.node().to_sexp(),
@@ -1380,21 +1346,12 @@ fn assert_layers_for_range(
     range: Range<Point>,
     expected_layers: &[&str],
 ) {
-    let layers = syntax_map
-        .layers_for_range(range, buffer, true)
-        .collect::<Vec<_>>();
-    assert_eq!(
-        layers.len(),
-        expected_layers.len(),
-        "wrong number of layers"
-    );
+    let layers = syntax_map.layers_for_range(range, buffer, true).collect::<Vec<_>>();
+    assert_eq!(layers.len(), expected_layers.len(), "wrong number of layers");
     for (i, (layer, expected_s_exp)) in layers.iter().zip(expected_layers.iter()).enumerate() {
         let actual_s_exp = layer.node().to_sexp();
         assert!(
-            string_contains_sequence(
-                &actual_s_exp,
-                &expected_s_exp.split("...").collect::<Vec<_>>()
-            ),
+            string_contains_sequence(&actual_s_exp, &expected_s_exp.split("...").collect::<Vec<_>>()),
             "layer {i}:\n\nexpected: {expected_s_exp}\nactual:   {actual_s_exp}",
         );
     }
@@ -1409,10 +1366,7 @@ fn assert_capture_ranges(
 ) {
     let mut actual_ranges = Vec::<Range<usize>>::new();
     let captures = syntax_map.captures(0..buffer.len(), buffer, |grammar| {
-        grammar
-            .highlights_config
-            .as_ref()
-            .map(|config| &config.query)
+        grammar.highlights_config.as_ref().map(|config| &config.query)
     });
     let queries = captures
         .grammars()

@@ -25,11 +25,7 @@ pub(crate) trait DiagnosticsToolbarEditor: Send + Sync {
     /// with the latest information.
     fn refresh_diagnostics(&self, window: &mut Window, cx: &mut App);
     /// Returns a list of diagnostics for the provided buffer id.
-    fn get_diagnostics_for_buffer(
-        &self,
-        buffer_id: BufferId,
-        cx: &App,
-    ) -> Vec<DiagnosticEntry<Anchor>>;
+    fn get_diagnostics_for_buffer(&self, buffer_id: BufferId, cx: &App) -> Vec<DiagnosticEntry<Anchor>>;
 }
 
 impl Render for ToolbarControls {
@@ -51,11 +47,7 @@ impl Render for ToolbarControls {
             "Include Warnings"
         };
 
-        let warning_color = if include_warnings {
-            Color::Warning
-        } else {
-            Color::Muted
-        };
+        let warning_color = if include_warnings { Color::Warning } else { Color::Muted };
 
         h_flex()
             .gap_1()

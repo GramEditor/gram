@@ -254,10 +254,10 @@ fn start_server(
                         break;
                     }
                 }
-            }).detach();
+            })
+            .detach();
 
             loop {
-
                 select_biased! {
                     _ = app_quit_rx.next().fuse() => {
                         return anyhow::Ok(());
@@ -354,9 +354,7 @@ pub fn execute_run(
             gram_version: VERSION.to_owned(),
             binary: "gram-remote-server".to_string(),
             release_channel: release_channel::RELEASE_CHANNEL_NAME.clone(),
-            commit_sha: option_env!("GRAM_COMMIT_SHA")
-                .unwrap_or("no_sha")
-                .to_owned(),
+            commit_sha: option_env!("GRAM_COMMIT_SHA").unwrap_or("no_sha").to_owned(),
         }))
         .detach();
     let log_rx = init_logging_server(log_file)?;
@@ -368,8 +366,7 @@ pub fn execute_run(
         stderr_socket
     );
 
-    write_pid_file(&pid_file)
-        .with_context(|| format!("failed to write pid file: {:?}", pid_file))?;
+    write_pid_file(&pid_file).with_context(|| format!("failed to write pid file: {:?}", pid_file))?;
 
     let listeners = ServerListeners::new(stdin_socket, stdout_socket, stderr_socket)?;
 
@@ -438,11 +435,7 @@ pub fn execute_run(
                 )
             };
 
-            let node_runtime = NodeRuntime::new(
-                http_client.clone(),
-                Some(shell_env_loaded_rx),
-                node_settings_rx,
-            );
+            let node_runtime = NodeRuntime::new(http_client.clone(), Some(shell_env_loaded_rx), node_settings_rx);
 
             let mut languages = LanguageRegistry::new(cx.background_executor().clone());
             languages.set_language_server_download_dir(paths::languages_dir().clone());
@@ -463,8 +456,7 @@ pub fn execute_run(
 
         handle_crash_files_requests(&project, &session);
 
-        cx.background_spawn(async move { cleanup_old_binaries() })
-            .detach();
+        cx.background_spawn(async move { cleanup_old_binaries() }).detach();
 
         mem::forget(project);
     });
@@ -500,11 +492,9 @@ struct ServerPaths {
 impl ServerPaths {
     fn new(identifier: &str) -> Result<Self, ServerPathError> {
         let server_dir = paths::remote_server_state_dir().join(identifier);
-        std::fs::create_dir_all(&server_dir).map_err(|source| {
-            ServerPathError::CreateServerDir {
-                source,
-                path: server_dir.clone(),
-            }
+        std::fs::create_dir_all(&server_dir).map_err(|source| ServerPathError::CreateServerDir {
+            source,
+            path: server_dir.clone(),
         })?;
         let log_dir = logs_dir();
         std::fs::create_dir_all(log_dir).map_err(|source| ServerPathError::CreateLogsDir {
@@ -561,10 +551,7 @@ pub(crate) enum ExecuteProxyError {
     StderrTask(#[source] anyhow::Error),
 }
 
-pub(crate) fn execute_proxy(
-    identifier: String,
-    is_reconnecting: bool,
-) -> Result<(), ExecuteProxyError> {
+pub(crate) fn execute_proxy(identifier: String, is_reconnecting: bool) -> Result<(), ExecuteProxyError> {
     init_logging_proxy();
 
     let server_paths = ServerPaths::new(&identifier)?;
@@ -575,27 +562,24 @@ pub(crate) fn execute_proxy(
         gram_version: VERSION.to_owned(),
         binary: "gram-remote-server".to_string(),
         release_channel: release_channel::RELEASE_CHANNEL_NAME.clone(),
-        commit_sha: option_env!("GRAM_COMMIT_SHA")
-            .unwrap_or("no_sha")
-            .to_owned(),
+        commit_sha: option_env!("GRAM_COMMIT_SHA").unwrap_or("no_sha").to_owned(),
     }))
     .detach();
 
     log::info!("starting proxy process. PID: {}", std::process::id());
     smol::block_on(async {
-        let server_pid = check_pid_file(&server_paths.pid_file)
-            .await
-            .map_err(|source| ExecuteProxyError::CheckPidFile {
-                source,
-                path: server_paths.pid_file.clone(),
-            })?;
+        let server_pid =
+            check_pid_file(&server_paths.pid_file)
+                .await
+                .map_err(|source| ExecuteProxyError::CheckPidFile {
+                    source,
+                    path: server_paths.pid_file.clone(),
+                })?;
         let server_running = server_pid.is_some();
         if is_reconnecting {
             if !server_running {
                 log::error!("attempted to reconnect, but no server running");
-                return Err(ExecuteProxyError::ServerNotRunning(
-                    ProxyLaunchError::ServerNotRunning,
-                ));
+                return Err(ExecuteProxyError::ServerNotRunning(ProxyLaunchError::ServerNotRunning));
             }
         } else {
             if let Some(pid) = server_pid {
@@ -630,14 +614,9 @@ pub(crate) fn execute_proxy(
         let mut stream = smol::net::unix::UnixStream::connect(&server_paths.stderr_socket).await?;
         let mut stderr_buffer = vec![0; 2048];
         loop {
-            match stream
-                .read(&mut stderr_buffer)
-                .await
-                .context("reading stderr")?
-            {
+            match stream.read(&mut stderr_buffer).await.context("reading stderr")? {
                 0 => {
-                    let error =
-                        std::io::Error::new(std::io::ErrorKind::UnexpectedEof, "stderr closed");
+                    let error = std::io::Error::new(std::io::ErrorKind::UnexpectedEof, "stderr closed");
                     Err(anyhow!(error))?;
                 }
                 n => {
@@ -732,27 +711,18 @@ async fn spawn_server(paths: &ServerPaths) -> Result<(), SpawnServerError> {
         .arg("--stderr-socket")
         .arg(&paths.stderr_socket);
 
-    let status = server_process
-        .status()
-        .await
-        .map_err(SpawnServerError::ProcessStatus)?;
+    let status = server_process.status().await.map_err(SpawnServerError::ProcessStatus)?;
 
     if !status.success() {
         return Err(SpawnServerError::LaunchStatus {
             status,
-            paths: format!(
-                "log file: {:?}, pid file: {:?}",
-                paths.log_file, paths.pid_file,
-            ),
+            paths: format!("log file: {:?}, pid file: {:?}", paths.log_file, paths.pid_file,),
         });
     }
 
     let mut total_time_waited = std::time::Duration::from_secs(0);
     let wait_duration = std::time::Duration::from_millis(20);
-    while !paths.stdout_socket.exists()
-        || !paths.stdin_socket.exists()
-        || !paths.stderr_socket.exists()
-    {
+    while !paths.stdout_socket.exists() || !paths.stdin_socket.exists() || !paths.stderr_socket.exists() {
         log::debug!("waiting for server to be ready to accept connections...");
         std::thread::sleep(wait_duration);
         total_time_waited += wait_duration;
@@ -783,12 +753,7 @@ async fn check_pid_file(path: &Path) -> Result<Option<u32>, CheckPidError> {
     };
 
     log::debug!("Checking if process with PID {} exists...", pid);
-    match new_smol_command("kill")
-        .arg("-0")
-        .arg(pid.to_string())
-        .output()
-        .await
-    {
+    match new_smol_command("kill").arg("-0").arg(pid.to_string()).output().await {
         Ok(output) if output.status.success() => {
             log::debug!(
                 "Process with PID {} exists. NOT spawning new server, but attaching to existing one.",
@@ -797,9 +762,7 @@ async fn check_pid_file(path: &Path) -> Result<Option<u32>, CheckPidError> {
             Ok(Some(pid))
         }
         _ => {
-            log::debug!(
-                "Found PID file, but process with that PID does not exist. Removing PID file."
-            );
+            log::debug!("Found PID file, but process with that PID does not exist. Removing PID file.");
             std::fs::remove_file(&path).map_err(|source| CheckPidError { source, pid })?;
             Ok(None)
         }
@@ -840,8 +803,7 @@ fn initialize_settings(
     fs: Arc<dyn Fs>,
     cx: &mut App,
 ) -> watch::Receiver<Option<NodeBinaryOptions>> {
-    let user_settings_file_rx =
-        watch_config_file(cx.background_executor(), fs, paths::settings_file().clone());
+    let user_settings_file_rx = watch_config_file(cx.background_executor(), fs, paths::settings_file().clone());
 
     handle_settings_file_changes(user_settings_file_rx, cx, {
         move |err, _cx| {
@@ -852,11 +814,7 @@ fn initialize_settings(
                     .send(proto::Toast {
                         project_id: REMOTE_SERVER_PROJECT_ID,
                         notification_id: "server-settings-failed".to_string(),
-                        message: format!(
-                            "Error in settings on remote host {:?}: {}",
-                            paths::settings_file(),
-                            e
-                        ),
+                        message: format!("Error in settings on remote host {:?}: {}", paths::settings_file(), e),
                     })
                     .log_err();
             } else {
@@ -910,14 +868,9 @@ pub fn handle_settings_file_changes(
     cx: &mut App,
     settings_changed: impl Fn(Option<anyhow::Error>, &mut App) + 'static,
 ) {
-    let server_settings_content = cx
-        .background_executor()
-        .block(server_settings_file.next())
-        .unwrap();
+    let server_settings_content = cx.background_executor().block(server_settings_file.next()).unwrap();
     SettingsStore::update_global(cx, |store, cx| {
-        store
-            .set_server_settings(&server_settings_content, cx)
-            .log_err();
+        store.set_server_settings(&server_settings_content, cx).log_err();
     });
     cx.spawn(async move |cx| {
         while let Some(server_settings_content) = server_settings_file.next().await {
@@ -974,10 +927,7 @@ unsafe fn redirect_standard_streams() -> Result<()> {
 
     let process_stdio = |name, fd| {
         let reopened_fd = unsafe { libc::dup2(devnull_fd, fd) };
-        anyhow::ensure!(
-            reopened_fd != -1,
-            format!("failed to redirect {} to /dev/null", name)
-        );
+        anyhow::ensure!(reopened_fd != -1, format!("failed to redirect {} to /dev/null", name));
         Ok(())
     };
 
@@ -1022,9 +972,10 @@ fn is_new_version(version: &str) -> bool {
 }
 
 fn is_file_in_use(file_name: &OsStr) -> bool {
-    let info = sysinfo::System::new_with_specifics(sysinfo::RefreshKind::nothing().with_processes(
-        sysinfo::ProcessRefreshKind::nothing().with_exe(sysinfo::UpdateKind::Always),
-    ));
+    let info = sysinfo::System::new_with_specifics(
+        sysinfo::RefreshKind::nothing()
+            .with_processes(sysinfo::ProcessRefreshKind::nothing().with_exe(sysinfo::UpdateKind::Always)),
+    );
 
     for process in info.processes().values() {
         if process

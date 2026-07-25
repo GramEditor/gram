@@ -36,9 +36,7 @@ pub fn init(cx: &mut App) {
             let delay_ms = which_key_settings.delay_ms;
 
             timer.replace(cx.spawn_in(window, async move |workspace_handle, cx| {
-                cx.background_executor()
-                    .timer(Duration::from_millis(delay_ms))
-                    .await;
+                cx.background_executor().timer(Duration::from_millis(delay_ms)).await;
                 workspace_handle
                     .update_in(cx, |workspace, window, cx| {
                         if workspace.active_modal::<WhichKeyModal>(cx).is_some() {

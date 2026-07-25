@@ -60,11 +60,7 @@ impl History {
         }
     }
 
-    fn end_transaction(
-        &mut self,
-        now: Instant,
-        buffer_transactions: HashMap<BufferId, text::TransactionId>,
-    ) -> bool {
+    fn end_transaction(&mut self, now: Instant, buffer_transactions: HashMap<BufferId, text::TransactionId>) -> bool {
         assert_ne!(self.transaction_depth, 0);
         self.transaction_depth -= 1;
         if self.transaction_depth == 0 {
@@ -88,12 +84,8 @@ impl History {
         }
     }
 
-    fn push_transaction<'a, T>(
-        &mut self,
-        buffer_transactions: T,
-        now: Instant,
-        cx: &Context<MultiBuffer>,
-    ) where
+    fn push_transaction<'a, T>(&mut self, buffer_transactions: T, now: Instant, cx: &Context<MultiBuffer>)
+    where
         T: IntoIterator<Item = (&'a Entity<Buffer>, &'a language::Transaction)>,
     {
         assert_eq!(self.transaction_depth, 0);
@@ -195,8 +187,7 @@ impl History {
         if let Some(mut transaction) = transactions.next_back() {
             while let Some(prev_transaction) = transactions.next_back() {
                 if !prev_transaction.suppress_grouping
-                    && transaction.first_edit_at - prev_transaction.last_edit_at
-                        <= self.group_interval
+                    && transaction.first_edit_at - prev_transaction.last_edit_at <= self.group_interval
                 {
                     transaction = prev_transaction;
                     count += 1;
@@ -257,11 +248,7 @@ impl MultiBuffer {
         self.start_transaction_at(Instant::now(), cx)
     }
 
-    pub fn start_transaction_at(
-        &mut self,
-        now: Instant,
-        cx: &mut Context<Self>,
-    ) -> Option<TransactionId> {
+    pub fn start_transaction_at(&mut self, now: Instant, cx: &mut Context<Self>) -> Option<TransactionId> {
         if let Some(buffer) = self.as_singleton() {
             return buffer.update(cx, |buffer, _| buffer.start_transaction_at(now));
         }
@@ -288,20 +275,14 @@ impl MultiBuffer {
         self.end_transaction_at(Instant::now(), cx)
     }
 
-    pub fn end_transaction_at(
-        &mut self,
-        now: Instant,
-        cx: &mut Context<Self>,
-    ) -> Option<TransactionId> {
+    pub fn end_transaction_at(&mut self, now: Instant, cx: &mut Context<Self>) -> Option<TransactionId> {
         if let Some(buffer) = self.as_singleton() {
             return buffer.update(cx, |buffer, cx| buffer.end_transaction_at(now, cx));
         }
 
         let mut buffer_transactions = HashMap::default();
         for BufferState { buffer, .. } in self.buffers.values() {
-            if let Some(transaction_id) =
-                buffer.update(cx, |buffer, cx| buffer.end_transaction_at(now, cx))
-            {
+            if let Some(transaction_id) = buffer.update(cx, |buffer, cx| buffer.end_transaction_at(now, cx)) {
                 buffer_transactions.insert(buffer.read(cx).remote_id(), transaction_id);
             }
         }
@@ -314,16 +295,9 @@ impl MultiBuffer {
         }
     }
 
-    pub fn edited_ranges_for_transaction<D>(
-        &self,
-        transaction_id: TransactionId,
-        cx: &App,
-    ) -> Vec<Range<D>>
+    pub fn edited_ranges_for_transaction<D>(&self, transaction_id: TransactionId, cx: &App) -> Vec<Range<D>>
     where
-        D: MultiBufferDimension
-            + Ord
-            + Sub<D, Output = D::TextDimension>
-            + AddAssign<D::TextDimension>,
+        D: MultiBufferDimension + Ord + Sub<D, Output = D::TextDimension> + AddAssign<D::TextDimension>,
         D::TextDimension: PartialOrd + Sub<D::TextDimension, Output = D::TextDimension>,
     {
         let Some(transaction) = self.history.transaction(transaction_id) else {
@@ -340,28 +314,16 @@ impl MultiBuffer {
             };
 
             let buffer = buffer_state.buffer.read(cx);
-            for range in
-                buffer.edited_ranges_for_transaction_id::<D::TextDimension>(*buffer_transaction)
-            {
+            for range in buffer.edited_ranges_for_transaction_id::<D::TextDimension>(*buffer_transaction) {
                 for excerpt_id in &buffer_state.excerpts {
                     cursor.seek(excerpt_id, Bias::Left);
                     if let Some(excerpt) = cursor.item()
                         && excerpt.locator == *excerpt_id
                     {
-                        let excerpt_buffer_start = excerpt
-                            .range
-                            .context
-                            .start
-                            .summary::<D::TextDimension>(buffer);
-                        let excerpt_buffer_end = excerpt
-                            .range
-                            .context
-                            .end
-                            .summary::<D::TextDimension>(buffer);
+                        let excerpt_buffer_start = excerpt.range.context.start.summary::<D::TextDimension>(buffer);
+                        let excerpt_buffer_end = excerpt.range.context.end.summary::<D::TextDimension>(buffer);
                         let excerpt_range = excerpt_buffer_start..excerpt_buffer_end;
-                        if excerpt_range.contains(&range.start)
-                            && excerpt_range.contains(&range.end)
-                        {
+                        if excerpt_range.contains(&range.start) && excerpt_range.contains(&range.end) {
                             let excerpt_start = D::from_summary(&cursor.start().text);
 
                             let mut start = excerpt_start;
@@ -388,28 +350,19 @@ impl MultiBuffer {
         cx: &mut Context<Self>,
     ) {
         if let Some(buffer) = self.as_singleton() {
-            buffer.update(cx, |buffer, _| {
-                buffer.merge_transactions(transaction, destination)
-            });
+            buffer.update(cx, |buffer, _| buffer.merge_transactions(transaction, destination));
         } else if let Some(transaction) = self.history.forget(transaction)
             && let Some(destination) = self.history.transaction_mut(destination)
         {
             for (buffer_id, buffer_transaction_id) in transaction.buffer_transactions {
-                if let Some(destination_buffer_transaction_id) =
-                    destination.buffer_transactions.get(&buffer_id)
-                {
+                if let Some(destination_buffer_transaction_id) = destination.buffer_transactions.get(&buffer_id) {
                     if let Some(state) = self.buffers.get(&buffer_id) {
                         state.buffer.update(cx, |buffer, _| {
-                            buffer.merge_transactions(
-                                buffer_transaction_id,
-                                *destination_buffer_transaction_id,
-                            )
+                            buffer.merge_transactions(buffer_transaction_id, *destination_buffer_transaction_id)
                         });
                     }
                 } else {
-                    destination
-                        .buffer_transactions
-                        .insert(buffer_id, buffer_transaction_id);
+                    destination.buffer_transactions.insert(buffer_id, buffer_transaction_id);
                 }
             }
         }
@@ -428,20 +381,13 @@ impl MultiBuffer {
     where
         T: IntoIterator<Item = (&'a Entity<Buffer>, &'a language::Transaction)>,
     {
-        self.history
-            .push_transaction(buffer_transactions, Instant::now(), cx);
+        self.history.push_transaction(buffer_transactions, Instant::now(), cx);
         self.history.finalize_last_transaction();
     }
 
-    pub fn group_until_transaction(
-        &mut self,
-        transaction_id: TransactionId,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn group_until_transaction(&mut self, transaction_id: TransactionId, cx: &mut Context<Self>) {
         if let Some(buffer) = self.as_singleton() {
-            buffer.update(cx, |buffer, _| {
-                buffer.group_until_transaction(transaction_id)
-            });
+            buffer.update(cx, |buffer, _| buffer.group_until_transaction(transaction_id));
         } else {
             self.history.group_until(transaction_id);
         }
@@ -512,9 +458,7 @@ impl MultiBuffer {
         } else if let Some(transaction) = self.history.remove_from_undo(transaction_id) {
             for (buffer_id, transaction_id) in &transaction.buffer_transactions {
                 if let Some(BufferState { buffer, .. }) = self.buffers.get(buffer_id) {
-                    buffer.update(cx, |buffer, cx| {
-                        buffer.undo_transaction(*transaction_id, cx)
-                    });
+                    buffer.update(cx, |buffer, cx| buffer.undo_transaction(*transaction_id, cx));
                 }
             }
         }

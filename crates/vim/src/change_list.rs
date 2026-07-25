@@ -23,20 +23,11 @@ pub(crate) fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
 }
 
 impl Vim {
-    fn move_to_change(
-        &mut self,
-        direction: Direction,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn move_to_change(&mut self, direction: Direction, window: &mut Window, cx: &mut Context<Self>) {
         let count = Vim::take_count(cx).unwrap_or(1);
         Vim::take_forced_motion(cx);
         self.update_editor(cx, |_, editor, cx| {
-            if let Some(selections) = editor
-                .change_list
-                .next_change(count, direction)
-                .map(|s| s.to_vec())
-            {
+            if let Some(selections) = editor.change_list.next_change(count, direction).map(|s| s.to_vec()) {
                 editor.change_selections(Default::default(), window, cx, |s| {
                     let map = s.display_snapshot();
                     s.select_display_ranges(selections.iter().map(|a| {
@@ -59,9 +50,10 @@ impl Vim {
                 .last()
                 .map(|previous| {
                     previous.len() == selections.len()
-                        && previous.iter().enumerate().all(|(ix, p)| {
-                            p.to_display_point(&display_map).row() == selections[ix].head().row()
-                        })
+                        && previous
+                            .iter()
+                            .enumerate()
+                            .all(|(ix, p)| p.to_display_point(&display_map).row() == selections[ix].head().row())
                 })
                 .unwrap_or(false);
 
@@ -77,9 +69,7 @@ impl Vim {
                 })
                 .collect::<Vec<_>>();
 
-            editor
-                .change_list
-                .push_to_change_list(pop_state, new_positions.clone());
+            editor.change_list.push_to_change_list(pop_state, new_positions.clone());
 
             (new_positions, buffer)
         }) else {

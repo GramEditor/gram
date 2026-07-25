@@ -4,8 +4,7 @@ use dap::{Scope, StackFrame, Variable, requests::Variables};
 use editor::{Editor, EditorMode, MultiBuffer};
 use gpui::{BackgroundExecutor, TestAppContext, VisualTestContext};
 use language::{
-    Language, LanguageConfig, LanguageMatcher, tree_sitter_python, tree_sitter_rust,
-    tree_sitter_typescript,
+    Language, LanguageConfig, LanguageMatcher, tree_sitter_python, tree_sitter_rust, tree_sitter_typescript,
 };
 use project::{FakeFs, Project};
 use serde_json::json;
@@ -213,9 +212,7 @@ fn main() {
         .expect("This worktree should exist in project")
         .0;
 
-    let worktree_id = workspace
-        .update(cx, |_, _, cx| worktree.read(cx).id())
-        .unwrap();
+    let worktree_id = workspace.update(cx, |_, _, cx| worktree.read(cx).id()).unwrap();
 
     let buffer = project
         .update(cx, |project, cx| {
@@ -1583,9 +1580,7 @@ def process_data(untyped_param, typed_param: int, another_typed: str):
         .expect("This worktree should exist in project")
         .0;
 
-    let worktree_id = workspace
-        .update(cx, |_, _, cx| worktree.read(cx).id())
-        .unwrap();
+    let worktree_id = workspace.update(cx, |_, _, cx| worktree.read(cx).id()).unwrap();
 
     let buffer = project
         .update(cx, |project, cx| {
@@ -1901,8 +1896,7 @@ async fn test_inline_values_util(
     init_test(cx);
 
     let lines_count = before.lines().count();
-    let stop_line =
-        active_debug_line.unwrap_or_else(|| if lines_count > 6 { 6 } else { lines_count - 1 });
+    let stop_line = active_debug_line.unwrap_or_else(|| if lines_count > 6 { 6 } else { lines_count - 1 });
 
     let fs = FakeFs::new(executor.clone());
     fs.insert_tree(path!("/project"), json!({ "main.rs": before.to_string() }))
@@ -2082,9 +2076,7 @@ async fn test_inline_values_util(
         .expect("This worktree should exist in project")
         .0;
 
-    let worktree_id = workspace
-        .update(cx, |_, _, cx| worktree.read(cx).id())
-        .unwrap();
+    let worktree_id = workspace.update(cx, |_, _, cx| worktree.read(cx).id()).unwrap();
 
     let buffer = project
         .update(cx, |project, cx| {
@@ -2145,17 +2137,7 @@ fn main() {
 "#
     .unindent();
 
-    test_inline_values_util(
-        &variables,
-        &[],
-        &before,
-        &after,
-        None,
-        rust_lang(),
-        executor,
-        cx,
-    )
-    .await;
+    test_inline_values_util(&variables, &[], &before, &after, None, rust_lang(), executor, cx).await;
 }
 
 #[gpui::test]
@@ -2266,17 +2248,7 @@ fn main() {
 "#
     .unindent();
 
-    test_inline_values_util(
-        &variables,
-        &[],
-        &before,
-        &after,
-        None,
-        rust_lang(),
-        executor,
-        cx,
-    )
-    .await;
+    test_inline_values_util(&variables, &[], &before, &after, None, rust_lang(), executor, cx).await;
 }
 
 fn javascript_lang() -> Language {
@@ -2332,12 +2304,7 @@ fn tsx_lang() -> Language {
 
 #[gpui::test]
 async fn test_javascript_inline_values(executor: BackgroundExecutor, cx: &mut TestAppContext) {
-    let variables = [
-        ("x", "10"),
-        ("y", "20"),
-        ("sum", "30"),
-        ("message", "Hello"),
-    ];
+    let variables = [("x", "10"), ("y", "20"), ("sum", "30"), ("message", "Hello")];
 
     let before = r#"
 function calculate() {
@@ -2361,27 +2328,12 @@ function calculate() {
 "#
     .unindent();
 
-    test_inline_values_util(
-        &variables,
-        &[],
-        &before,
-        &after,
-        None,
-        javascript_lang(),
-        executor,
-        cx,
-    )
-    .await;
+    test_inline_values_util(&variables, &[], &before, &after, None, javascript_lang(), executor, cx).await;
 }
 
 #[gpui::test]
 async fn test_typescript_inline_values(executor: BackgroundExecutor, cx: &mut TestAppContext) {
-    let variables = [
-        ("count", "42"),
-        ("name", "Alice"),
-        ("result", "84"),
-        ("i", "3"),
-    ];
+    let variables = [("count", "42"), ("name", "Alice"), ("result", "84"), ("i", "3")];
 
     let before = r#"
 function processData(count: number, name: string): number {
@@ -2405,17 +2357,7 @@ function processData(count: number, name: string): number {
 "#
     .unindent();
 
-    test_inline_values_util(
-        &variables,
-        &[],
-        &before,
-        &after,
-        None,
-        typescript_lang(),
-        executor,
-        cx,
-    )
-    .await;
+    test_inline_values_util(&variables, &[], &before, &after, None, typescript_lang(), executor, cx).await;
 }
 
 #[gpui::test]
@@ -2450,17 +2392,7 @@ const Counter = () => {
 "#
     .unindent();
 
-    test_inline_values_util(
-        &variables,
-        &[],
-        &before,
-        &after,
-        None,
-        tsx_lang(),
-        executor,
-        cx,
-    )
-    .await;
+    test_inline_values_util(&variables, &[], &before, &after, None, tsx_lang(), executor, cx).await;
 }
 
 #[gpui::test]
@@ -2483,17 +2415,7 @@ const double = (x) => {
 "#
     .unindent();
 
-    test_inline_values_util(
-        &variables,
-        &[],
-        &before,
-        &after,
-        None,
-        javascript_lang(),
-        executor,
-        cx,
-    )
-    .await;
+    test_inline_values_util(&variables, &[], &before, &after, None, javascript_lang(), executor, cx).await;
 }
 
 #[gpui::test]
@@ -2520,15 +2442,5 @@ function iterate() {
 "#
     .unindent();
 
-    test_inline_values_util(
-        &variables,
-        &[],
-        &before,
-        &after,
-        None,
-        typescript_lang(),
-        executor,
-        cx,
-    )
-    .await;
+    test_inline_values_util(&variables, &[], &before, &after, None, typescript_lang(), executor, cx).await;
 }

@@ -9,9 +9,7 @@ use crate::Color;
 use crate::prelude::*;
 use crate::traits::transformable::Transformable;
 
-#[derive(
-    Debug, PartialEq, Eq, Copy, Clone, EnumIter, EnumString, IntoStaticStr, Serialize, Deserialize,
-)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, EnumIter, EnumString, IntoStaticStr, Serialize, Deserialize)]
 #[strum(serialize_all = "snake_case")]
 pub enum VectorName {
     DebuggerGrid,
@@ -118,10 +116,7 @@ impl Component for Vector {
                     example_group_with_title(
                         "Basic Usage",
                         vec![
-                            single_example(
-                                "Default",
-                                Vector::square(VectorName::LogoDark, size).into_any_element(),
-                            ),
+                            single_example("Default", Vector::square(VectorName::LogoDark, size).into_any_element()),
                             single_example(
                                 "Custom Size",
                                 h_flex()
@@ -157,8 +152,7 @@ impl Component for Vector {
                         "Different Vectors",
                         vec![single_example(
                             "Gram Logo",
-                            Vector::square(VectorName::LogoDark, rems_from_px(8.0_f32))
-                                .into_any_element(),
+                            Vector::square(VectorName::LogoDark, rems_from_px(8.0_f32)).into_any_element(),
                         )],
                     ),
                 ])

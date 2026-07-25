@@ -62,25 +62,22 @@ where
                 }
 
                 // Check if parent is whitespace preserving element or contains code (<script>, <style>)
-                let (skip_collapse_whitespace, contains_code) =
-                    ctx.as_ref().map_or((false, false), |ctx| {
-                        if let NodeData::Element { name, .. } = &ctx.parent.data {
-                            let name = name.local.as_ref();
+                let (skip_collapse_whitespace, contains_code) = ctx.as_ref().map_or((false, false), |ctx| {
+                    if let NodeData::Element { name, .. } = &ctx.parent.data {
+                        let name = name.local.as_ref();
 
-                            (preserve_whitespace(name), contains_code(name))
-                        } else {
-                            (false, false)
-                        }
-                    });
+                        (preserve_whitespace(name), contains_code(name))
+                    } else {
+                        (false, false)
+                    }
+                });
 
                 if skip_collapse_whitespace {
                     return self.w.write_all(contents.as_bytes());
                 }
 
                 if contains_code {
-                    return self
-                        .w
-                        .write_all(contents.trim_matches(is_ascii_whitespace).as_bytes());
+                    return self.w.write_all(contents.trim_matches(is_ascii_whitespace).as_bytes());
                 }
 
                 // Early exit if empty to forego expensive trim logic
@@ -108,11 +105,8 @@ where
 
                     self.write_collapse_whitespace(&contents, reserved_entity, None)?;
 
-                    self.preceding_whitespace = !trim_right
-                        && contents
-                            .iter()
-                            .last()
-                            .map_or(false, u8::is_ascii_whitespace);
+                    self.preceding_whitespace =
+                        !trim_right && contents.iter().last().map_or(false, u8::is_ascii_whitespace);
                 }
 
                 Ok(())
@@ -134,8 +128,7 @@ where
                     return self.write_start_tag(name, &attrs);
                 }
 
-                let (omit_start_tag, omit_end_tag) =
-                    self.omit_tags(ctx, node, tag, attrs.is_empty());
+                let (omit_start_tag, omit_end_tag) = self.omit_tags(ctx, node, tag, attrs.is_empty());
 
                 if !omit_start_tag {
                     self.write_start_tag(name, &attrs)?;
@@ -191,20 +184,13 @@ where
     /// Determines if start and end tags can be omitted.
     /// Whitespace rules are ignored if `collapse_whitespace` is enabled.
     #[allow(clippy::too_many_lines)]
-    fn omit_tags(
-        &self,
-        ctx: &Option<Context>,
-        node: &Node,
-        name: &str,
-        empty_attributes: bool,
-    ) -> (bool, bool) {
+    fn omit_tags(&self, ctx: &Option<Context>, node: &Node, name: &str, empty_attributes: bool) -> (bool, bool) {
         ctx.as_ref().map_or((false, false), |ctx| match name {
             "html" => {
                 // The end tag may be omitted if the <html> element is not immediately followed by a comment.
                 let omit_end = ctx.right.map_or(true, |right| !self.next_is_comment(right));
                 // The start tag may be omitted if the first thing inside the <html> element is not a comment.
-                let omit_start =
-                    empty_attributes && omit_end && !self.next_is_comment(&*node.children.borrow());
+                let omit_start = empty_attributes && omit_end && !self.next_is_comment(&*node.children.borrow());
 
                 (omit_start, omit_end)
             }
@@ -258,9 +244,7 @@ where
                         .iter()
                         .find_map(|node| match &node.data {
                             NodeData::Text { contents } => self.is_whitespace(contents),
-                            NodeData::Element { name, .. } => {
-                                Some(!matches!(name.local.as_ref(), "script" | "style"))
-                            }
+                            NodeData::Element { name, .. } => Some(!matches!(name.local.as_ref(), "script" | "style")),
                             NodeData::Comment { .. } => {
                                 if self.options.preserve_comments {
                                     Some(false)
@@ -334,11 +318,7 @@ where
                     parent: node,
                     parent_context: ctx.as_ref(),
                     left: if i > 0 { Some(&children[..i]) } else { None },
-                    right: if i + 1 < l {
-                        Some(&children[i + 1..])
-                    } else {
-                        None
-                    },
+                    right: if i + 1 < l { Some(&children[i + 1..]) } else { None },
                 }),
                 child,
             )
@@ -347,22 +327,18 @@ where
 
     fn write_qualified_name(&mut self, name: &QualName) -> io::Result<()> {
         if let Some(prefix) = &name.prefix {
-            self.w
-                .write_all(prefix.as_ref().to_ascii_lowercase().as_bytes())?;
+            self.w.write_all(prefix.as_ref().to_ascii_lowercase().as_bytes())?;
             self.w.write_all(b":")?;
         }
 
-        self.w
-            .write_all(name.local.as_ref().to_ascii_lowercase().as_bytes())
+        self.w.write_all(name.local.as_ref().to_ascii_lowercase().as_bytes())
     }
 
     fn write_start_tag(&mut self, name: &QualName, attrs: &[Attribute]) -> io::Result<()> {
         self.w.write_all(b"<")?;
         self.write_qualified_name(name)?;
 
-        attrs
-            .iter()
-            .try_for_each(|attr| self.write_attribute(attr))?;
+        attrs.iter().try_for_each(|attr| self.write_attribute(attr))?;
 
         self.w.write_all(b">")
     }
@@ -391,15 +367,12 @@ where
         self.w.write_all(b"=")?;
 
         let b = value.as_bytes();
-        let (unquoted, double, _) =
-            b.iter()
-                .fold((true, false, false), |(unquoted, double, single), &c| {
-                    let (double, single) = (double || c == b'"', single || c == b'\'');
-                    let unquoted =
-                        unquoted && !double && !single && c != b'=' && !c.is_ascii_whitespace();
+        let (unquoted, double, _) = b.iter().fold((true, false, false), |(unquoted, double, single), &c| {
+            let (double, single) = (double || c == b'"', single || c == b'\'');
+            let unquoted = unquoted && !double && !single && c != b'=' && !c.is_ascii_whitespace();
 
-                    (unquoted, double, single)
-                });
+            (unquoted, double, single)
+        });
 
         if unquoted {
             self.w.write_all(b)
@@ -410,12 +383,7 @@ where
         }
     }
 
-    fn write_attribute_value<T: AsRef<[u8]>>(
-        &mut self,
-        v: T,
-        quote: &[u8],
-        f: EntityFn,
-    ) -> io::Result<()> {
+    fn write_attribute_value<T: AsRef<[u8]>>(&mut self, v: T, quote: &[u8], f: EntityFn) -> io::Result<()> {
         self.w.write_all(quote)?;
 
         let b = v.as_ref();
@@ -522,10 +490,7 @@ impl<'a> Context<'a> {
 
     fn trim_right(&self) -> bool {
         self.right.map_or(true, |siblings| {
-            siblings
-                .iter()
-                .find_map(Self::is_block_element)
-                .unwrap_or(true)
+            siblings.iter().find_map(Self::is_block_element).unwrap_or(true)
         })
     }
 
@@ -558,11 +523,7 @@ const fn reserved_entity(v: u8) -> Option<&'static [u8]> {
 }
 
 const fn reserved_entity_with_apos(v: u8) -> Option<&'static [u8]> {
-    if v == b'\'' {
-        Some(b"&#39;")
-    } else {
-        reserved_entity(v)
-    }
+    if v == b'\'' { Some(b"&#39;") } else { reserved_entity(v) }
 }
 
 fn is_whitespace(s: &RefCell<Tendril<UTF8>>) -> bool {
@@ -707,11 +668,7 @@ mod tests {
             let mut minifier = Minifier::new(&mut w, MinifierOptions::default());
             minifier.preceding_whitespace = preceding_whitespace;
             minifier
-                .write_collapse_whitespace(
-                    input.as_bytes(),
-                    reserved_entity,
-                    Some(preceding_whitespace),
-                )
+                .write_collapse_whitespace(input.as_bytes(), reserved_entity, Some(preceding_whitespace))
                 .unwrap();
 
             let s = str::from_utf8(&w).unwrap();
@@ -785,23 +742,13 @@ mod tests {
             ("<body>    <p>A", "<p>A", true, false),
             ("<body id=main>    <p>A", "<body id=main><p>A", true, false),
             // Retain whitespace, whitespace before <p>
-            (
-                "    <body>    <p>A      ",
-                "<body>    <p>A      ",
-                false,
-                false,
-            ),
+            ("    <body>    <p>A      ", "<body>    <p>A      ", false, false),
             // Retain whitespace, touching <p>
             ("<body><p>A</body>", "<p>A", false, false),
             // Comments ignored
             ("<body><p>A</body><!-- -->", "<p>A", false, false),
             // Comments preserved
-            (
-                "<body><p>A</body><!-- -->",
-                "<body><p>A</body><!-- -->",
-                false,
-                true,
-            ),
+            ("<body><p>A</body><!-- -->", "<body><p>A</body><!-- -->", false, true),
             // Retain end tag if touching inline element
             (
                 "<p>Some text</p><button></button>",

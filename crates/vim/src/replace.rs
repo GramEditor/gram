@@ -4,10 +4,7 @@ use crate::{
     object::Object,
     state::Mode,
 };
-use editor::{
-    Anchor, Bias, Editor, EditorSnapshot, SelectionEffects, ToOffset, ToPoint,
-    display_map::ToDisplayPoint,
-};
+use editor::{Anchor, Bias, Editor, EditorSnapshot, SelectionEffects, ToOffset, ToPoint, display_map::ToDisplayPoint};
 use gpui::{ClipboardEntry, Context, Window, actions};
 use language::{Point, SelectionGoal};
 use std::ops::Range;
@@ -43,12 +40,7 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
 struct VimExchange;
 
 impl Vim {
-    pub(crate) fn multi_replace(
-        &mut self,
-        text: Arc<str>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub(crate) fn multi_replace(&mut self, text: Arc<str>, window: &mut Window, cx: &mut Context<Self>) {
         self.update_editor(cx, |vim, editor, cx| {
             editor.transact(window, cx, |editor, window, cx| {
                 editor.set_clip_at_line_ends(false, cx);
@@ -69,10 +61,7 @@ impl Vim {
                         }
                         let replace_range = map.buffer_snapshot().anchor_before(range.start)
                             ..map.buffer_snapshot().anchor_after(range.end);
-                        let current_text = map
-                            .buffer_snapshot()
-                            .text_for_range(replace_range.clone())
-                            .collect();
+                        let current_text = map.buffer_snapshot().text_for_range(replace_range.clone()).collect();
                         vim.replacements.push((replace_range.clone(), current_text));
                         (replace_range, text.clone())
                     })
@@ -88,12 +77,7 @@ impl Vim {
         });
     }
 
-    fn undo_replace(
-        &mut self,
-        maybe_times: Option<usize>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn undo_replace(&mut self, maybe_times: Option<usize>, window: &mut Window, cx: &mut Context<Self>) {
         self.update_editor(cx, |vim, editor, cx| {
             editor.transact(window, cx, |editor, window, cx| {
                 editor.set_clip_at_line_ends(false, cx);
@@ -104,15 +88,10 @@ impl Vim {
                     .into_iter()
                     .filter_map(|selection| {
                         let end = selection.head();
-                        let start = motion::wrapping_left(
-                            &map,
-                            end.to_display_point(&map),
-                            maybe_times.unwrap_or(1),
-                        )
-                        .to_point(&map);
+                        let start = motion::wrapping_left(&map, end.to_display_point(&map), maybe_times.unwrap_or(1))
+                            .to_point(&map);
                         new_selections.push(
-                            map.buffer_snapshot().anchor_before(start)
-                                ..map.buffer_snapshot().anchor_before(start),
+                            map.buffer_snapshot().anchor_before(start)..map.buffer_snapshot().anchor_before(start),
                         );
 
                         let mut undo = None;
@@ -140,19 +119,11 @@ impl Vim {
         });
     }
 
-    pub fn exchange_object(
-        &mut self,
-        object: Object,
-        around: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn exchange_object(&mut self, object: Object, around: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.stop_recording(cx);
         self.update_editor(cx, |vim, editor, cx| {
             editor.set_clip_at_line_ends(false, cx);
-            let mut selection = editor
-                .selections
-                .newest_display(&editor.display_snapshot(cx));
+            let mut selection = editor.selections.newest_display(&editor.display_snapshot(cx));
             let snapshot = editor.snapshot(window, cx);
             object.expand_selection(&snapshot, &mut selection, around, None);
             let start = snapshot
@@ -198,17 +169,9 @@ impl Vim {
         self.update_editor(cx, |vim, editor, cx| {
             editor.set_clip_at_line_ends(false, cx);
             let text_layout_details = editor.text_layout_details(window);
-            let mut selection = editor
-                .selections
-                .newest_display(&editor.display_snapshot(cx));
+            let mut selection = editor.selections.newest_display(&editor.display_snapshot(cx));
             let snapshot = editor.snapshot(window, cx);
-            motion.expand_selection(
-                &snapshot,
-                &mut selection,
-                times,
-                &text_layout_details,
-                forced_motion,
-            );
+            motion.expand_selection(&snapshot, &mut selection, times, &text_layout_details, forced_motion);
             let start = snapshot
                 .buffer_snapshot()
                 .anchor_before(selection.start.to_point(&snapshot));
@@ -237,12 +200,7 @@ impl Vim {
             let previous_range_end = previous_range.end.to_offset(&snapshot.buffer_snapshot());
             let previous_range_start = previous_range.start.to_offset(&snapshot.buffer_snapshot());
 
-            let text_for = |range: Range<Anchor>| {
-                snapshot
-                    .buffer_snapshot()
-                    .text_for_range(range)
-                    .collect::<String>()
-            };
+            let text_for = |range: Range<Anchor>| snapshot.buffer_snapshot().text_for_range(range).collect::<String>();
 
             let mut final_cursor_position = None;
 
@@ -252,12 +210,10 @@ impl Vim {
                 final_cursor_position = Some(new_range.start.to_display_point(snapshot));
 
                 editor.edit([(previous_range, new_text), (new_range, previous_text)], cx);
-            } else if new_range_start <= previous_range_start && new_range_end >= previous_range_end
-            {
+            } else if new_range_start <= previous_range_start && new_range_end >= previous_range_end {
                 final_cursor_position = Some(new_range.start.to_display_point(snapshot));
                 editor.edit([(new_range, text_for(previous_range))], cx);
-            } else if previous_range_start <= new_range_start && previous_range_end >= new_range_end
-            {
+            } else if previous_range_start <= new_range_start && previous_range_end >= new_range_end {
                 final_cursor_position = Some(previous_range.start.to_display_point(snapshot));
                 editor.edit([(previous_range, text_for(new_range))], cx);
             }
@@ -282,12 +238,10 @@ impl Vim {
     /// Pastes the clipboard contents, replacing the same number of characters
     /// as the clipboard's contents.
     pub fn paste_replace(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let clipboard_text =
-            cx.read_from_clipboard()
-                .and_then(|item| match item.entries().first() {
-                    Some(ClipboardEntry::String(text)) => Some(text.text().to_string()),
-                    _ => None,
-                });
+        let clipboard_text = cx.read_from_clipboard().and_then(|item| match item.entries().first() {
+            Some(ClipboardEntry::String(text)) => Some(text.text().to_string()),
+            _ => None,
+        });
 
         if let Some(text) = clipboard_text {
             self.push_operator(Operator::Replace, window, cx);
@@ -408,8 +362,7 @@ mod test {
         cx.shared_state().await.assert_eq("--ˇ-lo\n");
 
         cx.set_shared_state("ˇhello\n").await;
-        cx.simulate_shared_keystrokes("3 shift-r a b c escape")
-            .await;
+        cx.simulate_shared_keystrokes("3 shift-r a b c escape").await;
         cx.shared_state().await.assert_eq("abcabcabˇc\n");
     }
 
@@ -418,8 +371,7 @@ mod test {
         let mut cx: NeovimBackedTestContext = NeovimBackedTestContext::new(cx).await;
 
         cx.set_shared_state("ˇhello world\n").await;
-        cx.simulate_shared_keystrokes("shift-r - - - escape 4 l .")
-            .await;
+        cx.simulate_shared_keystrokes("shift-r - - - escape 4 l .").await;
         cx.shared_state().await.assert_eq("---lo --ˇ-ld\n");
     }
 

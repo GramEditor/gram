@@ -15,22 +15,18 @@ pub use serde_json;
 // We explicitly enumerate the symbols we want to re-export, as there are some
 // that we may want to shadow to provide a cleaner Rust API.
 pub use wit::{
-    CodeLabel, CodeLabelSpan, CodeLabelSpanLiteral, Command, DownloadedFileType, EnvVars,
-    KeyValueStore, LanguageServerInstallationStatus, Project, Range, Worktree, download_file,
-    make_file_executable,
+    CodeLabel, CodeLabelSpan, CodeLabelSpanLiteral, Command, DownloadedFileType, EnvVars, KeyValueStore,
+    LanguageServerInstallationStatus, Project, Range, Worktree, download_file, make_file_executable,
     zed::extension::dap::{
-        AttachRequest, BuildTaskDefinition, BuildTaskDefinitionTemplatePayload, BuildTaskTemplate,
-        DebugAdapterBinary, DebugConfig, DebugRequest, DebugScenario, DebugTaskDefinition,
-        LaunchRequest, StartDebuggingRequestArguments, StartDebuggingRequestArgumentsRequest,
-        TaskTemplate, TcpArguments, TcpArgumentsTemplate, resolve_tcp_template,
+        AttachRequest, BuildTaskDefinition, BuildTaskDefinitionTemplatePayload, BuildTaskTemplate, DebugAdapterBinary,
+        DebugConfig, DebugRequest, DebugScenario, DebugTaskDefinition, LaunchRequest, StartDebuggingRequestArguments,
+        StartDebuggingRequestArgumentsRequest, TaskTemplate, TcpArguments, TcpArgumentsTemplate, resolve_tcp_template,
     },
     zed::extension::github::{
-        GithubRelease, GithubReleaseAsset, GithubReleaseOptions, github_release_by_tag_name,
-        latest_github_release,
+        GithubRelease, GithubReleaseAsset, GithubReleaseOptions, github_release_by_tag_name, latest_github_release,
     },
     zed::extension::nodejs::{
-        node_binary_path, npm_install_package, npm_package_installed_version,
-        npm_package_latest_version,
+        node_binary_path, npm_install_package, npm_package_installed_version, npm_package_latest_version,
     },
     zed::extension::platform::{Architecture, Os, current_platform},
 };
@@ -45,9 +41,7 @@ pub use wit::Guest;
 /// Constructs for interacting with language servers over the
 /// Language Server Protocol (LSP).
 pub mod lsp {
-    pub use crate::wit::zed::extension::lsp::{
-        Completion, CompletionKind, InsertTextFormat, Symbol, SymbolKind,
-    };
+    pub use crate::wit::zed::extension::lsp::{Completion, CompletionKind, InsertTextFormat, Symbol, SymbolKind};
 }
 
 /// A result returned from a Gram extension.
@@ -126,11 +120,7 @@ pub trait Extension: Send + Sync {
     }
 
     /// Returns the label for the given symbol.
-    fn label_for_symbol(
-        &self,
-        _language_server_id: &LanguageServerId,
-        _symbol: Symbol,
-    ) -> Option<CodeLabel> {
+    fn label_for_symbol(&self, _language_server_id: &LanguageServerId, _symbol: Symbol) -> Option<CodeLabel> {
         None
     }
 
@@ -144,12 +134,7 @@ pub trait Extension: Send + Sync {
     }
 
     /// Indexes the docs for the specified package.
-    fn index_docs(
-        &self,
-        _provider: String,
-        _package: String,
-        _database: &KeyValueStore,
-    ) -> Result<(), String> {
+    fn index_docs(&self, _provider: String, _package: String, _database: &KeyValueStore) -> Result<(), String> {
         Err("`index_docs` not implemented".to_string())
     }
 
@@ -211,11 +196,7 @@ pub trait Extension: Send + Sync {
 
     /// Runs the second phase of locator resolution.
     /// See [`Extension::dap_locator_create_scenario`] for a hefty comment on locators.
-    fn run_dap_locator(
-        &mut self,
-        _locator_name: String,
-        _build_task: TaskTemplate,
-    ) -> Result<DebugRequest, String> {
+    fn run_dap_locator(&mut self, _locator_name: String, _build_task: TaskTemplate) -> Result<DebugRequest, String> {
         Err("`run_dap_locator` not implemented".to_string())
     }
 }
@@ -263,9 +244,9 @@ macro_rules! register_extension {
             #[cfg(target_os = "wasi")]
             wasi_ext::init_cwd();
 
-            zed_extension_api::register_extension(|| {
-                Box::new(<$extension_type as zed_extension_api::Extension>::new())
-            });
+            zed_extension_api::register_extension(
+                || Box::new(<$extension_type as zed_extension_api::Extension>::new()),
+            );
         }
     };
 }
@@ -302,10 +283,7 @@ wit::export!(Component);
 struct Component;
 
 impl wit::Guest for Component {
-    fn language_server_command(
-        language_server_id: String,
-        worktree: &wit::Worktree,
-    ) -> Result<wit::Command> {
+    fn language_server_command(language_server_id: String, worktree: &wit::Worktree) -> Result<wit::Command> {
         let language_server_id = LanguageServerId(language_server_id);
         extension().language_server_command(&language_server_id, worktree)
     }
@@ -378,10 +356,7 @@ impl wit::Guest for Component {
         Ok(labels)
     }
 
-    fn labels_for_symbols(
-        language_server_id: String,
-        symbols: Vec<Symbol>,
-    ) -> Result<Vec<Option<CodeLabel>>, String> {
+    fn labels_for_symbols(language_server_id: String, symbols: Vec<Symbol>) -> Result<Vec<Option<CodeLabel>>, String> {
         let language_server_id = LanguageServerId(language_server_id);
         let mut labels = Vec::new();
         for (ix, symbol) in symbols.into_iter().enumerate() {
@@ -398,11 +373,7 @@ impl wit::Guest for Component {
         extension().suggest_docs_packages(provider)
     }
 
-    fn index_docs(
-        provider: String,
-        package: String,
-        database: &KeyValueStore,
-    ) -> Result<(), String> {
+    fn index_docs(provider: String, package: String, database: &KeyValueStore) -> Result<(), String> {
         extension().index_docs(provider, package, database)
     }
 
@@ -415,10 +386,7 @@ impl wit::Guest for Component {
         extension().get_dap_binary(adapter_name, config, user_installed_path, worktree)
     }
 
-    fn dap_request_kind(
-        adapter_name: String,
-        config: String,
-    ) -> Result<StartDebuggingRequestArgumentsRequest, String> {
+    fn dap_request_kind(adapter_name: String, config: String) -> Result<StartDebuggingRequestArgumentsRequest, String> {
         extension().dap_request_kind(
             adapter_name,
             serde_json::from_str(&config).map_err(|e| format!("Failed to parse config: {e}"))?,
@@ -433,17 +401,9 @@ impl wit::Guest for Component {
         resolved_label: String,
         debug_adapter_name: String,
     ) -> Option<DebugScenario> {
-        extension().dap_locator_create_scenario(
-            locator_name,
-            build_task,
-            resolved_label,
-            debug_adapter_name,
-        )
+        extension().dap_locator_create_scenario(locator_name, build_task, resolved_label, debug_adapter_name)
     }
-    fn run_dap_locator(
-        locator_name: String,
-        build_task: TaskTemplate,
-    ) -> Result<DebugRequest, String> {
+    fn run_dap_locator(locator_name: String, build_task: TaskTemplate) -> Result<DebugRequest, String> {
         extension().run_dap_locator(locator_name, build_task)
     }
 }

@@ -107,16 +107,10 @@ impl HeadlessExtensionStore {
         })
     }
 
-    pub async fn load_extension(
-        this: WeakEntity<Self>,
-        extension: ExtensionVersion,
-        cx: &mut AsyncApp,
-    ) -> Result<()> {
+    pub async fn load_extension(this: WeakEntity<Self>, extension: ExtensionVersion, cx: &mut AsyncApp) -> Result<()> {
         let (fs, wasm_host, extension_dir) = this.update(cx, |this, _cx| {
-            this.loaded_extensions.insert(
-                extension.id.clone().into(),
-                extension.version.clone().into(),
-            );
+            this.loaded_extensions
+                .insert(extension.id.clone().into(), extension.version.clone().into());
             (
                 this.fs.clone(),
                 this.wasm_host.clone(),
@@ -129,11 +123,7 @@ impl HeadlessExtensionStore {
         debug_assert!(!manifest.languages.is_empty() || manifest.allow_remote_load());
 
         if manifest.version.as_ref() != extension.version.as_str() {
-            anyhow::bail!(
-                "mismatched versions: ({}) != ({})",
-                manifest.version,
-                extension.version
-            )
+            anyhow::bail!("mismatched versions: ({}) != ({})", manifest.version, extension.version)
         }
 
         for language_path in &manifest.languages {
@@ -215,23 +205,13 @@ impl HeadlessExtensionStore {
         Ok(())
     }
 
-    fn uninstall_extension(
-        &mut self,
-        extension_id: &Arc<str>,
-        cx: &mut Context<Self>,
-    ) -> Task<Result<()>> {
+    fn uninstall_extension(&mut self, extension_id: &Arc<str>, cx: &mut Context<Self>) -> Task<Result<()>> {
         self.loaded_extensions.remove(extension_id);
 
-        let languages_to_remove = self
-            .loaded_languages
-            .remove(extension_id)
-            .unwrap_or_default();
+        let languages_to_remove = self.loaded_languages.remove(extension_id).unwrap_or_default();
         self.proxy.remove_languages(&languages_to_remove, &[]);
 
-        let servers_to_remove = self
-            .loaded_language_servers
-            .remove(extension_id)
-            .unwrap_or_default();
+        let servers_to_remove = self.loaded_language_servers.remove(extension_id).unwrap_or_default();
         let proxy = self.proxy.clone();
         let path = self.extension_dir.join(&extension_id.to_string());
         let fs = self.fs.clone();
@@ -239,11 +219,7 @@ impl HeadlessExtensionStore {
             let mut removal_tasks = Vec::with_capacity(servers_to_remove.len());
             cx.update(|cx| {
                 for (language_server_name, language) in servers_to_remove {
-                    removal_tasks.push(proxy.remove_language_server(
-                        &language,
-                        &language_server_name,
-                        cx,
-                    ));
+                    removal_tasks.push(proxy.remove_language_server(&language, &language_server_name, cx));
                 }
             })
             .ok();
@@ -291,16 +267,11 @@ impl HeadlessExtensionStore {
         envelope: TypedEnvelope<proto::SyncExtensions>,
         mut cx: AsyncApp,
     ) -> Result<proto::SyncExtensionsResponse> {
-        let requested_extensions =
-            envelope
-                .payload
-                .extensions
-                .into_iter()
-                .map(|p| ExtensionVersion {
-                    id: p.id,
-                    version: p.version,
-                    dev: p.dev,
-                });
+        let requested_extensions = envelope.payload.extensions.into_iter().map(|p| ExtensionVersion {
+            id: p.id,
+            version: p.version,
+            dev: p.dev,
+        });
         let missing_extensions = extension_store
             .update(&mut cx, |extension_store, cx| {
                 extension_store.sync_extensions(requested_extensions.collect(), cx)
@@ -316,9 +287,7 @@ impl HeadlessExtensionStore {
                     dev: e.dev,
                 })
                 .collect(),
-            tmp_dir: paths::remote_extensions_uploads_dir()
-                .to_string_lossy()
-                .to_string(),
+            tmp_dir: paths::remote_extensions_uploads_dir().to_string_lossy().to_string(),
         })
     }
 
@@ -327,10 +296,7 @@ impl HeadlessExtensionStore {
         envelope: TypedEnvelope<proto::InstallExtension>,
         mut cx: AsyncApp,
     ) -> Result<proto::Ack> {
-        let extension = envelope
-            .payload
-            .extension
-            .context("Invalid InstallExtension request")?;
+        let extension = envelope.payload.extension.context("Invalid InstallExtension request")?;
 
         extensions
             .update(&mut cx, |extensions, cx| {

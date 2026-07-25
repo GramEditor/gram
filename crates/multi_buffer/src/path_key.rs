@@ -8,9 +8,7 @@ use rope::Point;
 use text::{Bias, BufferId, OffsetRangeExt, locator::Locator};
 use util::{post_inc, rel_path::RelPath};
 
-use crate::{
-    Anchor, ExcerptId, ExcerptRange, ExpandExcerptDirection, MultiBuffer, build_excerpt_ranges,
-};
+use crate::{Anchor, ExcerptId, ExcerptRange, ExpandExcerptDirection, MultiBuffer, build_excerpt_ranges};
 
 #[derive(PartialEq, Eq, Ord, PartialOrd, Clone, Hash, Debug)]
 pub struct PathKey {
@@ -33,9 +31,7 @@ impl PathKey {
         } else {
             Self {
                 sort_prefix: None,
-                path: RelPath::unix(&buffer.entity_id().to_string())
-                    .unwrap()
-                    .into_arc(),
+                path: RelPath::unix(&buffer.entity_id().to_string()).unwrap().into_arc(),
             }
         }
     }
@@ -92,15 +88,7 @@ impl MultiBuffer {
         let excerpt_ranges = build_excerpt_ranges(ranges, context_line_count, &buffer_snapshot);
 
         let (new, counts) = Self::merge_excerpt_ranges(&excerpt_ranges);
-        self.set_merged_excerpt_ranges_for_path(
-            path,
-            buffer,
-            excerpt_ranges,
-            &buffer_snapshot,
-            new,
-            counts,
-            cx,
-        )
+        self.set_merged_excerpt_ranges_for_path(path, buffer, excerpt_ranges, &buffer_snapshot, new, counts, cx)
     }
 
     pub fn set_excerpt_ranges_for_path(
@@ -112,15 +100,7 @@ impl MultiBuffer {
         cx: &mut Context<Self>,
     ) -> (Vec<Range<Anchor>>, bool) {
         let (new, counts) = Self::merge_excerpt_ranges(&excerpt_ranges);
-        self.set_merged_excerpt_ranges_for_path(
-            path,
-            buffer,
-            excerpt_ranges,
-            buffer_snapshot,
-            new,
-            counts,
-            cx,
-        )
+        self.set_merged_excerpt_ranges_for_path(path, buffer, excerpt_ranges, buffer_snapshot, new, counts, cx)
     }
 
     pub fn set_anchored_excerpts_for_path(
@@ -139,8 +119,7 @@ impl MultiBuffer {
             let (excerpt_ranges, new, counts) = app
                 .background_spawn(async move {
                     let ranges = ranges.into_iter().map(|range| range.to_point(&snapshot));
-                    let excerpt_ranges =
-                        build_excerpt_ranges(ranges, context_line_count, &snapshot);
+                    let excerpt_ranges = build_excerpt_ranges(ranges, context_line_count, &snapshot);
                     let (new, counts) = Self::merge_excerpt_ranges(&excerpt_ranges);
                     (excerpt_ranges, new, counts)
                 })
@@ -210,15 +189,13 @@ impl MultiBuffer {
                             context.start.column = 0;
                         }
                         ExpandExcerptDirection::Down => {
-                            context.end.row =
-                                (context.end.row + line_count).min(excerpt.buffer.max_point().row);
+                            context.end.row = (context.end.row + line_count).min(excerpt.buffer.max_point().row);
                             context.end.column = excerpt.buffer.line_len(context.end.row);
                         }
                         ExpandExcerptDirection::UpAndDown => {
                             context.start.row = context.start.row.saturating_sub(line_count);
                             context.start.column = 0;
-                            context.end.row =
-                                (context.end.row + line_count).min(excerpt.buffer.max_point().row);
+                            context.end.row = (context.end.row + line_count).min(excerpt.buffer.max_point().row);
                             context.end.column = excerpt.buffer.line_len(context.end.row);
                         }
                     }
@@ -266,8 +243,7 @@ impl MultiBuffer {
         counts: Vec<usize>,
         cx: &mut Context<Self>,
     ) -> (Vec<Range<Anchor>>, bool) {
-        let (excerpt_ids, added_a_new_excerpt) =
-            self.update_path_excerpts(path, buffer, buffer_snapshot, new, cx);
+        let (excerpt_ids, added_a_new_excerpt) = self.update_path_excerpts(path, buffer, buffer_snapshot, new, cx);
 
         let mut result = Vec::new();
         let mut ranges = ranges.into_iter();
@@ -299,11 +275,7 @@ impl MultiBuffer {
             .and_then(|(_, value)| value.last().copied())
             .unwrap_or(ExcerptId::min());
 
-        let existing = self
-            .excerpts_by_path
-            .get(&path)
-            .cloned()
-            .unwrap_or_default();
+        let existing = self.excerpts_by_path.get(&path).cloned().unwrap_or_default();
         let mut new_iter = new.into_iter().peekable();
         let mut existing_iter = existing.into_iter().peekable();
 
@@ -359,10 +331,7 @@ impl MultiBuffer {
                 {
                     last.context.end = last.context.end.max(existing_range.end);
                     to_remove.push(*existing_id);
-                    self.snapshot
-                        .get_mut()
-                        .replaced_excerpts
-                        .insert(*existing_id, *last_id);
+                    self.snapshot.get_mut().replaced_excerpts.insert(*existing_id, *last_id);
                     existing_iter.next();
                     continue;
                 }
@@ -394,9 +363,7 @@ impl MultiBuffer {
                         continue;
                     }
 
-                    if existing_range.start == new.context.start
-                        && existing_range.end == new.context.end
-                    {
+                    if existing_range.start == new.context.start && existing_range.end == new.context.end {
                         self.insert_excerpts_with_ids_after(
                             insert_after,
                             buffer.clone(),
@@ -409,10 +376,7 @@ impl MultiBuffer {
                     } else {
                         let existing_id = existing_iter.next().unwrap();
                         let new_id = next_excerpt_id();
-                        self.snapshot
-                            .get_mut()
-                            .replaced_excerpts
-                            .insert(existing_id, new_id);
+                        self.snapshot.get_mut().replaced_excerpts.insert(existing_id, new_id);
                         to_remove.push(existing_id);
                         let mut range = new_iter.next().unwrap();
                         range.context.start = range.context.start.min(existing_range.start);

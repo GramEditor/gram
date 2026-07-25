@@ -5,9 +5,7 @@ use std::{
     sync::{Arc, LazyLock, OnceLock},
 };
 use theme::{Theme, ThemeColors, ThemeRegistry};
-use ui::{
-    IntoElement, RenderOnce, component_prelude::Documented, prelude::*, utils::inner_corner_radius,
-};
+use ui::{IntoElement, RenderOnce, component_prelude::Documented, prelude::*, utils::inner_corner_radius};
 
 #[derive(Clone, PartialEq)]
 pub enum ThemePreviewStyle {
@@ -71,11 +69,7 @@ impl ThemePreviewTile {
                 let value = (seed * 1000.0 + index as f32 * 10.0).sin() * 0.5 + 0.5;
                 0.5 + value * 0.45
             };
-            Self::item_skeleton(
-                relative(width).into(),
-                skeleton_height,
-                colors.text.alpha(0.45),
-            )
+            Self::item_skeleton(relative(width).into(), skeleton_height, colors.text.alpha(0.45))
         })
     }
 
@@ -108,8 +102,7 @@ impl ThemePreviewTile {
         let skeleton_height = skeleton_height.into();
 
         let line_width = |line_idx: usize, block_idx: usize| -> f32 {
-            let val =
-                (seed * 100.0 + line_idx as f32 * 20.0 + block_idx as f32 * 5.0).sin() * 0.5 + 0.5;
+            let val = (seed * 100.0 + line_idx as f32 * 20.0 + block_idx as f32 * 5.0).sin() * 0.5 + 0.5;
             0.05 + val * 0.2
         };
 
@@ -123,8 +116,7 @@ impl ThemePreviewTile {
         };
 
         let pick_color = |line_idx: usize, block_idx: usize| -> Hsla {
-            let idx = ((seed * 10.0 + line_idx as f32 * 7.0 + block_idx as f32 * 3.0).sin() * 3.5)
-                .abs() as usize
+            let idx = ((seed * 10.0 + line_idx as f32 * 7.0 + block_idx as f32 * 3.0).sin() * 3.5).abs() as usize
                 % syntax_colors.len();
             syntax_colors[idx].unwrap_or(colors.text)
         };
@@ -133,9 +125,8 @@ impl ThemePreviewTile {
 
         let lines = (0..line_count)
             .map(|line_idx| {
-                let block_count = (((seed * 30.0 + line_idx as f32 * 12.0).sin() * 0.5 + 0.5) * 3.0)
-                    .round() as usize
-                    + 2;
+                let block_count =
+                    (((seed * 30.0 + line_idx as f32 * 12.0).sin() * 0.5 + 0.5) * 3.0).round() as usize + 2;
 
                 let indent = indentation(line_idx);
 
@@ -166,27 +157,27 @@ impl ThemePreviewTile {
             .border_r(px(1.))
             .border_color(colors.border_transparent)
             .bg(colors.panel_background)
-            .child(v_flex().p_2().size_full().gap_1().children(
-                Self::render_sidebar_skeleton_items(seed, colors, skeleton_height.into()),
-            ))
+            .child(
+                v_flex()
+                    .p_2()
+                    .size_full()
+                    .gap_1()
+                    .children(Self::render_sidebar_skeleton_items(
+                        seed,
+                        colors,
+                        skeleton_height.into(),
+                    )),
+            )
     }
 
-    pub fn render_pane(
-        seed: f32,
-        theme: Arc<Theme>,
-        skeleton_height: impl Into<Length>,
-    ) -> impl IntoElement {
+    pub fn render_pane(seed: f32, theme: Arc<Theme>, skeleton_height: impl Into<Length>) -> impl IntoElement {
         v_flex().h_full().flex_grow().child(
             div()
                 .size_full()
                 .overflow_hidden()
                 .bg(theme.colors().editor_background)
                 .p_2()
-                .child(Self::render_pseudo_code_skeleton(
-                    seed,
-                    theme,
-                    skeleton_height.into(),
-                )),
+                .child(Self::render_pseudo_code_skeleton(seed, theme, skeleton_height.into())),
         )
     }
 
@@ -210,12 +201,7 @@ impl ThemePreviewTile {
     }
 
     fn render_borderless(seed: f32, theme: Arc<Theme>) -> impl IntoElement {
-        Self::render_editor(
-            seed,
-            theme,
-            Self::SIDEBAR_WIDTH_DEFAULT,
-            Self::SKELETON_HEIGHT_DEFAULT,
-        )
+        Self::render_editor(seed, theme, Self::SIDEBAR_WIDTH_DEFAULT, Self::SKELETON_HEIGHT_DEFAULT)
     }
 
     fn render_border(seed: f32, theme: Arc<Theme>) -> impl IntoElement {
@@ -285,19 +271,12 @@ impl ThemePreviewTile {
 impl RenderOnce for ThemePreviewTile {
     fn render(self, _window: &mut ui::Window, _cx: &mut ui::App) -> impl IntoElement {
         match self.style {
-            ThemePreviewStyle::Bordered => {
-                Self::render_border(self.seed, self.theme).into_any_element()
+            ThemePreviewStyle::Bordered => Self::render_border(self.seed, self.theme).into_any_element(),
+            ThemePreviewStyle::Borderless => Self::render_borderless(self.seed, self.theme).into_any_element(),
+            ThemePreviewStyle::SideBySide(other_theme) => {
+                Self::render_side_by_side(self.seed, self.theme, other_theme, _cx.theme().colors().border)
+                    .into_any_element()
             }
-            ThemePreviewStyle::Borderless => {
-                Self::render_borderless(self.seed, self.theme).into_any_element()
-            }
-            ThemePreviewStyle::SideBySide(other_theme) => Self::render_side_by_side(
-                self.seed,
-                self.theme,
-                other_theme,
-                _cx.theme().colors().border,
-            )
-            .into_any_element(),
         }
     }
 }
@@ -364,10 +343,7 @@ impl Component for ThemePreviewTile {
                                 themes_to_preview
                                     .into_iter()
                                     .map(|theme| {
-                                        div()
-                                            .w(px(200.))
-                                            .h(px(140.))
-                                            .child(ThemePreviewTile::new(theme, 0.42))
+                                        div().w(px(200.)).h(px(140.)).child(ThemePreviewTile::new(theme, 0.42))
                                     })
                                     .collect::<Vec<_>>(),
                             )

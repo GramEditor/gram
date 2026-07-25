@@ -92,10 +92,7 @@ pub fn terminal_size(window: &mut Window, cx: &mut App) -> terminal::TerminalBou
     let font_pixels = text_style.font_size.to_pixels(window.rem_size());
     let font_id = text_system.resolve_font(&text_style.font());
 
-    let cell_width = text_system
-        .advance(font_id, font_pixels, 'w')
-        .unwrap()
-        .width;
+    let cell_width = text_system.advance(font_id, font_pixels, 'w').unwrap().width;
 
     let num_lines = ReplSettings::get_global(cx).max_lines;
     let columns = ReplSettings::get_global(cx).max_columns;
@@ -121,11 +118,7 @@ impl TerminalOutput {
     /// and sets up the necessary components for handling terminal events and rendering.
     ///
     pub fn new(window: &mut Window, cx: &mut App) -> Self {
-        let term = alacritty_terminal::Term::new(
-            Config::default(),
-            &terminal_size(window, cx),
-            VoidListener,
-        );
+        let term = alacritty_terminal::Term::new(Config::default(), &terminal_size(window, cx), VoidListener);
 
         Self {
             parser: Processor::new(),
@@ -263,17 +256,11 @@ impl Render for TerminalOutput {
                 cell: ic.cell.clone(),
             });
         let minimum_contrast = TerminalSettings::get_global(cx).minimum_contrast;
-        let (rects, batched_text_runs) =
-            TerminalElement::layout_grid(grid, 0, &text_style, None, minimum_contrast, cx);
+        let (rects, batched_text_runs) = TerminalElement::layout_grid(grid, 0, &text_style, None, minimum_contrast, cx);
 
         // lines are 0-indexed, so we must add 1 to get the number of lines
         let text_line_height = text_style.line_height_in_pixels(window.rem_size());
-        let num_lines = batched_text_runs
-            .iter()
-            .map(|b| b.start_point.line)
-            .max()
-            .unwrap_or(0)
-            + 1;
+        let num_lines = batched_text_runs.iter().map(|b| b.start_point.line).max().unwrap_or(0) + 1;
         let height = num_lines as f32 * text_line_height;
 
         let font_pixels = text_style.font_size.to_pixels(window.rem_size());
@@ -339,8 +326,7 @@ impl OutputContent for TerminalOutput {
         }
 
         let buffer = cx.new(|cx| {
-            let mut buffer =
-                Buffer::local(self.full_text(), cx).with_language(language::PLAIN_TEXT.clone(), cx);
+            let mut buffer = Buffer::local(self.full_text(), cx).with_language(language::PLAIN_TEXT.clone(), cx);
             buffer.set_capability(language::Capability::ReadOnly, cx);
             buffer
         });

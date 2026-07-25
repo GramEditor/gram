@@ -43,9 +43,8 @@ impl SpinnerVariant {
             SpinnerVariant::Dots => vec!["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"],
             SpinnerVariant::DotsVariant => vec!["⣼", "⣹", "⢻", "⠿", "⡟", "⣏", "⣧", "⣶"],
             SpinnerVariant::Sand => vec![
-                "⠁", "⠂", "⠄", "⡀", "⡈", "⡐", "⡠", "⣀", "⣁", "⣂", "⣄", "⣌", "⣔", "⣤", "⣥", "⣦",
-                "⣮", "⣶", "⣷", "⣿", "⡿", "⠿", "⢟", "⠟", "⡛", "⠛", "⠫", "⢋", "⠋", "⠍", "⡉", "⠉",
-                "⠑", "⠡", "⢁",
+                "⠁", "⠂", "⠄", "⡀", "⡈", "⡐", "⡠", "⣀", "⣁", "⣂", "⣄", "⣌", "⣔", "⣤", "⣥", "⣦", "⣮", "⣶", "⣷", "⣿",
+                "⡿", "⠿", "⢟", "⠟", "⡛", "⠛", "⠫", "⢋", "⠋", "⠍", "⡉", "⠉", "⠑", "⠡", "⢁",
             ],
         }
     }
@@ -193,10 +192,7 @@ impl Component for SpinnerLabel {
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
         let examples = vec![
             single_example("Default", SpinnerLabel::new().into_any_element()),
-            single_example(
-                "Dots Variant",
-                SpinnerLabel::dots_variant().into_any_element(),
-            ),
+            single_example("Dots Variant", SpinnerLabel::dots_variant().into_any_element()),
             single_example("Sand Variant", SpinnerLabel::sand().into_any_element()),
         ];
 

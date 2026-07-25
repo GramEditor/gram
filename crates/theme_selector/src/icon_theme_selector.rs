@@ -1,17 +1,11 @@
 use app_actions::{ExtensionCategoryFilter, Extensions};
 use fs::Fs;
 use fuzzy::{StringMatch, StringMatchCandidate, match_strings};
-use gpui::{
-    App, Context, DismissEvent, Entity, EventEmitter, Focusable, Render, UpdateGlobal, WeakEntity,
-    Window,
-};
+use gpui::{App, Context, DismissEvent, Entity, EventEmitter, Focusable, Render, UpdateGlobal, WeakEntity, Window};
 use picker::{Picker, PickerDelegate};
 use settings::{Settings as _, SettingsStore, update_settings_file};
 use std::sync::Arc;
-use theme::{
-    Appearance, IconThemeName, IconThemeSelection, SystemAppearance, ThemeMeta, ThemeRegistry,
-    ThemeSettings,
-};
+use theme::{Appearance, IconThemeName, IconThemeSelection, SystemAppearance, ThemeMeta, ThemeRegistry, ThemeSettings};
 use ui::{ListItem, ListItemSpacing, prelude::*, v_flex};
 use util::ResultExt;
 use workspace::{ModalView, ui::HighlightedLabel};
@@ -31,11 +25,7 @@ impl Focusable for IconThemeSelector {
 impl ModalView for IconThemeSelector {}
 
 impl IconThemeSelector {
-    pub fn new(
-        delegate: IconThemeSelectorDelegate,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn new(delegate: IconThemeSelectorDelegate, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let picker = cx.new(|cx| Picker::uniform_list(delegate, window, cx));
         Self { picker }
     }
@@ -69,9 +59,7 @@ impl IconThemeSelectorDelegate {
         cx: &mut Context<IconThemeSelector>,
     ) -> Self {
         let theme_settings = ThemeSettings::get_global(cx);
-        let original_theme = theme_settings
-            .icon_theme
-            .name(SystemAppearance::global(cx).0);
+        let original_theme = theme_settings.icon_theme.name(SystemAppearance::global(cx).0);
 
         let registry = ThemeRegistry::global(cx);
         let mut themes = registry
@@ -116,10 +104,7 @@ impl IconThemeSelectorDelegate {
         this
     }
 
-    fn show_selected_theme(
-        &mut self,
-        cx: &mut Context<Picker<IconThemeSelectorDelegate>>,
-    ) -> Option<IconThemeName> {
+    fn show_selected_theme(&mut self, cx: &mut Context<Picker<IconThemeSelectorDelegate>>) -> Option<IconThemeName> {
         let mat = self.matches.get(self.selected_index)?;
         let name = IconThemeName(mat.string.clone().into());
         Self::set_icon_theme(name.clone(), cx);
@@ -154,18 +139,11 @@ impl PickerDelegate for IconThemeSelectorDelegate {
         self.matches.len()
     }
 
-    fn confirm(
-        &mut self,
-        _: bool,
-        window: &mut Window,
-        cx: &mut Context<Picker<IconThemeSelectorDelegate>>,
-    ) {
+    fn confirm(&mut self, _: bool, window: &mut Window, cx: &mut Context<Picker<IconThemeSelectorDelegate>>) {
         self.selection_completed = true;
 
         let theme_settings = ThemeSettings::get_global(cx);
-        let theme_name = theme_settings
-            .icon_theme
-            .name(SystemAppearance::global(cx).0);
+        let theme_name = theme_settings.icon_theme.name(SystemAppearance::global(cx).0);
 
         let appearance = Appearance::from(window.appearance());
 
@@ -192,21 +170,14 @@ impl PickerDelegate for IconThemeSelectorDelegate {
             self.selection_completed = true;
         }
 
-        self.selector
-            .update(cx, |_, cx| cx.emit(DismissEvent))
-            .log_err();
+        self.selector.update(cx, |_, cx| cx.emit(DismissEvent)).log_err();
     }
 
     fn selected_index(&self) -> usize {
         self.selected_index
     }
 
-    fn set_selected_index(
-        &mut self,
-        ix: usize,
-        _: &mut Window,
-        cx: &mut Context<Picker<IconThemeSelectorDelegate>>,
-    ) {
+    fn set_selected_index(&mut self, ix: usize, _: &mut Window, cx: &mut Context<Picker<IconThemeSelectorDelegate>>) {
         self.selected_index = ix;
         self.selected_theme = self.show_selected_theme(cx);
     }
@@ -238,16 +209,7 @@ impl PickerDelegate for IconThemeSelectorDelegate {
                     })
                     .collect()
             } else {
-                match_strings(
-                    &candidates,
-                    &query,
-                    false,
-                    true,
-                    100,
-                    &Default::default(),
-                    background,
-                )
-                .await
+                match_strings(&candidates, &query, false, true, 100, &Default::default(), background).await
             };
 
             this.update(cx, |this, cx| {
@@ -296,11 +258,7 @@ impl PickerDelegate for IconThemeSelectorDelegate {
         )
     }
 
-    fn render_footer(
-        &self,
-        _window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) -> Option<gpui::AnyElement> {
+    fn render_footer(&self, _window: &mut Window, cx: &mut Context<Picker<Self>>) -> Option<gpui::AnyElement> {
         Some(
             h_flex()
                 .p_2()
@@ -320,17 +278,15 @@ impl PickerDelegate for IconThemeSelectorDelegate {
                         }),
                 )
                 .child(
-                    Button::new("more-icon-themes", "Install Icon Themes").on_click(
-                        move |_event, window, cx| {
-                            window.dispatch_action(
-                                Box::new(Extensions {
-                                    category_filter: Some(ExtensionCategoryFilter::IconThemes),
-                                    id: None,
-                                }),
-                                cx,
-                            );
-                        },
-                    ),
+                    Button::new("more-icon-themes", "Install Icon Themes").on_click(move |_event, window, cx| {
+                        window.dispatch_action(
+                            Box::new(Extensions {
+                                category_filter: Some(ExtensionCategoryFilter::IconThemes),
+                                id: None,
+                            }),
+                            cx,
+                        );
+                    }),
                 )
                 .into_any_element(),
         )

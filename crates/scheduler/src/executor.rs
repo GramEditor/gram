@@ -176,8 +176,7 @@ where
         std::thread_local! {
             static ID: ThreadId = thread::current().id();
         }
-        ID.try_with(|id| *id)
-            .unwrap_or_else(|_| thread::current().id())
+        ID.try_with(|id| *id).unwrap_or_else(|_| thread::current().id())
     }
 
     struct Checked<F> {

@@ -31,9 +31,7 @@ impl SystemSpecs {
     pub fn new(window: &mut Window, cx: &mut App) -> Task<Self> {
         let app_version = AppVersion::global(cx).to_string();
         let release_channel = ReleaseChannel::global(cx);
-        let system = System::new_with_specifics(
-            RefreshKind::nothing().with_memory(MemoryRefreshKind::everything()),
-        );
+        let system = System::new_with_specifics(RefreshKind::nothing().with_memory(MemoryRefreshKind::everything()));
         let memory = system.total_memory();
         let architecture = env::consts::ARCH;
         let commit_sha = match release_channel {
@@ -67,9 +65,7 @@ impl SystemSpecs {
         app_commit_sha: Option<AppCommitSha>,
         release_channel: ReleaseChannel,
     ) -> Self {
-        let system = System::new_with_specifics(
-            RefreshKind::nothing().with_memory(MemoryRefreshKind::everything()),
-        );
+        let system = System::new_with_specifics(RefreshKind::nothing().with_memory(MemoryRefreshKind::everything()));
         let memory = system.total_memory();
         let architecture = env::consts::ARCH;
         let commit_sha = match release_channel {
@@ -104,11 +100,7 @@ impl Display for SystemSpecs {
             } else {
                 "".to_string()
             },
-            if cfg!(debug_assertions) {
-                "(Debug Build)"
-            } else {
-                ""
-            },
+            if cfg!(debug_assertions) { "(Debug Build)" } else { "" },
         );
         let system_specs = [
             app_version_information,
@@ -116,11 +108,7 @@ impl Display for SystemSpecs {
             format!("Architecture: {}", self.architecture),
         ]
         .into_iter()
-        .chain(
-            self.gpu_specs
-                .as_ref()
-                .map(|specs| format!("GPU: {}", specs)),
-        )
+        .chain(self.gpu_specs.as_ref().map(|specs| format!("GPU: {}", specs)))
         .collect::<Vec<String>>()
         .join("\n");
 
@@ -131,10 +119,7 @@ impl Display for SystemSpecs {
 fn try_determine_available_gpus() -> Option<String> {
     #[cfg(any(target_os = "linux", target_os = "freebsd"))]
     {
-        #[allow(
-            clippy::disallowed_methods,
-            reason = "we are not running in an executor"
-        )]
+        #[allow(clippy::disallowed_methods, reason = "we are not running in an executor")]
         std::process::Command::new("vulkaninfo")
             .args(&["--summary"])
             .output()
@@ -208,29 +193,20 @@ pub fn read_gpu_info_from_sys_class_drm() -> anyhow::Result<Vec<GpuInfo>> {
             });
         let driver_version = driver_name
             .as_ref()
-            .and_then(|driver_name| {
-                std::fs::read_to_string(format!("/sys/module/{driver_name}/version")).ok()
-            })
+            .and_then(|driver_name| std::fs::read_to_string(format!("/sys/module/{driver_name}/version")).ok())
             .as_deref()
             .map(str::trim)
             .map(str::to_string);
 
-        let already_found = gpus
-            .iter()
-            .zip(&pci_addresses)
-            .any(|(gpu, gpu_pci_address)| {
-                gpu_pci_address == &pci_address
-                    && gpu.driver_version == driver_version
-                    && gpu.driver_name == driver_name
-            });
+        let already_found = gpus.iter().zip(&pci_addresses).any(|(gpu, gpu_pci_address)| {
+            gpu_pci_address == &pci_address && gpu.driver_version == driver_version && gpu.driver_name == driver_name
+        });
 
         if already_found {
             continue;
         }
 
-        let vendor = pci_db
-            .as_ref()
-            .and_then(|db| db.vendors.get(&vendor_pci_id));
+        let vendor = pci_db.as_ref().and_then(|db| db.vendors.get(&vendor_pci_id));
         let vendor_name = vendor.map(|vendor| vendor.name.clone());
         let device_name = vendor
             .and_then(|vendor| vendor.devices.get(&device_pci_id))
@@ -259,11 +235,7 @@ fn read_pci_id_from_path(path: impl AsRef<std::path::Path>) -> anyhow::Result<u1
         .strip_prefix("0x")
         .context("Not a device ID")
         .context(id.clone())?;
-    anyhow::ensure!(
-        id.len() == 4,
-        "Not a device id, expected 4 digits, found {}",
-        id.len()
-    );
+    anyhow::ensure!(id.len() == 4, "Not a device id, expected 4 digits, found {}", id.len());
     u16::from_str_radix(id, 16).context("Failed to parse device ID")
 }
 

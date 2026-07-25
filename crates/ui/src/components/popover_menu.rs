@@ -1,10 +1,10 @@
 use std::{cell::RefCell, rc::Rc};
 
 use gpui::{
-    AnyElement, AnyView, App, Bounds, Corner, DismissEvent, DispatchPhase, Element, ElementId,
-    Entity, Focusable as _, GlobalElementId, HitboxBehavior, HitboxId, InteractiveElement,
-    IntoElement, LayoutId, Length, ManagedView, MouseDownEvent, ParentElement, Pixels, Point,
-    Style, Window, anchored, deferred, div, point, prelude::FluentBuilder, px, size,
+    AnyElement, AnyView, App, Bounds, Corner, DismissEvent, DispatchPhase, Element, ElementId, Entity, Focusable as _,
+    GlobalElementId, HitboxBehavior, HitboxId, InteractiveElement, IntoElement, LayoutId, Length, ManagedView,
+    MouseDownEvent, ParentElement, Pixels, Point, Style, Window, anchored, deferred, div, point,
+    prelude::FluentBuilder, px, size,
 };
 
 use crate::prelude::*;
@@ -17,10 +17,7 @@ impl<T: Clickable> Clickable for gpui::AnimationElement<T>
 where
     T: Clickable + 'static,
 {
-    fn on_click(
-        self,
-        handler: impl Fn(&gpui::ClickEvent, &mut Window, &mut App) + 'static,
-    ) -> Self {
+    fn on_click(self, handler: impl Fn(&gpui::ClickEvent, &mut Window, &mut App) + 'static) -> Self {
         self.map_element(|e| e.on_click(handler))
     }
 
@@ -61,13 +58,7 @@ struct PopoverMenuHandleState<M> {
 impl<M: ManagedView> PopoverMenuHandle<M> {
     pub fn show(&self, window: &mut Window, cx: &mut App) {
         if let Some(state) = self.0.borrow().as_ref() {
-            show_menu(
-                &state.menu_builder,
-                &state.menu,
-                state.on_open.clone(),
-                window,
-                cx,
-            );
+            show_menu(&state.menu_builder, &state.menu, state.on_open.clone(), window, cx);
         }
     }
 
@@ -166,10 +157,7 @@ impl<M: ManagedView> PopoverMenu<M> {
         self
     }
 
-    pub fn menu(
-        mut self,
-        f: impl Fn(&mut Window, &mut App) -> Option<Entity<M>> + 'static,
-    ) -> Self {
+    pub fn menu(mut self, f: impl Fn(&mut Window, &mut App) -> Option<Entity<M>> + 'static) -> Self {
         self.menu_builder = Some(Rc::new(f));
         self
     }
@@ -185,9 +173,7 @@ impl<M: ManagedView> PopoverMenu<M> {
             let open = menu.borrow().is_some();
             t.toggle_state(open)
                 .when_some(builder, |el, builder| {
-                    el.on_click(move |_event, window, cx| {
-                        show_menu(&builder, &menu, on_open.clone(), window, cx)
-                    })
+                    el.on_click(move |_event, window, cx| show_menu(&builder, &menu, on_open.clone(), window, cx))
                 })
                 .into_any_element()
         }));
@@ -205,12 +191,8 @@ impl<M: ManagedView> PopoverMenu<M> {
             let open = menu.borrow().is_some();
             t.toggle_state(open)
                 .when_some(builder, |el, builder| {
-                    el.on_click(move |_, window, cx| {
-                        show_menu(&builder, &menu, on_open.clone(), window, cx)
-                    })
-                    .when(!open, |t| {
-                        t.tooltip(move |window, cx| tooltip_builder(window, cx))
-                    })
+                    el.on_click(move |_, window, cx| show_menu(&builder, &menu, on_open.clone(), window, cx))
+                        .when(!open, |t| t.tooltip(move |window, cx| tooltip_builder(window, cx)))
                 })
                 .into_any_element()
         }));
@@ -370,8 +352,7 @@ impl<M: ManagedView> Element for PopoverMenu<M> {
                         .anchor(self.anchor)
                         .offset(offset);
                     if let Some(child_bounds) = element_state.child_bounds {
-                        anchored =
-                            anchored.position(child_bounds.corner(self.resolved_attach()) + offset);
+                        anchored = anchored.position(child_bounds.corner(self.resolved_attach()) + offset);
                     }
                     let mut element = deferred(anchored.child(div().occlude().child(menu.clone())))
                         .with_priority(1)
@@ -381,9 +362,10 @@ impl<M: ManagedView> Element for PopoverMenu<M> {
                     element
                 });
 
-                let mut child_element = self.child_builder.take().map(|child_builder| {
-                    (child_builder)(element_state.menu.clone(), self.menu_builder.clone())
-                });
+                let mut child_element = self
+                    .child_builder
+                    .take()
+                    .map(|child_builder| (child_builder)(element_state.menu.clone(), self.menu_builder.clone()));
 
                 if let Some(trigger_handle) = self.trigger_handle.take()
                     && let Some(menu_builder) = self.menu_builder.clone()
@@ -404,11 +386,7 @@ impl<M: ManagedView> Element for PopoverMenu<M> {
                     style.size = size(relative(1.).into(), Length::Auto);
                 }
 
-                let layout_id = window.request_layout(
-                    style,
-                    menu_layout_id.into_iter().chain(child_layout_id),
-                    cx,
-                );
+                let layout_id = window.request_layout(style, menu_layout_id.into_iter().chain(child_layout_id), cx);
 
                 (
                     (

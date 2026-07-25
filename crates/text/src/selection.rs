@@ -154,10 +154,7 @@ impl<T: Copy + Eq> Selection<T> {
 }
 
 impl Selection<Anchor> {
-    pub fn resolve<'a, D: 'a + TextDimension>(
-        &'a self,
-        snapshot: &'a BufferSnapshot,
-    ) -> Selection<D> {
+    pub fn resolve<'a, D: 'a + TextDimension>(&'a self, snapshot: &'a BufferSnapshot) -> Selection<D> {
         Selection {
             id: self.id,
             start: snapshot.summary_for_anchor(&self.start),

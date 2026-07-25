@@ -83,14 +83,12 @@ pub fn serialize_operation(operation: &crate::Operation) -> proto::Operation {
                 triggers,
                 lamport_timestamp,
                 server_id,
-            } => proto::operation::Variant::UpdateCompletionTriggers(
-                proto::operation::UpdateCompletionTriggers {
-                    replica_id: lamport_timestamp.replica_id.as_u16() as u32,
-                    lamport_timestamp: lamport_timestamp.value,
-                    triggers: triggers.clone(),
-                    language_server_id: server_id.to_proto(),
-                },
-            ),
+            } => proto::operation::Variant::UpdateCompletionTriggers(proto::operation::UpdateCompletionTriggers {
+                replica_id: lamport_timestamp.replica_id.as_u16() as u32,
+                lamport_timestamp: lamport_timestamp.value,
+                triggers: triggers.clone(),
+                language_server_id: server_id.to_proto(),
+            }),
 
             crate::Operation::UpdateLineEnding {
                 line_ending,
@@ -111,18 +109,12 @@ pub fn serialize_edit_operation(operation: &EditOperation) -> proto::operation::
         lamport_timestamp: operation.timestamp.value,
         version: serialize_version(&operation.version),
         ranges: operation.ranges.iter().map(serialize_range).collect(),
-        new_text: operation
-            .new_text
-            .iter()
-            .map(|text| text.to_string())
-            .collect(),
+        new_text: operation.new_text.iter().map(|text| text.to_string()).collect(),
     }
 }
 
 /// Serializes an entry in the undo map to be sent over RPC.
-pub fn serialize_undo_map_entry(
-    (edit_id, counts): (&clock::Lamport, &[(clock::Lamport, u32)]),
-) -> proto::UndoMapEntry {
+pub fn serialize_undo_map_entry((edit_id, counts): (&clock::Lamport, &[(clock::Lamport, u32)])) -> proto::UndoMapEntry {
     proto::UndoMapEntry {
         replica_id: edit_id.replica_id.as_u16() as u32,
         local_timestamp: edit_id.value,
@@ -138,9 +130,7 @@ pub fn serialize_undo_map_entry(
 }
 
 /// Splits the given list of operations into chunks.
-pub fn split_operations(
-    mut operations: Vec<proto::Operation>,
-) -> impl Iterator<Item = Vec<proto::Operation>> {
+pub fn split_operations(mut operations: Vec<proto::Operation>) -> impl Iterator<Item = Vec<proto::Operation>> {
     #[cfg(any(test, feature = "test-support"))]
     const CHUNK_SIZE: usize = 5;
 
@@ -232,19 +222,11 @@ pub fn serialize_diagnostics<'a>(
             is_primary: entry.diagnostic.is_primary,
             underline: entry.diagnostic.underline,
             code: entry.diagnostic.code.as_ref().map(|s| s.to_string()),
-            code_description: entry
-                .diagnostic
-                .code_description
-                .as_ref()
-                .map(|s| s.to_string()),
+            code_description: entry.diagnostic.code_description.as_ref().map(|s| s.to_string()),
             is_disk_based: entry.diagnostic.is_disk_based,
             is_unnecessary: entry.diagnostic.is_unnecessary,
             data: entry.diagnostic.data.as_ref().map(|data| data.to_string()),
-            registration_id: entry
-                .diagnostic
-                .registration_id
-                .as_ref()
-                .map(ToString::to_string),
+            registration_id: entry.diagnostic.registration_id.as_ref().map(ToString::to_string),
         })
         .collect()
 }
@@ -281,95 +263,83 @@ pub fn deserialize_anchor_range(range: proto::AnchorRange) -> Result<Range<Ancho
 // This behavior is currently copied in the collab database, for snapshotting channel notes
 /// Deserializes an [`crate::Operation`] from the RPC representation.
 pub fn deserialize_operation(message: proto::Operation) -> Result<crate::Operation> {
-    Ok(
-        match message.variant.context("missing operation variant")? {
-            proto::operation::Variant::Edit(edit) => {
-                crate::Operation::Buffer(text::Operation::Edit(deserialize_edit_operation(edit)))
-            }
-            proto::operation::Variant::Undo(undo) => {
-                crate::Operation::Buffer(text::Operation::Undo(UndoOperation {
-                    timestamp: clock::Lamport {
-                        replica_id: ReplicaId::new(undo.replica_id as u16),
-                        value: undo.lamport_timestamp,
-                    },
-                    version: deserialize_version(&undo.version),
-                    counts: undo
-                        .counts
-                        .into_iter()
-                        .map(|c| {
-                            (
-                                clock::Lamport {
-                                    replica_id: ReplicaId::new(c.replica_id as u16),
-                                    value: c.lamport_timestamp,
-                                },
-                                c.count,
-                            )
-                        })
-                        .collect(),
-                }))
-            }
-            proto::operation::Variant::UpdateSelections(message) => {
-                let selections = message
-                    .selections
-                    .into_iter()
-                    .filter_map(|selection| {
-                        Some(Selection {
-                            id: selection.id as usize,
-                            start: deserialize_anchor(selection.start?.anchor?)?,
-                            end: deserialize_anchor(selection.end?.anchor?)?,
-                            reversed: selection.reversed,
-                            goal: SelectionGoal::None,
-                        })
+    Ok(match message.variant.context("missing operation variant")? {
+        proto::operation::Variant::Edit(edit) => {
+            crate::Operation::Buffer(text::Operation::Edit(deserialize_edit_operation(edit)))
+        }
+        proto::operation::Variant::Undo(undo) => crate::Operation::Buffer(text::Operation::Undo(UndoOperation {
+            timestamp: clock::Lamport {
+                replica_id: ReplicaId::new(undo.replica_id as u16),
+                value: undo.lamport_timestamp,
+            },
+            version: deserialize_version(&undo.version),
+            counts: undo
+                .counts
+                .into_iter()
+                .map(|c| {
+                    (
+                        clock::Lamport {
+                            replica_id: ReplicaId::new(c.replica_id as u16),
+                            value: c.lamport_timestamp,
+                        },
+                        c.count,
+                    )
+                })
+                .collect(),
+        })),
+        proto::operation::Variant::UpdateSelections(message) => {
+            let selections = message
+                .selections
+                .into_iter()
+                .filter_map(|selection| {
+                    Some(Selection {
+                        id: selection.id as usize,
+                        start: deserialize_anchor(selection.start?.anchor?)?,
+                        end: deserialize_anchor(selection.end?.anchor?)?,
+                        reversed: selection.reversed,
+                        goal: SelectionGoal::None,
                     })
-                    .collect::<Vec<_>>();
+                })
+                .collect::<Vec<_>>();
 
-                crate::Operation::UpdateSelections {
-                    lamport_timestamp: clock::Lamport {
-                        replica_id: ReplicaId::new(message.replica_id as u16),
-                        value: message.lamport_timestamp,
-                    },
-                    selections: Arc::from(selections),
-                    line_mode: message.line_mode,
-                    cursor_shape: deserialize_cursor_shape(
-                        proto::CursorShape::try_from(message.cursor_shape)
-                            .context("Missing cursor shape")?,
-                    ),
-                }
+            crate::Operation::UpdateSelections {
+                lamport_timestamp: clock::Lamport {
+                    replica_id: ReplicaId::new(message.replica_id as u16),
+                    value: message.lamport_timestamp,
+                },
+                selections: Arc::from(selections),
+                line_mode: message.line_mode,
+                cursor_shape: deserialize_cursor_shape(
+                    proto::CursorShape::try_from(message.cursor_shape).context("Missing cursor shape")?,
+                ),
             }
-            proto::operation::Variant::UpdateDiagnostics(message) => {
-                crate::Operation::UpdateDiagnostics {
-                    lamport_timestamp: clock::Lamport {
-                        replica_id: ReplicaId::new(message.replica_id as u16),
-                        value: message.lamport_timestamp,
-                    },
-                    server_id: LanguageServerId(message.server_id as usize),
-                    diagnostics: deserialize_diagnostics(message.diagnostics),
-                }
-            }
-            proto::operation::Variant::UpdateCompletionTriggers(message) => {
-                crate::Operation::UpdateCompletionTriggers {
-                    triggers: message.triggers,
-                    lamport_timestamp: clock::Lamport {
-                        replica_id: ReplicaId::new(message.replica_id as u16),
-                        value: message.lamport_timestamp,
-                    },
-                    server_id: LanguageServerId::from_proto(message.language_server_id),
-                }
-            }
-            proto::operation::Variant::UpdateLineEnding(message) => {
-                crate::Operation::UpdateLineEnding {
-                    lamport_timestamp: clock::Lamport {
-                        replica_id: ReplicaId::new(message.replica_id as u16),
-                        value: message.lamport_timestamp,
-                    },
-                    line_ending: deserialize_line_ending(
-                        proto::LineEnding::try_from(message.line_ending)
-                            .context("missing line_ending")?,
-                    ),
-                }
-            }
+        }
+        proto::operation::Variant::UpdateDiagnostics(message) => crate::Operation::UpdateDiagnostics {
+            lamport_timestamp: clock::Lamport {
+                replica_id: ReplicaId::new(message.replica_id as u16),
+                value: message.lamport_timestamp,
+            },
+            server_id: LanguageServerId(message.server_id as usize),
+            diagnostics: deserialize_diagnostics(message.diagnostics),
         },
-    )
+        proto::operation::Variant::UpdateCompletionTriggers(message) => crate::Operation::UpdateCompletionTriggers {
+            triggers: message.triggers,
+            lamport_timestamp: clock::Lamport {
+                replica_id: ReplicaId::new(message.replica_id as u16),
+                value: message.lamport_timestamp,
+            },
+            server_id: LanguageServerId::from_proto(message.language_server_id),
+        },
+        proto::operation::Variant::UpdateLineEnding(message) => crate::Operation::UpdateLineEnding {
+            lamport_timestamp: clock::Lamport {
+                replica_id: ReplicaId::new(message.replica_id as u16),
+                value: message.lamport_timestamp,
+            },
+            line_ending: deserialize_line_ending(
+                proto::LineEnding::try_from(message.line_ending).context("missing line_ending")?,
+            ),
+        },
+    })
 }
 
 /// Deserializes an [`EditOperation`] from the RPC representation.
@@ -386,9 +356,7 @@ pub fn deserialize_edit_operation(edit: proto::operation::Edit) -> EditOperation
 }
 
 /// Deserializes an entry in the undo map from the RPC representation.
-pub fn deserialize_undo_map_entry(
-    entry: proto::UndoMapEntry,
-) -> (clock::Lamport, Vec<(clock::Lamport, u32)>) {
+pub fn deserialize_undo_map_entry(entry: proto::UndoMapEntry) -> (clock::Lamport, Vec<(clock::Lamport, u32)>) {
     (
         clock::Lamport {
             replica_id: ReplicaId::new(entry.replica_id as u16),
@@ -412,10 +380,7 @@ pub fn deserialize_undo_map_entry(
 
 /// Deserializes selections from the RPC representation.
 pub fn deserialize_selections(selections: Vec<proto::Selection>) -> Arc<[Selection<Anchor>]> {
-    selections
-        .into_iter()
-        .filter_map(deserialize_selection)
-        .collect()
+    selections.into_iter().filter_map(deserialize_selection).collect()
 }
 
 /// Deserializes a [`Selection`] from the RPC representation.
@@ -430,9 +395,7 @@ pub fn deserialize_selection(selection: proto::Selection) -> Option<Selection<An
 }
 
 /// Deserializes a list of diagnostics from the RPC representation.
-pub fn deserialize_diagnostics(
-    diagnostics: Vec<proto::Diagnostic>,
-) -> Arc<[DiagnosticEntry<Anchor>]> {
+pub fn deserialize_diagnostics(diagnostics: Vec<proto::Diagnostic>) -> Arc<[DiagnosticEntry<Anchor>]> {
     diagnostics
         .into_iter()
         .filter_map(|diagnostic| {
@@ -445,9 +408,7 @@ pub fn deserialize_diagnostics(
                 range: deserialize_anchor(diagnostic.start?)?..deserialize_anchor(diagnostic.end?)?,
                 diagnostic: Diagnostic {
                     source: diagnostic.source,
-                    severity: match proto::diagnostic::Severity::try_from(diagnostic.severity)
-                        .ok()?
-                    {
+                    severity: match proto::diagnostic::Severity::try_from(diagnostic.severity).ok()? {
                         proto::diagnostic::Severity::Error => DiagnosticSeverity::ERROR,
                         proto::diagnostic::Severity::Warning => DiagnosticSeverity::WARNING,
                         proto::diagnostic::Severity::Information => DiagnosticSeverity::INFORMATION,
@@ -458,19 +419,13 @@ pub fn deserialize_diagnostics(
                     markdown: diagnostic.markdown,
                     group_id: diagnostic.group_id as usize,
                     code: diagnostic.code.map(lsp::NumberOrString::from_string),
-                    code_description: diagnostic
-                        .code_description
-                        .and_then(|s| lsp::Uri::from_str(&s).ok()),
+                    code_description: diagnostic.code_description.and_then(|s| lsp::Uri::from_str(&s).ok()),
                     is_primary: diagnostic.is_primary,
                     is_disk_based: diagnostic.is_disk_based,
                     is_unnecessary: diagnostic.is_unnecessary,
                     underline: diagnostic.underline,
                     registration_id: diagnostic.registration_id.map(SharedString::from),
-                    source_kind: match proto::diagnostic::SourceKind::try_from(
-                        diagnostic.source_kind,
-                    )
-                    .ok()?
-                    {
+                    source_kind: match proto::diagnostic::SourceKind::try_from(diagnostic.source_kind).ok()? {
                         proto::diagnostic::SourceKind::Pulled => DiagnosticSourceKind::Pulled,
                         proto::diagnostic::SourceKind::Pushed => DiagnosticSourceKind::Pushed,
                         proto::diagnostic::SourceKind::Other => DiagnosticSourceKind::Other,
@@ -544,12 +499,7 @@ pub fn lamport_timestamp_for_operation(operation: &proto::Operation) -> Option<c
 pub fn serialize_transaction(transaction: &Transaction) -> proto::Transaction {
     proto::Transaction {
         id: Some(serialize_timestamp(transaction.id)),
-        edit_ids: transaction
-            .edit_ids
-            .iter()
-            .copied()
-            .map(serialize_timestamp)
-            .collect(),
+        edit_ids: transaction.edit_ids.iter().copied().map(serialize_timestamp).collect(),
         start: serialize_version(&transaction.start),
     }
 }
@@ -558,11 +508,7 @@ pub fn serialize_transaction(transaction: &Transaction) -> proto::Transaction {
 pub fn deserialize_transaction(transaction: proto::Transaction) -> Result<Transaction> {
     Ok(Transaction {
         id: deserialize_timestamp(transaction.id.context("missing transaction id")?),
-        edit_ids: transaction
-            .edit_ids
-            .into_iter()
-            .map(deserialize_timestamp)
-            .collect(),
+        edit_ids: transaction.edit_ids.into_iter().map(deserialize_timestamp).collect(),
         start: deserialize_version(&transaction.start),
     })
 }

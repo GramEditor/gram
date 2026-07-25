@@ -9,15 +9,10 @@ use gpui::{App, Global, SemanticVersion};
 /// stable | dev
 pub static RELEASE_CHANNEL_NAME: LazyLock<String> = LazyLock::new(|| {
     if cfg!(debug_assertions) {
-        env::var("GRAM_RELEASE_CHANNEL").unwrap_or_else(|_| {
-            include_str!("../../gram/RELEASE_CHANNEL")
-                .trim()
-                .to_string()
-        })
+        env::var("GRAM_RELEASE_CHANNEL")
+            .unwrap_or_else(|_| include_str!("../../gram/RELEASE_CHANNEL").trim().to_string())
     } else {
-        include_str!("../../gram/RELEASE_CHANNEL")
-            .trim()
-            .to_string()
+        include_str!("../../gram/RELEASE_CHANNEL").trim().to_string()
     }
 });
 
@@ -53,8 +48,7 @@ impl AppCommitSha {
 
     /// Returns the global [`AppCommitSha`], if one is set.
     pub fn try_global(cx: &App) -> Option<AppCommitSha> {
-        cx.try_global::<GlobalAppCommitSha>()
-            .map(|sha| sha.0.clone())
+        cx.try_global::<GlobalAppCommitSha>().map(|sha| sha.0.clone())
     }
 
     /// Sets the global [`AppCommitSha`].
@@ -137,8 +131,7 @@ impl ReleaseChannel {
 
     /// Returns the global [`ReleaseChannel`], if one is set.
     pub fn try_global(cx: &App) -> Option<Self> {
-        cx.try_global::<GlobalReleaseChannel>()
-            .map(|channel| channel.0)
+        cx.try_global::<GlobalReleaseChannel>().map(|channel| channel.0)
     }
 
     /// Returns whether we want to poll for updates for this [`ReleaseChannel`]

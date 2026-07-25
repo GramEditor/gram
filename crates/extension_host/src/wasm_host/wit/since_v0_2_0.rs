@@ -44,7 +44,9 @@ pub type ExtensionKeyValueStore = Arc<dyn KeyValueStoreDelegate>;
 pub fn linker(executor: &BackgroundExecutor) -> &'static Linker<WasmState> {
     static LINKER: OnceLock<Linker<WasmState>> = OnceLock::new();
     LINKER.get_or_init(|| {
-        super::new_linker(executor, |linker| Extension::add_to_linker::<_, WasmState>(linker, |s| s))
+        super::new_linker(executor, |linker| {
+            Extension::add_to_linker::<_, WasmState>(linker, |s| s)
+        })
     })
 }
 
@@ -143,10 +145,7 @@ impl HostKeyValueStore for WasmState {
 }
 
 impl HostProject for WasmState {
-    async fn worktree_ids(
-        &mut self,
-        project: Resource<ExtensionProject>,
-    ) -> wasmtime::Result<Vec<u64>> {
+    async fn worktree_ids(&mut self, project: Resource<ExtensionProject>) -> wasmtime::Result<Vec<u64>> {
         latest::HostProject::worktree_ids(self, project).await
     }
 
@@ -161,10 +160,7 @@ impl HostWorktree for WasmState {
         latest::HostWorktree::id(self, delegate).await
     }
 
-    async fn root_path(
-        &mut self,
-        delegate: Resource<Arc<dyn WorktreeDelegate>>,
-    ) -> wasmtime::Result<String> {
+    async fn root_path(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<String> {
         latest::HostWorktree::root_path(self, delegate).await
     }
 
@@ -176,10 +172,7 @@ impl HostWorktree for WasmState {
         latest::HostWorktree::read_text_file(self, delegate, path).await
     }
 
-    async fn shell_env(
-        &mut self,
-        delegate: Resource<Arc<dyn WorktreeDelegate>>,
-    ) -> wasmtime::Result<EnvVars> {
+    async fn shell_env(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<EnvVars> {
         latest::HostWorktree::shell_env(self, delegate).await
     }
 
@@ -206,13 +199,7 @@ impl ExtensionImports for WasmState {
         category: String,
         key: Option<String>,
     ) -> wasmtime::Result<Result<String, String>> {
-        latest::ExtensionImports::get_settings(
-            self,
-            location.map(|location| location.into()),
-            category,
-            key,
-        )
-        .await
+        latest::ExtensionImports::get_settings(self, location.map(|location| location.into()), category, key).await
     }
 
     async fn set_language_server_installation_status(
@@ -220,12 +207,7 @@ impl ExtensionImports for WasmState {
         server_name: String,
         status: LanguageServerInstallationStatus,
     ) -> wasmtime::Result<()> {
-        latest::ExtensionImports::set_language_server_installation_status(
-            self,
-            server_name,
-            status.into(),
-        )
-        .await
+        latest::ExtensionImports::set_language_server_installation_status(self, server_name, status.into()).await
     }
 
     async fn download_file(

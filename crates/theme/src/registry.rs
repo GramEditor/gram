@@ -12,9 +12,8 @@ use thiserror::Error;
 use util::ResultExt;
 
 use crate::{
-    Appearance, AppearanceContent, ChevronIcons, DEFAULT_ICON_THEME_NAME, DirectoryIcons,
-    IconDefinition, IconTheme, Theme, ThemeFamily, ThemeFamilyContent, default_icon_theme,
-    read_icon_theme, read_user_theme, refine_theme_family,
+    Appearance, AppearanceContent, ChevronIcons, DEFAULT_ICON_THEME_NAME, DirectoryIcons, IconDefinition, IconTheme,
+    Theme, ThemeFamily, ThemeFamilyContent, default_icon_theme, read_icon_theme, read_user_theme, refine_theme_family,
 };
 
 /// The metadata for a theme.
@@ -220,9 +219,7 @@ impl ThemeRegistry {
                 continue;
             };
 
-            self.load_user_theme(&theme_path, fs.clone())
-                .await
-                .log_err();
+            self.load_user_theme(&theme_path, fs.clone()).await.log_err();
         }
 
         Ok(())
@@ -282,21 +279,11 @@ impl ThemeRegistry {
     ///
     /// The `icons_root_dir` parameter indicates the root directory from which
     /// the relative paths to icons in the theme should be resolved against.
-    pub async fn load_icon_theme(
-        &self,
-        icon_theme_path: &Path,
-        icons_root_dir: &Path,
-        fs: Arc<dyn Fs>,
-    ) -> Result<()> {
+    pub async fn load_icon_theme(&self, icon_theme_path: &Path, icons_root_dir: &Path, fs: Arc<dyn Fs>) -> Result<()> {
         let icon_theme_family = read_icon_theme(icon_theme_path, fs).await?;
 
-        let resolve_icon_path = |path: SharedString| {
-            icons_root_dir
-                .join(path.as_ref())
-                .to_string_lossy()
-                .to_string()
-                .into()
-        };
+        let resolve_icon_path =
+            |path: SharedString| icons_root_dir.join(path.as_ref()).to_string_lossy().to_string().into();
 
         let default_icon_theme = default_icon_theme();
 
@@ -309,17 +296,15 @@ impl ThemeRegistry {
             file_suffixes.extend(icon_theme.file_suffixes);
 
             let mut named_directory_icons = default_icon_theme.named_directory_icons.clone();
-            named_directory_icons.extend(icon_theme.named_directory_icons.into_iter().map(
-                |(key, value)| {
-                    (
-                        key,
-                        DirectoryIcons {
-                            collapsed: value.collapsed.map(resolve_icon_path),
-                            expanded: value.expanded.map(resolve_icon_path),
-                        },
-                    )
-                },
-            ));
+            named_directory_icons.extend(icon_theme.named_directory_icons.into_iter().map(|(key, value)| {
+                (
+                    key,
+                    DirectoryIcons {
+                        collapsed: value.collapsed.map(resolve_icon_path),
+                        expanded: value.expanded.map(resolve_icon_path),
+                    },
+                )
+            }));
 
             let icon_theme = IconTheme {
                 id: uuid::Uuid::new_v4().to_string(),
@@ -353,9 +338,7 @@ impl ThemeRegistry {
                     .collect(),
             };
 
-            state
-                .icon_themes
-                .insert(icon_theme.name.clone(), Arc::new(icon_theme));
+            state.icon_themes.insert(icon_theme.name.clone(), Arc::new(icon_theme));
         }
 
         Ok(())

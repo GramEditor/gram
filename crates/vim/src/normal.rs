@@ -175,9 +175,7 @@ pub(crate) fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
         let times = Vim::take_count(cx);
         let forced_motion = Vim::take_forced_motion(cx);
         vim.change_motion(
-            Motion::EndOfLine {
-                display_lines: false,
-            },
+            Motion::EndOfLine { display_lines: false },
             times,
             forced_motion,
             window,
@@ -189,9 +187,7 @@ pub(crate) fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
         let times = Vim::take_count(cx);
         let forced_motion = Vim::take_forced_motion(cx);
         vim.delete_motion(
-            Motion::EndOfLine {
-                display_lines: false,
-            },
+            Motion::EndOfLine { display_lines: false },
             times,
             forced_motion,
             window,
@@ -272,11 +268,10 @@ pub(crate) fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
                         return None;
                     }
                     last_row = Some(point.row);
-                    let line_range = Point::new(point.row, 0)
-                        ..Point::new(point.row, snapshot.line_len(MultiBufferRow(point.row)));
+                    let line_range =
+                        Point::new(point.row, 0)..Point::new(point.row, snapshot.line_len(MultiBufferRow(point.row)));
                     Some((
-                        snapshot.anchor_before(line_range.start)
-                            ..snapshot.anchor_after(line_range.end),
+                        snapshot.anchor_before(line_range.start)..snapshot.anchor_after(line_range.end),
                         line_range,
                     ))
                 })
@@ -285,12 +280,7 @@ pub(crate) fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
             let edits = editor.buffer().update(cx, |buffer, cx| {
                 let current_content = ranges
                     .iter()
-                    .map(|(anchors, _)| {
-                        buffer
-                            .snapshot(cx)
-                            .text_for_range(anchors.clone())
-                            .collect::<String>()
-                    })
+                    .map(|(anchors, _)| buffer.snapshot(cx).text_for_range(anchors.clone()).collect::<String>())
                     .collect::<Vec<_>>();
                 let mut content_before_undo = current_content.clone();
                 let mut undo_count = 0;
@@ -301,12 +291,9 @@ pub(crate) fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
                     let mut content_after_undo = Vec::new();
 
                     let mut line_changed = false;
-                    for ((anchors, _), text_before_undo) in
-                        ranges.iter().zip(content_before_undo.iter())
-                    {
+                    for ((anchors, _), text_before_undo) in ranges.iter().zip(content_before_undo.iter()) {
                         let snapshot = buffer.snapshot(cx);
-                        let text_after_undo =
-                            snapshot.text_for_range(anchors.clone()).collect::<String>();
+                        let text_after_undo = snapshot.text_for_range(anchors.clone()).collect::<String>();
 
                         if &text_after_undo != text_before_undo {
                             line_changed = true;
@@ -334,11 +321,7 @@ pub(crate) fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
                             .char_indices()
                             .rev()
                             .zip(new_text.chars().rev())
-                            .find_map(
-                                |((i, a), b)| {
-                                    if a != b { Some(i + a.len_utf8()) } else { None }
-                                },
-                            )
+                            .find_map(|((i, a), b)| if a != b { Some(i + a.len_utf8()) } else { None })
                             .unwrap_or(old_text.len());
                         points.end.column -= (old_text.len() - common_suffix_starts_at) as u32;
                         old_text = old_text.split_at(common_suffix_starts_at).0.to_string();
@@ -392,83 +375,35 @@ impl Vim {
             Some(Operator::Delete) => self.delete_motion(motion, times, forced_motion, window, cx),
             Some(Operator::Yank) => self.yank_motion(motion, times, forced_motion, window, cx),
             Some(Operator::AddSurrounds { target: None }) => {}
-            Some(Operator::Indent) => self.indent_motion(
-                motion,
-                times,
-                forced_motion,
-                IndentDirection::In,
-                window,
-                cx,
-            ),
+            Some(Operator::Indent) => self.indent_motion(motion, times, forced_motion, IndentDirection::In, window, cx),
             Some(Operator::Rewrap) => self.rewrap_motion(motion, times, forced_motion, window, cx),
-            Some(Operator::Outdent) => self.indent_motion(
-                motion,
-                times,
-                forced_motion,
-                IndentDirection::Out,
-                window,
-                cx,
-            ),
-            Some(Operator::AutoIndent) => self.indent_motion(
-                motion,
-                times,
-                forced_motion,
-                IndentDirection::Auto,
-                window,
-                cx,
-            ),
-            Some(Operator::ShellCommand) => {
-                self.shell_command_motion(motion, times, forced_motion, window, cx)
+            Some(Operator::Outdent) => {
+                self.indent_motion(motion, times, forced_motion, IndentDirection::Out, window, cx)
             }
-            Some(Operator::Lowercase) => self.convert_motion(
-                motion,
-                times,
-                forced_motion,
-                ConvertTarget::LowerCase,
-                window,
-                cx,
-            ),
-            Some(Operator::Uppercase) => self.convert_motion(
-                motion,
-                times,
-                forced_motion,
-                ConvertTarget::UpperCase,
-                window,
-                cx,
-            ),
-            Some(Operator::OppositeCase) => self.convert_motion(
-                motion,
-                times,
-                forced_motion,
-                ConvertTarget::OppositeCase,
-                window,
-                cx,
-            ),
-            Some(Operator::Rot13) => self.convert_motion(
-                motion,
-                times,
-                forced_motion,
-                ConvertTarget::Rot13,
-                window,
-                cx,
-            ),
-            Some(Operator::Rot47) => self.convert_motion(
-                motion,
-                times,
-                forced_motion,
-                ConvertTarget::Rot47,
-                window,
-                cx,
-            ),
-            Some(Operator::ToggleComments) => {
-                self.toggle_comments_motion(motion, times, forced_motion, window, cx)
+            Some(Operator::AutoIndent) => {
+                self.indent_motion(motion, times, forced_motion, IndentDirection::Auto, window, cx)
             }
+            Some(Operator::ShellCommand) => self.shell_command_motion(motion, times, forced_motion, window, cx),
+            Some(Operator::Lowercase) => {
+                self.convert_motion(motion, times, forced_motion, ConvertTarget::LowerCase, window, cx)
+            }
+            Some(Operator::Uppercase) => {
+                self.convert_motion(motion, times, forced_motion, ConvertTarget::UpperCase, window, cx)
+            }
+            Some(Operator::OppositeCase) => {
+                self.convert_motion(motion, times, forced_motion, ConvertTarget::OppositeCase, window, cx)
+            }
+            Some(Operator::Rot13) => {
+                self.convert_motion(motion, times, forced_motion, ConvertTarget::Rot13, window, cx)
+            }
+            Some(Operator::Rot47) => {
+                self.convert_motion(motion, times, forced_motion, ConvertTarget::Rot47, window, cx)
+            }
+            Some(Operator::ToggleComments) => self.toggle_comments_motion(motion, times, forced_motion, window, cx),
             Some(Operator::ReplaceWithRegister) => {
                 self.replace_with_register_motion(motion, times, forced_motion, window, cx)
             }
-            Some(Operator::Exchange) => {
-                self.exchange_motion(motion, times, forced_motion, window, cx)
-            }
+            Some(Operator::Exchange) => self.exchange_motion(motion, times, forced_motion, window, cx),
             Some(operator) => {
                 // Can't do anything for text objects, Ignoring
                 error!("Unexpected normal mode motion operator: {:?}", operator)
@@ -492,12 +427,8 @@ impl Vim {
                 Some(Operator::Change) => self.change_object(object, around, times, window, cx),
                 Some(Operator::Delete) => self.delete_object(object, around, times, window, cx),
                 Some(Operator::Yank) => self.yank_object(object, around, times, window, cx),
-                Some(Operator::Indent) => {
-                    self.indent_object(object, around, IndentDirection::In, times, window, cx)
-                }
-                Some(Operator::Outdent) => {
-                    self.indent_object(object, around, IndentDirection::Out, times, window, cx)
-                }
+                Some(Operator::Indent) => self.indent_object(object, around, IndentDirection::In, times, window, cx),
+                Some(Operator::Outdent) => self.indent_object(object, around, IndentDirection::Out, times, window, cx),
                 Some(Operator::AutoIndent) => {
                     self.indent_object(object, around, IndentDirection::Auto, times, window, cx)
                 }
@@ -511,35 +442,20 @@ impl Vim {
                 Some(Operator::Uppercase) => {
                     self.convert_object(object, around, ConvertTarget::UpperCase, times, window, cx)
                 }
-                Some(Operator::OppositeCase) => self.convert_object(
-                    object,
-                    around,
-                    ConvertTarget::OppositeCase,
-                    times,
-                    window,
-                    cx,
-                ),
-                Some(Operator::Rot13) => {
-                    self.convert_object(object, around, ConvertTarget::Rot13, times, window, cx)
+                Some(Operator::OppositeCase) => {
+                    self.convert_object(object, around, ConvertTarget::OppositeCase, times, window, cx)
                 }
-                Some(Operator::Rot47) => {
-                    self.convert_object(object, around, ConvertTarget::Rot47, times, window, cx)
-                }
+                Some(Operator::Rot13) => self.convert_object(object, around, ConvertTarget::Rot13, times, window, cx),
+                Some(Operator::Rot47) => self.convert_object(object, around, ConvertTarget::Rot47, times, window, cx),
                 Some(Operator::AddSurrounds { target: None }) => {
                     waiting_operator = Some(Operator::AddSurrounds {
                         target: Some(SurroundsType::Object(object, around)),
                     });
                 }
-                Some(Operator::ToggleComments) => {
-                    self.toggle_comments_object(object, around, times, window, cx)
-                }
-                Some(Operator::ReplaceWithRegister) => {
-                    self.replace_with_register_object(object, around, window, cx)
-                }
+                Some(Operator::ToggleComments) => self.toggle_comments_object(object, around, times, window, cx),
+                Some(Operator::ReplaceWithRegister) => self.replace_with_register_object(object, around, window, cx),
                 Some(Operator::Exchange) => self.exchange_object(object, around, window, cx),
-                Some(Operator::HelixMatch) => {
-                    self.select_current_object(object, around, window, cx)
-                }
+                Some(Operator::HelixMatch) => self.select_current_object(object, around, window, cx),
                 _ => {
                     // Can't do anything for namespace operators. Ignoring
                 }
@@ -652,39 +568,22 @@ impl Vim {
         self.switch_mode(Mode::Insert, false, window, cx);
         self.update_editor(cx, |_, editor, cx| {
             editor.change_selections(Default::default(), window, cx, |s| {
-                s.move_cursors_with(|map, cursor, _| {
-                    (
-                        first_non_whitespace(map, false, cursor),
-                        SelectionGoal::None,
-                    )
-                });
+                s.move_cursors_with(|map, cursor, _| (first_non_whitespace(map, false, cursor), SelectionGoal::None));
             });
         });
     }
 
-    fn insert_end_of_line(
-        &mut self,
-        _: &InsertEndOfLine,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn insert_end_of_line(&mut self, _: &InsertEndOfLine, window: &mut Window, cx: &mut Context<Self>) {
         self.start_recording(cx);
         self.switch_mode(Mode::Insert, false, window, cx);
         self.update_editor(cx, |_, editor, cx| {
             editor.change_selections(Default::default(), window, cx, |s| {
-                s.move_cursors_with(|map, cursor, _| {
-                    (next_line_end(map, cursor, 1), SelectionGoal::None)
-                });
+                s.move_cursors_with(|map, cursor, _| (next_line_end(map, cursor, 1), SelectionGoal::None));
             });
         });
     }
 
-    fn insert_at_previous(
-        &mut self,
-        _: &InsertAtPrevious,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn insert_at_previous(&mut self, _: &InsertAtPrevious, window: &mut Window, cx: &mut Context<Self>) {
         self.start_recording(cx);
         self.switch_mode(Mode::Insert, false, window, cx);
         self.update_editor(cx, |vim, editor, cx| {
@@ -698,12 +597,7 @@ impl Vim {
         });
     }
 
-    fn insert_line_above(
-        &mut self,
-        _: &InsertLineAbove,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn insert_line_above(&mut self, _: &InsertLineAbove, window: &mut Window, cx: &mut Context<Self>) {
         self.start_recording(cx);
         self.switch_mode(Mode::Insert, false, window, cx);
         self.update_editor(cx, |_, editor, cx| {
@@ -711,10 +605,8 @@ impl Vim {
                 let selections = editor.selections.all::<Point>(&editor.display_snapshot(cx));
                 let snapshot = editor.buffer().read(cx).snapshot(cx);
 
-                let selection_start_rows: BTreeSet<u32> = selections
-                    .into_iter()
-                    .map(|selection| selection.start.row)
-                    .collect();
+                let selection_start_rows: BTreeSet<u32> =
+                    selections.into_iter().map(|selection| selection.start.row).collect();
                 let edits = selection_start_rows
                     .into_iter()
                     .map(|row| {
@@ -739,12 +631,7 @@ impl Vim {
         });
     }
 
-    fn insert_line_below(
-        &mut self,
-        _: &InsertLineBelow,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn insert_line_below(&mut self, _: &InsertLineBelow, window: &mut Window, cx: &mut Context<Self>) {
         self.start_recording(cx);
         self.switch_mode(Mode::Insert, false, window, cx);
         self.update_editor(cx, |_, editor, cx| {
@@ -753,10 +640,8 @@ impl Vim {
                 let selections = editor.selections.all::<Point>(&editor.display_snapshot(cx));
                 let snapshot = editor.buffer().read(cx).snapshot(cx);
 
-                let selection_end_rows: BTreeSet<u32> = selections
-                    .into_iter()
-                    .map(|selection| selection.end.row)
-                    .collect();
+                let selection_end_rows: BTreeSet<u32> =
+                    selections.into_iter().map(|selection| selection.end.row).collect();
                 let edits = selection_end_rows
                     .into_iter()
                     .map(|row| {
@@ -771,13 +656,7 @@ impl Vim {
                     .collect::<Vec<_>>();
                 editor.change_selections(Default::default(), window, cx, |s| {
                     s.maybe_move_cursors_with(|map, cursor, goal| {
-                        Motion::CurrentLine.move_point(
-                            map,
-                            cursor,
-                            goal,
-                            None,
-                            &text_layout_details,
-                        )
+                        Motion::CurrentLine.move_point(map, cursor, goal, None, &text_layout_details)
                     });
                 });
                 editor.edit_with_autoindent(edits, cx);
@@ -785,12 +664,7 @@ impl Vim {
         });
     }
 
-    fn insert_empty_line_above(
-        &mut self,
-        _: &InsertEmptyLineAbove,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn insert_empty_line_above(&mut self, _: &InsertEmptyLineAbove, window: &mut Window, cx: &mut Context<Self>) {
         self.record_current_action(cx);
         let count = Vim::take_count(cx).unwrap_or(1);
         Vim::take_forced_motion(cx);
@@ -798,10 +672,8 @@ impl Vim {
             editor.transact(window, cx, |editor, _, cx| {
                 let selections = editor.selections.all::<Point>(&editor.display_snapshot(cx));
 
-                let selection_start_rows: BTreeSet<u32> = selections
-                    .into_iter()
-                    .map(|selection| selection.start.row)
-                    .collect();
+                let selection_start_rows: BTreeSet<u32> =
+                    selections.into_iter().map(|selection| selection.start.row).collect();
                 let edits = selection_start_rows
                     .into_iter()
                     .map(|row| {
@@ -814,12 +686,7 @@ impl Vim {
         });
     }
 
-    fn insert_empty_line_below(
-        &mut self,
-        _: &InsertEmptyLineBelow,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn insert_empty_line_below(&mut self, _: &InsertEmptyLineBelow, window: &mut Window, cx: &mut Context<Self>) {
         self.record_current_action(cx);
         let count = Vim::take_count(cx).unwrap_or(1);
         Vim::take_forced_motion(cx);
@@ -834,10 +701,8 @@ impl Vim {
                     .map(|s| (s.id, s.head()))
                     .collect::<HashMap<_, _>>();
 
-                let selection_end_rows: BTreeSet<u32> = selections
-                    .into_iter()
-                    .map(|selection| selection.end.row)
-                    .collect();
+                let selection_end_rows: BTreeSet<u32> =
+                    selections.into_iter().map(|selection| selection.end.row).collect();
                 let edits = selection_end_rows
                     .into_iter()
                     .map(|row| {
@@ -858,12 +723,7 @@ impl Vim {
         });
     }
 
-    fn join_lines_impl(
-        &mut self,
-        insert_whitespace: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn join_lines_impl(&mut self, insert_whitespace: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.record_current_action(cx);
         let mut times = Vim::take_count(cx).unwrap_or(1);
         Vim::take_forced_motion(cx);
@@ -889,27 +749,14 @@ impl Vim {
     fn yank_line(&mut self, _: &YankLine, window: &mut Window, cx: &mut Context<Self>) {
         let count = Vim::take_count(cx);
         let forced_motion = Vim::take_forced_motion(cx);
-        self.yank_motion(
-            motion::Motion::CurrentLine,
-            count,
-            forced_motion,
-            window,
-            cx,
-        )
+        self.yank_motion(motion::Motion::CurrentLine, count, forced_motion, window, cx)
     }
 
-    fn yank_to_end_of_line(
-        &mut self,
-        _: &YankToEndOfLine,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn yank_to_end_of_line(&mut self, _: &YankToEndOfLine, window: &mut Window, cx: &mut Context<Self>) {
         let count = Vim::take_count(cx);
         let forced_motion = Vim::take_forced_motion(cx);
         self.yank_motion(
-            motion::Motion::EndOfLine {
-                display_lines: false,
-            },
+            motion::Motion::EndOfLine { display_lines: false },
             count,
             forced_motion,
             window,
@@ -922,11 +769,7 @@ impl Vim {
         Vim::take_forced_motion(cx);
         self.update_editor(cx, |vim, editor, cx| {
             let selection = editor.selections.newest_anchor();
-            let Some((buffer, point, _)) = editor
-                .buffer()
-                .read(cx)
-                .point_to_buffer_point(selection.head(), cx)
-            else {
+            let Some((buffer, point, _)) = editor.buffer().read(cx).point_to_buffer_point(selection.head(), cx) else {
                 return;
             };
             let filename = if let Some(file) = buffer.read(cx).file() {
@@ -976,12 +819,7 @@ impl Vim {
         }
     }
 
-    pub(crate) fn normal_replace(
-        &mut self,
-        text: Arc<str>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub(crate) fn normal_replace(&mut self, text: Arc<str>, window: &mut Window, cx: &mut Context<Self>) {
         // We need to use `text.chars().count()` instead of `text.len()` here as
         // `len()` counts bytes, not characters.
         let char_count = text.chars().count();
@@ -1013,8 +851,7 @@ impl Vim {
                     }
 
                     edits.push((
-                        range.start.to_offset(&display_map, Bias::Left)
-                            ..range.end.to_offset(&display_map, Bias::Left),
+                        range.start.to_offset(&display_map, Bias::Left)..range.end.to_offset(&display_map, Bias::Left),
                         text.repeat(repeat_count),
                     ));
                 }
@@ -1035,11 +872,7 @@ impl Vim {
         self.pop_operator(window, cx);
     }
 
-    pub fn save_selection_starts(
-        &self,
-        editor: &Editor,
-        cx: &mut Context<Editor>,
-    ) -> HashMap<usize, Anchor> {
+    pub fn save_selection_starts(&self, editor: &Editor, cx: &mut Context<Editor>) -> HashMap<usize, Anchor> {
         let display_map = editor.display_snapshot(cx);
         let selections = editor.selections.all_display(&display_map);
         selections
@@ -1392,9 +1225,7 @@ mod test {
     #[gpui::test]
     async fn test_a(cx: &mut gpui::TestAppContext) {
         let mut cx = NeovimBackedTestContext::new(cx).await;
-        cx.simulate_at_each_offset("a", "The qˇuicˇk")
-            .await
-            .assert_matches();
+        cx.simulate_at_each_offset("a", "The qˇuicˇk").await.assert_matches();
     }
 
     #[gpui::test]
@@ -1486,9 +1317,7 @@ mod test {
     #[gpui::test]
     async fn test_x(cx: &mut gpui::TestAppContext) {
         let mut cx = NeovimBackedTestContext::new(cx).await;
-        cx.simulate_at_each_offset("x", "ˇTeˇsˇt")
-            .await
-            .assert_matches();
+        cx.simulate_at_each_offset("x", "ˇTeˇsˇt").await.assert_matches();
         cx.simulate(
             "x",
             indoc! {"
@@ -1502,9 +1331,7 @@ mod test {
     #[gpui::test]
     async fn test_delete_left(cx: &mut gpui::TestAppContext) {
         let mut cx = NeovimBackedTestContext::new(cx).await;
-        cx.simulate_at_each_offset("shift-x", "ˇTˇeˇsˇt")
-            .await
-            .assert_matches();
+        cx.simulate_at_each_offset("shift-x", "ˇTˇeˇsˇt").await.assert_matches();
         cx.simulate(
             "shift-x",
             indoc! {"
@@ -1872,9 +1699,7 @@ mod test {
         cx.simulate_at_each_offset("%", "// ˇconsole.logˇ(ˇvaˇrˇ)ˇ;")
             .await
             .assert_matches();
-        cx.simulate_at_each_offset("%", "// ˇ{ ˇ{ˇ}ˇ }ˇ")
-            .await
-            .assert_matches();
+        cx.simulate_at_each_offset("%", "// ˇ{ ˇ{ˇ}ˇ }ˇ").await.assert_matches();
         // Template-style brackets (like Liquid {% %} and {{ }})
         cx.simulate_at_each_offset("%", "ˇ{ˇ% block %ˇ}ˇ")
             .await
@@ -1954,22 +1779,14 @@ mod test {
         cx.assert_binding_normal("e", indoc! {"foo_bˇar\nbaz"}, indoc! {"foo_baˇr\nbaz"});
 
         // Already at subword end, should move to next subword on next line
-        cx.assert_binding_normal(
-            "e",
-            indoc! {"foo_barˇ\nbaz_qux"},
-            indoc! {"foo_bar\nbaˇz_qux"},
-        );
+        cx.assert_binding_normal("e", indoc! {"foo_barˇ\nbaz_qux"}, indoc! {"foo_bar\nbaˇz_qux"});
 
         // CamelCase at EOL
         cx.assert_binding_normal("e", indoc! {"fooˇBar\nbaz"}, indoc! {"fooBaˇr\nbaz"});
 
         cx.assert_binding_normal("b", indoc! {"assert_ˇbinding"}, indoc! {"ˇassert_binding"});
 
-        cx.assert_binding_normal(
-            "g e",
-            indoc! {"assert_bindinˇg"},
-            indoc! {"asserˇt_binding"},
-        );
+        cx.assert_binding_normal("g e", indoc! {"assert_bindinˇg"}, indoc! {"asserˇt_binding"});
     }
 
     #[gpui::test]
@@ -2013,11 +1830,7 @@ mod test {
         cx.update(|_, cx| {
             SettingsStore::update_global(cx, |settings, cx| {
                 settings.update_user_settings(cx, |settings| {
-                    settings
-                        .project
-                        .all_languages
-                        .defaults
-                        .preferred_line_length = Some(5);
+                    settings.project.all_languages.defaults.preferred_line_length = Some(5);
                 });
             })
         });
@@ -2026,8 +1839,7 @@ mod test {
         cx.simulate_shared_keystrokes("g q q").await;
         cx.shared_state().await.assert_eq("th th\nth th\nˇth th\n");
 
-        cx.set_shared_state("ˇth th th th th th\nth th th th th th\n")
-            .await;
+        cx.set_shared_state("ˇth th th th th th\nth th th th th th\n").await;
         cx.simulate_shared_keystrokes("v j g q").await;
         cx.shared_state()
             .await
@@ -2067,9 +1879,7 @@ mod test {
         let mut cx = NeovimBackedTestContext::new(cx).await;
         cx.set_shared_state("heˇllo\nhello").await;
         cx.simulate_shared_keystrokes("2 y y p").await;
-        cx.shared_state()
-            .await
-            .assert_eq("hello\nˇhello\nhello\nhello");
+        cx.shared_state().await.assert_eq("hello\nˇhello\nhello\nhello");
     }
 
     #[gpui::test]
@@ -2334,18 +2144,13 @@ mod test {
         cx.simulate_shared_keystrokes("a").await;
         cx.shared_state().await.assert_matches();
         cx.simulate_shared_keystrokes("a n d space ctrl-o w").await;
-        cx.shared_state()
-            .await
-            .assert_eq(indoc! {"lorem and ipsum ˇdolor"});
+        cx.shared_state().await.assert_eq(indoc! {"lorem and ipsum ˇdolor"});
 
         // Test yanking to end of line ($).
         cx.set_shared_state(indoc! {"lorem ˇipsum dolor"}).await;
         cx.simulate_shared_keystrokes("i").await;
         cx.shared_state().await.assert_matches();
-        cx.simulate_shared_keystrokes("a n d space ctrl-o y $")
-            .await;
-        cx.shared_state()
-            .await
-            .assert_eq(indoc! {"lorem and ˇipsum dolor"});
+        cx.simulate_shared_keystrokes("a n d space ctrl-o y $").await;
+        cx.shared_state().await.assert_eq(indoc! {"lorem and ˇipsum dolor"});
     }
 }

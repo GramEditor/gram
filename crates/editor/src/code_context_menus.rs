@@ -1,9 +1,8 @@
 use crate::scroll::ScrollAmount;
 use fuzzy::{StringMatch, StringMatchCandidate};
 use gpui::{
-    AnyElement, Entity, Focusable, FontWeight, ListSizingBehavior, ScrollHandle, ScrollStrategy,
-    SharedString, Size, StrikethroughStyle, StyledText, Task, UniformListScrollHandle, div, px,
-    uniform_list,
+    AnyElement, Entity, Focusable, FontWeight, ListSizingBehavior, ScrollHandle, ScrollStrategy, SharedString, Size,
+    StrikethroughStyle, StyledText, Task, UniformListScrollHandle, div, px, uniform_list,
 };
 use itertools::Itertools;
 use language::CodeLabel;
@@ -28,16 +27,12 @@ use std::{
     rc::Rc,
 };
 use task::ResolvedTask;
-use ui::{
-    Color, IntoElement, ListItem, Pixels, Popover, ScrollAxes, Scrollbars, Styled, WithScrollbar,
-    prelude::*,
-};
+use ui::{Color, IntoElement, ListItem, Pixels, Popover, ScrollAxes, Scrollbars, Styled, WithScrollbar, prelude::*};
 use util::ResultExt;
 
 use crate::hover_popover::{hover_markdown_style, open_markdown_url};
 use crate::{
-    CodeActionProvider, CompletionId, CompletionProvider, DisplayRow, Editor, EditorStyle,
-    ResolvedTasks,
+    CodeActionProvider, CompletionId, CompletionProvider, DisplayRow, Editor, EditorStyle, ResolvedTasks,
     actions::{ConfirmCodeAction, ConfirmCompletion},
     split_words, styled_runs_for_code_label,
 };
@@ -164,12 +159,8 @@ impl CodeContextMenu {
         cx: &mut Context<Editor>,
     ) -> AnyElement {
         match self {
-            CodeContextMenu::Completions(menu) => {
-                menu.render(style, max_height_in_lines, window, cx)
-            }
-            CodeContextMenu::CodeActions(menu) => {
-                menu.render(style, max_height_in_lines, window, cx)
-            }
+            CodeContextMenu::Completions(menu) => menu.render(style, max_height_in_lines, window, cx),
+            CodeContextMenu::CodeActions(menu) => menu.render(style, max_height_in_lines, window, cx),
         }
     }
 
@@ -195,16 +186,9 @@ impl CodeContextMenu {
         }
     }
 
-    pub fn scroll_aside(
-        &mut self,
-        scroll_amount: ScrollAmount,
-        window: &mut Window,
-        cx: &mut Context<Editor>,
-    ) {
+    pub fn scroll_aside(&mut self, scroll_amount: ScrollAmount, window: &mut Window, cx: &mut Context<Editor>) {
         match self {
-            CodeContextMenu::Completions(completions_menu) => {
-                completions_menu.scroll_aside(scroll_amount, window, cx)
-            }
+            CodeContextMenu::Completions(completions_menu) => completions_menu.scroll_aside(scroll_amount, window, cx),
             CodeContextMenu::CodeActions(_) => (),
         }
     }
@@ -535,11 +519,7 @@ impl CompletionsMenu {
         cx.notify();
     }
 
-    pub fn resolve_visible_completions(
-        &mut self,
-        provider: Option<&dyn CompletionProvider>,
-        cx: &mut Context<Editor>,
-    ) {
+    pub fn resolve_visible_completions(&mut self, provider: Option<&dyn CompletionProvider>, cx: &mut Context<Editor>) {
         if !self.resolve_completions {
             return;
         }
@@ -609,12 +589,8 @@ impl CompletionsMenu {
             return;
         }
 
-        let resolve_task = provider.resolve_completions(
-            self.buffer.clone(),
-            candidate_ids,
-            self.completions.clone(),
-            cx,
-        );
+        let resolve_task =
+            provider.resolve_completions(self.buffer.clone(), candidate_ids, self.completions.clone(), cx);
 
         let completion_id = self.id;
         cx.spawn(async move |editor, cx| {
@@ -653,11 +629,7 @@ impl CompletionsMenu {
         }
     }
 
-    fn get_or_create_entry_markdown(
-        &self,
-        index: usize,
-        cx: &mut Context<Editor>,
-    ) -> Option<Entity<Markdown>> {
+    fn get_or_create_entry_markdown(&self, index: usize, cx: &mut Context<Editor>) -> Option<Entity<Markdown>> {
         let entries = self.entries.borrow();
         if index >= entries.len() {
             return None;
@@ -753,10 +725,7 @@ impl CompletionsMenu {
             // Handles redraw when the markdown is done parsing. The current render is for a
             // deferred draw, and so without this did not redraw when `markdown` notified.
             cx.observe(&markdown, |_, _, cx| cx.notify()).detach();
-            markdown_cache.push_front((
-                MarkdownCacheKey::ForCandidate { candidate_id },
-                markdown.clone(),
-            ));
+            markdown_cache.push_front((MarkdownCacheKey::ForCandidate { candidate_id }, markdown.clone()));
             Some((true, markdown))
         } else {
             debug_assert_eq!(markdown_cache.capacity(), MARKDOWN_CACHE_MAX_SIZE);
@@ -846,38 +815,33 @@ impl CompletionsMenu {
                                     FontWeight::BOLD.into(),
                                 )
                             }),
-                            styled_runs_for_code_label(
-                                &completion.label,
-                                &style.syntax,
-                                &style.local_player,
-                            )
-                            .map(|(range, mut highlight)| {
-                                // Ignore font weight for syntax highlighting, as we'll use it
-                                // for fuzzy matches.
-                                highlight.font_weight = None;
-                                if completion
-                                    .source
-                                    .lsp_completion(false)
-                                    .and_then(|lsp_completion| {
-                                        match (lsp_completion.deprecated, &lsp_completion.tags) {
-                                            (Some(true), _) => Some(true),
-                                            (_, Some(tags)) => {
-                                                Some(tags.contains(&CompletionItemTag::DEPRECATED))
+                            styled_runs_for_code_label(&completion.label, &style.syntax, &style.local_player).map(
+                                |(range, mut highlight)| {
+                                    // Ignore font weight for syntax highlighting, as we'll use it
+                                    // for fuzzy matches.
+                                    highlight.font_weight = None;
+                                    if completion
+                                        .source
+                                        .lsp_completion(false)
+                                        .and_then(|lsp_completion| {
+                                            match (lsp_completion.deprecated, &lsp_completion.tags) {
+                                                (Some(true), _) => Some(true),
+                                                (_, Some(tags)) => Some(tags.contains(&CompletionItemTag::DEPRECATED)),
+                                                _ => None,
                                             }
-                                            _ => None,
-                                        }
-                                    })
-                                    .unwrap_or(false)
-                                {
-                                    highlight.strikethrough = Some(StrikethroughStyle {
-                                        thickness: 1.0.into(),
-                                        ..Default::default()
-                                    });
-                                    highlight.color = Some(cx.theme().colors().text_muted);
-                                }
+                                        })
+                                        .unwrap_or(false)
+                                    {
+                                        highlight.strikethrough = Some(StrikethroughStyle {
+                                            thickness: 1.0.into(),
+                                            ..Default::default()
+                                        });
+                                        highlight.color = Some(cx.theme().colors().text_muted);
+                                    }
 
-                                (range, highlight)
-                            }),
+                                    (range, highlight)
+                                },
+                            ),
                         );
 
                         let completion_label = StyledText::new(completion.label.text.clone())
@@ -932,9 +896,7 @@ impl CompletionsMenu {
                                     .on_click(cx.listener(move |editor, _event, window, cx| {
                                         cx.stop_propagation();
                                         if let Some(task) = editor.confirm_completion(
-                                            &ConfirmCompletion {
-                                                item_ix: Some(item_ix),
-                                            },
+                                            &ConfirmCompletion { item_ix: Some(item_ix) },
                                             window,
                                             cx,
                                         ) {
@@ -989,17 +951,12 @@ impl CompletionsMenu {
         let multiline_docs = match completions[mat.candidate_id].documentation.as_ref() {
             Some(CompletionDocumentation::MultiLinePlainText(text)) => div().child(text.clone()),
             Some(CompletionDocumentation::SingleLineAndMultiLinePlainText {
-                plain_text: Some(text),
-                ..
+                plain_text: Some(text), ..
             }) => div().child(text.clone()),
             Some(CompletionDocumentation::MultiLineMarkdown(source)) if !source.is_empty() => {
-                let Some((false, markdown)) = self.get_or_create_markdown(
-                    mat.candidate_id,
-                    Some(source),
-                    true,
-                    &completions,
-                    cx,
-                ) else {
+                let Some((false, markdown)) =
+                    self.get_or_create_markdown(mat.candidate_id, Some(source), true, &completions, cx)
+                else {
                     return None;
                 };
                 Self::render_markdown(markdown, window, cx)
@@ -1021,10 +978,7 @@ impl CompletionsMenu {
             Some(CompletionDocumentation::MultiLineMarkdown(_)) => return None,
             Some(CompletionDocumentation::SingleLine(_)) => return None,
             Some(CompletionDocumentation::Undocumented) => return None,
-            Some(CompletionDocumentation::SingleLineAndMultiLinePlainText {
-                plain_text: None,
-                ..
-            }) => {
+            Some(CompletionDocumentation::SingleLineAndMultiLinePlainText { plain_text: None, .. }) => {
                 return None;
             }
         };
@@ -1045,11 +999,7 @@ impl CompletionsMenu {
         )
     }
 
-    fn render_markdown(
-        markdown: Entity<Markdown>,
-        window: &mut Window,
-        cx: &mut Context<Editor>,
-    ) -> Div {
+    fn render_markdown(markdown: Entity<Markdown>, window: &mut Window, cx: &mut Context<Editor>) -> Div {
         div().child(
             MarkdownElement::new(markdown, hover_markdown_style(window, cx))
                 .code_block_renderer(markdown::CodeBlockRenderer::Default {
@@ -1106,9 +1056,7 @@ impl CompletionsMenu {
                 .iter()
                 .map(|(query_start, candidates)| {
                     let query_for_batch = match query_start {
-                        Some(start) => {
-                            Arc::new(buffer_snapshot.text_for_range(*start..query_end).collect())
-                        }
+                        Some(start) => Arc::new(buffer_snapshot.text_for_range(*start..query_end).collect()),
                         None => default_query.clone(),
                     };
                     (query_for_batch, candidates)
@@ -1153,12 +1101,12 @@ impl CompletionsMenu {
             // Remove duplicate snippet prefixes (e.g., "cool code" will match
             // the text "c c" in two places; we should only show the longer one)
             let mut snippets_seen = HashSet::<(usize, usize)>::default();
-            matches.retain(|result| {
-                match completions_ref[result.candidate_id].snippet_deduplication_key {
+            matches.retain(
+                |result| match completions_ref[result.candidate_id].snippet_deduplication_key {
                     Some(key) => snippets_seen.insert(key),
                     None => true,
-                }
-            });
+                },
+            );
 
             matches
         })
@@ -1206,8 +1154,7 @@ impl CompletionsMenu {
             .and_then(|c| c.to_lowercase().next());
 
         if snippet_sort_order == SnippetSortOrder::None {
-            matches
-                .retain(|string_match| !completions[string_match.candidate_id].is_snippet_kind());
+            matches.retain(|string_match| !completions[string_match.candidate_id].is_snippet_kind());
         }
 
         matches.sort_unstable_by_key(|string_match| {
@@ -1229,10 +1176,8 @@ impl CompletionsMenu {
             let query_start_doesnt_match_split_words = !is_snippet
                 && query_start_lower
                     .map(|query_char| {
-                        !split_words(&string_match.string).any(|word| {
-                            word.chars().next().and_then(|c| c.to_lowercase().next())
-                                == Some(query_char)
-                        })
+                        !split_words(&string_match.string)
+                            .any(|word| word.chars().next().and_then(|c| c.to_lowercase().next()) == Some(query_char))
                     })
                     .unwrap_or(false);
 
@@ -1296,12 +1241,7 @@ impl CompletionsMenu {
             });
     }
 
-    pub fn scroll_aside(
-        &mut self,
-        amount: ScrollAmount,
-        window: &mut Window,
-        cx: &mut Context<Editor>,
-    ) {
+    pub fn scroll_aside(&mut self, amount: ScrollAmount, window: &mut Window, cx: &mut Context<Editor>) {
         let mut offset = self.scroll_handle_aside.offset();
 
         offset.y -= amount.pixels(
@@ -1374,12 +1314,7 @@ impl CodeActionContents {
                     provider: available.provider.clone(),
                 })
             }))
-            .chain(
-                self.debug_scenarios
-                    .iter()
-                    .cloned()
-                    .map(CodeActionsItem::DebugScenario),
-            )
+            .chain(self.debug_scenarios.iter().cloned().map(CodeActionsItem::DebugScenario))
     }
 
     pub fn get(&self, mut index: usize) -> Option<CodeActionsItem> {
@@ -1563,9 +1498,7 @@ impl CodeActionsMenu {
                             .on_click(cx.listener(move |editor, _, window, cx| {
                                 cx.stop_propagation();
                                 if let Some(task) = editor.confirm_code_action(
-                                    &ConfirmCodeAction {
-                                        item_ix: Some(item_ix),
-                                    },
+                                    &ConfirmCodeAction { item_ix: Some(item_ix) },
                                     window,
                                     cx,
                                 ) {
@@ -1585,12 +1518,8 @@ impl CodeActionsMenu {
                 .enumerate()
                 .max_by_key(|(_, action)| match action {
                     CodeActionsItem::Task(_, task) => task.resolved_label.chars().count(),
-                    CodeActionsItem::CodeAction { action, .. } => {
-                        action.lsp_action.title().chars().count()
-                    }
-                    CodeActionsItem::DebugScenario(scenario) => {
-                        format!("debug: {}", scenario.label).chars().count()
-                    }
+                    CodeActionsItem::CodeAction { action, .. } => action.lsp_action.title().chars().count(),
+                    CodeActionsItem::DebugScenario(scenario) => format!("debug: {}", scenario.label).chars().count(),
                 })
                 .map(|(ix, _)| ix),
         )
@@ -1615,12 +1544,8 @@ impl CodeActionsMenu {
             window.text_style().font(),
             window.text_style().font_size.to_pixels(window.rem_size()),
         );
-        let is_truncated = line_wrapper.should_truncate_line(
-            &label,
-            CODE_ACTION_MENU_MAX_WIDTH,
-            "…",
-            gpui::TruncateFrom::End,
-        );
+        let is_truncated =
+            line_wrapper.should_truncate_line(&label, CODE_ACTION_MENU_MAX_WIDTH, "…", gpui::TruncateFrom::End);
 
         if is_truncated.is_none() {
             return None;

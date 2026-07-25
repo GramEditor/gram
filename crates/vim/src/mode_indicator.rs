@@ -34,8 +34,7 @@ impl ModeIndicator {
             handle.update(cx, |_, cx| {
                 cx.subscribe(&vim, |mode_indicator, vim, event, cx| match event {
                     VimEvent::Focused => {
-                        mode_indicator.vim_subscription =
-                            Some(cx.observe(&vim, |_, _, cx| cx.notify()));
+                        mode_indicator.vim_subscription = Some(cx.observe(&vim, |_, _, cx| cx.notify()));
                         mode_indicator.vim = Some(vim.downgrade());
                     }
                 })
@@ -69,18 +68,10 @@ impl ModeIndicator {
 
         let vim = vim.read(cx);
         recording
-            .chain(
-                cx.global::<VimGlobals>()
-                    .pre_count
-                    .map(|count| format!("{}", count)),
-            )
+            .chain(cx.global::<VimGlobals>().pre_count.map(|count| format!("{}", count)))
             .chain(vim.selected_register.map(|reg| format!("\"{reg}")))
             .chain(vim.operator_stack.iter().map(|item| item.status()))
-            .chain(
-                cx.global::<VimGlobals>()
-                    .post_count
-                    .map(|count| format!("{}", count)),
-            )
+            .chain(cx.global::<VimGlobals>().post_count.map(|count| format!("{}", count)))
             .collect::<Vec<_>>()
             .join("")
     }
@@ -114,8 +105,7 @@ impl Render for ModeIndicator {
             crate::state::Mode::HelixSelect => colors.vim_helix_select_background,
         };
 
-        let (label, mode): (SharedString, Option<SharedString>) = if let Some(label) = status_label
-        {
+        let (label, mode): (SharedString, Option<SharedString>) = if let Some(label) = status_label {
             (label, None)
         } else {
             let mode_str = if temp_mode {
@@ -125,10 +115,7 @@ impl Render for ModeIndicator {
             };
 
             let current_operators_description = self.current_operators_description(vim.clone(), cx);
-            let pending = self
-                .pending_keys
-                .as_ref()
-                .unwrap_or(&current_operators_description);
+            let pending = self.pending_keys.as_ref().unwrap_or(&current_operators_description);
             (pending.into(), Some(mode_str.into()))
         };
         h_flex()

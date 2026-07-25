@@ -19,12 +19,7 @@ pub fn channel<T>(value: T) -> (Sender<T>, Receiver<T>) {
         closed: false,
     }));
 
-    (
-        Sender {
-            state: state.clone(),
-        },
-        Receiver { state, version: 0 },
-    )
+    (Sender { state: state.clone() }, Receiver { state, version: 0 })
 }
 
 #[derive(Default, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]

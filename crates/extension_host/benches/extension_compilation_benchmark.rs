@@ -2,8 +2,8 @@ use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
 
 use criterion::{BatchSize, BenchmarkId, Criterion, criterion_group, criterion_main};
 use extension::{
-    ExtensionCapability, ExtensionHostProxy, ExtensionLibraryKind, ExtensionManifest,
-    LanguageServerManifestEntry, LibManifestEntry, SchemaVersion,
+    ExtensionCapability, ExtensionHostProxy, ExtensionLibraryKind, ExtensionManifest, LanguageServerManifestEntry,
+    LibManifestEntry, SchemaVersion,
     extension_builder::{CompileExtensionOptions, ExtensionBuilder},
 };
 use extension_host::wasm_host::WasmHost;
@@ -24,11 +24,7 @@ fn extension_benchmarks(c: &mut Criterion) {
     let mut group = c.benchmark_group("load");
 
     let mut manifest = manifest();
-    let wasm_bytes = wasm_bytes(
-        &cx,
-        &mut manifest,
-        Arc::new(RealFs::new(None, cx.executor())),
-    );
+    let wasm_bytes = wasm_bytes(&cx, &mut manifest, Arc::new(RealFs::new(None, cx.executor())));
     let manifest = Arc::new(manifest);
     let extensions_dir = TempTree::new(json!({
         "installed": {},
@@ -73,12 +69,7 @@ fn wasm_bytes(cx: &TestAppContext, manifest: &mut ExtensionManifest, fs: Arc<dyn
         .unwrap()
         .join("extensions/test-extension");
     cx.executor()
-        .block(extension_builder.compile_extension(
-            &path,
-            manifest,
-            CompileExtensionOptions { release: true },
-            fs,
-        ))
+        .block(extension_builder.compile_extension(&path, manifest, CompileExtensionOptions { release: true }, fs))
         .unwrap();
     std::fs::read(path.join("extension.wasm")).unwrap()
 }
@@ -97,9 +88,7 @@ fn extension_builder() -> ExtensionBuilder {
 }
 
 fn wasm_host(cx: &TestAppContext, extensions_dir: &TempTree) -> Arc<WasmHost> {
-    let http_client = FakeHttpClient::create(async |_| {
-        Ok(Response::builder().status(404).body("not found".into())?)
-    });
+    let http_client = FakeHttpClient::create(async |_| Ok(Response::builder().status(404).body("not found".into())?));
     let extensions_dir = extensions_dir.path().canonicalize().unwrap();
     let work_dir = extensions_dir.join("work");
     let fs = Arc::new(RealFs::new(None, cx.executor()));
@@ -137,12 +126,10 @@ fn manifest() -> ExtensionManifest {
             .into_iter()
             .collect(),
         snippets: None,
-        capabilities: vec![ExtensionCapability::ProcessExec(
-            extension::ProcessExecCapability {
-                command: "echo".into(),
-                args: vec!["hello!".into()],
-            },
-        )],
+        capabilities: vec![ExtensionCapability::ProcessExec(extension::ProcessExecCapability {
+            command: "echo".into(),
+            args: vec!["hello!".into()],
+        })],
         debug_adapters: Default::default(),
         debug_locators: Default::default(),
     }

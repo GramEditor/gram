@@ -45,12 +45,8 @@ impl DebuggerPaneItem {
     pub(crate) fn is_supported(&self, capabilities: &Capabilities) -> bool {
         match self {
             DebuggerPaneItem::Modules => capabilities.supports_modules_request.unwrap_or_default(),
-            DebuggerPaneItem::MemoryView => capabilities
-                .supports_read_memory_request
-                .unwrap_or_default(),
-            DebuggerPaneItem::LoadedSources => capabilities
-                .supports_loaded_sources_request
-                .unwrap_or_default(),
+            DebuggerPaneItem::MemoryView => capabilities.supports_read_memory_request.unwrap_or_default(),
+            DebuggerPaneItem::LoadedSources => capabilities.supports_loaded_sources_request.unwrap_or_default(),
             _ => true,
         }
     }
@@ -69,23 +65,15 @@ impl DebuggerPaneItem {
     }
     pub(crate) fn tab_tooltip(self) -> SharedString {
         let tooltip = match self {
-            DebuggerPaneItem::Console => {
-                "Displays program output and allows manual input of debugger commands."
-            }
+            DebuggerPaneItem::Console => "Displays program output and allows manual input of debugger commands.",
             DebuggerPaneItem::Variables => {
                 "Shows current values of local and global variables in the current stack frame."
             }
             DebuggerPaneItem::BreakpointList => "Lists all active breakpoints set in the code.",
-            DebuggerPaneItem::Frames => {
-                "Displays the call stack, letting you navigate between function calls."
-            }
+            DebuggerPaneItem::Frames => "Displays the call stack, letting you navigate between function calls.",
             DebuggerPaneItem::Modules => "Shows all modules or libraries loaded by the program.",
-            DebuggerPaneItem::LoadedSources => {
-                "Lists all source files currently loaded and used by the debugger."
-            }
-            DebuggerPaneItem::Terminal => {
-                "Provides an interactive terminal session within the debugging environment."
-            }
+            DebuggerPaneItem::LoadedSources => "Lists all source files currently loaded and used by the debugger.",
+            DebuggerPaneItem::Terminal => "Provides an interactive terminal session within the debugging environment.",
             DebuggerPaneItem::MemoryView => "Allows inspection of memory contents.",
         };
         SharedString::new_static(tooltip)
@@ -126,21 +114,14 @@ pub(crate) async fn serialize_pane_layout(
     adapter_name: DebugAdapterName,
     pane_group: SerializedLayout,
 ) -> anyhow::Result<()> {
-    let serialized_pane_group = serde_json::to_string(&pane_group)
-        .context("Serializing pane group with serde_json as a string")?;
+    let serialized_pane_group =
+        serde_json::to_string(&pane_group).context("Serializing pane group with serde_json as a string")?;
     KEY_VALUE_STORE
-        .write_kvp(
-            format!("{DEBUGGER_PANEL_PREFIX}-{adapter_name}"),
-            serialized_pane_group,
-        )
+        .write_kvp(format!("{DEBUGGER_PANEL_PREFIX}-{adapter_name}"), serialized_pane_group)
         .await
 }
 
-pub(crate) fn build_serialized_layout(
-    pane_group: &Member,
-    dock_axis: Axis,
-    cx: &App,
-) -> SerializedLayout {
+pub(crate) fn build_serialized_layout(pane_group: &Member, dock_axis: Axis, cx: &App) -> SerializedLayout {
     SerializedLayout {
         dock_axis,
         panes: build_serialized_pane_layout(pane_group, cx),
@@ -170,10 +151,7 @@ fn serialize_pane(pane: &Entity<Pane>, cx: &App) -> SerializedPane {
     let pane = pane.read(cx);
     let children = pane
         .items()
-        .filter_map(|item| {
-            item.act_as::<SubView>(cx)
-                .map(|view| view.read(cx).view_kind())
-        })
+        .filter_map(|item| item.act_as::<SubView>(cx).map(|view| view.read(cx).view_kind()))
         .collect::<Vec<_>>();
 
     let active_item = pane
@@ -181,15 +159,10 @@ fn serialize_pane(pane: &Entity<Pane>, cx: &App) -> SerializedPane {
         .and_then(|item| item.act_as::<SubView>(cx))
         .map(|view| view.read(cx).view_kind());
 
-    SerializedPane {
-        children,
-        active_item,
-    }
+    SerializedPane { children, active_item }
 }
 
-pub(crate) async fn get_serialized_layout(
-    adapter_name: impl AsRef<str>,
-) -> Option<SerializedLayout> {
+pub(crate) async fn get_serialized_layout(adapter_name: impl AsRef<str>) -> Option<SerializedLayout> {
     let key = format!("{DEBUGGER_PANEL_PREFIX}-{}", adapter_name.as_ref());
 
     KEY_VALUE_STORE
@@ -217,11 +190,7 @@ pub(crate) fn deserialize_pane_layout(
     cx: &mut Context<RunningState>,
 ) -> Option<Member> {
     match serialized {
-        SerializedPaneLayout::Group {
-            axis,
-            flexes,
-            children,
-        } => {
+        SerializedPaneLayout::Group { axis, flexes, children } => {
             let mut members = Vec::new();
             for child in children {
                 if let Some(new_member) = deserialize_pane_layout(
@@ -270,18 +239,14 @@ pub(crate) fn deserialize_pane_layout(
                 .children
                 .iter()
                 .map(|child| match child {
-                    DebuggerPaneItem::Frames => {
-                        Box::new(SubView::stack_frame_list(stack_frame_list.clone(), cx))
-                    }
+                    DebuggerPaneItem::Frames => Box::new(SubView::stack_frame_list(stack_frame_list.clone(), cx)),
                     DebuggerPaneItem::Variables => Box::new(SubView::new(
                         variable_list.focus_handle(cx),
                         variable_list.clone().into(),
                         DebuggerPaneItem::Variables,
                         cx,
                     )),
-                    DebuggerPaneItem::BreakpointList => {
-                        Box::new(SubView::breakpoint_list(breakpoint_list.clone(), cx))
-                    }
+                    DebuggerPaneItem::BreakpointList => Box::new(SubView::breakpoint_list(breakpoint_list.clone(), cx)),
                     DebuggerPaneItem::Modules => Box::new(SubView::new(
                         module_list.focus_handle(cx),
                         module_list.clone().into(),

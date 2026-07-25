@@ -5,7 +5,8 @@ use lsp::{CompletionItem, Documentation};
 use regex::{Regex, RegexBuilder};
 
 const HEX: &str = r#"(#(?:[\da-fA-F]{3}){1,2})"#;
-const RGB_OR_HSL: &str = r#"(rgba?|hsla?)\(\s*(\d{1,3}%?)\s*,\s*(\d{1,3}%?)\s*,\s*(\d{1,3}%?)\s*(?:,\s*(1|0?\.\d+))?\s*\)"#;
+const RGB_OR_HSL: &str =
+    r#"(rgba?|hsla?)\(\s*(\d{1,3}%?)\s*,\s*(\d{1,3}%?)\s*,\s*(\d{1,3}%?)\s*(?:,\s*(1|0?\.\d+))?\s*\)"#;
 
 static RELAXED_HEX_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     RegexBuilder::new(HEX)
@@ -42,17 +43,11 @@ pub fn extract_color(item: &CompletionItem) -> Option<Hsla> {
     // Try to extract from entire `label` field.
     parse(&item.label, ParseMode::Strict)
         // Try to extract from entire `detail` field.
-        .or_else(|| {
-            item.detail
-                .as_ref()
-                .and_then(|detail| parse(detail, ParseMode::Strict))
-        })
+        .or_else(|| item.detail.as_ref().and_then(|detail| parse(detail, ParseMode::Strict)))
         // Try to extract from beginning or end of `documentation` field.
         .or_else(|| match item.documentation {
             Some(Documentation::String(ref str)) => parse(str, ParseMode::Relaxed),
-            Some(Documentation::MarkupContent(ref markup)) => {
-                parse(&markup.value, ParseMode::Relaxed)
-            }
+            Some(Documentation::MarkupContent(ref markup)) => parse(&markup.value, ParseMode::Relaxed),
             None => None,
         })
 }
@@ -249,9 +244,7 @@ mod tests {
                 kind: Some(CompletionItemKind::COLOR),
                 label: "".to_string(),
                 detail: None,
-                documentation: Some(Documentation::String(
-                    format!("{} foo", color_str).to_string(),
-                )),
+                documentation: Some(Documentation::String(format!("{} foo", color_str).to_string())),
                 ..Default::default()
             });
 
@@ -266,9 +259,7 @@ mod tests {
                 kind: Some(CompletionItemKind::COLOR),
                 label: "".to_string(),
                 detail: None,
-                documentation: Some(Documentation::String(
-                    format!("foo {}", color_str).to_string(),
-                )),
+                documentation: Some(Documentation::String(format!("foo {}", color_str).to_string())),
                 ..Default::default()
             });
 
@@ -283,9 +274,7 @@ mod tests {
                 kind: Some(CompletionItemKind::COLOR),
                 label: "".to_string(),
                 detail: None,
-                documentation: Some(Documentation::String(
-                    format!("foo {} foo", color_str).to_string(),
-                )),
+                documentation: Some(Documentation::String(format!("foo {} foo", color_str).to_string())),
                 ..Default::default()
             });
 

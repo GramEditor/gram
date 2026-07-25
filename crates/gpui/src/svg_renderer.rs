@@ -1,7 +1,4 @@
-use crate::{
-    AssetSource, DevicePixels, IsZero, RenderImage, Result, SharedString, Size,
-    swap_rgba_pa_to_bgra,
-};
+use crate::{AssetSource, DevicePixels, IsZero, RenderImage, Result, SharedString, Size, swap_rgba_pa_to_bgra};
 use image::Frame;
 use resvg::tiny_skia::Pixmap;
 use smallvec::SmallVec;
@@ -43,14 +40,12 @@ impl SvgRenderer {
             Arc::new(db)
         });
         let default_font_resolver = usvg::FontResolver::default_font_selector();
-        let font_resolver = Box::new(
-            move |font: &usvg::Font, db: &mut Arc<usvg::fontdb::Database>| {
-                if db.is_empty() {
-                    *db = FONT_DB.clone();
-                }
-                default_font_resolver(font, db)
-            },
-        );
+        let font_resolver = Box::new(move |font: &usvg::Font, db: &mut Arc<usvg::fontdb::Database>| {
+            if db.is_empty() {
+                *db = FONT_DB.clone();
+            }
+            default_font_resolver(font, db)
+        });
         let options = usvg::Options {
             font_resolver: usvg::FontResolver {
                 select_font: font_resolver,
@@ -71,25 +66,20 @@ impl SvgRenderer {
         scale_factor: f32,
         to_brga: bool,
     ) -> Result<Arc<RenderImage>, usvg::Error> {
-        self.render_pixmap(
-            bytes,
-            SvgSize::ScaleFactor(scale_factor * SMOOTH_SVG_SCALE_FACTOR),
-        )
-        .map(|pixmap| {
-            let mut buffer =
-                image::ImageBuffer::from_raw(pixmap.width(), pixmap.height(), pixmap.take())
-                    .unwrap();
+        self.render_pixmap(bytes, SvgSize::ScaleFactor(scale_factor * SMOOTH_SVG_SCALE_FACTOR))
+            .map(|pixmap| {
+                let mut buffer = image::ImageBuffer::from_raw(pixmap.width(), pixmap.height(), pixmap.take()).unwrap();
 
-            if to_brga {
-                for pixel in buffer.chunks_exact_mut(4) {
-                    swap_rgba_pa_to_bgra(pixel);
+                if to_brga {
+                    for pixel in buffer.chunks_exact_mut(4) {
+                        swap_rgba_pa_to_bgra(pixel);
+                    }
                 }
-            }
 
-            let mut image = RenderImage::new(SmallVec::from_const([Frame::new(buffer)]));
-            image.scale_factor = SMOOTH_SVG_SCALE_FACTOR;
-            Arc::new(image)
-        })
+                let mut image = RenderImage::new(SmallVec::from_const([Frame::new(buffer)]));
+                image.scale_factor = SMOOTH_SVG_SCALE_FACTOR;
+                Arc::new(image)
+            })
     }
 
     pub(crate) fn render_alpha_mask(
@@ -107,11 +97,7 @@ impl SvgRenderer {
                 DevicePixels(pixmap.width() as i32),
                 DevicePixels(pixmap.height() as i32),
             );
-            let alpha_mask = pixmap
-                .pixels()
-                .iter()
-                .map(|p| p.alpha())
-                .collect::<Vec<_>>();
+            let alpha_mask = pixmap.pixels().iter().map(|p| p.alpha()).collect::<Vec<_>>();
 
             Ok(Some((size, alpha_mask)))
         };
@@ -134,11 +120,9 @@ impl SvgRenderer {
         };
 
         // Render the SVG to a pixmap with the specified width and height.
-        let mut pixmap = resvg::tiny_skia::Pixmap::new(
-            (svg_size.width() * scale) as u32,
-            (svg_size.height() * scale) as u32,
-        )
-        .ok_or(usvg::Error::InvalidSize)?;
+        let mut pixmap =
+            resvg::tiny_skia::Pixmap::new((svg_size.width() * scale) as u32, (svg_size.height() * scale) as u32)
+                .ok_or(usvg::Error::InvalidSize)?;
 
         let transform = resvg::tiny_skia::Transform::from_scale(scale, scale);
 

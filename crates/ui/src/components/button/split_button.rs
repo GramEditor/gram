@@ -1,6 +1,6 @@
 use gpui::{
-    AnyElement, App, BoxShadow, IntoElement, ParentElement, RenderOnce, Styled, Window, div, hsla,
-    point, prelude::FluentBuilder, px,
+    AnyElement, App, BoxShadow, IntoElement, ParentElement, RenderOnce, Styled, Window, div, hsla, point,
+    prelude::FluentBuilder, px,
 };
 use theme::ActiveTheme;
 
@@ -45,24 +45,15 @@ impl SplitButton {
 
 impl RenderOnce for SplitButton {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let is_filled_or_outlined = matches!(
-            self.style,
-            SplitButtonStyle::Filled | SplitButtonStyle::Outlined
-        );
+        let is_filled_or_outlined = matches!(self.style, SplitButtonStyle::Filled | SplitButtonStyle::Outlined);
 
         h_flex()
             .rounded_sm()
             .when(is_filled_or_outlined, |this| {
-                this.border_1()
-                    .border_color(cx.theme().colors().border.opacity(0.8))
+                this.border_1().border_color(cx.theme().colors().border.opacity(0.8))
             })
             .child(div().flex_grow().child(self.left))
-            .child(
-                div()
-                    .h_full()
-                    .w_px()
-                    .bg(cx.theme().colors().border.opacity(0.5)),
-            )
+            .child(div().h_full().w_px().bg(cx.theme().colors().border.opacity(0.5)))
             .child(self.right)
             .when(self.style == SplitButtonStyle::Filled, |this| {
                 this.bg(ElevationIndex::Surface.on_elevation_bg(cx))

@@ -28,8 +28,8 @@ use x11rb::{
     protocol::xinput::ConnectionExt,
     protocol::xkb::ConnectionExt as _,
     protocol::xproto::{
-        AtomEnum, ChangeWindowAttributesAux, ClientMessageData, ClientMessageEvent,
-        ConnectionExt as _, EventMask, ModMask, Visibility,
+        AtomEnum, ChangeWindowAttributesAux, ClientMessageData, ClientMessageEvent, ConnectionExt as _, EventMask,
+        ModMask, Visibility,
     },
     protocol::{Event, randr, render, xinput, xkb, xproto},
     resource_manager::Database,
@@ -41,11 +41,10 @@ use xkbc::x11::ffi::{XKB_X11_MIN_MAJOR_XKB_VERSION, XKB_X11_MIN_MINOR_XKB_VERSIO
 use xkbcommon::xkb::{self as xkbc, STATE_LAYOUT_EFFECTIVE};
 
 use super::{
-    ButtonOrScroll, ScrollDirection, X11Display, X11WindowStatePtr, XcbAtoms, XimCallbackEvent,
-    XimHandler, button_or_scroll_from_event_detail, check_reply,
+    ButtonOrScroll, ScrollDirection, X11Display, X11WindowStatePtr, XcbAtoms, XimCallbackEvent, XimHandler,
+    button_or_scroll_from_event_detail, check_reply,
     clipboard::{self, Clipboard},
-    get_reply, get_valuator_axis_index, handle_connection_error, modifiers_from_state,
-    pressed_button_from_mask,
+    get_reply, get_valuator_axis_index, handle_connection_error, modifiers_from_state, pressed_button_from_mask,
 };
 
 use crate::platform::{
@@ -60,10 +59,10 @@ use crate::platform::{
     wgpu::WgpuContext,
 };
 use crate::{
-    AnyWindowHandle, Bounds, ClipboardItem, CursorStyle, DisplayId, FileDropEvent, Keystroke,
-    LinuxKeyboardLayout, Modifiers, ModifiersChangedEvent, MouseButton, Pixels, Platform,
-    PlatformDisplay, PlatformInput, PlatformKeyboardLayout, Point, RequestFrameOptions,
-    ScrollDelta, Size, TouchPhase, WindowParams, X11Window, modifiers_from_xinput_info, point, px,
+    AnyWindowHandle, Bounds, ClipboardItem, CursorStyle, DisplayId, FileDropEvent, Keystroke, LinuxKeyboardLayout,
+    Modifiers, ModifiersChangedEvent, MouseButton, Pixels, Platform, PlatformDisplay, PlatformInput,
+    PlatformKeyboardLayout, Point, RequestFrameOptions, ScrollDelta, Size, TouchPhase, WindowParams, X11Window,
+    modifiers_from_xinput_info, point, px,
 };
 
 /// Value for DeviceId parameters which selects all devices.
@@ -233,9 +232,7 @@ impl X11ClientStatePtr {
         let mut state = client.0.borrow_mut();
 
         if let Some(window_ref) = state.windows.remove(&x_window)
-            && let Some(RefreshState::PeriodicRefresh {
-                event_loop_token, ..
-            }) = window_ref.refresh_state
+            && let Some(RefreshState::PeriodicRefresh { event_loop_token, .. }) = window_ref.refresh_state
         {
             state.loop_handle.remove(event_loop_token);
         }
@@ -269,10 +266,7 @@ impl X11ClientStatePtr {
         let scaled_bounds = bounds.scale(state.scale_factor);
         let ic_attributes = ximc
             .build_ic_attributes()
-            .push(
-                xim::AttributeName::InputStyle,
-                xim::InputStyle::PREEDIT_CALLBACKS,
-            )
+            .push(xim::AttributeName::InputStyle, xim::InputStyle::PREEDIT_CALLBACKS)
             .push(xim::AttributeName::ClientWindow, xim_handler.window)
             .push(xim::AttributeName::FocusWindow, xim_handler.window)
             .nested_list(xim::AttributeName::PreeditAttributes, |b| {
@@ -348,9 +342,7 @@ impl X11Client {
                     }
                 }
             })
-            .map_err(|err| {
-                anyhow!("Failed to initialize event loop handling of foreground tasks: {err:?}")
-            })?;
+            .map_err(|err| anyhow!("Failed to initialize event loop handling of foreground tasks: {err:?}"))?;
 
         let (xcb_connection, x_root_index) = XCBConnection::connect(None)?;
         xcb_connection.prefetch_extension_information(xkb::X11_EXTENSION_NAME)?;
@@ -364,10 +356,7 @@ impl X11Client {
             || "XInput XiQueryVersion failed",
             xcb_connection.xinput_xi_query_version(2, 1),
         )?;
-        assert!(
-            xinput_version.major_version >= 2,
-            "XInput version >= 2 required."
-        );
+        assert!(xinput_version.major_version >= 2, "XInput version >= 2 required.");
 
         let pointer_device_states =
             current_pointer_device_states(&xcb_connection, &BTreeMap::new()).unwrap_or_default();
@@ -379,8 +368,7 @@ impl X11Client {
 
         let root = xcb_connection.setup().roots[0].root;
         let compositor_present = check_compositor_present(&xcb_connection, root);
-        let gtk_frame_extents_supported =
-            check_gtk_frame_extents_supported(&xcb_connection, &atoms, root);
+        let gtk_frame_extents_supported = check_gtk_frame_extents_supported(&xcb_connection, &atoms, root);
         let client_side_decorations_supported = compositor_present && gtk_frame_extents_supported;
         log::info!(
             "x11: compositor present: {}, gtk_frame_extents_supported: {}",
@@ -390,14 +378,11 @@ impl X11Client {
 
         let xkb = get_reply(
             || "Failed to initialize XKB extension",
-            xcb_connection
-                .xkb_use_extension(XKB_X11_MIN_MAJOR_XKB_VERSION, XKB_X11_MIN_MINOR_XKB_VERSION),
+            xcb_connection.xkb_use_extension(XKB_X11_MIN_MAJOR_XKB_VERSION, XKB_X11_MIN_MINOR_XKB_VERSION),
         )?;
         assert!(xkb.supported);
 
-        let events = xkb::EventType::STATE_NOTIFY
-            | xkb::EventType::MAP_NOTIFY
-            | xkb::EventType::NEW_KEYBOARD_NOTIFY;
+        let events = xkb::EventType::STATE_NOTIFY | xkb::EventType::MAP_NOTIFY | xkb::EventType::NEW_KEYBOARD_NOTIFY;
         let map_notify_parts = xkb::MapPart::KEY_TYPES
             | xkb::MapPart::KEY_SYMS
             | xkb::MapPart::MODIFIER_MAP
@@ -431,16 +416,13 @@ impl X11Client {
         };
         let compose_state = get_xkb_compose_state(&xkb_context);
         let layout_idx = xkb_state.serialize_layout(STATE_LAYOUT_EFFECTIVE);
-        let layout_name = xkb_state
-            .get_keymap()
-            .layout_get_name(layout_idx)
-            .to_string();
+        let layout_name = xkb_state.get_keymap().layout_get_name(layout_idx).to_string();
         let keyboard_layout = LinuxKeyboardLayout::new(layout_name.into());
 
         let gpu_context = WgpuContext::new().notify_err("Unable to init GPU context");
 
-        let resource_database = x11rb::resource_manager::new_from_default(&xcb_connection)
-            .context("Failed to create resource database")?;
+        let resource_database =
+            x11rb::resource_manager::new_from_default(&xcb_connection).context("Failed to create resource database")?;
         let scale_factor = get_scale_factor(&xcb_connection, &resource_database, x_root_index);
         let cursor_handle = cursor::Handle::new(&xcb_connection, x_root_index, &resource_database)
             .context("Failed to initialize cursor theme handler")?
@@ -452,22 +434,14 @@ impl X11Client {
         let xcb_connection = Rc::new(xcb_connection);
 
         let ximc = X11rbClient::init(Rc::clone(&xcb_connection), x_root_index, None).ok();
-        let xim_handler = if ximc.is_some() {
-            Some(XimHandler::new())
-        } else {
-            None
-        };
+        let xim_handler = if ximc.is_some() { Some(XimHandler::new()) } else { None };
 
         // Safety: Safe if xcb::Connection always returns a valid fd
         let fd = unsafe { FdWrapper::new(Rc::clone(&xcb_connection)) };
 
         handle
             .insert_source(
-                Generic::new_with_error::<EventHandlerError>(
-                    fd,
-                    calloop::Interest::READ,
-                    calloop::Mode::Level,
-                ),
+                Generic::new_with_error::<EventHandlerError>(fd, calloop::Interest::READ, calloop::Mode::Level),
                 {
                     let xcb_connection = xcb_connection.clone();
                     move |_readiness, _, client| {
@@ -543,10 +517,7 @@ impl X11Client {
         }))))
     }
 
-    pub fn process_x11_events(
-        &self,
-        xcb_connection: &XCBConnection,
-    ) -> Result<(), EventHandlerError> {
+    pub fn process_x11_events(&self, xcb_connection: &XCBConnection) -> Result<(), EventHandlerError> {
         loop {
             let mut events = Vec::new();
             let mut windows_to_refresh = HashSet::new();
@@ -565,9 +536,7 @@ impl X11Client {
                                 windows_to_refresh.insert(expose_event.window);
                             }
                             Event::KeyRelease(_) => {
-                                if let Some(last_keymap_change_event) =
-                                    last_keymap_change_event.take()
-                                {
+                                if let Some(last_keymap_change_event) = last_keymap_change_event.take() {
                                     if let Some(last_key_release) = last_key_release.take() {
                                         events.push(last_key_release);
                                     }
@@ -577,18 +546,14 @@ impl X11Client {
                                 last_key_release = Some(event);
                             }
                             Event::KeyPress(key_press) => {
-                                if let Some(last_keymap_change_event) =
-                                    last_keymap_change_event.take()
-                                {
+                                if let Some(last_keymap_change_event) = last_keymap_change_event.take() {
                                     if let Some(last_key_release) = last_key_release.take() {
                                         events.push(last_key_release);
                                     }
                                     events.push(last_keymap_change_event);
                                 }
 
-                                if let Some(Event::KeyRelease(key_release)) =
-                                    last_key_release.take()
-                                {
+                                if let Some(Event::KeyRelease(key_release)) = last_key_release.take() {
                                     // We ignore that last KeyRelease if it's too close to this KeyPress,
                                     // suggesting that it's auto-generated by X11 as a key-repeat event.
                                     if key_release.detail != key_press.detail
@@ -724,20 +689,18 @@ impl X11Client {
                 return;
             };
             if let Some(scaled_area) = window.get_ime_area() {
-                ic_attributes =
-                    ic_attributes.nested_list(xim::AttributeName::PreeditAttributes, |b| {
-                        b.push(
-                            xim::AttributeName::SpotLocation,
-                            xim::Point {
-                                x: u32::from(scaled_area.origin.x + scaled_area.size.width) as i16,
-                                y: u32::from(scaled_area.origin.y + scaled_area.size.height) as i16,
-                            },
-                        );
-                    });
+                ic_attributes = ic_attributes.nested_list(xim::AttributeName::PreeditAttributes, |b| {
+                    b.push(
+                        xim::AttributeName::SpotLocation,
+                        xim::Point {
+                            x: u32::from(scaled_area.origin.x + scaled_area.size.width) as i16,
+                            y: u32::from(scaled_area.origin.y + scaled_area.size.height) as i16,
+                        },
+                    );
+                });
             }
         }
-        ximc.create_ic(xim_handler.im_id, ic_attributes.build())
-            .ok();
+        ximc.create_ic(xim_handler.im_id, ic_attributes.build()).ok();
         let mut state = self.0.borrow_mut();
         state.restore_xim(ximc, xim_handler);
     }
@@ -799,21 +762,17 @@ impl X11Client {
                         window.close();
                     }
                 } else if atom == state.atoms._NET_WM_SYNC_REQUEST {
-                    window.state.borrow_mut().last_sync_counter =
-                        Some(x11rb::protocol::sync::Int64 {
-                            lo: arg2,
-                            hi: arg3 as i32,
-                        })
+                    window.state.borrow_mut().last_sync_counter = Some(x11rb::protocol::sync::Int64 {
+                        lo: arg2,
+                        hi: arg3 as i32,
+                    })
                 }
 
                 if event.type_ == state.atoms.XdndEnter {
                     state.xdnd_state.other_window = atom;
                     if (arg1 & 0x1) == 0x1 {
-                        state.xdnd_state.drag_type = xdnd_get_supported_atom(
-                            &state.xcb_connection,
-                            &state.atoms,
-                            state.xdnd_state.other_window,
-                        );
+                        state.xdnd_state.drag_type =
+                            xdnd_get_supported_atom(&state.xcb_connection, &state.atoms, state.xdnd_state.other_window);
                     } else {
                         if let Some(atom) = [arg2, arg3, arg4]
                             .into_iter()
@@ -825,8 +784,7 @@ impl X11Client {
                 } else if event.type_ == state.atoms.XdndLeave {
                     let position = state.xdnd_state.position;
                     drop(state);
-                    window
-                        .handle_input(PlatformInput::FileDrop(FileDropEvent::Pending { position }));
+                    window.handle_input(PlatformInput::FileDrop(FileDropEvent::Pending { position }));
                     window.handle_input(PlatformInput::FileDrop(FileDropEvent::Exited {}));
                     self.0.borrow_mut().xdnd_state = Xdnd::default();
                 } else if event.type_ == state.atoms.XdndPosition {
@@ -834,8 +792,7 @@ impl X11Client {
                         || "Failed to query pointer position",
                         state.xcb_connection.query_pointer(event.window),
                     ) {
-                        state.xdnd_state.position =
-                            Point::new(Pixels(pos.win_x as f32), Pixels(pos.win_y as f32));
+                        state.xdnd_state.position = Point::new(Pixels(pos.win_x as f32), Pixels(pos.win_y as f32));
                     }
                     if !state.xdnd_state.retrieved {
                         check_reply(
@@ -859,8 +816,7 @@ impl X11Client {
                     );
                     let position = state.xdnd_state.position;
                     drop(state);
-                    window
-                        .handle_input(PlatformInput::FileDrop(FileDropEvent::Pending { position }));
+                    window.handle_input(PlatformInput::FileDrop(FileDropEvent::Pending { position }));
                 } else if event.type_ == state.atoms.XdndDrop {
                     xdnd_send_finished(
                         &state.xcb_connection,
@@ -870,8 +826,7 @@ impl X11Client {
                     );
                     let position = state.xdnd_state.position;
                     drop(state);
-                    window
-                        .handle_input(PlatformInput::FileDrop(FileDropEvent::Submit { position }));
+                    window.handle_input(PlatformInput::FileDrop(FileDropEvent::Submit { position }));
                     self.0.borrow_mut().xdnd_state = Xdnd::default();
                 }
             }
@@ -965,11 +920,7 @@ impl X11Client {
                         state.xkb_device_id,
                         xkbc::KEYMAP_COMPILE_NO_FLAGS,
                     );
-                    xkbc::x11::state_new_from_device(
-                        &xkb_keymap,
-                        &state.xcb_connection,
-                        state.xkb_device_id,
-                    )
+                    xkbc::x11::state_new_from_device(&xkb_keymap, &state.xcb_connection, state.xkb_device_id)
                 };
                 state.xkb = xkb_state;
                 drop(state);
@@ -989,9 +940,7 @@ impl X11Client {
                 );
                 let modifiers = Modifiers::from_xkb(&state.xkb);
                 let capslock = Capslock::from_xkb(&state.xkb);
-                if state.last_modifiers_changed_event == modifiers
-                    && state.last_capslock_changed_event == capslock
-                {
+                if state.last_modifiers_changed_event == modifiers && state.last_capslock_changed_event == capslock {
                     drop(state);
                 } else {
                     let focused_window_id = state.keyboard_focused_window?;
@@ -1002,12 +951,10 @@ impl X11Client {
                     drop(state);
 
                     let focused_window = self.get_window(focused_window_id)?;
-                    focused_window.handle_input(PlatformInput::ModifiersChanged(
-                        ModifiersChangedEvent {
-                            modifiers,
-                            capslock,
-                        },
-                    ));
+                    focused_window.handle_input(PlatformInput::ModifiersChanged(ModifiersChangedEvent {
+                        modifiers,
+                        capslock,
+                    }));
                 }
 
                 if new_layout != old_layout {
@@ -1051,11 +998,9 @@ impl X11Client {
                             }
                             xkbc::Status::Composing => {
                                 keystroke.key_char = None;
-                                state.pre_edit_text = compose_state
-                                    .utf8()
-                                    .or(crate::Keystroke::underlying_dead_key(keysym));
-                                let pre_edit =
-                                    state.pre_edit_text.clone().unwrap_or(String::default());
+                                state.pre_edit_text =
+                                    compose_state.utf8().or(crate::Keystroke::underlying_dead_key(keysym));
+                                let pre_edit = state.pre_edit_text.clone().unwrap_or(String::default());
                                 drop(state);
                                 window.handle_ime_preedit(pre_edit);
                                 state = self.0.borrow_mut();
@@ -1143,9 +1088,7 @@ impl X11Client {
                     Some(ButtonOrScroll::Button(button)) => {
                         let click_elapsed = state.last_click.elapsed();
                         if click_elapsed < DOUBLE_CLICK_INTERVAL
-                            && state
-                                .last_mouse_button
-                                .is_some_and(|prev_button| prev_button == button)
+                            && state.last_mouse_button.is_some_and(|prev_button| prev_button == button)
                             && is_within_click_distance(state.last_location, position)
                         {
                             state.current_count += 1;
@@ -1171,19 +1114,18 @@ impl X11Client {
                         drop(state);
                         // Emulated scroll button presses are sent simultaneously with smooth scrolling XinputMotion events.
                         // Since handling those events does the scrolling, they are skipped here.
-                        if !event
-                            .flags
-                            .contains(xinput::PointerEventFlags::POINTER_EMULATED)
-                        {
+                        if !event.flags.contains(xinput::PointerEventFlags::POINTER_EMULATED) {
                             let scroll_delta = match direction {
                                 ScrollDirection::Up => Point::new(0.0, SCROLL_LINES),
                                 ScrollDirection::Down => Point::new(0.0, -SCROLL_LINES),
                                 ScrollDirection::Left => Point::new(SCROLL_LINES, 0.0),
                                 ScrollDirection::Right => Point::new(-SCROLL_LINES, 0.0),
                             };
-                            window.handle_input(PlatformInput::ScrollWheel(
-                                make_scroll_wheel_event(position, scroll_delta, modifiers),
-                            ));
+                            window.handle_input(PlatformInput::ScrollWheel(make_scroll_wheel_event(
+                                position,
+                                scroll_delta,
+                                modifiers,
+                            )));
                         }
                     }
                     None => {
@@ -1287,10 +1229,9 @@ impl X11Client {
                         state.pointer_device_states.remove(&info.deviceid);
                     }
                 }
-                if let Some(pointer_device_states) = current_pointer_device_states(
-                    &state.xcb_connection,
-                    &state.pointer_device_states,
-                ) {
+                if let Some(pointer_device_states) =
+                    current_pointer_device_states(&state.xcb_connection, &state.pointer_device_states)
+                {
                     state.pointer_device_states = pointer_device_states;
                 }
             }
@@ -1324,11 +1265,7 @@ impl X11Client {
         match event {
             Event::KeyPress(event) | Event::KeyRelease(event) => {
                 let mut state = self.0.borrow_mut();
-                state.pre_key_char_down = Some(Keystroke::from_xkb(
-                    &state.xkb,
-                    state.modifiers,
-                    event.detail.into(),
-                ));
+                state.pre_key_char_down = Some(Keystroke::from_xkb(&state.xkb, state.modifiers, event.detail.into()));
                 let (mut ximc, mut xim_handler) = state.take_xim()?;
                 drop(state);
                 xim_handler.window = event.event;
@@ -1378,10 +1315,7 @@ impl X11Client {
         if let Some(scaled_area) = window.get_ime_area() {
             let ic_attributes = ximc
                 .build_ic_attributes()
-                .push(
-                    xim::AttributeName::InputStyle,
-                    xim::InputStyle::PREEDIT_CALLBACKS,
-                )
+                .push(xim::AttributeName::InputStyle, xim::InputStyle::PREEDIT_CALLBACKS)
                 .push(xim::AttributeName::ClientWindow, xim_handler.window)
                 .push(xim::AttributeName::FocusWindow, xim_handler.window)
                 .nested_list(xim::AttributeName::PreeditAttributes, |b| {
@@ -1450,22 +1384,19 @@ impl LinuxClient for X11Client {
             .iter()
             .enumerate()
             .filter_map(|(root_id, _)| {
-                Some(Rc::new(
-                    X11Display::new(&state.xcb_connection, state.scale_factor, root_id).ok()?,
-                ) as Rc<dyn PlatformDisplay>)
+                Some(
+                    Rc::new(X11Display::new(&state.xcb_connection, state.scale_factor, root_id).ok()?)
+                        as Rc<dyn PlatformDisplay>,
+                )
             })
             .collect()
     }
 
     fn primary_display(&self) -> Option<Rc<dyn PlatformDisplay>> {
         let state = self.0.borrow();
-        X11Display::new(
-            &state.xcb_connection,
-            state.scale_factor,
-            state.x_root_index,
-        )
-        .log_err()
-        .map(|display| Rc::new(display) as Rc<dyn PlatformDisplay>)
+        X11Display::new(&state.xcb_connection, state.scale_factor, state.x_root_index)
+            .log_err()
+            .map(|display| Rc::new(display) as Rc<dyn PlatformDisplay>)
     }
 
     fn display(&self, id: DisplayId) -> Option<Rc<dyn PlatformDisplay>> {
@@ -1476,11 +1407,7 @@ impl LinuxClient for X11Client {
         ))
     }
 
-    fn open_window(
-        &self,
-        handle: AnyWindowHandle,
-        params: WindowParams,
-    ) -> anyhow::Result<Box<dyn PlatformWindow>> {
+    fn open_window(&self, handle: AnyWindowHandle, params: WindowParams) -> anyhow::Result<Box<dyn PlatformWindow>> {
         let mut state = self.0.borrow_mut();
         let parent_window = state
             .keyboard_focused_window
@@ -1536,10 +1463,7 @@ impl LinuxClient for X11Client {
         let Some(focused_window) = state.mouse_focused_window else {
             return;
         };
-        let current_style = state
-            .cursor_styles
-            .get(&focused_window)
-            .unwrap_or(&CursorStyle::Arrow);
+        let current_style = state.cursor_styles.get(&focused_window).unwrap_or(&CursorStyle::Arrow);
         if *current_style == style {
             return;
         }
@@ -1613,10 +1537,7 @@ impl LinuxClient for X11Client {
         let state = self.0.borrow_mut();
         // if the last copy was from this app, return our cached item
         // which has metadata attached.
-        if state
-            .clipboard
-            .is_owner(clipboard::ClipboardKind::Clipboard)
-        {
+        if state.clipboard.is_owner(clipboard::ClipboardKind::Clipboard) {
             return state.clipboard_item.clone();
         }
         state
@@ -1643,12 +1564,9 @@ impl LinuxClient for X11Client {
 
     fn active_window(&self) -> Option<AnyWindowHandle> {
         let state = self.0.borrow();
-        state.keyboard_focused_window.and_then(|focused_window| {
-            state
-                .windows
-                .get(&focused_window)
-                .map(|window| window.handle())
-        })
+        state
+            .keyboard_focused_window
+            .and_then(|focused_window| state.windows.get(&focused_window).map(|window| window.handle()))
     }
 
     fn window_stack(&self) -> Option<Vec<AnyWindowHandle>> {
@@ -1680,11 +1598,7 @@ impl LinuxClient for X11Client {
         // We need to reverse, since _NET_CLIENT_LIST_STACKING has
         // a back-to-front order.
         // See: https://specifications.freedesktop.org/wm-spec/1.3/ar01s03.html
-        for window_ref in window_ids
-            .iter()
-            .rev()
-            .filter_map(|&win| state.windows.get(&win))
-        {
+        for window_ref in window_ids.iter().rev().filter_map(|&win| state.windows.get(&win)) {
             if !window_ref.window.state.borrow().destroyed {
                 handles.push(window_ref.handle());
             }
@@ -1733,8 +1647,7 @@ impl X11ClientState {
         let Some(window_ref) = self.windows.get_mut(&x_window) else {
             return;
         };
-        let is_visible = window_ref.is_mapped
-            && !matches!(window_ref.last_visibility, Visibility::FULLY_OBSCURED);
+        let is_visible = window_ref.is_mapped && !matches!(window_ref.last_visibility, Visibility::FULLY_OBSCURED);
         match (is_visible, window_ref.refresh_state.take()) {
             (false, refresh_state @ Some(RefreshState::Hidden { .. }))
             | (false, refresh_state @ None)
@@ -1764,8 +1677,7 @@ impl X11ClientState {
             (true, None) => {
                 let Some(screen_resources) = get_reply(
                     || "Failed to get screen resources",
-                    self.xcb_connection
-                        .randr_get_screen_resources_current(x_window),
+                    self.xcb_connection.randr_get_screen_resources_current(x_window),
                 )
                 .log_err() else {
                     return;
@@ -1782,10 +1694,7 @@ impl X11ClientState {
                         .reply()
                         .ok()?;
 
-                    screen_resources
-                        .modes
-                        .iter()
-                        .find(|m| m.id == crtc_info.mode)
+                    screen_resources.modes.iter().find(|m| m.id == crtc_info.mode)
                 });
                 let refresh_rate = match mode_info {
                     Some(mode_info) => mode_refresh_rate(mode_info),
@@ -1811,11 +1720,7 @@ impl X11ClientState {
     }
 
     #[must_use]
-    fn start_refresh_loop(
-        &self,
-        x_window: xproto::Window,
-        refresh_rate: Duration,
-    ) -> RegistrationToken {
+    fn start_refresh_loop(&self, x_window: xproto::Window, refresh_rate: Duration) -> RegistrationToken {
         self.loop_handle
             .insert_source(calloop::timer::Timer::immediate(), {
                 move |mut instant, (), client| {
@@ -1862,10 +1767,7 @@ impl X11ClientState {
                 let mut errors = String::new();
                 let cursor_icon_names = style.to_icon_names();
                 for cursor_icon_name in cursor_icon_names {
-                    match self
-                        .cursor_handle
-                        .load_cursor(&self.xcb_connection, cursor_icon_name)
-                    {
+                    match self.cursor_handle.load_cursor(&self.xcb_connection, cursor_icon_name) {
                         Ok(loaded_cursor) => {
                             if loaded_cursor != x11rb::NONE {
                                 result = Ok(loaded_cursor);
@@ -2006,21 +1908,10 @@ fn check_compositor_present(xcb_connection: &XCBConnection, root: u32) -> bool {
     method1 || method2 || method3
 }
 
-fn check_gtk_frame_extents_supported(
-    xcb_connection: &XCBConnection,
-    atoms: &XcbAtoms,
-    root: xproto::Window,
-) -> bool {
+fn check_gtk_frame_extents_supported(xcb_connection: &XCBConnection, atoms: &XcbAtoms, root: xproto::Window) -> bool {
     let Some(supported_atoms) = get_reply(
         || "Failed to get _NET_SUPPORTED",
-        xcb_connection.get_property(
-            false,
-            root,
-            atoms._NET_SUPPORTED,
-            xproto::AtomEnum::ATOM,
-            0,
-            1024,
-        ),
+        xcb_connection.get_property(false, root, atoms._NET_SUPPORTED, xproto::AtomEnum::ATOM, 0, 1024),
     )
     .log_with_level(Level::Debug) else {
         return false;
@@ -2044,21 +1935,10 @@ fn xdnd_is_atom_supported(atom: u32, atoms: &XcbAtoms) -> bool {
         || atom == atoms.TextUriList
 }
 
-fn xdnd_get_supported_atom(
-    xcb_connection: &XCBConnection,
-    supported_atoms: &XcbAtoms,
-    target: xproto::Window,
-) -> u32 {
+fn xdnd_get_supported_atom(xcb_connection: &XCBConnection, supported_atoms: &XcbAtoms, target: xproto::Window) -> u32 {
     if let Some(reply) = get_reply(
         || "Failed to get XDnD supported atoms",
-        xcb_connection.get_property(
-            false,
-            target,
-            supported_atoms.XdndTypeList,
-            AtomEnum::ANY,
-            0,
-            1024,
-        ),
+        xcb_connection.get_property(false, target, supported_atoms.XdndTypeList, AtomEnum::ANY, 0, 1024),
     )
     .log_with_level(Level::Warn)
         && let Some(atoms) = reply.value32()
@@ -2216,10 +2096,7 @@ fn get_scroll_delta_and_update_state(
     }
 }
 
-fn get_axis_scroll_delta_and_update_state(
-    event: &xinput::MotionEvent,
-    axis: &mut ScrollAxisState,
-) -> Option<f32> {
+fn get_axis_scroll_delta_and_update_state(event: &xinput::MotionEvent, axis: &mut ScrollAxisState) -> Option<f32> {
     let axis_index = get_valuator_axis_index(&event.valuator_mask, axis.valuator_number?)?;
     if let Some(axis_value) = event.axisvalues.get(axis_index) {
         let new_scroll = fp3232_to_f32(*axis_value);
@@ -2278,11 +2155,7 @@ enum DpiMode {
     NotSet,
 }
 
-fn get_scale_factor(
-    connection: &XCBConnection,
-    resource_database: &Database,
-    screen_index: usize,
-) -> f32 {
+fn get_scale_factor(connection: &XCBConnection, resource_database: &Database, screen_index: usize) -> f32 {
     let env_dpi = std::env::var(GPUI_X11_SCALE_FACTOR_ENV)
         .ok()
         .map(|var| {
@@ -2310,11 +2183,7 @@ fn get_scale_factor(
 
     match env_dpi {
         DpiMode::Scale(scale) => {
-            log::info!(
-                "Using scale factor from {}: {}",
-                GPUI_X11_SCALE_FACTOR_ENV,
-                scale
-            );
+            log::info!("Using scale factor from {}: {}", GPUI_X11_SCALE_FACTOR_ENV, scale);
             return scale;
         }
         DpiMode::Randr => {
@@ -2334,11 +2203,7 @@ fn get_scale_factor(
 
     // TODO: Use scale factor from XSettings here
 
-    if let Some(dpi) = resource_database
-        .get_value::<f32>("Xft.dpi", "Xft.dpi")
-        .ok()
-        .flatten()
-    {
+    if let Some(dpi) = resource_database.get_value::<f32>("Xft.dpi", "Xft.dpi").ok().flatten() {
         let scale = dpi / 96.0; // base dpi
         log::info!("Using scale factor from Xft.dpi: {}", scale);
         return scale;
@@ -2358,9 +2223,7 @@ fn get_randr_scale_factor(connection: &XCBConnection, screen_index: usize) -> Op
 
     let version_cookie = connection.randr_query_version(1, 6).ok()?;
     let version_reply = version_cookie.reply().ok()?;
-    if version_reply.major_version < 1
-        || (version_reply.major_version == 1 && version_reply.minor_version < 5)
-    {
+    if version_reply.major_version < 1 || (version_reply.major_version == 1 && version_reply.minor_version < 5) {
         return legacy_get_randr_scale_factor(connection, root); // for randr <1.5
     }
 
@@ -2499,22 +2362,14 @@ fn get_dpi_factor((width_px, height_px): (u32, u32), (width_mm, height_mm): (u64
     const MIN_SCALE: f64 = 1.0;
     const MAX_SCALE: f64 = 20.0;
 
-    let dpi_factor =
-        ((ppmm * (QUANTIZE_STEP * MM_PER_INCH / BASE_DPI)).round() / QUANTIZE_STEP).max(MIN_SCALE);
+    let dpi_factor = ((ppmm * (QUANTIZE_STEP * MM_PER_INCH / BASE_DPI)).round() / QUANTIZE_STEP).max(MIN_SCALE);
 
-    let validated_factor = if dpi_factor <= MAX_SCALE {
-        dpi_factor
-    } else {
-        MIN_SCALE
-    };
+    let validated_factor = if dpi_factor <= MAX_SCALE { dpi_factor } else { MIN_SCALE };
 
     if valid_scale_factor(validated_factor as f32) {
         validated_factor as f32
     } else {
-        log::warn!(
-            "Calculated DPI factor {} is invalid, using 1.0",
-            validated_factor
-        );
+        log::warn!("Calculated DPI factor {} is invalid, using 1.0", validated_factor);
         1.0
     }
 }
@@ -2530,12 +2385,5 @@ fn update_xkb_mask_from_event_state(xkb: &mut xkbc::State, event_state: xproto::
     let latched_mods = xkb.serialize_mods(xkbc::STATE_MODS_LATCHED);
     let locked_mods = xkb.serialize_mods(xkbc::STATE_MODS_LOCKED);
     let locked_layout = xkb.serialize_layout(xkbc::STATE_LAYOUT_LOCKED);
-    xkb.update_mask(
-        depressed_mods.into(),
-        latched_mods,
-        locked_mods,
-        0,
-        0,
-        locked_layout,
-    );
+    xkb.update_mask(depressed_mods.into(), latched_mods, locked_mods, 0, 0, locked_layout);
 }

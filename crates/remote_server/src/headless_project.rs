@@ -10,8 +10,7 @@ use http_client::HttpClient;
 use language::{Buffer, BufferEvent, LanguageRegistry, proto::serialize_operation};
 use node_runtime::NodeRuntime;
 use project::{
-    LspStore, LspStoreEvent, ManifestTree, PrettierStore, ProjectEnvironment, ProjectPath,
-    ToolchainStore, WorktreeId,
+    LspStore, LspStoreEvent, ManifestTree, PrettierStore, ProjectEnvironment, ProjectPath, ToolchainStore, WorktreeId,
     buffer_store::{BufferStore, BufferStoreEvent},
     debugger::{breakpoint_store::BreakpointStore, dap_store::DapStore},
     git_store::GitStore,
@@ -96,8 +95,7 @@ impl HeadlessProject {
             store
         });
 
-        let environment =
-            cx.new(|cx| ProjectEnvironment::new(None, worktree_store.downgrade(), None, true, cx));
+        let environment = cx.new(|cx| ProjectEnvironment::new(None, worktree_store.downgrade(), None, true, cx));
         let manifest_tree = ManifestTree::new(worktree_store.clone(), cx);
         let toolchain_store = cx.new(|cx| {
             ToolchainStore::local(
@@ -117,8 +115,7 @@ impl HeadlessProject {
         });
 
         let breakpoint_store = cx.new(|_| {
-            let mut breakpoint_store =
-                BreakpointStore::local(worktree_store.clone(), buffer_store.clone());
+            let mut breakpoint_store = BreakpointStore::local(worktree_store.clone(), buffer_store.clone());
             breakpoint_store.shared(REMOTE_SERVER_PROJECT_ID, session.clone());
 
             breakpoint_store
@@ -174,12 +171,7 @@ impl HeadlessProject {
             task_store
         });
         let settings_observer = cx.new(|cx| {
-            let mut observer = SettingsObserver::new_local(
-                fs.clone(),
-                worktree_store.clone(),
-                task_store.clone(),
-                cx,
-            );
+            let mut observer = SettingsObserver::new_local(fs.clone(), worktree_store.clone(), task_store.clone(), cx);
             observer.shared(REMOTE_SERVER_PROJECT_ID, session.clone(), cx);
             observer
         });
@@ -260,14 +252,8 @@ impl HeadlessProject {
         session.add_entity_request_handler(BufferStore::handle_update_buffer);
         session.add_entity_message_handler(BufferStore::handle_close_buffer);
 
-        session.add_request_handler(
-            extensions.downgrade(),
-            HeadlessExtensionStore::handle_sync_extensions,
-        );
-        session.add_request_handler(
-            extensions.downgrade(),
-            HeadlessExtensionStore::handle_install_extension,
-        );
+        session.add_request_handler(extensions.downgrade(), HeadlessExtensionStore::handle_sync_extensions);
+        session.add_request_handler(extensions.downgrade(), HeadlessExtensionStore::handle_install_extension);
 
         BufferStore::init(&session);
         WorktreeStore::init(&session);
@@ -299,12 +285,7 @@ impl HeadlessProject {
         }
     }
 
-    fn on_buffer_event(
-        &mut self,
-        buffer: Entity<Buffer>,
-        event: &BufferEvent,
-        cx: &mut Context<Self>,
-    ) {
+    fn on_buffer_event(&mut self, buffer: Entity<Buffer>, event: &BufferEvent, cx: &mut Context<Self>) {
         if let BufferEvent::Operation {
             operation,
             is_local: true,
@@ -319,17 +300,10 @@ impl HeadlessProject {
         }
     }
 
-    fn on_lsp_store_event(
-        &mut self,
-        lsp_store: Entity<LspStore>,
-        event: &LspStoreEvent,
-        cx: &mut Context<Self>,
-    ) {
+    fn on_lsp_store_event(&mut self, lsp_store: Entity<LspStore>, event: &LspStoreEvent, cx: &mut Context<Self>) {
         match event {
             LspStoreEvent::LanguageServerAdded(id, name, worktree_id) => {
-                let log_store = cx
-                    .try_global::<GlobalLogStore>()
-                    .map(|lsp_logs| lsp_logs.0.clone());
+                let log_store = cx.try_global::<GlobalLogStore>().map(|lsp_logs| lsp_logs.0.clone());
                 if let Some(log_store) = log_store {
                     log_store.update(cx, |log_store, cx| {
                         log_store.add_language_server(
@@ -346,9 +320,7 @@ impl HeadlessProject {
                 }
             }
             LspStoreEvent::LanguageServerRemoved(id) => {
-                let log_store = cx
-                    .try_global::<GlobalLogStore>()
-                    .map(|lsp_logs| lsp_logs.0.clone());
+                let log_store = cx.try_global::<GlobalLogStore>().map(|lsp_logs| lsp_logs.0.clone());
                 if let Some(log_store) = log_store {
                     log_store.update(cx, |log_store, cx| {
                         log_store.remove_language_server(*id, cx);
@@ -381,11 +353,7 @@ impl HeadlessProject {
             LspStoreEvent::LanguageServerPrompt(prompt) => {
                 let request = self.session.request(proto::LanguageServerPromptRequest {
                     project_id: REMOTE_SERVER_PROJECT_ID,
-                    actions: prompt
-                        .actions
-                        .iter()
-                        .map(|action| action.title.to_string())
-                        .collect(),
+                    actions: prompt.actions.iter().map(|action| action.title.to_string()).collect(),
                     level: Some(prompt_to_proto(prompt)),
                     lsp_name: prompt.lsp_name.clone(),
                     message: prompt.message.clone(),
@@ -532,25 +500,21 @@ impl HeadlessProject {
         let project_id = message.payload.project_id;
         use proto::create_image_for_peer::Variant;
 
-        let (worktree_store, session) = this.read_with(&cx, |this, _| {
-            (this.worktree_store.clone(), this.session.clone())
-        })?;
+        let (worktree_store, session) =
+            this.read_with(&cx, |this, _| (this.worktree_store.clone(), this.session.clone()))?;
 
         let worktree = worktree_store
             .read_with(&cx, |store, cx| store.worktree_for_id(worktree_id, cx))?
             .context("worktree not found")?;
 
-        let load_task = worktree.update(&mut cx, |worktree, cx| {
-            worktree.load_binary_file(path.as_ref(), cx)
-        })?;
+        let load_task = worktree.update(&mut cx, |worktree, cx| worktree.load_binary_file(path.as_ref(), cx))?;
 
         let loaded_file = load_task.await?;
         let content = loaded_file.content;
         let file = loaded_file.file;
 
         let proto_file = worktree.read_with(&cx, |_worktree, cx| file.to_proto(cx))?;
-        let image_id =
-            ImageId::from(NonZeroU64::new(NEXT_ID.fetch_add(1, Ordering::Relaxed)).unwrap());
+        let image_id = ImageId::from(NonZeroU64::new(NEXT_ID.fetch_add(1, Ordering::Relaxed)).unwrap());
 
         let format = image::guess_format(&content)
             .map(|f| format!("{:?}", f).to_lowercase())
@@ -623,14 +587,13 @@ impl HeadlessProject {
                 .try_global::<GlobalLogStore>()
                 .map(|global_log_store| global_log_store.0.clone())
                 .context("lsp logs store is missing")?;
-            let toggled_log_kind =
-                match proto::toggle_lsp_logs::LogType::try_from(envelope.payload.log_type)
-                    .context("invalid log type")?
-                {
-                    proto::toggle_lsp_logs::LogType::Log => LogKind::Logs,
-                    proto::toggle_lsp_logs::LogType::Trace => LogKind::Trace,
-                    proto::toggle_lsp_logs::LogType::Rpc => LogKind::Rpc,
-                };
+            let toggled_log_kind = match proto::toggle_lsp_logs::LogType::try_from(envelope.payload.log_type)
+                .context("invalid log type")?
+            {
+                proto::toggle_lsp_logs::LogType::Log => LogKind::Logs,
+                proto::toggle_lsp_logs::LogType::Trace => LogKind::Trace,
+                proto::toggle_lsp_logs::LogType::Rpc => LogKind::Rpc,
+            };
             log_store.update(cx, |log_store, _| {
                 log_store.toggle_lsp_logs(server_id, envelope.payload.enabled, toggled_log_kind);
             });
@@ -699,10 +662,7 @@ impl HeadlessProject {
         mut cx: AsyncApp,
     ) -> Result<proto::FindSearchCandidatesResponse> {
         let message = envelope.payload;
-        let query = SearchQuery::from_proto(
-            message.query.context("missing query field")?,
-            PathStyle::local(),
-        )?;
+        let query = SearchQuery::from_proto(message.query.context("missing query field")?, PathStyle::local())?;
         let results = this.update(&mut cx, |this, cx| {
             project::Search::local(
                 this.fs.clone(),
@@ -715,9 +675,7 @@ impl HeadlessProject {
             .matching_buffers(cx)
         })?;
 
-        let mut response = proto::FindSearchCandidatesResponse {
-            buffer_ids: Vec::new(),
-        };
+        let mut response = proto::FindSearchCandidatesResponse { buffer_ids: Vec::new() };
 
         let buffer_store = this.read_with(&cx, |this, _| this.buffer_store.clone())?;
 
@@ -741,11 +699,7 @@ impl HeadlessProject {
     ) -> Result<proto::ListRemoteDirectoryResponse> {
         let fs = cx.read_entity(&this, |this, _| this.fs.clone())?;
         let expanded = PathBuf::from(shellexpand::tilde(&envelope.payload.path).to_string());
-        let check_info = envelope
-            .payload
-            .config
-            .as_ref()
-            .is_some_and(|config| config.is_dir);
+        let check_info = envelope.payload.config.as_ref().is_some_and(|config| config.is_dir);
 
         let mut entries = Vec::new();
         let mut entry_info = Vec::new();
@@ -760,10 +714,7 @@ impl HeadlessProject {
                 }
             }
         }
-        Ok(proto::ListRemoteDirectoryResponse {
-            entries,
-            entry_info,
-        })
+        Ok(proto::ListRemoteDirectoryResponse { entries, entry_info })
     }
 
     async fn handle_get_path_metadata(
@@ -823,10 +774,7 @@ impl HeadlessProject {
                 .with_cmd(UpdateKind::Always),
         );
 
-        for process in System::new_with_specifics(refresh_kind)
-            .processes()
-            .values()
-        {
+        for process in System::new_with_specifics(refresh_kind).processes().values() {
             let name = process.name().to_string_lossy().into_owned();
             let command = process
                 .cmd()
@@ -867,18 +815,16 @@ impl HeadlessProject {
     }
 }
 
-fn prompt_to_proto(
-    prompt: &project::LanguageServerPromptRequest,
-) -> proto::language_server_prompt_request::Level {
+fn prompt_to_proto(prompt: &project::LanguageServerPromptRequest) -> proto::language_server_prompt_request::Level {
     match prompt.level {
-        PromptLevel::Info => proto::language_server_prompt_request::Level::Info(
-            proto::language_server_prompt_request::Info {},
-        ),
-        PromptLevel::Warning => proto::language_server_prompt_request::Level::Warning(
-            proto::language_server_prompt_request::Warning {},
-        ),
-        PromptLevel::Critical => proto::language_server_prompt_request::Level::Critical(
-            proto::language_server_prompt_request::Critical {},
-        ),
+        PromptLevel::Info => {
+            proto::language_server_prompt_request::Level::Info(proto::language_server_prompt_request::Info {})
+        }
+        PromptLevel::Warning => {
+            proto::language_server_prompt_request::Level::Warning(proto::language_server_prompt_request::Warning {})
+        }
+        PromptLevel::Critical => {
+            proto::language_server_prompt_request::Level::Critical(proto::language_server_prompt_request::Critical {})
+        }
     }
 }

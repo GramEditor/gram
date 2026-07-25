@@ -1,7 +1,6 @@
 use gpui::{
-    Application, Background, Bounds, ColorSpace, Context, Path, PathBuilder, Pixels, Render,
-    TitlebarOptions, Window, WindowBounds, WindowOptions, canvas, div, linear_color_stop,
-    linear_gradient, point, prelude::*, px, rgb, size,
+    Application, Background, Bounds, ColorSpace, Context, Path, PathBuilder, Pixels, Render, TitlebarOptions, Window,
+    WindowBounds, WindowOptions, canvas, div, linear_color_stop, linear_gradient, point, prelude::*, px, rgb, size,
 };
 
 const DEFAULT_WINDOW_WIDTH: Pixels = px(1024.0);

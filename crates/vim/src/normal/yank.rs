@@ -33,16 +33,9 @@ impl Vim {
                 editor.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
                     s.move_with(|map, selection| {
                         let original_position = (selection.head(), selection.goal);
-                        kind = motion.expand_selection(
-                            map,
-                            selection,
-                            times,
-                            &text_layout_details,
-                            forced_motion,
-                        );
+                        kind = motion.expand_selection(map, selection, times, &text_layout_details, forced_motion);
                         if kind == Some(MotionKind::Exclusive) {
-                            original_positions
-                                .insert(selection.id, (selection.start, selection.goal));
+                            original_positions.insert(selection.id, (selection.start, selection.goal));
                         } else {
                             original_positions.insert(selection.id, original_position);
                         }
@@ -152,20 +145,14 @@ impl Vim {
         let buffer = editor.buffer().read(cx).snapshot(cx);
         self.set_mark(
             "[".to_string(),
-            selections
-                .iter()
-                .map(|s| buffer.anchor_before(s.start))
-                .collect(),
+            selections.iter().map(|s| buffer.anchor_before(s.start)).collect(),
             editor.buffer(),
             window,
             cx,
         );
         self.set_mark(
             "]".to_string(),
-            selections
-                .iter()
-                .map(|s| buffer.anchor_after(s.end))
-                .collect(),
+            selections.iter().map(|s| buffer.anchor_after(s.end)).collect(),
             editor.buffer(),
             window,
             cx,

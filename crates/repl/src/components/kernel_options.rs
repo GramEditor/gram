@@ -86,10 +86,7 @@ impl PickerDelegate for KernelPickerDelegate {
 
     fn selected_index(&self) -> usize {
         if let Some(kernelspec) = self.selected_kernelspec.as_ref() {
-            self.filtered_kernels
-                .iter()
-                .position(|k| k == kernelspec)
-                .unwrap_or(0)
+            self.filtered_kernels.iter().position(|k| k == kernelspec).unwrap_or(0)
         } else {
             0
         }
@@ -104,12 +101,7 @@ impl PickerDelegate for KernelPickerDelegate {
         "Select a kernel...".into()
     }
 
-    fn update_matches(
-        &mut self,
-        query: String,
-        _window: &mut Window,
-        _cx: &mut Context<Picker<Self>>,
-    ) -> Task<()> {
+    fn update_matches(&mut self, query: String, _window: &mut Window, _cx: &mut Context<Picker<Self>>) -> Task<()> {
         let all_kernels = self.all_kernels.clone();
 
         if query.is_empty() {
@@ -156,11 +148,9 @@ impl PickerDelegate for KernelPickerDelegate {
                 "Python Env",
                 Some(truncate_path(&kernelspec.path(), 42)),
             ),
-            KernelSpecification::Remote(_) => (
-                kernelspec.name(),
-                "Remote",
-                Some(truncate_path(&kernelspec.path(), 42)),
-            ),
+            KernelSpecification::Remote(_) => {
+                (kernelspec.name(), "Remote", Some(truncate_path(&kernelspec.path(), 42)))
+            }
         };
 
         Some(
@@ -180,19 +170,12 @@ impl PickerDelegate for KernelPickerDelegate {
                                 .child(
                                     h_flex()
                                         .justify_between()
-                                        .child(
-                                            div().w_48().text_ellipsis().child(
-                                                Label::new(name)
-                                                    .weight(FontWeight::MEDIUM)
-                                                    .size(LabelSize::Default),
-                                            ),
-                                        )
+                                        .child(div().w_48().text_ellipsis().child(
+                                            Label::new(name).weight(FontWeight::MEDIUM).size(LabelSize::Default),
+                                        ))
                                         .when_some(path_or_url, |flex, path| {
-                                            flex.text_ellipsis().child(
-                                                Label::new(path)
-                                                    .size(LabelSize::Small)
-                                                    .color(Color::Muted),
-                                            )
+                                            flex.text_ellipsis()
+                                                .child(Label::new(path).size(LabelSize::Small).color(Color::Muted))
                                         }),
                                 )
                                 .child(
@@ -203,29 +186,17 @@ impl PickerDelegate for KernelPickerDelegate {
                                                 .size(LabelSize::Small)
                                                 .color(Color::Muted),
                                         )
-                                        .child(
-                                            Label::new(kernel_type)
-                                                .size(LabelSize::Small)
-                                                .color(Color::Muted),
-                                        ),
+                                        .child(Label::new(kernel_type).size(LabelSize::Small).color(Color::Muted)),
                                 ),
                         ),
                 )
                 .when(is_selected, |item| {
-                    item.end_slot(
-                        Icon::new(IconName::Check)
-                            .color(Color::Accent)
-                            .size(IconSize::Small),
-                    )
+                    item.end_slot(Icon::new(IconName::Check).color(Color::Accent).size(IconSize::Small))
                 }),
         )
     }
 
-    fn render_footer(
-        &self,
-        _: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) -> Option<gpui::AnyElement> {
+    fn render_footer(&self, _: &mut Window, cx: &mut Context<Picker<Self>>) -> Option<gpui::AnyElement> {
         Some(
             h_flex()
                 .w_full()

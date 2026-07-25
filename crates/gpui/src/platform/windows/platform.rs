@@ -105,10 +105,8 @@ impl WindowsPlatform {
             rand::random::<u32>() as usize
         };
         let raw_window_handles = Arc::new(RwLock::new(SmallVec::new()));
-        let text_system = Arc::new(
-            DirectWriteTextSystem::new(&directx_devices)
-                .context("Error creating DirectWriteTextSystem")?,
-        );
+        let text_system =
+            Arc::new(DirectWriteTextSystem::new(&directx_devices).context("Error creating DirectWriteTextSystem")?);
         register_platform_window_class();
         let mut context = PlatformWindowCreateContext {
             inner: None,
@@ -145,8 +143,8 @@ impl WindowsPlatform {
             .context("CreateWindowExW did not run correctly")?;
         let handle = result?;
 
-        let disable_direct_composition = std::env::var(DISABLE_DIRECT_COMPOSITION)
-            .is_ok_and(|value| value == "true" || value == "1");
+        let disable_direct_composition =
+            std::env::var(DISABLE_DIRECT_COMPOSITION).is_ok_and(|value| value == "true" || value == "1");
         let background_executor = BackgroundExecutor::new(dispatcher.clone());
         let foreground_executor = ForegroundExecutor::new(dispatcher);
 
@@ -226,12 +224,9 @@ impl WindowsPlatform {
 
     #[inline]
     fn post_message(&self, message: u32, wparam: WPARAM, lparam: LPARAM) {
-        self.raw_window_handles
-            .read()
-            .iter()
-            .for_each(|handle| unsafe {
-                PostMessageW(Some(handle.as_raw()), message, wparam, lparam).log_err();
-            });
+        self.raw_window_handles.read().iter().for_each(|handle| unsafe {
+            PostMessageW(Some(handle.as_raw()), message, wparam, lparam).log_err();
+        });
     }
 
     fn generate_creation_info(&self) -> WindowCreationInfo {
@@ -357,14 +352,7 @@ fn translate_accelerator(msg: &MSG) -> Option<()> {
         return None;
     }
 
-    let result = unsafe {
-        SendMessageW(
-            msg.hwnd,
-            WM_GPUI_KEYDOWN,
-            Some(msg.wParam),
-            Some(msg.lParam),
-        )
-    };
+    let result = unsafe { SendMessageW(msg.hwnd, WM_GPUI_KEYDOWN, Some(msg.wParam), Some(msg.lParam)) };
     (result.0 == 0).then_some(())
 }
 
@@ -394,11 +382,7 @@ impl Platform for WindowsPlatform {
     }
 
     fn on_keyboard_layout_change(&self, callback: Box<dyn FnMut()>) {
-        self.inner
-            .state
-            .callbacks
-            .keyboard_layout_change
-            .set(Some(callback));
+        self.inner.state.callbacks.keyboard_layout_change.set(Some(callback));
     }
 
     fn run(&self, on_finish_launching: Box<dyn 'static + FnOnce()>) {
@@ -452,11 +436,10 @@ impl Platform for WindowsPlatform {
             clippy::disallowed_methods,
             reason = "We are restarting ourselves, using std command thus is fine"
         )] // todo(shell): There might be no powershell on the system
-        let restart_process =
-            util::command::new_std_command(util::shell::get_windows_system_shell())
-                .arg("-command")
-                .arg(script)
-                .spawn();
+        let restart_process = util::command::new_std_command(util::shell::get_windows_system_shell())
+            .arg("-command")
+            .arg(script)
+            .spawn();
 
         match restart_process {
             Ok(_) => self.quit(),
@@ -488,15 +471,10 @@ impl Platform for WindowsPlatform {
 
     fn active_window(&self) -> Option<AnyWindowHandle> {
         let active_window_hwnd = unsafe { GetActiveWindow() };
-        self.window_from_hwnd(active_window_hwnd)
-            .map(|inner| inner.handle)
+        self.window_from_hwnd(active_window_hwnd).map(|inner| inner.handle)
     }
 
-    fn open_window(
-        &self,
-        handle: AnyWindowHandle,
-        options: WindowParams,
-    ) -> Result<Box<dyn PlatformWindow>> {
+    fn open_window(&self, handle: AnyWindowHandle, options: WindowParams) -> Result<Box<dyn PlatformWindow>> {
         let window = WindowsWindow::new(handle, options, self.generate_creation_info())?;
         let handle = window.get_raw_handle();
         self.raw_window_handles.write().push(handle.into());
@@ -526,10 +504,7 @@ impl Platform for WindowsPlatform {
         self.inner.state.callbacks.open_urls.set(Some(callback));
     }
 
-    fn prompt_for_paths(
-        &self,
-        options: PathPromptOptions,
-    ) -> Receiver<Result<Option<Vec<PathBuf>>>> {
+    fn prompt_for_paths(&self, options: PathPromptOptions) -> Receiver<Result<Option<Vec<PathBuf>>>> {
         let (tx, rx) = oneshot::channel();
         let window = self.find_current_active_window();
         self.foreground_executor()
@@ -541,11 +516,7 @@ impl Platform for WindowsPlatform {
         rx
     }
 
-    fn prompt_for_new_path(
-        &self,
-        directory: &Path,
-        suggested_name: Option<&str>,
-    ) -> Receiver<Result<Option<PathBuf>>> {
+    fn prompt_for_new_path(&self, directory: &Path, suggested_name: Option<&str>) -> Receiver<Result<Option<PathBuf>>> {
         let directory = directory.to_owned();
         let suggested_name = suggested_name.map(|s| s.to_owned());
         let (tx, rx) = oneshot::channel();
@@ -613,27 +584,15 @@ impl Platform for WindowsPlatform {
     }
 
     fn on_app_menu_action(&self, callback: Box<dyn FnMut(&dyn Action)>) {
-        self.inner
-            .state
-            .callbacks
-            .app_menu_action
-            .set(Some(callback));
+        self.inner.state.callbacks.app_menu_action.set(Some(callback));
     }
 
     fn on_will_open_app_menu(&self, callback: Box<dyn FnMut()>) {
-        self.inner
-            .state
-            .callbacks
-            .will_open_app_menu
-            .set(Some(callback));
+        self.inner.state.callbacks.will_open_app_menu.set(Some(callback));
     }
 
     fn on_validate_app_menu_command(&self, callback: Box<dyn FnMut(&dyn Action) -> bool>) {
-        self.inner
-            .state
-            .callbacks
-            .validate_app_menu_command
-            .set(Some(callback));
+        self.inner.state.callbacks.validate_app_menu_command.set(Some(callback));
     }
 
     fn app_path(&self) -> Result<PathBuf> {
@@ -696,34 +655,18 @@ impl Platform for WindowsPlatform {
 
 impl WindowsPlatformInner {
     fn new(context: &mut PlatformWindowCreateContext) -> Result<Rc<Self>> {
-        let state = WindowsPlatformState::new(
-            context
-                .directx_devices
-                .take()
-                .context("missing directx devices")?,
-        );
+        let state = WindowsPlatformState::new(context.directx_devices.take().context("missing directx devices")?);
         Ok(Rc::new(Self {
             state,
             raw_window_handles: context.raw_window_handles.clone(),
-            dispatcher: context
-                .dispatcher
-                .as_ref()
-                .context("missing dispatcher")?
-                .clone(),
+            dispatcher: context.dispatcher.as_ref().context("missing dispatcher")?.clone(),
             validation_number: context.validation_number,
-            main_receiver: context
-                .main_receiver
-                .take()
-                .context("missing main receiver")?,
+            main_receiver: context.main_receiver.take().context("missing main receiver")?,
         }))
     }
 
     /// Calls `project` to project to the corresponding callback field, removes it from callbacks, calls `f` with the callback and then puts the callback back.
-    fn with_callback<T>(
-        &self,
-        project: impl Fn(&PlatformCallbacks) -> &Cell<Option<T>>,
-        f: impl FnOnce(&mut T),
-    ) {
+    fn with_callback<T>(&self, project: impl Fn(&PlatformCallbacks) -> &Cell<Option<T>>, f: impl FnOnce(&mut T)) {
         let callback = project(&self.state.callbacks).take();
         if let Some(mut callback) = callback {
             f(&mut callback);
@@ -731,13 +674,7 @@ impl WindowsPlatformInner {
         }
     }
 
-    fn handle_msg(
-        self: &Rc<Self>,
-        handle: HWND,
-        msg: u32,
-        wparam: WPARAM,
-        lparam: LPARAM,
-    ) -> LRESULT {
+    fn handle_msg(self: &Rc<Self>, handle: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
         let handled = match msg {
             WM_GPUI_CLOSE_ONE_WINDOW
             | WM_GPUI_TASK_DISPATCHED_ON_MAIN_THREAD
@@ -777,10 +714,7 @@ impl WindowsPlatformInner {
             return false;
         };
         let mut lock = all_windows.write();
-        let index = lock
-            .iter()
-            .position(|handle| handle.as_raw() == target_window)
-            .unwrap();
+        let index = lock.iter().position(|handle| handle.as_raw() == target_window).unwrap();
         lock.remove(index);
 
         lock.is_empty()
@@ -863,18 +797,12 @@ impl WindowsPlatformInner {
             log::error!("Dock menu for index {action_idx} not found");
             return Some(1);
         };
-        self.with_callback(
-            |callbacks| &callbacks.app_menu_action,
-            |callback| callback(&*action),
-        );
+        self.with_callback(|callbacks| &callbacks.app_menu_action, |callback| callback(&*action));
         Some(0)
     }
 
     fn handle_keyboard_layout_change(&self) -> Option<isize> {
-        self.with_callback(
-            |callbacks| &callbacks.keyboard_layout_change,
-            |callback| callback(),
-        );
+        self.with_callback(|callbacks| &callbacks.keyboard_layout_change, |callback| callback());
         Some(0)
     }
 
@@ -988,12 +916,8 @@ fn open_target_in_explorer(target: &Path) -> Result<()> {
     })
 }
 
-fn file_open_dialog(
-    options: PathPromptOptions,
-    window: Option<HWND>,
-) -> Result<Option<Vec<PathBuf>>> {
-    let folder_dialog: IFileOpenDialog =
-        unsafe { CoCreateInstance(&FileOpenDialog, None, CLSCTX_ALL)? };
+fn file_open_dialog(options: PathPromptOptions, window: Option<HWND>) -> Result<Option<Vec<PathBuf>>> {
+    let folder_dialog: IFileOpenDialog = unsafe { CoCreateInstance(&FileOpenDialog, None, CLSCTX_ALL)? };
 
     let mut dialog_options = FOS_FILEMUSTEXIST;
     if options.multiple {
@@ -1047,8 +971,7 @@ fn file_save_dialog(
     {
         let full_path = SanitizedPath::new(&full_path);
         let full_path_string = full_path.to_string();
-        let path_item: IShellItem =
-            unsafe { SHCreateItemFromParsingName(&HSTRING::from(full_path_string), None)? };
+        let path_item: IShellItem = unsafe { SHCreateItemFromParsingName(&HSTRING::from(full_path_string), None)? };
         unsafe {
             dialog
                 .SetFolder(&path_item)
@@ -1185,12 +1108,7 @@ fn register_platform_window_class() {
     unsafe { RegisterClassW(&wc) };
 }
 
-unsafe extern "system" fn window_procedure(
-    hwnd: HWND,
-    msg: u32,
-    wparam: WPARAM,
-    lparam: LPARAM,
-) -> LRESULT {
+unsafe extern "system" fn window_procedure(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     if msg == WM_NCCREATE {
         let params = unsafe { &*(lparam.0 as *const CREATESTRUCTW) };
         let creation_context = params.lpCreateParams as *mut PlatformWindowCreateContext;

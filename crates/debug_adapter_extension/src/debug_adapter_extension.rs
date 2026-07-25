@@ -36,28 +36,18 @@ impl ExtensionDebugAdapterProviderProxy for DebugAdapterRegistryProxy {
         debug_adapter_name: Arc<str>,
         schema_path: &Path,
     ) {
-        if let Some(adapter) =
-            ExtensionDapAdapter::new(extension, debug_adapter_name, schema_path).log_err()
-        {
+        if let Some(adapter) = ExtensionDapAdapter::new(extension, debug_adapter_name, schema_path).log_err() {
             self.debug_adapter_registry.add_adapter(Arc::new(adapter));
         }
     }
 
-    fn register_debug_locator(
-        &self,
-        extension: Arc<dyn extension::Extension>,
-        locator_name: Arc<str>,
-    ) {
+    fn register_debug_locator(&self, extension: Arc<dyn extension::Extension>, locator_name: Arc<str>) {
         self.debug_adapter_registry
-            .add_locator(Arc::new(ExtensionLocatorAdapter::new(
-                extension,
-                locator_name,
-            )));
+            .add_locator(Arc::new(ExtensionLocatorAdapter::new(extension, locator_name)));
     }
 
     fn unregister_debug_adapter(&self, debug_adapter_name: Arc<str>) {
-        self.debug_adapter_registry
-            .remove_adapter(&debug_adapter_name);
+        self.debug_adapter_registry.remove_adapter(&debug_adapter_name);
     }
 
     fn unregister_debug_locator(&self, locator_name: Arc<str>) {

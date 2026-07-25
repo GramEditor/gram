@@ -71,9 +71,8 @@ impl RenderOnce for ListSubHeader {
                             .gap_1()
                             .items_center()
                             .children(
-                                self.start_slot.map(|i| {
-                                    Icon::new(i).color(Color::Muted).size(IconSize::Small)
-                                }),
+                                self.start_slot
+                                    .map(|i| Icon::new(i).color(Color::Muted).size(IconSize::Small)),
                             )
                             .child(
                                 Label::new(self.label.clone())
@@ -92,9 +91,7 @@ impl Component for ListSubHeader {
     }
 
     fn description() -> Option<&'static str> {
-        Some(
-            "A sub-header component for organizing list content into subsections with optional icons and end slots.",
-        )
+        Some("A sub-header component for organizing list content into subsections with optional icons and end slots.")
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
@@ -105,10 +102,7 @@ impl Component for ListSubHeader {
                     example_group_with_title(
                         "Basic Sub-headers",
                         vec![
-                            single_example(
-                                "Simple",
-                                ListSubHeader::new("Subsection").into_any_element(),
-                            ),
+                            single_example("Simple", ListSubHeader::new("Subsection").into_any_element()),
                             single_example(
                                 "With Icon",
                                 ListSubHeader::new("Documents")
@@ -118,9 +112,7 @@ impl Component for ListSubHeader {
                             single_example(
                                 "With End Slot",
                                 ListSubHeader::new("Recent")
-                                    .end_slot(
-                                        Label::new("3").color(Color::Muted).into_any_element(),
-                                    )
+                                    .end_slot(Label::new("3").color(Color::Muted).into_any_element())
                                     .into_any_element(),
                             ),
                         ],
@@ -130,15 +122,11 @@ impl Component for ListSubHeader {
                         vec![
                             single_example(
                                 "Selected",
-                                ListSubHeader::new("Selected")
-                                    .toggle_state(true)
-                                    .into_any_element(),
+                                ListSubHeader::new("Selected").toggle_state(true).into_any_element(),
                             ),
                             single_example(
                                 "Inset",
-                                ListSubHeader::new("Inset Sub-header")
-                                    .inset(true)
-                                    .into_any_element(),
+                                ListSubHeader::new("Inset Sub-header").inset(true).into_any_element(),
                             ),
                         ],
                     ),

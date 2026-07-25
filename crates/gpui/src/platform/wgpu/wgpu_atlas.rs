@@ -1,6 +1,6 @@
 use crate::{
-    AtlasKey, AtlasTextureId, AtlasTextureKind, AtlasTile, Bounds, DevicePixels, PlatformAtlas,
-    Point, Size, platform::AtlasTextureList,
+    AtlasKey, AtlasTextureId, AtlasTextureKind, AtlasTile, Bounds, DevicePixels, PlatformAtlas, Point, Size,
+    platform::AtlasTextureList,
 };
 use anyhow::Result;
 use collections::FxHashMap;
@@ -99,9 +99,7 @@ impl PlatformAtlas for WgpuAtlas {
         if let Some(mut texture) = texture_slot.take() {
             texture.decrement_ref_count();
             if texture.is_unreferenced() {
-                lock.storage[id.kind]
-                    .free_list
-                    .push(texture.id.index as usize);
+                lock.storage[id.kind].free_list.push(texture.id.index as usize);
             } else {
                 *texture_slot = Some(texture);
             }
@@ -114,11 +112,7 @@ impl WgpuAtlasState {
         {
             let textures = &mut self.storage[texture_kind];
 
-            if let Some(tile) = textures
-                .iter_mut()
-                .rev()
-                .find_map(|texture| texture.allocate(size))
-            {
+            if let Some(tile) = textures.iter_mut().rev().find_map(|texture| texture.allocate(size)) {
                 return tile;
             }
         }
@@ -129,11 +123,7 @@ impl WgpuAtlasState {
             .expect("Failed to allocate from newly created texture")
     }
 
-    fn push_texture(
-        &mut self,
-        min_size: Size<DevicePixels>,
-        kind: AtlasTextureKind,
-    ) -> &mut WgpuAtlasTexture {
+    fn push_texture(&mut self, min_size: Size<DevicePixels>, kind: AtlasTextureKind) -> &mut WgpuAtlasTexture {
         const DEFAULT_ATLAS_SIZE: Size<DevicePixels> = Size {
             width: DevicePixels(1024),
             height: DevicePixels(1024),
@@ -271,9 +261,7 @@ impl ops::Index<AtlasTextureId> for WgpuAtlasStorage {
             AtlasTextureKind::Subpixel => &self.subpixel_textures,
             AtlasTextureKind::Polychrome => &self.polychrome_textures,
         };
-        textures[id.index as usize]
-            .as_ref()
-            .expect("texture must exist")
+        textures[id.index as usize].as_ref().expect("texture must exist")
     }
 }
 

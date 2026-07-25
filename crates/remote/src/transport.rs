@@ -100,9 +100,7 @@ fn handle_rpc_messages_over_child_process_stdio(
                 }
 
                 let message_len = message_len_from_buffer(&stdout_buffer);
-                let envelope =
-                    read_message_with_len(&mut child_stdout, &mut stdout_buffer, message_len)
-                        .await?;
+                let envelope = read_message_with_len(&mut child_stdout, &mut stdout_buffer, message_len).await?;
                 connection_activity_tx.try_send(()).ok();
                 incoming_tx.unbounded_send(envelope).ok();
             }
@@ -113,19 +111,14 @@ fn handle_rpc_messages_over_child_process_stdio(
         loop {
             stderr_buffer.resize(stderr_offset + 1024, 0);
 
-            let len = child_stderr
-                .read(&mut stderr_buffer[stderr_offset..])
-                .await?;
+            let len = child_stderr.read(&mut stderr_buffer[stderr_offset..]).await?;
             if len == 0 {
                 return anyhow::Ok(());
             }
 
             stderr_offset += len;
             let mut start_ix = 0;
-            while let Some(ix) = stderr_buffer[start_ix..stderr_offset]
-                .iter()
-                .position(|b| b == &b'\n')
-            {
+            while let Some(ix) = stderr_buffer[start_ix..stderr_offset].iter().position(|b| b == &b'\n') {
                 let line_ix = start_ix + ix;
                 let content = &stderr_buffer[start_ix..line_ix];
                 start_ix = line_ix + 1;
@@ -133,10 +126,7 @@ fn handle_rpc_messages_over_child_process_stdio(
                     record.log(log::logger())
                 } else {
                     std::io::stderr()
-                        .write_fmt(format_args!(
-                            "(remote) {}\n",
-                            String::from_utf8_lossy(content)
-                        ))
+                        .write_fmt(format_args!("(remote) {}\n", String::from_utf8_lossy(content)))
                         .ok();
                 }
             }
@@ -180,15 +170,8 @@ async fn build_remote_server_from_source(
 
     async fn run_cmd(command: &mut Command) -> Result<()> {
         log::info!("Command: {:?}", command);
-        let output = command
-            .kill_on_drop(true)
-            .stderr(Stdio::inherit())
-            .output()
-            .await?;
-        anyhow::ensure!(
-            output.status.success(),
-            "Failed to run command: {command:?}"
-        );
+        let output = command.kill_on_drop(true).stderr(Stdio::inherit()).output().await?;
+        anyhow::ensure!(output.status.success(), "Failed to run command: {command:?}");
         Ok(())
     }
 
@@ -257,24 +240,16 @@ async fn build_remote_server_from_source(
             .context("rustup not found on $PATH, install rustup (see https://rustup.rs/)")?;
         delegate.set_status(Some("Adding rustup target for cross-compilation"), cx);
         log::info!("adding rustup target");
-        run_cmd(
-            new_smol_command(rustup)
-                .args(["target", "add"])
-                .arg(&triple),
-        )
-        .await?;
+        run_cmd(new_smol_command(rustup).args(["target", "add"]).arg(&triple)).await?;
 
         if which("cargo-zigbuild", cx).await?.is_none() {
             delegate.set_status(Some("Installing cargo-zigbuild for cross-compilation"), cx);
             log::info!("installing cargo-zigbuild");
-            run_cmd(new_smol_command("cargo").args(["install", "--locked", "cargo-zigbuild"]))
-                .await?;
+            run_cmd(new_smol_command("cargo").args(["install", "--locked", "cargo-zigbuild"])).await?;
         }
 
         delegate.set_status(
-            Some(&format!(
-                "Building remote binary from source for {triple} with Zig"
-            )),
+            Some(&format!("Building remote binary from source for {triple} with Zig")),
             cx,
         );
         log::info!("building remote binary from source for {triple} with Zig");
@@ -312,20 +287,14 @@ async fn build_remote_server_from_source(
     {
         // On Windows, we use 7z to compress the binary
 
-        let seven_zip = which("7z.exe", cx).await?.context(
-            "7z.exe not found on $PATH, install it (e.g. with `winget install -e --id 7zip.7zip`)",
-        )?;
+        let seven_zip = which("7z.exe", cx)
+            .await?
+            .context("7z.exe not found on $PATH, install it (e.g. with `winget install -e --id 7zip.7zip`)")?;
         let gz_path = format!("target/remote_server/{}/debug/remote_server.gz", triple);
         if smol::fs::metadata(&gz_path).await.is_ok() {
             smol::fs::remove_file(&gz_path).await?;
         }
-        run_cmd(new_smol_command(seven_zip).args([
-            "a",
-            "-tgzip",
-            &gz_path,
-            &bin_path.to_string_lossy(),
-        ]))
-        .await?;
+        run_cmd(new_smol_command(seven_zip).args(["a", "-tgzip", &gz_path, &bin_path.to_string_lossy()])).await?;
     }
 
     let mut archive_path = bin_path;
@@ -336,10 +305,7 @@ async fn build_remote_server_from_source(
 }
 
 #[cfg(debug_assertions)]
-async fn which(
-    binary_name: impl AsRef<str>,
-    cx: &mut AsyncApp,
-) -> Result<Option<std::path::PathBuf>> {
+async fn which(binary_name: impl AsRef<str>, cx: &mut AsyncApp) -> Result<Option<std::path::PathBuf>> {
     let binary_name = binary_name.as_ref().to_string();
     let binary_name_cloned = binary_name.clone();
     let res = cx
@@ -384,10 +350,8 @@ mod tests {
         assert_eq!(parse_platform("Linux aarch64\n").unwrap().arch, "aarch64");
         assert_eq!(parse_platform("Linux x86_64\n").unwrap().arch, "x86_64");
 
-        let result = parse_platform(
-            r#"Linux x86_64 - What you're referring to as Linux, is in fact, GNU/Linux...\n"#,
-        )
-        .unwrap();
+        let result =
+            parse_platform(r#"Linux x86_64 - What you're referring to as Linux, is in fact, GNU/Linux...\n"#).unwrap();
         assert_eq!(result.os, "linux");
         assert_eq!(result.arch, "x86_64");
 
@@ -401,14 +365,8 @@ mod tests {
         assert_eq!(parse_shell("/bin/zsh\n", "sh"), "/bin/zsh");
 
         assert_eq!(parse_shell("/bin/bash", "sh"), "/bin/bash");
-        assert_eq!(
-            parse_shell("some shell init output\n/bin/bash\n", "sh"),
-            "/bin/bash"
-        );
-        assert_eq!(
-            parse_shell("some shell init output\n/bin/bash", "sh"),
-            "/bin/bash"
-        );
+        assert_eq!(parse_shell("some shell init output\n/bin/bash\n", "sh"), "/bin/bash");
+        assert_eq!(parse_shell("some shell init output\n/bin/bash", "sh"), "/bin/bash");
         assert_eq!(parse_shell("", "sh"), "sh");
         assert_eq!(parse_shell("\n", "sh"), "sh");
     }

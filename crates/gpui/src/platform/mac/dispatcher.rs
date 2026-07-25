@@ -3,8 +3,8 @@
 #![allow(non_snake_case)]
 
 use crate::{
-    GLOBAL_THREAD_TIMINGS, PlatformDispatcher, RunnableMeta, RunnableVariant, THREAD_TIMINGS,
-    TaskLabel, TaskTiming, ThreadTaskTimings,
+    GLOBAL_THREAD_TIMINGS, PlatformDispatcher, RunnableMeta, RunnableVariant, THREAD_TIMINGS, TaskLabel, TaskTiming,
+    ThreadTaskTimings,
 };
 
 use async_task::Runnable;
@@ -99,8 +99,7 @@ impl PlatformDispatcher for MacDispatcher {
             ),
         };
         unsafe {
-            let queue =
-                dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH.try_into().unwrap(), 0);
+            let queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH.try_into().unwrap(), 0);
             let when = dispatch_time(DISPATCH_TIME_NOW as u64, duration.as_nanos() as i64);
             dispatch_after_f(when, queue, context, trampoline);
         }
@@ -108,8 +107,7 @@ impl PlatformDispatcher for MacDispatcher {
 }
 
 extern "C" fn trampoline(runnable: *mut c_void) {
-    let task =
-        unsafe { Runnable::<RunnableMeta>::from_raw(NonNull::new_unchecked(runnable as *mut ())) };
+    let task = unsafe { Runnable::<RunnableMeta>::from_raw(NonNull::new_unchecked(runnable as *mut ())) };
 
     let location = task.metadata().location;
 

@@ -24,11 +24,7 @@ impl Vim {
         // Some motions ignore failure when switching to normal mode
         let mut motion_kind = if matches!(
             motion,
-            Motion::Left
-                | Motion::Right
-                | Motion::EndOfLine { .. }
-                | Motion::WrappingLeft
-                | Motion::StartOfLine { .. }
+            Motion::Left | Motion::Right | Motion::EndOfLine { .. } | Motion::WrappingLeft | Motion::StartOfLine { .. }
         ) {
             Some(MotionKind::Exclusive)
         } else {
@@ -43,34 +39,22 @@ impl Vim {
                     s.move_with(|map, selection| {
                         let kind = match motion {
                             Motion::NextWordStart { ignore_punctuation }
-                            | Motion::NextSubwordStart { ignore_punctuation } => {
-                                expand_changed_word_selection(
-                                    map,
-                                    selection,
-                                    times,
-                                    ignore_punctuation,
-                                    &text_layout_details,
-                                    motion == Motion::NextSubwordStart { ignore_punctuation },
-                                    !matches!(motion, Motion::NextWordStart { .. }),
-                                )
-                            }
+                            | Motion::NextSubwordStart { ignore_punctuation } => expand_changed_word_selection(
+                                map,
+                                selection,
+                                times,
+                                ignore_punctuation,
+                                &text_layout_details,
+                                motion == Motion::NextSubwordStart { ignore_punctuation },
+                                !matches!(motion, Motion::NextWordStart { .. }),
+                            ),
                             _ => {
-                                let kind = motion.expand_selection(
-                                    map,
-                                    selection,
-                                    times,
-                                    &text_layout_details,
-                                    forced_motion,
-                                );
-                                if matches!(
-                                    motion,
-                                    Motion::CurrentLine | Motion::Down { .. } | Motion::Up { .. }
-                                ) {
-                                    let mut start_offset =
-                                        selection.start.to_offset(map, Bias::Left);
-                                    let classifier = map
-                                        .buffer_snapshot()
-                                        .char_classifier_at(selection.start.to_point(map));
+                                let kind =
+                                    motion.expand_selection(map, selection, times, &text_layout_details, forced_motion);
+                                if matches!(motion, Motion::CurrentLine | Motion::Down { .. } | Motion::Up { .. }) {
+                                    let mut start_offset = selection.start.to_offset(map, Bias::Left);
+                                    let classifier =
+                                        map.buffer_snapshot().char_classifier_at(selection.start.to_point(map));
                                     for (ch, offset) in map.buffer_chars_at(start_offset) {
                                         if ch == '\n' || !classifier.is_whitespace(ch) {
                                             break;
@@ -154,9 +138,7 @@ fn expand_changed_word_selection(
     always_advance: bool,
 ) -> Option<MotionKind> {
     let is_in_word = || {
-        let classifier = map
-            .buffer_snapshot()
-            .char_classifier_at(selection.start.to_point(map));
+        let classifier = map.buffer_snapshot().char_classifier_at(selection.start.to_point(map));
 
         map.buffer_chars_at(selection.head().to_offset(map, Bias::Left))
             .next()
@@ -165,25 +147,16 @@ fn expand_changed_word_selection(
     };
     if (times.is_none() || times.unwrap() == 1) && is_in_word() {
         let next_char = map
-            .buffer_chars_at(
-                motion::next_char(map, selection.end, false).to_offset(map, Bias::Left),
-            )
+            .buffer_chars_at(motion::next_char(map, selection.end, false).to_offset(map, Bias::Left))
             .next();
         match next_char {
             Some((' ', _)) => selection.end = motion::next_char(map, selection.end, false),
             _ => {
                 if use_subword {
-                    selection.end =
-                        motion::next_subword_end(map, selection.end, ignore_punctuation, 1, false);
+                    selection.end = motion::next_subword_end(map, selection.end, ignore_punctuation, 1, false);
                 } else {
-                    selection.end = motion::next_word_end(
-                        map,
-                        selection.end,
-                        ignore_punctuation,
-                        1,
-                        false,
-                        always_advance,
-                    );
+                    selection.end =
+                        motion::next_word_end(map, selection.end, ignore_punctuation, 1, false, always_advance);
                 }
                 selection.end = motion::next_char(map, selection.end, false);
             }
@@ -277,9 +250,7 @@ mod test {
         .await
         .assert_matches();
 
-        cx.simulate("c shift-w", "Test teˇst-test test")
-            .await
-            .assert_matches();
+        cx.simulate("c shift-w", "Test teˇst-test test").await.assert_matches();
 
         // on last character of word, `cw` doesn't eat subsequent punctuation
         // see https://github.com/zed-industries/zed/issues/35269
@@ -317,9 +288,7 @@ mod test {
         .await
         .assert_matches();
 
-        cx.simulate("c shift-e", "Test teˇst-test test")
-            .await
-            .assert_matches();
+        cx.simulate("c shift-e", "Test teˇst-test test").await.assert_matches();
     }
 
     #[gpui::test]
@@ -327,9 +296,7 @@ mod test {
         let mut cx = NeovimBackedTestContext::new(cx).await;
         cx.simulate("c b", "Teˇst Test").await.assert_matches();
         cx.simulate("c b", "Test ˇtest").await.assert_matches();
-        cx.simulate("c b", "Test1 test2 ˇtest3")
-            .await
-            .assert_matches();
+        cx.simulate("c b", "Test1 test2 ˇtest3").await.assert_matches();
         cx.simulate(
             "c b",
             indoc! {"
@@ -348,9 +315,7 @@ mod test {
         .await
         .assert_matches();
 
-        cx.simulate("c shift-b", "Test test-test ˇtest")
-            .await
-            .assert_matches();
+        cx.simulate("c shift-b", "Test test-test ˇtest").await.assert_matches();
     }
 
     #[gpui::test]

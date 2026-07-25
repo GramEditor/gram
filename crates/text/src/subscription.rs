@@ -42,10 +42,8 @@ impl<T: Default> Subscription<T> {
     }
 }
 
-fn publish<T, TDelta>(
-    subscriptions: &mut Vec<Weak<Mutex<Patch<T>>>>,
-    edits: impl Clone + IntoIterator<Item = Edit<T>>,
-) where
+fn publish<T, TDelta>(subscriptions: &mut Vec<Weak<Mutex<Patch<T>>>>, edits: impl Clone + IntoIterator<Item = Edit<T>>)
+where
     T: 'static
         + Copy
         + Ord

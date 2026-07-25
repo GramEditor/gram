@@ -5,8 +5,8 @@ use strum::IntoDiscriminant as _;
 use ui::{IntoElement, SharedString};
 
 use crate::{
-    ActionLink, DynamicItem, PROJECT, SettingField, SettingItem, SettingsFieldMetadata,
-    SettingsPage, SettingsPageItem, SubPageLink, USER, all_language_names, sub_page_stack,
+    ActionLink, DynamicItem, PROJECT, SettingField, SettingItem, SettingsFieldMetadata, SettingsPage, SettingsPageItem,
+    SubPageLink, USER, all_language_names, sub_page_stack,
 };
 
 const DEFAULT_SHARED_STRING: SharedString = SharedString::new_static("");
@@ -5608,9 +5608,9 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
 const LANGUAGES_SECTION_HEADER: &'static str = "Languages";
 
 fn current_language() -> Option<SharedString> {
-    sub_page_stack().iter().find_map(|page| {
-        (page.section_header == LANGUAGES_SECTION_HEADER).then(|| page.link.title.clone())
-    })
+    sub_page_stack()
+        .iter()
+        .find_map(|page| (page.section_header == LANGUAGES_SECTION_HEADER).then(|| page.link.title.clone()))
 }
 
 fn language_settings_field<T>(
@@ -5637,11 +5637,7 @@ fn language_settings_field_mut<T>(
 ) {
     let all_languages = &mut settings_content.project.all_languages;
     let language_content = if let Some(current_language) = current_language() {
-        all_languages
-            .languages
-            .0
-            .entry(current_language)
-            .or_default()
+        all_languages.languages.0.entry(current_language).or_default()
     } else {
         &mut all_languages.defaults
     };
@@ -5674,9 +5670,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).hard_tabs"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.hard_tabs.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.hard_tabs.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -5693,9 +5687,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).auto_indent"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.auto_indent.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.auto_indent.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -5712,9 +5704,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).auto_indent_on_paste"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.auto_indent_on_paste.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.auto_indent_on_paste.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -5732,9 +5722,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).soft_wrap"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.soft_wrap.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.soft_wrap.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -5751,9 +5739,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).show_wrap_guides"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.show_wrap_guides.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.show_wrap_guides.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -5770,9 +5756,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).preferred_line_length"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.preferred_line_length.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.preferred_line_length.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -5790,9 +5774,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
                 SettingField {
                     json_path: Some("languages.$(language).wrap_guides"),
                     pick: |settings_content| {
-                        language_settings_field(settings_content, |language| {
-                            language.wrap_guides.as_ref()
-                        })
+                        language_settings_field(settings_content, |language| language.wrap_guides.as_ref())
                     },
                     write: |settings_content, value| {
                         language_settings_field_mut(settings_content, value, |language, value| {
@@ -5811,9 +5793,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).allow_rewrap"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.allow_rewrap.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.allow_rewrap.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -5884,10 +5864,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
-                        language
-                            .indent_guides
-                            .get_or_insert_default()
-                            .active_line_width = value;
+                        language.indent_guides.get_or_insert_default().active_line_width = value;
                     })
                 },
             }),
@@ -5931,10 +5908,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
-                        language
-                            .indent_guides
-                            .get_or_insert_default()
-                            .background_coloring = value;
+                        language.indent_guides.get_or_insert_default().background_coloring = value;
                     })
                 },
             }),
@@ -5950,9 +5924,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
                 SettingField {
                     json_path: Some("languages.$(language).format_on_save"),
                     pick: |settings_content| {
-                        language_settings_field(settings_content, |language| {
-                            language.format_on_save.as_ref()
-                        })
+                        language_settings_field(settings_content, |language| language.format_on_save.as_ref())
                     },
                     write: |settings_content, value| {
                         language_settings_field_mut(settings_content, value, |language, value| {
@@ -6009,9 +5981,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
                 SettingField {
                     json_path: Some("languages.$(language).formatter"),
                     pick: |settings_content| {
-                        language_settings_field(settings_content, |language| {
-                            language.formatter.as_ref()
-                        })
+                        language_settings_field(settings_content, |language| language.formatter.as_ref())
                     },
                     write: |settings_content, value| {
                         language_settings_field_mut(settings_content, value, |language, value| {
@@ -6030,9 +6000,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).use_on_type_format"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.use_on_type_format.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.use_on_type_format.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -6050,9 +6018,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
                 SettingField {
                     json_path: Some("languages.$(language).code_actions_on_format"),
                     pick: |settings_content| {
-                        language_settings_field(settings_content, |language| {
-                            language.code_actions_on_format.as_ref()
-                        })
+                        language_settings_field(settings_content, |language| language.code_actions_on_format.as_ref())
                     },
                     write: |settings_content, value| {
                         language_settings_field_mut(settings_content, value, |language, value| {
@@ -6072,9 +6038,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).use_autoclose"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.use_autoclose.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.use_autoclose.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -6091,9 +6055,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).use_auto_surround"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.use_auto_surround.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.use_auto_surround.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -6150,9 +6112,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).show_whitespaces"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.show_whitespaces.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.show_whitespaces.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -6214,9 +6174,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).show_completions_on_input"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.show_completions_on_input.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.show_completions_on_input.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -6277,10 +6235,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
-                        language
-                            .completions
-                            .get_or_insert_default()
-                            .words_min_length = value;
+                        language.completions.get_or_insert_default().words_min_length = value;
                     })
                 },
             }),
@@ -6358,10 +6313,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
-                        language
-                            .inlay_hints
-                            .get_or_insert_default()
-                            .show_value_hints = value;
+                        language.inlay_hints.get_or_insert_default().show_value_hints = value;
                     })
                 },
             }),
@@ -6399,10 +6351,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
-                        language
-                            .inlay_hints
-                            .get_or_insert_default()
-                            .show_parameter_hints = value;
+                        language.inlay_hints.get_or_insert_default().show_parameter_hints = value;
                     })
                 },
             }),
@@ -6421,10 +6370,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
-                        language
-                            .inlay_hints
-                            .get_or_insert_default()
-                            .show_other_hints = value;
+                        language.inlay_hints.get_or_insert_default().show_other_hints = value;
                     })
                 },
             }),
@@ -6462,10 +6408,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
-                        language
-                            .inlay_hints
-                            .get_or_insert_default()
-                            .edit_debounce_ms = value;
+                        language.inlay_hints.get_or_insert_default().edit_debounce_ms = value;
                     })
                 },
             }),
@@ -6484,10 +6427,7 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
-                        language
-                            .inlay_hints
-                            .get_or_insert_default()
-                            .scroll_debounce_ms = value;
+                        language.inlay_hints.get_or_insert_default().scroll_debounce_ms = value;
                     })
                 },
             }),
@@ -6502,19 +6442,12 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
                     json_path: Some("languages.$(language).inlay_hints.toggle_on_modifiers_press"),
                     pick: |settings_content| {
                         language_settings_field(settings_content, |language| {
-                            language
-                                .inlay_hints
-                                .as_ref()?
-                                .toggle_on_modifiers_press
-                                .as_ref()
+                            language.inlay_hints.as_ref()?.toggle_on_modifiers_press.as_ref()
                         })
                     },
                     write: |settings_content, value| {
                         language_settings_field_mut(settings_content, value, |language, value| {
-                            language
-                                .inlay_hints
-                                .get_or_insert_default()
-                                .toggle_on_modifiers_press = value;
+                            language.inlay_hints.get_or_insert_default().toggle_on_modifiers_press = value;
                         })
                     },
                 }
@@ -6747,9 +6680,7 @@ fn non_editor_language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).enable_language_server"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.enable_language_server.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.enable_language_server.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -6767,9 +6698,7 @@ fn non_editor_language_settings_data() -> Vec<SettingsPageItem> {
                 SettingField {
                     json_path: Some("languages.$(language).language_servers"),
                     pick: |settings_content| {
-                        language_settings_field(settings_content, |language| {
-                            language.language_servers.as_ref()
-                        })
+                        language_settings_field(settings_content, |language| language.language_servers.as_ref())
                     },
                     write: |settings_content, value| {
                         language_settings_field_mut(settings_content, value, |language, value| {
@@ -6788,9 +6717,7 @@ fn non_editor_language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).linked_edits"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.linked_edits.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.linked_edits.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -6821,9 +6748,7 @@ fn non_editor_language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).completions.lsp"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.completions.as_ref()?.lsp.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.completions.as_ref()?.lsp.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
@@ -6846,10 +6771,7 @@ fn non_editor_language_settings_data() -> Vec<SettingsPageItem> {
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {
-                        language
-                            .completions
-                            .get_or_insert_default()
-                            .lsp_fetch_timeout_ms = value;
+                        language.completions.get_or_insert_default().lsp_fetch_timeout_ms = value;
                     })
                 },
             }),
@@ -6883,9 +6805,7 @@ fn non_editor_language_settings_data() -> Vec<SettingsPageItem> {
                 SettingField {
                     json_path: Some("languages.$(language).debuggers"),
                     pick: |settings_content| {
-                        language_settings_field(settings_content, |language| {
-                            language.debuggers.as_ref()
-                        })
+                        language_settings_field(settings_content, |language| language.debuggers.as_ref())
                     },
                     write: |settings_content, value| {
                         language_settings_field_mut(settings_content, value, |language, value| {
@@ -6924,9 +6844,7 @@ fn non_editor_language_settings_data() -> Vec<SettingsPageItem> {
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).prettier.parser"),
                 pick: |settings_content| {
-                    language_settings_field(settings_content, |language| {
-                        language.prettier.as_ref()?.parser.as_ref()
-                    })
+                    language_settings_field(settings_content, |language| language.prettier.as_ref()?.parser.as_ref())
                 },
                 write: |settings_content, value| {
                     language_settings_field_mut(settings_content, value, |language, value| {

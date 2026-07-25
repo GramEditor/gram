@@ -6,8 +6,7 @@ use regex::Regex;
 use url::Url;
 
 use git::{
-    BuildCommitPermalinkParams, BuildPermalinkParams, GitHostingProvider, ParsedGitRemote,
-    PullRequest, RemoteUrl,
+    BuildCommitPermalinkParams, BuildPermalinkParams, GitHostingProvider, ParsedGitRemote, PullRequest, RemoteUrl,
 };
 
 use crate::get_host_from_git_remote_url;
@@ -57,9 +56,7 @@ impl Bitbucket {
     }
 
     fn is_self_hosted(&self) -> bool {
-        self.base_url
-            .host_str()
-            .is_some_and(|host| host != "bitbucket.org")
+        self.base_url.host_str().is_some_and(|host| host != "bitbucket.org")
     }
 }
 
@@ -108,11 +105,7 @@ impl GitHostingProvider for Bitbucket {
         })
     }
 
-    fn build_commit_permalink(
-        &self,
-        remote: &ParsedGitRemote,
-        params: BuildCommitPermalinkParams,
-    ) -> Url {
+    fn build_commit_permalink(&self, remote: &ParsedGitRemote, params: BuildCommitPermalinkParams) -> Url {
         let BuildCommitPermalinkParams { sha } = params;
         let ParsedGitRemote { owner, repo } = remote;
         if self.is_self_hosted() {
@@ -121,24 +114,16 @@ impl GitHostingProvider for Bitbucket {
                 .join(&format!("projects/{owner}/repos/{repo}/commits/{sha}"))
                 .unwrap();
         }
-        self.base_url()
-            .join(&format!("{owner}/{repo}/commits/{sha}"))
-            .unwrap()
+        self.base_url().join(&format!("{owner}/{repo}/commits/{sha}")).unwrap()
     }
 
     fn build_permalink(&self, remote: ParsedGitRemote, params: BuildPermalinkParams) -> Url {
         let ParsedGitRemote { owner, repo } = remote;
-        let BuildPermalinkParams {
-            sha,
-            path,
-            selection,
-        } = params;
+        let BuildPermalinkParams { sha, path, selection } = params;
 
         let mut permalink = if self.is_self_hosted() {
             self.base_url()
-                .join(&format!(
-                    "projects/{owner}/repos/{repo}/browse/{path}?at={sha}"
-                ))
+                .join(&format!("projects/{owner}/repos/{repo}/browse/{path}?at={sha}"))
                 .unwrap()
         } else {
             self.base_url()
@@ -146,11 +131,7 @@ impl GitHostingProvider for Bitbucket {
                 .unwrap()
         };
 
-        permalink.set_fragment(
-            selection
-                .map(|selection| self.line_fragment(&selection))
-                .as_deref(),
-        );
+        permalink.set_fragment(selection.map(|selection| self.line_fragment(&selection)).as_deref());
         permalink
     }
 
@@ -310,8 +291,7 @@ mod tests {
                 BuildPermalinkParams::new("f00b4r", &repo_path("main.rs"), None),
             );
 
-        let expected_url =
-            "https://bitbucket.company.com/projects/GramEditor/repos/gram/browse/main.rs?at=f00b4r";
+        let expected_url = "https://bitbucket.company.com/projects/GramEditor/repos/gram/browse/main.rs?at=f00b4r";
         assert_eq!(permalink.to_string(), expected_url.to_string())
     }
 
@@ -341,8 +321,7 @@ mod tests {
                 BuildPermalinkParams::new("f00b4r", &repo_path("main.rs"), Some(6..6)),
             );
 
-        let expected_url =
-            "https://bitbucket.company.com/projects/GramEditor/repos/gram/browse/main.rs?at=f00b4r#7";
+        let expected_url = "https://bitbucket.company.com/projects/GramEditor/repos/gram/browse/main.rs?at=f00b4r#7";
         assert_eq!(permalink.to_string(), expected_url.to_string())
     }
 
@@ -416,8 +395,7 @@ mod tests {
             repo: "gram".into(),
         };
 
-        let bitbucket =
-            Bitbucket::from_remote_url("https://bitbucket.company.com/GramEditor/gram.git").unwrap();
+        let bitbucket = Bitbucket::from_remote_url("https://bitbucket.company.com/GramEditor/gram.git").unwrap();
 
         // Test message without PR reference
         let message = "This does not contain a pull request";

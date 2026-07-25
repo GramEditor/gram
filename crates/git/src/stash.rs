@@ -50,10 +50,7 @@ impl FromStr for GitStash {
         if !errors.is_empty() && !entries.is_empty() {
             log::warn!("Failed to parse some stash entries: {}", errors.join(", "));
         } else if !errors.is_empty() {
-            return Err(anyhow!(
-                "Failed to parse stash entries: {}",
-                errors.join(", ")
-            ));
+            return Err(anyhow!("Failed to parse stash entries: {}", errors.join(", ")));
         }
 
         Ok(Self {
@@ -67,17 +64,13 @@ fn parse_stash_line(line: &str) -> Result<StashEntry> {
     let parts: Vec<&str> = line.splitn(4, '\0').collect();
 
     if parts.len() != 4 {
-        return Err(anyhow!(
-            "Expected 4 null-separated parts, got {}",
-            parts.len()
-        ));
+        return Err(anyhow!("Expected 4 null-separated parts, got {}", parts.len()));
     }
 
-    let index = parse_stash_index(parts[0])
-        .with_context(|| format!("Failed to parse stash index from '{}'", parts[0]))?;
+    let index =
+        parse_stash_index(parts[0]).with_context(|| format!("Failed to parse stash index from '{}'", parts[0]))?;
 
-    let oid = Oid::from_str(parts[1])
-        .with_context(|| format!("Failed to parse OID from '{}'", parts[1]))?;
+    let oid = Oid::from_str(parts[1]).with_context(|| format!("Failed to parse OID from '{}'", parts[1]))?;
 
     let timestamp = parts[2]
         .parse::<i64>()
@@ -99,9 +92,7 @@ fn parse_stash_index(input: &str) -> Result<usize> {
     let trimmed = input.trim();
 
     if !trimmed.starts_with("stash@{") || !trimmed.ends_with('}') {
-        return Err(anyhow!(
-            "Invalid stash index format: expected 'stash@{{N}}'"
-        ));
+        return Err(anyhow!("Invalid stash index format: expected 'stash@{{N}}'"));
     }
 
     let index_str = trimmed

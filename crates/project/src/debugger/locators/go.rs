@@ -33,8 +33,7 @@ fn is_debug_flag(arg: &str) -> Option<bool> {
         part = &part[..idx];
     }
     match part {
-        "benchmem" | "failfast" | "fullpath" | "fuzzworker" | "json" | "short" | "v"
-        | "paniconexit0" => Some(false),
+        "benchmem" | "failfast" | "fullpath" | "fuzzworker" | "json" | "short" | "v" | "paniconexit0" => Some(false),
         "bench"
         | "benchtime"
         | "blockprofile"
@@ -73,12 +72,13 @@ fn is_build_flag(mut arg: &str) -> Option<bool> {
         arg = &arg[..idx];
     }
     match arg {
-        "a" | "n" | "race" | "msan" | "asan" | "cover" | "work" | "x" | "v" | "buildvcs"
-        | "json" | "linkshared" | "modcacherw" | "trimpath" => Some(false),
+        "a" | "n" | "race" | "msan" | "asan" | "cover" | "work" | "x" | "v" | "buildvcs" | "json" | "linkshared"
+        | "modcacherw" | "trimpath" => Some(false),
 
-        "p" | "covermode" | "coverpkg" | "asmflags" | "buildmode" | "compiler" | "gccgoflags"
-        | "gcflags" | "installsuffix" | "ldflags" | "mod" | "modfile" | "overlay" | "pgo"
-        | "pkgdir" | "tags" | "toolexec" => Some(might_have_arg),
+        "p" | "covermode" | "coverpkg" | "asmflags" | "buildmode" | "compiler" | "gccgoflags" | "gcflags"
+        | "installsuffix" | "ldflags" | "mod" | "modfile" | "overlay" | "pgo" | "pkgdir" | "tags" | "toolexec" => {
+            Some(might_have_arg)
+        }
         _ => None,
     }
 }
@@ -298,11 +298,7 @@ mod tests {
         };
 
         let scenario = locator
-            .create_scenario(
-                &task,
-                "test label",
-                &DebugAdapterName("SomeOtherAdapter".into()),
-            )
+            .create_scenario(&task, "test label", &DebugAdapterName("SomeOtherAdapter".into()))
             .await;
         assert!(scenario.is_none());
 
@@ -338,10 +334,7 @@ mod tests {
             ..Default::default()
         };
 
-        let scenario = locator
-            .create_scenario(&task, "test run label", &delve)
-            .await
-            .unwrap();
+        let scenario = locator.create_scenario(&task, "test run label", &delve).await.unwrap();
 
         let config: DelveLaunchRequest = serde_json::from_value(scenario.config).unwrap();
 
@@ -390,10 +383,7 @@ mod tests {
             ],
             ..Default::default()
         };
-        let result = locator
-            .create_scenario(&task_with_tags, "", &delve)
-            .await
-            .unwrap();
+        let result = locator.create_scenario(&task_with_tags, "", &delve).await.unwrap();
 
         let config: DelveLaunchRequest = serde_json::from_value(result.config).unwrap();
 
@@ -404,11 +394,7 @@ mod tests {
                 mode: "test".to_string(),
                 program: ".".to_string(),
                 build_flags: vec!["-tags".to_string(), "integration,unit".to_string(),],
-                args: vec![
-                    "-test.run".to_string(),
-                    "Foo".to_string(),
-                    "-test.v".to_string()
-                ],
+                args: vec!["-test.run".to_string(), "Foo".to_string(), "-test.v".to_string()],
                 env: HashMap::default(),
                 cwd: None,
             }

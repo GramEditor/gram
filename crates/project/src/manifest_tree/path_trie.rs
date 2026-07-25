@@ -51,21 +51,14 @@ impl<Label: Ord + Clone> RootPathTrie<Label> {
     }
 
     // Internal implementation of inner that allows one to visit descendants of insertion point for a node.
-    fn insert_inner(
-        &mut self,
-        path: &TriePath,
-        value: Label,
-        presence: LabelPresence,
-    ) -> &mut Self {
+    fn insert_inner(&mut self, path: &TriePath, value: Label, presence: LabelPresence) -> &mut Self {
         let mut current = self;
 
         let mut path_so_far = <Arc<RelPath>>::from(RelPath::empty());
         for key in path.0.iter() {
             path_so_far = path_so_far.join(RelPath::unix(key.as_ref()).unwrap());
             current = match current.children.entry(key.clone()) {
-                Entry::Vacant(vacant_entry) => {
-                    vacant_entry.insert(RootPathTrie::new_with_key(path_so_far.clone()))
-                }
+                Entry::Vacant(vacant_entry) => vacant_entry.insert(RootPathTrie::new_with_key(path_so_far.clone())),
                 Entry::Occupied(occupied_entry) => occupied_entry.into_mut(),
             };
         }
@@ -81,16 +74,11 @@ impl<Label: Ord + Clone> RootPathTrie<Label> {
     pub(super) fn walk<'a>(
         &'a self,
         path: &TriePath,
-        callback: &mut dyn for<'b> FnMut(
-            &'b Arc<RelPath>,
-            &'a BTreeMap<Label, LabelPresence>,
-        ) -> ControlFlow<()>,
+        callback: &mut dyn for<'b> FnMut(&'b Arc<RelPath>, &'a BTreeMap<Label, LabelPresence>) -> ControlFlow<()>,
     ) {
         let mut current = self;
         for key in path.0.iter() {
-            if !current.labels.is_empty()
-                && (callback)(&current.worktree_relative_path, &current.labels).is_break()
-            {
+            if !current.labels.is_empty() && (callback)(&current.worktree_relative_path, &current.labels).is_break() {
                 return;
             };
             current = match current.children.get(key) {
@@ -123,12 +111,7 @@ pub(super) struct TriePath(Arc<[Arc<str>]>);
 
 impl TriePath {
     fn new(value: &RelPath) -> Self {
-        TriePath(
-            value
-                .components()
-                .map(|component| component.into())
-                .collect(),
-        )
+        TriePath(value.components().map(|component| component.into()).collect())
     }
 }
 
@@ -149,11 +132,7 @@ mod tests {
     #[test]
     fn test_insert_and_lookup() {
         let mut trie = RootPathTrie::<()>::new();
-        trie.insert(
-            &TriePath::new(rel_path("a/b/c")),
-            (),
-            LabelPresence::Present,
-        );
+        trie.insert(&TriePath::new(rel_path("a/b/c")), (), LabelPresence::Present);
 
         trie.walk(&TriePath::new(rel_path("a/b/c")), &mut |path, nodes| {
             assert_eq!(nodes.get(&()), Some(&LabelPresence::Present));
@@ -161,11 +140,7 @@ mod tests {
             ControlFlow::Continue(())
         });
         // Now let's annotate a parent with "Known missing" node.
-        trie.insert(
-            &TriePath::new(rel_path("a")),
-            (),
-            LabelPresence::KnownAbsent,
-        );
+        trie.insert(&TriePath::new(rel_path("a")), (), LabelPresence::KnownAbsent);
 
         // Ensure that we walk from the root to the leaf.
         let mut visited_paths = BTreeSet::new();
@@ -186,23 +161,20 @@ mod tests {
 
         // One can also pass a path whose prefix is in the tree, but not that path itself.
         let mut visited_paths = BTreeSet::new();
-        trie.walk(
-            &TriePath::new(rel_path("a/b/c/d/e/f/g")),
-            &mut |path, nodes| {
-                if path.as_unix_str() == "a/b/c" {
-                    assert_eq!(visited_paths, BTreeSet::from_iter([rel_path("a").into()]));
-                    assert_eq!(nodes.get(&()), Some(&LabelPresence::Present));
-                } else if path.as_unix_str() == "a" {
-                    assert!(visited_paths.is_empty());
-                    assert_eq!(nodes.get(&()), Some(&LabelPresence::KnownAbsent));
-                } else {
-                    panic!("Unknown path");
-                }
-                // Assert that we only ever visit a path once.
-                assert!(visited_paths.insert(path.clone()));
-                ControlFlow::Continue(())
-            },
-        );
+        trie.walk(&TriePath::new(rel_path("a/b/c/d/e/f/g")), &mut |path, nodes| {
+            if path.as_unix_str() == "a/b/c" {
+                assert_eq!(visited_paths, BTreeSet::from_iter([rel_path("a").into()]));
+                assert_eq!(nodes.get(&()), Some(&LabelPresence::Present));
+            } else if path.as_unix_str() == "a" {
+                assert!(visited_paths.is_empty());
+                assert_eq!(nodes.get(&()), Some(&LabelPresence::KnownAbsent));
+            } else {
+                panic!("Unknown path");
+            }
+            // Assert that we only ever visit a path once.
+            assert!(visited_paths.insert(path.clone()));
+            ControlFlow::Continue(())
+        });
 
         // Test breaking from the tree-walk.
         let mut visited_paths = BTreeSet::new();
@@ -220,11 +192,7 @@ mod tests {
         assert_eq!(visited_paths.len(), 1);
 
         // Entry removal.
-        trie.insert(
-            &TriePath::new(rel_path("a/b")),
-            (),
-            LabelPresence::KnownAbsent,
-        );
+        trie.insert(&TriePath::new(rel_path("a/b")), (), LabelPresence::KnownAbsent);
         let mut visited_paths = BTreeSet::new();
         trie.walk(&TriePath::new(rel_path("a/b/c")), &mut |path, _nodes| {
             // Assert that we only ever visit a path once.
@@ -240,10 +208,7 @@ mod tests {
             ControlFlow::Continue(())
         });
         assert_eq!(visited_paths.len(), 1);
-        assert_eq!(
-            visited_paths.into_iter().next().unwrap(),
-            rel_path("a").into()
-        );
+        assert_eq!(visited_paths.into_iter().next().unwrap(), rel_path("a").into());
     }
 
     #[test]

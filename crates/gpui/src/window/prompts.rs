@@ -3,9 +3,9 @@ use std::ops::Deref;
 use futures::channel::oneshot;
 
 use crate::{
-    AnyView, App, AppContext as _, Context, Entity, EventEmitter, FocusHandle, Focusable,
-    InteractiveElement, IntoElement, ParentElement, PromptButton, PromptLevel, Render,
-    StatefulInteractiveElement, Styled, div, opaque_grey, white,
+    AnyView, App, AppContext as _, Context, Entity, EventEmitter, FocusHandle, Focusable, InteractiveElement,
+    IntoElement, ParentElement, PromptButton, PromptLevel, Render, StatefulInteractiveElement, Styled, div,
+    opaque_grey, white,
 };
 
 use super::Window;
@@ -57,9 +57,7 @@ impl PromptHandle {
 
         window.focus(&view.focus_handle(cx), cx);
 
-        RenderablePromptHandle {
-            view: Box::new(view),
-        }
+        RenderablePromptHandle { view: Box::new(view) }
     }
 }
 
@@ -148,14 +146,7 @@ impl Render for FallbackPromptRenderer {
 
         div()
             .size_full()
-            .child(
-                div()
-                    .size_full()
-                    .bg(opaque_grey(0.5, 0.6))
-                    .absolute()
-                    .top_0()
-                    .left_0(),
-            )
+            .child(div().size_full().bg(opaque_grey(0.5, 0.6)).absolute().top_0().left_0())
             .child(
                 div()
                     .size_full()
@@ -165,14 +156,7 @@ impl Render for FallbackPromptRenderer {
                     .flex()
                     .flex_col()
                     .justify_around()
-                    .child(
-                        div()
-                            .w_full()
-                            .flex()
-                            .flex_row()
-                            .justify_around()
-                            .child(prompt),
-                    ),
+                    .child(div().w_full().flex().flex_row().justify_around().child(prompt)),
             )
     }
 }

@@ -222,8 +222,7 @@ fn possible_open_target(
                 }
             };
 
-            if let Ok(relative_path_to_check) =
-                RelPath::new(&path_to_check.path, PathStyle::local())
+            if let Ok(relative_path_to_check) = RelPath::new(&path_to_check.path, PathStyle::local())
                 && !worktree.read(cx).is_single_file()
                 && let Some(entry) = relative_cwd
                     .clone()
@@ -271,71 +270,70 @@ fn possible_open_target(
     }
 
     // Before entire worktree traversal(s), make an attempt to do FS checks if available.
-    let fs_paths_to_check =
-        if enable_background_fs_checks {
-            let fs_cwd_paths_to_check = cwd
-                .iter()
-                .flat_map(|cwd| {
-                    let mut paths_to_check = Vec::new();
-                    for path_to_check in &potential_paths {
-                        let maybe_path = &path_to_check.path;
-                        if path_to_check.path.is_relative() {
-                            paths_to_check.push(PathWithPosition {
-                                path: cwd.join(&maybe_path),
-                                row: path_to_check.row,
-                                column: path_to_check.column,
-                            });
-                        }
+    let fs_paths_to_check = if enable_background_fs_checks {
+        let fs_cwd_paths_to_check = cwd
+            .iter()
+            .flat_map(|cwd| {
+                let mut paths_to_check = Vec::new();
+                for path_to_check in &potential_paths {
+                    let maybe_path = &path_to_check.path;
+                    if path_to_check.path.is_relative() {
+                        paths_to_check.push(PathWithPosition {
+                            path: cwd.join(&maybe_path),
+                            row: path_to_check.row,
+                            column: path_to_check.column,
+                        });
                     }
-                    paths_to_check
-                })
-                .collect::<Vec<_>>();
-            fs_cwd_paths_to_check
-                .into_iter()
-                .chain(
-                    potential_paths
-                        .into_iter()
-                        .flat_map(|path_to_check| {
-                            let mut paths_to_check = Vec::new();
-                            let maybe_path = &path_to_check.path;
-                            if maybe_path.starts_with("~") {
-                                if let Some(home_path) = maybe_path.strip_prefix("~").ok().and_then(
-                                    |stripped_maybe_path| {
-                                        Some(dirs::home_dir()?.join(stripped_maybe_path))
-                                    },
-                                ) {
-                                    paths_to_check.push(PathWithPosition {
-                                        path: home_path,
-                                        row: path_to_check.row,
-                                        column: path_to_check.column,
-                                    });
-                                }
-                            } else {
+                }
+                paths_to_check
+            })
+            .collect::<Vec<_>>();
+        fs_cwd_paths_to_check
+            .into_iter()
+            .chain(
+                potential_paths
+                    .into_iter()
+                    .flat_map(|path_to_check| {
+                        let mut paths_to_check = Vec::new();
+                        let maybe_path = &path_to_check.path;
+                        if maybe_path.starts_with("~") {
+                            if let Some(home_path) = maybe_path
+                                .strip_prefix("~")
+                                .ok()
+                                .and_then(|stripped_maybe_path| Some(dirs::home_dir()?.join(stripped_maybe_path)))
+                            {
                                 paths_to_check.push(PathWithPosition {
-                                    path: maybe_path.clone(),
+                                    path: home_path,
                                     row: path_to_check.row,
                                     column: path_to_check.column,
                                 });
-                                if maybe_path.is_relative() {
-                                    for worktree in &worktree_candidates {
-                                        if !worktree.read(cx).is_single_file() {
-                                            paths_to_check.push(PathWithPosition {
-                                                path: worktree.read(cx).abs_path().join(maybe_path),
-                                                row: path_to_check.row,
-                                                column: path_to_check.column,
-                                            });
-                                        }
+                            }
+                        } else {
+                            paths_to_check.push(PathWithPosition {
+                                path: maybe_path.clone(),
+                                row: path_to_check.row,
+                                column: path_to_check.column,
+                            });
+                            if maybe_path.is_relative() {
+                                for worktree in &worktree_candidates {
+                                    if !worktree.read(cx).is_single_file() {
+                                        paths_to_check.push(PathWithPosition {
+                                            path: worktree.read(cx).abs_path().join(maybe_path),
+                                            row: path_to_check.row,
+                                            column: path_to_check.column,
+                                        });
                                     }
                                 }
                             }
-                            paths_to_check
-                        })
-                        .collect::<Vec<_>>(),
-                )
-                .collect()
-        } else {
-            Vec::new()
-        };
+                        }
+                        paths_to_check
+                    })
+                    .collect::<Vec<_>>(),
+            )
+            .collect()
+    } else {
+        Vec::new()
+    };
 
     let fs = workspace.read(cx).project().read(cx).fs().clone();
     let background_fs_checks_task = cx.background_spawn(async move {
@@ -364,15 +362,12 @@ fn possible_open_target(
             for (worktree, worktree_paths_to_check) in worktree_paths_to_check {
                 let found_entry = worktree
                     .update(cx, |worktree, _| -> Option<OpenTarget> {
-                        let traversal =
-                            worktree.traverse_from_path(true, true, false, RelPath::empty());
+                        let traversal = worktree.traverse_from_path(true, true, false, RelPath::empty());
                         for entry in traversal {
-                            if let Some(path_in_worktree) =
-                                worktree_paths_to_check.iter().find(|path_to_check| {
-                                    RelPath::new(&path_to_check.path, PathStyle::local())
-                                        .is_ok_and(|path| entry.path.ends_with(&path))
-                                })
-                            {
+                            if let Some(path_in_worktree) = worktree_paths_to_check.iter().find(|path_to_check| {
+                                RelPath::new(&path_to_check.path, PathStyle::local())
+                                    .is_ok_and(|path| entry.path.ends_with(&path))
+                            }) {
                                 return Some(OpenTarget::Worktree(
                                     PathWithPosition {
                                         path: worktree.absolutize(&entry.path),
@@ -406,8 +401,7 @@ pub(super) fn open_path_like_target(
 ) {
     #[cfg(not(test))]
     {
-        possibly_open_target(workspace, terminal_view, path_like_target, window, cx)
-            .detach_and_log_err(cx)
+        possibly_open_target(workspace, terminal_view, path_like_target, window, cx).detach_and_log_err(cx)
     }
     #[cfg(test)]
     {
@@ -469,10 +463,7 @@ fn possibly_open_target(
             .context("workspace update")?
             .await;
         if opened_items.len() != 1 {
-            debug_panic!(
-                "Received {} items for one path {path_to_open:?}",
-                opened_items.len(),
-            );
+            debug_panic!("Received {} items for one path {path_to_open:?}", opened_items.len(),);
         }
 
         if let Some(opened_item) = opened_items.first() {
@@ -485,10 +476,7 @@ fn possibly_open_target(
                                 .downgrade()
                                 .update_in(cx, |editor, window, cx| {
                                     editor.go_to_singleton_buffer_point(
-                                        language::Point::new(
-                                            row.saturating_sub(1),
-                                            col.saturating_sub(1),
-                                        ),
+                                        language::Point::new(row.saturating_sub(1), col.saturating_sub(1)),
                                         window,
                                         cx,
                                     )
@@ -526,11 +514,8 @@ mod tests {
         app_cx: &mut TestAppContext,
         trees: impl IntoIterator<Item = (&str, serde_json::Value)>,
         worktree_roots: impl IntoIterator<Item = &str>,
-    ) -> impl AsyncFnMut(
-        HoveredWord,
-        PathLikeTarget,
-        BackgroundFsChecks,
-    ) -> (Option<HoverTarget>, Option<OpenTarget>) {
+    ) -> impl AsyncFnMut(HoveredWord, PathLikeTarget, BackgroundFsChecks) -> (Option<HoverTarget>, Option<OpenTarget>)
+    {
         let fs = app_cx.update(AppState::test).fs.as_fake().clone();
 
         app_cx.update(|cx| {
@@ -542,15 +527,10 @@ mod tests {
             fs.insert_tree(path, tree).await;
         }
 
-        let project: gpui::Entity<Project> = Project::test(
-            fs.clone(),
-            worktree_roots.into_iter().map(Path::new),
-            app_cx,
-        )
-        .await;
+        let project: gpui::Entity<Project> =
+            Project::test(fs.clone(), worktree_roots.into_iter().map(Path::new), app_cx).await;
 
-        let (workspace, cx) =
-            app_cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (workspace, cx) = app_cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
 
         let cwd = std::env::current_dir().expect("Failed to get working directory");
         let terminal = project
@@ -562,14 +542,7 @@ mod tests {
 
         let workspace_a = workspace.clone();
         let (terminal_view, cx) = app_cx.add_window_view(|window, cx| {
-            TerminalView::new(
-                terminal,
-                workspace_a.downgrade(),
-                None,
-                project.downgrade(),
-                window,
-                cx,
-            )
+            TerminalView::new(terminal, workspace_a.downgrade(), None, project.downgrade(), window, cx)
         });
 
         async move |hovered_word: HoveredWord,
@@ -589,8 +562,7 @@ mod tests {
                 })
                 .await;
 
-            let hover_target =
-                terminal_view.read_with(cx, |terminal_view, _| terminal_view.hover.clone());
+            let hover_target = terminal_view.read_with(cx, |terminal_view, _| terminal_view.hover.clone());
 
             let open_target = terminal_view
                 .update_in(cx, |terminal_view, window, cx| {
@@ -646,10 +618,7 @@ mod tests {
             return;
         };
 
-        assert_eq!(
-            hover_target.tooltip, tooltip,
-            "Tooltip mismatch at {file}:{line}:"
-        );
+        assert_eq!(hover_target.tooltip, tooltip, "Tooltip mismatch at {file}:{line}:");
         assert_eq!(
             hover_target.hovered_word.word, maybe_path,
             "Hovered word mismatch at {file}:{line}:"
@@ -964,21 +933,9 @@ mod tests {
                     test!("src/main.rs", "/project/lib/src/main.rs", "/project/lib");
 
                     test!("lib/src/main.rs", "/project/lib/src/main.rs", "/project");
-                    test!(
-                        "lib/src/main.rs",
-                        "/project/lib/src/main.rs",
-                        "/project/src"
-                    );
-                    test!(
-                        "lib/src/main.rs",
-                        "/project/lib/src/main.rs",
-                        "/project/lib"
-                    );
-                    test!(
-                        "lib/src/main.rs",
-                        "/project/lib/src/main.rs",
-                        "/project/lib/src"
-                    );
+                    test!("lib/src/main.rs", "/project/lib/src/main.rs", "/project/src");
+                    test!("lib/src/main.rs", "/project/lib/src/main.rs", "/project/lib");
+                    test!("lib/src/main.rs", "/project/lib/src/main.rs", "/project/lib/src");
                     test!(
                         "src/only_in_lib.rs",
                         "/project/lib/src/only_in_lib.rs",
@@ -1068,36 +1025,16 @@ mod tests {
                 )],
                 vec![path!("/tmp")],
                 {
-                    test_remote!(
-                        "foo/./bar.txt",
-                        "/tmp/issue28339/foo/bar.txt",
-                        "/tmp/issue28339"
-                    );
-                    test_remote!(
-                        "foo/../foo/bar.txt",
-                        "/tmp/issue28339/foo/bar.txt",
-                        "/tmp/issue28339"
-                    );
-                    test_remote!(
-                        "foo/..///foo/bar.txt",
-                        "/tmp/issue28339/foo/bar.txt",
-                        "/tmp/issue28339"
-                    );
+                    test_remote!("foo/./bar.txt", "/tmp/issue28339/foo/bar.txt", "/tmp/issue28339");
+                    test_remote!("foo/../foo/bar.txt", "/tmp/issue28339/foo/bar.txt", "/tmp/issue28339");
+                    test_remote!("foo/..///foo/bar.txt", "/tmp/issue28339/foo/bar.txt", "/tmp/issue28339");
                     test_remote!(
                         "issue28339/../issue28339/foo/../foo/bar.txt",
                         "/tmp/issue28339/foo/bar.txt",
                         "/tmp/issue28339"
                     );
-                    test_remote!(
-                        "./bar.txt",
-                        "/tmp/issue28339/foo/bar.txt",
-                        "/tmp/issue28339/foo"
-                    );
-                    test_remote!(
-                        "../foo/bar.txt",
-                        "/tmp/issue28339/foo/bar.txt",
-                        "/tmp/issue28339/foo"
-                    );
+                    test_remote!("./bar.txt", "/tmp/issue28339/foo/bar.txt", "/tmp/issue28339/foo");
+                    test_remote!("../foo/bar.txt", "/tmp/issue28339/foo/bar.txt", "/tmp/issue28339/foo");
                 }
             )
         }
@@ -1119,11 +1056,7 @@ mod tests {
                 vec![path!("/tmp/issue34027")],
                 {
                     test!("test.txt", "/tmp/issue34027/test.txt", "/tmp/issue34027");
-                    test!(
-                        "test.txt",
-                        "/tmp/issue34027/foo/test.txt",
-                        "/tmp/issue34027/foo"
-                    );
+                    test!("test.txt", "/tmp/issue34027/foo/test.txt", "/tmp/issue34027/foo");
                 }
             )
         }
@@ -1180,38 +1113,12 @@ mod tests {
                 ),],
                 vec![path!("/test")],
                 {
-                    test!(
-                        "file.txt",
-                        "/test/sub1/subsub1/file.txt",
-                        "/test/sub1/subsub1"
-                    );
-                    test!(
-                        "file.txt",
-                        "/test/sub2/subsub1/file.txt",
-                        "/test/sub2/subsub1"
-                    );
-                    test!(
-                        "subsub1/file.txt",
-                        "/test/sub1/subsub1/file.txt",
-                        "/test",
-                        WorktreeScan
-                    );
-                    test!(
-                        "subsub1/file.txt",
-                        "/test/sub1/subsub1/file.txt",
-                        "/test",
-                        WorktreeScan
-                    );
-                    test!(
-                        "subsub1/file.txt",
-                        "/test/sub1/subsub1/file.txt",
-                        "/test/sub1"
-                    );
-                    test!(
-                        "subsub1/file.txt",
-                        "/test/sub2/subsub1/file.txt",
-                        "/test/sub2"
-                    );
+                    test!("file.txt", "/test/sub1/subsub1/file.txt", "/test/sub1/subsub1");
+                    test!("file.txt", "/test/sub2/subsub1/file.txt", "/test/sub2/subsub1");
+                    test!("subsub1/file.txt", "/test/sub1/subsub1/file.txt", "/test", WorktreeScan);
+                    test!("subsub1/file.txt", "/test/sub1/subsub1/file.txt", "/test", WorktreeScan);
+                    test!("subsub1/file.txt", "/test/sub1/subsub1/file.txt", "/test/sub1");
+                    test!("subsub1/file.txt", "/test/sub2/subsub1/file.txt", "/test/sub2");
                     test!(
                         "subsub1/file.txt",
                         "/test/sub1/subsub1/file.txt",
@@ -1326,11 +1233,7 @@ mod tests {
                 vec![path!("/project")],
                 {
                     // Finds "/project/src/main.rs"
-                    test!(
-                        "src/main.rs",
-                        "/project/lib/src/main.rs",
-                        "/project/lib/src"
-                    );
+                    test!("src/main.rs", "/project/lib/src/main.rs", "/project/lib/src");
                 }
             )
         }

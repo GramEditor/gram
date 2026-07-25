@@ -72,11 +72,7 @@ impl StatusToast {
         self
     }
 
-    pub fn action(
-        mut self,
-        label: impl Into<SharedString>,
-        f: impl Fn(&mut Window, &mut App) + 'static,
-    ) -> Self {
+    pub fn action(mut self, label: impl Into<SharedString>, f: impl Fn(&mut Window, &mut App) + 'static) -> Self {
         let this_handle = self.this_handle.clone();
         self.action = Some(ToastAction::new(
             label.into(),
@@ -123,10 +119,7 @@ impl Render for StatusToast {
             .when_some(self.action.as_ref(), |this, action| {
                 this.child(
                     Button::new(action.id.clone(), action.label.clone())
-                        .tooltip(Tooltip::for_action_title(
-                            action.label.clone(),
-                            &toast::RunAction,
-                        ))
+                        .tooltip(Tooltip::for_action_title(action.label.clone(), &toast::RunAction))
                         .color(Color::Muted)
                         .when_some(action.on_click.clone(), |el, handler| {
                             el.on_click(move |_click_event, window, cx| handler(window, cx))
@@ -177,14 +170,11 @@ impl Component for StatusToast {
             this.action("Restart", |_, _| {})
         });
 
-        let dismiss_button_example =
-            StatusToast::new("Dismiss Button", cx, |this, _| this.dismiss_button(true));
+        let dismiss_button_example = StatusToast::new("Dismiss Button", cx, |this, _| this.dismiss_button(true));
 
-        let icon_example = StatusToast::new(
-            "A grumpy toad accepted your contact request",
-            cx,
-            |this, _| this.icon(ToastIcon::new(IconName::Check).color(Color::Muted)),
-        );
+        let icon_example = StatusToast::new("A grumpy toad accepted your contact request", cx, |this, _| {
+            this.icon(ToastIcon::new(IconName::Check).color(Color::Muted))
+        });
 
         let success_example = StatusToast::new("Pushed 4 changes to `gram/main`", cx, |this, _| {
             this.icon(ToastIcon::new(IconName::Check).color(Color::Success))
@@ -204,16 +194,10 @@ impl Component for StatusToast {
                 .action("More Info", |_, _| {})
         });
 
-        let pr_example = StatusToast::new(
-            "`gram/new-notification-system` created!",
-            cx,
-            |this, _cx| {
-                this.icon(ToastIcon::new(IconName::GitBranchAlt).color(Color::Muted))
-                    .action("Open Pull Request", |_, cx| {
-                        cx.open_url("https://github.com/")
-                    })
-            },
-        );
+        let pr_example = StatusToast::new("`gram/new-notification-system` created!", cx, |this, _cx| {
+            this.icon(ToastIcon::new(IconName::GitBranchAlt).color(Color::Muted))
+                .action("Open Pull Request", |_, cx| cx.open_url("https://github.com/"))
+        });
 
         Some(
             v_flex()
@@ -224,29 +208,17 @@ impl Component for StatusToast {
                         "Basic Toast",
                         vec![
                             single_example("Text", div().child(text_example).into_any_element()),
-                            single_example(
-                                "Action",
-                                div().child(action_example).into_any_element(),
-                            ),
+                            single_example("Action", div().child(action_example).into_any_element()),
                             single_example("Icon", div().child(icon_example).into_any_element()),
-                            single_example(
-                                "Dismiss Button",
-                                div().child(dismiss_button_example).into_any_element(),
-                            ),
+                            single_example("Dismiss Button", div().child(dismiss_button_example).into_any_element()),
                         ],
                     ),
                     example_group_with_title(
                         "Examples",
                         vec![
-                            single_example(
-                                "Success",
-                                div().child(success_example).into_any_element(),
-                            ),
+                            single_example("Success", div().child(success_example).into_any_element()),
                             single_example("Error", div().child(error_example).into_any_element()),
-                            single_example(
-                                "Warning",
-                                div().child(warning_example).into_any_element(),
-                            ),
+                            single_example("Warning", div().child(warning_example).into_any_element()),
                             single_example("Create PR", div().child(pr_example).into_any_element()),
                         ],
                     )

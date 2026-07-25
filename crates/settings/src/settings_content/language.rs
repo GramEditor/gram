@@ -616,9 +616,7 @@ impl From<LanguageServerFormatterSpecifier> for LanguageServerVariantContent {
             LanguageServerFormatterSpecifier::Specific { name } => Self::Specific {
                 language_server: LanguageServerSpecifierContent { name: Some(name) },
             },
-            LanguageServerFormatterSpecifier::Current => {
-                Self::Current(CurrentLanguageServerContent::LanguageServer)
-            }
+            LanguageServerFormatterSpecifier::Current => Self::Current(CurrentLanguageServerContent::LanguageServer),
         }
     }
 }
@@ -757,10 +755,7 @@ mod test {
     fn test_formatter_deserialization() {
         let raw_auto = "{\"formatter\": \"auto\"}";
         let settings: LanguageSettingsContent = serde_json::from_str(raw_auto).unwrap();
-        assert_eq!(
-            settings.formatter,
-            Some(FormatterList::Single(Formatter::Auto))
-        );
+        assert_eq!(settings.formatter, Some(FormatterList::Single(Formatter::Auto)));
         let raw = "{\"formatter\": \"language_server\"}";
         let settings: LanguageSettingsContent = serde_json::from_str(raw).unwrap();
         assert_eq!(
@@ -817,8 +812,8 @@ mod test {
     #[test]
     fn test_prettier_options() {
         let raw_prettier = r#"{"allowed": false, "tabWidth": 4, "semi": false}"#;
-        let result = serde_json::from_str::<PrettierSettingsContent>(raw_prettier)
-            .expect("Failed to parse prettier options");
+        let result =
+            serde_json::from_str::<PrettierSettingsContent>(raw_prettier).expect("Failed to parse prettier options");
         assert!(
             result
                 .options

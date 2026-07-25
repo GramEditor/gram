@@ -52,14 +52,8 @@ pub fn init_output_stderr() {
     ENABLED_SINKS_STDERR.store(true, Ordering::Release);
 }
 
-pub fn init_output_file(
-    path: &'static PathBuf,
-    path_rotate: Option<&'static PathBuf>,
-) -> io::Result<()> {
-    let mut file = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(path)?;
+pub fn init_output_file(path: &'static PathBuf, path_rotate: Option<&'static PathBuf>) -> io::Result<()> {
+    let mut file = std::fs::OpenOptions::new().create(true).append(true).open(path)?;
 
     SINK_FILE_PATH
         .set(path)
@@ -263,9 +257,7 @@ fn rotate_log_file<PathRef>(
     let rotation_error = match (path, path_rotate) {
         (Some(_), None) => Some(anyhow::anyhow!("No rotation log file path configured")),
         (None, _) => Some(anyhow::anyhow!("No log file path configured")),
-        (Some(path), Some(path_rotate)) => fs::copy(path, path_rotate)
-            .err()
-            .map(|err| anyhow::anyhow!(err)),
+        (Some(path), Some(path_rotate)) => fs::copy(path, path_rotate).err().map(|err| anyhow::anyhow!(err)),
     };
     if let Some(err) = rotation_error {
         eprintln!("Log file rotation failed. Truncating log file anyways: {err}",);
@@ -295,20 +287,12 @@ mod tests {
 
         let size = AtomicU64::new(contents.len() as u64);
 
-        rotate_log_file(
-            &mut file,
-            Some(&log_file_path),
-            Some(&rotation_log_file_path),
-            &size,
-        );
+        rotate_log_file(&mut file, Some(&log_file_path), Some(&rotation_log_file_path), &size);
 
         assert!(log_file_path.exists());
         assert_eq!(log_file_path.metadata().unwrap().len(), 0);
         assert!(rotation_log_file_path.exists());
-        assert_eq!(
-            std::fs::read_to_string(&rotation_log_file_path).unwrap(),
-            contents,
-        );
+        assert_eq!(std::fs::read_to_string(&rotation_log_file_path).unwrap(), contents,);
         assert_eq!(size.load(Ordering::Acquire), 0);
     }
 

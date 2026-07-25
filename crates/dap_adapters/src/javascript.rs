@@ -19,10 +19,7 @@ impl JsDebugAdapter {
     const ADAPTER_NPM_NAME: &'static str = "vscode-js-debug";
     const ADAPTER_PATH: &'static str = "js-debug/src/dapDebugServer.js";
 
-    async fn fetch_latest_adapter_version(
-        &self,
-        delegate: &Arc<dyn DapDelegate>,
-    ) -> Result<AdapterVersion> {
+    async fn fetch_latest_adapter_version(&self, delegate: &Arc<dyn DapDelegate>) -> Result<AdapterVersion> {
         let release = http_client::github::latest_github_release(
             &format!("microsoft/{}", Self::ADAPTER_NPM_NAME),
             true,
@@ -62,9 +59,7 @@ impl JsDebugAdapter {
         let mut configuration = task_definition.config.clone();
         if let Some(configuration) = configuration.as_object_mut() {
             maybe!({
-                configuration
-                    .get("type")
-                    .filter(|value| value == &"node-terminal")?;
+                configuration.get("type").filter(|value| value == &"node-terminal")?;
                 let command = configuration.get("command")?.as_str()?.to_owned();
                 let mut args = ShellKind::Posix.split(&command)?.into_iter();
                 let program = args.next()?;
@@ -109,23 +104,15 @@ impl JsDebugAdapter {
                 .entry("cwd")
                 .or_insert(delegate.worktree_root_path().to_string_lossy().into());
 
-            configuration
-                .entry("console")
-                .or_insert("externalTerminal".into());
+            configuration.entry("console").or_insert("externalTerminal".into());
 
             configuration.entry("sourceMaps").or_insert(true.into());
-            configuration
-                .entry("pauseForSourceMap")
-                .or_insert(true.into());
-            configuration
-                .entry("sourceMapRenames")
-                .or_insert(true.into());
+            configuration.entry("pauseForSourceMap").or_insert(true.into());
+            configuration.entry("sourceMapRenames").or_insert(true.into());
 
             // Set up remote browser debugging
             if delegate.is_headless() {
-                configuration
-                    .entry("browserLaunchLocation")
-                    .or_insert("ui".into());
+                configuration.entry("browserLaunchLocation").or_insert("ui".into());
             }
         }
 
@@ -167,11 +154,7 @@ impl JsDebugAdapter {
             arguments,
             cwd: Some(delegate.worktree_root_path().to_path_buf()),
             envs,
-            connection: Some(adapters::TcpArguments {
-                host,
-                port,
-                timeout,
-            }),
+            connection: Some(adapters::TcpArguments { host, port, timeout }),
             request_args: StartDebuggingRequestArguments {
                 configuration,
                 request: self.request_kind(&task_definition.config).await?,
@@ -186,10 +169,7 @@ impl DebugAdapter for JsDebugAdapter {
         DebugAdapterName(Self::ADAPTER_NAME.into())
     }
 
-    async fn config_from_gram_format(
-        &self,
-        gram_scenario: GramDebugConfig,
-    ) -> Result<DebugScenario> {
+    async fn config_from_gram_format(&self, gram_scenario: GramDebugConfig) -> Result<DebugScenario> {
         let mut args = json!({
             "type": "pwa-node",
             "request": match gram_scenario.request {
@@ -525,15 +505,8 @@ impl DebugAdapter for JsDebugAdapter {
             }
         }
 
-        self.get_installed_binary(
-            delegate,
-            config,
-            user_installed_path,
-            user_args,
-            user_env,
-            cx,
-        )
-        .await
+        self.get_installed_binary(delegate, config, user_installed_path, user_args, user_env, cx)
+            .await
     }
 
     fn label_for_child_session(&self, args: &StartDebuggingRequestArguments) -> Option<String> {

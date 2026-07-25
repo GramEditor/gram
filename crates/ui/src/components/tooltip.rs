@@ -86,21 +86,13 @@ impl Tooltip {
             cx.new(|cx| Self {
                 title: Title::Str(title.clone()),
                 meta: None,
-                key_binding: Some(KeyBinding::for_action_in(
-                    action.as_ref(),
-                    &focus_handle,
-                    cx,
-                )),
+                key_binding: Some(KeyBinding::for_action_in(action.as_ref(), &focus_handle, cx)),
             })
             .into()
         }
     }
 
-    pub fn for_action(
-        title: impl Into<SharedString>,
-        action: &dyn Action,
-        cx: &mut App,
-    ) -> AnyView {
+    pub fn for_action(title: impl Into<SharedString>, action: &dyn Action, cx: &mut App) -> AnyView {
         cx.new(|cx| Self {
             title: Title::Str(title.into()),
             meta: None,

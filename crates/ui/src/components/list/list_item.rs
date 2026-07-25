@@ -98,10 +98,7 @@ impl ListItem {
         self
     }
 
-    pub fn on_click(
-        mut self,
-        handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
-    ) -> Self {
+    pub fn on_click(mut self, handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static) -> Self {
         self.on_click = Some(Box::new(handler));
         self
     }
@@ -144,10 +141,7 @@ impl ListItem {
         self
     }
 
-    pub fn on_toggle(
-        mut self,
-        on_toggle: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
-    ) -> Self {
+    pub fn on_toggle(mut self, on_toggle: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static) -> Self {
         self.on_toggle = Some(Arc::new(on_toggle));
         self
     }
@@ -226,8 +220,7 @@ impl RenderOnce for ListItem {
                     // .when(self.state == InteractionState::Focused, |this| {
                     .when_some(self.focused, |this, focused| {
                         if focused {
-                            this.border_1()
-                                .border_color(cx.theme().colors().border_focused)
+                            this.border_1().border_color(cx.theme().colors().border_focused)
                         } else {
                             this.border_1()
                         }
@@ -263,26 +256,22 @@ impl RenderOnce for ListItem {
                             //.when(self.state == InteractionState::Focused, |this| {
                             .when_some(self.focused, |this, focused| {
                                 if focused {
-                                    this.border_1()
-                                        .border_color(cx.theme().colors().border_focused)
+                                    this.border_1().border_color(cx.theme().colors().border_focused)
                                 } else {
                                     this.border_1()
                                 }
                             })
                             .when(self.selectable, |this| {
-                                this.hover(|style| {
-                                    style.bg(cx.theme().colors().ghost_element_hover)
-                                })
-                                .active(|style| style.bg(cx.theme().colors().ghost_element_active))
-                                .when(self.selected, |this| {
-                                    this.bg(cx.theme().colors().ghost_element_selected)
-                                })
+                                this.hover(|style| style.bg(cx.theme().colors().ghost_element_hover))
+                                    .active(|style| style.bg(cx.theme().colors().ghost_element_active))
+                                    .when(self.selected, |this| {
+                                        this.bg(cx.theme().colors().ghost_element_selected)
+                                    })
                             })
                     })
-                    .when_some(
-                        self.on_click.filter(|_| !self.disabled),
-                        |this, on_click| this.cursor_pointer().on_click(on_click),
-                    )
+                    .when_some(self.on_click.filter(|_| !self.disabled), |this, on_click| {
+                        this.cursor_pointer().on_click(on_click)
+                    })
                     .when(self.outlined, |this| {
                         this.border_1()
                             .border_color(cx.theme().colors().border)
@@ -311,10 +300,7 @@ impl RenderOnce for ListItem {
                             .when(is_open && !self.always_show_disclosure_icon, |this| {
                                 this.visible_on_hover("")
                             })
-                            .child(
-                                Disclosure::new("toggle", is_open)
-                                    .on_toggle_expanded(self.on_toggle),
-                            )
+                            .child(Disclosure::new("toggle", is_open).on_toggle_expanded(self.on_toggle))
                     }))
                     .child(
                         h_flex()
@@ -338,8 +324,7 @@ impl RenderOnce for ListItem {
                                 .flex_shrink()
                                 .overflow_hidden()
                                 .when(self.end_hover_slot.is_some(), |this| {
-                                    this.visible()
-                                        .group_hover("list_item", |this| this.invisible())
+                                    this.visible().group_hover("list_item", |this| this.invisible())
                                 })
                                 .child(end_slot),
                         )

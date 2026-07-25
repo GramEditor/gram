@@ -18,18 +18,16 @@ use wayland_protocols::xdg::decoration::zv1::client::zxdg_toplevel_decoration_v1
 use wayland_protocols::xdg::shell::client::xdg_surface;
 use wayland_protocols::xdg::shell::client::xdg_toplevel::{self};
 use wayland_protocols::{
-    wp::fractional_scale::v1::client::wp_fractional_scale_v1,
-    xdg::shell::client::xdg_toplevel::XdgToplevel,
+    wp::fractional_scale::v1::client::wp_fractional_scale_v1, xdg::shell::client::xdg_toplevel::XdgToplevel,
 };
 use wayland_protocols_plasma::blur::client::org_kde_kwin_blur;
 use wayland_protocols_wlr::layer_shell::v1::client::zwlr_layer_surface_v1;
 
 use crate::{
-    AnyWindowHandle, Bounds, Decorations, DevicePixels, Globals, GpuSpecs, Modifiers, Output,
-    Pixels, PlatformDisplay, PlatformInput, Point, PromptButton, PromptLevel, RequestFrameOptions,
-    ResizeEdge, Size, Tiling, WaylandClientStatePtr, WindowAppearance, WindowBackgroundAppearance,
-    WindowBounds, WindowControlArea, WindowControls, WindowDecorations, WindowParams,
-    layer_shell::LayerShellNotSupportedError, px, size,
+    AnyWindowHandle, Bounds, Decorations, DevicePixels, Globals, GpuSpecs, Modifiers, Output, Pixels, PlatformDisplay,
+    PlatformInput, Point, PromptButton, PromptLevel, RequestFrameOptions, ResizeEdge, Size, Tiling,
+    WaylandClientStatePtr, WindowAppearance, WindowBackgroundAppearance, WindowBounds, WindowControlArea,
+    WindowControls, WindowDecorations, WindowParams, layer_shell::LayerShellNotSupportedError, px, size,
 };
 use crate::{
     Capslock,
@@ -179,9 +177,7 @@ impl WaylandSurfaceState {
         }
 
         // All other WindowKinds result in a regular xdg surface
-        let xdg_surface = globals
-            .wm_base
-            .get_xdg_surface(&surface, &globals.qh, surface.id());
+        let xdg_surface = globals.wm_base.get_xdg_surface(&surface, &globals.qh, surface.id());
 
         let toplevel = xdg_surface.get_toplevel(&globals.qh, surface.id());
         if params.kind == WindowKind::Floating {
@@ -196,9 +192,7 @@ impl WaylandSurfaceState {
         let decoration = globals
             .decoration_manager
             .as_ref()
-            .map(|decoration_manager| {
-                decoration_manager.get_toplevel_decoration(&toplevel, &globals.qh, surface.id())
-            });
+            .map(|decoration_manager| decoration_manager.get_toplevel_decoration(&toplevel, &globals.qh, surface.id()));
 
         Ok(WaylandSurfaceState::Xdg(WaylandXdgSurfaceState {
             xdg_surface,
@@ -298,12 +292,7 @@ impl WaylandWindowState {
         let renderer = {
             let raw_window = RawWindow {
                 window: surface.id().as_ptr().cast::<c_void>(),
-                display: surface
-                    .backend()
-                    .upgrade()
-                    .unwrap()
-                    .display_ptr()
-                    .cast::<c_void>(),
+                display: surface.backend().upgrade().unwrap().display_ptr().cast::<c_void>(),
             };
             let config = WgpuSurfaceConfig {
                 size: Size {
@@ -571,13 +560,9 @@ impl WaylandWindowStatePtr {
             let mut state = self.state.borrow_mut();
             state.surface_state.ack_configure(serial);
 
-            let window_geometry = inset_by_tiling(
-                state.bounds.map_origin(|_| px(0.0)),
-                state.inset(),
-                state.tiling,
-            )
-            .map(|v| v.0 as i32)
-            .map_size(|v| if v <= 0 { 1 } else { v });
+            let window_geometry = inset_by_tiling(state.bounds.map_origin(|_| px(0.0)), state.inset(), state.tiling)
+                .map(|v| v.0 as i32)
+                .map_size(|v| if v <= 0 { 1 } else { v });
 
             state.surface_state.set_geometry(
                 window_geometry.origin.x,
@@ -600,18 +585,14 @@ impl WaylandWindowStatePtr {
             match mode {
                 WEnum::Value(zxdg_toplevel_decoration_v1::Mode::ServerSide) => {
                     self.state.borrow_mut().decorations = WindowDecorations::Server;
-                    if let Some(mut appearance_changed) =
-                        self.callbacks.borrow_mut().appearance_changed.as_mut()
-                    {
+                    if let Some(mut appearance_changed) = self.callbacks.borrow_mut().appearance_changed.as_mut() {
                         appearance_changed();
                     }
                 }
                 WEnum::Value(zxdg_toplevel_decoration_v1::Mode::ClientSide) => {
                     self.state.borrow_mut().decorations = WindowDecorations::Client;
                     // Update background to be transparent
-                    if let Some(mut appearance_changed) =
-                        self.callbacks.borrow_mut().appearance_changed.as_mut()
-                    {
+                    if let Some(mut appearance_changed) = self.callbacks.borrow_mut().appearance_changed.as_mut() {
                         appearance_changed();
                     }
                 }
@@ -633,11 +614,7 @@ impl WaylandWindowStatePtr {
 
     pub fn handle_toplevel_event(&self, event: xdg_toplevel::Event) -> bool {
         match event {
-            xdg_toplevel::Event::Configure {
-                width,
-                height,
-                states,
-            } => {
+            xdg_toplevel::Event::Configure { width, height, states } => {
                 let mut size = if width == 0 || height == 0 {
                     None
                 } else {
@@ -740,11 +717,7 @@ impl WaylandWindowStatePtr {
 
     pub fn handle_layersurface_event(&self, event: zwlr_layer_surface_v1::Event) -> bool {
         match event {
-            zwlr_layer_surface_v1::Event::Configure {
-                width,
-                height,
-                serial,
-            } => {
+            zwlr_layer_surface_v1::Event::Configure { width, height, serial } => {
                 let mut size = if width == 0 || height == 0 {
                     None
                 } else {
@@ -775,11 +748,7 @@ impl WaylandWindowStatePtr {
     }
 
     #[allow(clippy::mutable_key_type)]
-    pub fn handle_surface_event(
-        &self,
-        event: wl_surface::Event,
-        outputs: HashMap<ObjectId, Output>,
-    ) {
+    pub fn handle_surface_event(&self, event: wl_surface::Event, outputs: HashMap<ObjectId, Output>) {
         let mut state = self.state.borrow_mut();
 
         match event {
@@ -865,9 +834,7 @@ impl WaylandWindowStatePtr {
     pub fn set_size_and_scale(&self, size: Option<Size<Pixels>>, scale: Option<f32>) {
         let (size, scale) = {
             let mut state = self.state.borrow_mut();
-            if size.is_none_or(|size| size == state.bounds.size)
-                && scale.is_none_or(|scale| scale == state.scale)
-            {
+            if size.is_none_or(|size| size == state.bounds.size) && scale.is_none_or(|scale| scale == state.scale) {
                 return;
             }
             if let Some(size) = size {
@@ -1117,8 +1084,7 @@ impl PlatformWindow for WaylandWindow {
         // Try to request an activation token. Even though the activation is likely going to be rejected,
         // KWin and Mutter can use the app_id to visually indicate we're requesting attention.
         let state = self.borrow();
-        if let (Some(activation), Some(app_id)) = (&state.globals.activation, state.app_id.clone())
-        {
+        if let (Some(activation), Some(app_id)) = (&state.globals.activation, state.app_id.clone()) {
             state.client.set_pending_activation(state.surface.id());
             let token = activation.get_activation_token(&state.globals.qh, ());
             // The serial isn't exactly important here, since the activation is probably going to be rejected anyway.
@@ -1232,8 +1198,7 @@ impl PlatformWindow for WaylandWindow {
         self.0.callbacks.borrow_mut().close = Some(callback);
     }
 
-    fn on_hit_test_window_control(&self, _callback: Box<dyn FnMut() -> Option<WindowControlArea>>) {
-    }
+    fn on_hit_test_window_control(&self, _callback: Box<dyn FnMut() -> Option<WindowControlArea>>) {}
 
     fn on_appearance_changed(&self, callback: Box<dyn FnMut()>) {
         self.0.callbacks.borrow_mut().appearance_changed = Some(callback);
@@ -1265,12 +1230,7 @@ impl PlatformWindow for WaylandWindow {
         let state = self.borrow();
         let serial = state.client.get_serial(SerialKind::MousePress);
         if let Some(toplevel) = state.surface_state.toplevel() {
-            toplevel.show_window_menu(
-                &state.globals.seat,
-                serial,
-                position.x.0 as i32,
-                position.y.0 as i32,
-            );
+            toplevel.show_window_menu(&state.globals.seat, serial, position.x.0 as i32, position.y.0 as i32);
         }
     }
 
@@ -1297,9 +1257,7 @@ impl PlatformWindow for WaylandWindow {
         let state = self.borrow();
         match state.decorations {
             WindowDecorations::Server => Decorations::Server,
-            WindowDecorations::Client => Decorations::Client {
-                tiling: state.tiling,
-            },
+            WindowDecorations::Client => Decorations::Client { tiling: state.tiling },
         }
     }
 
@@ -1352,10 +1310,7 @@ fn update_window(mut state: RefMut<WaylandWindowState>) {
     let mut opaque_area = state.window_bounds.map(|v| v.0 as i32);
     opaque_area.inset(state.inset().0 as i32);
 
-    let region = state
-        .globals
-        .compositor
-        .create_region(&state.globals.qh, ());
+    let region = state.globals.compositor.create_region(&state.globals.qh, ());
     region.add(
         opaque_area.origin.x,
         opaque_area.origin.y,
@@ -1422,11 +1377,7 @@ impl ResizeEdge {
 /// The configuration event is in terms of the window geometry, which we are constantly
 /// updating to account for the client decorations. But that's not the area we want to render
 /// to, due to our intrusize CSD. So, here we calculate the 'actual' size, by adding back in the insets
-fn compute_outer_size(
-    inset: Pixels,
-    new_size: Option<Size<Pixels>>,
-    tiling: Tiling,
-) -> Option<Size<Pixels>> {
+fn compute_outer_size(inset: Pixels, new_size: Option<Size<Pixels>>, tiling: Tiling) -> Option<Size<Pixels>> {
     new_size.map(|mut new_size| {
         if !tiling.top {
             new_size.height += inset;

@@ -51,20 +51,14 @@ async fn test_traversal(cx: &mut TestAppContext) {
     )
     .await
     .unwrap();
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
 
     tree.read_with(cx, |tree, _| {
         assert_eq!(
             tree.entries(false, 0)
                 .map(|entry| entry.path.as_ref())
                 .collect::<Vec<_>>(),
-            vec![
-                rel_path(""),
-                rel_path(".gitignore"),
-                rel_path("a"),
-                rel_path("a/c"),
-            ]
+            vec![rel_path(""), rel_path(".gitignore"), rel_path("a"), rel_path("a/c"),]
         );
         assert_eq!(
             tree.entries(true, 0)
@@ -117,8 +111,7 @@ async fn test_circular_symlinks(cx: &mut TestAppContext) {
     .await
     .unwrap();
 
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
 
     tree.read_with(cx, |tree, _| {
         assert_eq!(
@@ -217,19 +210,16 @@ async fn test_symlinks_pointing_outside(cx: &mut TestAppContext) {
     .await
     .unwrap();
 
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
 
     let tree_updates = Arc::new(Mutex::new(Vec::new()));
     tree.update(cx, |_, cx| {
         let tree_updates = tree_updates.clone();
         cx.subscribe(&tree, move |_, _, event, _| {
             if let Event::UpdatedEntries(update) = event {
-                tree_updates.lock().extend(
-                    update
-                        .iter()
-                        .map(|(path, _, change)| (path.clone(), *change)),
-                );
+                tree_updates
+                    .lock()
+                    .extend(update.iter().map(|(path, _, change)| (path.clone(), *change)));
             }
         })
         .detach();
@@ -331,14 +321,8 @@ async fn test_symlinks_pointing_outside(cx: &mut TestAppContext) {
         mem::take(&mut *tree_updates.lock()),
         &[
             (rel_path("deps/dep-dir3/src").into(), PathChange::Loaded),
-            (
-                rel_path("deps/dep-dir3/src/e.rs").into(),
-                PathChange::Loaded
-            ),
-            (
-                rel_path("deps/dep-dir3/src/f.rs").into(),
-                PathChange::Loaded
-            )
+            (rel_path("deps/dep-dir3/src/e.rs").into(), PathChange::Loaded),
+            (rel_path("deps/dep-dir3/src/f.rs").into(), PathChange::Loaded)
         ]
     );
 }
@@ -368,8 +352,7 @@ async fn test_renaming_case_only(cx: &mut TestAppContext) {
     .await
     .unwrap();
 
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
     tree.read_with(cx, |tree, _| {
         assert_eq!(
             tree.entries(true, 0)
@@ -446,8 +429,7 @@ async fn test_open_gitignored_files(cx: &mut TestAppContext) {
     .await
     .unwrap();
 
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
 
     tree.read_with(cx, |tree, _| {
         assert_eq!(
@@ -470,9 +452,7 @@ async fn test_open_gitignored_files(cx: &mut TestAppContext) {
     // has not yet been expanded.
     let prev_read_dir_count = fs.read_dir_call_count();
     let loaded = tree
-        .update(cx, |tree, cx| {
-            tree.load_file(rel_path("one/node_modules/b/b1.js"), cx)
-        })
+        .update(cx, |tree, cx| tree.load_file(rel_path("one/node_modules/b/b1.js"), cx))
         .await
         .unwrap();
 
@@ -497,10 +477,7 @@ async fn test_open_gitignored_files(cx: &mut TestAppContext) {
             ]
         );
 
-        assert_eq!(
-            loaded.file.path.as_ref(),
-            rel_path("one/node_modules/b/b1.js")
-        );
+        assert_eq!(loaded.file.path.as_ref(), rel_path("one/node_modules/b/b1.js"));
 
         // Only the newly-expanded directories are scanned.
         assert_eq!(fs.read_dir_call_count() - prev_read_dir_count, 2);
@@ -510,9 +487,7 @@ async fn test_open_gitignored_files(cx: &mut TestAppContext) {
     // gitignored directory.
     let prev_read_dir_count = fs.read_dir_call_count();
     let loaded = tree
-        .update(cx, |tree, cx| {
-            tree.load_file(rel_path("one/node_modules/a/a2.js"), cx)
-        })
+        .update(cx, |tree, cx| tree.load_file(rel_path("one/node_modules/a/a2.js"), cx))
         .await
         .unwrap();
 
@@ -539,10 +514,7 @@ async fn test_open_gitignored_files(cx: &mut TestAppContext) {
             ]
         );
 
-        assert_eq!(
-            loaded.file.path.as_ref(),
-            rel_path("one/node_modules/a/a2.js")
-        );
+        assert_eq!(loaded.file.path.as_ref(), rel_path("one/node_modules/a/a2.js"));
 
         // Only the newly-expanded directory is scanned.
         assert_eq!(fs.read_dir_call_count() - prev_read_dir_count, 1);
@@ -611,8 +583,7 @@ async fn test_dirs_no_longer_ignored(cx: &mut TestAppContext) {
     .await
     .unwrap();
 
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
 
     // Open a file within the gitignored directory, forcing some of its
     // subdirectories to be read, but not all.
@@ -746,12 +717,8 @@ async fn test_write_file(cx: &mut TestAppContext) {
         .await
         .unwrap();
     worktree.read_with(cx, |tree, _| {
-        let tracked = tree
-            .entry_for_path(rel_path("tracked-dir/file.txt"))
-            .unwrap();
-        let ignored = tree
-            .entry_for_path(rel_path("ignored-dir/file.txt"))
-            .unwrap();
+        let tracked = tree.entry_for_path(rel_path("tracked-dir/file.txt")).unwrap();
+        let ignored = tree.entry_for_path(rel_path("ignored-dir/file.txt")).unwrap();
         assert!(!tracked.is_ignored);
         assert!(ignored.is_ignored);
     });
@@ -809,8 +776,7 @@ async fn test_file_scan_inclusions(cx: &mut TestAppContext) {
     )
     .await
     .unwrap();
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
     tree.flush_fs_events(cx).await;
     tree.read_with(cx, |tree, _| {
         // Assert that file_scan_inclusions overrides  file_scan_exclusions.
@@ -857,10 +823,8 @@ async fn test_file_scan_exclusions_overrules_inclusions(cx: &mut TestAppContext)
     cx.update(|cx| {
         cx.update_global::<SettingsStore, _>(|store, cx| {
             store.update_user_settings(cx, |settings| {
-                settings.project.worktree.file_scan_exclusions =
-                    Some(vec!["**/.DS_Store".to_string()]);
-                settings.project.worktree.file_scan_inclusions =
-                    Some(vec!["**/.DS_Store".to_string()]);
+                settings.project.worktree.file_scan_exclusions = Some(vec!["**/.DS_Store".to_string()]);
+                settings.project.worktree.file_scan_inclusions = Some(vec!["**/.DS_Store".to_string()]);
             });
         });
     });
@@ -875,8 +839,7 @@ async fn test_file_scan_exclusions_overrules_inclusions(cx: &mut TestAppContext)
     )
     .await
     .unwrap();
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
     tree.flush_fs_events(cx).await;
     tree.read_with(cx, |tree, _| {
         // Assert that file_scan_inclusions overrides  file_scan_exclusions.
@@ -919,8 +882,7 @@ async fn test_file_scan_inclusions_reindexes_on_setting_change(cx: &mut TestAppC
         cx.update_global::<SettingsStore, _>(|store, cx| {
             store.update_user_settings(cx, |settings| {
                 settings.project.worktree.file_scan_exclusions = Some(vec![]);
-                settings.project.worktree.file_scan_inclusions =
-                    Some(vec!["node_modules/**".to_string()]);
+                settings.project.worktree.file_scan_inclusions = Some(vec!["node_modules/**".to_string()]);
             });
         });
     });
@@ -934,8 +896,7 @@ async fn test_file_scan_inclusions_reindexes_on_setting_change(cx: &mut TestAppC
     )
     .await
     .unwrap();
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
     tree.flush_fs_events(cx).await;
 
     tree.read_with(cx, |tree, _| {
@@ -957,8 +918,7 @@ async fn test_file_scan_inclusions_reindexes_on_setting_change(cx: &mut TestAppC
             });
         });
     });
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
     tree.flush_fs_events(cx).await;
 
     tree.read_with(cx, |tree, _| {
@@ -1020,8 +980,7 @@ async fn test_file_scan_exclusions(cx: &mut TestAppContext) {
     )
     .await
     .unwrap();
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
     tree.flush_fs_events(cx).await;
     tree.read_with(cx, |tree, _| {
         check_worktree_entries(
@@ -1042,8 +1001,7 @@ async fn test_file_scan_exclusions(cx: &mut TestAppContext) {
     cx.update(|cx| {
         cx.update_global::<SettingsStore, _>(|store, cx| {
             store.update_user_settings(cx, |settings| {
-                settings.project.worktree.file_scan_exclusions =
-                    Some(vec!["**/node_modules/**".to_string()]);
+                settings.project.worktree.file_scan_exclusions = Some(vec!["**/node_modules/**".to_string()]);
             });
         });
     });
@@ -1102,8 +1060,7 @@ async fn test_hidden_files(cx: &mut TestAppContext) {
     )
     .await
     .unwrap();
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
     tree.flush_fs_events(cx).await;
 
     tree.read_with(cx, |tree, _| {
@@ -1213,8 +1170,7 @@ async fn test_fs_events_in_exclusions(cx: &mut TestAppContext) {
     )
     .await
     .unwrap();
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
     tree.flush_fs_events(cx).await;
     tree.read_with(cx, |tree, _| {
         check_worktree_entries(
@@ -1265,9 +1221,7 @@ async fn test_fs_events_in_exclusions(cx: &mut TestAppContext) {
         src_dir,
     ] {
         std::fs::write(directory_for_new_file.join("new_file"), "new file contents")
-            .unwrap_or_else(|e| {
-                panic!("Failed to create in {directory_for_new_file:?} a new file: {e}")
-            });
+            .unwrap_or_else(|e| panic!("Failed to create in {directory_for_new_file:?} a new file: {e}"));
     }
     tree.flush_fs_events(cx).await;
 
@@ -1325,8 +1279,7 @@ async fn test_fs_events_in_dot_git_worktree(cx: &mut TestAppContext) {
     )
     .await
     .unwrap();
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
     tree.flush_fs_events(cx).await;
     tree.read_with(cx, |tree, _| {
         check_worktree_entries(tree, &[], &["HEAD", "foo"], &[], &[])
@@ -1354,16 +1307,9 @@ async fn test_create_directory_during_initial_scan(cx: &mut TestAppContext) {
     )
     .await;
 
-    let tree = Worktree::local(
-        "/root".as_ref(),
-        true,
-        fs,
-        Default::default(),
-        true,
-        &mut cx.to_async(),
-    )
-    .await
-    .unwrap();
+    let tree = Worktree::local("/root".as_ref(), true, fs, Default::default(), true, &mut cx.to_async())
+        .await
+        .unwrap();
 
     let snapshot1 = tree.update(cx, |tree, cx| {
         let tree = tree.as_local_mut().unwrap();
@@ -1395,10 +1341,7 @@ async fn test_create_directory_during_initial_scan(cx: &mut TestAppContext) {
 
     cx.executor().run_until_parked();
     tree.read_with(cx, |tree, _| {
-        assert_eq!(
-            tree.entry_for_path(rel_path("a/e")).unwrap().kind,
-            EntryKind::Dir
-        );
+        assert_eq!(tree.entry_for_path(rel_path("a/e")).unwrap().kind, EntryKind::Dir);
     });
 
     let snapshot2 = tree.update(cx, |tree, _| tree.as_local().unwrap().snapshot());
@@ -1436,12 +1379,9 @@ async fn test_create_dir_all_on_create_entry(cx: &mut TestAppContext) {
 
     let entry = tree_fake
         .update(cx, |tree, cx| {
-            tree.as_local_mut().unwrap().create_entry(
-                rel_path("a/b/c/d.txt").into(),
-                false,
-                None,
-                cx,
-            )
+            tree.as_local_mut()
+                .unwrap()
+                .create_entry(rel_path("a/b/c/d.txt").into(), false, None, cx)
         })
         .await
         .unwrap()
@@ -1451,11 +1391,7 @@ async fn test_create_dir_all_on_create_entry(cx: &mut TestAppContext) {
 
     cx.executor().run_until_parked();
     tree_fake.read_with(cx, |tree, _| {
-        assert!(
-            tree.entry_for_path(rel_path("a/b/c/d.txt"))
-                .unwrap()
-                .is_file()
-        );
+        assert!(tree.entry_for_path(rel_path("a/b/c/d.txt")).unwrap().is_file());
         assert!(tree.entry_for_path(rel_path("a/b/c")).unwrap().is_dir());
         assert!(tree.entry_for_path(rel_path("a/b")).unwrap().is_dir());
     });
@@ -1478,12 +1414,9 @@ async fn test_create_dir_all_on_create_entry(cx: &mut TestAppContext) {
 
     let entry = tree_real
         .update(cx, |tree, cx| {
-            tree.as_local_mut().unwrap().create_entry(
-                rel_path("a/b/c/d.txt").into(),
-                false,
-                None,
-                cx,
-            )
+            tree.as_local_mut()
+                .unwrap()
+                .create_entry(rel_path("a/b/c/d.txt").into(), false, None, cx)
         })
         .await
         .unwrap()
@@ -1493,11 +1426,7 @@ async fn test_create_dir_all_on_create_entry(cx: &mut TestAppContext) {
 
     cx.executor().run_until_parked();
     tree_real.read_with(cx, |tree, _| {
-        assert!(
-            tree.entry_for_path(rel_path("a/b/c/d.txt"))
-                .unwrap()
-                .is_file()
-        );
+        assert!(tree.entry_for_path(rel_path("a/b/c/d.txt")).unwrap().is_file());
         assert!(tree.entry_for_path(rel_path("a/b/c")).unwrap().is_dir());
         assert!(tree.entry_for_path(rel_path("a/b")).unwrap().is_dir());
     });
@@ -1505,12 +1434,9 @@ async fn test_create_dir_all_on_create_entry(cx: &mut TestAppContext) {
     // Test smallest change
     let entry = tree_real
         .update(cx, |tree, cx| {
-            tree.as_local_mut().unwrap().create_entry(
-                rel_path("a/b/c/e.txt").into(),
-                false,
-                None,
-                cx,
-            )
+            tree.as_local_mut()
+                .unwrap()
+                .create_entry(rel_path("a/b/c/e.txt").into(), false, None, cx)
         })
         .await
         .unwrap()
@@ -1520,22 +1446,15 @@ async fn test_create_dir_all_on_create_entry(cx: &mut TestAppContext) {
 
     cx.executor().run_until_parked();
     tree_real.read_with(cx, |tree, _| {
-        assert!(
-            tree.entry_for_path(rel_path("a/b/c/e.txt"))
-                .unwrap()
-                .is_file()
-        );
+        assert!(tree.entry_for_path(rel_path("a/b/c/e.txt")).unwrap().is_file());
     });
 
     // Test largest change
     let entry = tree_real
         .update(cx, |tree, cx| {
-            tree.as_local_mut().unwrap().create_entry(
-                rel_path("d/e/f/g.txt").into(),
-                false,
-                None,
-                cx,
-            )
+            tree.as_local_mut()
+                .unwrap()
+                .create_entry(rel_path("d/e/f/g.txt").into(), false, None, cx)
         })
         .await
         .unwrap()
@@ -1545,11 +1464,7 @@ async fn test_create_dir_all_on_create_entry(cx: &mut TestAppContext) {
 
     cx.executor().run_until_parked();
     tree_real.read_with(cx, |tree, _| {
-        assert!(
-            tree.entry_for_path(rel_path("d/e/f/g.txt"))
-                .unwrap()
-                .is_file()
-        );
+        assert!(tree.entry_for_path(rel_path("d/e/f/g.txt")).unwrap().is_file());
         assert!(tree.entry_for_path(rel_path("d/e/f")).unwrap().is_dir());
         assert!(tree.entry_for_path(rel_path("d/e")).unwrap().is_dir());
         assert!(tree.entry_for_path(rel_path("d")).unwrap().is_dir());
@@ -1585,8 +1500,7 @@ async fn test_create_file_in_expanded_gitignored_dir(cx: &mut TestAppContext) {
     .await
     .unwrap();
 
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
 
     tree.read_with(cx, |tree, _| {
         let ignored_dir = tree.entry_for_path(rel_path("ignored_dir")).unwrap();
@@ -1605,14 +1519,8 @@ async fn test_create_file_in_expanded_gitignored_dir(cx: &mut TestAppContext) {
         assert!(ignored_dir.is_ignored);
         assert_eq!(ignored_dir.kind, EntryKind::Dir);
 
-        assert!(
-            tree.entry_for_path(rel_path("ignored_dir/existing_file.txt"))
-                .is_some()
-        );
-        assert!(
-            tree.entry_for_path(rel_path("ignored_dir/another_file.txt"))
-                .is_some()
-        );
+        assert!(tree.entry_for_path(rel_path("ignored_dir/existing_file.txt")).is_some());
+        assert!(tree.entry_for_path(rel_path("ignored_dir/another_file.txt")).is_some());
     });
 
     let entry = tree
@@ -1635,18 +1543,15 @@ async fn test_create_file_in_expanded_gitignored_dir(cx: &mut TestAppContext) {
         );
 
         assert!(
-            tree.entry_for_path(rel_path("ignored_dir/existing_file.txt"))
-                .is_some(),
+            tree.entry_for_path(rel_path("ignored_dir/existing_file.txt")).is_some(),
             "existing_file.txt should still be visible"
         );
         assert!(
-            tree.entry_for_path(rel_path("ignored_dir/another_file.txt"))
-                .is_some(),
+            tree.entry_for_path(rel_path("ignored_dir/another_file.txt")).is_some(),
             "another_file.txt should still be visible"
         );
         assert!(
-            tree.entry_for_path(rel_path("ignored_dir/new_file.txt"))
-                .is_some(),
+            tree.entry_for_path(rel_path("ignored_dir/new_file.txt")).is_some(),
             "new_file.txt should be visible"
         );
     });
@@ -1681,27 +1586,18 @@ async fn test_fs_event_for_gitignored_dir_does_not_lose_contents(cx: &mut TestAp
     .await
     .unwrap();
 
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
 
     // Load a file to expand the ignored directory
-    tree.update(cx, |tree, cx| {
-        tree.load_file(rel_path("ignored_dir/file1.txt"), cx)
-    })
-    .await
-    .unwrap();
+    tree.update(cx, |tree, cx| tree.load_file(rel_path("ignored_dir/file1.txt"), cx))
+        .await
+        .unwrap();
 
     tree.read_with(cx, |tree, _| {
         let ignored_dir = tree.entry_for_path(rel_path("ignored_dir")).unwrap();
         assert_eq!(ignored_dir.kind, EntryKind::Dir);
-        assert!(
-            tree.entry_for_path(rel_path("ignored_dir/file1.txt"))
-                .is_some()
-        );
-        assert!(
-            tree.entry_for_path(rel_path("ignored_dir/file2.txt"))
-                .is_some()
-        );
+        assert!(tree.entry_for_path(rel_path("ignored_dir/file1.txt")).is_some());
+        assert!(tree.entry_for_path(rel_path("ignored_dir/file2.txt")).is_some());
     });
 
     fs.emit_fs_event("/root/ignored_dir", Some(fs::PathEventKind::Changed));
@@ -1715,30 +1611,21 @@ async fn test_fs_event_for_gitignored_dir_does_not_lose_contents(cx: &mut TestAp
             "ignored_dir should still be loaded (Dir), not UnloadedDir"
         );
         assert!(
-            tree.entry_for_path(rel_path("ignored_dir/file1.txt"))
-                .is_some(),
+            tree.entry_for_path(rel_path("ignored_dir/file1.txt")).is_some(),
             "file1.txt should still be visible after directory fs event"
         );
         assert!(
-            tree.entry_for_path(rel_path("ignored_dir/file2.txt"))
-                .is_some(),
+            tree.entry_for_path(rel_path("ignored_dir/file2.txt")).is_some(),
             "file2.txt should still be visible after directory fs event"
         );
     });
 }
 
 #[gpui::test(iterations = 100)]
-async fn test_random_worktree_operations_during_initial_scan(
-    cx: &mut TestAppContext,
-    mut rng: StdRng,
-) {
+async fn test_random_worktree_operations_during_initial_scan(cx: &mut TestAppContext, mut rng: StdRng) {
     init_test(cx);
-    let operations = env::var("OPERATIONS")
-        .map(|o| o.parse().unwrap())
-        .unwrap_or(5);
-    let initial_entries = env::var("INITIAL_ENTRIES")
-        .map(|o| o.parse().unwrap())
-        .unwrap_or(20);
+    let operations = env::var("OPERATIONS").map(|o| o.parse().unwrap()).unwrap_or(5);
+    let initial_entries = env::var("INITIAL_ENTRIES").map(|o| o.parse().unwrap()).unwrap_or(20);
 
     let root_dir = Path::new(path!("/test"));
     let fs = FakeFs::new(cx.background_executor.clone()) as Arc<dyn Fs>;
@@ -1748,16 +1635,9 @@ async fn test_random_worktree_operations_during_initial_scan(
     }
     log::info!("generated initial tree");
 
-    let worktree = Worktree::local(
-        root_dir,
-        true,
-        fs.clone(),
-        Default::default(),
-        true,
-        &mut cx.to_async(),
-    )
-    .await
-    .unwrap();
+    let worktree = Worktree::local(root_dir, true, fs.clone(), Default::default(), true, &mut cx.to_async())
+        .await
+        .unwrap();
 
     let mut snapshots = vec![worktree.read_with(cx, |tree, _| tree.as_local().unwrap().snapshot())];
     let updates = Arc::new(Mutex::new(Vec::new()));
@@ -1775,14 +1655,10 @@ async fn test_random_worktree_operations_during_initial_scan(
 
     for _ in 0..operations {
         worktree
-            .update(cx, |worktree, cx| {
-                randomly_mutate_worktree(worktree, &mut rng, cx)
-            })
+            .update(cx, |worktree, cx| randomly_mutate_worktree(worktree, &mut rng, cx))
             .await
             .log_err();
-        worktree.read_with(cx, |tree, _| {
-            tree.as_local().unwrap().snapshot().check_invariants(true)
-        });
+        worktree.read_with(cx, |tree, _| tree.as_local().unwrap().snapshot().check_invariants(true));
 
         if rng.random_bool(0.6) {
             snapshots.push(worktree.read_with(cx, |tree, _| tree.as_local().unwrap().snapshot()));
@@ -1808,8 +1684,7 @@ async fn test_random_worktree_operations_during_initial_scan(
         let mut updated_snapshot = snapshot.clone();
         for update in updates.lock().iter() {
             if update.scan_id >= updated_snapshot.scan_id() as u64 {
-                updated_snapshot
-                    .apply_remote_update(update.clone(), &settings.file_scan_inclusions);
+                updated_snapshot.apply_remote_update(update.clone(), &settings.file_scan_inclusions);
             }
         }
 
@@ -1824,12 +1699,8 @@ async fn test_random_worktree_operations_during_initial_scan(
 #[gpui::test(iterations = 100)]
 async fn test_random_worktree_changes(cx: &mut TestAppContext, mut rng: StdRng) {
     init_test(cx);
-    let operations = env::var("OPERATIONS")
-        .map(|o| o.parse().unwrap())
-        .unwrap_or(40);
-    let initial_entries = env::var("INITIAL_ENTRIES")
-        .map(|o| o.parse().unwrap())
-        .unwrap_or(20);
+    let operations = env::var("OPERATIONS").map(|o| o.parse().unwrap()).unwrap_or(40);
+    let initial_entries = env::var("INITIAL_ENTRIES").map(|o| o.parse().unwrap()).unwrap_or(20);
 
     let root_dir = Path::new(path!("/test"));
     let fs = FakeFs::new(cx.background_executor.clone()) as Arc<dyn Fs>;
@@ -1839,16 +1710,9 @@ async fn test_random_worktree_changes(cx: &mut TestAppContext, mut rng: StdRng) 
     }
     log::info!("generated initial tree");
 
-    let worktree = Worktree::local(
-        root_dir,
-        true,
-        fs.clone(),
-        Default::default(),
-        true,
-        &mut cx.to_async(),
-    )
-    .await
-    .unwrap();
+    let worktree = Worktree::local(root_dir, true, fs.clone(), Default::default(), true, &mut cx.to_async())
+        .await
+        .unwrap();
 
     let updates = Arc::new(Mutex::new(Vec::new()));
     worktree.update(cx, |tree, cx| {
@@ -1873,9 +1737,7 @@ async fn test_random_worktree_changes(cx: &mut TestAppContext, mut rng: StdRng) 
     while mutations_len > 1 {
         if rng.random_bool(0.2) {
             worktree
-                .update(cx, |worktree, cx| {
-                    randomly_mutate_worktree(worktree, &mut rng, cx)
-                })
+                .update(cx, |worktree, cx| randomly_mutate_worktree(worktree, &mut rng, cx))
                 .await
                 .log_err();
         } else {
@@ -1906,35 +1768,22 @@ async fn test_random_worktree_changes(cx: &mut TestAppContext, mut rng: StdRng) 
 
     let snapshot = worktree.read_with(cx, |tree, _| tree.as_local().unwrap().snapshot());
     snapshot.check_invariants(true);
-    let expanded_paths = snapshot
-        .expanded_entries()
-        .map(|e| e.path.clone())
-        .collect::<Vec<_>>();
+    let expanded_paths = snapshot.expanded_entries().map(|e| e.path.clone()).collect::<Vec<_>>();
 
     {
-        let new_worktree = Worktree::local(
-            root_dir,
-            true,
-            fs.clone(),
-            Default::default(),
-            true,
-            &mut cx.to_async(),
-        )
-        .await
-        .unwrap();
+        let new_worktree = Worktree::local(root_dir, true, fs.clone(), Default::default(), true, &mut cx.to_async())
+            .await
+            .unwrap();
         new_worktree
             .update(cx, |tree, _| tree.as_local_mut().unwrap().scan_complete())
             .await;
         new_worktree
             .update(cx, |tree, _| {
-                tree.as_local_mut()
-                    .unwrap()
-                    .refresh_entries_for_paths(expanded_paths)
+                tree.as_local_mut().unwrap().refresh_entries_for_paths(expanded_paths)
             })
             .recv()
             .await;
-        let new_snapshot =
-            new_worktree.read_with(cx, |tree, _| tree.as_local().unwrap().snapshot());
+        let new_snapshot = new_worktree.read_with(cx, |tree, _| tree.as_local().unwrap().snapshot());
         assert_eq!(
             snapshot.entries_without_ids(true),
             new_snapshot.entries_without_ids(true)
@@ -1955,10 +1804,7 @@ async fn test_random_worktree_changes(cx: &mut TestAppContext, mut rng: StdRng) 
                 .entries(true, 0)
                 .map(ignore_pending_dir)
                 .collect::<Vec<_>>(),
-            snapshot
-                .entries(true, 0)
-                .map(ignore_pending_dir)
-                .collect::<Vec<_>>(),
+            snapshot.entries(true, 0).map(ignore_pending_dir).collect::<Vec<_>>(),
             "wrong updates after snapshot {i}: {updates:#?}",
         );
     }
@@ -2029,11 +1875,7 @@ fn randomly_mutate_worktree(
             if entry.is_dir() {
                 let child_path = entry.path.join(rel_path(&random_filename(rng)));
                 let is_dir = rng.random_bool(0.3);
-                log::info!(
-                    "creating {} at {:?}",
-                    if is_dir { "dir" } else { "file" },
-                    child_path,
-                );
+                log::info!("creating {} at {:?}", if is_dir { "dir" } else { "file" }, child_path,);
                 let task = worktree.create_entry(child_path, is_dir, None, cx);
                 cx.background_spawn(async move {
                     task.await?;
@@ -2058,12 +1900,7 @@ fn randomly_mutate_worktree(
     }
 }
 
-async fn randomly_mutate_fs(
-    fs: &Arc<dyn Fs>,
-    root_path: &Path,
-    insertion_probability: f64,
-    rng: &mut impl Rng,
-) {
+async fn randomly_mutate_fs(fs: &Arc<dyn Fs>, root_path: &Path, insertion_probability: f64, rng: &mut impl Rng) {
     log::info!("mutating fs");
     let mut files = Vec::new();
     let mut dirs = Vec::new();
@@ -2082,16 +1919,10 @@ async fn randomly_mutate_fs(
         let new_path = path.join(random_filename(rng));
 
         if rng.random() {
-            log::info!(
-                "creating dir {:?}",
-                new_path.strip_prefix(root_path).unwrap()
-            );
+            log::info!("creating dir {:?}", new_path.strip_prefix(root_path).unwrap());
             fs.create_dir(&new_path).await.unwrap();
         } else {
-            log::info!(
-                "creating file {:?}",
-                new_path.strip_prefix(root_path).unwrap()
-            );
+            log::info!("creating file {:?}", new_path.strip_prefix(root_path).unwrap());
             fs.create_file(&new_path, Default::default()).await.unwrap();
         }
     } else if rng.random_bool(0.05) {
@@ -2122,11 +1953,7 @@ async fn randomly_mutate_fs(
             writeln!(
                 ignore_contents,
                 "{}",
-                path_to_ignore
-                    .strip_prefix(ignore_dir_path)
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
+                path_to_ignore.strip_prefix(ignore_dir_path).unwrap().to_str().unwrap()
             )
             .unwrap();
         }
@@ -2135,13 +1962,9 @@ async fn randomly_mutate_fs(
             ignore_path.strip_prefix(root_path).unwrap(),
             ignore_contents
         );
-        fs.save(
-            &ignore_path,
-            &ignore_contents.as_str().into(),
-            Default::default(),
-        )
-        .await
-        .unwrap();
+        fs.save(&ignore_path, &ignore_contents.as_str().into(), Default::default())
+            .await
+            .unwrap();
     } else {
         let old_path = {
             let file_path = files.choose(rng);
@@ -2151,14 +1974,9 @@ async fn randomly_mutate_fs(
 
         let is_rename = rng.random();
         if is_rename {
-            let new_path_parent = dirs
-                .iter()
-                .filter(|d| !d.starts_with(old_path))
-                .choose(rng)
-                .unwrap();
+            let new_path_parent = dirs.iter().filter(|d| !d.starts_with(old_path)).choose(rng).unwrap();
 
-            let overwrite_existing_dir =
-                !old_path.starts_with(new_path_parent) && rng.random_bool(0.3);
+            let overwrite_existing_dir = !old_path.starts_with(new_path_parent) && rng.random_bool(0.3);
             let new_path = if overwrite_existing_dir {
                 fs.remove_dir(
                     new_path_parent,
@@ -2177,11 +1995,7 @@ async fn randomly_mutate_fs(
             log::info!(
                 "renaming {:?} to {}{:?}",
                 old_path.strip_prefix(root_path).unwrap(),
-                if overwrite_existing_dir {
-                    "overwrite "
-                } else {
-                    ""
-                },
+                if overwrite_existing_dir { "overwrite " } else { "" },
                 new_path.strip_prefix(root_path).unwrap()
             );
             fs.rename(
@@ -2196,16 +2010,10 @@ async fn randomly_mutate_fs(
             .await
             .unwrap();
         } else if fs.is_file(old_path).await {
-            log::info!(
-                "deleting file {:?}",
-                old_path.strip_prefix(root_path).unwrap()
-            );
+            log::info!("deleting file {:?}", old_path.strip_prefix(root_path).unwrap());
             fs.remove_file(old_path, Default::default()).await.unwrap();
         } else {
-            log::info!(
-                "deleting dir {:?}",
-                old_path.strip_prefix(root_path).unwrap()
-            );
+            log::info!("deleting dir {:?}", old_path.strip_prefix(root_path).unwrap());
             fs.remove_dir(
                 old_path,
                 RemoveOptions {
@@ -2230,8 +2038,7 @@ fn random_filename(rng: &mut impl Rng) -> String {
 async fn test_private_single_file_worktree(cx: &mut TestAppContext) {
     init_test(cx);
     let fs = FakeFs::new(cx.background_executor.clone());
-    fs.insert_tree("/", json!({".env": "PRIVATE=secret\n"}))
-        .await;
+    fs.insert_tree("/", json!({".env": "PRIVATE=secret\n"})).await;
     let tree = Worktree::local(
         Path::new("/.env"),
         true,
@@ -2242,8 +2049,7 @@ async fn test_private_single_file_worktree(cx: &mut TestAppContext) {
     )
     .await
     .unwrap();
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
     tree.read_with(cx, |tree, _| {
         let entry = tree.entry_for_path(rel_path("")).unwrap();
         assert!(entry.is_private);
@@ -2276,9 +2082,7 @@ async fn test_repository_above_root(executor: BackgroundExecutor, cx: &mut TestA
     .await
     .unwrap();
     worktree
-        .update(cx, |worktree, _| {
-            worktree.as_local().unwrap().scan_complete()
-        })
+        .update(cx, |worktree, _| worktree.as_local().unwrap().scan_complete())
         .await;
     cx.run_until_parked();
     let repos = worktree.update(cx, |worktree, _| {
@@ -2294,9 +2098,7 @@ async fn test_repository_above_root(executor: BackgroundExecutor, cx: &mut TestA
 
     fs.touch_path(path!("/root/subproject")).await;
     worktree
-        .update(cx, |worktree, _| {
-            worktree.as_local().unwrap().scan_complete()
-        })
+        .update(cx, |worktree, _| worktree.as_local().unwrap().scan_complete())
         .await;
     cx.run_until_parked();
 
@@ -2354,22 +2156,14 @@ async fn test_global_gitignore(executor: BackgroundExecutor, cx: &mut TestAppCon
     .await
     .unwrap();
     worktree
-        .update(cx, |worktree, _| {
-            worktree.as_local().unwrap().scan_complete()
-        })
+        .update(cx, |worktree, _| worktree.as_local().unwrap().scan_complete())
         .await;
     cx.run_until_parked();
 
     // .gitignore overrides excludesFile, and anchored paths in excludesFile are resolved
     // relative to the nearest containing repository
     worktree.update(cx, |worktree, _cx| {
-        check_worktree_entries(
-            worktree,
-            &[],
-            &["foo", "bar", "subrepo/bar"],
-            &["sub/bar", "baz"],
-            &[],
-        );
+        check_worktree_entries(worktree, &[], &["foo", "bar", "subrepo/bar"], &["sub/bar", "baz"], &[]);
     });
 
     // Ignore statuses are updated when excludesFile changes
@@ -2380,20 +2174,12 @@ async fn test_global_gitignore(executor: BackgroundExecutor, cx: &mut TestAppCon
     .await
     .unwrap();
     worktree
-        .update(cx, |worktree, _| {
-            worktree.as_local().unwrap().scan_complete()
-        })
+        .update(cx, |worktree, _| worktree.as_local().unwrap().scan_complete())
         .await;
     cx.run_until_parked();
 
     worktree.update(cx, |worktree, _cx| {
-        check_worktree_entries(
-            worktree,
-            &[],
-            &["bar", "subrepo/bar"],
-            &["foo", "sub/bar", "baz"],
-            &[],
-        );
+        check_worktree_entries(worktree, &[], &["bar", "subrepo/bar"], &["foo", "sub/bar", "baz"], &[]);
     });
 
     // Statuses are updated when .git added/removed
@@ -2407,20 +2193,12 @@ async fn test_global_gitignore(executor: BackgroundExecutor, cx: &mut TestAppCon
     .await
     .unwrap();
     worktree
-        .update(cx, |worktree, _| {
-            worktree.as_local().unwrap().scan_complete()
-        })
+        .update(cx, |worktree, _| worktree.as_local().unwrap().scan_complete())
         .await;
     cx.run_until_parked();
 
     worktree.update(cx, |worktree, _cx| {
-        check_worktree_entries(
-            worktree,
-            &[],
-            &["bar"],
-            &["foo", "sub/bar", "baz", "subrepo/bar"],
-            &[],
-        );
+        check_worktree_entries(worktree, &[], &["bar"], &["foo", "sub/bar", "baz", "subrepo/bar"], &[]);
     });
 }
 
@@ -2460,9 +2238,7 @@ async fn test_repo_exclude(executor: BackgroundExecutor, cx: &mut TestAppContext
     .await
     .unwrap();
     worktree
-        .update(cx, |worktree, _| {
-            worktree.as_local().unwrap().scan_complete()
-        })
+        .update(cx, |worktree, _| worktree.as_local().unwrap().scan_complete())
         .await;
     cx.run_until_parked();
 
@@ -2483,16 +2259,11 @@ async fn test_repo_exclude(executor: BackgroundExecutor, cx: &mut TestAppContext
     });
 
     // Ignore statuses are updated when .git/info/exclude file changes
-    fs.write(
-        &project_dir.join(DOT_GIT).join(REPO_EXCLUDE),
-        ".env.example".as_bytes(),
-    )
-    .await
-    .unwrap();
+    fs.write(&project_dir.join(DOT_GIT).join(REPO_EXCLUDE), ".env.example".as_bytes())
+        .await
+        .unwrap();
     worktree
-        .update(cx, |worktree, _| {
-            worktree.as_local().unwrap().scan_complete()
-        })
+        .update(cx, |worktree, _| worktree.as_local().unwrap().scan_complete())
         .await;
     cx.run_until_parked();
 
@@ -2595,8 +2366,7 @@ async fn test_load_file_encoding(cx: &mut TestAppContext) {
         TestCase {
             name: "iso2022jp.txt",
             bytes: vec![
-                0x1b, 0x24, 0x42, 0x24, 0x33, 0x24, 0x73, 0x24, 0x4b, 0x24, 0x41, 0x24, 0x4f, 0x1b,
-                0x28, 0x42,
+                0x1b, 0x24, 0x42, 0x24, 0x33, 0x24, 0x73, 0x24, 0x4b, 0x24, 0x41, 0x24, 0x4f, 0x1b, 0x28, 0x42,
             ],
             expected_text: "こんにちは",
         },
@@ -2607,9 +2377,7 @@ async fn test_load_file_encoding(cx: &mut TestAppContext) {
         },
         TestCase {
             name: "gbk.txt",
-            bytes: vec![
-                0xbd, 0xf1, 0xcc, 0xec, 0xcc, 0xec, 0xc6, 0xf8, 0xb2, 0xbb, 0xb4, 0xed,
-            ],
+            bytes: vec![0xbd, 0xf1, 0xcc, 0xec, 0xcc, 0xec, 0xc6, 0xf8, 0xb2, 0xbb, 0xb4, 0xed],
             expected_text: "今天天气不错",
         },
         // UTF-16LE with BOM
@@ -2665,25 +2433,13 @@ async fn test_load_file_encoding(cx: &mut TestAppContext) {
         fs.write(&path, &case.bytes).await.unwrap();
     }
 
-    let tree = Worktree::local(
-        root_path,
-        true,
-        fs,
-        Default::default(),
-        true,
-        &mut cx.to_async(),
-    )
-    .await
-    .unwrap();
+    let tree = Worktree::local(root_path, true, fs, Default::default(), true, &mut cx.to_async())
+        .await
+        .unwrap();
 
-    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete())
-        .await;
+    cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
 
-    let rel_path = |name: &str| {
-        RelPath::new(&Path::new(name), PathStyle::local())
-            .unwrap()
-            .into_arc()
-    };
+    let rel_path = |name: &str| RelPath::new(&Path::new(name), PathStyle::local()).unwrap().into_arc();
 
     // Run Success Tests
     for case in success_cases {
@@ -2820,14 +2576,7 @@ async fn test_write_file_encoding(cx: &mut gpui::TestAppContext) {
         let text = text::Rope::from(case.text);
 
         let task = worktree.update(cx, |wt, cx| {
-            wt.write_file(
-                rel_path,
-                text,
-                text::LineEnding::Unix,
-                case.encoding,
-                case.has_bom,
-                cx,
-            )
+            wt.write_file(rel_path, text, text::LineEnding::Unix, case.encoding, case.has_bom, cx)
         });
 
         if let Err(e) = task.await {

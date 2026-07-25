@@ -1,9 +1,8 @@
 use std::{ops::Range, rc::Rc};
 
 use gpui::{
-    AnyElement, App, AvailableSpace, Bounds, Context, Element, ElementId, Entity, GlobalElementId,
-    InspectorElementId, IntoElement, LayoutId, Pixels, Point, Render, Style, UniformListDecoration,
-    Window, point, px, size,
+    AnyElement, App, AvailableSpace, Bounds, Context, Element, ElementId, Entity, GlobalElementId, InspectorElementId,
+    IntoElement, LayoutId, Pixels, Point, Render, Style, UniformListDecoration, Window, point, px, size,
 };
 use smallvec::SmallVec;
 
@@ -19,8 +18,7 @@ pub struct StickyItems<T> {
 
 pub fn sticky_items<V, T>(
     entity: Entity<V>,
-    compute_fn: impl Fn(&mut V, Range<usize>, &mut Window, &mut Context<V>) -> SmallVec<[T; 8]>
-    + 'static,
+    compute_fn: impl Fn(&mut V, Range<usize>, &mut Window, &mut Context<V>) -> SmallVec<[T; 8]> + 'static,
     render_fn: impl Fn(&mut V, T, &mut Window, &mut Context<V>) -> SmallVec<[AnyElement; 8]> + 'static,
 ) -> StickyItems<T>
 where
@@ -197,11 +195,9 @@ where
 
         for decoration in &self.decorations {
             if let Some(drifting_indent) = drifting_indent {
-                let drifting_indent_vec: SmallVec<[usize; 8]> =
-                    [drifting_indent].into_iter().collect();
+                let drifting_indent_vec: SmallVec<[usize; 8]> = [drifting_indent].into_iter().collect();
 
-                let sticky_origin = base_origin
-                    + point(px(0.), item_height * rest_indents.len() + drifting_y_offset);
+                let sticky_origin = base_origin + point(px(0.), item_height * rest_indents.len() + drifting_y_offset);
                 let decoration_bounds = Bounds::new(sticky_origin, bounds.size);
 
                 let mut drifting_dec = decoration.as_ref().compute(
@@ -233,13 +229,12 @@ where
             }
         }
 
-        let (mut drifting_element, mut rest_elements) =
-            if sticky_anchor.drifting && !elements.is_empty() {
-                let last = elements.pop().unwrap();
-                (Some(last), elements)
-            } else {
-                (None, elements)
-            };
+        let (mut drifting_element, mut rest_elements) = if sticky_anchor.drifting && !elements.is_empty() {
+            let last = elements.pop().unwrap();
+            (Some(last), elements)
+        } else {
+            (None, elements)
+        };
 
         let element_available_space = size(
             AvailableSpace::Definite(expanded_width),
@@ -249,11 +244,7 @@ where
         // order of prepaint is important here
         // mouse events checks hitboxes in reverse insertion order
         if let Some(ref mut drifting_element) = drifting_element {
-            let sticky_origin = base_origin
-                + point(
-                    px(0.),
-                    item_height * rest_elements.len() + drifting_y_offset,
-                );
+            let sticky_origin = base_origin + point(px(0.), item_height * rest_elements.len() + drifting_y_offset);
 
             drifting_element.layout_as_root(element_available_space, window, cx);
             drifting_element.prepaint_at(sticky_origin, window, cx);

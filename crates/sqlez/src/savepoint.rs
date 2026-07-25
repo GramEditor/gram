@@ -79,14 +79,10 @@ mod tests {
             assert!(
                 connection
                     .with_savepoint("second", || -> anyhow::Result<Option<()>> {
-                        connection.exec_bound("INSERT INTO text(text, idx) VALUES (?, ?)")?((
-                            save2_text, 2,
-                        ))?;
+                        connection.exec_bound("INSERT INTO text(text, idx) VALUES (?, ?)")?((save2_text, 2))?;
 
                         assert_eq!(
-                            connection
-                                .select::<String>("SELECT text FROM text ORDER BY text.idx ASC")?(
-                            )?,
+                            connection.select::<String>("SELECT text FROM text ORDER BY text.idx ASC")?()?,
                             vec![save1_text, save2_text],
                         );
 
@@ -102,9 +98,7 @@ mod tests {
             );
 
             connection.with_savepoint_rollback::<(), _>("second", || {
-                connection.exec_bound("INSERT INTO text(text, idx) VALUES (?, ?)")?((
-                    save2_text, 2,
-                ))?;
+                connection.exec_bound("INSERT INTO text(text, idx) VALUES (?, ?)")?((save2_text, 2))?;
 
                 assert_eq!(
                     connection.select::<String>("SELECT text FROM text ORDER BY text.idx ASC")?()?,
@@ -120,9 +114,7 @@ mod tests {
             );
 
             connection.with_savepoint_rollback("second", || {
-                connection.exec_bound("INSERT INTO text(text, idx) VALUES (?, ?)")?((
-                    save2_text, 2,
-                ))?;
+                connection.exec_bound("INSERT INTO text(text, idx) VALUES (?, ?)")?((save2_text, 2))?;
 
                 assert_eq!(
                     connection.select::<String>("SELECT text FROM text ORDER BY text.idx ASC")?()?,

@@ -1,23 +1,21 @@
 use command_palette_hooks::CommandPaletteFilter;
 use editor::{Anchor, Editor, ExcerptId, MultiBufferOffset, SelectionEffects, scroll::Autoscroll};
 use gpui::{
-    App, AppContext as _, Context, Div, Entity, EntityId, EventEmitter, FocusHandle, Focusable,
-    Hsla, InteractiveElement, IntoElement, MouseButton, MouseDownEvent, MouseMoveEvent,
-    ParentElement, Render, ScrollStrategy, SharedString, Styled, Task, UniformListScrollHandle,
-    WeakEntity, Window, actions, div, rems, uniform_list,
+    App, AppContext as _, Context, Div, Entity, EntityId, EventEmitter, FocusHandle, Focusable, Hsla,
+    InteractiveElement, IntoElement, MouseButton, MouseDownEvent, MouseMoveEvent, ParentElement, Render,
+    ScrollStrategy, SharedString, Styled, Task, UniformListScrollHandle, WeakEntity, Window, actions, div, rems,
+    uniform_list,
 };
 use language::{Buffer, OwnedSyntaxLayer};
 use std::{any::TypeId, mem, ops::Range};
 use theme::ActiveTheme;
 use tree_sitter::{Node, TreeCursor};
 use ui::{
-    ButtonCommon, ButtonLike, Clickable, Color, ContextMenu, FluentBuilder as _, IconButton,
-    IconName, Label, LabelCommon, LabelSize, PopoverMenu, StyledExt, Tooltip, WithScrollbar,
-    h_flex, v_flex,
+    ButtonCommon, ButtonLike, Clickable, Color, ContextMenu, FluentBuilder as _, IconButton, IconName, Label,
+    LabelCommon, LabelSize, PopoverMenu, StyledExt, Tooltip, WithScrollbar, h_flex, v_flex,
 };
 use workspace::{
-    Event as WorkspaceEvent, SplitDirection, ToolbarItemEvent, ToolbarItemLocation,
-    ToolbarItemView, Workspace,
+    Event as WorkspaceEvent, SplitDirection, ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView, Workspace,
     item::{Item, ItemHandle},
 };
 
@@ -70,12 +68,7 @@ pub fn init(cx: &mut App) {
 
                 SyntaxTreeView::new(workspace_handle, active_item, window, cx)
             });
-            workspace.split_item(
-                SplitDirection::Right,
-                Box::new(syntax_tree_view),
-                window,
-                cx,
-            )
+            workspace.split_item(SplitDirection::Right, Box::new(syntax_tree_view), window, cx)
         });
         workspace.register_action(|workspace, _: &UseActiveEditor, window, cx| {
             if let Some(tree_view) = workspace.item_of_type::<SyntaxTreeView>(cx) {
@@ -183,12 +176,7 @@ impl SyntaxTreeView {
         }
     }
 
-    fn handle_item_removed(
-        &mut self,
-        item_id: &EntityId,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn handle_item_removed(&mut self, item_id: &EntityId, window: &mut Window, cx: &mut Context<Self>) {
         if self
             .editor
             .as_ref()
@@ -201,12 +189,7 @@ impl SyntaxTreeView {
         }
     }
 
-    fn update_active_editor(
-        &mut self,
-        _: &UseActiveEditor,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn update_active_editor(&mut self, _: &UseActiveEditor, window: &mut Window, cx: &mut Context<Self>) {
         let Some(editor) = self.last_active_editor.take() else {
             return;
         };
@@ -218,9 +201,7 @@ impl SyntaxTreeView {
             if state.editor == editor {
                 return;
             }
-            editor.update(cx, |editor, cx| {
-                editor.clear_background_highlights::<Self>(cx)
-            });
+            editor.update(cx, |editor, cx| editor.clear_background_highlights::<Self>(cx));
         }
 
         let subscription = cx.subscribe_in(&editor, window, |this, _, event, window, cx| {
@@ -240,17 +221,10 @@ impl SyntaxTreeView {
         self.editor_updated(true, window, cx);
     }
 
-    fn editor_updated(
-        &mut self,
-        did_reparse: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Option<()> {
+    fn editor_updated(&mut self, did_reparse: bool, window: &mut Window, cx: &mut Context<Self>) -> Option<()> {
         // Find which excerpt the cursor is in, and the position within that excerpted buffer.
         let editor_state = self.editor.as_mut()?;
-        let snapshot = editor_state
-            .editor
-            .update(cx, |editor, cx| editor.snapshot(window, cx));
+        let snapshot = editor_state.editor.update(cx, |editor, cx| editor.snapshot(window, cx));
         let (buffer, range, excerpt_id) = editor_state.editor.update(cx, |editor, cx| {
             let selection_range = editor
                 .selections
@@ -267,13 +241,11 @@ impl SyntaxTreeView {
 
         // If the cursor has moved into a different excerpt, retrieve a new syntax layer
         // from that buffer.
-        let buffer_state = editor_state
-            .active_buffer
-            .get_or_insert_with(|| BufferState {
-                buffer: buffer.clone(),
-                excerpt_id,
-                active_layer: None,
-            });
+        let buffer_state = editor_state.active_buffer.get_or_insert_with(|| BufferState {
+            buffer: buffer.clone(),
+            excerpt_id,
+            active_layer: None,
+        });
         let mut prev_layer = None;
         if did_reparse {
             prev_layer = buffer_state.active_layer.take();
@@ -395,12 +367,7 @@ impl SyntaxTreeView {
         .hover(|style| style.bg(colors.element_hover))
     }
 
-    fn compute_items(
-        &mut self,
-        layer: &OwnedSyntaxLayer,
-        range: Range<usize>,
-        cx: &Context<Self>,
-    ) -> Vec<Div> {
+    fn compute_items(&mut self, layer: &OwnedSyntaxLayer, range: Range<usize>, cx: &Context<Self>) -> Vec<Div> {
         let mut items = Vec::new();
         let mut cursor = layer.node().walk();
         let mut descendant_ix = range.start;
@@ -418,37 +385,31 @@ impl SyntaxTreeView {
                 }
             } else {
                 items.push(
-                    Self::render_node(
-                        &cursor,
-                        depth,
-                        Some(descendant_ix) == self.selected_descendant_ix,
-                        cx,
-                    )
-                    .on_mouse_down(
-                        MouseButton::Left,
-                        cx.listener(move |tree_view, _: &MouseDownEvent, window, cx| {
-                            tree_view.update_editor_with_range_for_descendant_ix(
-                                descendant_ix,
-                                window,
-                                cx,
-                                |editor, mut range, window, cx| {
-                                    // Put the cursor at the beginning of the node.
-                                    mem::swap(&mut range.start, &mut range.end);
+                    Self::render_node(&cursor, depth, Some(descendant_ix) == self.selected_descendant_ix, cx)
+                        .on_mouse_down(
+                            MouseButton::Left,
+                            cx.listener(move |tree_view, _: &MouseDownEvent, window, cx| {
+                                tree_view.update_editor_with_range_for_descendant_ix(
+                                    descendant_ix,
+                                    window,
+                                    cx,
+                                    |editor, mut range, window, cx| {
+                                        // Put the cursor at the beginning of the node.
+                                        mem::swap(&mut range.start, &mut range.end);
 
-                                    editor.change_selections(
-                                        SelectionEffects::scroll(Autoscroll::newest()),
-                                        window,
-                                        cx,
-                                        |selections| {
-                                            selections.select_ranges(vec![range]);
-                                        },
-                                    );
-                                },
-                            );
-                        }),
-                    )
-                    .on_mouse_move(cx.listener(
-                        move |tree_view, _: &MouseMoveEvent, window, cx| {
+                                        editor.change_selections(
+                                            SelectionEffects::scroll(Autoscroll::newest()),
+                                            window,
+                                            cx,
+                                            |selections| {
+                                                selections.select_ranges(vec![range]);
+                                            },
+                                        );
+                                    },
+                                );
+                            }),
+                        )
+                        .on_mouse_move(cx.listener(move |tree_view, _: &MouseMoveEvent, window, cx| {
                             if tree_view.hovered_descendant_ix != Some(descendant_ix) {
                                 tree_view.hovered_descendant_ix = Some(descendant_ix);
                                 tree_view.update_editor_with_range_for_descendant_ix(
@@ -459,19 +420,14 @@ impl SyntaxTreeView {
                                         editor.clear_background_highlights::<Self>(cx);
                                         editor.highlight_background::<Self>(
                                             &[range],
-                                            |_, theme| {
-                                                theme
-                                                    .colors()
-                                                    .editor_document_highlight_write_background
-                                            },
+                                            |_, theme| theme.colors().editor_document_highlight_write_background,
                                             cx,
                                         );
                                     },
                                 );
                                 cx.notify();
                             }
-                        },
-                    )),
+                        })),
                 );
                 descendant_ix += 1;
                 if cursor.goto_first_child() {
@@ -487,63 +443,51 @@ impl SyntaxTreeView {
 
 impl Render for SyntaxTreeView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        div()
-            .flex_1()
-            .bg(cx.theme().colors().editor_background)
-            .map(|this| {
-                let editor_state = self.editor.as_ref();
+        div().flex_1().bg(cx.theme().colors().editor_background).map(|this| {
+            let editor_state = self.editor.as_ref();
 
-                if let Some(layer) = editor_state
-                    .and_then(|editor| editor.active_buffer.as_ref())
-                    .and_then(|buffer| buffer.active_layer.as_ref())
-                {
-                    let layer = layer.clone();
-                    this.child(
-                        uniform_list(
-                            "SyntaxTreeView",
-                            layer.node().descendant_count(),
-                            cx.processor(move |this, range: Range<usize>, _, cx| {
-                                this.compute_items(&layer, range, cx)
-                            }),
-                        )
-                        .size_full()
-                        .track_scroll(&self.list_scroll_handle)
-                        .text_bg(cx.theme().colors().background)
-                        .into_any_element(),
+            if let Some(layer) = editor_state
+                .and_then(|editor| editor.active_buffer.as_ref())
+                .and_then(|buffer| buffer.active_layer.as_ref())
+            {
+                let layer = layer.clone();
+                this.child(
+                    uniform_list(
+                        "SyntaxTreeView",
+                        layer.node().descendant_count(),
+                        cx.processor(move |this, range: Range<usize>, _, cx| this.compute_items(&layer, range, cx)),
                     )
-                    .vertical_scrollbar_for(&self.list_scroll_handle, window, cx)
-                    .into_any_element()
-                } else {
-                    let inner_content = v_flex()
-                        .items_center()
-                        .text_center()
-                        .gap_2()
-                        .max_w_3_5()
-                        .map(|this| {
-                            if editor_state.is_some_and(|state| !state.has_language()) {
-                                this.child(Label::new("Current editor has no associated language"))
-                                    .child(
-                                        Label::new(concat!(
-                                            "Try assigning a language or",
-                                            "switching to a different buffer"
-                                        ))
-                                        .size(LabelSize::Small),
-                                    )
-                            } else {
-                                this.child(Label::new("Not attached to an editor")).child(
-                                    Label::new("Focus an editor to show a new tree view")
-                                        .size(LabelSize::Small),
-                                )
-                            }
-                        });
+                    .size_full()
+                    .track_scroll(&self.list_scroll_handle)
+                    .text_bg(cx.theme().colors().background)
+                    .into_any_element(),
+                )
+                .vertical_scrollbar_for(&self.list_scroll_handle, window, cx)
+                .into_any_element()
+            } else {
+                let inner_content = v_flex().items_center().text_center().gap_2().max_w_3_5().map(|this| {
+                    if editor_state.is_some_and(|state| !state.has_language()) {
+                        this.child(Label::new("Current editor has no associated language"))
+                            .child(
+                                Label::new(concat!(
+                                    "Try assigning a language or",
+                                    "switching to a different buffer"
+                                ))
+                                .size(LabelSize::Small),
+                            )
+                    } else {
+                        this.child(Label::new("Not attached to an editor"))
+                            .child(Label::new("Focus an editor to show a new tree view").size(LabelSize::Small))
+                    }
+                });
 
-                    this.h_flex()
-                        .size_full()
-                        .justify_center()
-                        .child(inner_content)
-                        .into_any_element()
-                }
-            })
+                this.h_flex()
+                    .size_full()
+                    .justify_center()
+                    .child(inner_content)
+                    .into_any_element()
+            }
+        })
     }
 }
 
@@ -619,11 +563,7 @@ impl SyntaxTreeToolbarItemView {
                         for (layer_ix, layer) in active_buffer.syntax_layers().enumerate() {
                             let view = view.clone();
                             menu = menu.entry(
-                                format!(
-                                    "{} {}",
-                                    layer.language.name(),
-                                    format_node_range(layer.node())
-                                ),
+                                format!("{} {}", layer.language.name(), format_node_range(layer.node())),
                                 None,
                                 move |window, cx| {
                                     view.update(cx, |view, cx| {
@@ -640,12 +580,7 @@ impl SyntaxTreeToolbarItemView {
         )
     }
 
-    fn select_layer(
-        &mut self,
-        layer_ix: usize,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Option<()> {
+    fn select_layer(&mut self, layer_ix: usize, window: &mut Window, cx: &mut Context<Self>) -> Option<()> {
         let tree_view = self.tree_view.as_ref()?;
         tree_view.update(cx, |view, cx| {
             let editor_state = view.editor.as_mut()?;
@@ -672,9 +607,8 @@ impl SyntaxTreeToolbarItemView {
                 view.last_active_editor.as_ref().map(|editor| {
                     IconButton::new("syntax-view-update", IconName::RotateCw)
                         .tooltip({
-                            let active_tab_name = editor.read_with(cx, |editor, cx| {
-                                editor.tab_content_text(Default::default(), cx)
-                            });
+                            let active_tab_name =
+                                editor.read_with(cx, |editor, cx| editor.tab_content_text(Default::default(), cx));
 
                             Tooltip::text(format!("Update view to '{active_tab_name}'"))
                         })

@@ -15,8 +15,7 @@ use db::{
     sqlez_macros::sql,
 };
 use workspace::{
-    ItemHandle, ItemId, Member, Pane, PaneAxis, PaneGroup, SerializableItem as _, Workspace,
-    WorkspaceDb, WorkspaceId,
+    ItemHandle, ItemId, Member, Pane, PaneAxis, PaneGroup, SerializableItem as _, Workspace, WorkspaceDb, WorkspaceId,
 };
 
 use crate::{
@@ -32,11 +31,7 @@ pub(crate) fn serialize_pane_group(
     build_serialized_pane_group(&pane_group.root, active_pane, cx)
 }
 
-fn build_serialized_pane_group(
-    pane_group: &Member,
-    active_pane: &Entity<Pane>,
-    cx: &mut App,
-) -> SerializedPaneGroup {
+fn build_serialized_pane_group(pane_group: &Member, active_pane: &Entity<Pane>, cx: &mut App) -> SerializedPaneGroup {
     match pane_group {
         Member::Axis(PaneAxis {
             axis,
@@ -106,14 +101,7 @@ pub(crate) fn deserialize_terminal_panel(
         })?;
         match &serialized_panel.items {
             SerializedItems::NoSplits(item_ids) => {
-                let items = deserialize_terminal_views(
-                    database_id,
-                    project,
-                    workspace,
-                    item_ids.as_slice(),
-                    cx,
-                )
-                .await;
+                let items = deserialize_terminal_views(database_id, project, workspace, item_ids.as_slice(), cx).await;
                 let active_item = serialized_panel.active_item_id;
                 terminal_panel.update_in(cx, |terminal_panel, window, cx| {
                     terminal_panel.active_pane.update(cx, |pane, cx| {
@@ -134,8 +122,7 @@ pub(crate) fn deserialize_terminal_panel(
                 if let Some((center_group, active_pane)) = center_pane {
                     terminal_panel.update(cx, |terminal_panel, _| {
                         terminal_panel.center = PaneGroup::with_root(center_group);
-                        terminal_panel.active_pane =
-                            active_pane.unwrap_or_else(|| terminal_panel.center.first_pane());
+                        terminal_panel.active_pane = active_pane.unwrap_or_else(|| terminal_panel.center.first_pane());
                     })?;
                 }
             }
@@ -174,11 +161,7 @@ async fn deserialize_pane_group(
     cx: &mut AsyncWindowContext,
 ) -> Option<(Member, Option<Entity<Pane>>)> {
     match serialized {
-        SerializedPaneGroup::Group {
-            axis,
-            flexes,
-            children,
-        } => {
+        SerializedPaneGroup::Group { axis, flexes, children } => {
             let mut current_active_pane = None;
             let mut members = Vec::new();
             for child in children {
@@ -250,9 +233,7 @@ async fn deserialize_pane_group(
                             .ok()
                             .flatten();
                         let Some(terminal) = project
-                            .update(cx, |project, cx| {
-                                project.create_terminal_shell(working_directory, cx)
-                            })
+                            .update(cx, |project, cx| project.create_terminal_shell(working_directory, cx))
                             .log_err()
                         else {
                             return;
@@ -295,14 +276,7 @@ fn deserialize_terminal_views(
         .iter()
         .map(|item_id| {
             cx.update(|window, cx| {
-                TerminalView::deserialize(
-                    project.clone(),
-                    workspace.clone(),
-                    workspace_id,
-                    *item_id,
-                    window,
-                    cx,
-                )
+                TerminalView::deserialize(project.clone(), workspace.clone(), workspace_id, *item_id, window, cx)
             })
             .unwrap_or_else(|e| Task::ready(Err(e.context("no window present"))))
         })
@@ -378,9 +352,7 @@ impl<'de> Deserialize<'de> for SerializedAxis {
         match s.as_str() {
             "horizontal" => Ok(SerializedAxis(Axis::Horizontal)),
             "vertical" => Ok(SerializedAxis(Axis::Vertical)),
-            invalid => Err(serde::de::Error::custom(format!(
-                "Invalid axis value: '{invalid}'"
-            ))),
+            invalid => Err(serde::de::Error::custom(format!("Invalid axis value: '{invalid}'"))),
         }
     }
 }
@@ -452,27 +424,20 @@ impl TerminalDb {
         workspace_id: WorkspaceId,
         working_directory: PathBuf,
     ) -> Result<()> {
-        log::debug!(
-            "Saving working directory {working_directory:?} for item {item_id} in workspace {workspace_id:?}"
-        );
-        let query =
-            "INSERT INTO terminals(item_id, workspace_id, working_directory, working_directory_path)
+        log::debug!("Saving working directory {working_directory:?} for item {item_id} in workspace {workspace_id:?}");
+        let query = "INSERT INTO terminals(item_id, workspace_id, working_directory, working_directory_path)
             VALUES (?1, ?2, ?3, ?4)
             ON CONFLICT DO UPDATE SET
                 item_id = ?1,
                 workspace_id = ?2,
                 working_directory = ?3,
-                working_directory_path = ?4"
-        ;
+                working_directory_path = ?4";
         self.write(move |conn| {
             let mut statement = Statement::prepare(conn, query)?;
             let mut next_index = statement.bind(&item_id, 1)?;
             next_index = statement.bind(&workspace_id, next_index)?;
             next_index = statement.bind(&working_directory, next_index)?;
-            statement.bind(
-                &working_directory.to_string_lossy().into_owned(),
-                next_index,
-            )?;
+            statement.bind(&working_directory.to_string_lossy().into_owned(), next_index)?;
             statement.exec()
         })
         .await

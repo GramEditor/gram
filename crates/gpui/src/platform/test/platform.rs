@@ -1,8 +1,7 @@
 use crate::{
-    AnyWindowHandle, BackgroundExecutor, ClipboardItem, CursorStyle, DummyKeyboardMapper,
-    ForegroundExecutor, Keymap, NoopTextSystem, Platform, PlatformDisplay, PlatformKeyboardLayout,
-    PlatformKeyboardMapper, PlatformTextSystem, PromptButton, Task, TestDisplay, TestWindow,
-    WindowAppearance, WindowParams,
+    AnyWindowHandle, BackgroundExecutor, ClipboardItem, CursorStyle, DummyKeyboardMapper, ForegroundExecutor, Keymap,
+    NoopTextSystem, Platform, PlatformDisplay, PlatformKeyboardLayout, PlatformKeyboardMapper, PlatformTextSystem,
+    PromptButton, Task, TestDisplay, TestWindow, WindowAppearance, WindowParams,
 };
 use anyhow::Result;
 use collections::VecDeque;
@@ -59,8 +58,7 @@ impl TestPlatform {
     pub fn new(executor: BackgroundExecutor, foreground_executor: ForegroundExecutor) -> Rc<Self> {
         #[cfg(target_os = "windows")]
         let bitmap_factory = unsafe {
-            windows::Win32::System::Ole::OleInitialize(None)
-                .expect("unable to initialize Windows OLE");
+            windows::Win32::System::Ole::OleInitialize(None).expect("unable to initialize Windows OLE");
             std::mem::ManuallyDrop::new(
                 CoCreateInstance(&CLSID_WICImagingFactory, None, CLSCTX_INPROC_SERVER)
                     .expect("Error creating bitmap factory."),
@@ -129,31 +127,20 @@ impl TestPlatform {
     pub(crate) fn pending_prompt(&self) -> Option<(String, String)> {
         let prompts = self.prompts.borrow();
         let prompt = prompts.multiple_choice.front()?;
-        Some((
-            prompt.msg.clone(),
-            prompt.detail.clone().unwrap_or_default(),
-        ))
+        Some((prompt.msg.clone(), prompt.detail.clone().unwrap_or_default()))
     }
 
-    pub(crate) fn prompt(
-        &self,
-        msg: &str,
-        detail: Option<&str>,
-        answers: &[PromptButton],
-    ) -> oneshot::Receiver<usize> {
+    pub(crate) fn prompt(&self, msg: &str, detail: Option<&str>, answers: &[PromptButton]) -> oneshot::Receiver<usize> {
         let (tx, rx) = oneshot::channel();
         let answers: Vec<String> = answers.iter().map(|s| s.label().to_string()).collect();
         self.background_executor()
             .set_waiting_hint(Some(format!("PROMPT: {:?} {:?}", msg, detail)));
-        self.prompts
-            .borrow_mut()
-            .multiple_choice
-            .push_back(TestPrompt {
-                msg: msg.to_string(),
-                detail: detail.map(|s| s.to_string()),
-                answers,
-                tx,
-            });
+        self.prompts.borrow_mut().multiple_choice.push_back(TestPrompt {
+            msg: msg.to_string(),
+            detail: detail.map(|s| s.to_string()),
+            answers,
+            tx,
+        });
         rx
     }
 
@@ -255,12 +242,7 @@ impl Platform for TestPlatform {
         handle: AnyWindowHandle,
         params: WindowParams,
     ) -> anyhow::Result<Box<dyn crate::PlatformWindow>> {
-        let window = TestWindow::new(
-            handle,
-            params,
-            self.weak.clone(),
-            self.active_display.clone(),
-        );
+        let window = TestWindow::new(handle, params, self.weak.clone(), self.active_display.clone());
         Ok(Box::new(window))
     }
 

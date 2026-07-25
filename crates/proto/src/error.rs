@@ -107,17 +107,13 @@ impl ErrorExt for anyhow::Error {
             rpc_error.to_proto()
         } else {
             ErrorCode::Internal
-                .message(
-                    format!("{self:#}")
-                        .lines()
-                        .fold(String::new(), |mut message, line| {
-                            if !message.is_empty() {
-                                message.push(' ');
-                            }
-                            message.push_str(line);
-                            message
-                        }),
-                )
+                .message(format!("{self:#}").lines().fold(String::new(), |mut message, line| {
+                    if !message.is_empty() {
+                        message.push(' ');
+                    }
+                    message.push_str(line);
+                    message
+                }))
                 .to_proto()
         }
     }

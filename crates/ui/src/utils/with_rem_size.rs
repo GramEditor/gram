@@ -1,7 +1,6 @@
 use gpui::{
-    AnyElement, App, Bounds, Div, DivFrameState, Element, ElementId, GlobalElementId, Hitbox,
-    InteractiveElement as _, IntoElement, LayoutId, ParentElement, Pixels, StyleRefinement, Styled,
-    Window, div,
+    AnyElement, App, Bounds, Div, DivFrameState, Element, ElementId, GlobalElementId, Hitbox, InteractiveElement as _,
+    IntoElement, LayoutId, ParentElement, Pixels, StyleRefinement, Styled, Window, div,
 };
 
 /// An element that sets a particular rem size for its children.
@@ -76,8 +75,7 @@ impl Element for WithRemSize {
         cx: &mut App,
     ) -> Self::PrepaintState {
         window.with_rem_size(Some(self.rem_size), |window| {
-            self.div
-                .prepaint(id, inspector_id, bounds, request_layout, window, cx)
+            self.div.prepaint(id, inspector_id, bounds, request_layout, window, cx)
         })
     }
 
@@ -92,15 +90,8 @@ impl Element for WithRemSize {
         cx: &mut App,
     ) {
         window.with_rem_size(Some(self.rem_size), |window| {
-            self.div.paint(
-                id,
-                inspector_id,
-                bounds,
-                request_layout,
-                prepaint,
-                window,
-                cx,
-            )
+            self.div
+                .paint(id, inspector_id, bounds, request_layout, prepaint, window, cx)
         })
     }
 }

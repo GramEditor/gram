@@ -69,16 +69,14 @@ impl RenderOnce for HighlightedMatchWithPaths {
     fn render(mut self, _window: &mut Window, _: &mut App) -> impl IntoElement {
         v_flex()
             .child(
-                h_flex().gap_1().child(self.match_label.clone()).when_some(
-                    self.prefix.as_ref(),
-                    |this, prefix| {
+                h_flex()
+                    .gap_1()
+                    .child(self.match_label.clone())
+                    .when_some(self.prefix.as_ref(), |this, prefix| {
                         this.child(Label::new(format!("({})", prefix)).color(Color::Muted))
-                    },
-                ),
+                    }),
             )
-            .when(!self.paths.is_empty(), |this| {
-                self.render_paths_children(this)
-            })
+            .when(!self.paths.is_empty(), |this| self.render_paths_children(this))
     }
 }
 

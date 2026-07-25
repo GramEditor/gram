@@ -44,9 +44,7 @@ impl Tab {
     pub fn new(id: impl Into<ElementId>) -> Self {
         let id = id.into();
         Self {
-            div: div()
-                .id(id.clone())
-                .debug_selector(|| format!("TAB-{}", id)),
+            div: div().id(id.clone()).debug_selector(|| format!("TAB-{}", id)),
             selected: false,
             position: TabPosition::First,
             close_side: TabCloseSide::End,
@@ -186,9 +184,7 @@ impl Component for Tab {
     }
 
     fn description() -> Option<&'static str> {
-        Some(
-            "A tab component that can be used in a tabbed interface, supporting different positions and states.",
-        )
+        Some("A tab component that can be used in a tabbed interface, supporting different positions and states.")
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
@@ -198,10 +194,7 @@ impl Component for Tab {
                 .children(vec![example_group_with_title(
                     "Variations",
                     vec![
-                        single_example(
-                            "Default",
-                            Tab::new("default").child("Default Tab").into_any_element(),
-                        ),
+                        single_example("Default", Tab::new("default").child("Default Tab").into_any_element()),
                         single_example(
                             "Selected",
                             Tab::new("selected")

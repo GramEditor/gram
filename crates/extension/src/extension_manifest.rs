@@ -90,15 +90,9 @@ pub struct ExtensionManifest {
 }
 
 impl ExtensionManifest {
-    pub fn allow_exec(
-        &self,
-        desired_command: &str,
-        desired_args: &[impl AsRef<str> + std::fmt::Debug],
-    ) -> Result<()> {
+    pub fn allow_exec(&self, desired_command: &str, desired_args: &[impl AsRef<str> + std::fmt::Debug]) -> Result<()> {
         let is_allowed = self.capabilities.iter().any(|capability| match capability {
-            ExtensionCapability::ProcessExec(capability) => {
-                capability.allows(desired_command, desired_args)
-            }
+            ExtensionCapability::ProcessExec(capability) => capability.allows(desired_command, desired_args),
             _ => false,
         });
 
@@ -116,10 +110,8 @@ impl ExtensionManifest {
     }
 
     pub fn remote_load(&self) -> Option<RemoteLoad<'_>> {
-        (!self.language_servers.is_empty()
-            || !self.debug_adapters.is_empty()
-            || !self.debug_locators.is_empty())
-        .then_some(RemoteLoad { manifest: self })
+        (!self.language_servers.is_empty() || !self.debug_adapters.is_empty() || !self.debug_locators.is_empty())
+            .then_some(RemoteLoad { manifest: self })
     }
 }
 
@@ -136,13 +128,9 @@ impl RemoteLoad<'_> {
     }
 }
 
-pub fn build_debug_adapter_schema_path(
-    adapter_name: &Arc<str>,
-    meta: &DebugAdapterManifestEntry,
-) -> PathBuf {
+pub fn build_debug_adapter_schema_path(adapter_name: &Arc<str>, meta: &DebugAdapterManifestEntry) -> PathBuf {
     meta.schema_path.clone().unwrap_or_else(|| {
-        Path::new("debug_adapter_schemas")
-            .join(Path::new(adapter_name.as_ref()).with_extension("json"))
+        Path::new("debug_adapter_schemas").join(Path::new(adapter_name.as_ref()).with_extension("json"))
     })
 }
 
@@ -210,18 +198,19 @@ impl ExtensionManifest {
     pub async fn load(fs: Arc<dyn Fs>, extension_dir: &Path) -> Result<Self> {
         let extension_manifest_path = extension_dir.join("extension.toml");
         if fs.is_file(&extension_manifest_path).await {
-            let manifest_content = fs.load(&extension_manifest_path).await.with_context(|| {
-                format!("loading extension manifest from {extension_manifest_path:?}")
-            })?;
-            toml::from_str(&manifest_content).map_err(|err| {
-                anyhow!("Invalid extension manifest {extension_manifest_path:?}:\n{err}")
-            })
+            let manifest_content = fs
+                .load(&extension_manifest_path)
+                .await
+                .with_context(|| format!("loading extension manifest from {extension_manifest_path:?}"))?;
+            toml::from_str(&manifest_content)
+                .map_err(|err| anyhow!("Invalid extension manifest {extension_manifest_path:?}:\n{err}"))
         } else if let extension_manifest_path = extension_manifest_path.with_extension("json")
             && fs.is_file(&extension_manifest_path).await
         {
-            let manifest_content = fs.load(&extension_manifest_path).await.with_context(|| {
-                format!("loading extension manifest from {extension_manifest_path:?}")
-            })?;
+            let manifest_content = fs
+                .load(&extension_manifest_path)
+                .await
+                .with_context(|| format!("loading extension manifest from {extension_manifest_path:?}"))?;
             let extension_name = extension_dir
                 .file_name()
                 .and_then(OsStr::to_str)
@@ -236,10 +225,7 @@ impl ExtensionManifest {
     }
 }
 
-fn manifest_from_old_manifest(
-    manifest_json: OldExtensionManifest,
-    extension_id: &str,
-) -> ExtensionManifest {
+fn manifest_from_old_manifest(manifest_json: OldExtensionManifest, extension_id: &str) -> ExtensionManifest {
     ExtensionManifest {
         id: extension_id.into(),
         name: manifest_json.name,
@@ -322,10 +308,7 @@ mod tests {
         let entry = DebugAdapterManifestEntry::default();
 
         let path = build_debug_adapter_schema_path(&adapter_name, &entry);
-        assert_eq!(
-            path,
-            PathBuf::from("debug_adapter_schemas").join("my_adapter.json")
-        );
+        assert_eq!(path, PathBuf::from("debug_adapter_schemas").join("my_adapter.json"));
     }
 
     #[test]
@@ -391,11 +374,7 @@ mod tests {
 
         assert!(manifest.allow_exec("docker", &["run", "nginx"]).is_ok());
         assert!(manifest.allow_exec("docker", &["run"]).is_err());
-        assert!(
-            manifest
-                .allow_exec("docker", &["run", "ubuntu", "bash"])
-                .is_ok()
-        );
+        assert!(manifest.allow_exec("docker", &["run", "ubuntu", "bash"]).is_ok());
         assert!(
             manifest
                 .allow_exec("docker", &["run", "alpine", "sh", "-c", "echo hello"])

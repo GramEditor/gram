@@ -58,15 +58,10 @@ impl DebugAdapterClient {
     }
 
     pub fn should_reconnect_for_ssh(&self) -> bool {
-        self.transport_delegate.tcp_arguments().is_some()
-            && self.binary.command.as_deref() == Some("ssh")
+        self.transport_delegate.tcp_arguments().is_some() && self.binary.command.as_deref() == Some("ssh")
     }
 
-    pub async fn connect(
-        &self,
-        message_handler: DapMessageHandler,
-        cx: &mut AsyncApp,
-    ) -> Result<()> {
+    pub async fn connect(&self, message_handler: DapMessageHandler, cx: &mut AsyncApp) -> Result<()> {
         self.transport_delegate.connect(message_handler, cx).await
     }
 
@@ -139,9 +134,7 @@ impl DebugAdapterClient {
                     Ok(serde_json::from_value(json)?)
                 // Note: dap types configure themselves to return `None` when an empty object is received,
                 // which then fails here...
-                } else if let Ok(result) =
-                    serde_json::from_value(serde_json::Value::Object(Default::default()))
-                {
+                } else if let Ok(result) = serde_json::from_value(serde_json::Value::Object(Default::default())) {
                     Ok(result)
                 } else {
                     Ok(serde_json::from_value(Default::default())?)
@@ -188,9 +181,7 @@ impl DebugAdapterClient {
     #[cfg(any(test, feature = "test-support"))]
     pub fn on_request<R: dap_types::requests::Request, F>(&self, mut handler: F)
     where
-        F: 'static
-            + Send
-            + FnMut(u64, R::Arguments) -> Result<R::Response, dap_types::ErrorResponse>,
+        F: 'static + Send + FnMut(u64, R::Arguments) -> Result<R::Response, dap_types::ErrorResponse>,
     {
         use crate::transport::RequestHandling;
 
@@ -198,9 +189,7 @@ impl DebugAdapterClient {
             .transport
             .lock()
             .as_fake()
-            .on_request::<R, _>(move |seq, request| {
-                RequestHandling::Respond(handler(seq, request))
-            });
+            .on_request::<R, _>(move |seq, request| RequestHandling::Respond(handler(seq, request)));
     }
 
     #[cfg(any(test, feature = "test-support"))]
@@ -208,12 +197,7 @@ impl DebugAdapterClient {
     where
         F: 'static
             + Send
-            + FnMut(
-                u64,
-                R::Arguments,
-            ) -> crate::transport::RequestHandling<
-                Result<R::Response, dap_types::ErrorResponse>,
-            >,
+            + FnMut(u64, R::Arguments) -> crate::transport::RequestHandling<Result<R::Response, dap_types::ErrorResponse>>,
     {
         self.transport_delegate
             .transport
@@ -247,9 +231,7 @@ impl DebugAdapterClient {
 
     #[cfg(any(test, feature = "test-support"))]
     pub async fn fake_event(&self, event: dap_types::messages::Events) {
-        self.send_message(Message::Event(Box::new(event)))
-            .await
-            .unwrap();
+        self.send_message(Message::Event(Box::new(event))).await.unwrap();
     }
 }
 
@@ -258,8 +240,8 @@ mod tests {
     use super::*;
     use crate::client::DebugAdapterClient;
     use dap_types::{
-        Capabilities, InitializeRequestArguments, InitializeRequestArgumentsPathFormat,
-        RunInTerminalRequestArguments, StartDebuggingRequestArguments,
+        Capabilities, InitializeRequestArguments, InitializeRequestArgumentsPathFormat, RunInTerminalRequestArguments,
+        StartDebuggingRequestArguments,
         messages::Events,
         requests::{Initialize, Request, RunInTerminal},
     };
@@ -372,9 +354,7 @@ mod tests {
                     called_event_handler.store(true, Ordering::SeqCst);
 
                     assert_eq!(
-                        Message::Event(Box::new(Events::Initialized(
-                            Some(Capabilities::default())
-                        ))),
+                        Message::Event(Box::new(Events::Initialized(Some(Capabilities::default())))),
                         event
                     );
                 }

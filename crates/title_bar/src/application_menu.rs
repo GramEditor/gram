@@ -96,50 +96,35 @@ impl ApplicationMenu {
         cleaned
     }
 
-    fn build_menu_from_items(
-        entry: MenuEntry,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> Entity<ContextMenu> {
+    fn build_menu_from_items(entry: MenuEntry, window: &mut Window, cx: &mut App) -> Entity<ContextMenu> {
         ContextMenu::build(window, cx, |menu, window, cx| {
             // Grab current focus handle so menu can shown items in context with the focused element
             let menu = menu.when_some(window.focused(cx), |menu, focused| menu.context(focused));
             let sanitized_items = Self::sanitize_menu_items(entry.menu.items);
 
-            sanitized_items
-                .into_iter()
-                .fold(menu, |menu, item| match item {
-                    OwnedMenuItem::Separator => menu.separator(),
-                    OwnedMenuItem::Action {
-                        name,
-                        action,
-                        checked,
-                        ..
-                    } => menu.action_checked(name, action, checked),
-                    OwnedMenuItem::Submenu(submenu) => {
-                        submenu
-                            .items
-                            .into_iter()
-                            .fold(menu, |menu, item| match item {
-                                OwnedMenuItem::Separator => menu.separator(),
-                                OwnedMenuItem::Action {
-                                    name,
-                                    action,
-                                    checked,
-                                    ..
-                                } => menu.action_checked(name, action, checked),
-                                OwnedMenuItem::Submenu(_) => menu,
-                                OwnedMenuItem::SystemMenu(_) => {
-                                    // A system menu doesn't make sense in this context, so ignore it
-                                    menu
-                                }
-                            })
-                    }
-                    OwnedMenuItem::SystemMenu(_) => {
-                        // A system menu doesn't make sense in this context, so ignore it
-                        menu
-                    }
-                })
+            sanitized_items.into_iter().fold(menu, |menu, item| match item {
+                OwnedMenuItem::Separator => menu.separator(),
+                OwnedMenuItem::Action {
+                    name, action, checked, ..
+                } => menu.action_checked(name, action, checked),
+                OwnedMenuItem::Submenu(submenu) => {
+                    submenu.items.into_iter().fold(menu, |menu, item| match item {
+                        OwnedMenuItem::Separator => menu.separator(),
+                        OwnedMenuItem::Action {
+                            name, action, checked, ..
+                        } => menu.action_checked(name, action, checked),
+                        OwnedMenuItem::Submenu(_) => menu,
+                        OwnedMenuItem::SystemMenu(_) => {
+                            // A system menu doesn't make sense in this context, so ignore it
+                            menu
+                        }
+                    })
+                }
+                OwnedMenuItem::SystemMenu(_) => {
+                    // A system menu doesn't make sense in this context, so ignore it
+                    menu
+                }
+            })
         })
     }
 
@@ -150,25 +135,20 @@ impl ApplicationMenu {
         let entry = entry.clone();
 
         // Application menu must have same ids as first menu item in standard menu
-        div()
-            .id(format!("{}-menu-item", menu_name))
-            .occlude()
-            .child(
-                PopoverMenu::new(format!("{}-menu-popover", menu_name))
-                    .menu(move |window, cx| {
-                        Self::build_menu_from_items(entry.clone(), window, cx).into()
-                    })
-                    .trigger_with_tooltip(
-                        IconButton::new(
-                            SharedString::from(format!("{}-menu-trigger", menu_name)),
-                            ui::IconName::Menu,
-                        )
-                        .style(ButtonStyle::Subtle)
-                        .icon_size(IconSize::Small),
-                        Tooltip::text("Open Application Menu"),
+        div().id(format!("{}-menu-item", menu_name)).occlude().child(
+            PopoverMenu::new(format!("{}-menu-popover", menu_name))
+                .menu(move |window, cx| Self::build_menu_from_items(entry.clone(), window, cx).into())
+                .trigger_with_tooltip(
+                    IconButton::new(
+                        SharedString::from(format!("{}-menu-trigger", menu_name)),
+                        ui::IconName::Menu,
                     )
-                    .with_handle(handle),
-            )
+                    .style(ButtonStyle::Subtle)
+                    .icon_size(IconSize::Small),
+                    Tooltip::text("Open Application Menu"),
+                )
+                .with_handle(handle),
+        )
     }
 
     fn render_standard_menu(&self, entry: &MenuEntry) -> impl IntoElement {
@@ -177,11 +157,7 @@ impl ApplicationMenu {
         let menu_name = entry.menu.name.clone();
         let entry = entry.clone();
 
-        let all_handles: Vec<_> = self
-            .entries
-            .iter()
-            .map(|entry| entry.handle.clone())
-            .collect();
+        let all_handles: Vec<_> = self.entries.iter().map(|entry| entry.handle.clone()).collect();
         let any_menu_deployed = all_handles.iter().any(|e| e.is_deployed());
 
         div()
@@ -189,16 +165,11 @@ impl ApplicationMenu {
             .occlude()
             .child(
                 PopoverMenu::new(format!("{}-menu-popover", menu_name))
-                    .menu(move |window, cx| {
-                        Self::build_menu_from_items(entry.clone(), window, cx).into()
-                    })
+                    .menu(move |window, cx| Self::build_menu_from_items(entry.clone(), window, cx).into())
                     .trigger(
-                        Button::new(
-                            SharedString::from(format!("{}-menu-trigger", menu_name)),
-                            menu_name,
-                        )
-                        .style(ButtonStyle::Subtle)
-                        .label_size(LabelSize::Small),
+                        Button::new(SharedString::from(format!("{}-menu-trigger", menu_name)), menu_name)
+                            .style(ButtonStyle::Subtle)
+                            .label_size(LabelSize::Small),
                     )
                     .with_handle(current_handle.clone()),
             )
@@ -214,12 +185,7 @@ impl ApplicationMenu {
     }
 
     #[cfg(not(target_os = "macos"))]
-    pub fn open_menu(
-        &mut self,
-        action: &OpenApplicationMenu,
-        _window: &mut Window,
-        _cx: &mut Context<Self>,
-    ) {
+    pub fn open_menu(&mut self, action: &OpenApplicationMenu, _window: &mut Window, _cx: &mut Context<Self>) {
         self.pending_menu_open = Some(action.0.clone());
     }
 
@@ -230,10 +196,7 @@ impl ApplicationMenu {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let current_index = self
-            .entries
-            .iter()
-            .position(|entry| entry.handle.is_deployed());
+        let current_index = self.entries.iter().position(|entry| entry.handle.is_deployed());
         let Some(current_index) = current_index else {
             return;
         };
@@ -315,11 +278,7 @@ impl Render for ApplicationMenu {
                 this.child(self.render_application_menu(&self.entries[0]))
             })
             .when(all_menus_shown, |this| {
-                this.children(
-                    self.entries
-                        .iter()
-                        .map(|entry| self.render_standard_menu(entry)),
-                )
+                this.children(self.entries.iter().map(|entry| self.render_standard_menu(entry)))
             })
     }
 }

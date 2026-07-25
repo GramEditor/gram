@@ -32,13 +32,7 @@ const SIZE_MOVE_LOOP_TIMER_ID: usize = 1;
 const AUTO_HIDE_TASKBAR_THICKNESS_PX: i32 = 1;
 
 impl WindowsWindowInner {
-    pub(crate) fn handle_msg(
-        self: &Rc<Self>,
-        handle: HWND,
-        msg: u32,
-        wparam: WPARAM,
-        lparam: LPARAM,
-    ) -> LRESULT {
+    pub(crate) fn handle_msg(self: &Rc<Self>, handle: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
         let handled = match msg {
             // eagerly activate the window, so calls to `active_window` will work correctly
             WM_MOUSEACTIVATE => {
@@ -69,33 +63,19 @@ impl WindowsWindowInner {
             WM_NCLBUTTONDBLCLK | WM_NCLBUTTONDOWN => {
                 self.handle_nc_mouse_down_msg(handle, MouseButton::Left, wparam, lparam)
             }
-            WM_NCRBUTTONDOWN => {
-                self.handle_nc_mouse_down_msg(handle, MouseButton::Right, wparam, lparam)
-            }
-            WM_NCMBUTTONDOWN => {
-                self.handle_nc_mouse_down_msg(handle, MouseButton::Middle, wparam, lparam)
-            }
-            WM_NCLBUTTONUP => {
-                self.handle_nc_mouse_up_msg(handle, MouseButton::Left, wparam, lparam)
-            }
-            WM_NCRBUTTONUP => {
-                self.handle_nc_mouse_up_msg(handle, MouseButton::Right, wparam, lparam)
-            }
-            WM_NCMBUTTONUP => {
-                self.handle_nc_mouse_up_msg(handle, MouseButton::Middle, wparam, lparam)
-            }
+            WM_NCRBUTTONDOWN => self.handle_nc_mouse_down_msg(handle, MouseButton::Right, wparam, lparam),
+            WM_NCMBUTTONDOWN => self.handle_nc_mouse_down_msg(handle, MouseButton::Middle, wparam, lparam),
+            WM_NCLBUTTONUP => self.handle_nc_mouse_up_msg(handle, MouseButton::Left, wparam, lparam),
+            WM_NCRBUTTONUP => self.handle_nc_mouse_up_msg(handle, MouseButton::Right, wparam, lparam),
+            WM_NCMBUTTONUP => self.handle_nc_mouse_up_msg(handle, MouseButton::Middle, wparam, lparam),
             WM_LBUTTONDOWN => self.handle_mouse_down_msg(handle, MouseButton::Left, lparam),
             WM_RBUTTONDOWN => self.handle_mouse_down_msg(handle, MouseButton::Right, lparam),
             WM_MBUTTONDOWN => self.handle_mouse_down_msg(handle, MouseButton::Middle, lparam),
-            WM_XBUTTONDOWN => {
-                self.handle_xbutton_msg(handle, wparam, lparam, Self::handle_mouse_down_msg)
-            }
+            WM_XBUTTONDOWN => self.handle_xbutton_msg(handle, wparam, lparam, Self::handle_mouse_down_msg),
             WM_LBUTTONUP => self.handle_mouse_up_msg(handle, MouseButton::Left, lparam),
             WM_RBUTTONUP => self.handle_mouse_up_msg(handle, MouseButton::Right, lparam),
             WM_MBUTTONUP => self.handle_mouse_up_msg(handle, MouseButton::Middle, lparam),
-            WM_XBUTTONUP => {
-                self.handle_xbutton_msg(handle, wparam, lparam, Self::handle_mouse_up_msg)
-            }
+            WM_XBUTTONUP => self.handle_xbutton_msg(handle, wparam, lparam, Self::handle_mouse_up_msg),
             WM_MOUSEWHEEL => self.handle_mouse_wheel_msg(handle, wparam, lparam),
             WM_MOUSEHWHEEL => self.handle_mouse_horizontal_wheel_msg(handle, wparam, lparam),
             WM_SYSKEYUP => self.handle_syskeyup_msg(wparam, lparam),
@@ -186,10 +166,7 @@ impl WindowsWindowInner {
         let scale_factor = self.state.scale_factor.get();
         let mut should_resize_renderer = false;
         if let Some(restore_from_minimized) = self.state.restore_from_minimized.take() {
-            self.state
-                .callbacks
-                .request_frame
-                .set(Some(restore_from_minimized));
+            self.state.callbacks.request_frame.set(Some(restore_from_minimized));
         } else {
             should_resize_renderer = true;
         }
@@ -198,18 +175,11 @@ impl WindowsWindowInner {
         Some(0)
     }
 
-    fn handle_size_change(
-        &self,
-        device_size: Size<DevicePixels>,
-        scale_factor: f32,
-        should_resize_renderer: bool,
-    ) {
+    fn handle_size_change(&self, device_size: Size<DevicePixels>, scale_factor: f32, should_resize_renderer: bool) {
         let new_logical_size = device_size.to_pixels(scale_factor);
 
         self.state.logical_size.set(new_logical_size);
-        if should_resize_renderer
-            && let Err(e) = self.state.renderer.borrow_mut().resize(device_size)
-        {
+        if should_resize_renderer && let Err(e) = self.state.renderer.borrow_mut().resize(device_size) {
             log::error!("Failed to resize renderer, invalidating devices: {}", e);
             self.state
                 .invalidate_devices
@@ -223,17 +193,9 @@ impl WindowsWindowInner {
 
     fn handle_size_move_loop(&self, handle: HWND) -> Option<isize> {
         unsafe {
-            let ret = SetTimer(
-                Some(handle),
-                SIZE_MOVE_LOOP_TIMER_ID,
-                USER_TIMER_MINIMUM,
-                None,
-            );
+            let ret = SetTimer(Some(handle), SIZE_MOVE_LOOP_TIMER_ID, USER_TIMER_MINIMUM, None);
             if ret == 0 {
-                log::error!(
-                    "unable to create timer: {}",
-                    std::io::Error::last_os_error()
-                );
+                log::error!("unable to create timer: {}", std::io::Error::last_os_error());
             }
         }
         None
@@ -297,12 +259,8 @@ impl WindowsWindowInner {
             flags if flags.contains(MK_LBUTTON) => Some(MouseButton::Left),
             flags if flags.contains(MK_RBUTTON) => Some(MouseButton::Right),
             flags if flags.contains(MK_MBUTTON) => Some(MouseButton::Middle),
-            flags if flags.contains(MK_XBUTTON1) => {
-                Some(MouseButton::Navigate(NavigationDirection::Back))
-            }
-            flags if flags.contains(MK_XBUTTON2) => {
-                Some(MouseButton::Navigate(NavigationDirection::Forward))
-            }
+            flags if flags.contains(MK_XBUTTON1) => Some(MouseButton::Navigate(NavigationDirection::Back)),
+            flags if flags.contains(MK_XBUTTON2) => Some(MouseButton::Navigate(NavigationDirection::Forward)),
             _ => None,
         };
         let x = lparam.signed_loword() as f32;
@@ -322,10 +280,7 @@ impl WindowsWindowInner {
         self.state.hovered.set(false);
         if let Some(mut callback) = self.state.callbacks.hovered_status_change.take() {
             callback(false);
-            self.state
-                .callbacks
-                .hovered_status_change
-                .set(Some(callback));
+            self.state.callbacks.hovered_status_change.set(Some(callback));
         }
 
         Some(0)
@@ -347,18 +302,13 @@ impl WindowsWindowInner {
     // It's a known bug that you can't trigger `ctrl-shift-0`. See:
     // https://superuser.com/questions/1455762/ctrl-shift-number-key-combination-has-stopped-working-for-a-few-numbers
     fn handle_keydown_msg(&self, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
-        let Some(input) = handle_key_event(
-            wparam,
-            lparam,
-            &self.state,
-            |keystroke, prefer_character_input| {
-                PlatformInput::KeyDown(KeyDownEvent {
-                    keystroke,
-                    is_held: lparam.0 & (0x1 << 30) > 0,
-                    prefer_character_input,
-                })
-            },
-        ) else {
+        let Some(input) = handle_key_event(wparam, lparam, &self.state, |keystroke, prefer_character_input| {
+            PlatformInput::KeyDown(KeyDownEvent {
+                keystroke,
+                is_held: lparam.0 & (0x1 << 30) > 0,
+                prefer_character_input,
+            })
+        }) else {
             return Some(1);
         };
 
@@ -399,12 +349,7 @@ impl WindowsWindowInner {
         Some(0)
     }
 
-    fn handle_mouse_down_msg(
-        &self,
-        handle: HWND,
-        button: MouseButton,
-        lparam: LPARAM,
-    ) -> Option<isize> {
+    fn handle_mouse_down_msg(&self, handle: HWND, button: MouseButton, lparam: LPARAM) -> Option<isize> {
         unsafe { SetCapture(handle) };
 
         let Some(mut func) = self.state.callbacks.input.take() else {
@@ -429,12 +374,7 @@ impl WindowsWindowInner {
         if handled { Some(0) } else { Some(1) }
     }
 
-    fn handle_mouse_up_msg(
-        &self,
-        _handle: HWND,
-        button: MouseButton,
-        lparam: LPARAM,
-    ) -> Option<isize> {
+    fn handle_mouse_up_msg(&self, _handle: HWND, button: MouseButton, lparam: LPARAM) -> Option<isize> {
         unsafe { ReleaseCapture().log_err() };
 
         let Some(mut func) = self.state.callbacks.input.take() else {
@@ -472,12 +412,7 @@ impl WindowsWindowInner {
         handler(self, handle, MouseButton::Navigate(nav_dir), lparam)
     }
 
-    fn handle_mouse_wheel_msg(
-        &self,
-        handle: HWND,
-        wparam: WPARAM,
-        lparam: LPARAM,
-    ) -> Option<isize> {
+    fn handle_mouse_wheel_msg(&self, handle: HWND, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
         let modifiers = current_modifiers();
 
         let Some(mut func) = self.state.callbacks.input.take() else {
@@ -485,20 +420,11 @@ impl WindowsWindowInner {
         };
         let scale_factor = self.state.scale_factor.get();
         let wheel_scroll_amount = match modifiers.shift {
-            true => self
-                .system_settings()
-                .mouse_wheel_settings
-                .wheel_scroll_chars
-                .get(),
-            false => self
-                .system_settings()
-                .mouse_wheel_settings
-                .wheel_scroll_lines
-                .get(),
+            true => self.system_settings().mouse_wheel_settings.wheel_scroll_chars.get(),
+            false => self.system_settings().mouse_wheel_settings.wheel_scroll_lines.get(),
         };
 
-        let wheel_distance =
-            (wparam.signed_hiword() as f32 / WHEEL_DELTA as f32) * wheel_scroll_amount as f32;
+        let wheel_distance = (wparam.signed_hiword() as f32 / WHEEL_DELTA as f32) * wheel_scroll_amount as f32;
         let mut cursor_point = POINT {
             x: lparam.signed_loword().into(),
             y: lparam.signed_hiword().into(),
@@ -525,24 +451,14 @@ impl WindowsWindowInner {
         if handled { Some(0) } else { Some(1) }
     }
 
-    fn handle_mouse_horizontal_wheel_msg(
-        &self,
-        handle: HWND,
-        wparam: WPARAM,
-        lparam: LPARAM,
-    ) -> Option<isize> {
+    fn handle_mouse_horizontal_wheel_msg(&self, handle: HWND, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
         let Some(mut func) = self.state.callbacks.input.take() else {
             return Some(1);
         };
         let scale_factor = self.state.scale_factor.get();
-        let wheel_scroll_chars = self
-            .system_settings()
-            .mouse_wheel_settings
-            .wheel_scroll_chars
-            .get();
+        let wheel_scroll_chars = self.system_settings().mouse_wheel_settings.wheel_scroll_chars.get();
 
-        let wheel_distance =
-            (-wparam.signed_hiword() as f32 / WHEEL_DELTA as f32) * wheel_scroll_chars as f32;
+        let wheel_distance = (-wparam.signed_hiword() as f32 / WHEEL_DELTA as f32) * wheel_scroll_chars as f32;
         let mut cursor_point = POINT {
             x: lparam.signed_loword().into(),
             y: lparam.signed_hiword().into(),
@@ -626,22 +542,20 @@ impl WindowsWindowInner {
             if lparam & GCS_RESULTSTR.0 > 0 {
                 let comp_result = parse_ime_composition_string(ctx, GCS_RESULTSTR)?;
                 self.with_input_handler(|input_handler| {
-                    input_handler
-                        .replace_text_in_range(None, &String::from_utf16_lossy(&comp_result));
+                    input_handler.replace_text_in_range(None, &String::from_utf16_lossy(&comp_result));
                 })?;
             }
             if lparam & GCS_COMPSTR.0 > 0 {
                 let comp_string = parse_ime_composition_string(ctx, GCS_COMPSTR)?;
-                let caret_pos =
-                    (!comp_string.is_empty() && lparam & GCS_CURSORPOS.0 > 0).then(|| {
-                        let cursor_pos = retrieve_composition_cursor_position(ctx);
-                        let pos = if should_use_ime_cursor_position(ctx, cursor_pos) {
-                            cursor_pos
-                        } else {
-                            comp_string.len()
-                        };
-                        pos..pos
-                    });
+                let caret_pos = (!comp_string.is_empty() && lparam & GCS_CURSORPOS.0 > 0).then(|| {
+                    let cursor_pos = retrieve_composition_cursor_position(ctx);
+                    let pos = if should_use_ime_cursor_position(ctx, cursor_pos) {
+                        cursor_pos
+                    } else {
+                        comp_string.len()
+                    };
+                    pos..pos
+                });
                 self.with_input_handler(|input_handler| {
                     input_handler.replace_and_mark_text_in_range(
                         None,
@@ -660,12 +574,7 @@ impl WindowsWindowInner {
     }
 
     /// SEE: https://learn.microsoft.com/en-us/windows/win32/winmsg/wm-nccalcsize
-    fn handle_calc_client_size(
-        &self,
-        handle: HWND,
-        wparam: WPARAM,
-        lparam: LPARAM,
-    ) -> Option<isize> {
+    fn handle_calc_client_size(&self, handle: HWND, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
         if !self.hide_title_bar || self.state.is_fullscreen() || wparam.0 == 0 {
             return None;
         }
@@ -684,25 +593,15 @@ impl WindowsWindowInner {
         // Fix auto hide taskbar not showing. This solution is based on the approach
         // used by Chrome. However, it may result in one row of pixels being obscured
         // in our client area. But as Chrome says, "there seems to be no better solution."
-        if is_maximized
-            && let Some(taskbar_position) = self.system_settings().auto_hide_taskbar_position.get()
-        {
+        if is_maximized && let Some(taskbar_position) = self.system_settings().auto_hide_taskbar_position.get() {
             // For the auto-hide taskbar, adjust in by 1 pixel on taskbar edge,
             // so the window isn't treated as a "fullscreen app", which would cause
             // the taskbar to disappear.
             match taskbar_position {
-                AutoHideTaskbarPosition::Left => {
-                    requested_client_rect[0].left += AUTO_HIDE_TASKBAR_THICKNESS_PX
-                }
-                AutoHideTaskbarPosition::Top => {
-                    requested_client_rect[0].top += AUTO_HIDE_TASKBAR_THICKNESS_PX
-                }
-                AutoHideTaskbarPosition::Right => {
-                    requested_client_rect[0].right -= AUTO_HIDE_TASKBAR_THICKNESS_PX
-                }
-                AutoHideTaskbarPosition::Bottom => {
-                    requested_client_rect[0].bottom -= AUTO_HIDE_TASKBAR_THICKNESS_PX
-                }
+                AutoHideTaskbarPosition::Left => requested_client_rect[0].left += AUTO_HIDE_TASKBAR_THICKNESS_PX,
+                AutoHideTaskbarPosition::Top => requested_client_rect[0].top += AUTO_HIDE_TASKBAR_THICKNESS_PX,
+                AutoHideTaskbarPosition::Right => requested_client_rect[0].right -= AUTO_HIDE_TASKBAR_THICKNESS_PX,
+                AutoHideTaskbarPosition::Bottom => requested_client_rect[0].bottom -= AUTO_HIDE_TASKBAR_THICKNESS_PX,
             }
         }
 
@@ -733,12 +632,7 @@ impl WindowsWindowInner {
         }
     }
 
-    fn handle_dpi_changed_msg(
-        &self,
-        handle: HWND,
-        wparam: WPARAM,
-        lparam: LPARAM,
-    ) -> Option<isize> {
+    fn handle_dpi_changed_msg(&self, handle: HWND, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
         let new_dpi = wparam.loword() as f32;
 
         let is_maximized = self.state.is_maximized();
@@ -848,10 +742,7 @@ impl WindowsWindowInner {
         let callback = self.state.callbacks.hit_test_window_control.take();
         let drag_area = if let Some(mut callback) = callback {
             let area = callback();
-            self.state
-                .callbacks
-                .hit_test_window_control
-                .set(Some(callback));
+            self.state.callbacks.hit_test_window_control.set(Some(callback));
             if let Some(area) = area {
                 match area {
                     WindowControlArea::Drag => Some(HTCAPTION as _),
@@ -1021,10 +912,7 @@ impl WindowsWindowInner {
                     true
                 }
                 (HTCLOSE, HTCLOSE) => {
-                    unsafe {
-                        PostMessageW(Some(handle), WM_CLOSE, WPARAM::default(), LPARAM::default())
-                            .log_err()
-                    };
+                    unsafe { PostMessageW(Some(handle), WM_CLOSE, WPARAM::default(), LPARAM::default()).log_err() };
                     true
                 }
                 _ => false,
@@ -1057,14 +945,7 @@ impl WindowsWindowInner {
         if unsafe { !IsWindowEnabled(handle).as_bool() }
             || matches!(
                 lparam.loword() as u32,
-                HTLEFT
-                    | HTRIGHT
-                    | HTTOP
-                    | HTTOPLEFT
-                    | HTTOPRIGHT
-                    | HTBOTTOM
-                    | HTBOTTOMLEFT
-                    | HTBOTTOMRIGHT
+                HTLEFT | HTRIGHT | HTTOP | HTTOPLEFT | HTTOPRIGHT | HTBOTTOM | HTBOTTOMLEFT | HTBOTTOMRIGHT
             )
         {
             return None;
@@ -1075,12 +956,7 @@ impl WindowsWindowInner {
         Some(0)
     }
 
-    fn handle_system_settings_changed(
-        &self,
-        handle: HWND,
-        wparam: WPARAM,
-        lparam: LPARAM,
-    ) -> Option<isize> {
+    fn handle_system_settings_changed(&self, handle: HWND, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
         if wparam.0 != 0 {
             let display = self.state.display.get();
             self.state.click_state.system_update(wparam.0);
@@ -1147,12 +1023,7 @@ impl WindowsWindowInner {
     fn handle_device_lost(&self, lparam: LPARAM) -> Option<isize> {
         let devices = lparam.0 as *const DirectXDevices;
         let devices = unsafe { &*devices };
-        if let Err(err) = self
-            .state
-            .renderer
-            .borrow_mut()
-            .handle_device_lost(&devices)
-        {
+        if let Err(err) = self.state.renderer.borrow_mut().handle_device_lost(&devices) {
             panic!("Device lost: {err}");
         }
         Some(0)
@@ -1194,9 +1065,7 @@ impl WindowsWindowInner {
                     String::from_utf16(&[high_surrogate, code_point]).ok()
                 } else {
                     // Invalid low surrogate without a preceding high surrogate
-                    log::warn!(
-                        "Received low surrogate without a preceding high surrogate: {code_point:x}"
-                    );
+                    log::warn!("Received low surrogate without a preceding high surrogate: {code_point:x}");
                     None
                 }
             }
@@ -1223,10 +1092,7 @@ impl WindowsWindowInner {
             };
             if let Some(mut callback) = self.state.callbacks.hovered_status_change.take() {
                 callback(true);
-                self.state
-                    .callbacks
-                    .hovered_status_change
-                    .set(Some(callback));
+                self.state.callbacks.hovered_status_change.set(Some(callback));
             }
         }
     }
@@ -1254,12 +1120,7 @@ impl WindowsWindowInner {
     }
 }
 
-fn handle_key_event<F>(
-    wparam: WPARAM,
-    lparam: LPARAM,
-    state: &WindowsWindowState,
-    f: F,
-) -> Option<PlatformInput>
+fn handle_key_event<F>(wparam: WPARAM, lparam: LPARAM, state: &WindowsWindowState, f: F) -> Option<PlatformInput>
 where
     F: FnOnce(Keystroke, bool) -> PlatformInput,
 {
@@ -1355,11 +1216,7 @@ fn parse_immutable(vkey: VIRTUAL_KEY) -> Option<String> {
     )
 }
 
-fn parse_normal_key(
-    vkey: VIRTUAL_KEY,
-    lparam: LPARAM,
-    mut modifiers: Modifiers,
-) -> Option<(Keystroke, bool)> {
+fn parse_normal_key(vkey: VIRTUAL_KEY, lparam: LPARAM, mut modifiers: Modifiers) -> Option<(Keystroke, bool)> {
     let (key_char, prefer_character_input) = process_key(vkey, lparam.hiword());
 
     let key = parse_immutable(vkey).or_else(|| {
@@ -1418,8 +1275,7 @@ fn process_key(vkey: VIRTUAL_KEY, scan_code: u16) -> (Option<String>, bool) {
     let keyboard_state = std::hint::black_box(keyboard_state);
     let ctrl_down = (keyboard_state[VK_CONTROL.0 as usize] & 0x80) != 0;
     let alt_down = (keyboard_state[VK_MENU.0 as usize] & 0x80) != 0;
-    let win_down = (keyboard_state[VK_LWIN.0 as usize] & 0x80) != 0
-        || (keyboard_state[VK_RWIN.0 as usize] & 0x80) != 0;
+    let win_down = (keyboard_state[VK_LWIN.0 as usize] & 0x80) != 0 || (keyboard_state[VK_RWIN.0 as usize] & 0x80) != 0;
 
     let has_modifiers = ctrl_down || alt_down || win_down;
     if !has_modifiers {
@@ -1448,10 +1304,7 @@ fn process_key(vkey: VIRTUAL_KEY, scan_code: u16) -> (Option<String>, bool) {
     };
 
     let c_no_modifiers = &buffer_c_no_modifiers[..result_c_no_modifiers.unsigned_abs() as usize];
-    (
-        key_char,
-        result_c != result_c_no_modifiers || c != c_no_modifiers,
-    )
+    (key_char, result_c != result_c_no_modifiers || c != c_no_modifiers)
 }
 
 fn parse_ime_composition_string(ctx: HIMC, comp_type: IME_COMPOSITION_STRING) -> Option<Vec<u16>> {
@@ -1459,16 +1312,8 @@ fn parse_ime_composition_string(ctx: HIMC, comp_type: IME_COMPOSITION_STRING) ->
         let string_len = ImmGetCompositionStringW(ctx, comp_type, None, 0);
         if string_len >= 0 {
             let mut buffer = vec![0u8; string_len as usize + 2];
-            ImmGetCompositionStringW(
-                ctx,
-                comp_type,
-                Some(buffer.as_mut_ptr() as _),
-                string_len as _,
-            );
-            let wstring = std::slice::from_raw_parts::<u16>(
-                buffer.as_mut_ptr().cast::<u16>(),
-                string_len as usize / 2,
-            );
+            ImmGetCompositionStringW(ctx, comp_type, Some(buffer.as_mut_ptr() as _), string_len as _);
+            let wstring = std::slice::from_raw_parts::<u16>(buffer.as_mut_ptr().cast::<u16>(), string_len as usize / 2);
             Some(wstring.to_vec())
         } else {
             None
@@ -1488,14 +1333,8 @@ fn should_use_ime_cursor_position(ctx: HIMC, cursor_pos: usize) -> bool {
     }
 
     let mut attrs = vec![0u8; attrs_size];
-    let result = unsafe {
-        ImmGetCompositionStringW(
-            ctx,
-            GCS_COMPATTR,
-            Some(attrs.as_mut_ptr() as *mut _),
-            attrs_size as u32,
-        )
-    };
+    let result =
+        unsafe { ImmGetCompositionStringW(ctx, GCS_COMPATTR, Some(attrs.as_mut_ptr() as *mut _), attrs_size as u32) };
     if result <= 0 {
         return false;
     }
@@ -1503,9 +1342,8 @@ fn should_use_ime_cursor_position(ctx: HIMC, cursor_pos: usize) -> bool {
     // Keep the cursor adjacent to the inserted text by only using the suggested position
     // if it's adjacent to unconverted text.
     let at_cursor_is_input = cursor_pos < attrs.len() && attrs[cursor_pos] == (ATTR_INPUT as u8);
-    let before_cursor_is_input = cursor_pos > 0
-        && (cursor_pos - 1) < attrs.len()
-        && attrs[cursor_pos - 1] == (ATTR_INPUT as u8);
+    let before_cursor_is_input =
+        cursor_pos > 0 && (cursor_pos - 1) < attrs.len() && attrs[cursor_pos - 1] == (ATTR_INPUT as u8);
 
     at_cursor_is_input || before_cursor_is_input
 }
@@ -1532,11 +1370,7 @@ pub(crate) fn current_capslock() -> Capslock {
     Capslock { on }
 }
 
-fn get_client_area_insets(
-    handle: HWND,
-    is_maximized: bool,
-    windows_version: WindowsVersion,
-) -> RECT {
+fn get_client_area_insets(handle: HWND, is_maximized: bool, windows_version: WindowsVersion) -> RECT {
     // For maximized windows, Windows outdents the window rect from the screen's client rect
     // by `frame_thickness` on each edge, meaning `insets` must contain `frame_thickness`
     // on all sides (including the top) to avoid the client area extending onto adjacent

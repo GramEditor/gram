@@ -1,9 +1,8 @@
 use crate::{SuppressNotification, Toast, Workspace};
 use anyhow::Context as _;
 use gpui::{
-    AnyView, App, AppContext as _, AsyncWindowContext, ClickEvent, Context, DismissEvent, Entity,
-    EventEmitter, FocusHandle, Focusable, PromptLevel, Render, ScrollHandle, Task,
-    TextStyleRefinement, UnderlineStyle, svg,
+    AnyView, App, AppContext as _, AsyncWindowContext, ClickEvent, Context, DismissEvent, Entity, EventEmitter,
+    FocusHandle, Focusable, PromptLevel, Render, ScrollHandle, Task, TextStyleRefinement, UnderlineStyle, svg,
 };
 use markdown::{Markdown, MarkdownElement, MarkdownStyle};
 use parking_lot::Mutex;
@@ -60,21 +59,14 @@ impl NotificationId {
     }
 }
 
-pub trait Notification:
-    EventEmitter<DismissEvent> + EventEmitter<SuppressEvent> + Focusable + Render
-{
-}
+pub trait Notification: EventEmitter<DismissEvent> + EventEmitter<SuppressEvent> + Focusable + Render {}
 
 pub struct SuppressEvent;
 
 impl Workspace {
     #[cfg(any(test, feature = "test-support"))]
     pub fn notification_ids(&self) -> Vec<NotificationId> {
-        self.notifications
-            .iter()
-            .map(|(id, _)| id)
-            .cloned()
-            .collect()
+        self.notifications.iter().map(|(id, _)| id).cloned().collect()
     }
 
     pub fn show_notification<V: Notification>(
@@ -118,8 +110,7 @@ impl Workspace {
             return;
         }
         self.dismiss_notification(id, cx);
-        self.notifications
-            .push((id.clone(), build_notification(cx)));
+        self.notifications.push((id.clone(), build_notification(cx)));
         cx.notify();
     }
 
@@ -143,13 +134,8 @@ impl Workspace {
         });
     }
 
-    pub fn show_error_with_link<S>(
-        &mut self,
-        err: S,
-        link_text: S,
-        link_url: S,
-        cx: &mut Context<Self>,
-    ) where
+    pub fn show_error_with_link<S>(&mut self, err: S, link_text: S, link_url: S, cx: &mut Context<Self>)
+    where
         S: Into<SharedString>,
     {
         struct PortalError;
@@ -180,16 +166,12 @@ impl Workspace {
                         .primary_message(click_msg.clone())
                         .primary_on_click(move |window, cx| on_click(window, cx))
                 }
-                None => {
-                    simple_message_notification::MessageNotification::new(toast.msg.clone(), cx)
-                }
+                None => simple_message_notification::MessageNotification::new(toast.msg.clone(), cx),
             })
         });
         if toast.autohide {
             cx.spawn(async move |workspace, cx| {
-                cx.background_executor()
-                    .timer(Duration::from_millis(5000))
-                    .await;
+                cx.background_executor().timer(Duration::from_millis(5000)).await;
                 workspace
                     .update(cx, |workspace, cx| workspace.dismiss_toast(&toast.id, cx))
                     .ok();
@@ -222,9 +204,7 @@ impl Workspace {
             .cloned()
             .collect::<Vec<_>>();
         for (id, build_notification) in app_notifications {
-            self.show_notification_without_handling_dismiss_events(&id, cx, |cx| {
-                build_notification(cx)
-            });
+            self.show_notification_without_handling_dismiss_events(&id, cx, |cx| build_notification(cx));
         }
     }
 }
@@ -258,9 +238,7 @@ impl LanguageServerPrompt {
 
     async fn select_option(this: Entity<Self>, ix: usize, cx: &mut AsyncWindowContext) {
         util::maybe!(async move {
-            let potential_future = this.update(cx, |this, _| {
-                this.request.take().map(|request| request.respond(ix))
-            });
+            let potential_future = this.update(cx, |this, _| this.request.take().map(|request| request.respond(ix)));
 
             potential_future? // App Closed
                 .context("Response already sent")?
@@ -322,11 +300,8 @@ impl Render for LanguageServerPrompt {
                                 h_flex()
                                     .gap_1()
                                     .child(
-                                        CopyButton::new(
-                                            "copy-description",
-                                            request.message.clone(),
-                                        )
-                                        .tooltip_label("Copy Description"),
+                                        CopyButton::new("copy-description", request.message.clone())
+                                            .tooltip_label("Copy Description"),
                                     )
                                     .child(
                                         IconButton::new(close_id, close_icon)
@@ -347,15 +322,13 @@ impl Render for LanguageServerPrompt {
                                                     )
                                                 }
                                             })
-                                            .on_click(cx.listener(
-                                                move |_, _: &ClickEvent, _, cx| {
-                                                    if suppress {
-                                                        cx.emit(SuppressEvent);
-                                                    } else {
-                                                        cx.emit(DismissEvent);
-                                                    }
-                                                },
-                                            )),
+                                            .on_click(cx.listener(move |_, _: &ClickEvent, _, cx| {
+                                                if suppress {
+                                                    cx.emit(SuppressEvent);
+                                                } else {
+                                                    cx.emit(DismissEvent);
+                                                }
+                                            })),
                                     ),
                             ),
                     )
@@ -377,8 +350,7 @@ impl Render for LanguageServerPrompt {
                                 let this_handle = this_handle.clone();
                                 window
                                     .spawn(cx, async move |cx| {
-                                        LanguageServerPrompt::select_option(this_handle, ix, cx)
-                                            .await
+                                        LanguageServerPrompt::select_option(this_handle, ix, cx).await
                                     })
                                     .detach()
                             })
@@ -483,10 +455,7 @@ impl Render for ErrorMessagePrompt {
                                     .flex_none()
                                     .mr_2()
                                     .mt(px(-2.0))
-                                    .map(|icon| {
-                                        icon.path(IconName::Warning.path())
-                                            .text_color(Color::Error.color(cx))
-                                    }),
+                                    .map(|icon| icon.path(IconName::Warning.path()).text_color(Color::Error.color(cx))),
                             )
                             .child(
                                 ui::IconButton::new("close", ui::IconName::Close)
@@ -607,41 +576,30 @@ impl RenderOnce for NotificationFrame {
                     .child(
                         v_flex()
                             .gap_0p5()
-                            .when_some(self.title.clone(), |div, title| {
-                                div.child(Label::new(title))
-                            })
+                            .when_some(self.title.clone(), |div, title| div.child(Label::new(title)))
                             .child(div().max_w_96().children(self.contents)),
                     )
                     .when(self.show_close_button, |this| {
-                        this.on_modifiers_changed(move |_, _, cx| cx.notify(entity))
-                            .child(
-                                IconButton::new(close_id, close_icon)
-                                    .tooltip(move |_window, cx| {
-                                        if suppress {
-                                            Tooltip::for_action(
-                                                "Suppress.\nClose with click.",
-                                                &SuppressNotification,
-                                                cx,
-                                            )
-                                        } else if show_suppress_button {
-                                            Tooltip::for_action(
-                                                "Close.\nSuppress with shift-click.",
-                                                &menu::Cancel,
-                                                cx,
-                                            )
-                                        } else {
-                                            Tooltip::for_action("Close", &menu::Cancel, cx)
+                        this.on_modifiers_changed(move |_, _, cx| cx.notify(entity)).child(
+                            IconButton::new(close_id, close_icon)
+                                .tooltip(move |_window, cx| {
+                                    if suppress {
+                                        Tooltip::for_action("Suppress.\nClose with click.", &SuppressNotification, cx)
+                                    } else if show_suppress_button {
+                                        Tooltip::for_action("Close.\nSuppress with shift-click.", &menu::Cancel, cx)
+                                    } else {
+                                        Tooltip::for_action("Close", &menu::Cancel, cx)
+                                    }
+                                })
+                                .on_click({
+                                    let close = self.close.take();
+                                    move |_, window, cx| {
+                                        if let Some(close) = &close {
+                                            close(&suppress, window, cx)
                                         }
-                                    })
-                                    .on_click({
-                                        let close = self.close.take();
-                                        move |_, window, cx| {
-                                            if let Some(close) = &close {
-                                                close(&suppress, window, cx)
-                                            }
-                                        }
-                                    }),
-                            )
+                                    }
+                                }),
+                        )
                     }),
             )
             .children(self.suffix)
@@ -683,8 +641,8 @@ pub mod simple_message_notification {
     use std::sync::Arc;
 
     use gpui::{
-        AnyElement, DismissEvent, EventEmitter, FocusHandle, Focusable, ParentElement, Render,
-        ScrollHandle, SharedString, Styled,
+        AnyElement, DismissEvent, EventEmitter, FocusHandle, Focusable, ParentElement, Render, ScrollHandle,
+        SharedString, Styled,
     };
     use ui::{WithScrollbar, prelude::*};
 
@@ -728,9 +686,7 @@ pub mod simple_message_notification {
             S: Into<SharedString>,
         {
             let message = message.into();
-            Self::new_from_builder(cx, move |_, _| {
-                Label::new(message.clone()).into_any_element()
-            })
+            Self::new_from_builder(cx, move |_, _| Label::new(message.clone()).into_any_element())
         }
 
         pub fn new_from_builder<F>(cx: &mut App, content: F) -> MessageNotification
@@ -982,8 +938,7 @@ impl AppNotifications {
     }
 
     pub fn remove(&mut self, id: &NotificationId) {
-        self.app_notifications
-            .retain(|(existing_id, _)| existing_id != id);
+        self.app_notifications.retain(|(existing_id, _)| existing_id != id);
     }
 }
 
@@ -998,28 +953,27 @@ pub fn show_app_notification<V: Notification + 'static>(
     // Defer notification creation so that windows on the stack can be returned to GPUI
     cx.defer(move |cx| {
         // Handle dismiss events by removing the notification from all workspaces.
-        let build_notification: Arc<dyn Fn(&mut Context<Workspace>) -> AnyView + Send + Sync> =
-            Arc::new({
-                let id = id.clone();
-                move |cx| {
-                    let notification = build_notification(cx);
-                    cx.subscribe(&notification, {
-                        let id = id.clone();
-                        move |_, _, _: &DismissEvent, cx| {
-                            dismiss_app_notification(&id, cx);
-                        }
-                    })
-                    .detach();
-                    cx.subscribe(&notification, {
-                        let id = id.clone();
-                        move |workspace: &mut Workspace, _, _: &SuppressEvent, cx| {
-                            workspace.suppress_notification(&id, cx);
-                        }
-                    })
-                    .detach();
-                    notification.into()
-                }
-            });
+        let build_notification: Arc<dyn Fn(&mut Context<Workspace>) -> AnyView + Send + Sync> = Arc::new({
+            let id = id.clone();
+            move |cx| {
+                let notification = build_notification(cx);
+                cx.subscribe(&notification, {
+                    let id = id.clone();
+                    move |_, _, _: &DismissEvent, cx| {
+                        dismiss_app_notification(&id, cx);
+                    }
+                })
+                .detach();
+                cx.subscribe(&notification, {
+                    let id = id.clone();
+                    move |workspace: &mut Workspace, _, _: &SuppressEvent, cx| {
+                        workspace.suppress_notification(&id, cx);
+                    }
+                })
+                .detach();
+                notification.into()
+            }
+        });
 
         // Store the notification so that new workspaces also receive it.
         GLOBAL_APP_NOTIFICATIONS
@@ -1030,11 +984,8 @@ pub fn show_app_notification<V: Notification + 'static>(
             if let Some(workspace_window) = window.downcast::<Workspace>() {
                 workspace_window
                     .update(cx, |workspace, _window, cx| {
-                        workspace.show_notification_without_handling_dismiss_events(
-                            &id,
-                            cx,
-                            |cx| build_notification(cx),
-                        );
+                        workspace
+                            .show_notification_without_handling_dismiss_events(&id, cx, |cx| build_notification(cx));
                     })
                     .ok(); // Doesn't matter if the windows are dropped
             }
@@ -1051,9 +1002,7 @@ pub fn dismiss_app_notification(id: &NotificationId, cx: &mut App) {
             if let Some(workspace_window) = window.downcast::<Workspace>() {
                 let id = id.clone();
                 workspace_window
-                    .update(cx, |workspace, _window, cx| {
-                        workspace.dismiss_notification(&id, cx)
-                    })
+                    .update(cx, |workspace, _window, cx| workspace.dismiss_notification(&id, cx))
                     .ok();
             }
         }
@@ -1063,8 +1012,7 @@ pub fn dismiss_app_notification(id: &NotificationId, cx: &mut App) {
 pub trait NotifyResultExt {
     type Ok;
 
-    fn notify_err(self, workspace: &mut Workspace, cx: &mut Context<Workspace>)
-    -> Option<Self::Ok>;
+    fn notify_err(self, workspace: &mut Workspace, cx: &mut Context<Workspace>) -> Option<Self::Ok>;
 
     fn notify_async_err(self, cx: &mut AsyncWindowContext) -> Option<Self::Ok>;
 
@@ -1182,8 +1130,7 @@ where
                         display.push('.');
                         display.push(' ')
                     }
-                    let detail =
-                        f(err, window, cx).unwrap_or_else(|| format!("{display}Please try again."));
+                    let detail = f(err, window, cx).unwrap_or_else(|| format!("{display}Please try again."));
                     window.prompt(PromptLevel::Critical, &msg, Some(&detail), &["Ok"], cx)
                 }) {
                     prompt.await.ok();

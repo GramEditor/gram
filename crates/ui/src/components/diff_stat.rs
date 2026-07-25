@@ -25,11 +25,7 @@ impl RenderOnce for DiffStat {
             .child(
                 h_flex()
                     .gap_0p5()
-                    .child(
-                        Icon::new(IconName::Plus)
-                            .size(IconSize::XSmall)
-                            .color(Color::Success),
-                    )
+                    .child(Icon::new(IconName::Plus).size(IconSize::XSmall).color(Color::Success))
                     .child(
                         Label::new(self.added.to_string())
                             .color(Color::Success)
@@ -39,11 +35,7 @@ impl RenderOnce for DiffStat {
             .child(
                 h_flex()
                     .gap_0p5()
-                    .child(
-                        Icon::new(IconName::Dash)
-                            .size(IconSize::XSmall)
-                            .color(Color::Error),
-                    )
+                    .child(Icon::new(IconName::Dash).size(IconSize::XSmall).color(Color::Error))
                     .child(
                         Label::new(self.removed.to_string())
                             .color(Color::Error)
@@ -71,15 +63,9 @@ impl Component for DiffStat {
 
         let diff_stat_example = vec![single_example(
             "Default",
-            container()
-                .child(DiffStat::new("id", 1, 2))
-                .into_any_element(),
+            container().child(DiffStat::new("id", 1, 2)).into_any_element(),
         )];
 
-        Some(
-            example_group(diff_stat_example)
-                .vertical()
-                .into_any_element(),
-        )
+        Some(example_group(diff_stat_example).vertical().into_any_element())
     }
 }

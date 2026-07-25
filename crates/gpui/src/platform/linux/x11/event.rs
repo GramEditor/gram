@@ -44,8 +44,7 @@ pub(crate) fn modifiers_from_state(state: xproto::KeyButMask) -> Modifiers {
 
 pub(crate) fn modifiers_from_xinput_info(modifier_info: xinput::ModifierInfo) -> Modifiers {
     Modifiers {
-        control: modifier_info.effective as u16 & ModMask::CONTROL.bits()
-            == ModMask::CONTROL.bits(),
+        control: modifier_info.effective as u16 & ModMask::CONTROL.bits() == ModMask::CONTROL.bits(),
         alt: modifier_info.effective as u16 & ModMask::M1.bits() == ModMask::M1.bits(),
         shift: modifier_info.effective as u16 & ModMask::SHIFT.bits() == ModMask::SHIFT.bits(),
         platform: modifier_info.effective as u16 & ModMask::M4.bits() == ModMask::M4.bits(),
@@ -65,10 +64,7 @@ pub(crate) fn pressed_button_from_mask(button_mask: u32) -> Option<MouseButton> 
     })
 }
 
-pub(crate) fn get_valuator_axis_index(
-    valuator_mask: &Vec<u32>,
-    valuator_number: u16,
-) -> Option<usize> {
+pub(crate) fn get_valuator_axis_index(valuator_mask: &Vec<u32>, valuator_number: u16) -> Option<usize> {
     // XInput valuator masks have a 1 at the bit indexes corresponding to each
     // valuator present in this event's axisvalues. Axisvalues is ordered from
     // lowest valuator number to highest, so counting bits before the 1 bit for
@@ -91,11 +87,7 @@ fn popcount_upto_bit_index(bit_vec: &Vec<u32>, bit_index: u16) -> u32 {
     } else {
         // Valuator numbers over 32 probably never occur for scroll position, but may as well
         // support it.
-        let leading_popcount: u32 = bit_vec
-            .iter()
-            .take(array_index)
-            .map(|bits| bits.count_ones())
-            .sum();
+        let leading_popcount: u32 = bit_vec.iter().take(array_index).map(|bits| bits.count_ones()).sum();
         popcount + leading_popcount
     }
 }

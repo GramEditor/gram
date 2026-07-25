@@ -16,18 +16,11 @@ pub trait CommonAnimationExt: AnimationExt {
     where
         Self: Transformable + Sized,
     {
-        self.with_keyed_rotate_animation(
-            ElementId::CodeLocation(*std::panic::Location::caller()),
-            duration,
-        )
+        self.with_keyed_rotate_animation(ElementId::CodeLocation(*std::panic::Location::caller()), duration)
     }
 
     /// Render this component as rotating with the given element ID over the given duration.
-    fn with_keyed_rotate_animation(
-        self,
-        id: impl Into<ElementId>,
-        duration: u64,
-    ) -> AnimationElement<Self>
+    fn with_keyed_rotate_animation(self, id: impl Into<ElementId>, duration: u64) -> AnimationElement<Self>
     where
         Self: Transformable + Sized,
     {

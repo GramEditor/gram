@@ -1,7 +1,7 @@
 use editor::Editor;
 use gpui::{
-    Context, Element, EventEmitter, Focusable, FontWeight, IntoElement, ParentElement, Render,
-    StyledText, Subscription, Window,
+    Context, Element, EventEmitter, Focusable, FontWeight, IntoElement, ParentElement, Render, StyledText,
+    Subscription, Window,
 };
 use itertools::Itertools;
 use settings::Settings;
@@ -56,10 +56,7 @@ impl Render for Breadcrumbs {
         };
 
         let prefix_end_ix = cmp::min(segments.len(), MAX_SEGMENTS / 2);
-        let suffix_start_ix = cmp::max(
-            prefix_end_ix,
-            segments.len().saturating_sub(MAX_SEGMENTS / 2),
-        );
+        let suffix_start_ix = cmp::max(prefix_end_ix, segments.len().saturating_sub(MAX_SEGMENTS / 2));
 
         if suffix_start_ix > prefix_end_ix {
             segments.splice(
@@ -108,10 +105,7 @@ impl Render for Breadcrumbs {
             breadcrumbs_stack
         };
 
-        match active_item
-            .downcast::<Editor>()
-            .map(|editor| editor.downgrade())
-        {
+        match active_item.downcast::<Editor>().map(|editor| editor.downgrade()) {
             Some(editor) => element.child(
                 ButtonLike::new("toggle outline view")
                     .child(breadcrumbs)
@@ -119,9 +113,8 @@ impl Render for Breadcrumbs {
                     .on_click({
                         let editor = editor.clone();
                         move |_, window, cx| {
-                            if let Some((editor, callback)) = editor
-                                .upgrade()
-                                .zip(app_actions::outline::TOGGLE_OUTLINE.get())
+                            if let Some((editor, callback)) =
+                                editor.upgrade().zip(app_actions::outline::TOGGLE_OUTLINE.get())
                             {
                                 callback(editor.to_any_view(), window, cx);
                             }
@@ -137,11 +130,7 @@ impl Render for Breadcrumbs {
                                 cx,
                             )
                         } else {
-                            Tooltip::for_action(
-                                "Show Symbol Outline",
-                                &app_actions::outline::ToggleOutline,
-                                cx,
-                            )
+                            Tooltip::for_action("Show Symbol Outline", &app_actions::outline::ToggleOutline, cx)
                         }
                     }),
             ),
@@ -177,9 +166,7 @@ impl ToolbarItemView for Breadcrumbs {
                     this.update(cx, |this, cx| {
                         cx.notify();
                         if let Some(active_item) = this.active_item.as_ref() {
-                            cx.emit(ToolbarItemEvent::ChangeLocation(
-                                active_item.breadcrumb_location(cx),
-                            ))
+                            cx.emit(ToolbarItemEvent::ChangeLocation(active_item.breadcrumb_location(cx)))
                         }
                     })
                     .ok();
@@ -190,12 +177,7 @@ impl ToolbarItemView for Breadcrumbs {
         item.breadcrumb_location(cx)
     }
 
-    fn pane_focus_update(
-        &mut self,
-        pane_focused: bool,
-        _window: &mut Window,
-        _: &mut Context<Self>,
-    ) {
+    fn pane_focus_update(&mut self, pane_focused: bool, _window: &mut Window, _: &mut Context<Self>) {
         self.pane_focused = pane_focused;
     }
 }
@@ -207,12 +189,10 @@ fn apply_dirty_filename_style(
 ) -> Option<gpui::AnyElement> {
     let text = segment.text.replace('\n', "⏎");
 
-    let filename_position = std::path::Path::new(&segment.text)
-        .file_name()
-        .and_then(|f| {
-            let filename_str = f.to_string_lossy();
-            segment.text.rfind(filename_str.as_ref())
-        })?;
+    let filename_position = std::path::Path::new(&segment.text).file_name().and_then(|f| {
+        let filename_str = f.to_string_lossy();
+        segment.text.rfind(filename_str.as_ref())
+    })?;
 
     let bold_weight = FontWeight::BOLD;
     let default_color = Color::Default.color(cx);

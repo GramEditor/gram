@@ -6,15 +6,14 @@ use std::{
 use file_icons::FileIcons;
 use fuzzy::{StringMatch, StringMatchCandidate};
 use gpui::{
-    Action, AppContext, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable,
-    Modifiers, ModifiersChangedEvent, Task, WeakEntity, actions, rems,
+    Action, AppContext, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, Modifiers,
+    ModifiersChangedEvent, Task, WeakEntity, actions, rems,
 };
 use picker::{Picker, PickerDelegate};
 use postage::{sink::Sink, stream::Stream};
 use ui::{
-    App, Color, FluentBuilder, HighlightedLabel, Icon, InteractiveElement, IntoElement,
-    LabelCommon, LabelSize, ListItem, ListItemSpacing, ParentElement, Render, SharedString, Styled,
-    Toggleable, Window, h_flex, v_flex,
+    App, Color, FluentBuilder, HighlightedLabel, Icon, InteractiveElement, IntoElement, LabelCommon, LabelSize,
+    ListItem, ListItemSpacing, ParentElement, Render, SharedString, Styled, Toggleable, Window, h_flex, v_flex,
 };
 use util::ResultExt;
 use workspace::{ModalView, OpenOptions, WORKSPACE_DB, Workspace};
@@ -41,11 +40,7 @@ pub fn init(cx: &mut App) {
 }
 
 impl RecentFiles {
-    fn register(
-        workspace: &mut Workspace,
-        _window: Option<&mut Window>,
-        _: &mut Context<Workspace>,
-    ) {
+    fn register(workspace: &mut Workspace, _window: Option<&mut Window>, _: &mut Context<Workspace>) {
         workspace.register_action(|workspace, _: &Toggle, window, cx| {
             let Some(recent_files) = workspace.active_modal::<Self>(cx) else {
                 Self::open(workspace, window, cx);
@@ -64,8 +59,7 @@ impl RecentFiles {
         let weak_workspace = workspace.weak_handle();
         let initial_modifiers = window.modifiers();
         workspace.toggle_modal(window, cx, |window, cx| {
-            let delegate =
-                RecentFilesDelegate::new(cx.entity().downgrade(), weak_workspace, window, cx);
+            let delegate = RecentFilesDelegate::new(cx.entity().downgrade(), weak_workspace, window, cx);
             let mut recent_files = RecentFiles::new(delegate, window, cx);
             if initial_modifiers.modified() {
                 recent_files.init_modifiers = Some(initial_modifiers);
@@ -82,12 +76,7 @@ impl RecentFiles {
         }
     }
 
-    fn handle_modifiers_changed(
-        &mut self,
-        event: &ModifiersChangedEvent,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn handle_modifiers_changed(&mut self, event: &ModifiersChangedEvent, window: &mut Window, cx: &mut Context<Self>) {
         let Some(init_modifiers) = self.init_modifiers else {
             return;
         };
@@ -196,10 +185,7 @@ impl RecentFilesDelegate {
                 ),
             )
         } else {
-            (
-                HighlightedLabel::new(left.string.clone(), left.positions),
-                None,
-            )
+            (HighlightedLabel::new(left.string.clone(), left.positions), None)
         }
     }
 }
@@ -223,12 +209,7 @@ impl PickerDelegate for RecentFilesDelegate {
         self.selected_index
     }
 
-    fn update_matches(
-        &mut self,
-        query: String,
-        window: &mut Window,
-        cx: &mut ui::Context<Picker<Self>>,
-    ) -> Task<()> {
+    fn update_matches(&mut self, query: String, window: &mut Window, cx: &mut ui::Context<Picker<Self>>) -> Task<()> {
         if query.is_empty() {
             self.matches_from_paths(|(idx, path)| StringMatch {
                 candidate_id: idx,
@@ -252,16 +233,8 @@ impl PickerDelegate for RecentFilesDelegate {
                     .enumerate()
                     .map(|(idx, path)| StringMatchCandidate::new(idx, homify(path).as_str()))
                     .collect::<Vec<_>>();
-                let matches = fuzzy::match_strings(
-                    &candidates,
-                    &query,
-                    true,
-                    true,
-                    10000,
-                    &Default::default(),
-                    executor,
-                )
-                .await;
+                let matches =
+                    fuzzy::match_strings(&candidates, &query, true, true, 10000, &Default::default(), executor).await;
 
                 tx.send(matches).await.log_err();
             }
@@ -284,21 +257,11 @@ impl PickerDelegate for RecentFilesDelegate {
         })
     }
 
-    fn set_selected_index(
-        &mut self,
-        ix: usize,
-        _window: &mut Window,
-        _cx: &mut Context<Picker<Self>>,
-    ) {
+    fn set_selected_index(&mut self, ix: usize, _window: &mut Window, _cx: &mut Context<Picker<Self>>) {
         self.selected_index = ix;
     }
 
-    fn confirm(
-        &mut self,
-        _secondary: bool,
-        window: &mut Window,
-        cx: &mut ui::Context<Picker<Self>>,
-    ) {
+    fn confirm(&mut self, _secondary: bool, window: &mut Window, cx: &mut ui::Context<Picker<Self>>) {
         let Some(selected_match) = self.matches.get(self.selected_index()).cloned() else {
             return;
         };
@@ -317,9 +280,7 @@ impl PickerDelegate for RecentFilesDelegate {
         self.dismissed(window, cx);
     }
     fn dismissed(&mut self, _window: &mut Window, cx: &mut ui::Context<Picker<Self>>) {
-        self.recent_files
-            .update(cx, |_, cx| cx.emit(DismissEvent))
-            .log_err();
+        self.recent_files.update(cx, |_, cx| cx.emit(DismissEvent)).log_err();
     }
 
     fn render_match(
@@ -339,9 +300,12 @@ impl PickerDelegate for RecentFilesDelegate {
                 .start_slot::<Icon>(file_icon)
                 .inset(true)
                 .toggle_state(selected)
-                .child(h_flex().gap_2().py_px().when(right.is_some(), |this| {
-                    this.child(left).child(right.unwrap())
-                })),
+                .child(
+                    h_flex()
+                        .gap_2()
+                        .py_px()
+                        .when(right.is_some(), |this| this.child(left).child(right.unwrap())),
+                ),
         )
     }
 }

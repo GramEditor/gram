@@ -22,11 +22,10 @@ use util::command::{new_smol_command, new_std_command};
 use xkbcommon::xkb::{self, Keycode, Keysym, State};
 
 use crate::{
-    Action, AnyWindowHandle, BackgroundExecutor, ClipboardItem, CursorStyle, DisplayId,
-    ForegroundExecutor, Keymap, LinuxDispatcher, Menu, MenuItem, OwnedMenu, PathPromptOptions,
-    Pixels, Platform, PlatformDisplay, PlatformKeyboardLayout, PlatformKeyboardMapper,
-    PlatformTextSystem, PlatformWindow, Point, Result, RunnableVariant, Task, WindowAppearance,
-    WindowParams, px,
+    Action, AnyWindowHandle, BackgroundExecutor, ClipboardItem, CursorStyle, DisplayId, ForegroundExecutor, Keymap,
+    LinuxDispatcher, Menu, MenuItem, OwnedMenu, PathPromptOptions, Pixels, Platform, PlatformDisplay,
+    PlatformKeyboardLayout, PlatformKeyboardMapper, PlatformTextSystem, PlatformWindow, Point, Result, RunnableVariant,
+    Task, WindowAppearance, WindowParams, px,
 };
 
 #[cfg(any(feature = "wayland", feature = "x11"))]
@@ -40,8 +39,7 @@ pub(crate) const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(400);
 pub(crate) const DOUBLE_CLICK_DISTANCE: Pixels = px(5.0);
 
 #[cfg(any(feature = "wayland", feature = "x11"))]
-const FILE_PICKER_PORTAL_MISSING: &str =
-    "Couldn't open file picker due to missing xdg-desktop-portal implementation.";
+const FILE_PICKER_PORTAL_MISSING: &str = "Couldn't open file picker due to missing xdg-desktop-portal implementation.";
 
 #[cfg(any(feature = "x11", feature = "wayland"))]
 pub trait ResultExt {
@@ -68,13 +66,10 @@ impl<T> ResultExt for anyhow::Result<T> {
                             notification_id,
                             Notification::new("Gram failed to launch")
                                 .body(Some(
-                                    format!("{e:?}. See docs/linux.md for troubleshooting steps.")
-                                        .as_str(),
+                                    format!("{e:?}. See docs/linux.md for troubleshooting steps.").as_str(),
                                 ))
                                 .priority(Priority::High)
-                                .icon(ashpd::desktop::Icon::with_names(&[
-                                    "dialog-question-symbolic",
-                                ])),
+                                .icon(ashpd::desktop::Icon::with_names(&["dialog-question-symbolic"])),
                         ),
                     )
                 }) {
@@ -99,11 +94,7 @@ pub trait LinuxClient {
     fn display(&self, id: DisplayId) -> Option<Rc<dyn PlatformDisplay>>;
     fn primary_display(&self) -> Option<Rc<dyn PlatformDisplay>>;
 
-    fn open_window(
-        &self,
-        handle: AnyWindowHandle,
-        options: WindowParams,
-    ) -> anyhow::Result<Box<dyn PlatformWindow>>;
+    fn open_window(&self, handle: AnyWindowHandle, options: WindowParams) -> anyhow::Result<Box<dyn PlatformWindow>>;
     fn set_cursor_style(&self, style: CursorStyle);
     fn open_uri(&self, uri: &str);
     fn reveal_path(&self, path: PathBuf);
@@ -117,9 +108,7 @@ pub trait LinuxClient {
     fn quit(&self);
 
     #[cfg(any(feature = "wayland", feature = "x11"))]
-    fn window_identifier(
-        &self,
-    ) -> impl Future<Output = Option<ashpd::WindowIdentifier>> + Send + 'static {
+    fn window_identifier(&self) -> impl Future<Output = Option<ashpd::WindowIdentifier>> + Send + 'static {
         std::future::ready::<Option<ashpd::WindowIdentifier>>(None)
     }
 }
@@ -308,11 +297,7 @@ impl<P: LinuxClient + 'static> Platform for P {
         self.window_stack()
     }
 
-    fn open_window(
-        &self,
-        handle: AnyWindowHandle,
-        options: WindowParams,
-    ) -> anyhow::Result<Box<dyn PlatformWindow>> {
+    fn open_window(&self, handle: AnyWindowHandle, options: WindowParams) -> anyhow::Result<Box<dyn PlatformWindow>> {
         self.open_window(handle, options)
     }
 
@@ -324,10 +309,7 @@ impl<P: LinuxClient + 'static> Platform for P {
         self.with_common(|common| common.callbacks.open_urls = Some(callback));
     }
 
-    fn prompt_for_paths(
-        &self,
-        options: PathPromptOptions,
-    ) -> oneshot::Receiver<Result<Option<Vec<PathBuf>>>> {
+    fn prompt_for_paths(&self, options: PathPromptOptions) -> oneshot::Receiver<Result<Option<Vec<PathBuf>>>> {
         let (done_tx, done_rx) = oneshot::channel();
 
         #[cfg(not(any(feature = "wayland", feature = "x11")))]
@@ -404,13 +386,12 @@ impl<P: LinuxClient + 'static> Platform for P {
                 let suggested_name = suggested_name.map(|s| s.to_owned());
 
                 async move {
-                    let mut request_builder =
-                        ashpd::desktop::file_chooser::SaveFileRequest::default()
-                            .identifier(identifier.await)
-                            .modal(true)
-                            .title("Save File")
-                            .current_folder(directory)
-                            .expect("pathbuf should not be nul terminated");
+                    let mut request_builder = ashpd::desktop::file_chooser::SaveFileRequest::default()
+                        .identifier(identifier.await)
+                        .modal(true)
+                        .title("Save File")
+                        .current_folder(directory)
+                        .expect("pathbuf should not be nul terminated");
 
                     if let Some(suggested_name) = suggested_name {
                         request_builder = request_builder.current_name(suggested_name.as_str());
@@ -565,11 +546,7 @@ impl<P: LinuxClient + 'static> Platform for P {
 }
 
 #[cfg(any(feature = "wayland", feature = "x11"))]
-pub(super) fn open_uri_internal(
-    executor: BackgroundExecutor,
-    uri: &str,
-    activation_token: Option<String>,
-) {
+pub(super) fn open_uri_internal(executor: BackgroundExecutor, uri: &str, activation_token: Option<String>) {
     if let Some(uri) = ashpd::Uri::parse(uri).log_err() {
         executor
             .spawn(async move {
@@ -604,11 +581,7 @@ pub(super) fn open_uri_internal(
 }
 
 #[cfg(any(feature = "x11", feature = "wayland"))]
-pub(super) fn reveal_path_internal(
-    executor: BackgroundExecutor,
-    path: PathBuf,
-    activation_token: Option<String>,
-) {
+pub(super) fn reveal_path_internal(executor: BackgroundExecutor, path: PathBuf, activation_token: Option<String>) {
     executor
         .spawn(async move {
             if let Some(dir) = File::open(path.clone()).log_err() {
@@ -645,13 +618,8 @@ pub(super) fn get_xkb_compose_state(cx: &xkb::Context) -> Option<xkb::compose::S
     locales.push(OsString::from("C"));
     let mut state: Option<xkb::compose::State> = None;
     for locale in locales {
-        if let Ok(table) =
-            xkb::compose::Table::new_from_locale(cx, &locale, xkb::compose::COMPILE_NO_FLAGS)
-        {
-            state = Some(xkb::compose::State::new(
-                &table,
-                xkb::compose::STATE_NO_FLAGS,
-            ));
+        if let Ok(table) = xkb::compose::Table::new_from_locale(cx, &locale, xkb::compose::COMPILE_NO_FLAGS) {
+            state = Some(xkb::compose::State::new(&table, xkb::compose::STATE_NO_FLAGS));
             break;
         }
     }
@@ -662,10 +630,7 @@ pub(super) fn get_xkb_compose_state(cx: &xkb::Context) -> Option<xkb::compose::S
 pub(super) const PIPE_READ_TIMEOUT: Duration = Duration::from_secs(4);
 
 #[cfg(any(feature = "wayland", feature = "x11"))]
-pub(super) fn read_fd_with_timeout(
-    mut fd: filedescriptor::FileDescriptor,
-    timeout: Duration,
-) -> Result<Vec<u8>> {
+pub(super) fn read_fd_with_timeout(mut fd: filedescriptor::FileDescriptor, timeout: Duration) -> Result<Vec<u8>> {
     fd.set_non_blocking(true)?;
     let mut buffer = Vec::new();
     let mut chunk = [0u8; 8192];
@@ -677,9 +642,7 @@ pub(super) fn read_fd_with_timeout(
         }];
         let ready = match filedescriptor::poll(&mut poll_fds, Some(timeout)) {
             Ok(ready) => ready,
-            Err(filedescriptor::Error::Poll(err))
-                if err.kind() == std::io::ErrorKind::Interrupted =>
-            {
+            Err(filedescriptor::Error::Poll(err)) if err.kind() == std::io::ErrorKind::Interrupted => {
                 continue;
             }
             Err(err) => return Err(err.into()),
@@ -691,8 +654,7 @@ pub(super) fn read_fd_with_timeout(
             Ok(0) => return Ok(buffer),
             Ok(len) => buffer.extend_from_slice(&chunk[..len]),
             Err(err)
-                if err.kind() == std::io::ErrorKind::WouldBlock
-                    || err.kind() == std::io::ErrorKind::Interrupted => {}
+                if err.kind() == std::io::ErrorKind::WouldBlock || err.kind() == std::io::ErrorKind::Interrupted => {}
             Err(err) => return Err(err.into()),
         }
     }
@@ -808,11 +770,7 @@ fn guess_ascii(keycode: Keycode, shift: bool) -> Option<char> {
 
 #[cfg(any(feature = "wayland", feature = "x11"))]
 impl crate::Keystroke {
-    pub(super) fn from_xkb(
-        state: &State,
-        mut modifiers: crate::Modifiers,
-        keycode: Keycode,
-    ) -> Self {
+    pub(super) fn from_xkb(state: &State, mut modifiers: crate::Modifiers, keycode: Keycode) -> Self {
         let key_utf32 = state.key_get_utf32(keycode);
         let key_utf8 = state.key_get_utf8(keycode);
         let key_sym = state.key_get_one_sym(keycode);
@@ -895,12 +853,8 @@ impl crate::Keystroke {
                     // map ctrl-a to `a`
                     // ctrl-0..9 may emit control codes like ctrl-[, but
                     // we don't want to map them to `[`
-                    } else if key_utf32 <= 0x1f
-                        && !name.chars().next().is_some_and(|c| c.is_ascii_digit())
-                    {
-                        ((key_utf32 as u8 + 0x40) as char)
-                            .to_ascii_lowercase()
-                            .to_string()
+                    } else if key_utf32 <= 0x1f && !name.chars().next().is_some_and(|c| c.is_ascii_digit()) {
+                        ((key_utf32 as u8 + 0x40) as char).to_ascii_lowercase().to_string()
                     } else {
                         name
                     }
@@ -922,8 +876,7 @@ impl crate::Keystroke {
         }
 
         // Ignore control characters (and DEL) for the purposes of key_char
-        let key_char =
-            (key_utf32 >= 32 && key_utf32 != 127 && !key_utf8.is_empty()).then_some(key_utf8);
+        let key_char = (key_utf32 >= 32 && key_utf32 != 127 && !key_utf8.is_empty()).then_some(key_utf8);
 
         Self {
             modifiers,
@@ -998,10 +951,8 @@ impl crate::Modifiers {
     pub(super) fn from_xkb(keymap_state: &State) -> Self {
         let shift = keymap_state.mod_name_is_active(xkb::MOD_NAME_SHIFT, xkb::STATE_MODS_EFFECTIVE);
         let alt = keymap_state.mod_name_is_active(xkb::MOD_NAME_ALT, xkb::STATE_MODS_EFFECTIVE);
-        let control =
-            keymap_state.mod_name_is_active(xkb::MOD_NAME_CTRL, xkb::STATE_MODS_EFFECTIVE);
-        let platform =
-            keymap_state.mod_name_is_active(xkb::MOD_NAME_LOGO, xkb::STATE_MODS_EFFECTIVE);
+        let control = keymap_state.mod_name_is_active(xkb::MOD_NAME_CTRL, xkb::STATE_MODS_EFFECTIVE);
+        let platform = keymap_state.mod_name_is_active(xkb::MOD_NAME_LOGO, xkb::STATE_MODS_EFFECTIVE);
         Self {
             shift,
             alt,
@@ -1029,18 +980,12 @@ mod tests {
     fn test_is_within_click_distance() {
         let zero = Point::new(px(0.0), px(0.0));
         assert!(is_within_click_distance(zero, Point::new(px(5.0), px(5.0))));
-        assert!(is_within_click_distance(
-            zero,
-            Point::new(px(-4.9), px(5.0))
-        ));
+        assert!(is_within_click_distance(zero, Point::new(px(-4.9), px(5.0))));
         assert!(is_within_click_distance(
             Point::new(px(3.0), px(2.0)),
             Point::new(px(-2.0), px(-2.0))
         ));
-        assert!(!is_within_click_distance(
-            zero,
-            Point::new(px(5.0), px(5.1))
-        ),);
+        assert!(!is_within_click_distance(zero, Point::new(px(5.0), px(5.1))),);
     }
 
     #[cfg(any(feature = "wayland", feature = "x11"))]
@@ -1079,10 +1024,7 @@ mod tests {
             let elapsed = started.elapsed();
 
             let err = result.unwrap_err();
-            assert!(
-                err.to_string().contains("timed out"),
-                "unexpected error: {err}"
-            );
+            assert!(err.to_string().contains("timed out"), "unexpected error: {err}");
             assert!(elapsed >= timeout, "returned before the timeout elapsed");
         }
 
@@ -1093,10 +1035,7 @@ mod tests {
             let _open_writer = pipe.write;
 
             let err = read_fd_with_timeout(pipe.read, Duration::from_millis(50)).unwrap_err();
-            assert!(
-                err.to_string().contains("timed out"),
-                "unexpected error: {err}"
-            );
+            assert!(err.to_string().contains("timed out"), "unexpected error: {err}");
         }
 
         #[test]

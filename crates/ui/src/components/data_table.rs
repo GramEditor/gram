@@ -1,18 +1,17 @@
 use std::{ops::Range, rc::Rc};
 
 use gpui::{
-    AbsoluteLength, AppContext, Context, DefiniteLength, DragMoveEvent, Entity, EntityId,
-    FocusHandle, Length, ListHorizontalSizingBehavior, ListSizingBehavior, ListState, Point,
-    Stateful, UniformListScrollHandle, WeakEntity, list, transparent_black, uniform_list,
+    AbsoluteLength, AppContext, Context, DefiniteLength, DragMoveEvent, Entity, EntityId, FocusHandle, Length,
+    ListHorizontalSizingBehavior, ListSizingBehavior, ListState, Point, Stateful, UniformListScrollHandle, WeakEntity,
+    list, transparent_black, uniform_list,
 };
 
 use crate::{
-    ActiveTheme as _, AnyElement, App, Button, ButtonCommon as _, ButtonStyle, Color, Component,
-    ComponentScope, Div, ElementId, FixedWidth as _, FluentBuilder as _, Indicator,
-    InteractiveElement, IntoElement, ParentElement, Pixels, RegisterComponent, RenderOnce,
-    ScrollAxes, ScrollableHandle, Scrollbars, SharedString, StatefulInteractiveElement, Styled,
-    StyledExt as _, StyledTypography, Window, WithScrollbar, div, example_group_with_title, h_flex,
-    px, single_example,
+    ActiveTheme as _, AnyElement, App, Button, ButtonCommon as _, ButtonStyle, Color, Component, ComponentScope, Div,
+    ElementId, FixedWidth as _, FluentBuilder as _, Indicator, InteractiveElement, IntoElement, ParentElement, Pixels,
+    RegisterComponent, RenderOnce, ScrollAxes, ScrollableHandle, Scrollbars, SharedString, StatefulInteractiveElement,
+    Styled, StyledExt as _, StyledTypography, Window, WithScrollbar, div, example_group_with_title, h_flex, px,
+    single_example,
     table_row::{IntoTableRow as _, TableRow},
     v_flex,
 };
@@ -27,9 +26,7 @@ pub mod table_row {
 
     use std::{
         any::type_name,
-        ops::{
-            Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive,
-        },
+        ops::{Index, IndexMut, Range, RangeFrom, RangeFull, RangeInclusive, RangeTo, RangeToInclusive},
     };
 
     #[derive(Clone, Debug, PartialEq, Eq)]
@@ -71,12 +68,9 @@ pub mod table_row {
         /// # Panics
         /// Panics if `col` is out of bounds (i.e., `col >= self.cols()`).
         pub fn expect_get(&self, col: usize) -> &T {
-            self.0.get(col).unwrap_or_else(|| {
-                panic!(
-                    "Expected table row of `{}` to have {col:?}",
-                    type_name::<T>()
-                )
-            })
+            self.0
+                .get(col)
+                .unwrap_or_else(|| panic!("Expected table row of `{}` to have {col:?}", type_name::<T>()))
         }
 
         pub fn get(&self, col: usize) -> Option<&T> {
@@ -231,8 +225,7 @@ pub type UncheckedTableRow<T> = Vec<T>;
 struct DraggedColumn(usize);
 
 struct UniformListData {
-    render_list_of_rows_fn:
-        Box<dyn Fn(Range<usize>, &mut Window, &mut App) -> Vec<UncheckedTableRow<AnyElement>>>,
+    render_list_of_rows_fn: Box<dyn Fn(Range<usize>, &mut Window, &mut App) -> Vec<UncheckedTableRow<AnyElement>>>,
     element_id: ElementId,
     row_count: usize,
 }
@@ -368,9 +361,8 @@ impl TableInteractionState {
                 {
                     let hovered = window.use_state(cx, |_window, _cx| false);
 
-                    resize_divider = resize_divider.when(*hovered.read(cx), |div| {
-                        div.bg(cx.theme().colors().border_focused)
-                    });
+                    resize_divider =
+                        resize_divider.when(*hovered.read(cx), |div| div.bg(cx.theme().colors().border_focused));
 
                     resize_handle = resize_handle
                         .on_hover(move |&was_hovered, _, cx| hovered.write(cx, was_hovered))
@@ -379,12 +371,7 @@ impl TableInteractionState {
                             this.on_click(move |event, window, cx| {
                                 if event.click_count() >= 2 {
                                     columns.update(cx, |columns, _| {
-                                        columns.on_double_click(
-                                            column_ix,
-                                            &initial_sizes,
-                                            &resizable_columns,
-                                            window,
-                                        );
+                                        columns.on_double_click(column_ix, &initial_sizes, &resizable_columns, window);
                                     })
                                 }
 
@@ -456,9 +443,7 @@ impl TableColumnWidths {
     fn get_fraction(length: &DefiniteLength, bounds_width: Pixels, rem_size: Pixels) -> f32 {
         match length {
             DefiniteLength::Absolute(AbsoluteLength::Pixels(pixels)) => *pixels / bounds_width,
-            DefiniteLength::Absolute(AbsoluteLength::Rems(rems_width)) => {
-                rems_width.to_pixels(rem_size) / bounds_width
-            }
+            DefiniteLength::Absolute(AbsoluteLength::Rems(rems_width)) => rems_width.to_pixels(rem_size) / bounds_width,
             DefiniteLength::Fraction(fraction) => *fraction,
         }
     }
@@ -472,18 +457,12 @@ impl TableColumnWidths {
     ) {
         let bounds_width = self.cached_bounds_width;
         let rem_size = window.rem_size();
-        let initial_sizes =
-            initial_sizes.map_ref(|length| Self::get_fraction(length, bounds_width, rem_size));
+        let initial_sizes = initial_sizes.map_ref(|length| Self::get_fraction(length, bounds_width, rem_size));
         let widths = self
             .widths
             .map_ref(|length| Self::get_fraction(length, bounds_width, rem_size));
 
-        let updated_widths = Self::reset_to_initial_size(
-            double_click_position,
-            widths,
-            initial_sizes,
-            resize_behavior,
-        );
+        let updated_widths = Self::reset_to_initial_size(double_click_position, widths, initial_sizes, resize_behavior);
         self.widths = updated_widths.map(DefiniteLength::Fraction);
         self.visible_widths = self.widths.clone(); // previously was copy
     }
@@ -533,10 +512,8 @@ impl TableColumnWidths {
 
         let diff = initial_sizes[col_idx] - widths[col_idx];
 
-        let left_diff =
-            initial_sizes[..col_idx].iter().sum::<f32>() - widths[..col_idx].iter().sum::<f32>();
-        let right_diff = initial_sizes[col_idx + 1..].iter().sum::<f32>()
-            - widths[col_idx + 1..].iter().sum::<f32>();
+        let left_diff = initial_sizes[..col_idx].iter().sum::<f32>() - widths[..col_idx].iter().sum::<f32>();
+        let right_diff = initial_sizes[col_idx + 1..].iter().sum::<f32>() - widths[col_idx + 1..].iter().sum::<f32>();
 
         let go_left_first = if diff < 0.0 {
             left_diff > right_diff
@@ -545,30 +522,16 @@ impl TableColumnWidths {
         };
 
         if !go_left_first {
-            let diff_remaining =
-                Self::propagate_resize_diff(diff, col_idx, &mut widths, resize_behavior, 1);
+            let diff_remaining = Self::propagate_resize_diff(diff, col_idx, &mut widths, resize_behavior, 1);
 
             if diff_remaining != 0.0 && col_idx > 0 {
-                Self::propagate_resize_diff(
-                    diff_remaining,
-                    col_idx,
-                    &mut widths,
-                    resize_behavior,
-                    -1,
-                );
+                Self::propagate_resize_diff(diff_remaining, col_idx, &mut widths, resize_behavior, -1);
             }
         } else {
-            let diff_remaining =
-                Self::propagate_resize_diff(diff, col_idx, &mut widths, resize_behavior, -1);
+            let diff_remaining = Self::propagate_resize_diff(diff, col_idx, &mut widths, resize_behavior, -1);
 
             if diff_remaining != 0.0 {
-                Self::propagate_resize_diff(
-                    diff_remaining,
-                    col_idx,
-                    &mut widths,
-                    resize_behavior,
-                    1,
-                );
+                Self::propagate_resize_diff(diff_remaining, col_idx, &mut widths, resize_behavior, 1);
             }
         }
 
@@ -706,8 +669,7 @@ impl TableWidths {
         TableWidths {
             initial: widths,
             current: None,
-            resizable: vec![TableResizeBehavior::None; expected_length]
-                .into_table_row(expected_length),
+            resizable: vec![TableResizeBehavior::None; expected_length].into_table_row(expected_length),
         }
     }
 
@@ -762,12 +724,7 @@ impl Table {
         mut self,
         id: impl Into<ElementId>,
         row_count: usize,
-        render_item_fn: impl Fn(
-            Range<usize>,
-            &mut Window,
-            &mut App,
-        ) -> Vec<UncheckedTableRow<AnyElement>>
-        + 'static,
+        render_item_fn: impl Fn(Range<usize>, &mut Window, &mut App) -> Vec<UncheckedTableRow<AnyElement>> + 'static,
     ) -> Self {
         self.rows = TableContents::UniformList(UniformListData {
             element_id: id.into(),
@@ -833,21 +790,13 @@ impl Table {
     }
 
     pub fn header(mut self, headers: UncheckedTableRow<impl IntoElement>) -> Self {
-        self.headers = Some(
-            headers
-                .into_table_row(self.cols)
-                .map(IntoElement::into_any_element),
-        );
+        self.headers = Some(headers.into_table_row(self.cols).map(IntoElement::into_any_element));
         self
     }
 
     pub fn row(mut self, items: UncheckedTableRow<impl IntoElement>) -> Self {
         if let Some(rows) = self.rows.rows_mut() {
-            rows.push(
-                items
-                    .into_table_row(self.cols)
-                    .map(IntoElement::into_any_element),
-            );
+            rows.push(items.into_table_row(self.cols).map(IntoElement::into_any_element));
         }
         self
     }
@@ -867,9 +816,7 @@ impl Table {
     ) -> Self {
         if let Some(table_widths) = self.col_widths.as_mut() {
             table_widths.resizable = resizable.into_table_row(self.cols);
-            let column_widths = table_widths
-                .current
-                .get_or_insert_with(|| column_widths.clone());
+            let column_widths = table_widths.current.get_or_insert_with(|| column_widths.clone());
 
             column_widths.update(cx, |widths, _| {
                 if !widths.initialized {
@@ -896,10 +843,7 @@ impl Table {
     }
 
     /// Provide a callback that is invoked when the table is rendered without any rows
-    pub fn empty_table_callback(
-        mut self,
-        callback: impl Fn(&mut Window, &mut App) -> AnyElement + 'static,
-    ) -> Self {
+    pub fn empty_table_callback(mut self, callback: impl Fn(&mut Window, &mut App) -> AnyElement + 'static) -> Self {
         self.empty_table_callback = Some(Rc::new(callback));
         self
     }
@@ -936,9 +880,7 @@ pub fn render_table_row(
     let cols = items.cols();
     let column_widths = table_context
         .column_widths
-        .map_or(vec![None; cols].into_table_row(cols), |widths| {
-            widths.map(Some)
-        });
+        .map_or(vec![None; cols].into_table_row(cols), |widths| widths.map(Some));
 
     let mut row = div()
         // NOTE: `h_flex()` sneakily applies `items_center()` which is not default behavior for div element.
@@ -992,13 +934,9 @@ pub fn render_table_header(
     let cols = headers.cols();
     let column_widths = table_context
         .column_widths
-        .map_or(vec![None; cols].into_table_row(cols), |widths| {
-            widths.map(Some)
-        });
+        .map_or(vec![None; cols].into_table_row(cols), |widths| widths.map(Some));
 
-    let element_id = entity_id
-        .map(|entity| entity.to_string())
-        .unwrap_or_default();
+    let element_id = entity_id.map(|entity| entity.to_string()).unwrap_or_default();
 
     let shared_element_id: SharedString = format!("table-{}", element_id).into();
 
@@ -1020,10 +958,7 @@ pub fn render_table_header(
                 .map(|((header_idx, h), width)| {
                     base_cell_style_text(width, table_context.use_ui_font, cx)
                         .child(h)
-                        .id(ElementId::NamedInteger(
-                            shared_element_id.clone(),
-                            header_idx as u64,
-                        ))
+                        .id(ElementId::NamedInteger(shared_element_id.clone(), header_idx as u64))
                         .when_some(
                             columns_widths.as_ref().cloned(),
                             |this, (column_widths, resizables, initial_sizes)| {
@@ -1130,8 +1065,7 @@ impl RenderOnce for Table {
                             widths
                                 .update(cx, |widths, _| {
                                     // This works because all children x axis bounds are the same
-                                    widths.cached_bounds_width =
-                                        bounds[0].right() - bounds[0].left();
+                                    widths.cached_bounds_width = bounds[0].right() - bounds[0].left();
                                 })
                                 .ok();
                         }
@@ -1155,42 +1089,26 @@ impl RenderOnce for Table {
                     .map(|parent| match self.rows {
                         TableContents::Vec(items) => {
                             parent.children(items.into_iter().enumerate().map(|(index, row)| {
-                                div().child(render_table_row(
-                                    index,
-                                    row,
-                                    table_context.clone(),
-                                    window,
-                                    cx,
-                                ))
+                                div().child(render_table_row(index, row, table_context.clone(), window, cx))
                             }))
                         }
                         TableContents::UniformList(uniform_list_data) => parent.child(
-                            uniform_list(
-                                uniform_list_data.element_id,
-                                uniform_list_data.row_count,
-                                {
-                                    let render_item_fn = uniform_list_data.render_list_of_rows_fn;
-                                    move |range: Range<usize>, window, cx| {
-                                        let elements = render_item_fn(range.clone(), window, cx)
-                                            .into_iter()
-                                            .map(|raw_row| raw_row.into_table_row(self.cols))
-                                            .collect::<Vec<_>>();
-                                        elements
-                                            .into_iter()
-                                            .zip(range)
-                                            .map(|(row, row_index)| {
-                                                render_table_row(
-                                                    row_index,
-                                                    row,
-                                                    table_context.clone(),
-                                                    window,
-                                                    cx,
-                                                )
-                                            })
-                                            .collect()
-                                    }
-                                },
-                            )
+                            uniform_list(uniform_list_data.element_id, uniform_list_data.row_count, {
+                                let render_item_fn = uniform_list_data.render_list_of_rows_fn;
+                                move |range: Range<usize>, window, cx| {
+                                    let elements = render_item_fn(range.clone(), window, cx)
+                                        .into_iter()
+                                        .map(|raw_row| raw_row.into_table_row(self.cols))
+                                        .collect::<Vec<_>>();
+                                    elements
+                                        .into_iter()
+                                        .zip(range)
+                                        .map(|(row, row_index)| {
+                                            render_table_row(row_index, row, table_context.clone(), window, cx)
+                                        })
+                                        .collect()
+                                }
+                            })
                             .size_full()
                             .flex_grow()
                             .with_sizing_behavior(ListSizingBehavior::Auto)
@@ -1199,28 +1117,16 @@ impl RenderOnce for Table {
                             } else {
                                 ListHorizontalSizingBehavior::FitList
                             })
-                            .when_some(
-                                interaction_state.as_ref(),
-                                |this, state| {
-                                    this.track_scroll(
-                                        &state.read_with(cx, |s, _| s.scroll_handle.clone()),
-                                    )
-                                },
-                            ),
+                            .when_some(interaction_state.as_ref(), |this, state| {
+                                this.track_scroll(&state.read_with(cx, |s, _| s.scroll_handle.clone()))
+                            }),
                         ),
                         TableContents::VariableRowHeightList(variable_list_data) => parent.child(
                             list(variable_list_data.list_state.clone(), {
                                 let render_item_fn = variable_list_data.render_row_fn;
                                 move |row_index: usize, window: &mut Window, cx: &mut App| {
-                                    let row = render_item_fn(row_index, window, cx)
-                                        .into_table_row(self.cols);
-                                    render_table_row(
-                                        row_index,
-                                        row,
-                                        table_context.clone(),
-                                        window,
-                                        cx,
-                                    )
+                                    let row = render_item_fn(row_index, window, cx).into_table_row(self.cols);
+                                    render_table_row(row_index, row, table_context.clone(), window, cx)
                                 }
                             })
                             .size_full()
@@ -1266,9 +1172,7 @@ impl RenderOnce for Table {
                 }
             })
             .when_some(
-                no_rows_rendered
-                    .then_some(self.empty_table_callback)
-                    .flatten(),
+                no_rows_rendered.then_some(self.empty_table_callback).flatten(),
                 |this, callback| {
                     this.child(
                         h_flex()
@@ -1419,11 +1323,7 @@ mod test {
             .join("|")
     }
 
-    fn parse_resize_behavior(
-        input: &str,
-        total_size: f32,
-        expected_cols: usize,
-    ) -> Vec<TableResizeBehavior> {
+    fn parse_resize_behavior(input: &str, total_size: f32, expected_cols: usize) -> Vec<TableResizeBehavior> {
         let mut resize_behavior = Vec::with_capacity(expected_cols);
         for col in input.split('|') {
             if col.starts_with('X') || col.is_empty() {
@@ -1469,12 +1369,7 @@ mod test {
         }
 
         #[track_caller]
-        fn check_reset_size(
-            initial_sizes: &str,
-            widths: &str,
-            expected: &str,
-            resize_behavior: &str,
-        ) {
+        fn check_reset_size(initial_sizes: &str, widths: &str, expected: &str, resize_behavior: &str) {
             let (initial_sizes, total_1, None) = parse(initial_sizes) else {
                 panic!("invalid test input: initial sizes should not be marked");
             };
@@ -1488,10 +1383,7 @@ mod test {
             let (expected, total_3, None) = parse(expected) else {
                 panic!("invalid test input: expected should not be marked: {expected:?}");
             };
-            assert_eq!(
-                total_2, total_3,
-                "invalid test input: total width not the same"
-            );
+            assert_eq!(total_2, total_3, "invalid test input: total width not the same");
             let cols = initial_sizes.len();
             let resize_behavior_vec = parse_resize_behavior(resize_behavior, total_1, cols);
             let resize_behavior = TableRow::from_vec(resize_behavior_vec, cols);
@@ -1661,10 +1553,7 @@ mod test {
             let (expected, total_2, None) = parse(expected) else {
                 panic!("invalid test input: expected should not be marked: {expected:?}");
             };
-            assert_eq!(
-                total_1, total_2,
-                "invalid test input: total width not the same"
-            );
+            assert_eq!(total_1, total_2, "invalid test input: total width not the same");
             let cols = widths.len();
             let resize_behavior_vec = parse_resize_behavior(resize_behavior, total_1, cols);
             let resize_behavior = TableRow::from_vec(resize_behavior_vec, cols);
@@ -1672,12 +1561,7 @@ mod test {
             let distance = distance as f32 / total_1;
 
             let mut widths_table_row = TableRow::from_vec(widths, cols);
-            TableColumnWidths::drag_column_handle(
-                distance,
-                column_index,
-                &mut widths_table_row,
-                &resize_behavior,
-            );
+            TableColumnWidths::drag_column_handle(distance, column_index, &mut widths_table_row, &resize_behavior);
 
             let result_widths = widths_table_row.as_slice();
             let is_eq = is_almost_eq(result_widths, &expected);

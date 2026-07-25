@@ -3,9 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::{
-    AnyElement, App, Element, ElementId, GlobalElementId, InspectorElementId, IntoElement, Window,
-};
+use crate::{AnyElement, App, Element, ElementId, GlobalElementId, InspectorElementId, IntoElement, Window};
 
 pub use easing::*;
 use smallvec::SmallVec;
@@ -145,8 +143,7 @@ impl<E: IntoElement + 'static> Element for AnimationElement<E> {
             });
             let animation_ix = state.animation_ix;
 
-            let mut delta = state.start.elapsed().as_secs_f32()
-                / self.animations[animation_ix].duration.as_secs_f32();
+            let mut delta = state.start.elapsed().as_secs_f32() / self.animations[animation_ix].duration.as_secs_f32();
 
             let mut done = false;
             if delta > 1.0 {
@@ -164,10 +161,7 @@ impl<E: IntoElement + 'static> Element for AnimationElement<E> {
             }
             let delta = (self.animations[animation_ix].easing)(delta);
 
-            debug_assert!(
-                (0.0..=1.0).contains(&delta),
-                "delta should always be between 0 and 1"
-            );
+            debug_assert!((0.0..=1.0).contains(&delta), "delta should always be between 0 and 1");
 
             let element = self.element.take().expect("should only be called once");
             let mut element = (self.animator)(element, animation_ix, delta).into_any_element();

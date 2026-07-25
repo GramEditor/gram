@@ -94,17 +94,12 @@ impl FileIcons {
                 .map(|icon_definition| icon_definition.path.clone())
         }
 
-        get_icon_for_type(GlobalTheme::icon_theme(cx), typ).or_else(|| {
-            Self::default_icon_theme(cx).and_then(|icon_theme| get_icon_for_type(&icon_theme, typ))
-        })
+        get_icon_for_type(GlobalTheme::icon_theme(cx), typ)
+            .or_else(|| Self::default_icon_theme(cx).and_then(|icon_theme| get_icon_for_type(&icon_theme, typ)))
     }
 
     pub fn get_folder_icon(expanded: bool, path: &Path, cx: &App) -> Option<SharedString> {
-        fn get_folder_icon(
-            icon_theme: &Arc<IconTheme>,
-            path: &Path,
-            expanded: bool,
-        ) -> Option<SharedString> {
+        fn get_folder_icon(icon_theme: &Arc<IconTheme>, path: &Path, expanded: bool) -> Option<SharedString> {
             let name = path.file_name()?.to_str()?.trim();
             if name.is_empty() {
                 return None;
@@ -121,8 +116,7 @@ impl FileIcons {
 
         get_folder_icon(GlobalTheme::icon_theme(cx), path, expanded)
             .or_else(|| {
-                Self::default_icon_theme(cx)
-                    .and_then(|icon_theme| get_folder_icon(&icon_theme, path, expanded))
+                Self::default_icon_theme(cx).and_then(|icon_theme| get_folder_icon(&icon_theme, path, expanded))
             })
             .or_else(|| {
                 // If we can't find a specific folder icon for the folder at the given path, fall back to the generic folder
@@ -132,10 +126,7 @@ impl FileIcons {
     }
 
     fn get_generic_folder_icon(expanded: bool, cx: &App) -> Option<SharedString> {
-        fn get_generic_folder_icon(
-            icon_theme: &Arc<IconTheme>,
-            expanded: bool,
-        ) -> Option<SharedString> {
+        fn get_generic_folder_icon(icon_theme: &Arc<IconTheme>, expanded: bool) -> Option<SharedString> {
             if expanded {
                 icon_theme.directory_icons.expanded.clone()
             } else {
@@ -144,8 +135,7 @@ impl FileIcons {
         }
 
         get_generic_folder_icon(GlobalTheme::icon_theme(cx), expanded).or_else(|| {
-            Self::default_icon_theme(cx)
-                .and_then(|icon_theme| get_generic_folder_icon(&icon_theme, expanded))
+            Self::default_icon_theme(cx).and_then(|icon_theme| get_generic_folder_icon(&icon_theme, expanded))
         })
     }
 
@@ -158,9 +148,7 @@ impl FileIcons {
             }
         }
 
-        get_chevron_icon(GlobalTheme::icon_theme(cx), expanded).or_else(|| {
-            Self::default_icon_theme(cx)
-                .and_then(|icon_theme| get_chevron_icon(&icon_theme, expanded))
-        })
+        get_chevron_icon(GlobalTheme::icon_theme(cx), expanded)
+            .or_else(|| Self::default_icon_theme(cx).and_then(|icon_theme| get_chevron_icon(&icon_theme, expanded)))
     }
 }

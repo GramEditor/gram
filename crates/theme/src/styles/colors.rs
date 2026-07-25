@@ -5,10 +5,7 @@ use refineable::Refineable;
 use std::sync::Arc;
 use strum::{AsRefStr, EnumIter, IntoEnumIterator};
 
-use crate::{
-    AccentColors, ActiveTheme, PlayerColors, StatusColors, StatusColorsRefinement, SyntaxTheme,
-    SystemColors,
-};
+use crate::{AccentColors, ActiveTheme, PlayerColors, StatusColors, StatusColorsRefinement, SyntaxTheme, SystemColors};
 
 #[derive(Refineable, Clone, Debug, PartialEq)]
 #[refineable(Debug, serde::Deserialize)]
@@ -481,9 +478,7 @@ impl ThemeColors {
             ThemeColorField::PaneGroupBorder => self.pane_group_border,
             ThemeColorField::ScrollbarThumbBackground => self.scrollbar_thumb_background,
             ThemeColorField::ScrollbarThumbHoverBackground => self.scrollbar_thumb_hover_background,
-            ThemeColorField::ScrollbarThumbActiveBackground => {
-                self.scrollbar_thumb_active_background
-            }
+            ThemeColorField::ScrollbarThumbActiveBackground => self.scrollbar_thumb_active_background,
             ThemeColorField::ScrollbarThumbBorder => self.scrollbar_thumb_border,
             ThemeColorField::ScrollbarTrackBackground => self.scrollbar_track_background,
             ThemeColorField::ScrollbarTrackBorder => self.scrollbar_track_border,
@@ -496,9 +491,7 @@ impl ThemeColors {
             ThemeColorField::EditorGutterBackground => self.editor_gutter_background,
             ThemeColorField::EditorSubheaderBackground => self.editor_subheader_background,
             ThemeColorField::EditorActiveLineBackground => self.editor_active_line_background,
-            ThemeColorField::EditorHighlightedLineBackground => {
-                self.editor_highlighted_line_background
-            }
+            ThemeColorField::EditorHighlightedLineBackground => self.editor_highlighted_line_background,
             ThemeColorField::EditorLineNumber => self.editor_line_number,
             ThemeColorField::EditorActiveLineNumber => self.editor_active_line_number,
             ThemeColorField::EditorInvisible => self.editor_invisible,
@@ -506,12 +499,8 @@ impl ThemeColors {
             ThemeColorField::EditorActiveWrapGuide => self.editor_active_wrap_guide,
             ThemeColorField::EditorIndentGuide => self.editor_indent_guide,
             ThemeColorField::EditorIndentGuideActive => self.editor_indent_guide_active,
-            ThemeColorField::EditorDocumentHighlightReadBackground => {
-                self.editor_document_highlight_read_background
-            }
-            ThemeColorField::EditorDocumentHighlightWriteBackground => {
-                self.editor_document_highlight_write_background
-            }
+            ThemeColorField::EditorDocumentHighlightReadBackground => self.editor_document_highlight_read_background,
+            ThemeColorField::EditorDocumentHighlightWriteBackground => self.editor_document_highlight_write_background,
             ThemeColorField::EditorDocumentHighlightBracketBackground => {
                 self.editor_document_highlight_bracket_background
             }

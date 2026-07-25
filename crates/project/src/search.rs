@@ -156,9 +156,7 @@ impl SearchQuery {
         let mut query = query.to_string();
         let initial_query = Arc::from(query.as_str());
 
-        if let Some((case_sensitive_from_pattern, new_query)) =
-            Self::case_sensitive_from_pattern(&query)
-        {
+        if let Some((case_sensitive_from_pattern, new_query)) = Self::case_sensitive_from_pattern(&query) {
             case_sensitive = case_sensitive_from_pattern;
             query = new_query
         }
@@ -184,9 +182,7 @@ impl SearchQuery {
             query.insert_str(0, "(?m)");
         }
 
-        let regex = RegexBuilder::new(&query)
-            .case_insensitive(!case_sensitive)
-            .build()?;
+        let regex = RegexBuilder::new(&query).case_insensitive(!case_sensitive).build()?;
         let inner = SearchInputs {
             query: initial_query,
             files_to_exclude,
@@ -299,12 +295,10 @@ impl SearchQuery {
     pub fn with_replacement(mut self, new_replacement: String) -> Self {
         match self {
             Self::Text {
-                ref mut replacement,
-                ..
+                ref mut replacement, ..
             }
             | Self::Regex {
-                ref mut replacement,
-                ..
+                ref mut replacement, ..
             } => {
                 *replacement = Some(new_replacement);
                 self
@@ -330,10 +324,7 @@ impl SearchQuery {
         }
     }
 
-    pub(crate) async fn detect(
-        &self,
-        mut reader: BufReader<Box<dyn Read + Send + Sync>>,
-    ) -> Result<bool> {
+    pub(crate) async fn detect(&self, mut reader: BufReader<Box<dyn Read + Send + Sync>>) -> Result<bool> {
         let query_str = self.as_str();
         let needle_len = query_str.len();
         if needle_len == 0 {
@@ -369,9 +360,7 @@ impl SearchQuery {
                     Ok(false)
                 }
             }
-            Self::Regex {
-                regex, multiline, ..
-            } => {
+            Self::Regex { regex, multiline, .. } => {
                 if *multiline {
                     if let Err(err) = reader.read_to_string(&mut text) {
                         Err(err.into())
@@ -398,30 +387,26 @@ impl SearchQuery {
     /// Returns the replacement text for this `SearchQuery`.
     pub fn replacement(&self) -> Option<&str> {
         match self {
-            SearchQuery::Text { replacement, .. } | SearchQuery::Regex { replacement, .. } => {
-                replacement.as_deref()
-            }
+            SearchQuery::Text { replacement, .. } | SearchQuery::Regex { replacement, .. } => replacement.as_deref(),
         }
     }
     /// Replaces search hits if replacement is set. `text` is assumed to be a string that matches this `SearchQuery` exactly, without any leftovers on either side.
     pub fn replacement_for<'a>(&self, text: &'a str) -> Option<Cow<'a, str>> {
         match self {
             SearchQuery::Text { replacement, .. } => replacement.clone().map(Cow::from),
-            SearchQuery::Regex {
-                regex, replacement, ..
-            } => {
+            SearchQuery::Regex { regex, replacement, .. } => {
                 if let Some(replacement) = replacement {
                     static TEXT_REPLACEMENT_SPECIAL_CHARACTERS_REGEX: LazyLock<Regex> =
                         LazyLock::new(|| Regex::new(r"\\\\|\\n|\\t").unwrap());
-                    let replacement = TEXT_REPLACEMENT_SPECIAL_CHARACTERS_REGEX.replace_all(
-                        replacement,
-                        |c: &Captures| match c.get(0).unwrap().as_str() {
-                            r"\\" => "\\",
-                            r"\n" => "\n",
-                            r"\t" => "\t",
-                            x => unreachable!("Unexpected escape sequence: {}", x),
-                        },
-                    );
+                    let replacement =
+                        TEXT_REPLACEMENT_SPECIAL_CHARACTERS_REGEX.replace_all(replacement, |c: &Captures| {
+                            match c.get(0).unwrap().as_str() {
+                                r"\\" => "\\",
+                                r"\n" => "\n",
+                                r"\t" => "\t",
+                                x => unreachable!("Unexpected escape sequence: {}", x),
+                            }
+                        });
                     Some(regex.replace(text, replacement))
                 } else {
                     None
@@ -430,11 +415,7 @@ impl SearchQuery {
         }
     }
 
-    pub async fn search(
-        &self,
-        buffer: &BufferSnapshot,
-        subrange: Option<Range<usize>>,
-    ) -> Vec<Range<usize>> {
+    pub async fn search(&self, buffer: &BufferSnapshot, subrange: Option<Range<usize>>) -> Vec<Range<usize>> {
         const YIELD_INTERVAL: usize = 20000;
 
         if self.as_str().is_empty() {
@@ -450,13 +431,8 @@ impl SearchQuery {
 
         let mut matches = Vec::new();
         match self {
-            Self::Text {
-                search, whole_word, ..
-            } => {
-                for (ix, mat) in search
-                    .stream_find_iter(rope.bytes_in_range(0..rope.len()))
-                    .enumerate()
-                {
+            Self::Text { search, whole_word, .. } => {
+                for (ix, mat) in search.stream_find_iter(rope.bytes_in_range(0..rope.len())).enumerate() {
                     if (ix + 1) % YIELD_INTERVAL == 0 {
                         yield_now().await;
                     }
@@ -465,14 +441,9 @@ impl SearchQuery {
                     if *whole_word {
                         let classifier = buffer.char_classifier_at(range_offset + mat.start());
 
-                        let prev_kind = rope
-                            .reversed_chars_at(mat.start())
-                            .next()
-                            .map(|c| classifier.kind(c));
-                        let start_kind =
-                            classifier.kind(rope.chars_at(mat.start()).next().unwrap());
-                        let end_kind =
-                            classifier.kind(rope.reversed_chars_at(mat.end()).next().unwrap());
+                        let prev_kind = rope.reversed_chars_at(mat.start()).next().map(|c| classifier.kind(c));
+                        let start_kind = classifier.kind(rope.chars_at(mat.start()).next().unwrap());
+                        let end_kind = classifier.kind(rope.reversed_chars_at(mat.end()).next().unwrap());
                         let next_kind = rope.chars_at(mat.end()).next().map(|c| classifier.kind(c));
                         if (Some(start_kind) == prev_kind && start_kind == CharKind::Word)
                             || (Some(end_kind) == next_kind && end_kind == CharKind::Word)
@@ -484,9 +455,7 @@ impl SearchQuery {
                 }
             }
 
-            Self::Regex {
-                regex, multiline, ..
-            } => {
+            Self::Regex { regex, multiline, .. } => {
                 if *multiline {
                     let text = rope.to_string();
                     for (ix, mat) in regex.find_iter(&text).enumerate() {
@@ -554,12 +523,8 @@ impl SearchQuery {
 
     pub fn include_ignored(&self) -> bool {
         match self {
-            Self::Text {
-                include_ignored, ..
-            } => *include_ignored,
-            Self::Regex {
-                include_ignored, ..
-            } => *include_ignored,
+            Self::Text { include_ignored, .. } => *include_ignored,
+            Self::Regex { include_ignored, .. } => *include_ignored,
         }
     }
 
@@ -584,8 +549,7 @@ impl SearchQuery {
     }
 
     pub fn filters_path(&self) -> bool {
-        !(self.files_to_exclude().sources().next().is_none()
-            && self.files_to_include().sources().next().is_none())
+        !(self.files_to_exclude().sources().next().is_none() && self.files_to_include().sources().next().is_none())
     }
 
     pub fn match_full_paths(&self) -> bool {
@@ -599,9 +563,7 @@ impl SearchQuery {
         loop {
             if self.files_to_exclude().is_match(&path) {
                 return false;
-            } else if self.files_to_include().sources().next().is_none()
-                || self.files_to_include().is_match(&path)
-            {
+            } else if self.files_to_include().sources().next().is_none() || self.files_to_include().is_match(&path) {
                 return true;
             } else if !path.pop() {
                 return false;
@@ -620,9 +582,7 @@ impl SearchQuery {
     /// option.
     pub fn one_match_per_line(&self) -> Option<bool> {
         match self {
-            Self::Regex {
-                one_match_per_line, ..
-            } => Some(*one_match_per_line),
+            Self::Regex { one_match_per_line, .. } => Some(*one_match_per_line),
             Self::Text { .. } => None,
         }
     }
@@ -643,12 +603,9 @@ mod tests {
             "dir/[a-z].txt",
         ] {
             let path_matcher = PathMatcher::new(&[valid_path.to_owned()], PathStyle::local())
-                .unwrap_or_else(|e| {
-                    panic!("Valid path {valid_path} should be accepted, but got: {e}")
-                });
+                .unwrap_or_else(|e| panic!("Valid path {valid_path} should be accepted, but got: {e}"));
             assert!(
-                path_matcher
-                    .is_match(&RelPath::new(valid_path.as_ref(), PathStyle::local()).unwrap()),
+                path_matcher.is_match(&RelPath::new(valid_path.as_ref(), PathStyle::local()).unwrap()),
                 "Path matcher for valid path {valid_path} should match itself"
             )
         }
@@ -663,13 +620,7 @@ mod tests {
             }
         }
 
-        for valid_glob in [
-            "dir/?ile",
-            "dir/*.txt",
-            "dir/**/file",
-            "dir/[a-z].txt",
-            "{dir,file}",
-        ] {
+        for valid_glob in ["dir/?ile", "dir/*.txt", "dir/**/file", "dir/[a-z].txt", "{dir,file}"] {
             match PathMatcher::new(&[valid_glob.to_owned()], PathStyle::local()) {
                 Ok(_expected) => {}
                 Err(e) => panic!("Valid glob should be accepted, but got: {e}"),
@@ -777,9 +728,7 @@ mod tests {
 
         use language::Buffer;
         let text = crate::Rope::from("hello\nworld\nhello\nworld");
-        let snapshot = cx
-            .update(|app| Buffer::build_snapshot(text, None, None, app))
-            .await;
+        let snapshot = cx.update(|app| Buffer::build_snapshot(text, None, None, app)).await;
 
         let results = search_query.search(&snapshot, None).await;
         assert_eq!(results, vec![0..6, 12..18]);

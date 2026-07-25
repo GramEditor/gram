@@ -16,8 +16,7 @@ use futures::Future;
 use gpui::{Context, Entity, Focusable as _, VisualTestContext, Window};
 use indoc::indoc;
 use language::{
-    BlockCommentConfig, FakeLspAdapter, Language, LanguageConfig, LanguageMatcher, LanguageQueries,
-    point_to_lsp,
+    BlockCommentConfig, FakeLspAdapter, Language, LanguageConfig, LanguageMatcher, LanguageQueries, point_to_lsp,
 };
 use lsp::{notification, request};
 use project::Project;
@@ -101,13 +100,10 @@ impl EditorLspTestContext {
 
         let mut cx = VisualTestContext::from_window(*window.deref(), cx);
         project
-            .update(&mut cx, |project, cx| {
-                project.find_or_create_worktree(root, true, cx)
-            })
+            .update(&mut cx, |project, cx| project.find_or_create_worktree(root, true, cx))
             .await
             .unwrap();
-        cx.read(|cx| workspace.read(cx).worktree_scans_complete(cx))
-            .await;
+        cx.read(|cx| workspace.read(cx).worktree_scans_complete(cx)).await;
         let file = cx.read(|cx| workspace.file_project_paths(cx)[0].clone());
         let item = workspace
             .update_in(&mut cx, |workspace, window, cx| {
@@ -115,10 +111,7 @@ impl EditorLspTestContext {
             })
             .await
             .expect("Could not open test file");
-        let editor = cx.update(|_, cx| {
-            item.act_as::<Editor>(cx)
-                .expect("Opened test file wasn't an editor")
-        });
+        let editor = cx.update(|_, cx| item.act_as::<Editor>(cx).expect("Opened test file wasn't an editor"));
         editor.update_in(&mut cx, |editor, window, cx| {
             let nav_history = workspace
                 .read(cx)
@@ -255,10 +248,7 @@ impl EditorLspTestContext {
         Self::new(language, capabilities, cx).await
     }
 
-    pub async fn new_tsx(
-        capabilities: lsp::ServerCapabilities,
-        cx: &mut gpui::TestAppContext,
-    ) -> EditorLspTestContext {
+    pub async fn new_tsx(capabilities: lsp::ServerCapabilities, cx: &mut gpui::TestAppContext) -> EditorLspTestContext {
         let mut word_characters: HashSet<char> = Default::default();
         word_characters.insert('$');
         word_characters.insert('#');
@@ -401,16 +391,11 @@ impl EditorLspTestContext {
     }
 
     pub async fn new_markdown_with_rust(cx: &mut gpui::TestAppContext) -> Self {
-        let context = Self::new(
-            Arc::into_inner(markdown_lang()).unwrap(),
-            Default::default(),
-            cx,
-        )
-        .await;
+        let context = Self::new(Arc::into_inner(markdown_lang()).unwrap(), Default::default(), cx).await;
 
-        let language_registry = context.workspace.read_with(cx, |workspace, cx| {
-            workspace.project().read(cx).languages().clone()
-        });
+        let language_registry = context
+            .workspace
+            .read_with(cx, |workspace, cx| workspace.project().read(cx).languages().clone());
         language_registry.add(rust_lang());
 
         context
@@ -432,8 +417,7 @@ impl EditorLspTestContext {
 
         self.editor(|editor, _, cx| {
             let buffer = editor.buffer().read(cx);
-            let (start_buffer, start_offset) =
-                buffer.point_to_buffer_offset(start_point, cx).unwrap();
+            let (start_buffer, start_offset) = buffer.point_to_buffer_offset(start_point, cx).unwrap();
             let start = point_to_lsp(start_offset.to_point_utf16(&start_buffer.read(cx)));
             let (end_buffer, end_offset) = buffer.point_to_buffer_offset(end_point, cx).unwrap();
             let end = point_to_lsp(end_offset.to_point_utf16(&end_buffer.read(cx)));
@@ -462,10 +446,7 @@ impl EditorLspTestContext {
         self.workspace.update_in(&mut self.cx.cx, update)
     }
 
-    pub fn set_request_handler<T, F, Fut>(
-        &self,
-        mut handler: F,
-    ) -> futures::channel::mpsc::UnboundedReceiver<()>
+    pub fn set_request_handler<T, F, Fut>(&self, mut handler: F) -> futures::channel::mpsc::UnboundedReceiver<()>
     where
         T: 'static + request::Request,
         T::Params: 'static + Send,

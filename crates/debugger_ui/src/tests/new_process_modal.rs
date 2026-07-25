@@ -5,9 +5,7 @@ use project::{FakeFs, Fs as _, Project};
 use serde_json::json;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use task::{
-    DebugRequest, DebugScenario, GramDebugConfig, LaunchRequest, TaskContext, VariableName,
-};
+use task::{DebugRequest, DebugScenario, GramDebugConfig, LaunchRequest, TaskContext, VariableName};
 use text::Point;
 use util::path;
 
@@ -36,12 +34,9 @@ async fn test_debug_session_substitutes_variables_and_relativizes_paths(
     let workspace = init_test_workspace(&project, cx).await;
     let cx = &mut VisualTestContext::from_window(*workspace, cx);
 
-    let test_variables = vec![(
-        VariableName::WorktreeRoot,
-        path!("/test/worktree/path").to_string(),
-    )]
-    .into_iter()
-    .collect();
+    let test_variables = vec![(VariableName::WorktreeRoot, path!("/test/worktree/path").to_string())]
+        .into_iter()
+        .collect();
 
     let task_context = TaskContext {
         cwd: None,
@@ -53,10 +48,7 @@ async fn test_debug_session_substitutes_variables_and_relativizes_paths(
 
     let test_cases: Vec<(&'static str, &'static str)> = vec![
         // Absolute path - should not be relativized
-        (
-            path!("/absolute/path/to/program"),
-            path!("/absolute/path/to/program"),
-        ),
+        (path!("/absolute/path/to/program"), path!("/absolute/path/to/program")),
         // Relative path - should be prefixed with worktree root
         (
             format!(".{0}src{0}program", std::path::MAIN_SEPARATOR).leak(),
@@ -74,11 +66,7 @@ async fn test_debug_session_substitutes_variables_and_relativizes_paths(
         ),
         // Path with $GRAM_WORKTREE_ROOT - should be substituted without double appending
         (
-            format!(
-                "$GRAM_WORKTREE_ROOT{0}src{0}program",
-                std::path::MAIN_SEPARATOR
-            )
-            .leak(),
+            format!("$GRAM_WORKTREE_ROOT{0}src{0}program", std::path::MAIN_SEPARATOR).leak(),
             path!("/test/worktree/path/src/program"),
         ),
     ];
@@ -145,14 +133,7 @@ async fn test_debug_session_substitutes_variables_and_relativizes_paths(
 
         workspace
             .update(cx, |workspace, window, cx| {
-                workspace.start_debug_session(
-                    scenario,
-                    task_context.clone(),
-                    None,
-                    None,
-                    window,
-                    cx,
-                )
+                workspace.start_debug_session(scenario, task_context.clone(), None, None, window, cx)
             })
             .unwrap();
 
@@ -189,9 +170,7 @@ async fn test_save_debug_scenario_to_file(executor: BackgroundExecutor, cx: &mut
     cx.run_until_parked();
 
     let modal = workspace
-        .update(cx, |workspace, _, cx| {
-            workspace.active_modal::<NewProcessModal>(cx)
-        })
+        .update(cx, |workspace, _, cx| workspace.active_modal::<NewProcessModal>(cx))
         .unwrap()
         .expect("Modal should be active");
 
@@ -234,10 +213,7 @@ async fn test_save_debug_scenario_to_file(executor: BackgroundExecutor, cx: &mut
 
     editor.update(cx, |editor, cx| {
         assert_eq!(
-            editor
-                .selections
-                .newest::<Point>(&editor.display_snapshot(cx))
-                .head(),
+            editor.selections.newest::<Point>(&editor.display_snapshot(cx)).head(),
             Point::new(5, 2)
         )
     });
@@ -283,10 +259,7 @@ async fn test_save_debug_scenario_to_file(executor: BackgroundExecutor, cx: &mut
 }
 
 #[gpui::test]
-async fn test_debug_modal_subtitles_with_multiple_worktrees(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_debug_modal_subtitles_with_multiple_worktrees(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let fs = FakeFs::new(executor.clone());
@@ -331,17 +304,13 @@ async fn test_debug_modal_subtitles_with_multiple_worktrees(
     cx.run_until_parked();
 
     let modal = workspace
-        .update(cx, |workspace, _, cx| {
-            workspace.active_modal::<NewProcessModal>(cx)
-        })
+        .update(cx, |workspace, _, cx| workspace.active_modal::<NewProcessModal>(cx))
         .unwrap()
         .expect("Modal should be active");
 
     cx.executor().run_until_parked();
 
-    let subtitles = modal.update_in(cx, |modal, _, cx| {
-        modal.debug_picker_candidate_subtitles(cx)
-    });
+    let subtitles = modal.update_in(cx, |modal, _, cx| modal.debug_picker_candidate_subtitles(cx));
 
     assert_eq!(
         subtitles.as_slice(),
@@ -353,14 +322,7 @@ async fn test_debug_modal_subtitles_with_multiple_worktrees(
 async fn test_dap_adapter_config_conversion_and_validation(cx: &mut TestAppContext) {
     init_test(cx);
 
-    let mut expected_adapters = vec![
-        "CodeLLDB",
-        "Debugpy",
-        "JavaScript",
-        "Delve",
-        "GDB",
-        "fake-adapter",
-    ];
+    let mut expected_adapters = vec!["CodeLLDB", "Debugpy", "JavaScript", "Delve", "GDB", "fake-adapter"];
 
     let adapter_names = cx.update(|cx| {
         let registry = DapRegistry::global(cx);
@@ -398,12 +360,7 @@ async fn test_dap_adapter_config_conversion_and_validation(cx: &mut TestAppConte
         let debug_scenario = adapter
             .config_from_gram_format(adapter_specific_config)
             .await
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Adapter {} should successfully convert from Gram format",
-                    adapter_name
-                )
-            });
+            .unwrap_or_else(|_| panic!("Adapter {} should successfully convert from Gram format", adapter_name));
 
         assert!(
             debug_scenario.config.is_object(),
@@ -414,20 +371,12 @@ async fn test_dap_adapter_config_conversion_and_validation(cx: &mut TestAppConte
         let request_type = adapter
             .request_kind(&debug_scenario.config)
             .await
-            .unwrap_or_else(|_| {
-                panic!(
-                    "Adapter {} should validate the config successfully",
-                    adapter_name
-                )
-            });
+            .unwrap_or_else(|_| panic!("Adapter {} should validate the config successfully", adapter_name));
 
         match request_type {
             dap::StartDebuggingRequestArgumentsRequest::Launch => {}
             dap::StartDebuggingRequestArgumentsRequest::Attach => {
-                panic!(
-                    "Expected Launch request but got Attach for adapter {}",
-                    adapter_name
-                );
+                panic!("Expected Launch request but got Attach for adapter {}", adapter_name);
             }
         }
     }

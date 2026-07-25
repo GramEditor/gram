@@ -46,8 +46,7 @@ fn test_line_endings(cx: &mut gpui::App) {
     init_settings(cx, |_| {});
 
     cx.new(|cx| {
-        let mut buffer =
-            Buffer::local("one\r\ntwo\rthree", cx).with_language(Arc::new(rust_lang()), cx);
+        let mut buffer = Buffer::local("one\r\ntwo\rthree", cx).with_language(Arc::new(rust_lang()), cx);
         assert_eq!(buffer.text(), "one\ntwo\nthree");
         assert_eq!(buffer.line_ending(), LineEnding::Windows);
 
@@ -260,13 +259,9 @@ async fn test_first_line_pattern(cx: &mut TestAppContext) {
     );
 
     assert_eq!(
-        cx.read(|cx| languages.language_for_file(
-            &file("the/script"),
-            Some(&"#!/bin/env node".into()),
-            cx
-        ))
-        .unwrap()
-        .name(),
+        cx.read(|cx| languages.language_for_file(&file("the/script"), Some(&"#!/bin/env node".into()), cx))
+            .unwrap()
+            .name(),
         "JavaScript".into()
     );
 }
@@ -423,9 +418,7 @@ fn test_edit_events(cx: &mut gpui::App) {
             .detach();
             let buffer_2_events = buffer_2_events.clone();
             cx.subscribe(&buffer2, move |_, _, event, _| match event.clone() {
-                BufferEvent::Operation {
-                    is_local: false, ..
-                } => {}
+                BufferEvent::Operation { is_local: false, .. } => {}
                 event => buffer_2_events.lock().push(event),
             })
             .detach();
@@ -491,9 +484,7 @@ fn test_edit_events(cx: &mut gpui::App) {
 
 #[gpui::test]
 async fn test_apply_diff(cx: &mut TestAppContext) {
-    let (text, offsets) = marked_text_offsets(
-        "one two three\nfour fiˇve six\nseven eightˇ nine\nten eleven twelve\n",
-    );
+    let (text, offsets) = marked_text_offsets("one two three\nfour fiˇve six\nseven eightˇ nine\nten eleven twelve\n");
     let buffer = cx.new(|cx| Buffer::local(text, cx));
     let anchors = buffer.update(cx, |buffer, _| {
         offsets
@@ -502,9 +493,8 @@ async fn test_apply_diff(cx: &mut TestAppContext) {
             .collect::<Vec<_>>()
     });
 
-    let (text, offsets) = marked_text_offsets(
-        "one two three\n{\nfour FIVEˇ six\n}\nseven AND EIGHTˇ nine\nten eleven twelve\n",
-    );
+    let (text, offsets) =
+        marked_text_offsets("one two three\n{\nfour FIVEˇ six\n}\nseven AND EIGHTˇ nine\nten eleven twelve\n");
 
     let diff = buffer.update(cx, |b, cx| b.diff(text.clone(), cx)).await;
     buffer.update(cx, |buffer, cx| {
@@ -517,8 +507,7 @@ async fn test_apply_diff(cx: &mut TestAppContext) {
         assert_eq!(actual_offsets, offsets);
     });
 
-    let (text, offsets) =
-        marked_text_offsets("one two three\n{\nˇ}\nseven AND EIGHTEENˇ nine\nten eleven twelve\n");
+    let (text, offsets) = marked_text_offsets("one two three\n{\nˇ}\nseven AND EIGHTEENˇ nine\nten eleven twelve\n");
 
     let diff = buffer.update(cx, |b, cx| b.diff(text.clone(), cx)).await;
     buffer.update(cx, |buffer, cx| {
@@ -770,7 +759,8 @@ async fn test_outline(cx: &mut gpui::TestAppContext) {
             .map(|item| (
                 item.text.as_str(),
                 item.depth,
-                item.to_point(&snapshot).body_range(&snapshot)
+                item.to_point(&snapshot)
+                    .body_range(&snapshot)
                     .map(|range| minimize_space(&snapshot.text_for_range(range).collect::<String>()))
             ))
             .collect::<Vec<_>>(),
@@ -818,10 +808,7 @@ async fn test_outline(cx: &mut gpui::TestAppContext) {
 
     assert_eq!(
         search(&outline, "dp p", cx).await,
-        &[
-            ("impl Drop for Person", vec![5, 8, 9, 14]),
-            ("fn drop", vec![]),
-        ]
+        &[("impl Drop for Person", vec![5, 8, 9, 14]), ("fn drop", vec![]),]
     );
     assert_eq!(
         search(&outline, "dpn", cx).await,
@@ -1001,10 +988,7 @@ async fn test_symbols_containing(cx: &mut gpui::TestAppContext) {
     assert_eq!(
         symbols_containing(Point::new(1, 4), &snapshot),
         vec![
-            (
-                "impl Person".to_string(),
-                Point::new(0, 0)..Point::new(10, 1)
-            ),
+            ("impl Person".to_string(), Point::new(0, 0)..Point::new(10, 1)),
             ("fn one".to_string(), Point::new(1, 4)..Point::new(3, 5))
         ]
     );
@@ -1013,10 +997,7 @@ async fn test_symbols_containing(cx: &mut gpui::TestAppContext) {
     assert_eq!(
         symbols_containing(Point::new(2, 8), &snapshot),
         vec![
-            (
-                "impl Person".to_string(),
-                Point::new(0, 0)..Point::new(10, 1)
-            ),
+            ("impl Person".to_string(), Point::new(0, 0)..Point::new(10, 1)),
             ("fn one".to_string(), Point::new(1, 4)..Point::new(3, 5))
         ]
     );
@@ -1025,10 +1006,7 @@ async fn test_symbols_containing(cx: &mut gpui::TestAppContext) {
     assert_eq!(
         symbols_containing(Point::new(3, 5), &snapshot),
         vec![
-            (
-                "impl Person".to_string(),
-                Point::new(0, 0)..Point::new(10, 1)
-            ),
+            ("impl Person".to_string(), Point::new(0, 0)..Point::new(10, 1)),
             ("fn one".to_string(), Point::new(1, 4)..Point::new(3, 5))
         ]
     );
@@ -1037,18 +1015,12 @@ async fn test_symbols_containing(cx: &mut gpui::TestAppContext) {
     assert_eq!(
         symbols_containing(Point::new(7, 5), &snapshot),
         vec![
-            (
-                "impl Person".to_string(),
-                Point::new(0, 0)..Point::new(10, 1)
-            ),
+            ("impl Person".to_string(), Point::new(0, 0)..Point::new(10, 1)),
             ("fn two".to_string(), Point::new(5, 4)..Point::new(7, 5))
         ]
     );
 
-    fn symbols_containing(
-        position: Point,
-        snapshot: &BufferSnapshot,
-    ) -> Vec<(String, Range<Point>)> {
+    fn symbols_containing(position: Point, snapshot: &BufferSnapshot) -> Vec<(String, Range<Point>)> {
         snapshot
             .symbols_containing(position, None)
             .into_iter()
@@ -1088,8 +1060,7 @@ fn test_text_objects(cx: &mut App) {
         false,
     );
 
-    let buffer =
-        cx.new(|cx| Buffer::local(text.clone(), cx).with_language(Arc::new(rust_lang()), cx));
+    let buffer = cx.new(|cx| Buffer::local(text.clone(), cx).with_language(Arc::new(rust_lang()), cx));
     let snapshot = buffer.update(cx, |buffer, _| buffer.snapshot());
 
     let matches = snapshot
@@ -1102,10 +1073,7 @@ fn test_text_objects(cx: &mut App) {
         &[
             ("/* hi */", TextObject::AroundComment),
             ("return /* hi */ 1", TextObject::InsideFunction),
-            (
-                "fn say() -> u8 { return /* hi */ 1 }",
-                TextObject::AroundFunction
-            ),
+            ("fn say() -> u8 { return /* hi */ 1 }", TextObject::AroundFunction),
         ],
     )
 }
@@ -1378,24 +1346,15 @@ fn test_range_for_syntax_ancestor(cx: &mut App) {
             range_of(text, "|")
         );
         assert_eq!(
-            snapshot
-                .syntax_ancestor(range_of(text, "|"))
-                .unwrap()
-                .byte_range(),
+            snapshot.syntax_ancestor(range_of(text, "|")).unwrap().byte_range(),
             range_of(text, "|c|")
         );
         assert_eq!(
-            snapshot
-                .syntax_ancestor(range_of(text, "|c|"))
-                .unwrap()
-                .byte_range(),
+            snapshot.syntax_ancestor(range_of(text, "|c|")).unwrap().byte_range(),
             range_of(text, "|c| {}")
         );
         assert_eq!(
-            snapshot
-                .syntax_ancestor(range_of(text, "|c| {}"))
-                .unwrap()
-                .byte_range(),
+            snapshot.syntax_ancestor(range_of(text, "|c| {}")).unwrap().byte_range(),
             range_of(text, "(|c| {})")
         );
 
@@ -1824,11 +1783,7 @@ fn test_autoindent_with_edit_at_end_of_buffer(cx: &mut App) {
     cx.new(|cx| {
         let text = "a\nb";
         let mut buffer = Buffer::local(text, cx).with_language(Arc::new(rust_lang()), cx);
-        buffer.edit(
-            [(0..1, "\n"), (2..3, "\n")],
-            Some(AutoindentMode::EachLine),
-            cx,
-        );
+        buffer.edit([(0..1, "\n"), (2..3, "\n")], Some(AutoindentMode::EachLine), cx);
         assert_eq!(buffer.text(), "\n\n\n");
         buffer
     });
@@ -2057,11 +2012,7 @@ fn test_autoindent_block_mode_without_original_indent_columns(cx: &mut App) {
         buffer.undo(cx); // Undo the original edit
 
         // Insert the block at a deeper indent level. The entire block is outdented.
-        buffer.edit(
-            [(Point::new(2, 0)..Point::new(2, 0), " ".repeat(12))],
-            None,
-            cx,
-        );
+        buffer.edit([(Point::new(2, 0)..Point::new(2, 0), " ".repeat(12))], None, cx);
         buffer.edit(
             [(Point::new(2, 12)..Point::new(2, 12), inserted_text)],
             Some(AutoindentMode::Block {
@@ -2549,10 +2500,7 @@ fn test_language_scope_at_with_javascript(cx: &mut App) {
         );
 
         // Both bracket pairs are enabled
-        assert_eq!(
-            config.brackets().map(|e| e.1).collect::<Vec<_>>(),
-            &[true, true]
-        );
+        assert_eq!(config.brackets().map(|e| e.1).collect::<Vec<_>>(), &[true, true]);
 
         let comment_config = snapshot
             .language_scope_at(text.find("comment").unwrap() + "comment".len())
@@ -2562,9 +2510,7 @@ fn test_language_scope_at_with_javascript(cx: &mut App) {
             &[true, false]
         );
 
-        let string_config = snapshot
-            .language_scope_at(text.find("b\"").unwrap())
-            .unwrap();
+        let string_config = snapshot.language_scope_at(text.find("b\"").unwrap()).unwrap();
         assert_eq!(string_config.line_comment_prefixes(), &[Arc::from("// ")]);
         assert_eq!(
             string_config.block_comment(),
@@ -2582,9 +2528,7 @@ fn test_language_scope_at_with_javascript(cx: &mut App) {
         );
 
         // In between JSX tags: use the `element` override.
-        let element_config = snapshot
-            .language_scope_at(text.find("<F>").unwrap())
-            .unwrap();
+        let element_config = snapshot.language_scope_at(text.find("<F>").unwrap()).unwrap();
         // TODO nested blocks after newlines are captured with all whitespaces
         // https://github.com/tree-sitter/tree-sitter-typescript/issues/306
         // assert_eq!(element_config.line_comment_prefixes(), &[]);
@@ -2598,9 +2542,7 @@ fn test_language_scope_at_with_javascript(cx: &mut App) {
         );
 
         // Within a JSX tag: use the default config.
-        let tag_config = snapshot
-            .language_scope_at(text.find(" d=").unwrap() + 1)
-            .unwrap();
+        let tag_config = snapshot.language_scope_at(text.find(" d=").unwrap() + 1).unwrap();
         assert_eq!(tag_config.line_comment_prefixes(), &[Arc::from("// ")]);
         assert_eq!(
             tag_config.block_comment(),
@@ -2611,15 +2553,10 @@ fn test_language_scope_at_with_javascript(cx: &mut App) {
                 tab_size: 1,
             })
         );
-        assert_eq!(
-            tag_config.brackets().map(|e| e.1).collect::<Vec<_>>(),
-            &[true, true]
-        );
+        assert_eq!(tag_config.brackets().map(|e| e.1).collect::<Vec<_>>(), &[true, true]);
 
         // In a JSX expression: use the default config.
-        let expression_in_element_config = snapshot
-            .language_scope_at(text.find('{').unwrap() + 1)
-            .unwrap();
+        let expression_in_element_config = snapshot.language_scope_at(text.find('{').unwrap() + 1).unwrap();
         assert_eq!(
             expression_in_element_config.line_comment_prefixes(),
             &[Arc::from("// ")]
@@ -2634,10 +2571,7 @@ fn test_language_scope_at_with_javascript(cx: &mut App) {
             })
         );
         assert_eq!(
-            expression_in_element_config
-                .brackets()
-                .map(|e| e.1)
-                .collect::<Vec<_>>(),
+            expression_in_element_config.brackets().map(|e| e.1).collect::<Vec<_>>(),
             &[true, true]
         );
 
@@ -2696,15 +2630,10 @@ fn test_language_scope_at_with_rust(cx: &mut App) {
 
         // By default, all brackets are enabled
         let config = snapshot.language_scope_at(0).unwrap();
-        assert_eq!(
-            config.brackets().map(|e| e.1).collect::<Vec<_>>(),
-            &[true, true]
-        );
+        assert_eq!(config.brackets().map(|e| e.1).collect::<Vec<_>>(), &[true, true]);
 
         // Within a string, the quotation brackets are disabled.
-        let string_config = snapshot
-            .language_scope_at(text.find("ello").unwrap())
-            .unwrap();
+        let string_config = snapshot.language_scope_at(text.find("ello").unwrap()).unwrap();
         assert_eq!(
             string_config.brackets().map(|e| e.1).collect::<Vec<_>>(),
             &[true, false]
@@ -2927,17 +2856,10 @@ fn test_serialization(cx: &mut gpui::App) {
     assert_eq!(buffer1.read(cx).text(), "abcDF");
 
     let state = buffer1.read(cx).to_proto(cx);
-    let ops = cx
-        .background_executor()
-        .block(buffer1.read(cx).serialize_ops(None, cx));
+    let ops = cx.background_executor().block(buffer1.read(cx).serialize_ops(None, cx));
     let buffer2 = cx.new(|cx| {
-        let mut buffer =
-            Buffer::from_proto(ReplicaId::new(1), Capability::ReadWrite, state, None).unwrap();
-        buffer.apply_ops(
-            ops.into_iter()
-                .map(|op| proto::deserialize_operation(op).unwrap()),
-            cx,
-        );
+        let mut buffer = Buffer::from_proto(ReplicaId::new(1), Capability::ReadWrite, state, None).unwrap();
+        buffer.apply_ops(ops.into_iter().map(|op| proto::deserialize_operation(op).unwrap()), cx);
         buffer
     });
     assert_eq!(buffer2.read(cx).text(), "abcDF");
@@ -2997,14 +2919,8 @@ fn test_branch_and_merge(cx: &mut TestAppContext) {
     // Convert from branch buffer ranges to the corresponding ranges in the
     // base buffer.
     branch.read_with(cx, |buffer, cx| {
-        assert_eq!(
-            buffer.range_to_version(4..7, &base.read(cx).version()),
-            4..4
-        );
-        assert_eq!(
-            buffer.range_to_version(2..9, &base.read(cx).version()),
-            2..5
-        );
+        assert_eq!(buffer.range_to_version(4..7, &base.read(cx).version()), 4..4);
+        assert_eq!(buffer.range_to_version(2..9, &base.read(cx).version()), 2..5);
     });
 
     // Edits to the base are applied to the branch.
@@ -3234,9 +3150,8 @@ async fn test_preview_edits(cx: &mut TestAppContext) {
         let edit_preview = buffer
             .read_with(cx, |buffer, cx| buffer.preview_edits(edits.clone(), cx))
             .await;
-        let highlighted_edits = cx.read(|cx| {
-            edit_preview.highlight_edits(&buffer.read(cx).snapshot(), &edits, include_deletions, cx)
-        });
+        let highlighted_edits =
+            cx.read(|cx| edit_preview.highlight_edits(&buffer.read(cx).snapshot(), &edits, include_deletions, cx));
         assert_fn(highlighted_edits);
     }
 }
@@ -3254,9 +3169,7 @@ fn test_random_collaboration(cx: &mut App, mut rng: StdRng) {
         .unwrap_or(10);
 
     let base_text_len = rng.random_range(0..10);
-    let base_text = RandomCharIter::new(&mut rng)
-        .take(base_text_len)
-        .collect::<String>();
+    let base_text = RandomCharIter::new(&mut rng).take(base_text_len).collect::<String>();
     let mut replica_ids = Vec::new();
     let mut buffers = Vec::new();
     let network = Arc::new(Mutex::new(Network::new(rng.fork())));
@@ -3268,14 +3181,8 @@ fn test_random_collaboration(cx: &mut App, mut rng: StdRng) {
             let ops = cx
                 .background_executor()
                 .block(base_buffer.read(cx).serialize_ops(None, cx));
-            let mut buffer =
-                Buffer::from_proto(ReplicaId::new(i as u16), Capability::ReadWrite, state, None)
-                    .unwrap();
-            buffer.apply_ops(
-                ops.into_iter()
-                    .map(|op| proto::deserialize_operation(op).unwrap()),
-                cx,
-            );
+            let mut buffer = Buffer::from_proto(ReplicaId::new(i as u16), Capability::ReadWrite, state, None).unwrap();
+            buffer.apply_ops(ops.into_iter().map(|op| proto::deserialize_operation(op).unwrap()), cx);
             buffer.set_group_interval(Duration::from_millis(rng.random_range(0..=200)));
             let network = network.clone();
             cx.subscribe(&cx.entity(), move |buffer, _, event, _| {
@@ -3284,10 +3191,9 @@ fn test_random_collaboration(cx: &mut App, mut rng: StdRng) {
                     is_local: true,
                 } = event
                 {
-                    network.lock().broadcast(
-                        buffer.replica_id(),
-                        vec![proto::serialize_operation(operation)],
-                    );
+                    network
+                        .lock()
+                        .broadcast(buffer.replica_id(), vec![proto::serialize_operation(operation)]);
                 }
             })
             .detach();
@@ -3340,11 +3246,7 @@ fn test_random_collaboration(cx: &mut App, mut rng: StdRng) {
                             });
                         }
                         let selections: Arc<[Selection<Anchor>]> = selections.into();
-                        log::info!(
-                            "peer {:?} setting active selections: {:?}",
-                            replica_id,
-                            selections
-                        );
+                        log::info!("peer {:?} setting active selections: {:?}", replica_id, selections);
                         active_selections.insert(replica_id, selections.clone());
                         buffer.set_active_selections(selections, false, Default::default(), cx);
                     }
@@ -3369,20 +3271,14 @@ fn test_random_collaboration(cx: &mut App, mut rng: StdRng) {
                         }),
                         buffer,
                     );
-                    log::info!(
-                        "peer {:?} setting diagnostics: {:?}",
-                        replica_id,
-                        diagnostics
-                    );
+                    log::info!("peer {:?} setting diagnostics: {:?}", replica_id, diagnostics);
                     buffer.update_diagnostics(LanguageServerId(0), diagnostics, cx);
                 });
                 mutation_count -= 1;
             }
             50..=59 if replica_ids.len() < max_peers => {
                 let old_buffer_state = buffer.read(cx).to_proto(cx);
-                let old_buffer_ops = cx
-                    .background_executor()
-                    .block(buffer.read(cx).serialize_ops(None, cx));
+                let old_buffer_ops = cx.background_executor().block(buffer.read(cx).serialize_ops(None, cx));
                 let new_replica_id = (0..=replica_ids.len() as u16)
                     .map(ReplicaId::new)
                     .filter(|replica_id| *replica_id != buffer.read(cx).replica_id())
@@ -3394,17 +3290,10 @@ fn test_random_collaboration(cx: &mut App, mut rng: StdRng) {
                     replica_id
                 );
                 new_buffer = Some(cx.new(|cx| {
-                    let mut new_buffer = Buffer::from_proto(
-                        new_replica_id,
-                        Capability::ReadWrite,
-                        old_buffer_state,
-                        None,
-                    )
-                    .unwrap();
+                    let mut new_buffer =
+                        Buffer::from_proto(new_replica_id, Capability::ReadWrite, old_buffer_state, None).unwrap();
                     new_buffer.apply_ops(
-                        old_buffer_ops
-                            .into_iter()
-                            .map(|op| deserialize_operation(op).unwrap()),
+                        old_buffer_ops.into_iter().map(|op| deserialize_operation(op).unwrap()),
                         cx,
                     );
                     log::info!(
@@ -3420,10 +3309,9 @@ fn test_random_collaboration(cx: &mut App, mut rng: StdRng) {
                             is_local: true,
                         } = event
                         {
-                            network.lock().broadcast(
-                                buffer.replica_id(),
-                                vec![proto::serialize_operation(operation)],
-                            );
+                            network
+                                .lock()
+                                .broadcast(buffer.replica_id(), vec![proto::serialize_operation(operation)]);
                         }
                     })
                     .detach();
@@ -3552,11 +3440,7 @@ fn test_contiguous_ranges() {
 
     // Respects the `max_len` parameter
     assert_eq!(
-        contiguous_ranges(
-            [2, 3, 4, 5, 6, 7, 8, 9, 23, 24, 25, 26, 30, 31].into_iter(),
-            3
-        )
-        .collect::<Vec<_>>(),
+        contiguous_ranges([2, 3, 4, 5, 6, 7, 8, 9, 23, 24, 25, 26, 30, 31].into_iter(), 3).collect::<Vec<_>>(),
         &[2..5, 5..8, 8..10, 23..26, 26..27, 30..32],
     );
 }
@@ -4006,8 +3890,7 @@ fn assert_bracket_pairs(
     cx: &mut App,
 ) {
     let (expected_text, selection_ranges) = marked_text_ranges(selection_text, false);
-    let buffer =
-        cx.new(|cx| Buffer::local(expected_text.clone(), cx).with_language(Arc::new(language), cx));
+    let buffer = cx.new(|cx| Buffer::local(expected_text.clone(), cx).with_language(Arc::new(language), cx));
     let buffer = buffer.update(cx, |buffer, _cx| buffer.snapshot());
 
     let selection_range = selection_ranges[0].clone();
@@ -4059,10 +3942,7 @@ fn test_random_chunk_bitmaps(cx: &mut App, mut rng: StdRng) {
 
         // Check empty chunks have empty bitmaps
         if chunk_text.is_empty() {
-            assert_eq!(
-                chars_bitmap, 0,
-                "Empty chunk should have empty chars bitmap"
-            );
+            assert_eq!(chars_bitmap, 0, "Empty chunk should have empty chars bitmap");
             assert_eq!(tabs_bitmap, 0, "Empty chunk should have empty tabs bitmap");
             continue;
         }
@@ -4075,10 +3955,7 @@ fn test_random_chunk_bitmaps(cx: &mut App, mut rng: StdRng) {
         );
 
         // Verify chars bitmap
-        let char_indices = chunk_text
-            .char_indices()
-            .map(|(i, _)| i)
-            .collect::<Vec<_>>();
+        let char_indices = chunk_text.char_indices().map(|(i, _)| i).collect::<Vec<_>>();
 
         for byte_idx in 0..chunk_text.len() {
             let should_have_bit = char_indices.contains(&byte_idx);

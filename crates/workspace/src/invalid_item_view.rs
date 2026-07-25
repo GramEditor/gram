@@ -1,12 +1,11 @@
 use std::{path::Path, sync::Arc};
 
+use app_actions::workspace::OpenWithSystem;
 use gpui::{EventEmitter, FocusHandle, Focusable};
 use ui::{
-    App, Button, ButtonCommon, ButtonStyle, Clickable, Context, FluentBuilder, InteractiveElement,
-    KeyBinding, Label, LabelCommon, LabelSize, ParentElement, Render, SharedString, Styled as _,
-    Window, h_flex, v_flex,
+    App, Button, ButtonCommon, ButtonStyle, Clickable, Context, FluentBuilder, InteractiveElement, KeyBinding, Label,
+    LabelCommon, LabelSize, ParentElement, Render, SharedString, Styled as _, Window, h_flex, v_flex,
 };
-use app_actions::workspace::OpenWithSystem;
 
 use crate::Item;
 
@@ -22,13 +21,7 @@ pub struct InvalidItemView {
 }
 
 impl InvalidItemView {
-    pub fn new(
-        abs_path: &Path,
-        is_local: bool,
-        e: &anyhow::Error,
-        _: &mut Window,
-        cx: &mut App,
-    ) -> Self {
+    pub fn new(abs_path: &Path, is_local: bool, e: &anyhow::Error, _: &mut Window, cx: &mut App) -> Self {
         Self {
             is_local,
             abs_path: Arc::from(abs_path),

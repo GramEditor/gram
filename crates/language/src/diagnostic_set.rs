@@ -69,13 +69,9 @@ impl<T: Clone> DiagnosticEntryRef<'_, T> {
 
 impl<'a> DiagnosticEntryRef<'a, Anchor> {
     /// Converts the [DiagnosticEntry] to a different buffer coordinate type.
-    pub fn resolve<O: FromAnchor>(
-        &self,
-        buffer: &text::BufferSnapshot,
-    ) -> DiagnosticEntryRef<'a, O> {
+    pub fn resolve<O: FromAnchor>(&self, buffer: &text::BufferSnapshot) -> DiagnosticEntryRef<'a, O> {
         DiagnosticEntryRef {
-            range: O::from_anchor(&self.range.start, buffer)
-                ..O::from_anchor(&self.range.end, buffer),
+            range: O::from_anchor(&self.range.start, buffer)..O::from_anchor(&self.range.end, buffer),
             diagnostic: &self.diagnostic,
         }
     }
@@ -95,11 +91,7 @@ impl<'a> DiagnosticGroup<'a, Anchor> {
     /// Converts the entries in this [`DiagnosticGroup`] to a different buffer coordinate type.
     pub fn resolve<O: FromAnchor>(&self, buffer: &text::BufferSnapshot) -> DiagnosticGroup<'a, O> {
         DiagnosticGroup {
-            entries: self
-                .entries
-                .iter()
-                .map(|entry| entry.resolve(buffer))
-                .collect(),
+            entries: self.entries.iter().map(|entry| entry.resolve(buffer)).collect(),
             primary_ix: self.primary_ix,
         }
     }
@@ -171,8 +163,7 @@ impl DiagnosticSet {
         Self {
             diagnostics: SumTree::from_iter(
                 entries.into_iter().map(|entry| DiagnosticEntry {
-                    range: buffer.anchor_before(entry.range.start)
-                        ..buffer.anchor_before(entry.range.end),
+                    range: buffer.anchor_before(entry.range.start)..buffer.anchor_before(entry.range.end),
                     diagnostic: entry.diagnostic,
                 }),
                 buffer,
@@ -266,15 +257,7 @@ impl DiagnosticSet {
             entries
                 .iter()
                 .position(|entry| entry.diagnostic.is_primary)
-                .map(|primary_ix| {
-                    (
-                        language_server_id,
-                        DiagnosticGroup {
-                            entries,
-                            primary_ix,
-                        },
-                    )
-                })
+                .map(|primary_ix| (language_server_id, DiagnosticGroup { entries, primary_ix }))
         }));
         output[start_ix..].sort_unstable_by(|(id_a, group_a), (id_b, group_b)| {
             group_a.entries[group_a.primary_ix]
@@ -314,13 +297,9 @@ impl sum_tree::Item for DiagnosticEntry<Anchor> {
 
 impl DiagnosticEntry<Anchor> {
     /// Converts the [DiagnosticEntry] to a different buffer coordinate type.
-    pub fn resolve<'a, O: FromAnchor>(
-        &'a self,
-        buffer: &text::BufferSnapshot,
-    ) -> DiagnosticEntryRef<'a, O> {
+    pub fn resolve<'a, O: FromAnchor>(&'a self, buffer: &text::BufferSnapshot) -> DiagnosticEntryRef<'a, O> {
         DiagnosticEntryRef {
-            range: O::from_anchor(&self.range.start, buffer)
-                ..O::from_anchor(&self.range.end, buffer),
+            range: O::from_anchor(&self.range.start, buffer)..O::from_anchor(&self.range.end, buffer),
             diagnostic: &self.diagnostic,
         }
     }

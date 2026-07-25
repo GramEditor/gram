@@ -104,8 +104,7 @@ impl InputField {
 
     pub fn set_disabled(&mut self, disabled: bool, cx: &mut Context<Self>) {
         self.disabled = disabled;
-        self.editor
-            .update(cx, |editor, _| editor.set_read_only(disabled))
+        self.editor.update(cx, |editor, _| editor.set_read_only(disabled))
     }
 
     pub fn is_empty(&self, cx: &App) -> bool {
@@ -121,13 +120,11 @@ impl InputField {
     }
 
     pub fn clear(&self, window: &mut Window, cx: &mut App) {
-        self.editor()
-            .update(cx, |editor, cx| editor.clear(window, cx))
+        self.editor().update(cx, |editor, cx| editor.clear(window, cx))
     }
 
     pub fn set_text(&self, text: impl Into<Arc<str>>, window: &mut Window, cx: &mut App) {
-        self.editor()
-            .update(cx, |editor, cx| editor.set_text(text, window, cx))
+        self.editor().update(cx, |editor, cx| editor.set_text(text, window, cx))
     }
 }
 
@@ -188,15 +185,11 @@ impl Render for InputField {
             .w_full()
             .gap_1()
             .when_some(self.label.clone(), |this, label| {
-                this.child(
-                    Label::new(label)
-                        .size(self.label_size)
-                        .color(if self.disabled {
-                            Color::Disabled
-                        } else {
-                            Color::Default
-                        }),
-                )
+                this.child(Label::new(label).size(self.label_size).color(if self.disabled {
+                    Color::Disabled
+                } else {
+                    Color::Default
+                }))
             })
             .child(
                 h_flex()
@@ -212,10 +205,9 @@ impl Render for InputField {
                     .bg(style.background_color)
                     .border_1()
                     .border_color(style.border_color)
-                    .when(
-                        editor.focus_handle(cx).contains_focused(window, cx),
-                        |this| this.border_color(theme_color.border_focused),
-                    )
+                    .when(editor.focus_handle(cx).contains_focused(window, cx), |this| {
+                        this.border_color(theme_color.border_focused)
+                    })
                     .when_some(self.start_icon, |this, icon| {
                         this.gap_1()
                             .child(Icon::new(icon).size(IconSize::Small).color(Color::Muted))
@@ -231,8 +223,7 @@ impl Component for InputField {
     }
 
     fn preview(window: &mut Window, cx: &mut App) -> Option<AnyElement> {
-        let input_small =
-            cx.new(|cx| InputField::new(window, cx, "placeholder").label("Small Label"));
+        let input_small = cx.new(|cx| InputField::new(window, cx, "placeholder").label("Small Label"));
 
         let input_regular = cx.new(|cx| {
             InputField::new(window, cx, "placeholder")
@@ -244,14 +235,8 @@ impl Component for InputField {
             v_flex()
                 .gap_6()
                 .children(vec![example_group(vec![
-                    single_example(
-                        "Small Label (Default)",
-                        div().child(input_small).into_any_element(),
-                    ),
-                    single_example(
-                        "Regular Label",
-                        div().child(input_regular).into_any_element(),
-                    ),
+                    single_example("Small Label (Default)", div().child(input_small).into_any_element()),
+                    single_example("Regular Label", div().child(input_regular).into_any_element()),
                 ])])
                 .into_any_element(),
         )

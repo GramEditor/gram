@@ -75,9 +75,7 @@ impl RenderOnce for ContentGroup {
         // Do we make the padding optional, or do we push to use a different component?
 
         self.base
-            .when(self.fill, |this| {
-                this.bg(cx.theme().colors().text.opacity(0.05))
-            })
+            .when(self.fill, |this| this.bg(cx.theme().colors().text.opacity(0.05)))
             .when(self.border, |this| {
                 this.border_1().border_color(cx.theme().colors().border)
             })
@@ -107,7 +105,10 @@ impl Component for ContentGroup {
                         .h_48()
                         .child(Label::new("Default ContentGroup"))
                         .into_any_element(),
-                ).description("A contained style for laying out groups of content. Has a default background and border color."),
+                )
+                .description(
+                    "A contained style for laying out groups of content. Has a default background and border color.",
+                ),
                 single_example(
                     "Without Border",
                     ContentGroup::new()

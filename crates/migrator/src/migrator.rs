@@ -25,9 +25,7 @@ mod migrations;
 fn migrate(text: &str, patterns: MigrationPatterns, query: &Query) -> Result<Option<String>> {
     let mut parser = tree_sitter::Parser::new();
     parser.set_language(&tree_sitter_json::LANGUAGE.into())?;
-    let syntax_tree = parser
-        .parse(text, None)
-        .context("failed to parse settings")?;
+    let syntax_tree = parser.parse(text, None).context("failed to parse settings")?;
 
     let mut cursor = tree_sitter::QueryCursor::new();
     let mut matches = cursor.matches(query, syntax_tree.root_node(), text.as_bytes());
@@ -40,9 +38,7 @@ fn migrate(text: &str, patterns: MigrationPatterns, query: &Query) -> Result<Opt
     }
 
     edits.sort_by_key(|(range, _)| (range.start, Reverse(range.end)));
-    edits.dedup_by(|(range_b, _), (range_a, _)| {
-        range_a.contains(&range_b.start) || range_a.contains(&range_b.end)
-    });
+    edits.dedup_by(|(range_b, _), (range_a, _)| range_a.contains(&range_b.start) || range_a.contains(&range_b.end));
 
     if edits.is_empty() {
         Ok(None)
@@ -80,8 +76,7 @@ fn run_migrations(text: &str, migrations: &[MigrationType]) -> Result<Option<Str
                 if current_text.trim().is_empty() {
                     return Ok(None);
                 }
-                let old_content: serde_json_lenient::Value =
-                    parse_json_with_comments(&current_text)?;
+                let old_content: serde_json_lenient::Value = parse_json_with_comments(&current_text)?;
                 let old_value = serde_json::to_value(&old_content).unwrap();
                 let mut new_value = old_value.clone();
                 callback(&mut new_value)?;
@@ -144,10 +139,7 @@ macro_rules! define_query {
         static $var_name: LazyLock<Query> = LazyLock::new(|| {
             Query::new(
                 &tree_sitter_json::LANGUAGE.into(),
-                &$patterns_path
-                    .iter()
-                    .map(|pattern| pattern.0)
-                    .collect::<String>(),
+                &$patterns_path.iter().map(|pattern| pattern.0).collect::<String>(),
             )
             .unwrap()
         });
@@ -172,11 +164,7 @@ mod tests {
 
     #[allow(dead_code)]
     #[track_caller]
-    fn assert_migrate_settings_with_migrations(
-        migrations: &[MigrationType],
-        input: &str,
-        output: Option<&str>,
-    ) {
+    fn assert_migrate_settings_with_migrations(migrations: &[MigrationType], input: &str, output: Option<&str>) {
         let migrated = run_migrations(input, migrations).unwrap();
         assert_migrated_correctly(migrated.clone(), output);
 

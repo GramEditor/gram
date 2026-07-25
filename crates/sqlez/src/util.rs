@@ -26,7 +26,6 @@ impl<T: Send> Deref for UnboundedSyncSender<T> {
     type Target = Sender<T>;
 
     fn deref(&self) -> &Self::Target {
-        self.local_senders
-            .get_or(|| self.cloneable_sender.lock().clone())
+        self.local_senders.get_or(|| self.cloneable_sender.lock().clone())
     }
 }

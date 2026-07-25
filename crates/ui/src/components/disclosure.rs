@@ -124,14 +124,8 @@ impl Component for Disclosure {
                     example_group_with_title(
                         "Disclosure States",
                         vec![
-                            single_example(
-                                "Closed",
-                                Disclosure::new("closed", false).into_any_element(),
-                            ),
-                            single_example(
-                                "Open",
-                                Disclosure::new("open", true).into_any_element(),
-                            ),
+                            single_example("Closed", Disclosure::new("closed", false).into_any_element()),
+                            single_example("Open", Disclosure::new("open", true).into_any_element()),
                         ],
                     ),
                     example_group_with_title(

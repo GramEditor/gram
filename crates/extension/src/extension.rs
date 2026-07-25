@@ -15,7 +15,7 @@ use fs::normalize_path;
 use gpui::{App, Task};
 use language::LanguageName;
 use semver::Version as SemanticVersion;
-use task::{SpawnInTerminal, GramDebugConfig};
+use task::{GramDebugConfig, SpawnInTerminal};
 use util::rel_path::RelPath;
 
 pub use crate::capabilities::*;
@@ -138,22 +138,14 @@ pub trait Extension: Send + Sync + 'static {
         resolved_label: String,
         debug_adapter_name: String,
     ) -> Result<Option<DebugScenario>>;
-    async fn run_dap_locator(
-        &self,
-        locator_name: String,
-        config: SpawnInTerminal,
-    ) -> Result<DebugRequest>;
+    async fn run_dap_locator(&self, locator_name: String, config: SpawnInTerminal) -> Result<DebugRequest>;
 }
 
-pub fn parse_wasm_extension_version(
-    extension_id: &str,
-    wasm_bytes: &[u8],
-) -> Result<SemanticVersion> {
+pub fn parse_wasm_extension_version(extension_id: &str, wasm_bytes: &[u8]) -> Result<SemanticVersion> {
     let mut version = None;
 
     for part in wasmparser::Parser::new(0).parse_all(wasm_bytes) {
-        if let wasmparser::Payload::CustomSection(s) =
-            part.context("error parsing wasm extension")?
+        if let wasmparser::Payload::CustomSection(s) = part.context("error parsing wasm extension")?
             && (s.name() == "gram:api-version" || s.name() == "zed:api-version")
         {
             version = parse_wasm_extension_version_custom_section(s.data());
@@ -172,9 +164,7 @@ pub fn parse_wasm_extension_version(
     //
     // By parsing the entirety of the Wasm bytes before we return, we're able to detect this problem
     // earlier as an `Err` rather than as a panic.
-    version.with_context(|| {
-        format!("extension {extension_id} has no gram:api-version or zed:api-version section")
-    })
+    version.with_context(|| format!("extension {extension_id} has no gram:api-version or zed:api-version section"))
 }
 
 fn parse_wasm_extension_version_custom_section(data: &[u8]) -> Option<SemanticVersion> {

@@ -37,11 +37,7 @@ impl PathList {
             .collect();
         indexed_paths.sort_by(|(_, a), (_, b)| a.cmp(b));
         let order = indexed_paths.iter().map(|e| e.0).collect::<Vec<_>>().into();
-        let paths = indexed_paths
-            .into_iter()
-            .map(|e| e.1)
-            .collect::<Vec<_>>()
-            .into();
+        let paths = indexed_paths.into_iter().map(|e| e.1).collect::<Vec<_>>().into();
         Self { order, paths }
     }
 
@@ -79,11 +75,7 @@ impl PathList {
             serialized.paths.split('\n').map(PathBuf::from).collect()
         };
 
-        let mut order: Vec<usize> = serialized
-            .order
-            .split(',')
-            .filter_map(|s| s.parse().ok())
-            .collect();
+        let mut order: Vec<usize> = serialized.order.split(',').filter_map(|s| s.parse().ok()).collect();
 
         if !paths.is_sorted() || order.len() != paths.len() {
             order = (0..paths.len()).collect();
@@ -165,11 +157,7 @@ mod tests {
 
         assert_eq!(
             deserialized.ordered_paths().collect_array().unwrap(),
-            [
-                &PathBuf::from("b"),
-                &PathBuf::from("a"),
-                &PathBuf::from("c")
-            ]
+            [&PathBuf::from("b"), &PathBuf::from("a"), &PathBuf::from("c")]
         );
 
         let list = PathList::new(&["b", "c", "a"]);
@@ -186,11 +174,7 @@ mod tests {
 
         assert_eq!(
             deserialized.ordered_paths().collect_array().unwrap(),
-            [
-                &PathBuf::from("b"),
-                &PathBuf::from("c"),
-                &PathBuf::from("a"),
-            ]
+            [&PathBuf::from("b"), &PathBuf::from("c"), &PathBuf::from("a"),]
         );
     }
 }

@@ -51,17 +51,13 @@ trait BoundedObject {
             let start = self
                 .previous_start(map, inner_range.start, true)
                 .unwrap_or(inner_range.start);
-            let end = self
-                .next_end(map, inner_range.end, true)
-                .unwrap_or(inner_range.end);
+            let end = self.next_end(map, inner_range.end, true).unwrap_or(inner_range.end);
 
             return start..end;
         }
 
         let mut start = inner_range.start;
-        let end = self
-            .next_end(map, inner_range.end, true)
-            .unwrap_or(inner_range.end);
+        let end = self.next_end(map, inner_range.end, true).unwrap_or(inner_range.end);
         if end == inner_range.end {
             start = self
                 .previous_start(map, inner_range.start, true)
@@ -73,18 +69,14 @@ trait BoundedObject {
     /// Switches from an "ma" range to an "mi" one.
     /// Assumes the inner range is valid.
     fn inside(&self, map: &DisplaySnapshot, outer_range: Range<Offset>) -> Range<Offset> {
-        let inner_start = self
-            .next_start(map, outer_range.start, false)
-            .unwrap_or_else(|| {
-                log::warn!("The motion might not have found the text object correctly");
-                outer_range.start
-            });
-        let inner_end = self
-            .previous_end(map, outer_range.end, false)
-            .unwrap_or_else(|| {
-                log::warn!("The motion might not have found the text object correctly");
-                outer_range.end
-            });
+        let inner_start = self.next_start(map, outer_range.start, false).unwrap_or_else(|| {
+            log::warn!("The motion might not have found the text object correctly");
+            outer_range.start
+        });
+        let inner_end = self.previous_end(map, outer_range.end, false).unwrap_or_else(|| {
+            log::warn!("The motion might not have found the text object correctly");
+            outer_range.end
+        });
         inner_start..inner_end
     }
 
@@ -101,8 +93,7 @@ trait BoundedObject {
             let next_end = self.next_end(map, end_search_start, outer)?;
             let maybe_next_start = self.next_start(map, start_search_start, outer);
             if let Some(next_start) = maybe_next_start
-                && (next_start.0 < next_end.0
-                    || next_start.0 == next_end.0 && self.can_be_zero_width(outer))
+                && (next_start.0 < next_end.0 || next_start.0 == next_end.0 && self.can_be_zero_width(outer))
                 && !self.ambiguous_outer()
             {
                 let closing = self.close_at_end(next_start, map, outer)?;
@@ -152,25 +143,16 @@ trait BoundedObject {
 struct Offset(MultiBufferOffset);
 impl Offset {
     fn next(self, map: &DisplaySnapshot) -> Option<Self> {
-        let next = Self(
-            map.buffer_snapshot()
-                .clip_offset(self.0 + 1usize, Bias::Right),
-        );
+        let next = Self(map.buffer_snapshot().clip_offset(self.0 + 1usize, Bias::Right));
         (next.0 > self.0).then(|| next)
     }
     fn previous(self, map: &DisplaySnapshot) -> Option<Self> {
         if self.0 == MultiBufferOffset(0) {
             return None;
         }
-        Some(Self(
-            map.buffer_snapshot().clip_offset(self.0 - 1, Bias::Left),
-        ))
+        Some(Self(map.buffer_snapshot().clip_offset(self.0 - 1, Bias::Left)))
     }
-    fn range(
-        start: (DisplayPoint, Bias),
-        end: (DisplayPoint, Bias),
-        map: &DisplaySnapshot,
-    ) -> Range<Self> {
+    fn range(start: (DisplayPoint, Bias), end: (DisplayPoint, Bias), map: &DisplaySnapshot) -> Range<Self> {
         Self(start.0.to_offset(map, start.1))..Self(end.0.to_offset(map, end.1))
     }
 }
@@ -182,11 +164,7 @@ impl<B: BoundedObject> HelixTextObject for B {
         relative_to: Range<DisplayPoint>,
         around: bool,
     ) -> Option<Range<DisplayPoint>> {
-        let relative_to = Offset::range(
-            (relative_to.start, Bias::Left),
-            (relative_to.end, Bias::Left),
-            map,
-        );
+        let relative_to = Offset::range((relative_to.start, Bias::Left), (relative_to.end, Bias::Left), map);
 
         relative_range(self, around, map, |find_outer| {
             let search_start = if self.can_be_zero_width(find_outer) {
@@ -210,11 +188,7 @@ impl<B: BoundedObject> HelixTextObject for B {
         relative_to: Range<DisplayPoint>,
         around: bool,
     ) -> Option<Range<DisplayPoint>> {
-        let relative_to = Offset::range(
-            (relative_to.start, Bias::Left),
-            (relative_to.end, Bias::Left),
-            map,
-        );
+        let relative_to = Offset::range((relative_to.start, Bias::Left), (relative_to.end, Bias::Left), map);
 
         relative_range(self, around, map, |find_outer| {
             let min_start = self.next_start(map, relative_to.end, find_outer)?;
@@ -230,11 +204,7 @@ impl<B: BoundedObject> HelixTextObject for B {
         relative_to: Range<DisplayPoint>,
         around: bool,
     ) -> Option<Range<DisplayPoint>> {
-        let relative_to = Offset::range(
-            (relative_to.start, Bias::Left),
-            (relative_to.end, Bias::Left),
-            map,
-        );
+        let relative_to = Offset::range((relative_to.start, Bias::Left), (relative_to.end, Bias::Left), map);
 
         relative_range(self, around, map, |find_outer| {
             let max_end = self.previous_end(map, relative_to.start, find_outer)?;
@@ -343,9 +313,7 @@ impl ImmediateBoundary {
     fn is_outer_start(&self, left: char, right: char, classifier: CharClassifier) -> bool {
         match self {
             word @ Self::Word { .. } => word.is_inner_end(left, right, classifier) || left == '\n',
-            subword @ Self::Subword { .. } => {
-                subword.is_inner_end(left, right, classifier) || left == '\n'
-            }
+            subword @ Self::Subword { .. } => subword.is_inner_end(left, right, classifier) || left == '\n',
             Self::AngleBrackets => right == '<',
             Self::BackQuotes => right == '`',
             Self::CurlyBrackets => right == '{',
@@ -358,12 +326,8 @@ impl ImmediateBoundary {
     }
     fn is_outer_end(&self, left: char, right: char, classifier: CharClassifier) -> bool {
         match self {
-            word @ Self::Word { .. } => {
-                word.is_inner_start(left, right, classifier) || right == '\n'
-            }
-            subword @ Self::Subword { .. } => {
-                subword.is_inner_start(left, right, classifier) || right == '\n'
-            }
+            word @ Self::Word { .. } => word.is_inner_start(left, right, classifier) || right == '\n',
+            subword @ Self::Subword { .. } => subword.is_inner_start(left, right, classifier) || right == '\n',
             Self::AngleBrackets => left == '>',
             Self::BackQuotes => left == '`',
             Self::CurlyBrackets => left == '}',
@@ -497,15 +461,11 @@ impl FuzzyBoundary {
                     return None;
                 }
                 Some(Box::new(|identifier, map| {
-                    try_find_preceding_boundary(map, identifier, |left, right| {
-                        left != '\n' && right == '\n'
-                    })
+                    try_find_preceding_boundary(map, identifier, |left, right| left != '\n' && right == '\n')
                 }))
             }
             Self::Sentence => {
-                if let Some(find_paragraph_end) =
-                    Self::Paragraph.is_near_potential_inner_end(left, right, classifier)
-                {
+                if let Some(find_paragraph_end) = Self::Paragraph.is_near_potential_inner_end(left, right, classifier) {
                     return Some(find_paragraph_end);
                 } else if !is_sentence_end(left, right, classifier) {
                     return None;
@@ -523,12 +483,8 @@ impl FuzzyBoundary {
         classifier: &CharClassifier,
     ) -> Option<Box<dyn Fn(Offset, &'a DisplaySnapshot) -> Option<Offset>>> {
         match self {
-            paragraph @ Self::Paragraph => {
-                paragraph.is_near_potential_inner_end(left, right, classifier)
-            }
-            sentence @ Self::Sentence => {
-                sentence.is_near_potential_inner_end(left, right, classifier)
-            }
+            paragraph @ Self::Paragraph => paragraph.is_near_potential_inner_end(left, right, classifier),
+            sentence @ Self::Sentence => sentence.is_near_potential_inner_end(left, right, classifier),
         }
     }
     /// When between two chars that form an easy-to-find identifier boundary,
@@ -540,12 +496,8 @@ impl FuzzyBoundary {
         classifier: &CharClassifier,
     ) -> Option<Box<dyn Fn(Offset, &'a DisplaySnapshot) -> Option<Offset>>> {
         match self {
-            paragraph @ Self::Paragraph => {
-                paragraph.is_near_potential_inner_start(left, right, classifier)
-            }
-            sentence @ Self::Sentence => {
-                sentence.is_near_potential_inner_start(left, right, classifier)
-            }
+            paragraph @ Self::Paragraph => paragraph.is_near_potential_inner_start(left, right, classifier),
+            sentence @ Self::Sentence => sentence.is_near_potential_inner_start(left, right, classifier),
         }
     }
 
@@ -626,18 +578,14 @@ impl BoundedObject for FuzzyBoundary {
 
 /// Returns the first boundary after or at `from` in text direction.
 /// The start and end of the file are the chars `'\0'`.
-fn try_find_boundary(
-    map: &DisplaySnapshot,
-    from: Offset,
-    is_boundary: impl Fn(char, char) -> bool,
-) -> Option<Offset> {
-    let boundary = try_find_boundary_data(map, from, |left, right, point| {
-        if is_boundary(left, right) {
-            Some(point)
-        } else {
-            None
-        }
-    })?;
+fn try_find_boundary(map: &DisplaySnapshot, from: Offset, is_boundary: impl Fn(char, char) -> bool) -> Option<Offset> {
+    let boundary = try_find_boundary_data(
+        map,
+        from,
+        |left, right, point| {
+            if is_boundary(left, right) { Some(point) } else { None }
+        },
+    )?;
     Some(boundary)
 }
 
@@ -649,11 +597,7 @@ fn try_find_boundary_data<T>(
     mut from: Offset,
     boundary_information: impl Fn(char, char, Offset) -> Option<T>,
 ) -> Option<T> {
-    let mut prev_ch = map
-        .buffer_snapshot()
-        .reversed_chars_at(from.0)
-        .next()
-        .unwrap_or('\0');
+    let mut prev_ch = map.buffer_snapshot().reversed_chars_at(from.0).next().unwrap_or('\0');
 
     for ch in map.buffer_snapshot().chars_at(from.0).chain(['\0']) {
         if let Some(boundary_information) = boundary_information(prev_ch, ch, from) {
@@ -673,13 +617,14 @@ fn try_find_preceding_boundary(
     from: Offset,
     is_boundary: impl Fn(char, char) -> bool,
 ) -> Option<Offset> {
-    let boundary = try_find_preceding_boundary_data(map, from, |left, right, point| {
-        if is_boundary(left, right) {
-            Some(point)
-        } else {
-            None
-        }
-    })?;
+    let boundary =
+        try_find_preceding_boundary_data(
+            map,
+            from,
+            |left, right, point| {
+                if is_boundary(left, right) { Some(point) } else { None }
+            },
+        )?;
     Some(boundary)
 }
 
@@ -691,17 +636,9 @@ fn try_find_preceding_boundary_data<T>(
     mut from: Offset,
     is_boundary: impl Fn(char, char, Offset) -> Option<T>,
 ) -> Option<T> {
-    let mut prev_ch = map
-        .buffer_snapshot()
-        .chars_at(from.0)
-        .next()
-        .unwrap_or('\0');
+    let mut prev_ch = map.buffer_snapshot().chars_at(from.0).next().unwrap_or('\0');
 
-    for ch in map
-        .buffer_snapshot()
-        .reversed_chars_at(from.0)
-        .chain(['\0'])
-    {
+    for ch in map.buffer_snapshot().reversed_chars_at(from.0).chain(['\0']) {
         if let Some(boundary_information) = is_boundary(ch, prev_ch, from) {
             return Some(boundary_information);
         }
@@ -721,8 +658,7 @@ fn is_buffer_end(right: char) -> bool {
 }
 
 fn is_word_start(left: char, right: char, classifier: &CharClassifier) -> bool {
-    classifier.kind(left) != classifier.kind(right)
-        && classifier.kind(right) != CharKind::Whitespace
+    classifier.kind(left) != classifier.kind(right) && classifier.kind(right) != CharKind::Whitespace
 }
 
 fn is_word_end(left: char, right: char, classifier: &CharClassifier) -> bool {

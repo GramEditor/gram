@@ -93,10 +93,7 @@ impl SelectableButton for ButtonIcon {
 
 impl RenderOnce for ButtonIcon {
     fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
-        let icon = self
-            .selected_icon
-            .filter(|_| self.selected)
-            .unwrap_or(self.icon);
+        let icon = self.selected_icon.filter(|_| self.selected).unwrap_or(self.icon);
 
         let icon_color = if self.disabled {
             Color::Disabled
@@ -140,10 +137,7 @@ impl Component for ButtonIcon {
                     example_group_with_title(
                         "Basic Usage",
                         vec![
-                            single_example(
-                                "Default",
-                                ButtonIcon::new(IconName::Star).into_any_element(),
-                            ),
+                            single_example("Default", ButtonIcon::new(IconName::Star).into_any_element()),
                             single_example(
                                 "Custom Size",
                                 ButtonIcon::new(IconName::Star)
@@ -152,9 +146,7 @@ impl Component for ButtonIcon {
                             ),
                             single_example(
                                 "Custom Color",
-                                ButtonIcon::new(IconName::Star)
-                                    .color(Color::Accent)
-                                    .into_any_element(),
+                                ButtonIcon::new(IconName::Star).color(Color::Accent).into_any_element(),
                             ),
                         ],
                     ),
@@ -163,15 +155,11 @@ impl Component for ButtonIcon {
                         vec![
                             single_example(
                                 "Selected",
-                                ButtonIcon::new(IconName::Star)
-                                    .toggle_state(true)
-                                    .into_any_element(),
+                                ButtonIcon::new(IconName::Star).toggle_state(true).into_any_element(),
                             ),
                             single_example(
                                 "Disabled",
-                                ButtonIcon::new(IconName::Star)
-                                    .disabled(true)
-                                    .into_any_element(),
+                                ButtonIcon::new(IconName::Star).disabled(true).into_any_element(),
                             ),
                         ],
                     ),

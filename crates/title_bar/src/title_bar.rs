@@ -14,14 +14,12 @@ use crate::{
 };
 
 #[cfg(not(target_os = "macos"))]
-use crate::application_menu::{
-    ActivateDirection, ActivateMenuLeft, ActivateMenuRight, OpenApplicationMenu,
-};
+use crate::application_menu::{ActivateDirection, ActivateMenuLeft, ActivateMenuRight, OpenApplicationMenu};
 
 use app_actions::{OpenRecent, OpenRemote};
 use gpui::{
-    Action, AnyElement, App, Context, Corner, Element, Entity, Focusable, InteractiveElement,
-    IntoElement, MouseButton, ParentElement, Render, Styled, Subscription, WeakEntity, Window,
+    Action, AnyElement, App, Context, Corner, Element, Entity, Focusable, InteractiveElement, IntoElement, MouseButton,
+    ParentElement, Render, Styled, Subscription, WeakEntity, Window,
 };
 use project::{Project, git_store::GitStoreEvent};
 use remote::RemoteConnectionOptions;
@@ -29,8 +27,8 @@ use settings::Settings;
 use theme::ActiveTheme;
 use title_bar_settings::TitleBarSettings;
 use ui::{
-    Button, ButtonLike, ButtonStyle, ContextMenu, Icon, IconName, IconSize, IconWithIndicator,
-    Indicator, PopoverMenu, Tooltip, h_flex, prelude::*,
+    Button, ButtonLike, ButtonStyle, ContextMenu, Icon, IconName, IconSize, IconWithIndicator, Indicator, PopoverMenu,
+    Tooltip, h_flex, prelude::*,
 };
 use workspace::Workspace;
 
@@ -41,11 +39,7 @@ const MAX_PROJECT_NAME_LENGTH: usize = 40;
 const MAX_BRANCH_NAME_LENGTH: usize = 40;
 const MAX_SHORT_SHA_LENGTH: usize = 8;
 
-fn apply_title_bar_visibility(
-    workspace: &mut Workspace,
-    window: &mut Window,
-    cx: &mut Context<Workspace>,
-) {
+fn apply_title_bar_visibility(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>) {
     let should_show = TitleBarSettings::get_global(cx).show;
 
     if should_show {
@@ -145,14 +139,13 @@ impl Render for TitleBar {
             h_flex()
                 .gap_1()
                 .map(|title_bar| {
-                    let mut render_project_items = title_bar_settings.show_branch_name
-                        || title_bar_settings.show_project_items;
+                    let mut render_project_items =
+                        title_bar_settings.show_branch_name || title_bar_settings.show_project_items;
                     title_bar
                         .when_some(
                             self.application_menu.clone().filter(|_| !show_menus),
                             |title_bar, menu| {
-                                render_project_items &=
-                                    !menu.update(cx, |menu, cx| menu.all_menus_shown(cx));
+                                render_project_items &= !menu.update(cx, |menu, cx| menu.all_menus_shown(cx));
                                 title_bar.child(menu)
                             },
                         )
@@ -183,11 +176,7 @@ impl Render for TitleBar {
 
         if show_menus {
             self.platform_titlebar.update(cx, |this, _| {
-                this.set_children(
-                    self.application_menu
-                        .clone()
-                        .map(|menu| menu.into_any_element()),
-                );
+                this.set_children(self.application_menu.clone().map(|menu| menu.into_any_element()));
             });
 
             let height = PlatformTitleBar::height(window);
@@ -218,12 +207,7 @@ impl Render for TitleBar {
 }
 
 impl TitleBar {
-    pub fn new(
-        id: impl Into<ElementId>,
-        workspace: &Workspace,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn new(id: impl Into<ElementId>, workspace: &Workspace, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let project = workspace.project().clone();
         let git_store = project.read(cx).git_store().clone();
 
@@ -236,28 +220,19 @@ impl TitleBar {
                     None
                 }
             }
-            PlatformStyle::Linux | PlatformStyle::Windows => {
-                Some(cx.new(|cx| ApplicationMenu::new(window, cx)))
-            }
+            PlatformStyle::Linux | PlatformStyle::Windows => Some(cx.new(|cx| ApplicationMenu::new(window, cx))),
         };
 
         let mut subscriptions = Vec::new();
-        subscriptions.push(
-            cx.observe(&workspace.weak_handle().upgrade().unwrap(), |_, _, cx| {
-                cx.notify()
-            }),
-        );
+        subscriptions.push(cx.observe(&workspace.weak_handle().upgrade().unwrap(), |_, _, cx| cx.notify()));
         subscriptions.push(cx.subscribe(&project, |_, _, _: &project::Event, cx| cx.notify()));
         subscriptions.push(cx.observe_window_activation(window, Self::window_activation_changed));
-        subscriptions.push(
-            cx.subscribe(&git_store, move |_, _, event, cx| match event {
-                GitStoreEvent::ActiveRepositoryChanged(_)
-                | GitStoreEvent::RepositoryUpdated(_, _, true) => {
-                    cx.notify();
-                }
-                _ => {}
-            }),
-        );
+        subscriptions.push(cx.subscribe(&git_store, move |_, _, event, cx| match event {
+            GitStoreEvent::ActiveRepositoryChanged(_) | GitStoreEvent::RepositoryUpdated(_, _, true) => {
+                cx.notify();
+            }
+            _ => {}
+        }));
 
         let platform_titlebar = cx.new(|cx| PlatformTitleBar::new(id, cx));
 
@@ -283,9 +258,7 @@ impl TitleBar {
         let host: SharedString = options.display_name().into();
 
         let (nickname, icon) = match options {
-            RemoteConnectionOptions::Ssh(options) => {
-                (options.nickname.map(|nick| nick.into()), IconName::Server)
-            }
+            RemoteConnectionOptions::Ssh(options) => (options.nickname.map(|nick| nick.into()), IconName::Server),
             RemoteConnectionOptions::Wsl(_) => (None, IconName::Linux),
         };
         let nickname = nickname.unwrap_or_else(|| host.clone());
@@ -297,13 +270,10 @@ impl TitleBar {
                 Color::Warning,
                 format!("Connection attempt to {host} missed. Retrying..."),
             ),
-            remote::ConnectionState::Reconnecting => (
-                Color::Warning,
-                format!("Lost connection to {host}. Reconnecting..."),
-            ),
-            remote::ConnectionState::Disconnected => {
-                (Color::Error, format!("Disconnected from {host}"))
+            remote::ConnectionState::Reconnecting => {
+                (Color::Warning, format!("Lost connection to {host}. Reconnecting..."))
             }
+            remote::ConnectionState::Disconnected => (Color::Error, format!("Disconnected from {host}")),
         };
 
         let icon_color = match self.project.read(cx).remote_connection_state(cx)? {
@@ -421,13 +391,9 @@ impl TitleBar {
             .map(|branch| branch.name())
             .map(|name| util::truncate_and_trailoff(name, MAX_BRANCH_NAME_LENGTH))
             .or_else(|| {
-                repo.head_commit.as_ref().map(|commit| {
-                    commit
-                        .sha
-                        .chars()
-                        .take(MAX_SHORT_SHA_LENGTH)
-                        .collect::<String>()
-                })
+                repo.head_commit
+                    .as_ref()
+                    .map(|commit| commit.sha.chars().take(MAX_SHORT_SHA_LENGTH).collect::<String>())
             })?;
         let project_name = self.project_name(cx);
         let repo_name = repo
@@ -435,8 +401,7 @@ impl TitleBar {
             .file_name()
             .and_then(|name| name.to_str())
             .map(SharedString::new);
-        let show_repo_name =
-            repository_count > 1 && repo.branch.is_some() && repo_name != project_name;
+        let show_repo_name = repository_count > 1 && repo.branch.is_some() && repo_name != project_name;
         let branch_name = if let Some(repo_name) = repo_name.filter(|_| show_repo_name) {
             format!("{repo_name}/{branch_name}")
         } else {
@@ -499,14 +464,8 @@ impl TitleBar {
                         .separator()
                         .action("Settings", app_actions::OpenSettings.boxed_clone())
                         .action("Keymap", Box::new(app_actions::OpenKeymap))
-                        .action(
-                            "Extensions",
-                            app_actions::Extensions::default().boxed_clone(),
-                        )
-                        .action(
-                            "Themes…",
-                            app_actions::theme_selector::Toggle::default().boxed_clone(),
-                        )
+                        .action("Extensions", app_actions::Extensions::default().boxed_clone())
+                        .action("Themes…", app_actions::theme_selector::Toggle::default().boxed_clone())
                         .action(
                             "Icon Themes…",
                             app_actions::icon_theme_selector::Toggle::default().boxed_clone(),

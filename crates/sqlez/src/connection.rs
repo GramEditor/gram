@@ -32,12 +32,7 @@ impl Connection {
         };
 
         unsafe {
-            sqlite3_open_v2(
-                CString::new(uri)?.as_ptr(),
-                &mut connection.sqlite3,
-                flags,
-                ptr::null(),
-            );
+            sqlite3_open_v2(CString::new(uri)?.as_ptr(), &mut connection.sqlite3, flags, ptr::null());
 
             // Turn on extended error codes
             sqlite3_extended_result_codes(connection.sqlite3, 1);
@@ -57,10 +52,8 @@ impl Connection {
     pub fn open_memory(uri: Option<&str>) -> Self {
         if let Some(uri) = uri {
             let in_memory_path = format!("file:{}?mode=memory&cache=shared", uri);
-            let flags =
-                SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_READWRITE | SQLITE_OPEN_URI;
-            Self::open_with_flags(&in_memory_path, false, flags)
-                .expect("Could not create fallback in memory db")
+            let flags = SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_READWRITE | SQLITE_OPEN_URI;
+            Self::open_with_flags(&in_memory_path, false, flags).expect("Could not create fallback in memory db")
         } else {
             Self::open(":memory:", false).expect("Could not create fallback in memory db")
         }
@@ -110,8 +103,7 @@ impl Connection {
             let mut raw_statement = ptr::null_mut::<sqlite3_stmt>();
             let mut remaining_sql_ptr = ptr::null();
 
-            let (res, offset, message, _conn) = if let Some((table_to_alter, column)) = alter_table
-            {
+            let (res, offset, message, _conn) = if let Some((table_to_alter, column)) = alter_table {
                 // ALTER TABLE is a weird statement. When preparing the statement the table's
                 // existence is checked *before* syntax checking any other part of the statement.
                 // Therefore, we need to make sure that the table has been created before calling
@@ -180,10 +172,8 @@ impl Connection {
 
             if res == 1 && offset >= 0 {
                 let sub_statement_correction = remaining_sql.as_ptr() as usize - sql_start as usize;
-                let err_msg = String::from_utf8_lossy(unsafe {
-                    CStr::from_ptr(message as *const _).to_bytes()
-                })
-                .into_owned();
+                let err_msg =
+                    String::from_utf8_lossy(unsafe { CStr::from_ptr(message as *const _).to_bytes() }).into_owned();
 
                 return Some((err_msg, offset as usize + sub_statement_correction));
             }
@@ -205,10 +195,7 @@ impl Connection {
             let message = if message.is_null() {
                 None
             } else {
-                Some(
-                    String::from_utf8_lossy(CStr::from_ptr(message as *const _).to_bytes())
-                        .into_owned(),
-                )
+                Some(String::from_utf8_lossy(CStr::from_ptr(message as *const _).to_bytes()).into_owned())
             };
 
             anyhow::bail!("Sqlite call failed with code {code} and message: {message:?}")
@@ -287,10 +274,7 @@ mod test {
 
         let text = "Some test text";
 
-        connection
-            .exec_bound("INSERT INTO text (text) VALUES (?);")
-            .unwrap()(text)
-        .unwrap();
+        connection.exec_bound("INSERT INTO text (text) VALUES (?);").unwrap()(text).unwrap();
 
         assert_eq!(
             connection.select_row("SELECT text FROM text;").unwrap()().unwrap(),
@@ -317,9 +301,7 @@ mod test {
         let tuple2 = ("test2".to_string(), 32, vec![64, 32, 16, 8, 4, 2, 1, 0]);
 
         let mut insert = connection
-            .exec_bound::<(String, usize, Vec<u8>)>(
-                "INSERT INTO test (text, integer, blob) VALUES (?, ?, ?)",
-            )
+            .exec_bound::<(String, usize, Vec<u8>)>("INSERT INTO test (text, integer, blob) VALUES (?, ?, ?)")
             .unwrap();
 
         insert(tuple1.clone()).unwrap();
@@ -346,16 +328,10 @@ mod test {
             .unwrap()()
         .unwrap();
 
-        connection
-            .exec_bound("INSERT INTO bools(t, f) VALUES (?, ?)")
-            .unwrap()((true, false))
-        .unwrap();
+        connection.exec_bound("INSERT INTO bools(t, f) VALUES (?, ?)").unwrap()((true, false)).unwrap();
 
         assert_eq!(
-            connection
-                .select_row::<(bool, bool)>("SELECT * FROM bools;")
-                .unwrap()()
-            .unwrap(),
+            connection.select_row::<(bool, bool)>("SELECT * FROM bools;").unwrap()().unwrap(),
             Some((true, false))
         );
     }
@@ -381,10 +357,7 @@ mod test {
         connection1.backup_main(&connection2).unwrap();
 
         // Delete the added blob and verify its deleted on the other side
-        let read_blobs = connection1
-            .select::<Vec<u8>>("SELECT * FROM blobs;")
-            .unwrap()()
-        .unwrap();
+        let read_blobs = connection1.select::<Vec<u8>>("SELECT * FROM blobs;").unwrap()().unwrap();
         assert_eq!(read_blobs, vec![blob]);
     }
 
@@ -407,10 +380,7 @@ mod test {
         .unwrap();
 
         assert_eq!(
-            connection
-                .select_row::<usize>("SELECT * FROM test")
-                .unwrap()()
-            .unwrap(),
+            connection.select_row::<usize>("SELECT * FROM test").unwrap()().unwrap(),
             Some(2)
         );
     }
@@ -419,8 +389,7 @@ mod test {
     #[test]
     fn test_sql_has_syntax_errors() {
         let connection = Connection::open_memory(Some("test_sql_has_syntax_errors"));
-        let first_stmt =
-            "CREATE TABLE kv_store(key TEXT PRIMARY KEY, value TEXT NOT NULL) STRICT ;";
+        let first_stmt = "CREATE TABLE kv_store(key TEXT PRIMARY KEY, value TEXT NOT NULL) STRICT ;";
         let second_stmt = "SELECT FROM";
 
         let second_offset = connection.sql_has_syntax_error(second_stmt).unwrap().1;
@@ -436,16 +405,8 @@ mod test {
     fn test_alter_table_syntax() {
         let connection = Connection::open_memory(Some("test_alter_table_syntax"));
 
-        assert!(
-            connection
-                .sql_has_syntax_error("ALTER TABLE test ADD x TEXT")
-                .is_none()
-        );
+        assert!(connection.sql_has_syntax_error("ALTER TABLE test ADD x TEXT").is_none());
 
-        assert!(
-            connection
-                .sql_has_syntax_error("ALTER TABLE test AAD x TEXT")
-                .is_some()
-        );
+        assert!(connection.sql_has_syntax_error("ALTER TABLE test AAD x TEXT").is_some());
     }
 }

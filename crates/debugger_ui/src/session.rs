@@ -75,15 +75,7 @@ impl DebugSession {
         self.stack_trace_view.get_or_init(|| {
             let stackframe_list = running_state.read(cx).stack_frame_list().clone();
 
-            cx.new(|cx| {
-                StackTraceView::new(
-                    workspace.clone(),
-                    project.clone(),
-                    stackframe_list,
-                    window,
-                    cx,
-                )
-            })
+            cx.new(|cx| StackTraceView::new(workspace.clone(), project.clone(), stackframe_list, window, cx))
         })
     }
 
@@ -92,8 +84,7 @@ impl DebugSession {
     }
 
     pub(crate) fn shutdown(&mut self, cx: &mut Context<Self>) {
-        self.running_state
-            .update(cx, |state, cx| state.shutdown(cx));
+        self.running_state.update(cx, |state, cx| state.shutdown(cx));
     }
 
     pub(crate) fn label(&self, cx: &mut App) -> Option<SharedString> {

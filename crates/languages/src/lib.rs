@@ -53,22 +53,21 @@ struct LanguageDir;
 
 /// A shared grammar for plain text, exposed for reuse by downstream crates.
 #[cfg(feature = "tree-sitter-gitcommit")]
-pub static LANGUAGE_GIT_COMMIT: std::sync::LazyLock<Arc<Language>> =
-    std::sync::LazyLock::new(|| {
-        Arc::new(Language::new(
-            LanguageConfig {
-                name: "Git Commit".into(),
-                soft_wrap: Some(language::language_settings::SoftWrap::EditorWidth),
-                matcher: LanguageMatcher {
-                    path_suffixes: vec!["COMMIT_EDITMSG".to_owned()],
-                    first_line_pattern: None,
-                },
-                line_comments: vec![Arc::from("#")],
-                ..LanguageConfig::default()
+pub static LANGUAGE_GIT_COMMIT: std::sync::LazyLock<Arc<Language>> = std::sync::LazyLock::new(|| {
+    Arc::new(Language::new(
+        LanguageConfig {
+            name: "Git Commit".into(),
+            soft_wrap: Some(language::language_settings::SoftWrap::EditorWidth),
+            matcher: LanguageMatcher {
+                path_suffixes: vec!["COMMIT_EDITMSG".to_owned()],
+                first_line_pattern: None,
             },
-            Some(tree_sitter_gitcommit::LANGUAGE.into()),
-        ))
-    });
+            line_comments: vec![Arc::from("#")],
+            ..LanguageConfig::default()
+        },
+        Some(tree_sitter_gitcommit::LANGUAGE.into()),
+    ))
+});
 
 pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime, cx: &mut App) {
     #[cfg(feature = "load-grammars")]
@@ -145,10 +144,7 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
     let tailwindcss_adapter = Arc::new(tailwindcss::TailwindCssLspAdapter::new(node.clone()));
     let toml_lsp_adapter = Arc::new(toml::TomlLspAdapter);
     let typescript_context = Arc::new(typescript::TypeScriptContextProvider::new(fs.clone()));
-    let typescript_lsp_adapter = Arc::new(typescript::TypeScriptLspAdapter::new(
-        node.clone(),
-        fs.clone(),
-    ));
+    let typescript_lsp_adapter = Arc::new(typescript::TypeScriptLspAdapter::new(node.clone(), fs.clone()));
     let vtsls_adapter = Arc::new(vtsls::VtslsLspAdapter::new(node.clone(), fs.clone()));
     let xml_lsp_adapter = Arc::new(xml::XmlLspAdapter);
     let yaml_lsp_adapter = Arc::new(yaml::YamlLspAdapter::new(node));
@@ -395,10 +391,7 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
         LanguageServerName("tailwindcss-intellisense-css".into()),
         tailwindcss_adapter,
     );
-    languages.register_available_lsp_adapter(
-        LanguageServerName("eslint".into()),
-        eslint_adapter.clone(),
-    );
+    languages.register_available_lsp_adapter(LanguageServerName("eslint".into()), eslint_adapter.clone());
     languages.register_available_lsp_adapter(LanguageServerName("vtsls".into()), vtsls_adapter);
     languages.register_available_lsp_adapter(
         LanguageServerName("typescript-language-server".into()),

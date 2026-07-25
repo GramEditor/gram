@@ -1,13 +1,10 @@
 use crate::{
-    Appearance, DEFAULT_ICON_THEME_NAME, SyntaxTheme, Theme, status_colors_refinement,
-    syntax_overrides, theme_colors_refinement,
+    Appearance, DEFAULT_ICON_THEME_NAME, SyntaxTheme, Theme, status_colors_refinement, syntax_overrides,
+    theme_colors_refinement,
 };
 use collections::HashMap;
 use derive_more::{Deref, DerefMut};
-use gpui::{
-    App, Context, Font, FontFallbacks, FontStyle, FontWeight, Global, Pixels, Subscription, Window,
-    px,
-};
+use gpui::{App, Context, Font, FontFallbacks, FontStyle, FontWeight, Global, Pixels, Subscription, Window, px};
 use refineable::Refineable;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -19,20 +16,7 @@ const MIN_FONT_SIZE: Pixels = px(6.0);
 const MAX_FONT_SIZE: Pixels = px(100.0);
 const MIN_LINE_HEIGHT: f32 = 1.0;
 
-#[derive(
-    Debug,
-    Default,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Hash,
-    Clone,
-    Copy,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-)]
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, Serialize, Deserialize, JsonSchema)]
 
 /// Specifies the density of the UI.
 /// Note: This setting is still experimental. See [this tracking issue](https://github.com/zed-industries/zed/issues/18078)
@@ -214,9 +198,7 @@ impl From<settings::ThemeSelection> for ThemeSelection {
     fn from(selection: settings::ThemeSelection) -> Self {
         match selection {
             settings::ThemeSelection::Static(theme) => ThemeSelection::Static(theme),
-            settings::ThemeSelection::Dynamic { mode, light, dark } => {
-                ThemeSelection::Dynamic { mode, light, dark }
-            }
+            settings::ThemeSelection::Dynamic { mode, light, dark } => ThemeSelection::Dynamic { mode, light, dark },
         }
     }
 }
@@ -333,8 +315,7 @@ pub fn set_theme(
 
             // Don't update the theme mode if it is set to system and the new theme has the same
             // appearance.
-            let should_update_mode =
-                !(mode == &ThemeAppearanceMode::System && theme_appearance == system_appearance);
+            let should_update_mode = !(mode == &ThemeAppearanceMode::System && theme_appearance == system_appearance);
 
             if should_update_mode {
                 // Update the mode to the specified appearance (otherwise we might set the theme and
@@ -346,11 +327,7 @@ pub fn set_theme(
 }
 
 /// Sets the icon theme for the given appearance to the icon theme with the specified name.
-pub fn set_icon_theme(
-    current: &mut SettingsContent,
-    icon_theme_name: IconThemeName,
-    appearance: Appearance,
-) {
+pub fn set_icon_theme(current: &mut SettingsContent, icon_theme_name: IconThemeName, appearance: Appearance) {
     if let Some(selection) = current.theme.icon_theme.as_mut() {
         let icon_theme_to_update = match selection {
             settings::IconThemeSelection::Static(theme) => theme,
@@ -387,8 +364,7 @@ pub fn set_mode(content: &mut SettingsContent, mode: ThemeAppearanceMode) {
                 };
             }
             settings::ThemeSelection::Dynamic {
-                mode: mode_to_update,
-                ..
+                mode: mode_to_update, ..
             } => *mode_to_update = mode,
         }
     } else {
@@ -412,8 +388,7 @@ pub fn set_mode(content: &mut SettingsContent, mode: ThemeAppearanceMode) {
                 };
             }
             settings::IconThemeSelection::Dynamic {
-                mode: mode_to_update,
-                ..
+                mode: mode_to_update, ..
             } => *mode_to_update = mode,
         }
     } else {
@@ -441,9 +416,7 @@ impl From<settings::BufferLineHeight> for BufferLineHeight {
         match value {
             settings::BufferLineHeight::Comfortable => BufferLineHeight::Comfortable,
             settings::BufferLineHeight::Standard => BufferLineHeight::Standard,
-            settings::BufferLineHeight::Custom(line_height) => {
-                BufferLineHeight::Custom(line_height)
-            }
+            settings::BufferLineHeight::Custom(line_height) => BufferLineHeight::Custom(line_height),
         }
     }
 }
@@ -531,10 +504,8 @@ impl ThemeSettings {
         base_theme.styles.status.refine(&status_color_refinement);
         base_theme.styles.player.merge(&theme_overrides.players);
         base_theme.styles.accents.merge(&theme_overrides.accents);
-        base_theme.styles.syntax = SyntaxTheme::merge(
-            base_theme.styles.syntax.clone(),
-            syntax_overrides(&theme_overrides),
-        );
+        base_theme.styles.syntax =
+            SyntaxTheme::merge(base_theme.styles.syntax.clone(), syntax_overrides(&theme_overrides));
     }
 }
 
@@ -548,14 +519,13 @@ pub fn observe_buffer_font_size_adjustment<V: 'static>(
 
 /// Gets the font size, adjusted by the difference between the current buffer font size and the one set in the settings.
 pub fn adjusted_font_size(size: Pixels, cx: &App) -> Pixels {
-    let adjusted_font_size =
-        if let Some(BufferFontSize(adjusted_size)) = cx.try_global::<BufferFontSize>() {
-            let buffer_font_size = ThemeSettings::get_global(cx).buffer_font_size;
-            let delta = *adjusted_size - buffer_font_size;
-            size + delta
-        } else {
-            size
-        };
+    let adjusted_font_size = if let Some(BufferFontSize(adjusted_size)) = cx.try_global::<BufferFontSize>() {
+        let buffer_font_size = ThemeSettings::get_global(cx).buffer_font_size;
+        let delta = *adjusted_size - buffer_font_size;
+        size + delta
+    } else {
+        size
+    };
     clamp_font_size(adjusted_font_size)
 }
 
@@ -618,9 +588,7 @@ fn clamp_font_weight(weight: f32) -> FontWeight {
 }
 
 /// font fallback from settings
-pub fn font_fallbacks_from_settings(
-    fallbacks: Option<Vec<settings::FontFamilyName>>,
-) -> Option<FontFallbacks> {
+pub fn font_fallbacks_from_settings(fallbacks: Option<Vec<settings::FontFamilyName>>) -> Option<FontFallbacks> {
     fallbacks.map(|fallbacks| {
         FontFallbacks::from_fonts(
             fallbacks
@@ -646,13 +614,7 @@ impl settings::Settings for ThemeSettings {
                 style: Default::default(),
             },
             buffer_font: Font {
-                family: content
-                    .buffer_font_family
-                    .as_ref()
-                    .unwrap()
-                    .0
-                    .clone()
-                    .into(),
+                family: content.buffer_font_family.as_ref().unwrap().0.clone().into(),
                 features: content.buffer_font_features.clone().unwrap(),
                 fallbacks: font_fallbacks_from_settings(content.buffer_font_fallbacks.clone()),
                 weight: clamp_font_weight(content.buffer_font_weight.unwrap().0),
@@ -672,12 +634,7 @@ impl settings::Settings for ThemeSettings {
                 .0
                 .clamp(0.0, 20.0)
                 .into(),
-            client_side_decoration_shadow: content
-                .client_side_decoration_shadow
-                .unwrap()
-                .0
-                .clamp(0.0, 20.0)
-                .into(),
+            client_side_decoration_shadow: content.client_side_decoration_shadow.unwrap().0.clamp(0.0, 20.0).into(),
         }
     }
 }

@@ -1,6 +1,6 @@
 use gpui::{
-    App, Application, Bounds, Context, MousePressureEvent, PressureStage, Window, WindowBounds,
-    WindowOptions, div, prelude::*, px, rgb, size,
+    App, Application, Bounds, Context, MousePressureEvent, PressureStage, Window, WindowBounds, WindowOptions, div,
+    prelude::*, px, rgb, size,
 };
 
 struct MousePressureExample {
@@ -30,12 +30,7 @@ impl Render for MousePressureExample {
 }
 
 impl MousePressureExample {
-    fn on_mouse_pressure(
-        &mut self,
-        pressure_event: &MousePressureEvent,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn on_mouse_pressure(&mut self, pressure_event: &MousePressureEvent, _window: &mut Window, cx: &mut Context<Self>) {
         self.pressure_amount = pressure_event.pressure;
         self.pressure_stage = pressure_event.stage;
 

@@ -37,9 +37,7 @@ impl LspInstaller for BashLspAdapter {
         _: bool,
         _: &mut AsyncApp,
     ) -> Result<String> {
-        self.node
-            .npm_package_latest_version("bash-language-server")
-            .await
+        self.node.npm_package_latest_version("bash-language-server").await
     }
 
     async fn check_if_user_installed(
@@ -67,10 +65,7 @@ impl LspInstaller for BashLspAdapter {
         let server_path = container_dir.join(SERVER_PATH);
 
         self.node
-            .npm_install_packages(
-                &container_dir,
-                &[(Self::PACKAGE_NAME, latest_version.as_str())],
-            )
+            .npm_install_packages(&container_dir, &[(Self::PACKAGE_NAME, latest_version.as_str())])
             .await?;
 
         Ok(LanguageServerBinary {
@@ -118,16 +113,10 @@ impl LspInstaller for BashLspAdapter {
     }
 }
 
-async fn get_cached_server_binary(
-    container_dir: PathBuf,
-    node: &NodeRuntime,
-) -> Option<LanguageServerBinary> {
+async fn get_cached_server_binary(container_dir: PathBuf, node: &NodeRuntime) -> Option<LanguageServerBinary> {
     maybe!(async {
         let server_path = container_dir.join(SERVER_PATH);
-        anyhow::ensure!(
-            server_path.exists(),
-            "missing executable in directory {server_path:?}"
-        );
+        anyhow::ensure!(server_path.exists(), "missing executable in directory {server_path:?}");
         Ok(LanguageServerBinary {
             path: node.binary_path().await?,
             env: None,
@@ -177,32 +166,20 @@ mod tests {
             let test_settings = SettingsStore::test(cx);
             cx.set_global(test_settings);
             cx.update_global::<SettingsStore, _>(|store, cx| {
-                store.update_user_settings(cx, |s| {
-                    s.project.all_languages.defaults.tab_size = NonZeroU32::new(2)
-                });
+                store.update_user_settings(cx, |s| s.project.all_languages.defaults.tab_size = NonZeroU32::new(2));
             });
         });
 
         cx.new(|cx| {
             let mut buffer = Buffer::local("", cx).with_language(language, cx);
 
-            let expect_indents_to =
-                |buffer: &mut Buffer, cx: &mut Context<Buffer>, input: &str, expected: &str| {
-                    buffer.edit(
-                        [(0..buffer.len(), input)],
-                        Some(AutoindentMode::EachLine),
-                        cx,
-                    );
-                    assert_eq!(buffer.text(), expected);
-                };
+            let expect_indents_to = |buffer: &mut Buffer, cx: &mut Context<Buffer>, input: &str, expected: &str| {
+                buffer.edit([(0..buffer.len(), input)], Some(AutoindentMode::EachLine), cx);
+                assert_eq!(buffer.text(), expected);
+            };
 
             // Do not indent after shebang
-            expect_indents_to(
-                &mut buffer,
-                cx,
-                "#!/usr/bin/env bash\n#",
-                "#!/usr/bin/env bash\n#",
-            );
+            expect_indents_to(&mut buffer, cx, "#!/usr/bin/env bash\n#", "#!/usr/bin/env bash\n#");
 
             // indent function correctly
             expect_indents_to(
@@ -253,12 +230,7 @@ mod tests {
             );
 
             // indent array correctly
-            expect_indents_to(
-                &mut buffer,
-                cx,
-                "array=(\n1\n2\n3\n)",
-                "array=(\n  1\n  2\n  3\n)",
-            );
+            expect_indents_to(&mut buffer, cx, "array=(\n1\n2\n3\n)", "array=(\n  1\n  2\n  3\n)");
 
             // indents non-"function" function correctly
             expect_indents_to(
@@ -280,11 +252,7 @@ mod tests {
             );
 
             buffer.edit([(0..buffer.len(), input)], None, cx);
-            buffer.edit(
-                [(offsets[0]..offsets[0], "\n")],
-                Some(AutoindentMode::EachLine),
-                cx,
-            );
+            buffer.edit([(offsets[0]..offsets[0], "\n")], Some(AutoindentMode::EachLine), cx);
             buffer.edit(
                 [(offsets[0] + 3..offsets[0] + 3, "elif")],
                 Some(AutoindentMode::EachLine),

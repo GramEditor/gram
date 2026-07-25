@@ -135,10 +135,7 @@ impl LineLayout {
         let mut first_non_whitespace_ix = None;
         let mut last_candidate_ix = None;
         let mut last_candidate_x = px(0.);
-        let mut last_boundary = WrapBoundary {
-            run_ix: 0,
-            glyph_ix: 0,
-        };
+        let mut last_boundary = WrapBoundary { run_ix: 0, glyph_ix: 0 };
         let mut last_boundary_x = px(0.);
         let mut prev_ch = '\0';
         let mut glyphs = self
@@ -148,11 +145,7 @@ impl LineLayout {
             .flat_map(move |(run_ix, run)| {
                 run.glyphs.iter().enumerate().map(move |(glyph_ix, glyph)| {
                     let character = text[glyph.index..].chars().next().unwrap();
-                    (
-                        WrapBoundary { run_ix, glyph_ix },
-                        character,
-                        glyph.position.x,
-                    )
+                    (WrapBoundary { run_ix, glyph_ix }, character, glyph.position.x)
                 })
             })
             .peekable();
@@ -238,9 +231,7 @@ impl WrappedLineLayout {
 
     /// The width of this line, in pixels, whether or not it was wrapped.
     pub fn width(&self) -> Pixels {
-        self.wrap_width
-            .unwrap_or(Pixels::MAX)
-            .min(self.unwrapped_layout.width)
+        self.wrap_width.unwrap_or(Pixels::MAX).min(self.unwrapped_layout.width)
     }
 
     /// The size of the whole wrapped text, for the given line_height.
@@ -280,11 +271,7 @@ impl WrappedLineLayout {
     /// The index corresponding to a given position in this layout for the given line height.
     ///
     /// See also [`Self::closest_index_for_position`].
-    pub fn index_for_position(
-        &self,
-        position: Point<Pixels>,
-        line_height: Pixels,
-    ) -> Result<usize, usize> {
+    pub fn index_for_position(&self, position: Point<Pixels>, line_height: Pixels) -> Result<usize, usize> {
         self._index_for_position(position, line_height, false)
     }
 
@@ -293,11 +280,7 @@ impl WrappedLineLayout {
     /// Closest means the character boundary closest to the given position.
     ///
     /// See also [`LineLayout::closest_index_for_x`].
-    pub fn closest_index_for_position(
-        &self,
-        position: Point<Pixels>,
-        line_height: Pixels,
-    ) -> Result<usize, usize> {
+    pub fn closest_index_for_position(&self, position: Point<Pixels>, line_height: Pixels) -> Result<usize, usize> {
         self._index_for_position(position, line_height, true)
     }
 
@@ -346,14 +329,9 @@ impl WrappedLineLayout {
             Err(wrapped_line_end_index)
         } else {
             if closest {
-                Ok(self
-                    .unwrapped_layout
-                    .closest_index_for_x(position_in_unwrapped_line.x))
+                Ok(self.unwrapped_layout.closest_index_for_x(position_in_unwrapped_line.x))
             } else {
-                Ok(self
-                    .unwrapped_layout
-                    .index_for_x(position_in_unwrapped_line.x)
-                    .unwrap())
+                Ok(self.unwrapped_layout.index_for_x(position_in_unwrapped_line.x).unwrap())
             }
         }
     }
@@ -437,9 +415,7 @@ impl LineLayoutCache {
             current_frame.used_lines.push(key.clone());
         }
 
-        for key in &previous_frame.used_wrapped_lines
-            [range.start.wrapped_lines_index..range.end.wrapped_lines_index]
-        {
+        for key in &previous_frame.used_wrapped_lines[range.start.wrapped_lines_index..range.end.wrapped_lines_index] {
             if let Some((key, line)) = previous_frame.wrapped_lines.remove_entry(key) {
                 current_frame.wrapped_lines.insert(key, line);
             }
@@ -450,9 +426,7 @@ impl LineLayoutCache {
     pub fn truncate_layouts(&self, index: LineLayoutIndex) {
         let mut current_frame = &mut *self.current_frame.write();
         current_frame.used_lines.truncate(index.lines_index);
-        current_frame
-            .used_wrapped_lines
-            .truncate(index.wrapped_lines_index);
+        current_frame.used_wrapped_lines.truncate(index.wrapped_lines_index);
     }
 
     pub fn finish_frame(&self) {
@@ -493,9 +467,7 @@ impl LineLayoutCache {
         let previous_frame_entry = self.previous_frame.lock().wrapped_lines.remove_entry(key);
         if let Some((key, layout)) = previous_frame_entry {
             let mut current_frame = RwLockUpgradableReadGuard::upgrade(current_frame);
-            current_frame
-                .wrapped_lines
-                .insert(key.clone(), layout.clone());
+            current_frame.wrapped_lines.insert(key.clone(), layout.clone());
             current_frame.used_wrapped_lines.push(key);
             layout
         } else {
@@ -521,9 +493,7 @@ impl LineLayoutCache {
             });
 
             let mut current_frame = self.current_frame.write();
-            current_frame
-                .wrapped_lines
-                .insert(key.clone(), layout.clone());
+            current_frame.wrapped_lines.insert(key.clone(), layout.clone());
             current_frame.used_wrapped_lines.push(key);
 
             layout
@@ -561,9 +531,7 @@ impl LineLayoutCache {
             layout
         } else {
             let text = SharedString::from(text);
-            let mut layout = self
-                .platform_text_system
-                .layout_line(&text, font_size, runs);
+            let mut layout = self.platform_text_system.layout_line(&text, font_size, runs);
 
             if let Some(force_width) = force_width {
                 let mut glyph_pos = 0;

@@ -3,6 +3,6 @@ pub use dap::{
     adapters::{DebugAdapterBinary, DebugTaskDefinition, TcpArguments},
 };
 pub use task::{
-    AttachRequest, BuildTaskDefinition, DebugRequest, DebugScenario, LaunchRequest,
-    TaskTemplate as BuildTaskTemplate, TcpArgumentsTemplate,
+    AttachRequest, BuildTaskDefinition, DebugRequest, DebugScenario, LaunchRequest, TaskTemplate as BuildTaskTemplate,
+    TcpArgumentsTemplate,
 };

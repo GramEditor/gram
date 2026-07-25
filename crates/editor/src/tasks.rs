@@ -15,11 +15,7 @@ impl Editor {
         };
         let (selection, buffer, editor_snapshot) = {
             let selection = self.selections.newest_adjusted(&self.display_snapshot(cx));
-            let Some((buffer, _)) = self
-                .buffer()
-                .read(cx)
-                .point_to_buffer_offset(selection.start, cx)
-            else {
+            let Some((buffer, _)) = self.buffer().read(cx).point_to_buffer_offset(selection.start, cx) else {
                 return Task::ready(None);
             };
             let snapshot = self.snapshot(window, cx);
@@ -47,21 +43,12 @@ impl Editor {
             let snapshot = buffer.snapshot();
             let starting_point = location.range.start.to_point(&snapshot);
             let starting_offset = starting_point.to_offset(&snapshot);
-            for (_, tasks) in self
-                .tasks
-                .range((buffer_id, 0)..(buffer_id, starting_point.row + 1))
-            {
-                if !tasks
-                    .context_range
-                    .contains(&crate::BufferOffset(starting_offset))
-                {
+            for (_, tasks) in self.tasks.range((buffer_id, 0)..(buffer_id, starting_point.row + 1)) {
+                if !tasks.context_range.contains(&crate::BufferOffset(starting_offset)) {
                     continue;
                 }
                 for (capture_name, value) in tasks.extra_variables.iter() {
-                    variables.insert(
-                        VariableName::Custom(capture_name.to_owned().into()),
-                        value.clone(),
-                    );
+                    variables.insert(VariableName::Custom(capture_name.to_owned().into()), value.clone());
                 }
             }
             variables
@@ -82,29 +69,17 @@ impl Editor {
             .all_buffers()
             .into_iter()
             .filter_map(|buffer| {
-                let lsp_tasks_source = buffer
-                    .read(cx)
-                    .language()?
-                    .context_provider()?
-                    .lsp_task_source()?;
-                if lsp_settings
-                    .get(&lsp_tasks_source)
-                    .is_none_or(|s| s.enable_lsp_tasks)
-                {
+                let lsp_tasks_source = buffer.read(cx).language()?.context_provider()?.lsp_task_source()?;
+                if lsp_settings.get(&lsp_tasks_source).is_none_or(|s| s.enable_lsp_tasks) {
                     let buffer_id = buffer.read(cx).remote_id();
                     Some((lsp_tasks_source, buffer_id))
                 } else {
                     None
                 }
             })
-            .fold(
-                HashMap::default(),
-                |mut acc, (lsp_task_source, buffer_id)| {
-                    acc.entry(lsp_task_source)
-                        .or_insert_with(Vec::new)
-                        .push(buffer_id);
-                    acc
-                },
-            )
+            .fold(HashMap::default(), |mut acc, (lsp_task_source, buffer_id)| {
+                acc.entry(lsp_task_source).or_insert_with(Vec::new).push(buffer_id);
+                acc
+            })
     }
 }

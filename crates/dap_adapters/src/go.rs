@@ -2,9 +2,7 @@ use anyhow::{Context as _, bail};
 use collections::HashMap;
 use dap::{
     StartDebuggingRequestArguments,
-    adapters::{
-        DebugTaskDefinition, DownloadedFileType, TcpArguments, download_adapter_from_github,
-    },
+    adapters::{DebugTaskDefinition, DownloadedFileType, TcpArguments, download_adapter_from_github},
 };
 use fs::Fs;
 use gpui::{AsyncApp, SharedString};
@@ -31,9 +29,7 @@ pub(crate) struct GoDebugAdapter {
 
 impl GoDebugAdapter {
     const ADAPTER_NAME: &'static str = "Delve";
-    async fn fetch_latest_adapter_version(
-        delegate: &Arc<dyn DapDelegate>,
-    ) -> Result<AdapterVersion> {
+    async fn fetch_latest_adapter_version(delegate: &Arc<dyn DapDelegate>) -> Result<AdapterVersion> {
         let release = http_client::github::latest_github_release(
             "zed-industries/delve-shim-dap",
             true,
@@ -48,11 +44,7 @@ impl GoDebugAdapter {
             "windows" => "pc-windows-msvc",
             other => bail!("Running on unsupported os: {other}"),
         };
-        let suffix = if consts::OS == "windows" {
-            ".zip"
-        } else {
-            ".tar.gz"
-        };
+        let suffix = if consts::OS == "windows" { ".zip" } else { ".tar.gz" };
         let asset_name = format!("delve-shim-dap-{}-{os}{suffix}", consts::ARCH);
         let asset = release
             .assets
@@ -76,13 +68,7 @@ impl GoDebugAdapter {
         } else {
             DownloadedFileType::GzipTar
         };
-        download_adapter_from_github(
-            "delve-shim-dap".into(),
-            asset.clone(),
-            ty,
-            delegate.as_ref(),
-        )
-        .await?;
+        download_adapter_from_github("delve-shim-dap".into(), asset.clone(), ty, delegate.as_ref()).await?;
 
         let path = paths::debug_adapters_dir()
             .join("delve-shim-dap")
@@ -360,10 +346,7 @@ impl DebugAdapter for GoDebugAdapter {
         })
     }
 
-    async fn config_from_gram_format(
-        &self,
-        gram_scenario: GramDebugConfig,
-    ) -> Result<DebugScenario> {
+    async fn config_from_gram_format(&self, gram_scenario: GramDebugConfig) -> Result<DebugScenario> {
         let mut args = match &gram_scenario.request {
             dap::DebugRequest::Attach(attach_config) => {
                 json!({
@@ -373,11 +356,7 @@ impl DebugAdapter for GoDebugAdapter {
                 })
             }
             dap::DebugRequest::Launch(launch_config) => {
-                let mode = if launch_config.program != "." {
-                    "exec"
-                } else {
-                    "debug"
-                };
+                let mode = if launch_config.program != "." { "exec" } else { "debug" };
 
                 json!({
                     "request": "launch",
@@ -470,29 +449,17 @@ impl DebugAdapter for GoDebugAdapter {
                 .entry("cwd")
                 .or_insert_with(|| delegate.worktree_root_path().to_string_lossy().into());
 
-            handle_envs(
-                configuration,
-                &mut envs,
-                cwd.as_deref(),
-                delegate.fs().clone(),
-            )
-            .await;
+            handle_envs(configuration, &mut envs, cwd.as_deref(), delegate.fs().clone()).await;
         }
 
         if let Some(connection_options) = &task_definition.tcp_connection {
             command = None;
             arguments = vec![];
-            let (host, port, timeout) =
-                crate::configure_tcp_connection(connection_options.clone()).await?;
-            connection = Some(TcpArguments {
-                host,
-                port,
-                timeout,
-            });
+            let (host, port, timeout) = crate::configure_tcp_connection(connection_options.clone()).await?;
+            connection = Some(TcpArguments { host, port, timeout });
         } else {
             let minidelve_path = self.install_shim(delegate).await?;
-            let (host, port, _) =
-                crate::configure_tcp_connection(TcpArgumentsTemplate::default()).await?;
+            let (host, port, _) = crate::configure_tcp_connection(TcpArgumentsTemplate::default()).await?;
             command = Some(minidelve_path.to_string_lossy().into_owned());
             connection = None;
             arguments = if let Some(mut args) = user_args {
@@ -552,17 +519,12 @@ async fn handle_envs(
 
     let mut env_vars = HashMap::default();
     for path in env_files {
-        let Some(path) = path
-            .and_then(|s| PathBuf::from_str(s).ok())
-            .and_then(rebase_path)
-        else {
+        let Some(path) = path.and_then(|s| PathBuf::from_str(s).ok()).and_then(rebase_path) else {
             continue;
         };
 
         if let Ok(file) = fs.open_sync(&path).await {
-            let file_envs: HashMap<String, String> = dotenvy::from_read_iter(file)
-                .filter_map(Result::ok)
-                .collect();
+            let file_envs: HashMap<String, String> = dotenvy::from_read_iter(file).filter_map(Result::ok).collect();
             envs.extend(file_envs.iter().map(|(k, v)| (k.clone(), v.clone())));
             env_vars.extend(file_envs);
         } else {

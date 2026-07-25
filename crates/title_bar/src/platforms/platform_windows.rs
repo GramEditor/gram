@@ -106,12 +106,7 @@ impl RenderOnce for WindowsCaptionButton {
                 }
                 .into();
 
-                (
-                    color,
-                    gpui::white(),
-                    color.opacity(0.8),
-                    gpui::white().opacity(0.8),
-                )
+                (color, gpui::white(), color.opacity(0.8), gpui::white().opacity(0.8))
             }
             _ => (
                 cx.theme().colors().ghost_element_hover,

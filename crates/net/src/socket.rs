@@ -3,8 +3,8 @@ use std::io::{Error, ErrorKind, Result};
 use windows::Win32::{
     Foundation::{HANDLE, HANDLE_FLAG_INHERIT, HANDLE_FLAGS, SetHandleInformation},
     Networking::WinSock::{
-        AF_UNIX, SEND_RECV_FLAGS, SOCK_STREAM, SOCKADDR, SOCKET, WSA_FLAG_OVERLAPPED,
-        WSAEWOULDBLOCK, WSASocketW, accept, closesocket, recv, send,
+        AF_UNIX, SEND_RECV_FLAGS, SOCK_STREAM, SOCKADDR, SOCKET, WSA_FLAG_OVERLAPPED, WSAEWOULDBLOCK, WSASocketW,
+        accept, closesocket, recv, send,
     },
 };
 
@@ -16,11 +16,7 @@ impl UnixSocket {
     pub fn new() -> Result<Self> {
         unsafe {
             let raw = WSASocketW(AF_UNIX as _, SOCK_STREAM.0, 0, None, 0, WSA_FLAG_OVERLAPPED)?;
-            SetHandleInformation(
-                HANDLE(raw.0 as _),
-                HANDLE_FLAG_INHERIT.0,
-                HANDLE_FLAGS::default(),
-            )?;
+            SetHandleInformation(HANDLE(raw.0 as _), HANDLE_FLAG_INHERIT.0, HANDLE_FLAGS::default())?;
             Ok(Self(raw))
         }
     }

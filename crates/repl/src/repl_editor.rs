@@ -11,9 +11,7 @@ use project::{ProjectItem as _, WorktreeId};
 
 use crate::repl_store::ReplStore;
 use crate::session::SessionEvent;
-use crate::{
-    ClearOutputs, Interrupt, JupyterSettings, KernelSpecification, Restart, Session, Shutdown,
-};
+use crate::{ClearOutputs, Interrupt, JupyterSettings, KernelSpecification, Restart, Session, Shutdown};
 
 pub fn assign_kernelspec(
     kernel_specification: KernelSpecification,
@@ -26,8 +24,8 @@ pub fn assign_kernelspec(
         return Ok(());
     }
 
-    let worktree_id = crate::repl_editor::worktree_id_for_editor(weak_editor.clone(), cx)
-        .context("editor is not in a worktree")?;
+    let worktree_id =
+        crate::repl_editor::worktree_id_for_editor(weak_editor.clone(), cx).context("editor is not in a worktree")?;
 
     store.update(cx, |store, cx| {
         store.set_active_kernelspec(worktree_id, kernel_specification.clone(), cx);
@@ -44,8 +42,7 @@ pub fn assign_kernelspec(
         });
     }
 
-    let session =
-        cx.new(|cx| Session::new(weak_editor.clone(), fs, kernel_specification, window, cx));
+    let session = cx.new(|cx| Session::new(weak_editor.clone(), fs, kernel_specification, window, cx));
 
     weak_editor
         .update(cx, |_editor, cx| {
@@ -72,12 +69,7 @@ pub fn assign_kernelspec(
     Ok(())
 }
 
-pub fn run(
-    editor: WeakEntity<Editor>,
-    move_down: bool,
-    window: &mut Window,
-    cx: &mut App,
-) -> Result<()> {
+pub fn run(editor: WeakEntity<Editor>, move_down: bool, window: &mut Window, cx: &mut App) -> Result<()> {
     let store = ReplStore::global(cx);
     if !store.read(cx).is_enabled() {
         return Ok(());
@@ -86,9 +78,7 @@ pub fn run(
     let editor = editor.upgrade().context("editor was dropped")?;
     let selected_range = editor
         .update(cx, |editor, cx| {
-            editor
-                .selections
-                .newest_adjusted(&editor.display_snapshot(cx))
+            editor.selections.newest_adjusted(&editor.display_snapshot(cx))
         })
         .range();
     let multibuffer = editor.read(cx).buffer().clone();
@@ -100,8 +90,7 @@ pub fn run(
         return Ok(());
     };
 
-    let (runnable_ranges, next_cell_point) =
-        runnable_ranges(&buffer.read(cx).snapshot(), selected_range, cx);
+    let (runnable_ranges, next_cell_point) = runnable_ranges(&buffer.read(cx).snapshot(), selected_range, cx);
 
     for runnable_range in runnable_ranges {
         let Some(language) = multibuffer.read(cx).language_at(runnable_range.start, cx) else {
@@ -115,13 +104,11 @@ pub fn run(
 
         let fs = store.read(cx).fs().clone();
 
-        let session = if let Some(session) = store.read(cx).get_session(editor.entity_id()).cloned()
-        {
+        let session = if let Some(session) = store.read(cx).get_session(editor.entity_id()).cloned() {
             session
         } else {
             let weak_editor = editor.downgrade();
-            let session =
-                cx.new(|cx| Session::new(weak_editor, fs, kernel_specification, window, cx));
+            let session = cx.new(|cx| Session::new(weak_editor, fs, kernel_specification, window, cx));
 
             editor.update(cx, |_editor, cx| {
                 cx.notify();
@@ -151,23 +138,13 @@ pub fn run(
         let next_cursor;
         {
             let snapshot = multibuffer.read(cx).read(cx);
-            selected_text = snapshot
-                .text_for_range(runnable_range.clone())
-                .collect::<String>();
-            anchor_range = snapshot.anchor_before(runnable_range.start)
-                ..snapshot.anchor_after(runnable_range.end);
+            selected_text = snapshot.text_for_range(runnable_range.clone()).collect::<String>();
+            anchor_range = snapshot.anchor_before(runnable_range.start)..snapshot.anchor_after(runnable_range.end);
             next_cursor = next_cell_point.map(|point| snapshot.anchor_after(point));
         }
 
         session.update(cx, |session, cx| {
-            session.execute(
-                selected_text,
-                anchor_range,
-                next_cursor,
-                move_down,
-                window,
-                cx,
-            );
+            session.execute(selected_text, anchor_range, next_cursor, move_down, window, cx);
         });
     }
 
@@ -274,11 +251,7 @@ pub fn restart(editor: WeakEntity<Editor>, window: &mut Window, cx: &mut App) {
 
     let entity_id = editor.entity_id();
 
-    let Some(session) = ReplStore::global(cx)
-        .read(cx)
-        .get_session(entity_id)
-        .cloned()
-    else {
+    let Some(session) = ReplStore::global(cx).read(cx).get_session(entity_id).cloned() else {
         return;
     };
 
@@ -351,10 +324,7 @@ fn cell_range(buffer: &BufferSnapshot, start_row: u32, end_row: u32) -> Range<Po
 }
 
 // Returns the ranges of the snippets in the buffer and the next point for moving the cursor to
-fn jupytext_cells(
-    buffer: &BufferSnapshot,
-    range: Range<Point>,
-) -> (Vec<Range<Point>>, Option<Point>) {
+fn jupytext_cells(buffer: &BufferSnapshot, range: Range<Point>) -> (Vec<Range<Point>>, Option<Point>) {
     let mut current_row = range.start.row;
 
     let Some(language) = buffer.language() else {
@@ -406,21 +376,13 @@ fn jupytext_cells(
         }
 
         // Go to the end of the buffer (no more jupytext cells found)
-        snippets.push(cell_range(
-            buffer,
-            snippet_start_row,
-            buffer.max_point().row,
-        ));
+        snippets.push(cell_range(buffer, snippet_start_row, buffer.max_point().row));
     }
 
     (snippets, None)
 }
 
-fn runnable_ranges(
-    buffer: &BufferSnapshot,
-    range: Range<Point>,
-    cx: &mut App,
-) -> (Vec<Range<Point>>, Option<Point>) {
+fn runnable_ranges(buffer: &BufferSnapshot, range: Range<Point>, cx: &mut App) -> (Vec<Range<Point>>, Option<Point>) {
     if let Some(language) = buffer.language()
         && language.name() == "Markdown".into()
     {
@@ -435,8 +397,7 @@ fn runnable_ranges(
     let snippet_range = cell_range(buffer, range.start.row, range.end.row);
 
     // Check if the snippet range is entirely blank, if so, skip forward to find code
-    let is_blank =
-        (snippet_range.start.row..=snippet_range.end.row).all(|row| buffer.is_line_blank(row));
+    let is_blank = (snippet_range.start.row..=snippet_range.end.row).all(|row| buffer.is_line_blank(row));
 
     if is_blank {
         // Search forward for the next non-blank line
@@ -478,11 +439,7 @@ fn runnable_ranges(
 
 // We allow markdown code blocks to end in a trailing newline in order to render the output
 // below the final code fence. This is different than our behavior for selections and Jupytext cells.
-fn markdown_code_blocks(
-    buffer: &BufferSnapshot,
-    range: Range<Point>,
-    cx: &mut App,
-) -> Vec<Range<Point>> {
+fn markdown_code_blocks(buffer: &BufferSnapshot, range: Range<Point>, cx: &mut App) -> Vec<Range<Point>> {
     buffer
         .injections_intersecting_range(range)
         .filter(|(_, language)| language_supported(language, cx))
@@ -508,9 +465,7 @@ fn get_language(editor: WeakEntity<Editor>, cx: &mut App) -> Option<Arc<Language
     editor
         .update(cx, |editor, cx| {
             let display_snapshot = editor.display_snapshot(cx);
-            let selection = editor
-                .selections
-                .newest::<MultiBufferOffset>(&display_snapshot);
+            let selection = editor.selections.newest::<MultiBufferOffset>(&display_snapshot);
             display_snapshot
                 .buffer_snapshot()
                 .language_at(selection.head())
@@ -717,10 +672,7 @@ mod tests {
         });
 
         let markdown = languages::language("markdown", tree_sitter_md::LANGUAGE.into());
-        let typescript = languages::language(
-            "typescript",
-            tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
-        );
+        let typescript = languages::language("typescript", tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into());
         let python = languages::language("python", tree_sitter_python::LANGUAGE.into());
         let language_registry = Arc::new(LanguageRegistry::new(cx.background_executor().clone()));
         language_registry.add(markdown.clone());

@@ -68,13 +68,7 @@ where
 
 impl<T, TDelta> Patch<T>
 where
-    T: 'static
-        + Copy
-        + Ord
-        + Sub<T, Output = TDelta>
-        + Add<TDelta, Output = T>
-        + AddAssign<TDelta>
-        + Default,
+    T: 'static + Copy + Ord + Sub<T, Output = TDelta> + Add<TDelta, Output = T> + AddAssign<TDelta> + Default,
     TDelta: Ord + Copy,
 {
     #[must_use]
@@ -272,216 +266,69 @@ mod tests {
     #[gpui::test]
     fn test_one_disjoint_edit() {
         assert_patch_composition(
-            Patch(vec![Edit {
-                old: 1..3,
-                new: 1..4,
-            }]),
-            Patch(vec![Edit {
-                old: 0..0,
-                new: 0..4,
-            }]),
-            Patch(vec![
-                Edit {
-                    old: 0..0,
-                    new: 0..4,
-                },
-                Edit {
-                    old: 1..3,
-                    new: 5..8,
-                },
-            ]),
+            Patch(vec![Edit { old: 1..3, new: 1..4 }]),
+            Patch(vec![Edit { old: 0..0, new: 0..4 }]),
+            Patch(vec![Edit { old: 0..0, new: 0..4 }, Edit { old: 1..3, new: 5..8 }]),
         );
 
         assert_patch_composition(
-            Patch(vec![Edit {
-                old: 1..3,
-                new: 1..4,
-            }]),
-            Patch(vec![Edit {
-                old: 5..9,
-                new: 5..7,
-            }]),
-            Patch(vec![
-                Edit {
-                    old: 1..3,
-                    new: 1..4,
-                },
-                Edit {
-                    old: 4..8,
-                    new: 5..7,
-                },
-            ]),
+            Patch(vec![Edit { old: 1..3, new: 1..4 }]),
+            Patch(vec![Edit { old: 5..9, new: 5..7 }]),
+            Patch(vec![Edit { old: 1..3, new: 1..4 }, Edit { old: 4..8, new: 5..7 }]),
         );
     }
 
     #[gpui::test]
     fn test_one_overlapping_edit() {
         assert_patch_composition(
-            Patch(vec![Edit {
-                old: 1..3,
-                new: 1..4,
-            }]),
-            Patch(vec![Edit {
-                old: 3..5,
-                new: 3..6,
-            }]),
-            Patch(vec![Edit {
-                old: 1..4,
-                new: 1..6,
-            }]),
+            Patch(vec![Edit { old: 1..3, new: 1..4 }]),
+            Patch(vec![Edit { old: 3..5, new: 3..6 }]),
+            Patch(vec![Edit { old: 1..4, new: 1..6 }]),
         );
     }
 
     #[gpui::test]
     fn test_two_disjoint_and_overlapping() {
         assert_patch_composition(
-            Patch(vec![
-                Edit {
-                    old: 1..3,
-                    new: 1..4,
-                },
-                Edit {
-                    old: 8..12,
-                    new: 9..11,
-                },
-            ]),
-            Patch(vec![
-                Edit {
-                    old: 0..0,
-                    new: 0..4,
-                },
-                Edit {
-                    old: 3..10,
-                    new: 7..9,
-                },
-            ]),
-            Patch(vec![
-                Edit {
-                    old: 0..0,
-                    new: 0..4,
-                },
-                Edit {
-                    old: 1..12,
-                    new: 5..10,
-                },
-            ]),
+            Patch(vec![Edit { old: 1..3, new: 1..4 }, Edit { old: 8..12, new: 9..11 }]),
+            Patch(vec![Edit { old: 0..0, new: 0..4 }, Edit { old: 3..10, new: 7..9 }]),
+            Patch(vec![Edit { old: 0..0, new: 0..4 }, Edit { old: 1..12, new: 5..10 }]),
         );
     }
 
     #[gpui::test]
     fn test_two_new_edits_overlapping_one_old_edit() {
         assert_patch_composition(
-            Patch(vec![Edit {
-                old: 0..0,
-                new: 0..3,
-            }]),
-            Patch(vec![
-                Edit {
-                    old: 0..0,
-                    new: 0..1,
-                },
-                Edit {
-                    old: 1..2,
-                    new: 2..2,
-                },
-            ]),
-            Patch(vec![Edit {
-                old: 0..0,
-                new: 0..3,
-            }]),
+            Patch(vec![Edit { old: 0..0, new: 0..3 }]),
+            Patch(vec![Edit { old: 0..0, new: 0..1 }, Edit { old: 1..2, new: 2..2 }]),
+            Patch(vec![Edit { old: 0..0, new: 0..3 }]),
         );
 
         assert_patch_composition(
-            Patch(vec![Edit {
-                old: 2..3,
-                new: 2..4,
-            }]),
-            Patch(vec![
-                Edit {
-                    old: 0..2,
-                    new: 0..1,
-                },
-                Edit {
-                    old: 3..3,
-                    new: 2..5,
-                },
-            ]),
-            Patch(vec![Edit {
-                old: 0..3,
-                new: 0..6,
-            }]),
+            Patch(vec![Edit { old: 2..3, new: 2..4 }]),
+            Patch(vec![Edit { old: 0..2, new: 0..1 }, Edit { old: 3..3, new: 2..5 }]),
+            Patch(vec![Edit { old: 0..3, new: 0..6 }]),
         );
 
         assert_patch_composition(
-            Patch(vec![Edit {
-                old: 0..0,
-                new: 0..2,
-            }]),
-            Patch(vec![
-                Edit {
-                    old: 0..0,
-                    new: 0..2,
-                },
-                Edit {
-                    old: 2..5,
-                    new: 4..4,
-                },
-            ]),
-            Patch(vec![Edit {
-                old: 0..3,
-                new: 0..4,
-            }]),
+            Patch(vec![Edit { old: 0..0, new: 0..2 }]),
+            Patch(vec![Edit { old: 0..0, new: 0..2 }, Edit { old: 2..5, new: 4..4 }]),
+            Patch(vec![Edit { old: 0..3, new: 0..4 }]),
         );
     }
 
     #[gpui::test]
     fn test_two_new_edits_touching_one_old_edit() {
         assert_patch_composition(
-            Patch(vec![
-                Edit {
-                    old: 2..3,
-                    new: 2..4,
-                },
-                Edit {
-                    old: 7..7,
-                    new: 8..11,
-                },
-            ]),
-            Patch(vec![
-                Edit {
-                    old: 2..3,
-                    new: 2..2,
-                },
-                Edit {
-                    old: 4..4,
-                    new: 3..4,
-                },
-            ]),
-            Patch(vec![
-                Edit {
-                    old: 2..3,
-                    new: 2..4,
-                },
-                Edit {
-                    old: 7..7,
-                    new: 8..11,
-                },
-            ]),
+            Patch(vec![Edit { old: 2..3, new: 2..4 }, Edit { old: 7..7, new: 8..11 }]),
+            Patch(vec![Edit { old: 2..3, new: 2..2 }, Edit { old: 4..4, new: 3..4 }]),
+            Patch(vec![Edit { old: 2..3, new: 2..4 }, Edit { old: 7..7, new: 8..11 }]),
         );
     }
 
     #[gpui::test]
     fn test_old_to_new() {
-        let patch = Patch(vec![
-            Edit {
-                old: 2..4,
-                new: 2..4,
-            },
-            Edit {
-                old: 7..8,
-                new: 7..11,
-            },
-        ]);
+        let patch = Patch(vec![Edit { old: 2..4, new: 2..4 }, Edit { old: 7..8, new: 7..11 }]);
         assert_eq!(patch.old_to_new(0), 0);
         assert_eq!(patch.old_to_new(1), 1);
         assert_eq!(patch.old_to_new(2), 2);
@@ -534,11 +381,7 @@ mod tests {
                 let new_chars = (0..new_len)
                     .map(|_| rng.random_range(b'A'..=b'Z') as char)
                     .collect::<Vec<_>>();
-                log::info!(
-                    "  editing {:?}: {:?}",
-                    start..end,
-                    new_chars.iter().collect::<String>()
-                );
+                log::info!("  editing {:?}: {:?}", start..end, new_chars.iter().collect::<String>());
                 edits.push(Edit {
                     old: (start as i32 - delta) as u32..(end as i32 - delta) as u32,
                     new: start as u32..(start + new_len) as u32,
@@ -599,9 +442,7 @@ mod tests {
         for edit in patch.0.iter().rev() {
             text.splice(
                 edit.old.start as usize..edit.old.end as usize,
-                new_text[edit.new.start as usize..edit.new.end as usize]
-                    .iter()
-                    .copied(),
+                new_text[edit.new.start as usize..edit.new.end as usize].iter().copied(),
             );
         }
     }

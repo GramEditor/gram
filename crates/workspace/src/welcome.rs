@@ -2,14 +2,12 @@ use crate::{
     NewFile, Open, PathList, SerializedWorkspaceLocation, WORKSPACE_DB, Workspace, WorkspaceId,
     item::{Item, ItemEvent},
 };
-use app_actions::{
-    Extensions, OpenDocs, OpenOnboarding, OpenRecent, OpenSettings, command_palette,
-};
+use app_actions::{Extensions, OpenDocs, OpenOnboarding, OpenRecent, OpenSettings, command_palette};
 use git::Clone as GitClone;
 use gpui::WeakEntity;
 use gpui::{
-    Action, App, Context, Entity, EventEmitter, FocusHandle, Focusable, InteractiveElement,
-    ParentElement, Render, Styled, Task, Window, actions,
+    Action, App, Context, Entity, EventEmitter, FocusHandle, Focusable, InteractiveElement, ParentElement, Render,
+    Styled, Task, Window, actions,
 };
 use menu::{SelectNext, SelectPrevious};
 use remote::RemoteConnectionOptions;
@@ -41,9 +39,7 @@ struct SectionHeader {
 
 impl SectionHeader {
     fn new(title: impl Into<SharedString>) -> Self {
-        Self {
-            title: title.into(),
-        }
+        Self { title: title.into() }
     }
 }
 
@@ -106,16 +102,11 @@ impl RenderOnce for SectionButton {
                     .child(
                         h_flex()
                             .gap_2()
-                            .child(
-                                Icon::new(self.icon)
-                                    .color(Color::Muted)
-                                    .size(IconSize::Small),
-                            )
+                            .child(Icon::new(self.icon).color(Color::Muted).size(IconSize::Small))
                             .child(Label::new(self.label)),
                     )
                     .child(
-                        KeyBinding::for_action_in(action_ref, &self.focus_handle, cx)
-                            .size(TextSize::Small.rems(cx)),
+                        KeyBinding::for_action_in(action_ref, &self.focus_handle, cx).size(TextSize::Small.rems(cx)),
                     ),
             )
             .on_click(move |_, window, cx| window.dispatch_action(self.action.boxed_clone(), cx))
@@ -130,13 +121,7 @@ struct SectionEntry {
 
 impl SectionEntry {
     fn render(&self, button_index: usize, focus: &FocusHandle, _cx: &App) -> impl IntoElement {
-        SectionButton::new(
-            self.title,
-            self.icon,
-            self.action,
-            button_index,
-            focus.clone(),
-        )
+        SectionButton::new(self.title, self.icon, self.action, button_index, focus.clone())
     }
 }
 
@@ -198,15 +183,12 @@ struct Section<const COLS: usize> {
 
 impl<const COLS: usize> Section<COLS> {
     fn render(self, index_offset: usize, focus: &FocusHandle, cx: &App) -> impl IntoElement {
-        v_flex()
-            .min_w_full()
-            .child(SectionHeader::new(self.title))
-            .children(
-                self.entries
-                    .iter()
-                    .enumerate()
-                    .map(|(index, entry)| entry.render(index_offset + index, focus, cx)),
-            )
+        v_flex().min_w_full().child(SectionHeader::new(self.title)).children(
+            self.entries
+                .iter()
+                .enumerate()
+                .map(|(index, entry)| entry.render(index_offset + index, focus, cx)),
+        )
     }
 }
 
@@ -225,8 +207,7 @@ impl WelcomePage {
         cx: &mut Context<Self>,
     ) -> Self {
         let focus_handle = cx.focus_handle();
-        cx.on_focus(&focus_handle, window, |_, _, cx| cx.notify())
-            .detach();
+        cx.on_focus(&focus_handle, window, |_, _, cx| cx.notify()).detach();
 
         if fallback_to_recent_projects {
             cx.spawn_in(window, async move |this: WeakEntity<Self>, cx| {
@@ -263,12 +244,7 @@ impl WelcomePage {
         cx.notify();
     }
 
-    fn open_recent_project(
-        &mut self,
-        action: &OpenRecentProject,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn open_recent_project(&mut self, action: &OpenRecentProject, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(recent_workspaces) = &self.recent_workspaces {
             if let Some((_workspace_id, location, paths)) = recent_workspaces.get(action.index) {
                 let paths = paths.clone();
@@ -280,9 +256,7 @@ impl WelcomePage {
                     let paths = paths.paths().to_vec();
                     cx.spawn_in(window, async move |_, cx| {
                         let _ = workspace.update_in(cx, |workspace, window, cx| {
-                            workspace
-                                .open_workspace_for_paths(true, paths, window, cx)
-                                .detach();
+                            workspace.open_workspace_for_paths(true, paths, window, cx).detach();
                         });
                     })
                     .detach();
@@ -300,10 +274,7 @@ impl WelcomePage {
         }
     }
 
-    fn render_recent_project_section(
-        &self,
-        recent_projects: Vec<impl IntoElement>,
-    ) -> impl IntoElement {
+    fn render_recent_project_section(&self, recent_projects: Vec<impl IntoElement>) -> impl IntoElement {
         v_flex()
             .w_full()
             .child(SectionHeader::new("Recent Projects"))
@@ -341,13 +312,7 @@ impl WelcomePage {
             }
         };
 
-        SectionButton::new(
-            title,
-            icon,
-            &OpenRecentProject { index },
-            10,
-            self.focus_handle.clone(),
-        )
+        SectionButton::new(title, icon, &OpenRecentProject { index }, 10, self.focus_handle.clone())
     }
 }
 
@@ -368,8 +333,7 @@ impl Render for WelcomePage {
             .collect::<Vec<_>>();
 
         let second_section = if self.fallback_to_recent_projects && !recent_projects.is_empty() {
-            self.render_recent_project_section(recent_projects)
-                .into_any_element()
+            self.render_recent_project_section(recent_projects).into_any_element()
         } else {
             second_section
                 .render(first_section_entries, &self.focus_handle, cx)
@@ -392,54 +356,44 @@ impl Render for WelcomePage {
             .overflow_hidden()
             .bg(cx.theme().colors().editor_background)
             .child(
-                h_flex()
-                    .relative()
-                    .size_full()
-                    .px_12()
-                    .max_w(px(1100.))
-                    .child(
-                        v_flex()
-                            .flex_1()
-                            .justify_center()
-                            .max_w_128()
-                            .mx_auto()
-                            .gap_6()
-                            .overflow_x_hidden()
-                            .child(
-                                h_flex()
-                                    .w_full()
-                                    .justify_center()
-                                    .mb_4()
-                                    .gap_4()
-                                    .child(Vector::square(image, rems_from_px(90.0_f32)))
-                                    .child(
-                                        v_flex()
-                                            .child(Headline::new("Gram").size(HeadlineSize::Large))
-                                            .child(
-                                                Label::new(
-                                                    r#"What cannot be mended must be transcended."#,
-                                                )
-                                                .size(LabelSize::Default)
-                                                .color(Color::Muted)
-                                                .italic(),
-                                            ),
+                h_flex().relative().size_full().px_12().max_w(px(1100.)).child(
+                    v_flex()
+                        .flex_1()
+                        .justify_center()
+                        .max_w_128()
+                        .mx_auto()
+                        .gap_6()
+                        .overflow_x_hidden()
+                        .child(
+                            h_flex()
+                                .w_full()
+                                .justify_center()
+                                .mb_4()
+                                .gap_4()
+                                .child(Vector::square(image, rems_from_px(90.0_f32)))
+                                .child(
+                                    v_flex().child(Headline::new("Gram").size(HeadlineSize::Large)).child(
+                                        Label::new(r#"What cannot be mended must be transcended."#)
+                                            .size(LabelSize::Default)
+                                            .color(Color::Muted)
+                                            .italic(),
                                     ),
-                            )
-                            .child(first_section.render(Default::default(), &self.focus_handle, cx))
-                            .child(second_section)
-                            .child(
-                                v_flex().gap_1().child(Divider::horizontal()).child(
-                                    Button::new("welcome-exit", "Return to Onboarding")
-                                        .tab_index(last_index as isize)
-                                        .full_width()
-                                        .label_size(LabelSize::XSmall)
-                                        .on_click(|_, window, cx| {
-                                            window
-                                                .dispatch_action(OpenOnboarding.boxed_clone(), cx);
-                                        }),
                                 ),
+                        )
+                        .child(first_section.render(Default::default(), &self.focus_handle, cx))
+                        .child(second_section)
+                        .child(
+                            v_flex().gap_1().child(Divider::horizontal()).child(
+                                Button::new("welcome-exit", "Return to Onboarding")
+                                    .tab_index(last_index as isize)
+                                    .full_width()
+                                    .label_size(LabelSize::XSmall)
+                                    .on_click(|_, window, cx| {
+                                        window.dispatch_action(OpenOnboarding.boxed_clone(), cx);
+                                    }),
                             ),
-                    ),
+                        ),
+                ),
             )
     }
 }
@@ -501,9 +455,7 @@ impl crate::SerializableItem for WelcomePage {
             .ok()
             .is_some_and(|is_open| is_open)
         {
-            Task::ready(Ok(
-                cx.new(|cx| WelcomePage::new(workspace, false, window, cx))
-            ))
+            Task::ready(Ok(cx.new(|cx| WelcomePage::new(workspace, false, window, cx))))
         } else {
             Task::ready(Err(anyhow::anyhow!("No welcome page to deserialize")))
         }

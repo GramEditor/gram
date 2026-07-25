@@ -1,7 +1,6 @@
 use gpui::{
-    App, Entity, EventEmitter, FocusHandle, Focusable, PromptButton, PromptHandle, PromptLevel,
-    PromptResponse, RenderablePromptHandle, SharedString, TextStyleRefinement, Window, div,
-    prelude::*,
+    App, Entity, EventEmitter, FocusHandle, Focusable, PromptButton, PromptHandle, PromptLevel, PromptResponse,
+    RenderablePromptHandle, SharedString, TextStyleRefinement, Window, div, prelude::*,
 };
 use markdown::{Markdown, MarkdownElement, MarkdownStyle};
 use settings::{Settings, SettingsStore};
@@ -12,8 +11,7 @@ use workspace::WorkspaceSettings;
 pub fn init(cx: &mut App) {
     process_settings(cx);
 
-    cx.observe_global::<SettingsStore>(process_settings)
-        .detach();
+    cx.observe_global::<SettingsStore>(process_settings).detach();
 }
 
 fn process_settings(cx: &mut App) {
@@ -72,12 +70,7 @@ impl GramPromptRenderer {
         }
     }
 
-    fn select_first(
-        &mut self,
-        _: &menu::SelectFirst,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn select_first(&mut self, _: &menu::SelectFirst, _window: &mut Window, cx: &mut Context<Self>) {
         self.active_action_id = self.actions.len().saturating_sub(1);
         cx.notify();
     }
@@ -92,12 +85,7 @@ impl GramPromptRenderer {
         cx.notify();
     }
 
-    fn select_previous(
-        &mut self,
-        _: &menu::SelectPrevious,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn select_previous(&mut self, _: &menu::SelectPrevious, _window: &mut Window, cx: &mut Context<Self>) {
         if self.active_action_id > 0 {
             self.active_action_id -= 1;
         } else {
@@ -132,10 +120,10 @@ impl Render for GramPromptRenderer {
                 markdown_style(true, window, cx),
             )))
             .children(self.detail.clone().map(|detail| {
-                div().w_full().text_xs().child(MarkdownElement::new(
-                    detail,
-                    markdown_style(false, window, cx),
-                ))
+                div()
+                    .w_full()
+                    .text_xs()
+                    .child(MarkdownElement::new(detail, markdown_style(false, window, cx)))
             }))
             .child(
                 v_flex()
@@ -154,20 +142,16 @@ impl Render for GramPromptRenderer {
                     })),
             );
 
-        div()
-            .size_full()
-            .occlude()
-            .bg(gpui::black().opacity(0.2))
-            .child(
-                v_flex()
-                    .size_full()
-                    .absolute()
-                    .top_0()
-                    .left_0()
-                    .items_center()
-                    .justify_center()
-                    .child(dialog),
-            )
+        div().size_full().occlude().bg(gpui::black().opacity(0.2)).child(
+            v_flex()
+                .size_full()
+                .absolute()
+                .top_0()
+                .left_0()
+                .items_center()
+                .justify_center()
+                .child(dialog),
+        )
     }
 }
 

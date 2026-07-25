@@ -51,10 +51,7 @@ impl TreeViewItem {
         self
     }
 
-    pub fn on_click(
-        mut self,
-        handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
-    ) -> Self {
+    pub fn on_click(mut self, handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static) -> Self {
         self.on_click = Some(Box::new(handler));
         self
     }
@@ -92,10 +89,7 @@ impl TreeViewItem {
         self
     }
 
-    pub fn on_toggle(
-        mut self,
-        on_toggle: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
-    ) -> Self {
+    pub fn on_toggle(mut self, on_toggle: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static) -> Self {
         self.on_toggle = Some(Arc::new(on_toggle));
         self
     }
@@ -139,12 +133,11 @@ impl RenderOnce for TreeViewItem {
         let focused_border = cx.theme().colors().border_focused;
 
         let item_size = rems_from_px(28.0_f32);
-        let indentation_line = h_flex().size(item_size).flex_none().justify_center().child(
-            div()
-                .w_px()
-                .h_full()
-                .bg(cx.theme().colors().border.opacity(0.5)),
-        );
+        let indentation_line = h_flex()
+            .size(item_size)
+            .flex_none()
+            .justify_center()
+            .child(div().w_px().h_full().bg(cx.theme().colors().border.opacity(0.5)));
 
         h_flex()
             .id(self.id)
@@ -160,9 +153,7 @@ impl RenderOnce for TreeViewItem {
                     .border_1()
                     .border_color(transparent_border)
                     .focus_visible(|s| s.border_color(focused_border))
-                    .when(self.selected, |this| {
-                        this.border_color(selected_border).bg(selected_bg)
-                    })
+                    .when(self.selected, |this| this.border_color(selected_border).bg(selected_bg))
                     .hover(|s| s.bg(cx.theme().colors().element_hover))
                     .map(|this| {
                         let label = self.label;
@@ -172,19 +163,13 @@ impl RenderOnce for TreeViewItem {
                                 .gap_2p5()
                                 .child(
                                     Disclosure::new("toggle", self.expanded)
-                                        .when_some(
-                                            self.on_toggle.clone(),
-                                            |disclosure, on_toggle| {
-                                                disclosure.on_toggle_expanded(on_toggle)
-                                            },
-                                        )
+                                        .when_some(self.on_toggle.clone(), |disclosure, on_toggle| {
+                                            disclosure.on_toggle_expanded(on_toggle)
+                                        })
                                         .opened_icon(IconName::ChevronDown)
                                         .closed_icon(IconName::ChevronRight),
                                 )
-                                .child(
-                                    Label::new(label)
-                                        .when(!self.selected, |this| this.color(Color::Muted)),
-                                )
+                                .child(Label::new(label).when(!self.selected, |this| this.color(Color::Muted)))
                         } else {
                             this.child(indentation_line).child(
                                 h_flex()
@@ -192,20 +177,16 @@ impl RenderOnce for TreeViewItem {
                                     .w_full()
                                     .flex_grow()
                                     .px_1()
-                                    .child(
-                                        Label::new(label)
-                                            .when(!self.selected, |this| this.color(Color::Muted)),
-                                    ),
+                                    .child(Label::new(label).when(!self.selected, |this| this.color(Color::Muted))),
                             )
                         }
                     })
                     .when_some(self.focus_handle, |this, handle| this.track_focus(&handle))
                     .when_some(self.tab_index, |this, index| this.tab_index(index))
                     .when_some(self.on_hover, |this, on_hover| this.on_hover(on_hover))
-                    .when_some(
-                        self.on_click.filter(|_| !self.disabled),
-                        |this, on_click| this.on_click(on_click),
-                    )
+                    .when_some(self.on_click.filter(|_| !self.disabled), |this, on_click| {
+                        this.on_click(on_click)
+                    })
                     .when_some(self.on_secondary_mouse_down, |this, on_mouse_down| {
                         this.on_mouse_down(MouseButton::Right, move |event, window, cx| {
                             (on_mouse_down)(event, window, cx)

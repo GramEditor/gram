@@ -94,14 +94,7 @@ impl NodeChildren {
 
 impl<U> BoundsTree<U>
 where
-    U: Clone
-        + Debug
-        + PartialEq
-        + PartialOrd
-        + Add<U, Output = U>
-        + Sub<Output = U>
-        + Half
-        + Default,
+    U: Clone + Debug + PartialEq + PartialOrd + Add<U, Output = U> + Sub<Output = U> + Half + Default,
 {
     /// Clears all nodes from the tree.
     pub fn clear(&mut self) {
@@ -242,9 +235,7 @@ where
             // Find the best child to descend into
             let mut best_child_idx = children.as_slice()[0];
             let mut best_child_pos = 0;
-            let mut best_cost = bounds
-                .union(&self.nodes[best_child_idx].bounds)
-                .half_perimeter();
+            let mut best_cost = bounds.union(&self.nodes[best_child_idx].bounds).half_perimeter();
 
             for (pos, &child_idx) in children.as_slice().iter().enumerate().skip(1) {
                 let cost = bounds.union(&self.nodes[child_idx].bounds).half_perimeter();
@@ -294,9 +285,7 @@ where
                     self.nodes.push(Node {
                         bounds: sibling_bounds.union(&bounds),
                         max_order: new_internal_max,
-                        kind: NodeKind::Internal {
-                            children: new_children,
-                        },
+                        kind: NodeKind::Internal { children: new_children },
                     });
 
                     // Replace the leaf with the new internal in parent
@@ -332,8 +321,7 @@ where
                 // Swap updated child to end (skip first iteration since the invariant is already handled by previous cases)
                 if let Some(child_idx) = updated_child_idx {
                     if let NodeKind::Internal { children } = &mut node.kind {
-                        if let Some(pos) = children.as_slice().iter().position(|&c| c == child_idx)
-                        {
+                        if let Some(pos) = children.as_slice().iter().position(|&c| c == child_idx) {
                             let last = children.len() - 1;
                             if pos != last {
                                 children.indices.swap(pos, last);

@@ -24,11 +24,7 @@ pub struct TrackedFile<T> {
 
 impl<T: PartialEq + 'static + Sync> TrackedFile<T> {
     /// Initializes new [`TrackedFile`] with a type that's deserializable.
-    pub fn new(
-        mut tracker: UnboundedReceiver<String>,
-        notification_outlet: UnboundedSender<()>,
-        cx: &App,
-    ) -> Self
+    pub fn new(mut tracker: UnboundedReceiver<String>, notification_outlet: UnboundedSender<()>, cx: &App) -> Self
     where
         T: for<'a> Deserialize<'a> + Default + Send,
     {
@@ -42,9 +38,7 @@ impl<T: PartialEq + 'static + Sync> TrackedFile<T> {
                         break;
                     }
                     if !new_contents.trim().is_empty() {
-                        let Some(new_contents) =
-                            serde_json_lenient::from_str::<T>(&new_contents).log_err()
-                        else {
+                        let Some(new_contents) = serde_json_lenient::from_str::<T>(&new_contents).log_err() else {
                             continue;
                         };
                         let mut contents = parsed_contents.write();
@@ -83,9 +77,7 @@ impl<T: PartialEq + 'static + Sync> TrackedFile<T> {
                     }
 
                     if !new_contents.trim().is_empty() {
-                        let Some(new_contents) =
-                            serde_json_lenient::from_str::<U>(&new_contents).log_err()
-                        else {
+                        let Some(new_contents) = serde_json_lenient::from_str::<U>(&new_contents).log_err() else {
                             continue;
                         };
                         let Some(new_contents) = new_contents.try_into().log_err() else {

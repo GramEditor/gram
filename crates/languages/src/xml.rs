@@ -63,13 +63,8 @@ impl LspInstaller for XmlLspAdapter {
         pre_release: bool,
         _cx: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        let release = latest_github_release(
-            "redhat-developer/vscode-xml",
-            true,
-            pre_release,
-            delegate.http_client(),
-        )
-        .await?;
+        let release =
+            latest_github_release("redhat-developer/vscode-xml", true, pre_release, delegate.http_client()).await?;
 
         let arch = match std::env::consts::ARCH {
             "aarch64" => "aarch_64",

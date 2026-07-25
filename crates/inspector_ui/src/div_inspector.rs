@@ -1,23 +1,17 @@
 use anyhow::{Result, anyhow};
-use editor::{
-    Bias, CompletionProvider, Editor, EditorEvent, EditorMode, ExcerptId, MinimapVisibility,
-    MultiBuffer,
-};
+use editor::{Bias, CompletionProvider, Editor, EditorEvent, EditorMode, ExcerptId, MinimapVisibility, MultiBuffer};
 use fuzzy::StringMatch;
 use gpui::{
-    AsyncWindowContext, DivInspectorState, Entity, InspectorElementId, IntoElement,
-    StyleRefinement, Task, Window, inspector_reflection::FunctionReflection, styled_reflection,
+    AsyncWindowContext, DivInspectorState, Entity, InspectorElementId, IntoElement, StyleRefinement, Task, Window,
+    inspector_reflection::FunctionReflection, styled_reflection,
 };
 use language::language_settings::SoftWrap;
 use language::{
-    Anchor, Buffer, BufferSnapshot, CodeLabel, Diagnostic, DiagnosticEntry, DiagnosticSet,
-    DiagnosticSeverity, LanguageServerId, Point, ToOffset as _, ToPoint as _,
+    Anchor, Buffer, BufferSnapshot, CodeLabel, Diagnostic, DiagnosticEntry, DiagnosticSet, DiagnosticSeverity,
+    LanguageServerId, Point, ToOffset as _, ToPoint as _,
 };
 use project::lsp_store::CompletionDocumentation;
-use project::{
-    Completion, CompletionDisplayOptions, CompletionResponse, CompletionSource, Project,
-    ProjectPath,
-};
+use project::{Completion, CompletionDisplayOptions, CompletionResponse, CompletionSource, Project, ProjectPath};
 use std::fmt::Write as _;
 use std::ops::Range;
 use std::path::Path;
@@ -68,11 +62,7 @@ enum State {
 }
 
 impl DivInspector {
-    pub fn new(
-        project: Entity<Project>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> DivInspector {
+    pub fn new(project: Entity<Project>, window: &mut Window, cx: &mut Context<Self>) -> DivInspector {
         // Open the buffers once, so they can then be used for each editor.
         cx.spawn_in(window, {
             let languages = project.read(cx).languages().clone();
@@ -80,8 +70,7 @@ impl DivInspector {
             async move |this, cx| {
                 // Open the JSON style buffer in the inspector-specific project, so that it runs the
                 // JSON language server.
-                let json_style_buffer =
-                    Self::create_buffer_in_project(GRAM_INSPECTOR_STYLE_JSON, &project, cx).await;
+                let json_style_buffer = Self::create_buffer_in_project(GRAM_INSPECTOR_STYLE_JSON, &project, cx).await;
 
                 // Create Rust style buffer without adding it to the project / buffer_store, so that
                 // Rust Analyzer doesn't get started for it.
@@ -91,8 +80,7 @@ impl DivInspector {
                 });
 
                 match json_style_buffer.and_then(|json_style_buffer| {
-                    rust_style_buffer
-                        .map(|rust_style_buffer| (json_style_buffer, rust_style_buffer))
+                    rust_style_buffer.map(|rust_style_buffer| (json_style_buffer, rust_style_buffer))
                 }) {
                     Ok((json_style_buffer, rust_style_buffer)) => {
                         this.update_in(cx, |this, window, cx| {
@@ -106,9 +94,7 @@ impl DivInspector {
                             // "Loading..." until the user moves the mouse to a different element.
                             if let Some(id) = this.inspector_id.take() {
                                 let inspector_state =
-                                    window.with_inspector_state(Some(&id), cx, |state, _window| {
-                                        state.clone()
-                                    });
+                                    window.with_inspector_state(Some(&id), cx, |state, _window| state.clone());
                                 if let Some(inspector_state) = inspector_state {
                                     this.update_inspected_element(&id, inspector_state, window, cx);
                                     cx.notify();
@@ -120,10 +106,7 @@ impl DivInspector {
                     Err(err) => {
                         this.update(cx, |this, _cx| {
                             this.state = State::LoadError {
-                                message: format!(
-                                    "Failed to create buffers for style editing: {err}"
-                                )
-                                .into(),
+                                message: format!("Failed to create buffers for style editing: {err}").into(),
                             };
                         })
                         .ok();
@@ -183,14 +166,11 @@ impl DivInspector {
         rust_style_editor.update(cx, {
             let div_inspector = cx.entity();
             |rust_style_editor, _cx| {
-                rust_style_editor.set_completion_provider(Some(Rc::new(
-                    RustStyleCompletionProvider { div_inspector },
-                )));
+                rust_style_editor.set_completion_provider(Some(Rc::new(RustStyleCompletionProvider { div_inspector })));
             }
         });
 
-        let rust_style = match self.reset_style_editors(&rust_style_buffer, &json_style_buffer, cx)
-        {
+        let rust_style = match self.reset_style_editors(&rust_style_buffer, &json_style_buffer, cx) {
             Ok(rust_style) => {
                 self.json_style_error = None;
                 rust_style
@@ -209,9 +189,8 @@ impl DivInspector {
                     let style_json = editor.read(cx).text(cx);
                     match serde_json_lenient::from_str_lenient::<StyleRefinement>(&style_json) {
                         Ok(new_style) => {
-                            let (rust_style, _) = this.style_from_rust_buffer_snapshot(
-                                &rust_style_buffer.read(cx).snapshot(),
-                            );
+                            let (rust_style, _) =
+                                this.style_from_rust_buffer_snapshot(&rust_style_buffer.read(cx).snapshot());
 
                             let mut unconvertible_plus_rust = this.unconvertible_style.clone();
                             unconvertible_plus_rust.refine(&rust_style);
@@ -221,16 +200,12 @@ impl DivInspector {
                             // true (such as for `p_1_3`). This can cause these values to
                             // erroneously appear in `json_style_overrides` since they are not
                             // perfectly equal. Roundtripping before `subtract` fixes this.
-                            unconvertible_plus_rust =
-                                serde_json::to_string(&unconvertible_plus_rust)
-                                    .ok()
-                                    .and_then(|json| {
-                                        serde_json_lenient::from_str_lenient(&json).ok()
-                                    })
-                                    .unwrap_or(unconvertible_plus_rust);
+                            unconvertible_plus_rust = serde_json::to_string(&unconvertible_plus_rust)
+                                .ok()
+                                .and_then(|json| serde_json_lenient::from_str_lenient(&json).ok())
+                                .unwrap_or(unconvertible_plus_rust);
 
-                            this.json_style_overrides =
-                                new_style.subtract(&unconvertible_plus_rust);
+                            this.json_style_overrides = new_style.subtract(&unconvertible_plus_rust);
 
                             window.with_inspector_state::<DivInspectorState, _>(
                                 Some(&id),
@@ -279,9 +254,7 @@ impl DivInspector {
             ..
         } = &self.state
         {
-            if let Err(err) =
-                self.reset_style_editors(&rust_style_buffer.clone(), &json_style_buffer.clone(), cx)
-            {
+            if let Err(err) = self.reset_style_editors(&rust_style_buffer.clone(), &json_style_buffer.clone(), cx) {
                 self.json_style_error = Some(format!("{err}").into());
             } else {
                 self.json_style_error = None;
@@ -307,12 +280,7 @@ impl DivInspector {
             rust_style_buffer.set_text(rust_code, cx);
             let snapshot = rust_style_buffer.snapshot();
             let (_, unrecognized_ranges) = self.style_from_rust_buffer_snapshot(&snapshot);
-            Self::set_rust_buffer_diagnostics(
-                unrecognized_ranges,
-                rust_style_buffer,
-                &snapshot,
-                cx,
-            );
+            Self::set_rust_buffer_diagnostics(unrecognized_ranges, rust_style_buffer, &snapshot, cx);
         });
         json_style_buffer.update(cx, |json_style_buffer, cx| {
             json_style_buffer.set_text(json_text, cx);
@@ -321,11 +289,7 @@ impl DivInspector {
         Ok(rust_style)
     }
 
-    fn handle_rust_completion_selection_change(
-        &mut self,
-        rust_completion: Option<String>,
-        cx: &mut Context<Self>,
-    ) {
+    fn handle_rust_completion_selection_change(&mut self, rust_completion: Option<String>, cx: &mut Context<Self>) {
         self.rust_completion = rust_completion;
         if let State::Ready {
             rust_style_buffer,
@@ -333,11 +297,7 @@ impl DivInspector {
             ..
         } = &self.state
         {
-            self.update_json_style_from_rust(
-                &json_style_buffer.clone(),
-                &rust_style_buffer.clone(),
-                cx,
-            );
+            self.update_json_style_from_rust(&json_style_buffer.clone(), &rust_style_buffer.clone(), cx);
         }
     }
 
@@ -350,12 +310,7 @@ impl DivInspector {
         let rust_style = rust_style_buffer.update(cx, |rust_style_buffer, cx| {
             let snapshot = rust_style_buffer.snapshot();
             let (rust_style, unrecognized_ranges) = self.style_from_rust_buffer_snapshot(&snapshot);
-            Self::set_rust_buffer_diagnostics(
-                unrecognized_ranges,
-                rust_style_buffer,
-                &snapshot,
-                cx,
-            );
+            Self::set_rust_buffer_diagnostics(unrecognized_ranges, rust_style_buffer, &snapshot, cx);
             rust_style
         });
 
@@ -383,10 +338,7 @@ impl DivInspector {
         }
     }
 
-    fn style_from_rust_buffer_snapshot(
-        &self,
-        snapshot: &BufferSnapshot,
-    ) -> (StyleRefinement, Vec<Range<Anchor>>) {
+    fn style_from_rust_buffer_snapshot(&self, snapshot: &BufferSnapshot) -> (StyleRefinement, Vec<Range<Anchor>>) {
         let method_names = if let Some((completion, completion_range)) = self
             .rust_completion
             .as_ref()
@@ -396,10 +348,7 @@ impl DivInspector {
                 .text_for_range(0..completion_range.start.to_offset(snapshot))
                 .collect::<String>();
             let after_text = snapshot
-                .text_for_range(
-                    completion_range.end.to_offset(snapshot)
-                        ..snapshot.clip_offset(usize::MAX, Bias::Left),
-                )
+                .text_for_range(completion_range.end.to_offset(snapshot)..snapshot.clip_offset(usize::MAX, Bias::Left))
                 .collect::<String>();
             let mut method_names = split_str_with_ranges(&before_text, is_not_identifier_char)
                 .into_iter()
@@ -425,8 +374,7 @@ impl DivInspector {
             if let Some((_, method)) = STYLE_METHODS.iter().find(|(_, m)| m.name == name) {
                 style = method.invoke(style);
             } else if let Some(range) = range {
-                unrecognized_ranges
-                    .push(snapshot.anchor_before(range.start)..snapshot.anchor_before(range.end));
+                unrecognized_ranges.push(snapshot.anchor_before(range.start)..snapshot.anchor_before(range.end));
             }
         }
 
@@ -478,21 +426,10 @@ impl DivInspector {
         Ok(buffer)
     }
 
-    fn create_editor(
-        &self,
-        buffer: Entity<Buffer>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Entity<Editor> {
+    fn create_editor(&self, buffer: Entity<Buffer>, window: &mut Window, cx: &mut Context<Self>) -> Entity<Editor> {
         cx.new(|cx| {
             let multi_buffer = cx.new(|cx| MultiBuffer::singleton(buffer, cx));
-            let mut editor = Editor::new(
-                EditorMode::full(),
-                multi_buffer,
-                Some(self.project.clone()),
-                window,
-                cx,
-            );
+            let mut editor = Editor::new(EditorMode::full(), multi_buffer, Some(self.project.clone()), window, cx);
             editor.set_soft_wrap_mode(SoftWrap::EditorWidth, cx);
             editor.set_show_line_numbers(false, cx);
             editor.set_show_code_actions(false, cx);
@@ -518,9 +455,7 @@ impl Render for DivInspector {
                 )
             })
             .map(|this| match &self.state {
-                State::Loading | State::BuffersLoaded { .. } => {
-                    this.child(Label::new("Loading..."))
-                }
+                State::Loading | State::BuffersLoaded { .. } => this.child(Label::new("Loading...")),
                 State::LoadError { message } => this.child(
                     div()
                         .w_full()
@@ -587,13 +522,11 @@ fn render_layout_state(inspector_state: &DivInspectorState, cx: &App) -> Div {
                 .id("content-size")
                 .text_ui(cx)
                 .tooltip(Tooltip::text("Size of the element's children"))
-                .child(
-                    if inspector_state.content_size != inspector_state.bounds.size {
-                        format!("Content size: {}", inspector_state.content_size)
-                    } else {
-                        "".to_string()
-                    },
-                ),
+                .child(if inspector_state.content_size != inspector_state.bounds.size {
+                    format!("Content size: {}", inspector_state.content_size)
+                } else {
+                    "".to_string()
+                }),
         )
 }
 
@@ -647,8 +580,7 @@ impl CompletionProvider for RustStyleCompletionProvider {
         _window: &mut Window,
         cx: &mut Context<Editor>,
     ) -> Task<Result<Vec<CompletionResponse>>> {
-        let Some(replace_range) = completion_replace_range(&buffer.read(cx).snapshot(), &position)
-        else {
+        let Some(replace_range) = completion_replace_range(&buffer.read(cx).snapshot(), &position) else {
             return Task::ready(Ok(Vec::new()));
         };
 
@@ -666,9 +598,9 @@ impl CompletionProvider for RustStyleCompletionProvider {
                     match_start: None,
                     snippet_deduplication_key: None,
                     icon_path: None,
-                    documentation: method.documentation.map(|documentation| {
-                        CompletionDocumentation::MultiLineMarkdown(documentation.into())
-                    }),
+                    documentation: method
+                        .documentation
+                        .map(|documentation| CompletionDocumentation::MultiLineMarkdown(documentation.into())),
                     source: CompletionSource::Custom,
                     insert_text_mode: None,
                     confirm: None,

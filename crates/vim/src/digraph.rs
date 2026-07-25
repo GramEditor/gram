@@ -45,13 +45,7 @@ fn lookup_digraph(a: char, b: char, cx: &App) -> Arc<str> {
 }
 
 impl Vim {
-    pub fn insert_digraph(
-        &mut self,
-        first_char: char,
-        second_char: char,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn insert_digraph(&mut self, first_char: char, second_char: char, window: &mut Window, cx: &mut Context<Self>) {
         let text = lookup_digraph(first_char, second_char, cx);
 
         self.pop_operator(window, cx);
@@ -64,9 +58,7 @@ impl Vim {
 
     fn literal(&mut self, action: &Literal, window: &mut Window, cx: &mut Context<Self>) {
         match self.active_operator() {
-            Some(Operator::Literal {
-                prefix: Some(prefix),
-            }) => {
+            Some(Operator::Literal { prefix: Some(prefix) }) => {
                 if let Some(keystroke) = Keystroke::parse(&action.0).ok() {
                     window.defer(cx, |window, cx| {
                         window.dispatch_keystroke(keystroke, cx);
@@ -178,39 +170,21 @@ impl Vim {
                     return self.insert_literal(Some(ch), "", window, cx);
                 }
             }
-            None if matches!(next, 'o' | 'O' | 'x' | 'X' | 'u' | 'U' | '0'..='9') => {
-                prefix.push(next)
-            }
+            None if matches!(next, 'o' | 'O' | 'x' | 'X' | 'u' | 'U' | '0'..='9') => prefix.push(next),
             _ => {
                 return self.insert_literal(None, text, window, cx);
             }
         };
 
         self.pop_operator(window, cx);
-        self.push_operator(
-            Operator::Literal {
-                prefix: Some(prefix),
-            },
-            window,
-            cx,
-        );
+        self.push_operator(Operator::Literal { prefix: Some(prefix) }, window, cx);
     }
 
-    fn insert_literal(
-        &mut self,
-        ch: Option<char>,
-        suffix: &str,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn insert_literal(&mut self, ch: Option<char>, suffix: &str, window: &mut Window, cx: &mut Context<Self>) {
         self.pop_operator(window, cx);
         let mut text = String::new();
         if let Some(c) = ch {
-            if c == '\n' {
-                text.push('\x00')
-            } else {
-                text.push(c)
-            }
+            if c == '\n' { text.push('\x00') } else { text.push(c) }
         }
         text.push_str(suffix);
 
@@ -285,10 +259,8 @@ mod test {
         let mut cx: NeovimBackedTestContext = NeovimBackedTestContext::new(cx).await;
 
         cx.set_shared_state("ˇHello").await;
-        cx.simulate_shared_keystrokes(
-            "shift-r ctrl-k a ' ctrl-k e ` ctrl-k i : ctrl-k o ~ ctrl-k u - escape",
-        )
-        .await;
+        cx.simulate_shared_keystrokes("shift-r ctrl-k a ' ctrl-k e ` ctrl-k i : ctrl-k o ~ ctrl-k u - escape")
+            .await;
         cx.shared_state().await.assert_eq("áèïõˇū");
     }
 
@@ -336,8 +308,7 @@ mod test {
         cx.shared_state().await.assert_eq("\x00jˇ");
         cx.simulate_shared_keystrokes("ctrl-v x 6 5").await;
         cx.shared_state().await.assert_eq("\x00jeˇ");
-        cx.simulate_shared_keystrokes("ctrl-v U 1 F 6 4 0 space")
-            .await;
+        cx.simulate_shared_keystrokes("ctrl-v U 1 F 6 4 0 space").await;
         cx.shared_state().await.assert_eq("\x00je🙀 ˇ");
     }
 

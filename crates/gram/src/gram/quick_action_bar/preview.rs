@@ -4,8 +4,7 @@ use markdown_preview::{
     markdown_preview_view::MarkdownPreviewView,
 };
 use svg_preview::{
-    OpenPreview as SvgOpenPreview, OpenPreviewToTheSide as SvgOpenPreviewToTheSide,
-    svg_preview_view::SvgPreviewView,
+    OpenPreview as SvgOpenPreview, OpenPreviewToTheSide as SvgOpenPreviewToTheSide, svg_preview_view::SvgPreviewView,
 };
 use ui::{Tooltip, prelude::*, text_for_keystroke};
 use workspace::Workspace;
@@ -28,12 +27,9 @@ impl QuickActionBar {
 
         if let Some(workspace) = self.workspace.upgrade() {
             workspace.update(cx, |workspace, cx| {
-                if MarkdownPreviewView::resolve_active_item_as_markdown_editor(workspace, cx)
-                    .is_some()
-                {
+                if MarkdownPreviewView::resolve_active_item_as_markdown_editor(workspace, cx).is_some() {
                     preview_type = Some(PreviewType::Markdown);
-                } else if SvgPreviewView::resolve_active_item_as_svg_buffer(workspace, cx).is_some()
-                {
+                } else if SvgPreviewView::resolve_active_item_as_svg_buffer(workspace, cx).is_some() {
                     preview_type = Some(PreviewType::Svg);
                 }
             });
@@ -41,23 +37,22 @@ impl QuickActionBar {
 
         let preview_type = preview_type?;
 
-        let (button_id, tooltip_text, open_action, open_to_side_action, open_action_for_tooltip) =
-            match preview_type {
-                PreviewType::Markdown => (
-                    "toggle-markdown-preview",
-                    "Preview Markdown",
-                    Box::new(MarkdownOpenPreview) as Box<dyn gpui::Action>,
-                    Box::new(MarkdownOpenPreviewToTheSide) as Box<dyn gpui::Action>,
-                    &markdown_preview::OpenPreview as &dyn gpui::Action,
-                ),
-                PreviewType::Svg => (
-                    "toggle-svg-preview",
-                    "Preview SVG",
-                    Box::new(SvgOpenPreview) as Box<dyn gpui::Action>,
-                    Box::new(SvgOpenPreviewToTheSide) as Box<dyn gpui::Action>,
-                    &svg_preview::OpenPreview as &dyn gpui::Action,
-                ),
-            };
+        let (button_id, tooltip_text, open_action, open_to_side_action, open_action_for_tooltip) = match preview_type {
+            PreviewType::Markdown => (
+                "toggle-markdown-preview",
+                "Preview Markdown",
+                Box::new(MarkdownOpenPreview) as Box<dyn gpui::Action>,
+                Box::new(MarkdownOpenPreviewToTheSide) as Box<dyn gpui::Action>,
+                &markdown_preview::OpenPreview as &dyn gpui::Action,
+            ),
+            PreviewType::Svg => (
+                "toggle-svg-preview",
+                "Preview SVG",
+                Box::new(SvgOpenPreview) as Box<dyn gpui::Action>,
+                Box::new(SvgOpenPreviewToTheSide) as Box<dyn gpui::Action>,
+                &svg_preview::OpenPreview as &dyn gpui::Action,
+            ),
+        };
 
         let alt_click = gpui::Keystroke {
             key: "click".into(),

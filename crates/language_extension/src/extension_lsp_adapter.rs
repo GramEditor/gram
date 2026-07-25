@@ -9,12 +9,11 @@ use extension::{Extension, ExtensionLanguageServerProxy, WorktreeDelegate};
 use futures::{FutureExt, future::join_all, lock::OwnedMutexGuard};
 use gpui::{App, AppContext, AsyncApp, Task};
 use language::{
-    BinaryStatus, CodeLabel, DynLspInstaller, HighlightId, Language, LanguageName,
-    LanguageServerBinaryLocations, LspAdapter, LspAdapterDelegate, Toolchain,
+    BinaryStatus, CodeLabel, DynLspInstaller, HighlightId, Language, LanguageName, LanguageServerBinaryLocations,
+    LspAdapter, LspAdapterDelegate, Toolchain,
 };
 use lsp::{
-    CodeActionKind, LanguageServerBinary, LanguageServerBinaryOptions, LanguageServerName,
-    LanguageServerSelector, Uri,
+    CodeActionKind, LanguageServerBinary, LanguageServerBinaryOptions, LanguageServerName, LanguageServerSelector, Uri,
 };
 use serde::Serialize;
 use serde_json::Value;
@@ -60,11 +59,7 @@ impl ExtensionLanguageServerProxy for LanguageServerRegistryProxy {
     ) {
         self.language_registry.register_lsp_adapter(
             language.clone(),
-            Arc::new(ExtensionLspAdapter::new(
-                extension,
-                language_server_id,
-                language,
-            )),
+            Arc::new(ExtensionLspAdapter::new(extension, language_server_id, language)),
         );
     }
 
@@ -82,9 +77,7 @@ impl ExtensionLanguageServerProxy for LanguageServerRegistryProxy {
             LspAccess::ViaLspStore(lsp_store) => lsp_store.update(cx, |lsp_store, cx| {
                 let stop_task = lsp_store.stop_language_servers_for_buffers(
                     Vec::new(),
-                    HashSet::from_iter([LanguageServerSelector::Name(
-                        language_server_name.clone(),
-                    )]),
+                    HashSet::from_iter([LanguageServerSelector::Name(language_server_name.clone())]),
                     cx,
                 );
                 tasks.push(stop_task);
@@ -95,9 +88,7 @@ impl ExtensionLanguageServerProxy for LanguageServerRegistryProxy {
                         lsp_store.update(cx, |lsp_store, cx| {
                             let stop_task = lsp_store.stop_language_servers_for_buffers(
                                 Vec::new(),
-                                HashSet::from_iter([LanguageServerSelector::Name(
-                                    language_server_name.clone(),
-                                )]),
+                                HashSet::from_iter([LanguageServerSelector::Name(language_server_name.clone())]),
                                 cx,
                             );
                             tasks.push(stop_task);
@@ -117,16 +108,8 @@ impl ExtensionLanguageServerProxy for LanguageServerRegistryProxy {
         })
     }
 
-    fn update_language_server_status(
-        &self,
-        language_server_id: LanguageServerName,
-        status: BinaryStatus,
-    ) {
-        log::debug!(
-            "updating binary status for {} to {:?}",
-            language_server_id,
-            status
-        );
+    fn update_language_server_status(&self, language_server_id: LanguageServerName, status: BinaryStatus) {
+        log::debug!("updating binary status for {} to {:?}", language_server_id, status);
         self.language_registry
             .update_lsp_binary_status(language_server_id, status);
     }
@@ -139,11 +122,7 @@ struct ExtensionLspAdapter {
 }
 
 impl ExtensionLspAdapter {
-    fn new(
-        extension: Arc<dyn Extension>,
-        language_server_id: LanguageServerName,
-        language_name: LanguageName,
-    ) -> Self {
+    fn new(extension: Arc<dyn Extension>, language_server_id: LanguageServerName, language_name: LanguageName) -> Self {
         Self {
             extension,
             language_server_id,
@@ -167,11 +146,7 @@ impl DynLspInstaller for ExtensionLspAdapter {
                 let delegate = Arc::new(WorktreeDelegateAdapter(delegate.clone())) as _;
                 let command = self
                     .extension
-                    .language_server_command(
-                        self.language_server_id.clone(),
-                        self.language_name.clone(),
-                        delegate,
-                    )
+                    .language_server_command(self.language_server_id.clone(), self.language_name.clone(), delegate)
                     .await?;
 
                 // on windows, extensions might produce weird paths
@@ -320,9 +295,8 @@ impl LspAdapter for ExtensionLspAdapter {
             )
             .await?;
         Ok(if let Some(json_options) = json_options {
-            serde_json::from_str(&json_options).with_context(|| {
-                format!("failed to parse initialization_options from extension: {json_options}")
-            })?
+            serde_json::from_str(&json_options)
+                .with_context(|| format!("failed to parse initialization_options from extension: {json_options}"))?
         } else {
             None
         })
@@ -341,9 +315,8 @@ impl LspAdapter for ExtensionLspAdapter {
             .language_server_workspace_configuration(self.language_server_id.clone(), delegate)
             .await?;
         Ok(if let Some(json_options) = json_options {
-            serde_json::from_str(&json_options).with_context(|| {
-                format!("failed to parse workspace_configuration from extension: {json_options}")
-            })?
+            serde_json::from_str(&json_options)
+                .with_context(|| format!("failed to parse workspace_configuration from extension: {json_options}"))?
         } else {
             serde_json::json!({})
         })
@@ -365,9 +338,7 @@ impl LspAdapter for ExtensionLspAdapter {
             .await?;
         Ok(if let Some(json_options) = json_options {
             serde_json::from_str(&json_options).with_context(|| {
-                format!(
-                    "failed to parse additional_initialization_options from extension: {json_options}"
-                )
+                format!("failed to parse additional_initialization_options from extension: {json_options}")
             })?
         } else {
             None
@@ -504,9 +475,7 @@ fn build_code_label(
                 let highlight_id = language
                     .grammar()
                     .zip(span.highlight_name.as_ref())
-                    .and_then(|(grammar, highlight_name)| {
-                        grammar.highlight_id_for_name(highlight_name)
-                    })
+                    .and_then(|(grammar, highlight_name)| grammar.highlight_id_for_name(highlight_name))
                     .unwrap_or_default();
                 let ix = text.len();
                 runs.push((ix..ix + span.text.len(), highlight_id));
@@ -523,14 +492,10 @@ fn build_code_label(
 fn lsp_completion_to_extension(value: lsp::CompletionItem) -> extension::Completion {
     extension::Completion {
         label: value.label,
-        label_details: value
-            .label_details
-            .map(lsp_completion_item_label_details_to_extension),
+        label_details: value.label_details.map(lsp_completion_item_label_details_to_extension),
         detail: value.detail,
         kind: value.kind.map(lsp_completion_item_kind_to_extension),
-        insert_text_format: value
-            .insert_text_format
-            .map(lsp_insert_text_format_to_extension),
+        insert_text_format: value.insert_text_format.map(lsp_insert_text_format_to_extension),
     }
 }
 
@@ -543,9 +508,7 @@ fn lsp_completion_item_label_details_to_extension(
     }
 }
 
-fn lsp_completion_item_kind_to_extension(
-    value: lsp::CompletionItemKind,
-) -> extension::CompletionKind {
+fn lsp_completion_item_kind_to_extension(value: lsp::CompletionItemKind) -> extension::CompletionKind {
     match value {
         lsp::CompletionItemKind::TEXT => extension::CompletionKind::Text,
         lsp::CompletionItemKind::METHOD => extension::CompletionKind::Method,
@@ -576,9 +539,7 @@ fn lsp_completion_item_kind_to_extension(
     }
 }
 
-fn lsp_insert_text_format_to_extension(
-    value: lsp::InsertTextFormat,
-) -> extension::InsertTextFormat {
+fn lsp_insert_text_format_to_extension(value: lsp::InsertTextFormat) -> extension::InsertTextFormat {
     match value {
         lsp::InsertTextFormat::PLAIN_TEXT => extension::InsertTextFormat::PlainText,
         lsp::InsertTextFormat::SNIPPET => extension::InsertTextFormat::Snippet,
@@ -631,10 +592,7 @@ fn extract_int<T: Serialize>(value: T) -> i32 {
 fn test_build_code_label() {
     use util::test::marked_text_ranges;
 
-    let (code, code_ranges) = marked_text_ranges(
-        "«const» «a»: «fn»(«Bcd»(«Efgh»)) -> «Ijklm» = pqrs.tuv",
-        false,
-    );
+    let (code, code_ranges) = marked_text_ranges("«const» «a»: «fn»(«Bcd»(«Efgh»)) -> «Ijklm» = pqrs.tuv", false);
     let code_runs = code_ranges
         .into_iter()
         .map(|range| (range, HighlightId(0)))
@@ -644,9 +602,7 @@ fn test_build_code_label() {
         &extension::CodeLabel {
             spans: vec![
                 extension::CodeLabelSpan::CodeRange(code.find("pqrs").unwrap()..code.len()),
-                extension::CodeLabelSpan::CodeRange(
-                    code.find(": fn").unwrap()..code.find(" = ").unwrap(),
-                ),
+                extension::CodeLabelSpan::CodeRange(code.find(": fn").unwrap()..code.find(" = ").unwrap()),
             ],
             filter_range: 0.."pqrs.tuv".len(),
             code,
@@ -656,8 +612,7 @@ fn test_build_code_label() {
     )
     .unwrap();
 
-    let (label_text, label_ranges) =
-        marked_text_ranges("pqrs.tuv: «fn»(«Bcd»(«Efgh»)) -> «Ijklm»", false);
+    let (label_text, label_ranges) = marked_text_ranges("pqrs.tuv: «fn»(«Bcd»(«Efgh»)) -> «Ijklm»", false);
     let label_runs = label_ranges
         .into_iter()
         .map(|range| (range, HighlightId(0)))
@@ -684,9 +639,7 @@ fn test_build_code_label_with_invalid_ranges() {
     let label = build_code_label(
         &extension::CodeLabel {
             spans: vec![
-                extension::CodeLabelSpan::CodeRange(
-                    code.find('B').unwrap()..code.find(" = ").unwrap(),
-                ),
+                extension::CodeLabelSpan::CodeRange(code.find('B').unwrap()..code.find(" = ").unwrap()),
                 extension::CodeLabelSpan::CodeRange((code.find('🏀').unwrap() + 1)..code.len()),
             ],
             filter_range: 0.."B".len(),
@@ -700,12 +653,10 @@ fn test_build_code_label_with_invalid_ranges() {
     // Filter range extends beyond actual text
     let label = build_code_label(
         &extension::CodeLabel {
-            spans: vec![extension::CodeLabelSpan::Literal(
-                extension::CodeLabelSpanLiteral {
-                    text: "abc".into(),
-                    highlight_name: Some("type".into()),
-                },
-            )],
+            spans: vec![extension::CodeLabelSpan::Literal(extension::CodeLabelSpanLiteral {
+                text: "abc".into(),
+                highlight_name: Some("type".into()),
+            })],
             filter_range: 0..5,
             code: String::new(),
         },

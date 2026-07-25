@@ -9,10 +9,7 @@ use util::path;
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
-async fn test_dap_logger_captures_all_session_rpc_messages(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_dap_logger_captures_all_session_rpc_messages(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     let log_store_cell = std::rc::Rc::new(OnceCell::new());
 
     cx.update(|cx| {

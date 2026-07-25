@@ -280,10 +280,7 @@ messages!(
 
 request_messages!(
     (ApplyCodeAction, ApplyCodeActionResponse),
-    (
-        ApplyCompletionAdditionalEdits,
-        ApplyCompletionAdditionalEditsResponse
-    ),
+    (ApplyCompletionAdditionalEdits, ApplyCompletionAdditionalEditsResponse),
     (Commit, Ack),
     (RunGitHook, Ack),
     (CopyProjectEntry, ProjectEntryResponse),
@@ -337,10 +334,7 @@ request_messages!(
     (RejoinRoom, RejoinRoomResponse),
     (ReloadBuffers, ReloadBuffersResponse),
     (RenameProjectEntry, ProjectEntryResponse),
-    (
-        ResolveCompletionDocumentation,
-        ResolveCompletionDocumentationResponse
-    ),
+    (ResolveCompletionDocumentation, ResolveCompletionDocumentationResponse),
     (ResolveInlayHint, ResolveInlayHintResponse),
     (GetDocumentColor, GetDocumentColorResponse),
     (GetColorPresentation, GetColorPresentationResponse),
@@ -594,9 +588,7 @@ entity_messages!(
 
 impl From<Timestamp> for SystemTime {
     fn from(val: Timestamp) -> Self {
-        UNIX_EPOCH
-            .checked_add(Duration::new(val.seconds, val.nanos))
-            .unwrap()
+        UNIX_EPOCH.checked_add(Duration::new(val.seconds, val.nanos)).unwrap()
     }
 }
 
@@ -614,10 +606,7 @@ impl From<u128> for Nonce {
     fn from(nonce: u128) -> Self {
         let upper_half = (nonce >> 64) as u64;
         let lower_half = nonce as u64;
-        Self {
-            upper_half,
-            lower_half,
-        }
+        Self { upper_half, lower_half }
     }
 }
 
@@ -642,23 +631,11 @@ pub fn split_worktree_update(mut message: UpdateWorktree) -> impl Iterator<Item 
             return None;
         }
 
-        let updated_entries_chunk_size = cmp::min(
-            message.updated_entries.len(),
-            MAX_WORKTREE_UPDATE_MAX_CHUNK_SIZE,
-        );
-        let updated_entries: Vec<_> = message
-            .updated_entries
-            .drain(..updated_entries_chunk_size)
-            .collect();
+        let updated_entries_chunk_size = cmp::min(message.updated_entries.len(), MAX_WORKTREE_UPDATE_MAX_CHUNK_SIZE);
+        let updated_entries: Vec<_> = message.updated_entries.drain(..updated_entries_chunk_size).collect();
 
-        let removed_entries_chunk_size = cmp::min(
-            message.removed_entries.len(),
-            MAX_WORKTREE_UPDATE_MAX_CHUNK_SIZE,
-        );
-        let removed_entries = message
-            .removed_entries
-            .drain(..removed_entries_chunk_size)
-            .collect();
+        let removed_entries_chunk_size = cmp::min(message.removed_entries.len(), MAX_WORKTREE_UPDATE_MAX_CHUNK_SIZE);
+        let removed_entries = message.removed_entries.drain(..removed_entries_chunk_size).collect();
 
         let mut updated_repositories = Vec::new();
         let mut limit = MAX_WORKTREE_UPDATE_MAX_CHUNK_SIZE;
@@ -669,14 +646,8 @@ pub fn split_worktree_update(mut message: UpdateWorktree) -> impl Iterator<Item 
             updated_repositories.push(RepositoryEntry {
                 repository_id: repo.repository_id,
                 branch_summary: repo.branch_summary.clone(),
-                updated_statuses: repo
-                    .updated_statuses
-                    .drain(..updated_statuses_limit)
-                    .collect(),
-                removed_statuses: repo
-                    .removed_statuses
-                    .drain(..removed_statuses_limit)
-                    .collect(),
+                updated_statuses: repo.updated_statuses.drain(..updated_statuses_limit).collect(),
+                removed_statuses: repo.removed_statuses.drain(..removed_statuses_limit).collect(),
                 current_merge_conflicts: repo.current_merge_conflicts.clone(),
             });
             if repo.removed_statuses.is_empty() && repo.updated_statuses.is_empty() {
@@ -713,9 +684,7 @@ pub fn split_worktree_update(mut message: UpdateWorktree) -> impl Iterator<Item 
     })
 }
 
-pub fn split_repository_update(
-    mut update: UpdateRepository,
-) -> impl Iterator<Item = UpdateRepository> {
+pub fn split_repository_update(mut update: UpdateRepository) -> impl Iterator<Item = UpdateRepository> {
     let mut updated_statuses_iter = mem::take(&mut update.updated_statuses).into_iter().fuse();
     let mut removed_statuses_iter = mem::take(&mut update.removed_statuses).into_iter().fuse();
     std::iter::from_fn({
@@ -754,10 +723,7 @@ mod tests {
 
     #[test]
     fn test_converting_peer_id_from_and_to_u64() {
-        let peer_id = PeerId {
-            owner_id: 10,
-            id: 3,
-        };
+        let peer_id = PeerId { owner_id: 10, id: 3 };
         assert_eq!(PeerId::from_u64(peer_id.as_u64()), peer_id);
         let peer_id = PeerId {
             owner_id: u32::MAX,

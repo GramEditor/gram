@@ -5,18 +5,15 @@ use editor::display_map::{BlockPlacement, BlockProperties, BlockStyle};
 use editor::{Addon, Editor, EditorEvent, ExcerptRange, MultiBuffer, multibuffer_context_lines};
 use git::repository::{CommitDetails, CommitDiff, RepoPath, is_binary_content};
 use git::status::{FileStatus, StatusCode, TrackedStatus};
-use git::{
-    BuildCommitPermalinkParams, GitHostingProviderRegistry, GitRemote, ParsedGitRemote,
-    parse_git_remote_url,
-};
+use git::{BuildCommitPermalinkParams, GitHostingProviderRegistry, GitRemote, ParsedGitRemote, parse_git_remote_url};
 use gpui::{
-    AnyElement, App, AppContext as _, AsyncApp, AsyncWindowContext, ClipboardItem, Context,
-    Element, Entity, EventEmitter, FocusHandle, Focusable, InteractiveElement, IntoElement,
-    ParentElement, PromptLevel, Render, Styled, Task, WeakEntity, Window, actions,
+    AnyElement, App, AppContext as _, AsyncApp, AsyncWindowContext, ClipboardItem, Context, Element, Entity,
+    EventEmitter, FocusHandle, Focusable, InteractiveElement, IntoElement, ParentElement, PromptLevel, Render, Styled,
+    Task, WeakEntity, Window, actions,
 };
 use language::{
-    Anchor, Buffer, Capability, DiskState, File, LanguageRegistry, LineEnding, OffsetRangeExt as _,
-    Point, ReplicaId, Rope, TextBuffer,
+    Anchor, Buffer, Capability, DiskState, File, LanguageRegistry, LineEnding, OffsetRangeExt as _, Point, ReplicaId,
+    Rope, TextBuffer,
 };
 use multi_buffer::PathKey;
 use project::{Project, WorktreeId, git_store::Repository};
@@ -31,8 +28,7 @@ use ui::{ButtonLike, DiffStat, Tooltip, prelude::*};
 use util::{ResultExt, paths::PathStyle, rel_path::RelPath, truncate_and_trailoff};
 use workspace::item::TabTooltipContent;
 use workspace::{
-    Item, ItemHandle, ItemNavHistory, ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView,
-    Workspace,
+    Item, ItemHandle, ItemNavHistory, ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView, Workspace,
     item::{BreadcrumbText, ItemEvent, TabContentParams},
     notifications::NotifyTaskExt,
     pane::SaveIntent,
@@ -85,11 +81,7 @@ impl Addon for CommitDiffAddon {
         self
     }
 
-    fn override_status_for_buffer_id(
-        &self,
-        buffer_id: language::BufferId,
-        _cx: &App,
-    ) -> Option<FileStatus> {
+    fn override_status_for_buffer_id(&self, buffer_id: language::BufferId, _cx: &App) -> Option<FileStatus> {
         self.file_statuses.get(&buffer_id).copied()
     }
 }
@@ -110,9 +102,7 @@ impl CommitView {
         let commit_diff = repo
             .update(cx, |repo, _| repo.load_commit_diff(commit_sha.clone()))
             .ok();
-        let commit_details = repo
-            .update(cx, |repo, _| repo.show(commit_sha.clone()))
-            .ok();
+        let commit_details = repo.update(cx, |repo, _| repo.show(commit_sha.clone())).ok();
 
         window
             .spawn(cx, async move |cx| {
@@ -131,23 +121,14 @@ impl CommitView {
                     .update_in(cx, |workspace, window, cx| {
                         let project = workspace.project();
                         let commit_view = cx.new(|cx| {
-                            CommitView::new(
-                                commit_details,
-                                commit_diff,
-                                repo,
-                                project.clone(),
-                                stash,
-                                window,
-                                cx,
-                            )
+                            CommitView::new(commit_details, commit_diff, repo, project.clone(), stash, window, cx)
                         });
 
                         let pane = workspace.active_pane();
                         pane.update(cx, |pane, cx| {
                             let ix = pane.items().position(|item| {
                                 let commit_view = item.downcast::<CommitView>();
-                                commit_view
-                                    .is_some_and(|view| view.read(cx).commit.sha == commit_sha)
+                                commit_view.is_some_and(|view| view.read(cx).commit.sha == commit_sha)
                             });
                             if let Some(ix) = ix {
                                 pane.activate_item(ix, true, true, window, cx);
@@ -199,8 +180,7 @@ impl CommitView {
         });
 
         let editor = cx.new(|cx| {
-            let mut editor =
-                Editor::for_multibuffer(multibuffer.clone(), Some(project.clone()), window, cx);
+            let mut editor = Editor::for_multibuffer(multibuffer.clone(), Some(project.clone()), window, cx);
 
             editor.disable_inline_diagnostics();
             editor.set_show_breakpoints(false, cx);
@@ -451,9 +431,7 @@ impl CommitView {
                 let added_rows = hunk.range.end.row.saturating_sub(hunk.range.start.row);
                 total_additions += added_rows;
 
-                let base_start = base_text
-                    .offset_to_point(hunk.diff_base_byte_range.start)
-                    .row;
+                let base_start = base_text.offset_to_point(hunk.diff_base_byte_range.start).row;
                 let base_end = base_text.offset_to_point(hunk.diff_base_byte_range.end).row;
                 let deleted_rows = base_end.saturating_sub(base_start);
 
@@ -485,10 +463,7 @@ impl CommitView {
                 repo: remote.repo.as_ref().into(),
             };
             let params = BuildCommitPermalinkParams { sha: &commit.sha };
-            let url = remote
-                .host
-                .build_commit_permalink(&parsed_remote, params)
-                .to_string();
+            let url = remote.host.build_commit_permalink(&parsed_remote, params).to_string();
             (provider, url)
         });
 
@@ -517,9 +492,7 @@ impl CommitView {
         let clipboard_has_link = cx
             .read_from_clipboard()
             .and_then(|entry| entry.text())
-            .map_or(false, |clipboard_text| {
-                clipboard_text.trim() == commit_sha.as_ref()
-            });
+            .map_or(false, |clipboard_text| clipboard_text.trim() == commit_sha.as_ref());
 
         let (copy_icon, copy_icon_color) = if clipboard_has_link {
             (IconName::Check, Color::Success)
@@ -578,12 +551,7 @@ impl CommitView {
                                             .tooltip({
                                                 let commit_sha = commit_sha.clone();
                                                 move |_, cx| {
-                                                    Tooltip::with_meta(
-                                                        "Copy Commit SHA",
-                                                        None,
-                                                        commit_sha.clone(),
-                                                        cx,
-                                                    )
+                                                    Tooltip::with_meta("Copy Commit SHA", None, commit_sha.clone(), cx)
                                                 }
                                             })
                                             .on_click(move |_, _, cx| {
@@ -597,16 +565,8 @@ impl CommitView {
                             .child(
                                 h_flex()
                                     .gap_1p5()
-                                    .child(
-                                        Label::new(date_string)
-                                            .color(Color::Muted)
-                                            .size(LabelSize::Small),
-                                    )
-                                    .child(
-                                        Label::new("•")
-                                            .color(Color::Ignored)
-                                            .size(LabelSize::Small),
-                                    )
+                                    .child(Label::new(date_string).color(Color::Muted).size(LabelSize::Small))
+                                    .child(Label::new("•").color(Color::Ignored).size(LabelSize::Small))
                                     .children(commit_diff_stat),
                             ),
                     )
@@ -913,11 +873,7 @@ impl Item for CommitView {
 
     fn tab_content(&self, params: TabContentParams, _window: &Window, cx: &App) -> AnyElement {
         Label::new(self.tab_content_text(params.detail.unwrap_or_default(), cx))
-            .color(if params.selected {
-                Color::Default
-            } else {
-                Color::Muted
-            })
+            .color(if params.selected { Color::Default } else { Color::Muted })
             .into_any_element()
     }
 
@@ -938,11 +894,7 @@ impl Item for CommitView {
             move |_, _| {
                 v_flex()
                     .child(Label::new(subject.clone()))
-                    .child(
-                        Label::new(short_sha.clone())
-                            .color(Color::Muted)
-                            .size(LabelSize::Small),
-                    )
+                    .child(Label::new(short_sha.clone()).color(Color::Muted).size(LabelSize::Small))
                     .into_any_element()
             }
         }))))
@@ -953,8 +905,7 @@ impl Item for CommitView {
     }
 
     fn deactivated(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        self.editor
-            .update(cx, |editor, cx| editor.deactivated(window, cx));
+        self.editor.update(cx, |editor, cx| editor.deactivated(window, cx));
     }
 
     fn act_as_type<'a>(
@@ -976,33 +927,18 @@ impl Item for CommitView {
         Some(Box::new(self.editor.clone()))
     }
 
-    fn for_each_project_item(
-        &self,
-        cx: &App,
-        f: &mut dyn FnMut(gpui::EntityId, &dyn project::ProjectItem),
-    ) {
+    fn for_each_project_item(&self, cx: &App, f: &mut dyn FnMut(gpui::EntityId, &dyn project::ProjectItem)) {
         self.editor.for_each_project_item(cx, f)
     }
 
-    fn set_nav_history(
-        &mut self,
-        nav_history: ItemNavHistory,
-        _: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn set_nav_history(&mut self, nav_history: ItemNavHistory, _: &mut Window, cx: &mut Context<Self>) {
         self.editor.update(cx, |editor, _| {
             editor.set_nav_history(Some(nav_history));
         });
     }
 
-    fn navigate(
-        &mut self,
-        data: Box<dyn Any>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> bool {
-        self.editor
-            .update(cx, |editor, cx| editor.navigate(data, window, cx))
+    fn navigate(&mut self, data: Box<dyn Any>, window: &mut Window, cx: &mut Context<Self>) -> bool {
+        self.editor.update(cx, |editor, cx| editor.navigate(data, window, cx))
     }
 
     fn breadcrumb_location(&self, _: &App) -> ToolbarItemLocation {
@@ -1013,15 +949,9 @@ impl Item for CommitView {
         None
     }
 
-    fn added_to_workspace(
-        &mut self,
-        workspace: &mut Workspace,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        self.editor.update(cx, |editor, cx| {
-            editor.added_to_workspace(workspace, window, cx)
-        });
+    fn added_to_workspace(&mut self, workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Self>) {
+        self.editor
+            .update(cx, |editor, cx| editor.added_to_workspace(workspace, window, cx));
     }
 
     fn can_split(&self) -> bool {
@@ -1047,9 +977,7 @@ impl Item for CommitView {
             let editor = cx.new({
                 let file_statuses = file_statuses.clone();
                 |cx| {
-                    let mut editor = self
-                        .editor
-                        .update(cx, |editor, cx| editor.clone(window, cx));
+                    let mut editor = self.editor.update(cx, |editor, cx| editor.clone(window, cx));
                     editor.register_addon(CommitDiffAddon { file_statuses });
                     editor
                 }
@@ -1116,13 +1044,7 @@ impl ToolbarItemView for CommitViewToolbar {
         ToolbarItemLocation::Hidden
     }
 
-    fn pane_focus_update(
-        &mut self,
-        _pane_focused: bool,
-        _window: &mut Window,
-        _cx: &mut Context<Self>,
-    ) {
-    }
+    fn pane_focus_update(&mut self, _pane_focused: bool, _window: &mut Window, _cx: &mut Context<Self>) {}
 }
 
 fn stash_matches_index(sha: &str, stash_index: usize, repo: &Repository) -> bool {

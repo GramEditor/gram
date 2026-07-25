@@ -5,8 +5,8 @@ use git::blame::BlameEntry;
 use git::repository::CommitSummary;
 use git::{GitRemote, commit::ParsedCommitMessage};
 use gpui::{
-    App, Asset, Element, Entity, MouseButton, ParentElement, Render, ScrollHandle,
-    StatefulInteractiveElement, WeakEntity, prelude::*,
+    App, Asset, Element, Entity, MouseButton, ParentElement, Render, ScrollHandle, StatefulInteractiveElement,
+    WeakEntity, prelude::*,
 };
 use markdown::{Markdown, MarkdownElement};
 use project::git_store::Repository;
@@ -44,10 +44,7 @@ impl<'a> CommitAvatar<'a> {
     pub fn from_commit_details(details: &'a CommitDetails) -> Self {
         Self {
             sha: &details.sha,
-            remote: details
-                .message
-                .as_ref()
-                .and_then(|details| details.remote.as_ref()),
+            remote: details.message.as_ref().and_then(|details| details.remote.as_ref()),
             size: None,
         }
     }
@@ -72,9 +69,7 @@ impl<'a> CommitAvatar<'a> {
     }
 
     pub fn avatar(&'a self, window: &mut Window, cx: &mut App) -> Option<Avatar> {
-        let remote = self
-            .remote
-            .filter(|remote| remote.host_supports_avatars())?;
+        let remote = self.remote.filter(|remote| remote.host_supports_avatars())?;
         let avatar_url = CommitAvatarAsset::new(remote.clone(), self.sha.clone());
 
         let url = window.use_asset::<CommitAvatarAsset>(&avatar_url, cx)??;
@@ -105,10 +100,7 @@ impl Asset for CommitAvatarAsset {
     type Source = Self;
     type Output = Option<SharedString>;
 
-    fn load(
-        source: Self::Source,
-        cx: &mut App,
-    ) -> impl Future<Output = Self::Output> + Send + 'static {
+    fn load(source: Self::Source, cx: &mut App) -> impl Future<Output = Self::Output> + Send + 'static {
         let client = cx.http_client();
 
         async move {
@@ -146,11 +138,7 @@ impl CommitTooltip {
             CommitDetails {
                 sha: blame.sha.to_string().into(),
                 commit_time,
-                author_name: blame
-                    .author
-                    .clone()
-                    .unwrap_or("<no name>".to_string())
-                    .into(),
+                author_name: blame.author.clone().unwrap_or("<no name>".to_string()).into(),
                 author_email: blame.author_mail.clone().unwrap_or("".to_string()).into(),
                 message: details,
             },
@@ -234,20 +222,16 @@ impl Render for CommitTooltip {
         let workspace = self.workspace.clone();
         let commit_summary = CommitSummary {
             sha: self.commit.sha.clone(),
-            subject: self
-                .commit
-                .message
-                .as_ref()
-                .map_or(Default::default(), |message| {
-                    message
-                        .message
-                        .split('\n')
-                        .next()
-                        .unwrap()
-                        .trim_end()
-                        .to_string()
-                        .into()
-                }),
+            subject: self.commit.message.as_ref().map_or(Default::default(), |message| {
+                message
+                    .message
+                    .split('\n')
+                    .next()
+                    .unwrap()
+                    .trim_end()
+                    .to_string()
+                    .into()
+            }),
             commit_timestamp: self.commit.commit_time.unix_timestamp(),
             author_name: self.commit.author_name.clone(),
             has_parent: false,
@@ -270,11 +254,7 @@ impl Render for CommitTooltip {
                                 .child(avatar)
                                 .child(author)
                                 .when(!author_email.is_empty(), |this| {
-                                    this.child(
-                                        div()
-                                            .text_color(cx.theme().colors().text_muted)
-                                            .child(author_email),
-                                    )
+                                    this.child(div().text_color(cx.theme().colors().text_muted).child(author_email))
                                 })
                                 .border_b_1()
                                 .border_color(cx.theme().colors().border_variant),
@@ -301,34 +281,27 @@ impl Render for CommitTooltip {
                                         .gap_1p5()
                                         .when_some(pull_request, |this, pr| {
                                             this.child(
-                                                Button::new(
-                                                    "pull-request-button",
-                                                    format!("#{}", pr.number),
-                                                )
-                                                .color(Color::Muted)
-                                                .icon(IconName::PullRequest)
-                                                .icon_color(Color::Muted)
-                                                .icon_position(IconPosition::Start)
-                                                .style(ButtonStyle::Subtle)
-                                                .on_click(move |_, _, cx| {
-                                                    cx.stop_propagation();
-                                                    cx.open_url(pr.url.as_str())
-                                                }),
+                                                Button::new("pull-request-button", format!("#{}", pr.number))
+                                                    .color(Color::Muted)
+                                                    .icon(IconName::PullRequest)
+                                                    .icon_color(Color::Muted)
+                                                    .icon_position(IconPosition::Start)
+                                                    .style(ButtonStyle::Subtle)
+                                                    .on_click(move |_, _, cx| {
+                                                        cx.stop_propagation();
+                                                        cx.open_url(pr.url.as_str())
+                                                    }),
                                             )
                                             .child(Divider::vertical())
                                         })
                                         .child(
-                                            Button::new(
-                                                "commit-sha-button",
-                                                short_commit_id.clone(),
-                                            )
-                                            .style(ButtonStyle::Subtle)
-                                            .color(Color::Muted)
-                                            .icon(IconName::FileGit)
-                                            .icon_color(Color::Muted)
-                                            .icon_position(IconPosition::Start)
-                                            .on_click(
-                                                move |_, window, cx| {
+                                            Button::new("commit-sha-button", short_commit_id.clone())
+                                                .style(ButtonStyle::Subtle)
+                                                .color(Color::Muted)
+                                                .icon(IconName::FileGit)
+                                                .icon_color(Color::Muted)
+                                                .icon_position(IconPosition::Start)
+                                                .on_click(move |_, window, cx| {
                                                     CommitView::open(
                                                         commit_summary.sha.to_string(),
                                                         repo.downgrade(),
@@ -339,14 +312,10 @@ impl Render for CommitTooltip {
                                                         cx,
                                                     );
                                                     cx.stop_propagation();
-                                                },
-                                            ),
+                                                }),
                                         )
                                         .child(Divider::vertical())
-                                        .child(
-                                            CopyButton::new("copy-commit-sha", full_sha)
-                                                .tooltip_label("Copy SHA"),
-                                        ),
+                                        .child(CopyButton::new("copy-commit-sha", full_sha).tooltip_label("Copy SHA")),
                                 ),
                         ),
                 )
@@ -358,12 +327,7 @@ fn blame_entry_timestamp(blame_entry: &BlameEntry, format: time_format::Timestam
     match blame_entry.author_offset_date_time() {
         Ok(timestamp) => {
             let local_offset = UtcOffset::current_local_offset().unwrap_or(UtcOffset::UTC);
-            time_format::format_localized_timestamp(
-                timestamp,
-                time::OffsetDateTime::now_utc(),
-                local_offset,
-                format,
-            )
+            time_format::format_localized_timestamp(timestamp, time::OffsetDateTime::now_utc(), local_offset, format)
         }
         Err(_) => "Error parsing date".to_string(),
     }

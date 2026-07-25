@@ -2,17 +2,15 @@ use anyhow::Result;
 use collections::HashMap;
 use windows::Win32::UI::{
     Input::KeyboardAndMouse::{
-        GetKeyboardLayoutNameW, MAPVK_VK_TO_CHAR, MAPVK_VK_TO_VSC, MapVirtualKeyW, ToUnicode,
-        VIRTUAL_KEY, VK_0, VK_1, VK_2, VK_3, VK_4, VK_5, VK_6, VK_7, VK_8, VK_9, VK_ABNT_C1,
-        VK_CONTROL, VK_MENU, VK_OEM_1, VK_OEM_2, VK_OEM_3, VK_OEM_4, VK_OEM_5, VK_OEM_6, VK_OEM_7,
-        VK_OEM_8, VK_OEM_102, VK_OEM_COMMA, VK_OEM_MINUS, VK_OEM_PERIOD, VK_OEM_PLUS, VK_SHIFT,
+        GetKeyboardLayoutNameW, MAPVK_VK_TO_CHAR, MAPVK_VK_TO_VSC, MapVirtualKeyW, ToUnicode, VIRTUAL_KEY, VK_0, VK_1,
+        VK_2, VK_3, VK_4, VK_5, VK_6, VK_7, VK_8, VK_9, VK_ABNT_C1, VK_CONTROL, VK_MENU, VK_OEM_1, VK_OEM_2, VK_OEM_3,
+        VK_OEM_4, VK_OEM_5, VK_OEM_6, VK_OEM_7, VK_OEM_8, VK_OEM_102, VK_OEM_COMMA, VK_OEM_MINUS, VK_OEM_PERIOD,
+        VK_OEM_PLUS, VK_SHIFT,
     },
     WindowsAndMessaging::KL_NAMELENGTH,
 };
 
-use crate::{
-    KeybindingKeystroke, Keystroke, Modifiers, PlatformKeyboardLayout, PlatformKeyboardMapper,
-};
+use crate::{KeybindingKeystroke, Keystroke, Modifiers, PlatformKeyboardLayout, PlatformKeyboardMapper};
 
 pub(crate) struct WindowsKeyboardLayout {
     id: String,
@@ -36,13 +34,8 @@ impl PlatformKeyboardLayout for WindowsKeyboardLayout {
 }
 
 impl PlatformKeyboardMapper for WindowsKeyboardMapper {
-    fn map_key_equivalent(
-        &self,
-        mut keystroke: Keystroke,
-        use_key_equivalents: bool,
-    ) -> KeybindingKeystroke {
-        let Some((vkey, shifted_key)) = self.get_vkey_from_key(&keystroke.key, use_key_equivalents)
-        else {
+    fn map_key_equivalent(&self, mut keystroke: Keystroke, use_key_equivalents: bool) -> KeybindingKeystroke {
+        let Some((vkey, shifted_key)) = self.get_vkey_from_key(&keystroke.key, use_key_equivalents) else {
             return KeybindingKeystroke::from_keystroke(keystroke);
         };
         if shifted_key && keystroke.modifiers.shift {
@@ -56,10 +49,7 @@ impl PlatformKeyboardMapper for WindowsKeyboardMapper {
         keystroke.modifiers.shift = false;
 
         let Some(key) = self.vkey_to_key.get(&vkey).cloned() else {
-            log::error!(
-                "Failed to map key equivalent '{:?}' to a valid key",
-                keystroke
-            );
+            log::error!("Failed to map key equivalent '{:?}' to a valid key", keystroke);
             return KeybindingKeystroke::from_keystroke(keystroke);
         };
 
@@ -95,9 +85,8 @@ impl WindowsKeyboardLayout {
         let mut buffer = [0u16; KL_NAMELENGTH as usize]; // KL_NAMELENGTH includes the null terminator
         unsafe { GetKeyboardLayoutNameW(&mut buffer)? };
         let id = String::from_utf16_lossy(&buffer[..buffer.len() - 1]); // Remove the null terminator
-        let entry = windows_registry::LOCAL_MACHINE.open(format!(
-            "System\\CurrentControlSet\\Control\\Keyboard Layouts\\{id}"
-        ))?;
+        let entry = windows_registry::LOCAL_MACHINE
+            .open(format!("System\\CurrentControlSet\\Control\\Keyboard Layouts\\{id}"))?;
         let name = entry.get_string("Layout Text")?;
         Ok(Self { id, name })
     }
@@ -145,11 +134,7 @@ impl WindowsKeyboardMapper {
     }
 }
 
-pub(crate) fn get_keystroke_key(
-    vkey: VIRTUAL_KEY,
-    scan_code: u32,
-    modifiers: &mut Modifiers,
-) -> Option<String> {
+pub(crate) fn get_keystroke_key(vkey: VIRTUAL_KEY, scan_code: u32, modifiers: &mut Modifiers) -> Option<String> {
     if modifiers.shift && need_to_convert_to_shifted_key(vkey) {
         get_shifted_key(vkey, scan_code).inspect(|_| {
             modifiers.shift = false;
@@ -230,9 +215,7 @@ pub(crate) fn generate_key_char(
     match len {
         len if len > 0 => String::from_utf16(&buffer[..len as usize])
             .ok()
-            .filter(|candidate| {
-                !candidate.is_empty() && !candidate.chars().next().unwrap().is_control()
-            }),
+            .filter(|candidate| !candidate.is_empty() && !candidate.chars().next().unwrap().is_control()),
         len if len < 0 => String::from_utf16(&buffer[..(-len as usize)]).ok(),
         _ => None,
     }

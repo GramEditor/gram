@@ -13,8 +13,7 @@ use std::{
 };
 use util::{ResultExt, maybe, merge_json_value_into};
 
-const SERVER_PATH: &str =
-    "node_modules/vscode-langservers-extracted/bin/vscode-css-language-server";
+const SERVER_PATH: &str = "node_modules/vscode-langservers-extracted/bin/vscode-css-language-server";
 
 fn server_binary_arguments(server_path: &Path) -> Vec<OsString> {
     vec![server_path.into(), "--stdio".into()]
@@ -51,9 +50,7 @@ impl LspInstaller for CssLspAdapter {
         _: Option<Toolchain>,
         _: &AsyncApp,
     ) -> Option<LanguageServerBinary> {
-        let path = delegate
-            .which("vscode-css-language-server".as_ref())
-            .await?;
+        let path = delegate.which("vscode-css-language-server".as_ref()).await?;
         let env = delegate.shell_env().await;
 
         Some(LanguageServerBinary {
@@ -72,10 +69,7 @@ impl LspInstaller for CssLspAdapter {
         let server_path = container_dir.join(SERVER_PATH);
 
         self.node
-            .npm_install_packages(
-                &container_dir,
-                &[(Self::PACKAGE_NAME, latest_version.as_str())],
-            )
+            .npm_install_packages(&container_dir, &[(Self::PACKAGE_NAME, latest_version.as_str())])
             .await?;
 
         Ok(LanguageServerBinary {
@@ -158,8 +152,7 @@ impl LspAdapter for CssLspAdapter {
         });
 
         let project_options = cx.update(|cx| {
-            language_server_settings(delegate.as_ref(), &self.name(), cx)
-                .and_then(|s| s.settings.clone())
+            language_server_settings(delegate.as_ref(), &self.name(), cx).and_then(|s| s.settings.clone())
         })?;
 
         if let Some(override_options) = project_options {
@@ -170,16 +163,10 @@ impl LspAdapter for CssLspAdapter {
     }
 }
 
-async fn get_cached_server_binary(
-    container_dir: PathBuf,
-    node: &NodeRuntime,
-) -> Option<LanguageServerBinary> {
+async fn get_cached_server_binary(container_dir: PathBuf, node: &NodeRuntime) -> Option<LanguageServerBinary> {
     maybe!(async {
         let server_path = container_dir.join(SERVER_PATH);
-        anyhow::ensure!(
-            server_path.exists(),
-            "missing executable in directory {server_path:?}"
-        );
+        anyhow::ensure!(server_path.exists(), "missing executable in directory {server_path:?}");
         Ok(LanguageServerBinary {
             path: node.binary_path().await?,
             env: None,

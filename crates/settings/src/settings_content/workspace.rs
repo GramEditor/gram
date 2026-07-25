@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 use settings_macros::{MergeFrom, with_fallible_options};
 
 use crate::{
-    CenteredPaddingSettings, DelayMs, DockPosition, DockSide, InactiveOpacity,
-    ScrollbarSettingsContent, ShowIndentGuides, serialize_optional_f32_with_two_decimal_places,
+    CenteredPaddingSettings, DelayMs, DockPosition, DockSide, InactiveOpacity, ScrollbarSettingsContent,
+    ShowIndentGuides, serialize_optional_f32_with_two_decimal_places,
 };
 
 #[with_fallible_options]
@@ -559,16 +559,7 @@ pub enum StatusBarIconSize {
 }
 
 #[derive(
-    Copy,
-    Clone,
-    Debug,
-    Serialize,
-    Deserialize,
-    PartialEq,
-    Eq,
-    JsonSchema,
-    MergeFrom,
-    strum::EnumDiscriminants,
+    Copy, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, JsonSchema, MergeFrom, strum::EnumDiscriminants,
 )]
 #[strum_discriminants(derive(strum::VariantArray, strum::VariantNames, strum::FromRepr))]
 #[serde(rename_all = "snake_case")]
@@ -587,9 +578,7 @@ impl AutosaveSetting {
     pub fn should_save_on_close(&self) -> bool {
         matches!(
             &self,
-            AutosaveSetting::OnFocusChange
-                | AutosaveSetting::OnWindowChange
-                | AutosaveSetting::AfterDelay { .. }
+            AutosaveSetting::OnFocusChange | AutosaveSetting::OnWindowChange | AutosaveSetting::AfterDelay { .. }
         )
     }
 }
@@ -860,9 +849,7 @@ pub enum ProjectPanelSortMode {
 }
 
 #[with_fallible_options]
-#[derive(
-    Copy, Clone, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, Eq, Default,
-)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, Eq, Default)]
 pub struct ProjectPanelIndentGuidesSettings {
     pub show: Option<ShowIndentGuides>,
 }

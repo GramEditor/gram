@@ -123,11 +123,7 @@ impl Vim {
                                 .map(|(mut range, _)| {
                                     // The Motion::CurrentLine operation will contain the newline of the current line and leading/trailing whitespace
                                     if let Motion::CurrentLine = motion {
-                                        range.start = motion::first_non_whitespace(
-                                            &display_map,
-                                            false,
-                                            range.start,
-                                        );
+                                        range.start = motion::first_non_whitespace(&display_map, false, range.start);
                                         range.end = movement::saturating_right(
                                             &display_map,
                                             motion::last_non_whitespace(&display_map, range.end, 1),
@@ -178,12 +174,7 @@ impl Vim {
         self.switch_mode(Mode::Normal, false, window, cx);
     }
 
-    pub fn delete_surrounds(
-        &mut self,
-        text: Arc<str>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn delete_surrounds(&mut self, text: Arc<str>, window: &mut Window, cx: &mut Context<Self>) {
         self.stop_recording(cx);
 
         // only legitimate surrounds can be removed
@@ -210,14 +201,12 @@ impl Vim {
 
                 for selection in &display_selections {
                     let start = selection.start.to_offset(&display_map, Bias::Left);
-                    if let Some(range) =
-                        pair_object.range(&display_map, selection.clone(), true, None)
-                    {
+                    if let Some(range) = pair_object.range(&display_map, selection.clone(), true, None) {
                         // If the current parenthesis object is single-line,
                         // then we need to filter whether it is the current line or not
                         if !pair_object.is_multiline() {
-                            let is_same_row = selection.start.row() == range.start.row()
-                                && selection.end.row() == range.end.row();
+                            let is_same_row =
+                                selection.start.row() == range.start.row() && selection.end.row() == range.end.row();
                             if !is_same_row {
                                 anchors.push(start..start);
                                 continue;
@@ -296,16 +285,14 @@ impl Vim {
                     // A single space should be added if the new surround is a
                     // bracket and not a quote (pair.start != pair.end) and if
                     // the bracket used is the opening bracket.
-                    let add_space =
-                        !(pair.start == pair.end) && (pair.end != surround_alias((*text).as_ref()));
+                    let add_space = !(pair.start == pair.end) && (pair.end != surround_alias((*text).as_ref()));
 
                     // Space should be preserved if either the surrounding
                     // characters being updated are quotes
                     // (will_replace_pair.start == will_replace_pair.end) or if
                     // the bracket used in the command is not an opening
                     // bracket.
-                    let preserve_space =
-                        will_replace_pair.start == will_replace_pair.end || !opening;
+                    let preserve_space = will_replace_pair.start == will_replace_pair.end || !opening;
 
                     let display_map = editor.display_snapshot(cx);
                     let selections = editor.selections.all_adjusted_display(&display_map);
@@ -314,9 +301,7 @@ impl Vim {
 
                     for selection in &selections {
                         let start = selection.start.to_offset(&display_map, Bias::Left);
-                        if let Some(range) =
-                            target.range(&display_map, selection.clone(), true, None)
-                        {
+                        if let Some(range) = target.range(&display_map, selection.clone(), true, None) {
                             if !target.is_multiline() {
                                 let is_same_row = selection.start.row() == range.start.row()
                                     && selection.end.row() == range.end.row();
@@ -363,9 +348,7 @@ impl Vim {
                             }
 
                             let mut reverse_chars_and_offsets = display_map
-                                .reverse_buffer_chars_at(
-                                    range.end.to_offset(&display_map, Bias::Left),
-                                )
+                                .reverse_buffer_chars_at(range.end.to_offset(&display_map, Bias::Left))
                                 .peekable();
                             while let Some((ch, offset)) = reverse_chars_and_offsets.next() {
                                 if ch.to_string() == will_replace_pair.end {
@@ -442,9 +425,7 @@ impl Vim {
 
                     for selection in &selections {
                         let start = selection.start.to_offset(&display_map, Bias::Left);
-                        if let Some(range) =
-                            object.range(&display_map, selection.clone(), true, None)
-                        {
+                        if let Some(range) = object.range(&display_map, selection.clone(), true, None) {
                             // If the current parenthesis object is single-line,
                             // then we need to filter whether it is the current line or not
                             if object.is_multiline()
@@ -454,9 +435,7 @@ impl Vim {
                             {
                                 valid = true;
                                 let chars_and_offset = display_map
-                                    .buffer_chars_at(
-                                        range.start.to_offset(&display_map, Bias::Left),
-                                    )
+                                    .buffer_chars_at(range.start.to_offset(&display_map, Bias::Left))
                                     .peekable();
                                 for (ch, offset) in chars_and_offset {
                                     if ch.to_string() == pair.start {
@@ -481,11 +460,7 @@ impl Vim {
         valid
     }
 
-    fn object_to_bracket_pair(
-        &self,
-        object: Object,
-        cx: &mut Context<Self>,
-    ) -> Option<BracketPair> {
+    fn object_to_bracket_pair(&self, object: Object, cx: &mut Context<Self>) -> Option<BracketPair> {
         if let Some(pair) = object_to_surround_pair(object) {
             return Some(pair.to_bracket_pair());
         }
@@ -498,11 +473,7 @@ impl Vim {
         }
     }
 
-    fn any_pair(
-        &self,
-        allowed_pairs: &[SurroundPair],
-        cx: &mut Context<Self>,
-    ) -> Option<BracketPair> {
+    fn any_pair(&self, allowed_pairs: &[SurroundPair], cx: &mut Context<Self>) -> Option<BracketPair> {
         // If we're dealing with `AnyBrackets`, which can map to multiple bracket
         // pairs, we'll need to first determine which `BracketPair` to target.
         // As such, we keep track of the smallest range size, so that in cases
@@ -536,14 +507,9 @@ impl Vim {
                 let cursor_offset = relative_to.to_offset(&display_map, Bias::Left);
 
                 for pair in allowed_pairs {
-                    if let Some(range) = surrounding_markers(
-                        &display_map,
-                        relative_to,
-                        true,
-                        false,
-                        pair.open,
-                        pair.close,
-                    ) {
+                    if let Some(range) =
+                        surrounding_markers(&display_map, relative_to, true, false, pair.open, pair.close)
+                    {
                         let start_offset = range.start.to_offset(&display_map, Bias::Left);
                         let end_offset = range.end.to_offset(&display_map, Bias::Right);
 
@@ -609,10 +575,7 @@ pub fn surround_alias(ch: &str) -> &str {
 }
 
 fn literal_surround_pair(ch: char) -> Option<SurroundPair> {
-    SURROUND_PAIRS
-        .iter()
-        .find(|p| p.open == ch || p.close == ch)
-        .copied()
+    SURROUND_PAIRS.iter().find(|p| p.open == ch || p.close == ch).copied()
 }
 
 /// Resolve a character (including Vim aliases) to its surround pair.
@@ -1850,10 +1813,7 @@ mod test {
         assert_eq!(surround_pair_for_char_vim('x'), None);
 
         // Helix resolves literal chars and falls back to symmetric pairs.
-        assert_eq!(
-            as_tuple(surround_pair_for_char_helix('*')),
-            Some(('*', '*'))
-        );
+        assert_eq!(as_tuple(surround_pair_for_char_helix('*')), Some(('*', '*')));
         assert_eq!(surround_pair_for_char_helix('m'), None);
     }
 }

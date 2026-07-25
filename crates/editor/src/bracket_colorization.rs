@@ -27,21 +27,18 @@ impl Editor {
         let accents_count = cx.theme().accents().0.len();
         let multi_buffer_snapshot = self.buffer().read(cx).snapshot(cx);
         let all_excerpts = self.buffer().read(cx).excerpt_ids();
-        let anchors_in_multi_buffer = |current_excerpt: ExcerptId,
-                                       text_anchors: [text::Anchor; 4]|
-         -> Option<[Option<_>; 4]> {
-            multi_buffer_snapshot
-                .anchors_in_excerpt(current_excerpt, text_anchors)
-                .or_else(|| {
-                    all_excerpts
-                        .iter()
-                        .filter(|&&excerpt_id| excerpt_id != current_excerpt)
-                        .find_map(|&excerpt_id| {
-                            multi_buffer_snapshot.anchors_in_excerpt(excerpt_id, text_anchors)
-                        })
-                })?
-                .collect_array()
-        };
+        let anchors_in_multi_buffer =
+            |current_excerpt: ExcerptId, text_anchors: [text::Anchor; 4]| -> Option<[Option<_>; 4]> {
+                multi_buffer_snapshot
+                    .anchors_in_excerpt(current_excerpt, text_anchors)
+                    .or_else(|| {
+                        all_excerpts
+                            .iter()
+                            .filter(|&&excerpt_id| excerpt_id != current_excerpt)
+                            .find_map(|&excerpt_id| multi_buffer_snapshot.anchors_in_excerpt(excerpt_id, text_anchors))
+                    })?
+                    .collect_array()
+            };
 
         let bracket_matches_by_accent = self.visible_excerpts(false, cx).into_iter().fold(
             HashMap::default(),
@@ -54,16 +51,10 @@ impl Editor {
                 )
                 .colorize_brackets
                 {
-                    let fetched_chunks = self
-                        .fetched_tree_sitter_chunks
-                        .entry(excerpt_id)
-                        .or_default();
+                    let fetched_chunks = self.fetched_tree_sitter_chunks.entry(excerpt_id).or_default();
 
                     let brackets_by_accent = buffer_snapshot
-                        .fetch_bracket_ranges(
-                            buffer_range.start..buffer_range.end,
-                            Some(fetched_chunks),
-                        )
+                        .fetch_bracket_ranges(buffer_range.start..buffer_range.end, Some(fetched_chunks))
                         .into_iter()
                         .flat_map(|(chunk_range, pairs)| {
                             if fetched_chunks.insert(chunk_range) {
@@ -75,11 +66,9 @@ impl Editor {
                         .filter_map(|pair| {
                             let color_index = pair.color_index?;
 
-                            let buffer_open_range = buffer_snapshot
-                                .anchor_before(pair.open_range.start)
+                            let buffer_open_range = buffer_snapshot.anchor_before(pair.open_range.start)
                                 ..buffer_snapshot.anchor_after(pair.open_range.end);
-                            let buffer_close_range = buffer_snapshot
-                                .anchor_before(pair.close_range.start)
+                            let buffer_close_range = buffer_snapshot.anchor_before(pair.close_range.start)
                                 ..buffer_snapshot.anchor_after(pair.close_range.end);
                             let [
                                 buffer_open_range_start,
@@ -95,10 +84,8 @@ impl Editor {
                                     buffer_close_range.end,
                                 ],
                             )?;
-                            let multi_buffer_open_range =
-                                buffer_open_range_start.zip(buffer_open_range_end);
-                            let multi_buffer_close_range =
-                                buffer_close_range_start.zip(buffer_close_range_end);
+                            let multi_buffer_open_range = buffer_open_range_start.zip(buffer_open_range_end);
+                            let multi_buffer_close_range = buffer_close_range_start.zip(buffer_close_range_end);
 
                             let mut ranges = Vec::with_capacity(2);
                             if let Some((open_start, open_end)) = multi_buffer_open_range {
@@ -115,15 +102,11 @@ impl Editor {
                         });
 
                     for (accent_number, new_ranges) in brackets_by_accent {
-                        let ranges = acc
-                            .entry(accent_number)
-                            .or_insert_with(Vec::<Range<Anchor>>::new);
+                        let ranges = acc.entry(accent_number).or_insert_with(Vec::<Range<Anchor>>::new);
 
                         for new_range in new_ranges {
                             let i = ranges
-                                .binary_search_by(|probe| {
-                                    probe.start.cmp(&new_range.start, &multi_buffer_snapshot)
-                                })
+                                .binary_search_by(|probe| probe.start.cmp(&new_range.start, &multi_buffer_snapshot))
                                 .unwrap_or_else(|i| i);
                             ranges.insert(i, new_range);
                         }
@@ -147,13 +130,7 @@ impl Editor {
                 ..HighlightStyle::default()
             };
 
-            self.highlight_text_key::<ColorizedBracketsHighlight>(
-                accent_number,
-                bracket_highlights,
-                style,
-                true,
-                cx,
-            );
+            self.highlight_text_key::<ColorizedBracketsHighlight>(accent_number, bracket_highlights, style, true, cx);
         }
     }
 }
@@ -167,9 +144,7 @@ mod tests {
         DisplayPoint, EditorMode, EditorSnapshot, MoveToBeginning, MoveToEnd, MoveUp,
         display_map::{DisplayRow, ToDisplayPoint},
         editor_tests::init_test,
-        test::{
-            editor_lsp_test_context::EditorLspTestContext, editor_test_context::EditorTestContext,
-        },
+        test::{editor_lsp_test_context::EditorLspTestContext, editor_test_context::EditorTestContext},
     };
     use collections::HashSet;
     use fs::FakeFs;
@@ -284,12 +259,9 @@ where
         let editor = cx.add_window(|window, cx| {
             let multi_buffer = MultiBuffer::build_simple("fn main() {}", cx);
             multi_buffer.update(cx, |multi_buffer, cx| {
-                multi_buffer
-                    .as_singleton()
-                    .unwrap()
-                    .update(cx, |buffer, cx| {
-                        buffer.set_language(Some(rust_lang()), cx);
-                    });
+                multi_buffer.as_singleton().unwrap().update(cx, |buffer, cx| {
+                    buffer.set_language(Some(rust_lang()), cx);
+                });
             });
             Editor::new(EditorMode::full(), multi_buffer, None, window, cx)
         });
@@ -1002,18 +974,11 @@ mod foo «1{
             highlighted_brackets.insert(range, color);
         }
 
-        let last_bracket = actual_ranges
-            .iter()
-            .max_by_key(|(_, p)| p.end.row)
-            .unwrap()
-            .clone();
+        let last_bracket = actual_ranges.iter().max_by_key(|(_, p)| p.end.row).unwrap().clone();
 
         cx.update_editor(|editor, window, cx| {
-            let was_scrolled = editor.set_scroll_position(
-                gpui::Point::new(0.0, last_bracket.1.end.row as f64 * 2.0),
-                window,
-                cx,
-            );
+            let was_scrolled =
+                editor.set_scroll_position(gpui::Point::new(0.0, last_bracket.1.end.row as f64 * 2.0), window, cx);
             assert!(was_scrolled.0);
         });
         cx.executor().advance_clock(Duration::from_millis(100));
@@ -1061,16 +1026,12 @@ mod foo «1{
 
             let snapshot = cx.update_editor(|editor, window, cx| editor.snapshot(window, cx));
             let scroll_position = snapshot.scroll_position();
-            let visible_lines =
-                cx.update_editor(|editor, _, _| editor.visible_line_count().unwrap());
-            let visible_range = DisplayRow(scroll_position.y as u32)
-                ..DisplayRow((scroll_position.y + visible_lines) as u32);
+            let visible_lines = cx.update_editor(|editor, _, _| editor.visible_line_count().unwrap());
+            let visible_range =
+                DisplayRow(scroll_position.y as u32)..DisplayRow((scroll_position.y + visible_lines) as u32);
 
-            let current_highlighted_bracket_set: HashSet<Point> = HashSet::from_iter(
-                colored_brackets
-                    .iter()
-                    .flat_map(|(_, range)| [range.start, range.end]),
-            );
+            let current_highlighted_bracket_set: HashSet<Point> =
+                HashSet::from_iter(colored_brackets.iter().flat_map(|(_, range)| [range.start, range.end]));
 
             for highlight_range in highlighted_brackets.keys().filter(|bracket_range| {
                 visible_range.contains(&bracket_range.start.to_display_point(&snapshot).row())
@@ -1087,17 +1048,11 @@ mod foo «1{
             for bracket_match in buffer_snapshot
                 .fetch_bracket_ranges(
                     snapshot
-                        .display_point_to_point(
-                            DisplayPoint::new(visible_range.start, 0),
-                            Bias::Left,
-                        )
+                        .display_point_to_point(DisplayPoint::new(visible_range.start, 0), Bias::Left)
                         .to_offset(&buffer_snapshot)
                         ..snapshot
                             .display_point_to_point(
-                                DisplayPoint::new(
-                                    visible_range.end,
-                                    snapshot.line_len(visible_range.end),
-                                ),
+                                DisplayPoint::new(visible_range.end, snapshot.line_len(visible_range.end)),
                                 Bias::Right,
                             )
                             .to_offset(&buffer_snapshot),
@@ -1113,9 +1068,7 @@ mod foo «1{
                 assert!(
                     start_bracket.is_some(),
                     "Existing bracket start in the visible range should be highlighted. Missing color for match: \"{}\" at position {:?}",
-                    buffer_snapshot
-                        .text_for_range(start.start..end.end)
-                        .collect::<String>(),
+                    buffer_snapshot.text_for_range(start.start..end.end).collect::<String>(),
                     start
                 );
 
@@ -1123,9 +1076,7 @@ mod foo «1{
                 assert!(
                     end_bracket.is_some(),
                     "Existing bracket end in the visible range should be highlighted. Missing color for match: \"{}\" at position {:?}",
-                    buffer_snapshot
-                        .text_for_range(start.start..end.end)
-                        .collect::<String>(),
+                    buffer_snapshot.text_for_range(start.start..end.end).collect::<String>(),
                     start
                 );
 
@@ -1177,15 +1128,11 @@ mod foo «1{
         language_registry.add(rust_lang());
 
         let buffer_1 = project
-            .update(cx, |project, cx| {
-                project.open_local_buffer(path!("/a/lib.rs"), cx)
-            })
+            .update(cx, |project, cx| project.open_local_buffer(path!("/a/lib.rs"), cx))
             .await
             .unwrap();
         let buffer_2 = project
-            .update(cx, |project, cx| {
-                project.open_local_buffer(path!("/a/main.rs"), cx)
-            })
+            .update(cx, |project, cx| project.open_local_buffer(path!("/a/main.rs"), cx))
             .await
             .unwrap();
 
@@ -1204,15 +1151,9 @@ mod foo «1{
                 [
                     ExcerptRange::new(Point::new(0, 0)..Point::new(excerpt_rows, 0)),
                     ExcerptRange::new(
-                        Point::new(
-                            comment_lines as u32 + excerpt_rows + rest_of_first_except_rows,
-                            0,
-                        )
+                        Point::new(comment_lines as u32 + excerpt_rows + rest_of_first_except_rows, 0)
                             ..Point::new(
-                                comment_lines as u32
-                                    + excerpt_rows
-                                    + rest_of_first_except_rows
-                                    + excerpt_rows,
+                                comment_lines as u32 + excerpt_rows + rest_of_first_except_rows + excerpt_rows,
                                 0,
                             ),
                     ),
@@ -1222,9 +1163,8 @@ mod foo «1{
             multi_buffer
         });
 
-        let editor = cx.add_window(|window, cx| {
-            Editor::for_multibuffer(multi_buffer, Some(project.clone()), window, cx)
-        });
+        let editor =
+            cx.add_window(|window, cx| Editor::for_multibuffer(multi_buffer, Some(project.clone()), window, cx));
         cx.executor().advance_clock(Duration::from_millis(100));
         cx.executor().run_until_parked();
 
@@ -1357,9 +1297,7 @@ mod foo «1{
     }
 
     fn bracket_colors_markup(cx: &mut EditorTestContext) -> String {
-        cx.update_editor(|editor, window, cx| {
-            editor_bracket_colors_markup(&editor.snapshot(window, cx))
-        })
+        cx.update_editor(|editor, window, cx| editor_bracket_colors_markup(&editor.snapshot(window, cx)))
     }
 
     fn editor_bracket_colors_markup(snapshot: &EditorSnapshot) -> String {

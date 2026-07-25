@@ -100,17 +100,15 @@ impl IgnoreStack {
                     ignore::Match::Whitelist(_) => false,
                 }
             }
-            IgnoreStackEntry::RepoExclude { ignore, parent } => {
-                match ignore.matched(abs_path, is_dir) {
-                    ignore::Match::None => IgnoreStack {
-                        repo_root: self.repo_root.clone(),
-                        top: parent.clone(),
-                    }
-                    .is_abs_path_ignored(abs_path, is_dir),
-                    ignore::Match::Ignore(_) => true,
-                    ignore::Match::Whitelist(_) => false,
+            IgnoreStackEntry::RepoExclude { ignore, parent } => match ignore.matched(abs_path, is_dir) {
+                ignore::Match::None => IgnoreStack {
+                    repo_root: self.repo_root.clone(),
+                    top: parent.clone(),
                 }
-            }
+                .is_abs_path_ignored(abs_path, is_dir),
+                ignore::Match::Ignore(_) => true,
+                ignore::Match::Whitelist(_) => false,
+            },
             IgnoreStackEntry::Some {
                 abs_base_path,
                 ignore,

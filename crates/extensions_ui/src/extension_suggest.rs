@@ -104,10 +104,7 @@ const EXTENSION_URL: &[(&str, &str)] = &[
     ("fish", "https://github.com/hasit/zed-fish"),
     ("fortran", "https://github.com/Xavier-Maruff/zed-fortran"),
     ("fsharp", "https://github.com/nathanjcollins/zed-fsharp"),
-    (
-        "git-firefly",
-        "https://github.com/zed-extensions/git_firefly",
-    ),
+    ("git-firefly", "https://github.com/zed-extensions/git_firefly"),
     ("glsl", "https://codeberg.org/GramEditor/glsl-extension"),
     ("graphql", "https://github.com/11bit/zed-extension-graphql"),
     ("graphviz", "https://github.com/gabeins/zed-graphviz"),
@@ -156,9 +153,7 @@ fn suggested_extensions() -> &'static HashMap<&'static str, Arc<str>> {
             .iter()
             .flat_map(|(name, path_suffixes)| {
                 let name = Arc::<str>::from(*name);
-                path_suffixes
-                    .iter()
-                    .map(move |suffix| (*suffix, name.clone()))
+                path_suffixes.iter().map(move |suffix| (*suffix, name.clone()))
             })
             .collect()
     })

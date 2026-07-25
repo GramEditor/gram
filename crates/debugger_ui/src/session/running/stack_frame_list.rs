@@ -6,8 +6,8 @@ use anyhow::{Context as _, Result, anyhow};
 use dap::StackFrameId;
 use db::kvp::KEY_VALUE_STORE;
 use gpui::{
-    Action, AnyElement, Entity, EventEmitter, FocusHandle, Focusable, FontWeight, ListState,
-    Subscription, Task, WeakEntity, list,
+    Action, AnyElement, Entity, EventEmitter, FocusHandle, Focusable, FontWeight, ListState, Subscription, Task,
+    WeakEntity, list,
 };
 use util::{
     debug_panic,
@@ -92,24 +92,20 @@ impl StackFrameList {
     ) -> Self {
         let focus_handle = cx.focus_handle();
 
-        let _subscription =
-            cx.subscribe_in(&session, window, |this, _, event, window, cx| match event {
-                SessionEvent::Threads => {
-                    this.schedule_refresh(false, window, cx);
-                }
-                SessionEvent::Stopped(..) | SessionEvent::StackTrace => {
-                    this.schedule_refresh(true, window, cx);
-                }
-                _ => {}
-            });
+        let _subscription = cx.subscribe_in(&session, window, |this, _, event, window, cx| match event {
+            SessionEvent::Threads => {
+                this.schedule_refresh(false, window, cx);
+            }
+            SessionEvent::Stopped(..) | SessionEvent::StackTrace => {
+                this.schedule_refresh(true, window, cx);
+            }
+            _ => {}
+        });
 
         let list_state = ListState::new(0, gpui::ListAlignment::Top, px(1000.));
 
         let list_filter = KEY_VALUE_STORE
-            .read_kvp(&format!(
-                "stack-frame-list-filter-{}",
-                session.read(cx).adapter().0
-            ))
+            .read_kvp(&format!("stack-frame-list-filter-{}", session.read(cx).adapter().0))
             .ok()
             .flatten()
             .map(StackFrameFilter::from_str_or_default)
@@ -139,20 +135,13 @@ impl StackFrameList {
         &self.entries
     }
 
-    pub(crate) fn flatten_entries(
-        &self,
-        show_collapsed: bool,
-        show_labels: bool,
-    ) -> Vec<dap::StackFrame> {
+    pub(crate) fn flatten_entries(&self, show_collapsed: bool, show_labels: bool) -> Vec<dap::StackFrame> {
         self.entries
             .iter()
             .enumerate()
             .filter(|(ix, _)| {
                 self.list_filter == StackFrameFilter::All
-                    || self
-                        .filter_entries_indices
-                        .binary_search_by_key(&ix, |ix| ix)
-                        .is_ok()
+                    || self.filter_entries_indices.binary_search_by_key(&ix, |ix| ix).is_ok()
             })
             .flat_map(|(_, frame)| match frame {
                 StackFrameEntry::Normal(frame) => vec![frame.clone()],
@@ -165,8 +154,7 @@ impl StackFrameList {
 
     fn stack_frames(&self, cx: &mut App) -> Result<Vec<StackFrame>> {
         if let Ok(Some(thread_id)) = self.state.read_with(cx, |state, _| state.thread_id) {
-            self.session
-                .update(cx, |this, cx| this.stack_frames(thread_id, cx))
+            self.session.update(cx, |this, cx| this.stack_frames(thread_id, cx))
         } else {
             Ok(Vec::default())
         }
@@ -203,12 +191,7 @@ impl StackFrameList {
         self.opened_stack_frame_id
     }
 
-    pub(super) fn schedule_refresh(
-        &mut self,
-        select_first: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub(super) fn schedule_refresh(&mut self, select_first: bool, window: &mut Window, cx: &mut Context<Self>) {
         const REFRESH_DEBOUNCE: Duration = Duration::from_millis(20);
 
         self._refresh_task = cx.spawn_in(window, async move |this, cx| {
@@ -231,19 +214,14 @@ impl StackFrameList {
         })
     }
 
-    pub fn build_entries(
-        &mut self,
-        open_first_stack_frame: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        let old_selected_frame_id = self
-            .selected_ix
-            .and_then(|ix| self.entries.get(ix))
-            .and_then(|entry| match entry {
-                StackFrameEntry::Normal(stack_frame) => Some(stack_frame.id),
-                StackFrameEntry::Collapsed(_) | StackFrameEntry::Label(_) => None,
-            });
+    pub fn build_entries(&mut self, open_first_stack_frame: bool, window: &mut Window, cx: &mut Context<Self>) {
+        let old_selected_frame_id =
+            self.selected_ix
+                .and_then(|ix| self.entries.get(ix))
+                .and_then(|entry| match entry {
+                    StackFrameEntry::Normal(stack_frame) => Some(stack_frame.id),
+                    StackFrameEntry::Collapsed(_) | StackFrameEntry::Label(_) => None,
+                });
         let mut entries = Vec::new();
         let mut collapsed_entries = Vec::new();
         let mut first_stack_frame = None;
@@ -285,8 +263,7 @@ impl StackFrameList {
             });
 
             match stack_frame.dap.presentation_hint {
-                Some(dap::StackFramePresentationHint::Deemphasize)
-                | Some(dap::StackFramePresentationHint::Subtle) => {
+                Some(dap::StackFramePresentationHint::Deemphasize) | Some(dap::StackFramePresentationHint::Subtle) => {
                     collapsed_entries.push(stack_frame.dap.clone());
                 }
                 Some(dap::StackFramePresentationHint::Label) => {
@@ -383,16 +360,14 @@ impl StackFrameList {
             return Task::ready(Err(anyhow!("Project path not found")));
         };
         let row = stack_frame.line.saturating_sub(1) as u32;
-        cx.emit(StackFrameListEvent::SelectedStackFrameChanged(
-            stack_frame_id,
-        ));
+        cx.emit(StackFrameListEvent::SelectedStackFrameChanged(stack_frame_id));
         cx.spawn_in(window, async move |this, cx| {
             let (worktree, relative_path) = this
                 .update(cx, |this, cx| {
                     this.workspace.update(cx, |workspace, cx| {
-                        workspace.project().update(cx, |this, cx| {
-                            this.find_or_create_worktree(&abs_path, false, cx)
-                        })
+                        workspace
+                            .project()
+                            .update(cx, |this, cx| this.find_or_create_worktree(&abs_path, false, cx))
                     })
                 })??
                 .await?;
@@ -412,9 +387,7 @@ impl StackFrameList {
                     })
                 })??
                 .await?;
-            let position = buffer.read_with(cx, |this, _| {
-                this.snapshot().anchor_after(PointUtf16::new(row, 0))
-            })?;
+            let position = buffer.read_with(cx, |this, _| this.snapshot().anchor_after(PointUtf16::new(row, 0)))?;
             this.update_in(cx, |this, window, cx| {
                 this.workspace.update(cx, |workspace, cx| {
                     let project_path = buffer
@@ -431,23 +404,15 @@ impl StackFrameList {
                         })
                         .unwrap_or_default();
 
-                    anyhow::Ok(workspace.open_path_preview(
-                        project_path,
-                        None,
-                        true,
-                        true,
-                        open_preview,
-                        window,
-                        cx,
-                    ))
+                    anyhow::Ok(workspace.open_path_preview(project_path, None, true, true, open_preview, window, cx))
                 })
             })???
             .await?;
 
             this.update(cx, |this, cx| {
-                let thread_id = this.state.read_with(cx, |state, _| {
-                    state.thread_id.context("No selected thread ID found")
-                })??;
+                let thread_id = this
+                    .state
+                    .read_with(cx, |state, _| state.thread_id.context("No selected thread ID found"))??;
 
                 this.workspace.update(cx, |workspace, cx| {
                     let breakpoint_store = workspace.project().read(cx).breakpoint_store();
@@ -483,16 +448,11 @@ impl StackFrameList {
     }
 
     pub fn restart_stack_frame(&mut self, stack_frame_id: u64, cx: &mut Context<Self>) {
-        self.session.update(cx, |state, cx| {
-            state.restart_stack_frame(stack_frame_id, cx)
-        });
+        self.session
+            .update(cx, |state, cx| state.restart_stack_frame(stack_frame_id, cx));
     }
 
-    fn render_label_entry(
-        &self,
-        stack_frame: &dap::StackFrame,
-        _cx: &mut Context<Self>,
-    ) -> AnyElement {
+    fn render_label_entry(&self, stack_frame: &dap::StackFrame, _cx: &mut Context<Self>) -> AnyElement {
         h_flex()
             .rounded_md()
             .justify_between()
@@ -515,12 +475,7 @@ impl StackFrameList {
             .into_any()
     }
 
-    fn render_normal_entry(
-        &self,
-        ix: usize,
-        stack_frame: &dap::StackFrame,
-        cx: &mut Context<Self>,
-    ) -> AnyElement {
+    fn render_normal_entry(&self, ix: usize, stack_frame: &dap::StackFrame, cx: &mut Context<Self>) -> AnyElement {
         let source = stack_frame.source.clone();
         let is_selected_frame = Some(ix) == self.selected_ix;
 
@@ -543,10 +498,7 @@ impl StackFrameList {
 
         let should_deemphasize = matches!(
             stack_frame.presentation_hint,
-            Some(
-                dap::StackFramePresentationHint::Subtle
-                    | dap::StackFramePresentationHint::Deemphasize
-            )
+            Some(dap::StackFramePresentationHint::Subtle | dap::StackFramePresentationHint::Deemphasize)
         );
         h_flex()
             .rounded_md()
@@ -555,9 +507,7 @@ impl StackFrameList {
             .group("")
             .id(("stack-frame", stack_frame.id))
             .p_1()
-            .when(is_selected_frame, |this| {
-                this.bg(cx.theme().colors().element_hover)
-            })
+            .when(is_selected_frame, |this| this.bg(cx.theme().colors().element_hover))
             .on_any_mouse_down(|_, _, cx| {
                 cx.stop_propagation();
             })
@@ -592,26 +542,17 @@ impl StackFrameList {
                             .border_1()
                             .border_color(cx.theme().colors().element_selected)
                             .bg(cx.theme().colors().element_background)
-                            .hover(|style| {
-                                style
-                                    .bg(cx.theme().colors().ghost_element_hover)
-                                    .cursor_pointer()
-                            })
+                            .hover(|style| style.bg(cx.theme().colors().ghost_element_hover).cursor_pointer())
                             .child(
-                                IconButton::new(
-                                    ("restart-stack-frame", stack_frame.id),
-                                    IconName::RotateCcw,
-                                )
-                                .icon_size(IconSize::Small)
-                                .on_click(cx.listener({
-                                    let stack_frame_id = stack_frame.id;
-                                    move |this, _, _window, cx| {
-                                        this.restart_stack_frame(stack_frame_id, cx);
-                                    }
-                                }))
-                                .tooltip(move |window, cx| {
-                                    Tooltip::text("Restart Stack Frame")(window, cx)
-                                }),
+                                IconButton::new(("restart-stack-frame", stack_frame.id), IconName::RotateCcw)
+                                    .icon_size(IconSize::Small)
+                                    .on_click(cx.listener({
+                                        let stack_frame_id = stack_frame.id;
+                                        move |this, _, _window, cx| {
+                                            this.restart_stack_frame(stack_frame_id, cx);
+                                        }
+                                    }))
+                                    .tooltip(move |window, cx| Tooltip::text("Restart Stack Frame")(window, cx)),
                             ),
                     )
                 },
@@ -623,14 +564,11 @@ impl StackFrameList {
         let Some(StackFrameEntry::Collapsed(stack_frames)) = self.entries.get_mut(ix) else {
             return;
         };
-        let entries = std::mem::take(stack_frames)
-            .into_iter()
-            .map(StackFrameEntry::Normal);
+        let entries = std::mem::take(stack_frames).into_iter().map(StackFrameEntry::Normal);
         // HERE
         let entries_len = entries.len();
         self.entries.splice(ix..ix + 1, entries);
-        let (Ok(filtered_indices_start) | Err(filtered_indices_start)) =
-            self.filter_entries_indices.binary_search(&ix);
+        let (Ok(filtered_indices_start) | Err(filtered_indices_start)) = self.filter_entries_indices.binary_search(&ix);
 
         for idx in &mut self.filter_entries_indices[filtered_indices_start..] {
             *idx += entries_len - 1;
@@ -658,9 +596,7 @@ impl StackFrameList {
             .group("")
             .id(("stack-frame", first_stack_frame.id))
             .p_1()
-            .when(is_selected, |this| {
-                this.bg(cx.theme().colors().element_hover)
-            })
+            .when(is_selected, |this| this.bg(cx.theme().colors().element_hover))
             .on_any_mouse_down(|_, _, cx| {
                 cx.stop_propagation();
             })
@@ -696,9 +632,7 @@ impl StackFrameList {
         match &self.entries[ix] {
             StackFrameEntry::Label(stack_frame) => self.render_label_entry(stack_frame, cx),
             StackFrameEntry::Normal(stack_frame) => self.render_normal_entry(ix, stack_frame, cx),
-            StackFrameEntry::Collapsed(stack_frames) => {
-                self.render_collapsed_entry(ix, stack_frames, cx)
-            }
+            StackFrameEntry::Collapsed(stack_frames) => self.render_collapsed_entry(ix, stack_frames, cx),
         }
     }
 
@@ -722,12 +656,7 @@ impl StackFrameList {
         self.select_ix(ix, cx);
     }
 
-    fn select_previous(
-        &mut self,
-        _: &menu::SelectPrevious,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn select_previous(&mut self, _: &menu::SelectPrevious, _window: &mut Window, cx: &mut Context<Self>) {
         let ix = match self.selected_ix {
             _ if self.entries.is_empty() => None,
             None => Some(self.entries.len() - 1),
@@ -742,17 +671,8 @@ impl StackFrameList {
         self.select_ix(ix, cx);
     }
 
-    fn select_first(
-        &mut self,
-        _: &menu::SelectFirst,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        let ix = if !self.entries.is_empty() {
-            Some(0)
-        } else {
-            None
-        };
+    fn select_first(&mut self, _: &menu::SelectFirst, _window: &mut Window, cx: &mut Context<Self>) {
+        let ix = if !self.entries.is_empty() { Some(0) } else { None };
         self.select_ix(ix, cx);
     }
 
@@ -790,11 +710,7 @@ impl StackFrameList {
         self.activate_selected_entry(window, cx);
     }
 
-    pub(crate) fn toggle_frame_filter(
-        &mut self,
-        thread_status: Option<ThreadStatus>,
-        cx: &mut Context<Self>,
-    ) {
+    pub(crate) fn toggle_frame_filter(&mut self, thread_status: Option<ThreadStatus>, cx: &mut Context<Self>) {
         self.list_filter = match self.list_filter {
             StackFrameFilter::All => StackFrameFilter::OnlyUserFrames,
             StackFrameFilter::OnlyUserFrames => StackFrameFilter::All,
@@ -869,18 +785,11 @@ impl StackFrameList {
 
         h_flex()
             .child(
-                IconButton::new(
-                    "filter-by-visible-worktree-stack-frame-list",
-                    IconName::ListFilter,
-                )
-                .tooltip(move |_window, cx| {
-                    Tooltip::for_action(tooltip_title, &ToggleUserFrames, cx)
-                })
-                .toggle_state(self.list_filter == StackFrameFilter::OnlyUserFrames)
-                .icon_size(IconSize::Small)
-                .on_click(|_, window, cx| {
-                    window.dispatch_action(ToggleUserFrames.boxed_clone(), cx)
-                }),
+                IconButton::new("filter-by-visible-worktree-stack-frame-list", IconName::ListFilter)
+                    .tooltip(move |_window, cx| Tooltip::for_action(tooltip_title, &ToggleUserFrames, cx))
+                    .toggle_state(self.list_filter == StackFrameFilter::OnlyUserFrames)
+                    .icon_size(IconSize::Small)
+                    .on_click(|_, window, cx| window.dispatch_action(ToggleUserFrames.boxed_clone(), cx)),
             )
             .into_any_element()
     }
@@ -905,11 +814,7 @@ impl Render for StackFrameList {
                         .pl_1()
                         .child(Icon::new(IconName::Warning).color(Color::Warning))
                         .gap_2()
-                        .child(
-                            Label::new(error)
-                                .size(LabelSize::Small)
-                                .color(Color::Warning),
-                        ),
+                        .child(Label::new(error).size(LabelSize::Small).color(Color::Warning)),
                 )
             })
             .child(self.render_list(window, cx))

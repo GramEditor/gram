@@ -64,9 +64,7 @@ pub const EMPTY_THEME_NAME: &str = "empty-theme";
 
 #[cfg(any(test, feature = "test-support"))]
 pub fn test_settings() -> String {
-    let mut value =
-        crate::parse_json_with_comments::<serde_json::Value>(crate::default_settings().as_ref())
-            .unwrap();
+    let mut value = crate::parse_json_with_comments::<serde_json::Value>(crate::default_settings().as_ref()).unwrap();
     #[cfg(not(target_os = "windows"))]
     util::merge_non_null_json_value_into(
         serde_json::json!({
@@ -110,11 +108,7 @@ pub fn watch_config_file(
     executor
         .spawn(async move {
             let (events, _) = fs
-                .watch(
-                    &path,
-                    Duration::from_millis(100),
-                    fs::fs_watcher::WatcherMode::Native,
-                )
+                .watch(&path, Duration::from_millis(100), fs::fs_watcher::WatcherMode::Native)
                 .await;
             futures::pin_mut!(events);
 
@@ -192,9 +186,7 @@ pub fn watch_config_dir(
                             }
                             _ => {}
                         }
-                    } else if matches!(event.kind, Some(PathEventKind::Rescan))
-                        && event.path == dir_path
-                    {
+                    } else if matches!(event.kind, Some(PathEventKind::Rescan)) && event.path == dir_path {
                         for file_path in &config_paths {
                             let contents = fs.load(file_path).await.unwrap_or_default();
                             if tx.unbounded_send(contents).is_err() {

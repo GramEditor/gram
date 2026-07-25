@@ -63,8 +63,7 @@ impl LspInstaller for GleamLspAdapter {
         _pre_release: bool,
         _cx: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        let release =
-            latest_github_release("gleam-lang/gleam", false, false, delegate.http_client()).await?;
+        let release = latest_github_release("gleam-lang/gleam", false, false, delegate.http_client()).await?;
 
         let arch = match std::env::consts::ARCH {
             "aarch64" => "aarch64",
@@ -193,10 +192,7 @@ impl LspAdapter for GleamLspAdapter {
         let filter_range = completion
             .filter_text
             .as_deref()
-            .and_then(|filter_text| {
-                code.find(filter_text)
-                    .map(|start| start..start + filter_text.len())
-            })
+            .and_then(|filter_text| code.find(filter_text).map(|start| start..start + filter_text.len()))
             .unwrap_or(0..label.len());
 
         Some(CodeLabel::new(code, filter_range, highlights))
@@ -208,10 +204,7 @@ impl LspAdapter for GleamLspAdapter {
 /// The Gleam LSP can return types containing newlines, which causes formatting
 /// issues within the completions menu.
 fn strip_newlines_from_detail(detail: &str) -> String {
-    let without_newlines = detail
-        .replace("->\n  ", "-> ")
-        .replace("\n  ", "")
-        .replace(",\n", "");
+    let without_newlines = detail.replace("->\n  ", "-> ").replace("\n  ", "").replace(",\n", "");
 
     without_newlines
         .split(',')
@@ -250,15 +243,19 @@ mod tests {
     #[test]
     fn test_strip_newlines_from_detail() {
         let detail = "fn(\n  Selector(a),\n  b,\n  fn(Dynamic, Dynamic, Dynamic, Dynamic, Dynamic, Dynamic, Dynamic) -> a,\n) -> Selector(a)";
-        let expected = "fn(Selector(a), b, fn(Dynamic, Dynamic, Dynamic, Dynamic, Dynamic, Dynamic, Dynamic) -> a) -> Selector(a)";
+        let expected =
+            "fn(Selector(a), b, fn(Dynamic, Dynamic, Dynamic, Dynamic, Dynamic, Dynamic, Dynamic) -> a) -> Selector(a)";
         assert_eq!(strip_newlines_from_detail(detail), expected);
 
-        let detail = "fn(Selector(a), b, fn(Dynamic, Dynamic, Dynamic, Dynamic, Dynamic, Dynamic) -> a) ->\n  Selector(a)";
-        let expected = "fn(Selector(a), b, fn(Dynamic, Dynamic, Dynamic, Dynamic, Dynamic, Dynamic) -> a) -> Selector(a)";
+        let detail =
+            "fn(Selector(a), b, fn(Dynamic, Dynamic, Dynamic, Dynamic, Dynamic, Dynamic) -> a) ->\n  Selector(a)";
+        let expected =
+            "fn(Selector(a), b, fn(Dynamic, Dynamic, Dynamic, Dynamic, Dynamic, Dynamic) -> a) -> Selector(a)";
         assert_eq!(strip_newlines_from_detail(detail), expected);
 
         let detail = "fn(\n  Method,\n  List(#(String, String)),\n  a,\n  Scheme,\n  String,\n  Option(Int),\n  String,\n  Option(String),\n) -> Request(a)";
-        let expected = "fn(Method, List(#(String, String)), a, Scheme, String, Option(Int), String, Option(String)) -> Request(a)";
+        let expected =
+            "fn(Method, List(#(String, String)), a, Scheme, String, Option(Int), String, Option(String)) -> Request(a)";
         assert_eq!(strip_newlines_from_detail(detail), expected);
     }
 }

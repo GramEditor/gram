@@ -3,19 +3,14 @@ use crate::kernels::RemoteRunningKernel;
 use crate::setup_editor_session_actions;
 use crate::{
     kernels::{Kernel, KernelSpecification, NativeRunningKernel},
-    outputs::{
-        ExecutionStatus, ExecutionView, ExecutionViewFinishedEmpty, ExecutionViewFinishedSmall,
-    },
+    outputs::{ExecutionStatus, ExecutionView, ExecutionViewFinishedEmpty, ExecutionViewFinishedSmall},
 };
 use anyhow::Context as _;
 use collections::{HashMap, HashSet};
 use editor::SelectionEffects;
 use editor::{
     Anchor, AnchorRangeExt as _, Editor, Inlay, MultiBuffer, ToOffset, ToPoint,
-    display_map::{
-        BlockContext, BlockId, BlockPlacement, BlockProperties, BlockStyle, CustomBlockId,
-        RenderBlock,
-    },
+    display_map::{BlockContext, BlockId, BlockPlacement, BlockProperties, BlockStyle, CustomBlockId, RenderBlock},
     scroll::Autoscroll,
 };
 use project::InlayId;
@@ -24,14 +19,11 @@ use project::InlayId;
 enum ReplExecutedRange {}
 
 use futures::FutureExt as _;
-use gpui::{
-    Context, Entity, EventEmitter, Render, Subscription, Task, WeakEntity, Window, div, prelude::*,
-};
+use gpui::{Context, Entity, EventEmitter, Render, Subscription, Task, WeakEntity, Window, div, prelude::*};
 use language::Point;
 use project::Fs;
 use runtimelib::{
-    ExecuteRequest, ExecutionState, InterruptRequest, JupyterMessage, JupyterMessageContent,
-    ShutdownRequest,
+    ExecuteRequest, ExecutionState, InterruptRequest, JupyterMessage, JupyterMessageContent, ShutdownRequest,
 };
 use std::{env::temp_dir, ops::Range, sync::Arc, time::Duration};
 use theme::ActiveTheme;
@@ -58,8 +50,7 @@ struct EditorBlock {
     execution_view: Entity<ExecutionView>,
 }
 
-type CloseBlockFn =
-    Arc<dyn for<'a> Fn(CustomBlockId, &'a mut Window, &mut App) + Send + Sync + 'static>;
+type CloseBlockFn = Arc<dyn for<'a> Fn(CustomBlockId, &'a mut Window, &mut App) + Send + Sync + 'static>;
 
 impl EditorBlock {
     fn new(
@@ -82,10 +73,7 @@ impl EditorBlock {
             if next_row_start > buffer_snapshot.max_point() {
                 buffer.update(cx, |buffer, cx| {
                     buffer.edit(
-                        [(
-                            buffer_snapshot.max_point()..buffer_snapshot.max_point(),
-                            "\n",
-                        )],
+                        [(buffer_snapshot.max_point()..buffer_snapshot.max_point(), "\n")],
                         None,
                         cx,
                     )
@@ -114,21 +102,13 @@ impl EditorBlock {
         })
     }
 
-    fn handle_message(
-        &mut self,
-        message: &JupyterMessage,
-        window: &mut Window,
-        cx: &mut Context<Session>,
-    ) {
+    fn handle_message(&mut self, message: &JupyterMessage, window: &mut Window, cx: &mut Context<Session>) {
         self.execution_view.update(cx, |execution_view, cx| {
             execution_view.push_message(&message.content, window, cx);
         });
     }
 
-    fn create_output_area_renderer(
-        execution_view: Entity<ExecutionView>,
-        on_close: CloseBlockFn,
-    ) -> RenderBlock {
+    fn create_output_area_renderer(execution_view: Entity<ExecutionView>, on_close: CloseBlockFn) -> RenderBlock {
         Arc::new(move |cx: &mut BlockContext| {
             let execution_view = execution_view.clone();
             let text_style = crate::outputs::plain::text_style(cx.window, cx.app);
@@ -261,13 +241,9 @@ impl Session {
                 window,
                 cx,
             ),
-            KernelSpecification::Remote(remote_kernel_specification) => RemoteRunningKernel::new(
-                remote_kernel_specification,
-                working_directory,
-                session_view,
-                window,
-                cx,
-            ),
+            KernelSpecification::Remote(remote_kernel_specification) => {
+                RemoteRunningKernel::new(remote_kernel_specification, working_directory, session_view, window, cx)
+            }
         };
 
         let pending_kernel = cx
@@ -306,8 +282,7 @@ impl Session {
                     }
                     _ => {
                         // All other cases, set the status to errored
-                        execution_view.status =
-                            ExecutionStatus::KernelErrored(error_message.clone())
+                        execution_view.status = ExecutionStatus::KernelErrored(error_message.clone())
                     }
                 }
                 cx.notify();
@@ -315,12 +290,7 @@ impl Session {
         });
     }
 
-    fn on_buffer_event(
-        &mut self,
-        buffer: Entity<MultiBuffer>,
-        event: &multi_buffer::Event,
-        cx: &mut Context<Self>,
-    ) {
+    fn on_buffer_event(&mut self, buffer: Entity<MultiBuffer>, event: &multi_buffer::Event, cx: &mut Context<Self>) {
         if let multi_buffer::Event::Edited { .. } = event {
             let snapshot = buffer.read(cx).snapshot(cx);
 
@@ -341,26 +311,22 @@ impl Session {
 
             let mut inlays_to_remove: Vec<InlayId> = Vec::new();
 
-            self.result_inlays
-                .retain(|id, (inlay_id, code_range, original_len)| {
-                    let start_offset = code_range.start.to_offset(&snapshot);
-                    let end_offset = code_range.end.to_offset(&snapshot);
-                    let current_len = end_offset.saturating_sub(start_offset);
+            self.result_inlays.retain(|id, (inlay_id, code_range, original_len)| {
+                let start_offset = code_range.start.to_offset(&snapshot);
+                let end_offset = code_range.end.to_offset(&snapshot);
+                let current_len = end_offset.saturating_sub(start_offset);
 
-                    if current_len != *original_len {
-                        inlays_to_remove.push(*inlay_id);
-                        gutter_ranges_to_remove.push(code_range.clone());
-                        keys_to_remove.push(id.clone());
-                        false
-                    } else {
-                        true
-                    }
-                });
+                if current_len != *original_len {
+                    inlays_to_remove.push(*inlay_id);
+                    gutter_ranges_to_remove.push(code_range.clone());
+                    keys_to_remove.push(id.clone());
+                    false
+                } else {
+                    true
+                }
+            });
 
-            if !blocks_to_remove.is_empty()
-                || !inlays_to_remove.is_empty()
-                || !gutter_ranges_to_remove.is_empty()
-            {
+            if !blocks_to_remove.is_empty() || !inlays_to_remove.is_empty() || !gutter_ranges_to_remove.is_empty() {
                 self.editor
                     .update(cx, |editor, cx| {
                         if !blocks_to_remove.is_empty() {
@@ -370,10 +336,7 @@ impl Session {
                             editor.splice_inlays(&inlays_to_remove, vec![], cx);
                         }
                         if !gutter_ranges_to_remove.is_empty() {
-                            editor.remove_gutter_highlights::<ReplExecutedRange>(
-                                gutter_ranges_to_remove,
-                                cx,
-                            );
+                            editor.remove_gutter_highlights::<ReplExecutedRange>(gutter_ranges_to_remove, cx);
                         }
                     })
                     .ok();
@@ -422,29 +385,19 @@ impl Session {
             editor.splice_inlays(&[], vec![inlay], cx);
             self.result_inlays.insert(
                 message_id.to_string(),
-                (
-                    InlayId::ReplResult(inlay_id),
-                    code_range.clone(),
-                    original_len,
-                ),
+                (InlayId::ReplResult(inlay_id), code_range.clone(), original_len),
             );
 
-            editor.insert_gutter_highlight::<ReplExecutedRange>(
-                code_range,
-                |cx| cx.theme().status().success,
-                cx,
-            );
+            editor.insert_gutter_highlight::<ReplExecutedRange>(code_range, |cx| cx.theme().status().success, cx);
         });
 
         cx.notify();
     }
 
     pub fn clear_outputs(&mut self, cx: &mut Context<Self>) {
-        let blocks_to_remove: HashSet<CustomBlockId> =
-            self.blocks.values().map(|block| block.block_id).collect();
+        let blocks_to_remove: HashSet<CustomBlockId> = self.blocks.values().map(|block| block.block_id).collect();
 
-        let inlays_to_remove: Vec<InlayId> =
-            self.result_inlays.values().map(|(id, _, _)| *id).collect();
+        let inlays_to_remove: Vec<InlayId> = self.result_inlays.values().map(|(id, _, _)| *id).collect();
 
         self.editor
             .update(cx, |editor, cx| {
@@ -497,16 +450,15 @@ impl Session {
             }
         });
 
-        self.result_inlays
-            .retain(|_key, (inlay_id, inlay_range, _)| {
-                if anchor_range.overlaps(inlay_range, &buffer) {
-                    inlays_to_remove.push(*inlay_id);
-                    gutter_ranges_to_remove.push(inlay_range.clone());
-                    false
-                } else {
-                    true
-                }
-            });
+        self.result_inlays.retain(|_key, (inlay_id, inlay_range, _)| {
+            if anchor_range.overlaps(inlay_range, &buffer) {
+                inlays_to_remove.push(*inlay_id);
+                gutter_ranges_to_remove.push(inlay_range.clone());
+                false
+            } else {
+                true
+            }
+        });
 
         self.editor
             .update(cx, |editor, cx| {
@@ -515,8 +467,7 @@ impl Session {
                     editor.splice_inlays(&inlays_to_remove, vec![], cx);
                 }
                 if !gutter_ranges_to_remove.is_empty() {
-                    editor
-                        .remove_gutter_highlights::<ReplExecutedRange>(gutter_ranges_to_remove, cx);
+                    editor.remove_gutter_highlights::<ReplExecutedRange>(gutter_ranges_to_remove, cx);
                 }
             })
             .ok();
@@ -535,36 +486,25 @@ impl Session {
         let weak_editor = self.editor.clone();
         let code_range_for_close = anchor_range.clone();
 
-        let on_close: CloseBlockFn = Arc::new(
-            move |block_id: CustomBlockId, _: &mut Window, cx: &mut App| {
-                if let Some(session) = session_view.upgrade() {
-                    session.update(cx, |session, cx| {
-                        session.blocks.remove(&parent_message_id);
-                        cx.notify();
-                    });
-                }
+        let on_close: CloseBlockFn = Arc::new(move |block_id: CustomBlockId, _: &mut Window, cx: &mut App| {
+            if let Some(session) = session_view.upgrade() {
+                session.update(cx, |session, cx| {
+                    session.blocks.remove(&parent_message_id);
+                    cx.notify();
+                });
+            }
 
-                if let Some(editor) = weak_editor.upgrade() {
-                    editor.update(cx, |editor, cx| {
-                        let mut block_ids = HashSet::default();
-                        block_ids.insert(block_id);
-                        editor.remove_blocks(block_ids, None, cx);
-                        editor.remove_gutter_highlights::<ReplExecutedRange>(
-                            vec![code_range_for_close.clone()],
-                            cx,
-                        );
-                    });
-                }
-            },
-        );
+            if let Some(editor) = weak_editor.upgrade() {
+                editor.update(cx, |editor, cx| {
+                    let mut block_ids = HashSet::default();
+                    block_ids.insert(block_id);
+                    editor.remove_blocks(block_ids, None, cx);
+                    editor.remove_gutter_highlights::<ReplExecutedRange>(vec![code_range_for_close.clone()], cx);
+                });
+            }
+        });
 
-        let Ok(editor_block) = EditorBlock::new(
-            self.editor.clone(),
-            anchor_range.clone(),
-            status,
-            on_close,
-            cx,
-        ) else {
+        let Ok(editor_block) = EditorBlock::new(self.editor.clone(), anchor_range.clone(), status, on_close, cx) else {
             return;
         };
 
@@ -602,8 +542,7 @@ impl Session {
         );
         self._subscriptions.push(subscription);
 
-        self.blocks
-            .insert(message.header.msg_id.clone(), editor_block);
+        self.blocks.insert(message.header.msg_id.clone(), editor_block);
 
         match &self.kernel {
             Kernel::RunningKernel(_) => {

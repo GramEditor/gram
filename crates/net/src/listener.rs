@@ -20,11 +20,7 @@ impl UnixListener {
         let socket = UnixSocket::new()?;
         let (addr, len) = sockaddr_un(path)?;
         unsafe {
-            map_ret(bind(
-                socket.as_raw(),
-                &addr as *const _ as *const _,
-                len as i32,
-            ))?;
+            map_ret(bind(socket.as_raw(), &addr as *const _ as *const _, len as i32))?;
             map_ret(listen(socket.as_raw(), SOMAXCONN as _))?;
         }
         Ok(Self(socket))

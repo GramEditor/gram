@@ -17,10 +17,7 @@ use util::{path, rel_path::rel_path};
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
-async fn test_fetch_initial_stack_frames_and_go_to_stack_frame(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_fetch_initial_stack_frames_and_go_to_stack_frame(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let fs = FakeFs::new(executor.clone());
@@ -140,9 +137,7 @@ async fn test_fetch_initial_stack_frames_and_go_to_stack_frame(
     // trigger to load threads
     active_debug_session_panel(workspace, cx).update(cx, |session, cx| {
         session.running_state().update(cx, |running_state, cx| {
-            running_state
-                .session()
-                .update(cx, |session, cx| session.threads(cx));
+            running_state.session().update(cx, |session, cx| session.threads(cx));
         });
     });
 
@@ -152,9 +147,7 @@ async fn test_fetch_initial_stack_frames_and_go_to_stack_frame(
     active_debug_session_panel(workspace, cx).update_in(cx, |session, window, cx| {
         session.running_state().update(cx, |running_state, cx| {
             running_state.select_current_thread(
-                &running_state
-                    .session()
-                    .update(cx, |session, cx| session.threads(cx)),
+                &running_state.session().update(cx, |session, cx| session.threads(cx)),
                 window,
                 cx,
             );
@@ -302,9 +295,7 @@ async fn test_select_stack_frame(executor: BackgroundExecutor, cx: &mut TestAppC
     // trigger threads to load
     active_debug_session_panel(workspace, cx).update(cx, |session, cx| {
         session.running_state().update(cx, |running_state, cx| {
-            running_state
-                .session()
-                .update(cx, |session, cx| session.threads(cx));
+            running_state.session().update(cx, |session, cx| session.threads(cx));
         });
     });
 
@@ -314,9 +305,7 @@ async fn test_select_stack_frame(executor: BackgroundExecutor, cx: &mut TestAppC
     active_debug_session_panel(workspace, cx).update_in(cx, |session, window, cx| {
         session.running_state().update(cx, |running_state, cx| {
             running_state.select_current_thread(
-                &running_state
-                    .session()
-                    .update(cx, |session, cx| session.threads(cx)),
+                &running_state.session().update(cx, |session, cx| session.threads(cx)),
                 window,
                 cx,
             );
@@ -330,9 +319,7 @@ async fn test_select_stack_frame(executor: BackgroundExecutor, cx: &mut TestAppC
             let editors = workspace.items_of_type::<Editor>(cx).collect::<Vec<_>>();
             assert_eq!(1, editors.len());
 
-            let project_path = editors[0]
-                .update(cx, |editor, cx| editor.project_path(cx))
-                .unwrap();
+            let project_path = editors[0].update(cx, |editor, cx| editor.project_path(cx)).unwrap();
             assert_eq!(rel_path("src/test.js"), project_path.path.as_ref());
             assert_eq!(test_file_content, editors[0].read(cx).text(cx));
             assert_eq!(
@@ -356,9 +343,7 @@ async fn test_select_stack_frame(executor: BackgroundExecutor, cx: &mut TestAppC
     let stack_frame_list = workspace
         .update(cx, |workspace, _window, cx| {
             let debug_panel = workspace.panel::<DebugPanel>(cx).unwrap();
-            let active_debug_panel_item = debug_panel
-                .update(cx, |this, _| this.active_session())
-                .unwrap();
+            let active_debug_panel_item = debug_panel.update(cx, |this, _| this.active_session()).unwrap();
 
             active_debug_panel_item
                 .read(cx)
@@ -393,9 +378,7 @@ async fn test_select_stack_frame(executor: BackgroundExecutor, cx: &mut TestAppC
         let editors = workspace.items_of_type::<Editor>(cx).collect::<Vec<_>>();
         assert_eq!(1, editors.len());
 
-        let project_path = editors[0]
-            .update(cx, |editor, cx| editor.project_path(cx))
-            .unwrap();
+        let project_path = editors[0].update(cx, |editor, cx| editor.project_path(cx)).unwrap();
         assert_eq!(rel_path("src/module.js"), project_path.path.as_ref());
         assert_eq!(module_file_content, editors[0].read(cx).text(cx));
         assert_eq!(
@@ -650,9 +633,7 @@ async fn test_collapsed_entries(executor: BackgroundExecutor, cx: &mut TestAppCo
     // trigger threads to load
     active_debug_session_panel(workspace, cx).update(cx, |session, cx| {
         session.running_state().update(cx, |running_state, cx| {
-            running_state
-                .session()
-                .update(cx, |session, cx| session.threads(cx));
+            running_state.session().update(cx, |session, cx| session.threads(cx));
         });
     });
 
@@ -662,9 +643,7 @@ async fn test_collapsed_entries(executor: BackgroundExecutor, cx: &mut TestAppCo
     active_debug_session_panel(workspace, cx).update_in(cx, |session, window, cx| {
         session.running_state().update(cx, |running_state, cx| {
             running_state.select_current_thread(
-                &running_state
-                    .session()
-                    .update(cx, |session, cx| session.threads(cx)),
+                &running_state.session().update(cx, |session, cx| session.threads(cx)),
                 window,
                 cx,
             );
@@ -697,15 +676,9 @@ async fn test_collapsed_entries(executor: BackgroundExecutor, cx: &mut TestAppCo
             assert_eq!(
                 &vec![
                     StackFrameEntry::Normal(stack_frames[0].clone()),
-                    StackFrameEntry::Collapsed(vec![
-                        stack_frames[1].clone(),
-                        stack_frames[2].clone()
-                    ]),
+                    StackFrameEntry::Collapsed(vec![stack_frames[1].clone(), stack_frames[2].clone()]),
                     StackFrameEntry::Normal(stack_frames[3].clone()),
-                    StackFrameEntry::Collapsed(vec![
-                        stack_frames[4].clone(),
-                        stack_frames[5].clone()
-                    ]),
+                    StackFrameEntry::Collapsed(vec![stack_frames[4].clone(), stack_frames[5].clone()]),
                     StackFrameEntry::Normal(stack_frames[6].clone()),
                 ],
                 stack_frame_list.entries()
@@ -719,10 +692,7 @@ async fn test_collapsed_entries(executor: BackgroundExecutor, cx: &mut TestAppCo
                     StackFrameEntry::Normal(stack_frames[1].clone()),
                     StackFrameEntry::Normal(stack_frames[2].clone()),
                     StackFrameEntry::Normal(stack_frames[3].clone()),
-                    StackFrameEntry::Collapsed(vec![
-                        stack_frames[4].clone(),
-                        stack_frames[5].clone()
-                    ]),
+                    StackFrameEntry::Collapsed(vec![stack_frames[4].clone(), stack_frames[5].clone()]),
                     StackFrameEntry::Normal(stack_frames[6].clone()),
                 ],
                 stack_frame_list.entries()
@@ -937,9 +907,7 @@ async fn test_stack_frame_filter(executor: BackgroundExecutor, cx: &mut TestAppC
     // trigger threads to load
     active_debug_session_panel(workspace, cx).update(cx, |session, cx| {
         session.running_state().update(cx, |running_state, cx| {
-            running_state
-                .session()
-                .update(cx, |session, cx| session.threads(cx));
+            running_state.session().update(cx, |session, cx| session.threads(cx));
         });
     });
 
@@ -949,9 +917,7 @@ async fn test_stack_frame_filter(executor: BackgroundExecutor, cx: &mut TestAppC
     active_debug_session_panel(workspace, cx).update_in(cx, |session, window, cx| {
         session.running_state().update(cx, |running_state, cx| {
             running_state.select_current_thread(
-                &running_state
-                    .session()
-                    .update(cx, |session, cx| session.threads(cx)),
+                &running_state.session().update(cx, |session, cx| session.threads(cx)),
                 window,
                 cx,
             );
@@ -973,43 +939,38 @@ async fn test_stack_frame_filter(executor: BackgroundExecutor, cx: &mut TestAppC
 
     cx.run_until_parked();
 
-    let stack_frame_list =
-        active_debug_session_panel(workspace, cx).update_in(cx, |debug_panel_item, window, cx| {
-            let stack_frame_list = debug_panel_item
-                .running_state()
-                .update(cx, |state, _| state.stack_frame_list().clone());
+    let stack_frame_list = active_debug_session_panel(workspace, cx).update_in(cx, |debug_panel_item, window, cx| {
+        let stack_frame_list = debug_panel_item
+            .running_state()
+            .update(cx, |state, _| state.stack_frame_list().clone());
 
-            stack_frame_list.update(cx, |stack_frame_list, cx| {
-                stack_frame_list.build_entries(true, window, cx);
+        stack_frame_list.update(cx, |stack_frame_list, cx| {
+            stack_frame_list.build_entries(true, window, cx);
 
-                // Verify we have the expected collapsed structure
-                assert_eq!(
-                    stack_frame_list.entries(),
-                    &vec![
-                        StackFrameEntry::Normal(stack_frames_for_assertions[0].clone()),
-                        StackFrameEntry::Collapsed(vec![
-                            stack_frames_for_assertions[1].clone(),
-                            stack_frames_for_assertions[2].clone(),
-                            stack_frames_for_assertions[3].clone()
-                        ]),
-                        StackFrameEntry::Normal(stack_frames_for_assertions[4].clone()),
-                    ]
-                );
-            });
-
-            stack_frame_list
+            // Verify we have the expected collapsed structure
+            assert_eq!(
+                stack_frame_list.entries(),
+                &vec![
+                    StackFrameEntry::Normal(stack_frames_for_assertions[0].clone()),
+                    StackFrameEntry::Collapsed(vec![
+                        stack_frames_for_assertions[1].clone(),
+                        stack_frames_for_assertions[2].clone(),
+                        stack_frames_for_assertions[3].clone()
+                    ]),
+                    StackFrameEntry::Normal(stack_frames_for_assertions[4].clone()),
+                ]
+            );
         });
+
+        stack_frame_list
+    });
 
     stack_frame_list.update(cx, |stack_frame_list, cx| {
         let all_frames = stack_frame_list.flatten_entries(true, false);
         assert_eq!(all_frames.len(), 5, "Should see all 5 frames initially");
 
-        stack_frame_list
-            .toggle_frame_filter(Some(project::debugger::session::ThreadStatus::Stopped), cx);
-        assert_eq!(
-            stack_frame_list.list_filter(),
-            StackFrameFilter::OnlyUserFrames
-        );
+        stack_frame_list.toggle_frame_filter(Some(project::debugger::session::ThreadStatus::Stopped), cx);
+        assert_eq!(stack_frame_list.list_filter(), StackFrameFilter::OnlyUserFrames);
     });
 
     stack_frame_list.update(cx, |stack_frame_list, cx| {
@@ -1019,18 +980,13 @@ async fn test_stack_frame_filter(executor: BackgroundExecutor, cx: &mut TestAppC
         assert_eq!(user_frames[1].name, "doSomething");
 
         // Toggle back to all frames
-        stack_frame_list
-            .toggle_frame_filter(Some(project::debugger::session::ThreadStatus::Stopped), cx);
+        stack_frame_list.toggle_frame_filter(Some(project::debugger::session::ThreadStatus::Stopped), cx);
         assert_eq!(stack_frame_list.list_filter(), StackFrameFilter::All);
     });
 
     stack_frame_list.update(cx, |stack_frame_list, cx| {
         let all_frames_again = stack_frame_list.flatten_entries(true, false);
-        assert_eq!(
-            all_frames_again.len(),
-            5,
-            "Should see all 5 frames after toggling back"
-        );
+        assert_eq!(all_frames_again.len(), 5, "Should see all 5 frames after toggling back");
 
         // Test 3: Verify collapsed entries stay expanded
         stack_frame_list.expand_collapsed_entry(1, cx);
@@ -1045,27 +1001,18 @@ async fn test_stack_frame_filter(executor: BackgroundExecutor, cx: &mut TestAppC
             ]
         );
 
-        stack_frame_list
-            .toggle_frame_filter(Some(project::debugger::session::ThreadStatus::Stopped), cx);
-        assert_eq!(
-            stack_frame_list.list_filter(),
-            StackFrameFilter::OnlyUserFrames
-        );
+        stack_frame_list.toggle_frame_filter(Some(project::debugger::session::ThreadStatus::Stopped), cx);
+        assert_eq!(stack_frame_list.list_filter(), StackFrameFilter::OnlyUserFrames);
     });
 
     stack_frame_list.update(cx, |stack_frame_list, cx| {
-        stack_frame_list
-            .toggle_frame_filter(Some(project::debugger::session::ThreadStatus::Stopped), cx);
+        stack_frame_list.toggle_frame_filter(Some(project::debugger::session::ThreadStatus::Stopped), cx);
         assert_eq!(stack_frame_list.list_filter(), StackFrameFilter::All);
     });
 
     stack_frame_list.update(cx, |stack_frame_list, cx| {
-        stack_frame_list
-            .toggle_frame_filter(Some(project::debugger::session::ThreadStatus::Stopped), cx);
-        assert_eq!(
-            stack_frame_list.list_filter(),
-            StackFrameFilter::OnlyUserFrames
-        );
+        stack_frame_list.toggle_frame_filter(Some(project::debugger::session::ThreadStatus::Stopped), cx);
+        assert_eq!(stack_frame_list.list_filter(), StackFrameFilter::OnlyUserFrames);
 
         assert_eq!(
             stack_frame_list.dap_stack_frames(cx).as_slice(),

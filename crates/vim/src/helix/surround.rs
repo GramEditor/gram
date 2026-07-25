@@ -9,18 +9,13 @@ use crate::object::surrounding_markers;
 use crate::surrounds::{SURROUND_PAIRS, bracket_pair_for_str_helix, surround_pair_for_char_helix};
 
 /// Find the nearest surrounding bracket pair around the cursor.
-fn find_nearest_surrounding_pair(
-    display_map: &DisplaySnapshot,
-    cursor: DisplayPoint,
-) -> Option<(char, char)> {
+fn find_nearest_surrounding_pair(display_map: &DisplaySnapshot, cursor: DisplayPoint) -> Option<(char, char)> {
     let cursor_offset = cursor.to_offset(display_map, Bias::Left);
     let mut best_pair: Option<(char, char)> = None;
     let mut min_range_size = usize::MAX;
 
     for pair in SURROUND_PAIRS {
-        if let Some(range) =
-            surrounding_markers(display_map, cursor, true, true, pair.open, pair.close)
-        {
+        if let Some(range) = surrounding_markers(display_map, cursor, true, true, pair.open, pair.close) {
             let start_offset = range.start.to_offset(display_map, Bias::Left);
             let end_offset = range.end.to_offset(display_map, Bias::Right);
 
@@ -48,12 +43,8 @@ fn selection_cursor(map: &DisplaySnapshot, selection: &Selection<DisplayPoint>) 
 type SurroundEdits = Vec<(std::ops::Range<MultiBufferOffset>, String)>;
 type SurroundAnchors = Vec<std::ops::Range<Anchor>>;
 
-fn apply_helix_surround_edits<F>(
-    vim: &mut Vim,
-    window: &mut Window,
-    cx: &mut Context<Vim>,
-    mut build: F,
-) where
+fn apply_helix_surround_edits<F>(vim: &mut Vim, window: &mut Window, cx: &mut Context<Vim>, mut build: F)
+where
     F: FnMut(&DisplaySnapshot, Vec<Selection<DisplayPoint>>) -> (SurroundEdits, SurroundAnchors),
 {
     vim.update_editor(cx, |_, editor, cx| {
@@ -134,9 +125,7 @@ impl Vim {
                     continue;
                 };
 
-                if let Some(range) =
-                    surrounding_markers(display_map, cursor, true, true, open_marker, close_marker)
-                {
+                if let Some(range) = surrounding_markers(display_map, cursor, true, true, open_marker, close_marker) {
                     let open_start = range.start.to_offset(display_map, Bias::Left);
                     let open_end = open_start + open_marker.len_utf8();
                     let close_end = range.end.to_offset(display_map, Bias::Left);
@@ -160,12 +149,7 @@ impl Vim {
     }
 
     /// md - Delete innermost surrounding pair containing the cursor.
-    pub fn helix_surround_delete(
-        &mut self,
-        target_char: char,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn helix_surround_delete(&mut self, target_char: char, window: &mut Window, cx: &mut Context<Self>) {
         self.stop_recording(cx);
 
         apply_helix_surround_edits(self, window, cx, |display_map, selections| {
@@ -188,9 +172,7 @@ impl Vim {
                     continue;
                 };
 
-                if let Some(range) =
-                    surrounding_markers(display_map, cursor, true, true, open_marker, close_marker)
-                {
+                if let Some(range) = surrounding_markers(display_map, cursor, true, true, open_marker, close_marker) {
                     let open_start = range.start.to_offset(display_map, Bias::Left);
                     let open_end = open_start + open_marker.len_utf8();
                     let close_end = range.end.to_offset(display_map, Bias::Left);

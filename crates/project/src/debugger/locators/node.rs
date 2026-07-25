@@ -9,8 +9,7 @@ use task::{DebugScenario, SpawnInTerminal, TaskTemplate, VariableName};
 
 pub(crate) struct NodeLocator;
 
-const TYPESCRIPT_RUNNER_VARIABLE: VariableName =
-    VariableName::Custom(Cow::Borrowed("TYPESCRIPT_RUNNER"));
+const TYPESCRIPT_RUNNER_VARIABLE: VariableName = VariableName::Custom(Cow::Borrowed("TYPESCRIPT_RUNNER"));
 
 #[async_trait]
 impl DapLocator for NodeLocator {

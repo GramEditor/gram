@@ -1,7 +1,6 @@
 use crate::{
-    App, Bounds, Half, Hsla, LineLayout, Pixels, Point, Result, SharedString, StrikethroughStyle,
-    TextAlign, UnderlineStyle, Window, WrapBoundary, WrappedLineLayout, black, fill, point, px,
-    size,
+    App, Bounds, Half, Hsla, LineLayout, Pixels, Point, Result, SharedString, StrikethroughStyle, TextAlign,
+    UnderlineStyle, Window, WrapBoundary, WrappedLineLayout, black, fill, point, px, size,
 };
 use derive_more::{Deref, DerefMut};
 use smallvec::SmallVec;
@@ -202,10 +201,7 @@ fn paint_line(
 ) -> Result<()> {
     let line_bounds = Bounds::new(
         origin,
-        size(
-            layout.width,
-            line_height * (wrap_boundaries.len() as f32 + 1.),
-        ),
+        size(layout.width, line_height * (wrap_boundaries.len() as f32 + 1.)),
     );
     window.paint_layer(line_bounds, |window| {
         let padding_top = (line_height - layout.ascent - layout.descent) / 2.;
@@ -246,17 +242,11 @@ fn paint_line(
                         if glyph_origin.x == underline_origin.x {
                             underline_origin.x -= max_glyph_size.width.half();
                         };
-                        window.paint_underline(
-                            *underline_origin,
-                            glyph_origin.x - underline_origin.x,
-                            underline_style,
-                        );
+                        window.paint_underline(*underline_origin, glyph_origin.x - underline_origin.x, underline_style);
                         underline_origin.x = origin.x;
                         underline_origin.y += line_height;
                     }
-                    if let Some((strikethrough_origin, strikethrough_style)) =
-                        current_strikethrough.as_mut()
-                    {
+                    if let Some((strikethrough_origin, strikethrough_style)) = current_strikethrough.as_mut() {
                         if glyph_origin.x == strikethrough_origin.x {
                             strikethrough_origin.x -= max_glyph_size.width.half();
                         };
@@ -323,8 +313,7 @@ fn paint_line(
                             current_strikethrough.get_or_insert((
                                 point(
                                     glyph_origin.x,
-                                    glyph_origin.y
-                                        + (((layout.ascent * 0.5) + baseline_offset.y) * 0.5),
+                                    glyph_origin.y + (((layout.ascent * 0.5) + baseline_offset.y) * 0.5),
                                 ),
                                 StrikethroughStyle {
                                     color: Some(run_strikethrough.color.unwrap_or(style_run.color)),
@@ -346,16 +335,10 @@ fn paint_line(
                     if underline_origin.x == glyph_origin.x {
                         underline_origin.x -= max_glyph_size.width.half();
                     };
-                    window.paint_underline(
-                        underline_origin,
-                        glyph_origin.x - underline_origin.x,
-                        &underline_style,
-                    );
+                    window.paint_underline(underline_origin, glyph_origin.x - underline_origin.x, &underline_style);
                 }
 
-                if let Some((mut strikethrough_origin, strikethrough_style)) =
-                    finished_strikethrough
-                {
+                if let Some((mut strikethrough_origin, strikethrough_style)) = finished_strikethrough {
                     if strikethrough_origin.x == glyph_origin.x {
                         strikethrough_origin.x -= max_glyph_size.width.half();
                     };
@@ -405,11 +388,7 @@ fn paint_line(
             if last_line_end_x == underline_start.x {
                 underline_start.x -= max_glyph_size.width.half()
             };
-            window.paint_underline(
-                underline_start,
-                last_line_end_x - underline_start.x,
-                &underline_style,
-            );
+            window.paint_underline(underline_start, last_line_end_x - underline_start.x, &underline_style);
         }
 
         if let Some((mut strikethrough_start, strikethrough_style)) = current_strikethrough.take() {
@@ -440,10 +419,7 @@ fn paint_line_background(
 ) -> Result<()> {
     let line_bounds = Bounds::new(
         origin,
-        size(
-            layout.width,
-            line_height * (wrap_boundaries.len() as f32 + 1.),
-        ),
+        size(layout.width, line_height * (wrap_boundaries.len() as f32 + 1.)),
     );
     window.paint_layer(line_bounds, |window| {
         let mut decoration_runs = decoration_runs.iter();
@@ -472,8 +448,7 @@ fn paint_line_background(
 
                 if wraps.peek() == Some(&&WrapBoundary { run_ix, glyph_ix }) {
                     wraps.next();
-                    if let Some((background_origin, background_color)) = current_background.as_mut()
-                    {
+                    if let Some((background_origin, background_color)) = current_background.as_mut() {
                         if glyph_origin.x == background_origin.x {
                             background_origin.x -= max_glyph_size.width.half()
                         }
@@ -520,10 +495,7 @@ fn paint_line_background(
                             finished_background = current_background.take();
                         }
                         if let Some(run_background) = style_run.background_color {
-                            current_background.get_or_insert((
-                                point(glyph_origin.x, glyph_origin.y),
-                                run_background,
-                            ));
+                            current_background.get_or_insert((point(glyph_origin.x, glyph_origin.y), run_background));
                         }
                         run_end += style_run.len as usize;
                     } else {

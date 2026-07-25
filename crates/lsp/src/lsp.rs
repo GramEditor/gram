@@ -134,9 +134,7 @@ impl LanguageServerId {
 }
 
 /// A name of a language server.
-#[derive(
-    Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize, JsonSchema,
-)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize, Serialize, JsonSchema)]
 #[serde(transparent)]
 pub struct LanguageServerName(pub SharedString);
 
@@ -332,8 +330,7 @@ impl LanguageServer {
         } else {
             root_path.parent().unwrap_or_else(|| Path::new("/"))
         };
-        let root_uri = Uri::from_file_path(&working_dir)
-            .map_err(|()| anyhow!("{working_dir:?} is not a valid URI"))?;
+        let root_uri = Uri::from_file_path(&working_dir).map_err(|()| anyhow!("{working_dir:?} is not a valid URI"))?;
         log::info!(
             "starting language server process. binary path: \
             {:?}, working directory: {:?}, args: {:?}",
@@ -372,8 +369,7 @@ impl LanguageServer {
             workspace_folders,
             cx,
             move |notification| {
-                let ignored =
-                    notification.method.starts_with("$/") || notification.method == "eslint/status";
+                let ignored = notification.method.starts_with("$/") || notification.method == "eslint/status";
                 if ignored {
                     log::debug!(
                         "Language server with id {} sent unhandled notification {}:\n{}",
@@ -419,10 +415,8 @@ impl LanguageServer {
     {
         let (outbound_tx, outbound_rx) = channel::unbounded::<String>();
         let (output_done_tx, output_done_rx) = barrier::channel();
-        let notification_handlers =
-            Arc::new(Mutex::new(HashMap::<_, NotificationHandler>::default()));
-        let response_handlers =
-            Arc::new(Mutex::new(Some(HashMap::<_, ResponseHandler>::default())));
+        let notification_handlers = Arc::new(Mutex::new(HashMap::<_, NotificationHandler>::default()));
+        let response_handlers = Arc::new(Mutex::new(Some(HashMap::<_, ResponseHandler>::default())));
         let io_handlers = Arc::new(Mutex::new(HashMap::default()));
 
         let stdout_input_task = cx.spawn({
@@ -489,10 +483,7 @@ impl LanguageServer {
             .log_err()
         });
 
-        let configuration = DidChangeConfigurationParams {
-            settings: Value::Null,
-        }
-        .into();
+        let configuration = DidChangeConfigurationParams { settings: Value::Null }.into();
 
         let (notification_tx, notification_rx) = channel::unbounded::<NotificationSerializer>();
         cx.background_spawn({
@@ -714,11 +705,9 @@ impl LanguageServer {
                     inlay_hint: Some(InlayHintWorkspaceClientCapabilities {
                         refresh_support: Some(true),
                     }),
-                    diagnostics: pull_diagnostics.then_some(
-                        DiagnosticWorkspaceClientCapabilities {
-                            refresh_support: Some(true),
-                        },
-                    ),
+                    diagnostics: pull_diagnostics.then_some(DiagnosticWorkspaceClientCapabilities {
+                        refresh_support: Some(true),
+                    }),
                     code_lens: Some(CodeLensWorkspaceClientCapabilities {
                         refresh_support: Some(true),
                     }),
@@ -793,15 +782,9 @@ impl LanguageServer {
                             insert_replace_support: Some(true),
                             label_details_support: Some(true),
                             insert_text_mode_support: Some(InsertTextModeSupport {
-                                value_set: vec![
-                                    InsertTextMode::AS_IS,
-                                    InsertTextMode::ADJUST_INDENTATION,
-                                ],
+                                value_set: vec![InsertTextMode::AS_IS, InsertTextMode::ADJUST_INDENTATION],
                             }),
-                            documentation_format: Some(vec![
-                                MarkupKind::Markdown,
-                                MarkupKind::PlainText,
-                            ]),
+                            documentation_format: Some(vec![MarkupKind::Markdown, MarkupKind::PlainText]),
                             ..CompletionItemCapability::default()
                         }),
                         insert_text_mode: Some(InsertTextMode::ADJUST_INDENTATION),
@@ -820,9 +803,7 @@ impl LanguageServer {
                     }),
                     rename: Some(RenameClientCapabilities {
                         prepare_support: Some(true),
-                        prepare_support_default_behavior: Some(
-                            PrepareSupportDefaultBehavior::IDENTIFIER,
-                        ),
+                        prepare_support_default_behavior: Some(PrepareSupportDefaultBehavior::IDENTIFIER),
                         dynamic_registration: Some(true),
                         ..RenameClientCapabilities::default()
                     }),
@@ -862,10 +843,7 @@ impl LanguageServer {
                     }),
                     signature_help: Some(SignatureHelpClientCapabilities {
                         signature_information: Some(SignatureInformationSettings {
-                            documentation_format: Some(vec![
-                                MarkupKind::Markdown,
-                                MarkupKind::PlainText,
-                            ]),
+                            documentation_format: Some(vec![MarkupKind::Markdown, MarkupKind::PlainText]),
                             parameter_information: Some(ParameterInformationSettings {
                                 label_offset_support: Some(true),
                             }),
@@ -912,11 +890,9 @@ impl LanguageServer {
             },
             trace: None,
             workspace_folders: Some(workspace_folders),
-            client_info: release_channel::ReleaseChannel::try_global(cx).map(|release_channel| {
-                ClientInfo {
-                    name: release_channel.display_name().to_string(),
-                    version: Some(release_channel::AppVersion::global(cx).to_string()),
-                }
+            client_info: release_channel::ReleaseChannel::try_global(cx).map(|release_channel| ClientInfo {
+                name: release_channel.display_name().to_string(),
+                version: Some(release_channel::AppVersion::global(cx).to_string()),
             }),
             locale: None,
             ..InitializeParams::default()
@@ -938,13 +914,7 @@ impl LanguageServer {
                 .request::<request::Initialize>(params)
                 .await
                 .into_response()
-                .with_context(|| {
-                    format!(
-                        "initializing server {}, id {}",
-                        self.name(),
-                        self.server_id()
-                    )
-                })?;
+                .with_context(|| format!("initializing server {}, id {}", self.name(), self.server_id()))?;
             if let Some(info) = response.server_info {
                 self.version = info.version.map(SharedString::from);
                 self.process_name = info.name.into();
@@ -1127,9 +1097,7 @@ impl LanguageServer {
                                                 })),
                                             },
                                         };
-                                        if let Some(response) =
-                                            serde_json::to_string(&response).log_err()
-                                        {
+                                        if let Some(response) = serde_json::to_string(&response).log_err() {
                                             outbound_tx.try_send(response).ok();
                                         }
                                     }
@@ -1216,10 +1184,7 @@ impl LanguageServer {
     /// Sends a RPC request to the language server.
     ///
     /// [LSP Specification](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#requestMessage)
-    pub fn request<T: request::Request>(
-        &self,
-        params: T::Params,
-    ) -> impl LspRequestFuture<T::Result> + use<T>
+    pub fn request<T: request::Request>(&self, params: T::Params) -> impl LspRequestFuture<T::Result> + use<T>
     where
         T::Result: 'static + Send,
     {
@@ -1519,13 +1484,7 @@ impl LanguageServer {
         )
     }
 
-    pub fn register_buffer(
-        &self,
-        uri: Uri,
-        language_id: String,
-        version: i32,
-        initial_text: String,
-    ) {
+    pub fn register_buffer(&self, uri: Uri, language_id: String, version: i32, initial_text: String) {
         self.notify::<notification::DidOpenTextDocument>(DidOpenTextDocumentParams {
             text_document: TextDocumentItem::new(uri, language_id, version, initial_text),
         })
@@ -1553,8 +1512,7 @@ impl Subscription {
     pub fn detach(&mut self) {
         match self {
             Subscription::Notification {
-                notification_handlers,
-                ..
+                notification_handlers, ..
             } => *notification_handlers = None,
             Subscription::Io { io_handlers, .. } => *io_handlers = None,
         }
@@ -1770,9 +1728,7 @@ impl FakeLanguageServer {
     }
 
     /// Consumes the notification channel until it finds a notification for the specified type.
-    pub async fn try_receive_notification<T: notification::Notification>(
-        &mut self,
-    ) -> Option<T::Params> {
+    pub async fn try_receive_notification<T: notification::Notification>(&mut self) -> Option<T::Params> {
         loop {
             let (method, params) = self.notifications_rx.recv().await.ok()?;
             if method == T::METHOD {
@@ -1784,10 +1740,7 @@ impl FakeLanguageServer {
     }
 
     /// Registers a handler for a specific kind of request. Removes any existing handler for specified request type.
-    pub fn set_request_handler<T, F, Fut>(
-        &self,
-        mut handler: F,
-    ) -> futures::channel::mpsc::UnboundedReceiver<()>
+    pub fn set_request_handler<T, F, Fut>(&self, mut handler: F) -> futures::channel::mpsc::UnboundedReceiver<()>
     where
         T: 'static + request::Request,
         T::Params: 'static + Send,
@@ -1813,10 +1766,7 @@ impl FakeLanguageServer {
     }
 
     /// Registers a handler for a specific kind of notification. Removes any existing handler for specified notification type.
-    pub fn handle_notification<T, F>(
-        &self,
-        mut handler: F,
-    ) -> futures::channel::mpsc::UnboundedReceiver<()>
+    pub fn handle_notification<T, F>(&self, mut handler: F) -> futures::channel::mpsc::UnboundedReceiver<()>
     where
         T: 'static + notification::Notification,
         T::Params: 'static + Send,
@@ -1846,11 +1796,7 @@ impl FakeLanguageServer {
         self.start_progress_with(token, Default::default()).await
     }
 
-    pub async fn start_progress_with(
-        &self,
-        token: impl Into<String>,
-        progress: WorkDoneProgressBegin,
-    ) {
+    pub async fn start_progress_with(&self, token: impl Into<String>, progress: WorkDoneProgressBegin) {
         let token = token.into();
         self.request::<request::WorkDoneProgressCreate>(WorkDoneProgressCreateParams {
             token: NumberOrString::String(token.clone()),
@@ -1904,9 +1850,7 @@ mod tests {
         let (message_tx, message_rx) = channel::unbounded();
         let (diagnostics_tx, diagnostics_rx) = channel::unbounded();
         server
-            .on_notification::<notification::ShowMessage, _>(move |params, _| {
-                message_tx.try_send(params).unwrap()
-            })
+            .on_notification::<notification::ShowMessage, _>(move |params, _| message_tx.try_send(params).unwrap())
             .detach();
         server
             .on_notification::<notification::PublishDiagnostics, _>(move |params, _| {
@@ -1953,10 +1897,7 @@ mod tests {
             diagnostics: vec![],
         });
         assert_eq!(message_rx.recv().await.unwrap().message, "ok");
-        assert_eq!(
-            diagnostics_rx.recv().await.unwrap().uri.as_str(),
-            "file://b/c"
-        );
+        assert_eq!(diagnostics_rx.recv().await.unwrap().uri.as_str(), "file://b/c");
 
         fake.set_request_handler::<request::Shutdown, _, _>(|_, _| async move { Ok(()) });
 
@@ -1968,8 +1909,8 @@ mod tests {
     #[gpui::test]
     fn test_deserialize_string_digit_id() {
         let json = r#"{"jsonrpc":"2.0","id":"2","method":"workspace/configuration","params":{"items":[{"scopeUri":"file:///Users/mph/Devel/personal/hello-scala/","section":"metals"}]}}"#;
-        let notification = serde_json::from_str::<NotificationOrRequest>(json)
-            .expect("message with string id should be parsed");
+        let notification =
+            serde_json::from_str::<NotificationOrRequest>(json).expect("message with string id should be parsed");
         let expected_id = RequestId::Str("2".to_string());
         assert_eq!(notification.id, Some(expected_id));
     }
@@ -1977,8 +1918,8 @@ mod tests {
     #[gpui::test]
     fn test_deserialize_string_id() {
         let json = r#"{"jsonrpc":"2.0","id":"anythingAtAll","method":"workspace/configuration","params":{"items":[{"scopeUri":"file:///Users/mph/Devel/personal/hello-scala/","section":"metals"}]}}"#;
-        let notification = serde_json::from_str::<NotificationOrRequest>(json)
-            .expect("message with string id should be parsed");
+        let notification =
+            serde_json::from_str::<NotificationOrRequest>(json).expect("message with string id should be parsed");
         let expected_id = RequestId::Str("anythingAtAll".to_string());
         assert_eq!(notification.id, Some(expected_id));
     }
@@ -1986,8 +1927,8 @@ mod tests {
     #[gpui::test]
     fn test_deserialize_int_id() {
         let json = r#"{"jsonrpc":"2.0","id":2,"method":"workspace/configuration","params":{"items":[{"scopeUri":"file:///Users/mph/Devel/personal/hello-scala/","section":"metals"}]}}"#;
-        let notification = serde_json::from_str::<NotificationOrRequest>(json)
-            .expect("message with string id should be parsed");
+        let notification =
+            serde_json::from_str::<NotificationOrRequest>(json).expect("message with string id should be parsed");
         let expected_id = RequestId::Int(2);
         assert_eq!(notification.id, Some(expected_id));
     }
@@ -2039,9 +1980,7 @@ mod tests {
         #[allow(deprecated)]
         let root_path = params.root_path.expect("root_path should be set");
 
-        let expected_path = root_uri
-            .to_file_path()
-            .expect("root_uri should be a valid file path");
+        let expected_path = root_uri.to_file_path().expect("root_uri should be a valid file path");
         assert_eq!(
             root_path,
             expected_path.to_string_lossy(),

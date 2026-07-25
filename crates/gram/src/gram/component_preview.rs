@@ -6,9 +6,7 @@ mod persistence;
 
 use collections::HashMap;
 use component::{ComponentId, ComponentMetadata, components};
-use gpui::{
-    App, Entity, EventEmitter, FocusHandle, Focusable, Task, WeakEntity, Window, list, prelude::*,
-};
+use gpui::{App, Entity, EventEmitter, FocusHandle, Focusable, Task, WeakEntity, Window, list, prelude::*};
 use gpui::{ListState, ScrollHandle, ScrollStrategy, UniformListScrollHandle};
 use languages::LanguageRegistry;
 use notifications::status_toast::{StatusToast, ToastIcon};
@@ -18,8 +16,7 @@ use std::{iter::Iterator, ops::Range, sync::Arc};
 use ui::{Divider, HighlightedLabel, ListItem, ListSubHeader, prelude::*};
 use ui_input::InputField;
 use workspace::{
-    AppState, Item, ItemId, SerializableItem, Workspace, WorkspaceId, delete_unloaded_items,
-    item::ItemEvent,
+    AppState, Item, ItemId, SerializableItem, Workspace, WorkspaceId, delete_unloaded_items, item::ItemEvent,
 };
 
 pub fn init(app_state: Arc<AppState>, cx: &mut App) {
@@ -30,34 +27,26 @@ pub fn init(app_state: Arc<AppState>, cx: &mut App) {
         let project = workspace.project().clone();
         let weak_workspace = cx.entity().downgrade();
 
-        workspace.register_action(
-            move |workspace, _: &workspace::OpenComponentPreview, window, cx| {
-                let app_state = app_state.clone();
+        workspace.register_action(move |workspace, _: &workspace::OpenComponentPreview, window, cx| {
+            let app_state = app_state.clone();
 
-                let language_registry = app_state.languages.clone();
+            let language_registry = app_state.languages.clone();
 
-                let component_preview = cx.new(|cx| {
-                    ComponentPreview::new(
-                        weak_workspace.clone(),
-                        project.clone(),
-                        language_registry,
-                        None,
-                        None,
-                        window,
-                        cx,
-                    )
-                    .expect("Failed to create component preview")
-                });
-
-                workspace.add_item_to_active_pane(
-                    Box::new(component_preview),
+            let component_preview = cx.new(|cx| {
+                ComponentPreview::new(
+                    weak_workspace.clone(),
+                    project.clone(),
+                    language_registry,
                     None,
-                    true,
+                    None,
                     window,
                     cx,
                 )
-            },
-        );
+                .expect("Failed to create component preview")
+            });
+
+            workspace.add_item_to_active_pane(Box::new(component_preview), None, true, window, cx)
+        });
     })
     .detach();
 }
@@ -123,11 +112,7 @@ impl ComponentPreview {
         let active_page = active_page.unwrap_or(PreviewPage::AllComponents);
         let filter_editor = cx.new(|cx| InputField::new(window, cx, "Find components or usages…"));
 
-        let component_list = ListState::new(
-            sorted_components.len(),
-            gpui::ListAlignment::Top,
-            px(1500.0),
-        );
+        let component_list = ListState::new(sorted_components.len(), gpui::ListAlignment::Top, px(1500.0));
 
         let mut component_preview = Self {
             active_page,
@@ -195,14 +180,9 @@ impl ComponentPreview {
             .filter(|component| {
                 let component_name = component.name().to_lowercase();
                 let scope_name = component.scope().to_string().to_lowercase();
-                let description = component
-                    .description()
-                    .map(|d| d.to_lowercase())
-                    .unwrap_or_default();
+                let description = component.description().map(|d| d.to_lowercase()).unwrap_or_default();
 
-                component_name.contains(&filter)
-                    || scope_name.contains(&filter)
-                    || description.contains(&filter)
+                component_name.contains(&filter) || scope_name.contains(&filter) || description.contains(&filter)
             })
             .cloned()
             .collect()
@@ -211,10 +191,8 @@ impl ComponentPreview {
     fn scope_ordered_entries(&self) -> Vec<PreviewEntry> {
         use collections::HashMap;
 
-        let mut scope_groups: HashMap<
-            ComponentScope,
-            Vec<(ComponentMetadata, Option<Vec<usize>>)>,
-        > = HashMap::default();
+        let mut scope_groups: HashMap<ComponentScope, Vec<(ComponentMetadata, Option<Vec<usize>>)>> =
+            HashMap::default();
         let lowercase_filter = self.filter_text.to_lowercase();
 
         for component in &self.components {
@@ -325,8 +303,7 @@ impl ComponentPreview {
         let new_len = entries.len();
 
         if new_len > 0 {
-            self.nav_scroll_handle
-                .scroll_to_item(0, ScrollStrategy::Top);
+            self.nav_scroll_handle.scroll_to_item(0, ScrollStrategy::Top);
         }
 
         let filtered_components = self.filtered_components();
@@ -355,12 +332,7 @@ impl ComponentPreview {
         cx.emit(ItemEvent::UpdateTab);
     }
 
-    fn render_sidebar_entry(
-        &self,
-        ix: usize,
-        entry: &PreviewEntry,
-        cx: &Context<Self>,
-    ) -> impl IntoElement + use<> {
+    fn render_sidebar_entry(&self, ix: usize, entry: &PreviewEntry, cx: &Context<Self>) -> impl IntoElement + use<> {
         match entry {
             PreviewEntry::Component(component_metadata, highlight_positions) => {
                 let id = component_metadata.id();
@@ -394,9 +366,9 @@ impl ComponentPreview {
                     }))
                     .into_any_element()
             }
-            PreviewEntry::SectionHeader(shared_string) => ListSubHeader::new(shared_string)
-                .inset(true)
-                .into_any_element(),
+            PreviewEntry::SectionHeader(shared_string) => {
+                ListSubHeader::new(shared_string).inset(true).into_any_element()
+            }
             PreviewEntry::AllComponents => {
                 let selected = self.active_page == PreviewPage::AllComponents;
 
@@ -417,13 +389,7 @@ impl ComponentPreview {
         }
     }
 
-    fn render_scope_header(
-        &self,
-        _ix: usize,
-        title: SharedString,
-        _window: &Window,
-        _cx: &App,
-    ) -> impl IntoElement {
+    fn render_scope_header(&self, _ix: usize, title: SharedString, _window: &Window, _cx: &App) -> impl IntoElement {
         h_flex()
             .w_full()
             .h_10()
@@ -431,12 +397,7 @@ impl ComponentPreview {
             .child(Divider::horizontal())
     }
 
-    fn render_preview(
-        &self,
-        component: &ComponentMetadata,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> impl IntoElement {
+    fn render_preview(&self, component: &ComponentMetadata, window: &mut Window, cx: &mut App) -> impl IntoElement {
         let name = component.scopeless_name();
         let scope = component.scope();
 
@@ -485,49 +446,42 @@ impl ComponentPreview {
     }
 
     fn render_all_components(&self, cx: &Context<Self>) -> impl IntoElement {
-        v_flex()
-            .id("component-list")
-            .px_8()
-            .pt_4()
-            .size_full()
-            .child(
-                if self.filtered_components().is_empty() && !self.filter_text.is_empty() {
-                    div()
-                        .size_full()
-                        .items_center()
-                        .justify_center()
-                        .text_color(cx.theme().colors().text_muted)
-                        .child(format!("No components matching '{}'.", self.filter_text))
-                        .into_any_element()
-                } else {
-                    list(
-                        self.component_list.clone(),
-                        cx.processor(|this, ix, window, cx| {
-                            if ix >= this.entries.len() {
-                                return div().w_full().h_0().into_any_element();
-                            }
-
-                            let entry = &this.entries[ix];
-
-                            match entry {
-                                PreviewEntry::Component(component, _) => this
-                                    .render_preview(component, window, cx)
-                                    .into_any_element(),
-                                PreviewEntry::SectionHeader(shared_string) => this
-                                    .render_scope_header(ix, shared_string.clone(), window, cx)
-                                    .into_any_element(),
-                                PreviewEntry::AllComponents => {
-                                    div().w_full().h_0().into_any_element()
-                                }
-                                PreviewEntry::Separator => div().w_full().h_0().into_any_element(),
-                            }
-                        }),
-                    )
-                    .flex_grow()
-                    .with_sizing_behavior(gpui::ListSizingBehavior::Auto)
+        v_flex().id("component-list").px_8().pt_4().size_full().child(
+            if self.filtered_components().is_empty() && !self.filter_text.is_empty() {
+                div()
+                    .size_full()
+                    .items_center()
+                    .justify_center()
+                    .text_color(cx.theme().colors().text_muted)
+                    .child(format!("No components matching '{}'.", self.filter_text))
                     .into_any_element()
-                },
-            )
+            } else {
+                list(
+                    self.component_list.clone(),
+                    cx.processor(|this, ix, window, cx| {
+                        if ix >= this.entries.len() {
+                            return div().w_full().h_0().into_any_element();
+                        }
+
+                        let entry = &this.entries[ix];
+
+                        match entry {
+                            PreviewEntry::Component(component, _) => {
+                                this.render_preview(component, window, cx).into_any_element()
+                            }
+                            PreviewEntry::SectionHeader(shared_string) => this
+                                .render_scope_header(ix, shared_string.clone(), window, cx)
+                                .into_any_element(),
+                            PreviewEntry::AllComponents => div().w_full().h_0().into_any_element(),
+                            PreviewEntry::Separator => div().w_full().h_0().into_any_element(),
+                        }
+                    }),
+                )
+                .flex_grow()
+                .with_sizing_behavior(gpui::ListSizingBehavior::Auto)
+                .into_any_element()
+            },
+        )
     }
 
     fn render_component_page(
@@ -557,16 +511,10 @@ impl ComponentPreview {
     fn test_status_toast(&self, cx: &mut Context<Self>) {
         if let Some(workspace) = self.workspace.upgrade() {
             workspace.update(cx, |workspace, cx| {
-                let status_toast = StatusToast::new(
-                    "`gram/new-notification-system` created!",
-                    cx,
-                    |this, _cx| {
-                        this.icon(ToastIcon::new(IconName::GitBranchAlt).color(Color::Muted))
-                            .action("Open Pull Request", |_, cx| {
-                                cx.open_url("https://github.com/")
-                            })
-                    },
-                );
+                let status_toast = StatusToast::new("`gram/new-notification-system` created!", cx, |this, _cx| {
+                    this.icon(ToastIcon::new(IconName::GitBranchAlt).color(Color::Muted))
+                        .action("Open Pull Request", |_, cx| cx.open_url("https://github.com/"))
+                });
                 workspace.toggle_status_toast(status_toast, cx)
             });
         }
@@ -612,11 +560,7 @@ impl Render for ComponentPreview {
                                 range
                                     .filter_map(|ix| {
                                         if ix < sidebar_entries.len() {
-                                            Some(this.render_sidebar_entry(
-                                                ix,
-                                                &sidebar_entries[ix],
-                                                cx,
-                                            ))
+                                            Some(this.render_sidebar_entry(ix, &sidebar_entries[ix], cx))
                                         } else {
                                             None
                                         }
@@ -661,16 +605,16 @@ impl Render for ComponentPreview {
                             .child(self.filter_editor.clone()),
                     )
                     .child(
-                        div().id("content-area").flex_1().overflow_y_scroll().child(
-                            match active_page {
-                                PreviewPage::AllComponents => {
-                                    self.render_all_components(cx).into_any_element()
+                        div()
+                            .id("content-area")
+                            .flex_1()
+                            .overflow_y_scroll()
+                            .child(match active_page {
+                                PreviewPage::AllComponents => self.render_all_components(cx).into_any_element(),
+                                PreviewPage::Component(id) => {
+                                    self.render_component_page(&id, window, cx).into_any_element()
                                 }
-                                PreviewPage::Component(id) => self
-                                    .render_component_page(&id, window, cx)
-                                    .into_any_element(),
-                            },
-                        ),
+                            }),
                     ),
             )
     }
@@ -752,12 +696,7 @@ impl Item for ComponentPreview {
         f(*event)
     }
 
-    fn added_to_workspace(
-        &mut self,
-        workspace: &mut Workspace,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn added_to_workspace(&mut self, workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Self>) {
         self.workspace_id = workspace.database_id();
 
         let focus_handle = self.filter_editor.read(cx).focus_handle(cx);
@@ -778,17 +717,16 @@ impl SerializableItem for ComponentPreview {
         window: &mut Window,
         cx: &mut App,
     ) -> Task<anyhow::Result<Entity<Self>>> {
-        let deserialized_active_page =
-            match COMPONENT_PREVIEW_DB.get_active_page(item_id, workspace_id) {
-                Ok(page) => {
-                    if let Some(page) = page {
-                        ActivePageId(page)
-                    } else {
-                        ActivePageId::default()
-                    }
+        let deserialized_active_page = match COMPONENT_PREVIEW_DB.get_active_page(item_id, workspace_id) {
+            Ok(page) => {
+                if let Some(page) = page {
+                    ActivePageId(page)
+                } else {
+                    ActivePageId::default()
                 }
-                Err(_) => ActivePageId::default(),
-            };
+            }
+            Err(_) => ActivePageId::default(),
+        };
 
         let language_registry = project.read(cx).languages().clone();
         let preview_page = if deserialized_active_page.0 == ActivePageId::default().0 {
@@ -902,9 +840,11 @@ impl ComponentPreviewPage {
                             .size(LabelSize::Small)
                             .color(Color::Muted),
                     )
-                    .child(h_flex().gap_2().child(
-                        Headline::new(self.component.scopeless_name()).size(HeadlineSize::XLarge),
-                    )),
+                    .child(
+                        h_flex()
+                            .gap_2()
+                            .child(Headline::new(self.component.scopeless_name()).size(HeadlineSize::XLarge)),
+                    ),
             )
             .when_some(self.component.description(), |this, description| {
                 this.child(Label::new(description).size(LabelSize::Small))

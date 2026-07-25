@@ -52,18 +52,13 @@ pub(crate) fn derive_action(input: TokenStream) -> TokenStream {
                     no_register = true;
                 } else if meta.path.is_ident("deprecated_aliases") {
                     if !deprecated_aliases.is_empty() {
-                        return Err(
-                            meta.error("'deprecated_aliases' argument specified multiple times")
-                        );
+                        return Err(meta.error("'deprecated_aliases' argument specified multiple times"));
                     }
                     meta.input.parse::<Token![=]>()?;
                     // Parse array of string literals
                     let content;
                     syn::bracketed!(content in meta.input);
-                    let aliases = content.parse_terminated(
-                        |input: ParseStream| input.parse::<LitStr>(),
-                        Token![,],
-                    )?;
+                    let aliases = content.parse_terminated(|input: ParseStream| input.parse::<LitStr>(), Token![,])?;
                     deprecated_aliases.extend(aliases.into_iter().map(|lit| lit.value()));
                 } else if meta.path.is_ident("deprecated") {
                     if deprecated.is_some() {
@@ -85,11 +80,9 @@ pub(crate) fn derive_action(input: TokenStream) -> TokenStream {
         } else if attr.path().is_ident("doc") {
             use syn::{Expr::Lit, ExprLit, Lit::Str, Meta, MetaNameValue};
             if let Meta::NameValue(MetaNameValue {
-                value:
-                    Lit(ExprLit {
-                        lit: Str(ref lit_str),
-                        ..
-                    }),
+                value: Lit(ExprLit {
+                    lit: Str(ref lit_str), ..
+                }),
                 ..
             }) = attr.meta
             {

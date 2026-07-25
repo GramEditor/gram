@@ -244,9 +244,7 @@ pub fn perf(our_attr: TokenStream, input: TokenStream) -> TokenStream {
             } else {
                 quote! {}
             };
-            let weight = args
-                .weight
-                .unwrap_or_else(|| parse_quote! { #WEIGHT_DEFAULT });
+            let weight = args.weight.unwrap_or_else(|| parse_quote! { #WEIGHT_DEFAULT });
             parse_quote!({
                 #q_iter
                 println!("{} {} {}", #MDATA_LINE_PREF, #WEIGHT_LINE_NAME, #weight);

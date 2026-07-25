@@ -11,12 +11,11 @@ fn inline_elements() -> &'static HashSet<&'static str> {
     static INLINE_ELEMENTS: OnceLock<HashSet<&str>> = OnceLock::new();
     INLINE_ELEMENTS.get_or_init(|| {
         HashSet::from_iter([
-            "a", "abbr", "acronym", "audio", "b", "bdi", "bdo", "big", "br", "button", "canvas",
-            "cite", "code", "data", "datalist", "del", "dfn", "em", "embed", "i", "iframe", "img",
-            "input", "ins", "kbd", "label", "map", "mark", "meter", "noscript", "object", "output",
-            "picture", "progress", "q", "ruby", "s", "samp", "script", "select", "slot", "small",
-            "span", "strong", "sub", "sup", "svg", "template", "textarea", "time", "tt", "u",
-            "var", "video", "wbr",
+            "a", "abbr", "acronym", "audio", "b", "bdi", "bdo", "big", "br", "button", "canvas", "cite", "code",
+            "data", "datalist", "del", "dfn", "em", "embed", "i", "iframe", "img", "input", "ins", "kbd", "label",
+            "map", "mark", "meter", "noscript", "object", "output", "picture", "progress", "q", "ruby", "s", "samp",
+            "script", "select", "slot", "small", "span", "strong", "sub", "sup", "svg", "template", "textarea", "time",
+            "tt", "u", "var", "video", "wbr",
         ])
     })
 }
@@ -73,11 +72,7 @@ impl HtmlElement {
     /// Returns whether this [`HtmlElement`] has any of the specified classes.
     pub fn has_any_classes(&self, classes: &[&str]) -> bool {
         self.attrs.borrow().iter().any(|attr| {
-            attr.name.local.to_string() == "class"
-                && attr
-                    .value
-                    .split(' ')
-                    .any(|class| classes.contains(&class.trim()))
+            attr.name.local.to_string() == "class" && attr.value.split(' ').any(|class| classes.contains(&class.trim()))
         })
     }
 }

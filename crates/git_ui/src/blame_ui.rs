@@ -5,8 +5,8 @@ use crate::{
 use editor::{BlameRenderer, Editor, hover_markdown_style};
 use git::{blame::BlameEntry, commit::ParsedCommitMessage, repository::CommitSummary};
 use gpui::{
-    ClipboardItem, Entity, Hsla, MouseButton, ScrollHandle, Subscription, TextStyle,
-    TextStyleRefinement, UnderlineStyle, WeakEntity, prelude::*,
+    ClipboardItem, Entity, Hsla, MouseButton, ScrollHandle, Subscription, TextStyle, TextStyleRefinement,
+    UnderlineStyle, WeakEntity, prelude::*,
 };
 use markdown::{Markdown, MarkdownElement};
 use project::{git_store::Repository, project_settings::ProjectSettings};
@@ -137,10 +137,7 @@ impl BlameRenderer for GitBlameRenderer {
     ) -> Option<AnyElement> {
         let relative_timestamp = blame_entry_relative_timestamp(&blame_entry);
         let author = blame_entry.author.as_deref().unwrap_or_default();
-        let summary_enabled = ProjectSettings::get_global(cx)
-            .git
-            .inline_blame
-            .show_commit_summary;
+        let summary_enabled = ProjectSettings::get_global(cx).git.inline_blame.show_commit_summary;
 
         let text = match blame_entry.summary.as_ref() {
             Some(summary) if summary_enabled => {
@@ -180,14 +177,9 @@ impl BlameRenderer for GitBlameRenderer {
             .unwrap_or(OffsetDateTime::now_utc());
 
         let sha = blame.sha.to_string().into();
-        let author: SharedString = blame
-            .author
-            .clone()
-            .unwrap_or("<no name>".to_string())
-            .into();
+        let author: SharedString = blame.author.clone().unwrap_or("<no name>".to_string()).into();
         let author_email = blame.author_mail.as_deref().unwrap_or_default();
-        let avatar = CommitAvatar::new(&sha, details.as_ref().and_then(|it| it.remote.as_ref()))
-            .render(window, cx);
+        let avatar = CommitAvatar::new(&sha, details.as_ref().and_then(|it| it.remote.as_ref())).render(window, cx);
 
         let short_commit_id = sha
             .get(..8)
@@ -220,9 +212,7 @@ impl BlameRenderer for GitBlameRenderer {
             .map(|_| MarkdownElement::new(markdown.clone(), markdown_style).into_any())
             .unwrap_or("<no commit message>".into_any());
 
-        let pull_request = details
-            .as_ref()
-            .and_then(|details| details.pull_request.clone());
+        let pull_request = details.as_ref().and_then(|details| details.pull_request.clone());
 
         let ui_font_size = ThemeSettings::get_global(cx).ui_font_size(cx);
         let message_max_height = window.line_height() * 12 + (ui_font_size / 0.4);
@@ -230,17 +220,7 @@ impl BlameRenderer for GitBlameRenderer {
             sha: sha.clone(),
             subject: details
                 .as_ref()
-                .and_then(|details| {
-                    Some(
-                        details
-                            .message
-                            .split('\n')
-                            .next()?
-                            .trim_end()
-                            .to_string()
-                            .into(),
-                    )
-                })
+                .and_then(|details| Some(details.message.split('\n').next()?.trim_end().to_string().into()))
                 .unwrap_or_default(),
             commit_timestamp: commit_time.unix_timestamp(),
             author_name: author.clone(),
@@ -296,44 +276,38 @@ impl BlameRenderer for GitBlameRenderer {
                                             .gap_1()
                                             .when_some(pull_request, |this, pr| {
                                                 this.child(
-                                                    Button::new(
-                                                        "pull-request-button",
-                                                        format!("#{}", pr.number),
-                                                    )
-                                                    .color(Color::Muted)
-                                                    .icon(IconName::PullRequest)
-                                                    .icon_color(Color::Muted)
-                                                    .icon_position(IconPosition::Start)
-                                                    .icon_size(IconSize::Small)
-                                                    .on_click(move |_, _, cx| {
-                                                        cx.stop_propagation();
-                                                        cx.open_url(pr.url.as_str())
-                                                    }),
+                                                    Button::new("pull-request-button", format!("#{}", pr.number))
+                                                        .color(Color::Muted)
+                                                        .icon(IconName::PullRequest)
+                                                        .icon_color(Color::Muted)
+                                                        .icon_position(IconPosition::Start)
+                                                        .icon_size(IconSize::Small)
+                                                        .on_click(move |_, _, cx| {
+                                                            cx.stop_propagation();
+                                                            cx.open_url(pr.url.as_str())
+                                                        }),
                                                 )
                                                 .child(Divider::vertical())
                                             })
                                             .child(
-                                                Button::new(
-                                                    "commit-sha-button",
-                                                    short_commit_id.clone(),
-                                                )
-                                                .color(Color::Muted)
-                                                .icon(IconName::FileGit)
-                                                .icon_color(Color::Muted)
-                                                .icon_position(IconPosition::Start)
-                                                .icon_size(IconSize::Small)
-                                                .on_click(move |_, window, cx| {
-                                                    CommitView::open(
-                                                        commit_summary.sha.clone().into(),
-                                                        repository.downgrade(),
-                                                        workspace.clone(),
-                                                        None,
-                                                        None,
-                                                        window,
-                                                        cx,
-                                                    );
-                                                    cx.stop_propagation();
-                                                }),
+                                                Button::new("commit-sha-button", short_commit_id.clone())
+                                                    .color(Color::Muted)
+                                                    .icon(IconName::FileGit)
+                                                    .icon_color(Color::Muted)
+                                                    .icon_position(IconPosition::Start)
+                                                    .icon_size(IconSize::Small)
+                                                    .on_click(move |_, window, cx| {
+                                                        CommitView::open(
+                                                            commit_summary.sha.clone().into(),
+                                                            repository.downgrade(),
+                                                            workspace.clone(),
+                                                            None,
+                                                            None,
+                                                            window,
+                                                            cx,
+                                                        );
+                                                        cx.stop_propagation();
+                                                    }),
                                             )
                                             .child(Divider::vertical())
                                             .child(
@@ -382,14 +356,9 @@ fn deploy_blame_entry_context_menu(
             .entry("Copy commit SHA", None, move |_, cx| {
                 cx.write_to_clipboard(ClipboardItem::new_string(sha.clone()));
             })
-            .when_some(
-                details.and_then(|details| details.permalink.clone()),
-                |this, url| {
-                    this.entry("Open permalink", None, move |_, cx| {
-                        cx.open_url(url.as_str())
-                    })
-                },
-            )
+            .when_some(details.and_then(|details| details.permalink.clone()), |this, url| {
+                this.entry("Open permalink", None, move |_, cx| cx.open_url(url.as_str()))
+            })
     });
 
     editor.update(cx, move |editor, cx| {
@@ -402,8 +371,7 @@ fn deploy_blame_entry_context_menu(
 fn blame_entry_relative_timestamp(blame_entry: &BlameEntry) -> String {
     match blame_entry.author_offset_date_time() {
         Ok(timestamp) => {
-            let local_offset =
-                time::UtcOffset::current_local_offset().unwrap_or(time::UtcOffset::UTC);
+            let local_offset = time::UtcOffset::current_local_offset().unwrap_or(time::UtcOffset::UTC);
             time_format::format_localized_timestamp(
                 timestamp,
                 time::OffsetDateTime::now_utc(),

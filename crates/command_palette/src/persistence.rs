@@ -1,10 +1,7 @@
 use anyhow::Result;
 use db::{
     query,
-    sqlez::{
-        bindable::Column, domain::Domain, statement::Statement,
-        thread_safe_connection::ThreadSafeConnection,
-    },
+    sqlez::{bindable::Column, domain::Domain, statement::Statement, thread_safe_connection::ThreadSafeConnection},
     sqlez_macros::sql,
 };
 use serde::{Deserialize, Serialize};
@@ -79,11 +76,8 @@ impl CommandPaletteDB {
     ) -> Result<()> {
         let command_name = command_name.into();
         let user_query = user_query.into();
-        log::debug!(
-            "Writing command invocation: command_name={command_name}, user_query={user_query}"
-        );
-        self.write_command_invocation_internal(command_name, user_query)
-            .await
+        log::debug!("Writing command invocation: command_name={command_name}, user_query={user_query}");
+        self.write_command_invocation_internal(command_name, user_query).await
     }
 
     #[cfg(test)]
@@ -142,16 +136,13 @@ mod tests {
 
     #[gpui::test]
     async fn test_saves_and_retrieves_command_invocation() {
-        let db =
-            CommandPaletteDB::open_test_db("test_saves_and_retrieves_command_invocation").await;
+        let db = CommandPaletteDB::open_test_db("test_saves_and_retrieves_command_invocation").await;
 
         let retrieved_cmd = db.get_last_invoked("editor: backspace").unwrap();
 
         assert!(retrieved_cmd.is_none());
 
-        db.write_command_invocation("editor: backspace", "")
-            .await
-            .unwrap();
+        db.write_command_invocation("editor: backspace", "").await.unwrap();
 
         let retrieved_cmd = db.get_last_invoked("editor: backspace").unwrap();
 
@@ -164,12 +155,8 @@ mod tests {
     #[gpui::test]
     async fn test_gets_usage_history() {
         let db = CommandPaletteDB::open_test_db("test_gets_usage_history").await;
-        db.write_command_invocation("go to line: toggle", "200")
-            .await
-            .unwrap();
-        db.write_command_invocation("go to line: toggle", "201")
-            .await
-            .unwrap();
+        db.write_command_invocation("go to line: toggle", "200").await.unwrap();
+        db.write_command_invocation("go to line: toggle", "201").await.unwrap();
 
         let retrieved_cmd = db.get_last_invoked("go to line: toggle").unwrap();
 
@@ -198,15 +185,9 @@ mod tests {
         assert!(empty_commands.is_ok());
         assert_eq!(empty_commands.expect("is ok").len(), 0);
 
-        db.write_command_invocation("go to line: toggle", "200")
-            .await
-            .unwrap();
-        db.write_command_invocation("editor: backspace", "")
-            .await
-            .unwrap();
-        db.write_command_invocation("editor: backspace", "")
-            .await
-            .unwrap();
+        db.write_command_invocation("go to line: toggle", "200").await.unwrap();
+        db.write_command_invocation("editor: backspace", "").await.unwrap();
+        db.write_command_invocation("editor: backspace", "").await.unwrap();
 
         let commands = db.list_commands_used();
 

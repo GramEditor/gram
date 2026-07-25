@@ -31,9 +31,7 @@ impl LspInstaller for CLspAdapter {
     ) -> Result<GitHubLspBinaryVersion> {
         ensure_arch_compatibility()?;
 
-        let release =
-            latest_github_release("clangd/clangd", true, pre_release, delegate.http_client())
-                .await?;
+        let release = latest_github_release("clangd/clangd", true, pre_release, delegate.http_client()).await?;
         let os_suffix = match consts::OS {
             "macos" => "mac",
             "linux" => "linux",
@@ -173,10 +171,7 @@ impl super::LspAdapter for CLspAdapter {
                 let filter_range = completion
                     .filter_text
                     .as_deref()
-                    .and_then(|filter_text| {
-                        text.find(filter_text)
-                            .map(|start| start..start + filter_text.len())
-                    })
+                    .and_then(|filter_text| text.find(filter_text).map(|start| start..start + filter_text.len()))
                     .unwrap_or(detail.len() + 1..text.len());
                 return Some(CodeLabel::new(text, filter_range, runs));
             }
@@ -189,10 +184,7 @@ impl super::LspAdapter for CLspAdapter {
                 let filter_range = completion
                     .filter_text
                     .as_deref()
-                    .and_then(|filter_text| {
-                        text.find(filter_text)
-                            .map(|start| start..start + filter_text.len())
-                    })
+                    .and_then(|filter_text| text.find(filter_text).map(|start| start..start + filter_text.len()))
                     .unwrap_or(detail.len() + 1..text.len());
                 return Some(CodeLabel::new(text, filter_range, runs));
             }
@@ -205,16 +197,10 @@ impl super::LspAdapter for CLspAdapter {
                 let filter_range = completion
                     .filter_text
                     .as_deref()
-                    .and_then(|filter_text| {
-                        text.find(filter_text)
-                            .map(|start| start..start + filter_text.len())
-                    })
+                    .and_then(|filter_text| text.find(filter_text).map(|start| start..start + filter_text.len()))
                     .unwrap_or_else(|| {
                         let filter_start = detail.len() + 1;
-                        let filter_end = text
-                            .rfind('(')
-                            .filter(|end| *end > filter_start)
-                            .unwrap_or(text.len());
+                        let filter_end = text.rfind('(').filter(|end| *end > filter_start).unwrap_or(text.len());
                         filter_start..filter_end
                     });
 
@@ -228,9 +214,7 @@ impl super::LspAdapter for CLspAdapter {
                     | lsp::CompletionItemKind::ENUM => Some("type"),
                     lsp::CompletionItemKind::ENUM_MEMBER => Some("variant"),
                     lsp::CompletionItemKind::KEYWORD => Some("keyword"),
-                    lsp::CompletionItemKind::VALUE | lsp::CompletionItemKind::CONSTANT => {
-                        Some("constant")
-                    }
+                    lsp::CompletionItemKind::VALUE | lsp::CompletionItemKind::CONSTANT => Some("constant"),
                     _ => None,
                 };
                 if let Some(highlight_id) = language
@@ -238,10 +222,9 @@ impl super::LspAdapter for CLspAdapter {
                     .and_then(|g| g.highlight_id_for_name(highlight_name?))
                 {
                     let mut label = CodeLabel::plain(label, completion.filter_text.as_deref());
-                    label.runs.push((
-                        0..label.text.rfind('(').unwrap_or(label.text.len()),
-                        highlight_id,
-                    ));
+                    label
+                        .runs
+                        .push((0..label.text.rfind('(').unwrap_or(label.text.len()), highlight_id));
                     return Some(label);
                 }
             }
@@ -250,12 +233,7 @@ impl super::LspAdapter for CLspAdapter {
         Some(CodeLabel::plain(label, completion.filter_text.as_deref()))
     }
 
-    async fn label_for_symbol(
-        &self,
-        name: &str,
-        kind: lsp::SymbolKind,
-        language: &Arc<Language>,
-    ) -> Option<CodeLabel> {
+    async fn label_for_symbol(&self, name: &str, kind: lsp::SymbolKind, language: &Arc<Language>) -> Option<CodeLabel> {
         let (text, filter_range, display_range) = match kind {
             lsp::SymbolKind::METHOD | lsp::SymbolKind::FUNCTION => {
                 let text = format!("void {} () {{}}", name);
@@ -309,11 +287,7 @@ impl super::LspAdapter for CLspAdapter {
         ))
     }
 
-    fn prepare_initialize_params(
-        &self,
-        mut original: InitializeParams,
-        _: &App,
-    ) -> Result<InitializeParams> {
+    fn prepare_initialize_params(&self, mut original: InitializeParams, _: &App) -> Result<InitializeParams> {
         let experimental = json!({
             "textDocument": {
                 "completion" : {
@@ -354,10 +328,7 @@ async fn get_cached_server_binary(container_dir: PathBuf) -> Option<LanguageServ
         }
         let clangd_dir = last_clangd_dir.context("no cached binary")?;
         let clangd_bin = clangd_dir.join("bin/clangd");
-        anyhow::ensure!(
-            clangd_bin.exists(),
-            "missing clangd binary in directory {clangd_dir:?}"
-        );
+        anyhow::ensure!(clangd_bin.exists(), "missing clangd binary in directory {clangd_dir:?}");
         Ok(LanguageServerBinary {
             path: clangd_bin,
             env: None,

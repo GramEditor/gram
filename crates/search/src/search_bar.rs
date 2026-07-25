@@ -18,25 +18,22 @@ pub(super) fn render_action_button(
     action: &'static dyn Action,
     focus_handle: FocusHandle,
 ) -> impl IntoElement {
-    IconButton::new(
-        SharedString::from(format!("{id_prefix}-{}", action.name())),
-        icon,
-    )
-    .shape(IconButtonShape::Square)
-    .on_click({
-        let focus_handle = focus_handle.clone();
-        move |_, window, cx| {
-            if !focus_handle.is_focused(window) {
-                window.focus(&focus_handle, cx);
+    IconButton::new(SharedString::from(format!("{id_prefix}-{}", action.name())), icon)
+        .shape(IconButtonShape::Square)
+        .on_click({
+            let focus_handle = focus_handle.clone();
+            move |_, window, cx| {
+                if !focus_handle.is_focused(window) {
+                    window.focus(&focus_handle, cx);
+                }
+                window.dispatch_action(action.boxed_clone(), cx);
             }
-            window.dispatch_action(action.boxed_clone(), cx);
-        }
-    })
-    .tooltip(move |_window, cx| Tooltip::for_action_in(tooltip, action, &focus_handle, cx))
-    .when_some(button_state, |this, state| match state {
-        ActionButtonState::Toggled => this.toggle_state(true),
-        ActionButtonState::Disabled => this.disabled(true),
-    })
+        })
+        .tooltip(move |_window, cx| Tooltip::for_action_in(tooltip, action, &focus_handle, cx))
+        .when_some(button_state, |this, state| match state {
+            ActionButtonState::Toggled => this.toggle_state(true),
+            ActionButtonState::Disabled => this.disabled(true),
+        })
 }
 
 pub(crate) fn input_base_styles(border_color: Hsla, map: impl FnOnce(Div) -> Div) -> Div {
@@ -51,11 +48,7 @@ pub(crate) fn input_base_styles(border_color: Hsla, map: impl FnOnce(Div) -> Div
         .rounded_md()
 }
 
-pub(crate) fn render_text_input(
-    editor: &Entity<Editor>,
-    color_override: Option<Color>,
-    app: &App,
-) -> impl IntoElement {
+pub(crate) fn render_text_input(editor: &Entity<Editor>, color_override: Option<Color>, app: &App) -> impl IntoElement {
     let (color, use_syntax) = if editor.read(app).read_only(app) {
         (app.theme().colors().text_disabled, false)
     } else {

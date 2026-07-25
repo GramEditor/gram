@@ -6,9 +6,9 @@ pub mod terminal_scrollbar;
 
 use editor::{Editor, EditorSettings, actions::SelectAll, blink_manager::BlinkManager};
 use gpui::{
-    Action, AnyElement, App, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable,
-    KeyContext, KeyDownEvent, Keystroke, MouseButton, MouseDownEvent, Pixels, Point, Render,
-    ScrollWheelEvent, Styled, Subscription, Task, WeakEntity, actions, anchored, deferred, div,
+    Action, AnyElement, App, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, KeyContext, KeyDownEvent,
+    Keystroke, MouseButton, MouseDownEvent, Pixels, Point, Render, ScrollWheelEvent, Styled, Subscription, Task,
+    WeakEntity, actions, anchored, deferred, div,
 };
 use menu;
 use persistence::TERMINAL_DB;
@@ -18,9 +18,9 @@ use serde::Deserialize;
 use settings::{Settings, SettingsStore, TerminalBlink, WorkingDirectory};
 use task::TaskId;
 use terminal::{
-    Clear, Copy, Event, HoveredWord, MaybeNavigationTarget, Paste, ScrollLineDown, ScrollLineUp,
-    ScrollPageDown, ScrollPageUp, ScrollToBottom, ScrollToTop, ShowCharacterPalette, TaskState,
-    TaskStatus, Terminal, TerminalBounds, ToggleViMode,
+    Clear, Copy, Event, HoveredWord, MaybeNavigationTarget, Paste, ScrollLineDown, ScrollLineUp, ScrollPageDown,
+    ScrollPageUp, ScrollToBottom, ScrollToTop, ShowCharacterPalette, TaskState, TaskStatus, Terminal, TerminalBounds,
+    ToggleViMode,
     alacritty_terminal::{
         index::Point as AlacPoint,
         term::{TermMode, point_to_viewport, search::RegexSearch},
@@ -40,9 +40,7 @@ use util::ResultExt;
 use workspace::{
     CloseActiveItem, NewCenterTerminal, NewTerminal, ToolbarItemLocation, Workspace, WorkspaceId,
     delete_unloaded_items,
-    item::{
-        BreadcrumbText, Item, ItemEvent, SerializableItem, TabContentParams, TabTooltipContent,
-    },
+    item::{BreadcrumbText, Item, ItemEvent, SerializableItem, TabContentParams, TabTooltipContent},
     register_serializable_item,
     searchable::{Direction, SearchEvent, SearchOptions, SearchableItem, SearchableItemHandle},
 };
@@ -153,10 +151,7 @@ pub enum TerminalMode {
 #[derive(Clone)]
 pub enum ContentMode {
     Scrollable,
-    Inline {
-        displayed_lines: usize,
-        total_lines: usize,
-    },
+    Inline { displayed_lines: usize, total_lines: usize },
 }
 
 impl ContentMode {
@@ -194,12 +189,7 @@ impl Focusable for TerminalView {
 
 impl TerminalView {
     ///Create a new Terminal in the current working directory or the user's home directory
-    pub fn deploy(
-        workspace: &mut Workspace,
-        _: &NewCenterTerminal,
-        window: &mut Window,
-        cx: &mut Context<Workspace>,
-    ) {
+    pub fn deploy(workspace: &mut Workspace, _: &NewCenterTerminal, window: &mut Window, cx: &mut Context<Workspace>) {
         let working_directory = default_working_directory(workspace, cx);
         TerminalPanel::add_center_terminal(workspace, window, cx, |project, cx| {
             project.create_terminal_shell(working_directory, cx)
@@ -216,20 +206,15 @@ impl TerminalView {
         cx: &mut Context<Self>,
     ) -> Self {
         let workspace_handle = workspace.clone();
-        let terminal_subscriptions =
-            subscribe_for_terminal_events(&terminal, workspace, window, cx);
+        let terminal_subscriptions = subscribe_for_terminal_events(&terminal, workspace, window, cx);
 
         let focus_handle = cx.focus_handle();
         let focus_in = cx.on_focus_in(&focus_handle, window, |terminal_view, window, cx| {
             terminal_view.focus_in(window, cx);
         });
-        let focus_out = cx.on_focus_out(
-            &focus_handle,
-            window,
-            |terminal_view, _event, window, cx| {
-                terminal_view.focus_out(window, cx);
-            },
-        );
+        let focus_out = cx.on_focus_out(&focus_handle, window, |terminal_view, _event, window, cx| {
+            terminal_view.focus_out(window, cx);
+        });
         let cursor_shape = TerminalSettings::get_global(cx).cursor_shape;
 
         let scroll_handle = TerminalScrollHandle::new(terminal.read(cx));
@@ -237,12 +222,7 @@ impl TerminalView {
         let blink_manager = cx.new(|cx| {
             BlinkManager::new(
                 CURSOR_BLINK_INTERVAL,
-                |cx| {
-                    !matches!(
-                        TerminalSettings::get_global(cx).blinking,
-                        TerminalBlink::Off
-                    )
-                },
+                |cx| !matches!(TerminalSettings::get_global(cx).blinking, TerminalBlink::Off),
                 cx,
             )
         });
@@ -284,11 +264,7 @@ impl TerminalView {
     }
 
     /// Enable 'embedded' mode where the terminal displays the full content with an optional limit of lines.
-    pub fn set_embedded_mode(
-        &mut self,
-        max_lines_when_unfocused: Option<usize>,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn set_embedded_mode(&mut self, max_lines_when_unfocused: Option<usize>, cx: &mut Context<Self>) {
         self.mode = TerminalMode::Embedded {
             max_lines_when_unfocused,
         };
@@ -422,12 +398,7 @@ impl TerminalView {
         self.focus_handle.focus(window, cx);
     }
 
-    pub fn rename_terminal(
-        &mut self,
-        _: &RenameTerminal,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn rename_terminal(&mut self, _: &RenameTerminal, window: &mut Window, cx: &mut Context<Self>) {
         if self.terminal.read(cx).task().is_some() {
             return;
         }
@@ -473,12 +444,7 @@ impl TerminalView {
         cx.emit(Event::Wakeup);
     }
 
-    pub fn deploy_context_menu(
-        &mut self,
-        position: Point<Pixels>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn deploy_context_menu(&mut self, position: Point<Pixels>, window: &mut Window, cx: &mut Context<Self>) {
         let context_menu = ContextMenu::build(window, cx, |menu, _, _| {
             menu.context(self.focus_handle.clone())
                 .action("New Terminal", Box::new(NewTerminal))
@@ -498,19 +464,17 @@ impl TerminalView {
         });
 
         window.focus(&context_menu.focus_handle(cx), cx);
-        let subscription = cx.subscribe_in(
-            &context_menu,
-            window,
-            |this, _, _: &DismissEvent, window, cx| {
-                if this.context_menu.as_ref().is_some_and(|context_menu| {
-                    context_menu.0.focus_handle(cx).contains_focused(window, cx)
-                }) {
-                    cx.focus_self(window);
-                }
-                this.context_menu.take();
-                cx.notify();
-            },
-        );
+        let subscription = cx.subscribe_in(&context_menu, window, |this, _, _: &DismissEvent, window, cx| {
+            if this
+                .context_menu
+                .as_ref()
+                .is_some_and(|context_menu| context_menu.0.focus_handle(cx).contains_focused(window, cx))
+            {
+                cx.focus_self(window);
+            }
+            this.context_menu.take();
+            cx.notify();
+        });
 
         self.context_menu = Some((context_menu, position, subscription));
     }
@@ -549,19 +513,8 @@ impl TerminalView {
         cx.notify();
     }
 
-    fn show_character_palette(
-        &mut self,
-        _: &ShowCharacterPalette,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        if self
-            .terminal
-            .read(cx)
-            .last_content
-            .mode
-            .contains(TermMode::ALT_SCREEN)
-        {
+    fn show_character_palette(&mut self, _: &ShowCharacterPalette, window: &mut Window, cx: &mut Context<Self>) {
+        if self.terminal.read(cx).last_content.mode.contains(TermMode::ALT_SCREEN) {
             self.terminal.update(cx, |term, cx| {
                 term.try_keystroke(
                     &Keystroke::parse("ctrl-cmd-space").unwrap(),
@@ -603,11 +556,8 @@ impl TerminalView {
 
         let line_height = terminal.last_content().terminal_bounds.line_height;
         let viewport_lines = terminal.viewport_lines();
-        let cursor = point_to_viewport(
-            terminal.last_content.display_offset,
-            terminal.last_content.cursor.point,
-        )
-        .unwrap_or_default();
+        let cursor = point_to_viewport(terminal.last_content.display_offset, terminal.last_content.cursor.point)
+            .unwrap_or_default();
         let max_scroll_top_in_lines =
             (block.height as usize).saturating_sub(viewport_lines.saturating_sub(cursor.line + 1));
 
@@ -630,19 +580,13 @@ impl TerminalView {
             }
         }
         self.terminal.update(cx, |term, cx| {
-            term.scroll_wheel(
-                event,
-                TerminalSettings::get_global(cx).scroll_multiplier.max(0.01),
-            )
+            term.scroll_wheel(event, TerminalSettings::get_global(cx).scroll_multiplier.max(0.01))
         });
     }
 
     fn scroll_line_up(&mut self, _: &ScrollLineUp, _: &mut Window, cx: &mut Context<Self>) {
         let terminal_content = self.terminal.read(cx).last_content();
-        if self.block_below_cursor.is_some()
-            && terminal_content.display_offset == 0
-            && self.scroll_top > Pixels::ZERO
-        {
+        if self.block_below_cursor.is_some() && terminal_content.display_offset == 0 && self.scroll_top > Pixels::ZERO {
             let line_height = terminal_content.terminal_bounds.line_height;
             self.scroll_top = cmp::max(self.scroll_top - line_height, Pixels::ZERO);
             return;
@@ -671,12 +615,7 @@ impl TerminalView {
         if self.scroll_top == Pixels::ZERO {
             self.terminal.update(cx, |term, _| term.scroll_page_up());
         } else {
-            let line_height = self
-                .terminal
-                .read(cx)
-                .last_content
-                .terminal_bounds
-                .line_height();
+            let line_height = self.terminal.read(cx).last_content.terminal_bounds.line_height();
             let visible_block_lines = (self.scroll_top / line_height) as usize;
             let viewport_lines = self.terminal.read(cx).viewport_lines();
             let visible_content_lines = viewport_lines - visible_block_lines;
@@ -721,14 +660,7 @@ impl TerminalView {
 
     pub fn should_show_cursor(&self, focused: bool, cx: &mut Context<Self>) -> bool {
         // Always show cursor when not focused or in special modes
-        if !focused
-            || self
-                .terminal
-                .read(cx)
-                .last_content
-                .mode
-                .contains(TermMode::ALT_SCREEN)
-        {
+        if !focused || self.terminal.read(cx).last_content.mode.contains(TermMode::ALT_SCREEN) {
             return true;
         }
 
@@ -750,12 +682,7 @@ impl TerminalView {
         &self.terminal
     }
 
-    pub fn set_block_below_cursor(
-        &mut self,
-        block: BlockProperties,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn set_block_below_cursor(&mut self, block: BlockProperties, window: &mut Window, cx: &mut Context<Self>) {
         self.block_below_cursor = Some(Rc::new(block));
         self.scroll_to_bottom(&ScrollToBottom, window, cx);
         cx.notify();
@@ -879,14 +806,8 @@ impl TerminalView {
         dispatch_context
     }
 
-    fn set_terminal(
-        &mut self,
-        terminal: Entity<Terminal>,
-        window: &mut Window,
-        cx: &mut Context<TerminalView>,
-    ) {
-        self._terminal_subscriptions =
-            subscribe_for_terminal_events(&terminal, self.workspace.clone(), window, cx);
+    fn set_terminal(&mut self, terminal: Entity<Terminal>, window: &mut Window, cx: &mut Context<TerminalView>) {
+        self._terminal_subscriptions = subscribe_for_terminal_events(&terminal, self.workspace.clone(), window, cx);
         self.terminal = terminal;
     }
 
@@ -927,10 +848,8 @@ fn subscribe_for_terminal_events(
 ) -> Vec<Subscription> {
     let terminal_subscription = cx.observe(terminal, |_, _, cx| cx.notify());
     let mut previous_cwd = None;
-    let terminal_events_subscription = cx.subscribe_in(
-        terminal,
-        window,
-        move |terminal_view, terminal, event, window, cx| {
+    let terminal_events_subscription =
+        cx.subscribe_in(terminal, window, move |terminal_view, terminal, event, window, cx| {
             let current_cwd = terminal.read(cx).working_directory();
             if current_cwd != previous_cwd {
                 previous_cwd = current_cwd;
@@ -979,12 +898,7 @@ fn subscribe_for_terminal_events(
                         .zip(terminal.read(cx).last_content.last_hovered_word.as_ref())
                     {
                         Some((MaybeNavigationTarget::Url(url), hovered_word)) => {
-                            if Some(hovered_word)
-                                != terminal_view
-                                    .hover
-                                    .as_ref()
-                                    .map(|hover| &hover.hovered_word)
-                            {
+                            if Some(hovered_word) != terminal_view.hover.as_ref().map(|hover| &hover.hovered_word) {
                                 terminal_view.hover = Some(HoverTarget {
                                     tooltip: url.clone(),
                                     hovered_word: hovered_word.clone(),
@@ -994,19 +908,10 @@ fn subscribe_for_terminal_events(
                             }
                         }
                         Some((MaybeNavigationTarget::PathLike(path_like_target), hovered_word)) => {
-                            if Some(hovered_word)
-                                != terminal_view
-                                    .hover
-                                    .as_ref()
-                                    .map(|hover| &hover.hovered_word)
-                            {
+                            if Some(hovered_word) != terminal_view.hover.as_ref().map(|hover| &hover.hovered_word) {
                                 terminal_view.hover = None;
-                                terminal_view.hover_tooltip_update = hover_path_like_target(
-                                    &workspace,
-                                    hovered_word.clone(),
-                                    path_like_target,
-                                    cx,
-                                );
+                                terminal_view.hover_tooltip_update =
+                                    hover_path_like_target(&workspace, hovered_word.clone(), path_like_target, cx);
                                 cx.notify();
                             }
                         }
@@ -1020,13 +925,9 @@ fn subscribe_for_terminal_events(
 
                 Event::Open(maybe_navigation_target) => match maybe_navigation_target {
                     MaybeNavigationTarget::Url(url) => cx.open_url(url),
-                    MaybeNavigationTarget::PathLike(path_like_target) => open_path_like_target(
-                        &workspace,
-                        terminal_view,
-                        path_like_target,
-                        window,
-                        cx,
-                    ),
+                    MaybeNavigationTarget::PathLike(path_like_target) => {
+                        open_path_like_target(&workspace, terminal_view, path_like_target, window, cx)
+                    }
                 },
                 Event::BreadcrumbsChanged => cx.emit(ItemEvent::UpdateBreadcrumbs),
                 Event::CloseTerminal => cx.emit(ItemEvent::CloseItem),
@@ -1035,8 +936,7 @@ fn subscribe_for_terminal_events(
                     cx.emit(SearchEvent::ActiveMatchChanged)
                 }
             }
-        },
-    );
+        });
     vec![terminal_subscription, terminal_events_subscription]
 }
 
@@ -1208,10 +1108,7 @@ impl Render for TerminalView {
                         div.custom_scrollbars(
                             Scrollbars::for_settings::<TerminalScrollbarSettingsWrapper>()
                                 .show_along(ScrollAxes::Vertical)
-                                .with_track_along(
-                                    ScrollAxes::Vertical,
-                                    cx.theme().colors().editor_background,
-                                )
+                                .with_track_along(ScrollAxes::Vertical, cx.theme().colors().editor_background)
                                 .tracked_scroll_handle(&self.scroll_handle),
                             window,
                             cx,
@@ -1302,12 +1199,7 @@ impl Item for TerminalView {
                             .child(Icon::new(icon).color(icon_color)),
                     )
                     .when_some(rerun_button, |this, rerun_button| {
-                        this.child(
-                            div()
-                                .absolute()
-                                .visible_on_hover("term-tab-icon")
-                                .child(rerun_button),
-                        )
+                        this.child(div().absolute().visible_on_hover("term-tab-icon").child(rerun_button))
                     }),
             )
             .child(
@@ -1330,16 +1222,12 @@ impl Item for TerminalView {
                                 .child(editor)
                                 .on_action(move |_: &menu::Confirm, window, cx| {
                                     self_handle
-                                        .update(cx, |this, cx| {
-                                            this.finish_renaming(true, window, cx)
-                                        })
+                                        .update(cx, |this, cx| this.finish_renaming(true, window, cx))
                                         .ok();
                                 })
                                 .on_action(move |_: &menu::Cancel, window, cx| {
                                     self_handle_cancel
-                                        .update(cx, |this, cx| {
-                                            this.finish_renaming(false, window, cx)
-                                        })
+                                        .update(cx, |this, cx| this.finish_renaming(false, window, cx))
                                         .ok();
                                 }),
                         )
@@ -1384,9 +1272,7 @@ impl Item for TerminalView {
         cx: &mut Context<Self>,
     ) -> Task<Option<Entity<Self>>> {
         let Ok(terminal) = self.project.update(cx, |project, cx| {
-            let cwd = project
-                .active_project_directory(cx)
-                .map(|it| it.to_path_buf());
+            let cwd = project.active_project_directory(cx).map(|it| it.to_path_buf());
             project.clone_terminal(self.terminal(), cx, cwd)
         }) else {
             return Task::ready(None);
@@ -1424,11 +1310,7 @@ impl Item for TerminalView {
         false
     }
 
-    fn as_searchable(
-        &self,
-        handle: &Entity<Self>,
-        _: &App,
-    ) -> Option<Box<dyn SearchableItemHandle>> {
+    fn as_searchable(&self, handle: &Entity<Self>, _: &App) -> Option<Box<dyn SearchableItemHandle>> {
         Some(Box::new(handle.clone()))
     }
 
@@ -1448,23 +1330,12 @@ impl Item for TerminalView {
         }])
     }
 
-    fn added_to_workspace(
-        &mut self,
-        workspace: &mut Workspace,
-        _: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn added_to_workspace(&mut self, workspace: &mut Workspace, _: &mut Window, cx: &mut Context<Self>) {
         if self.terminal().read(cx).task().is_none() {
             if let Some((new_id, old_id)) = workspace.database_id().zip(self.workspace_id) {
-                log::debug!(
-                    "Updating workspace id for the terminal, old: {old_id:?}, new: {new_id:?}",
-                );
-                cx.background_spawn(TERMINAL_DB.update_workspace_id(
-                    new_id,
-                    old_id,
-                    cx.entity_id().as_u64(),
-                ))
-                .detach();
+                log::debug!("Updating workspace id for the terminal, old: {old_id:?}, new: {new_id:?}",);
+                cx.background_spawn(TERMINAL_DB.update_workspace_id(new_id, old_id, cx.entity_id().as_u64()))
+                    .detach();
             }
             self.workspace_id = workspace.database_id();
         }
@@ -1513,9 +1384,7 @@ impl SerializableItem for TerminalView {
 
         Some(cx.background_spawn(async move {
             if let Some(cwd) = cwd {
-                TERMINAL_DB
-                    .save_working_directory(item_id, workspace_id, cwd)
-                    .await?;
+                TERMINAL_DB.save_working_directory(item_id, workspace_id, cwd).await?;
             }
             TERMINAL_DB
                 .save_custom_title(item_id, workspace_id, custom_title)
@@ -1543,10 +1412,7 @@ impl SerializableItem for TerminalView {
                         .get_working_directory(item_id, workspace_id)
                         .log_err()
                         .flatten();
-                    let cwd = if from_db
-                        .as_ref()
-                        .is_some_and(|from_db| !from_db.as_os_str().is_empty())
-                    {
+                    let cwd = if from_db.as_ref().is_some_and(|from_db| !from_db.as_os_str().is_empty()) {
                         from_db
                     } else {
                         workspace
@@ -1568,14 +1434,8 @@ impl SerializableItem for TerminalView {
                 .await?;
             cx.update(|window, cx| {
                 cx.new(|cx| {
-                    let mut view = TerminalView::new(
-                        terminal,
-                        workspace,
-                        Some(workspace_id),
-                        project.downgrade(),
-                        window,
-                        cx,
-                    );
+                    let mut view =
+                        TerminalView::new(terminal, workspace, Some(workspace_id), project.downgrade(), window, cx);
                     if custom_title.is_some() {
                         view.custom_title = custom_title;
                     }
@@ -1613,17 +1473,11 @@ impl SearchableItem for TerminalView {
         _window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        self.terminal()
-            .update(cx, |term, _| term.matches = matches.to_vec())
+        self.terminal().update(cx, |term, _| term.matches = matches.to_vec())
     }
 
     /// Returns the selection content to pre-load into this search
-    fn query_suggestion(
-        &mut self,
-        _ignore_settings: bool,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> String {
+    fn query_suggestion(&mut self, _ignore_settings: bool, _window: &mut Window, cx: &mut Context<Self>) -> String {
         self.terminal()
             .read(cx)
             .last_content
@@ -1633,22 +1487,14 @@ impl SearchableItem for TerminalView {
     }
 
     /// Focus match at given index into the Vec of matches
-    fn activate_match(
-        &mut self,
-        index: usize,
-        _: &[Self::Match],
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        self.terminal()
-            .update(cx, |term, _| term.activate_match(index));
+    fn activate_match(&mut self, index: usize, _: &[Self::Match], _window: &mut Window, cx: &mut Context<Self>) {
+        self.terminal().update(cx, |term, _| term.activate_match(index));
         cx.notify();
     }
 
     /// Add selections for all matches given.
     fn select_matches(&mut self, matches: &[Self::Match], _: &mut Window, cx: &mut Context<Self>) {
-        self.terminal()
-            .update(cx, |term, _| term.select_matches(matches));
+        self.terminal().update(cx, |term, _| term.select_matches(matches));
         cx.notify();
     }
 
@@ -1660,8 +1506,7 @@ impl SearchableItem for TerminalView {
         cx: &mut Context<Self>,
     ) -> Task<Vec<Self::Match>> {
         if let Some(s) = regex_search_for_query(&query) {
-            self.terminal()
-                .update(cx, |term, cx| term.find_matches(s, cx))
+            self.terminal().update(cx, |term, cx| term.find_matches(s, cx))
         } else {
             Task::ready(vec![])
         }
@@ -1691,8 +1536,7 @@ impl SearchableItem for TerminalView {
                                 .enumerate()
                                 .rev()
                                 .find(|(_, search_match)| {
-                                    search_match.contains(&selection_head)
-                                        || search_match.start() < &selection_head
+                                    search_match.contains(&selection_head) || search_match.start() < &selection_head
                                 })
                                 .map(|(ix, _)| ix)
                                 .unwrap_or(0),
@@ -1705,8 +1549,7 @@ impl SearchableItem for TerminalView {
                                 .iter()
                                 .enumerate()
                                 .find(|(_, search_match)| {
-                                    search_match.contains(&selection_head)
-                                        || search_match.start() > &selection_head
+                                    search_match.contains(&selection_head) || search_match.start() > &selection_head
                                 })
                                 .map(|(ix, _)| ix)
                                 .unwrap_or(matches.len().saturating_sub(1)),
@@ -1721,13 +1564,7 @@ impl SearchableItem for TerminalView {
             None
         }
     }
-    fn replace(
-        &mut self,
-        _: &Self::Match,
-        _: &SearchQuery,
-        _window: &mut Window,
-        _: &mut Context<Self>,
-    ) {
+    fn replace(&mut self, _: &Self::Match, _: &SearchQuery, _window: &mut Window, _: &mut Context<Self>) {
         // Replacement is not supported in terminal view, so this is a no-op.
     }
 }
@@ -1920,18 +1757,12 @@ mod tests {
         cx: &mut TestAppContext,
     ) -> (Entity<Worktree>, Entry) {
         let (wt, _) = project
-            .update(cx, |project, cx| {
-                project.find_or_create_worktree(path, true, cx)
-            })
+            .update(cx, |project, cx| project.find_or_create_worktree(path, true, cx))
             .await
             .unwrap();
 
         let entry = cx
-            .update(|cx| {
-                wt.update(cx, |wt, cx| {
-                    wt.create_entry(RelPath::empty().into(), is_dir, None, cx)
-                })
-            })
+            .update(|cx| wt.update(cx, |wt, cx| wt.create_entry(RelPath::empty().into(), is_dir, None, cx)))
             .await
             .unwrap()
             .into_included()
@@ -1968,14 +1799,7 @@ mod tests {
 
         let terminal_view = cx
             .add_window(|window, cx| {
-                TerminalView::new(
-                    terminal,
-                    workspace.downgrade(),
-                    None,
-                    project.downgrade(),
-                    window,
-                    cx,
-                )
+                TerminalView::new(terminal, workspace.downgrade(), None, project.downgrade(), window, cx)
             })
             .root(cx)
             .unwrap();
@@ -1996,14 +1820,7 @@ mod tests {
 
         let terminal_view = cx
             .add_window(|window, cx| {
-                TerminalView::new(
-                    terminal,
-                    workspace.downgrade(),
-                    None,
-                    project.downgrade(),
-                    window,
-                    cx,
-                )
+                TerminalView::new(terminal, workspace.downgrade(), None, project.downgrade(), window, cx)
             })
             .root(cx)
             .unwrap();
@@ -2025,14 +1842,7 @@ mod tests {
 
         let terminal_view = cx
             .add_window(|window, cx| {
-                TerminalView::new(
-                    terminal,
-                    workspace.downgrade(),
-                    None,
-                    project.downgrade(),
-                    window,
-                    cx,
-                )
+                TerminalView::new(terminal, workspace.downgrade(), None, project.downgrade(), window, cx)
             })
             .root(cx)
             .unwrap();
@@ -2060,14 +1870,7 @@ mod tests {
 
         let terminal_view = cx
             .add_window(|window, cx| {
-                TerminalView::new(
-                    terminal,
-                    workspace.downgrade(),
-                    None,
-                    project.downgrade(),
-                    window,
-                    cx,
-                )
+                TerminalView::new(terminal, workspace.downgrade(), None, project.downgrade(), window, cx)
             })
             .root(cx)
             .unwrap();
@@ -2090,14 +1893,7 @@ mod tests {
 
         let terminal_view = cx
             .add_window(|window, cx| {
-                TerminalView::new(
-                    terminal,
-                    workspace.downgrade(),
-                    None,
-                    project.downgrade(),
-                    window,
-                    cx,
-                )
+                TerminalView::new(terminal, workspace.downgrade(), None, project.downgrade(), window, cx)
             })
             .root(cx)
             .unwrap();
@@ -2116,9 +1912,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_tab_content_shows_terminal_title_when_custom_title_directly_set_empty(
-        cx: &mut TestAppContext,
-    ) {
+    async fn test_tab_content_shows_terminal_title_when_custom_title_directly_set_empty(cx: &mut TestAppContext) {
         let (project, workspace) = init_test(cx).await;
 
         let terminal = project
@@ -2128,14 +1922,7 @@ mod tests {
 
         let terminal_view = cx
             .add_window(|window, cx| {
-                TerminalView::new(
-                    terminal,
-                    workspace.downgrade(),
-                    None,
-                    project.downgrade(),
-                    window,
-                    cx,
-                )
+                TerminalView::new(terminal, workspace.downgrade(), None, project.downgrade(), window, cx)
             })
             .root(cx)
             .unwrap();

@@ -32,33 +32,26 @@ struct WorktreeRoots {
 }
 
 impl WorktreeRoots {
-    fn new(
-        worktree_store: Entity<WorktreeStore>,
-        worktree: Entity<Worktree>,
-        cx: &mut App,
-    ) -> Entity<Self> {
+    fn new(worktree_store: Entity<WorktreeStore>, worktree: Entity<Worktree>, cx: &mut App) -> Entity<Self> {
         cx.new(|cx| Self {
             roots: RootPathTrie::new(),
             worktree_store,
-            _worktree_subscription: cx.subscribe(&worktree, |this: &mut Self, _, event, cx| {
-                match event {
-                    WorktreeEvent::UpdatedEntries(changes) => {
-                        for (path, _, kind) in changes.iter() {
-                            if kind == &worktree::PathChange::Removed {
-                                let path = TriePath::from(path.as_ref());
-                                this.roots.remove(&path);
-                            }
+            _worktree_subscription: cx.subscribe(&worktree, |this: &mut Self, _, event, cx| match event {
+                WorktreeEvent::UpdatedEntries(changes) => {
+                    for (path, _, kind) in changes.iter() {
+                        if kind == &worktree::PathChange::Removed {
+                            let path = TriePath::from(path.as_ref());
+                            this.roots.remove(&path);
                         }
                     }
-                    WorktreeEvent::UpdatedGitRepositories(_) => {}
-                    WorktreeEvent::DeletedEntry(entry_id) => {
-                        let Some(entry) = this.worktree_store.read(cx).entry_for_id(*entry_id, cx)
-                        else {
-                            return;
-                        };
-                        let path = TriePath::from(entry.path.as_ref());
-                        this.roots.remove(&path);
-                    }
+                }
+                WorktreeEvent::UpdatedGitRepositories(_) => {}
+                WorktreeEvent::DeletedEntry(entry_id) => {
+                    let Some(entry) = this.worktree_store.read(cx).entry_for_id(*entry_id, cx) else {
+                        return;
+                    };
+                    let path = TriePath::from(entry.path.as_ref());
+                    this.roots.remove(&path);
                 }
             }),
         })
@@ -101,11 +94,7 @@ impl ManifestTree {
         let worktree_roots = match self.root_points.entry(*worktree_id) {
             Entry::Occupied(occupied_entry) => occupied_entry.get().clone(),
             Entry::Vacant(vacant_entry) => {
-                let Some(worktree) = self
-                    .worktree_store
-                    .read(cx)
-                    .worktree_for_id(*worktree_id, cx)
-                else {
+                let Some(worktree) = self.worktree_store.read(cx).worktree_for_id(*worktree_id, cx) else {
                     return Default::default();
                 };
                 let roots = WorktreeRoots::new(self.worktree_store.clone(), worktree, cx);
@@ -134,17 +123,11 @@ impl ManifestTree {
             // Some part of the path is unexplored.
             let depth = marked_path
                 .as_ref()
-                .map(|root_path| {
-                    path.strip_prefix(&root_path.path)
-                        .unwrap()
-                        .components()
-                        .count()
-                })
+                .map(|root_path| path.strip_prefix(&root_path.path).unwrap().components().count())
                 .unwrap_or_else(|| path.components().count() + 1);
 
             if depth > 0
-                && let Some(provider) =
-                    ManifestProvidersStore::global(cx).get(manifest_name.borrow())
+                && let Some(provider) = ManifestProvidersStore::global(cx).get(manifest_name.borrow())
             {
                 let root = provider.search(ManifestQuery {
                     path: path.clone(),
@@ -154,8 +137,7 @@ impl ManifestTree {
                 match root {
                     Some(known_root) => worktree_roots.update(cx, |this, _| {
                         let root = TriePath::from(&*known_root);
-                        this.roots
-                            .insert(&root, manifest_name.clone(), LabelPresence::Present);
+                        this.roots.insert(&root, manifest_name.clone(), LabelPresence::Present);
                         current_presence = LabelPresence::Present;
                         marked_path = Some(ProjectPath {
                             worktree_id: *worktree_id,
@@ -189,12 +171,7 @@ impl ManifestTree {
             })
     }
 
-    fn on_worktree_store_event(
-        &mut self,
-        _: Entity<WorktreeStore>,
-        evt: &WorktreeStoreEvent,
-        _: &mut Context<Self>,
-    ) {
+    fn on_worktree_store_event(&mut self, _: Entity<WorktreeStore>, evt: &WorktreeStoreEvent, _: &mut Context<Self>) {
         if let WorktreeStoreEvent::WorktreeRemoved(_, worktree_id) = evt {
             self.root_points.remove(worktree_id);
         }
@@ -213,9 +190,9 @@ impl ManifestQueryDelegate {
 
 impl ManifestDelegate for ManifestQueryDelegate {
     fn exists(&self, path: &RelPath, is_dir: Option<bool>) -> bool {
-        self.worktree.entry_for_path(path).is_some_and(|entry| {
-            is_dir.is_none_or(|is_required_to_be_dir| is_required_to_be_dir == entry.is_dir())
-        })
+        self.worktree
+            .entry_for_path(path)
+            .is_some_and(|entry| is_dir.is_none_or(|is_required_to_be_dir| is_required_to_be_dir == entry.is_dir()))
     }
 
     fn worktree_id(&self) -> WorktreeId {

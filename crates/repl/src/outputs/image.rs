@@ -26,8 +26,7 @@ pub const STANDARD_INDIFFERENT: GeneralPurpose = GeneralPurpose::new(
 
 impl ImageView {
     pub fn from(base64_encoded_data: &str) -> Result<Self> {
-        let filtered =
-            base64_encoded_data.replace(&[' ', '\n', '\t', '\r', '\x0b', '\x0c'][..], "");
+        let filtered = base64_encoded_data.replace(&[' ', '\n', '\t', '\r', '\x0b', '\x0c'][..], "");
         let bytes = STANDARD_INDIFFERENT.decode(filtered)?;
 
         let format = image::guess_format(&bytes)?;

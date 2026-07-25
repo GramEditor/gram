@@ -7,13 +7,13 @@ use anyhow::Result;
 use collections::HashMap;
 use dap::{CompletionItem, CompletionItemType, OutputEvent};
 use editor::{
-    Bias, CompletionProvider, Editor, EditorElement, EditorMode, EditorStyle, ExcerptId,
-    MultiBufferOffset, SizingBehavior,
+    Bias, CompletionProvider, Editor, EditorElement, EditorMode, EditorStyle, ExcerptId, MultiBufferOffset,
+    SizingBehavior,
 };
 use fuzzy::StringMatchCandidate;
 use gpui::{
-    Action as _, AppContext, Context, Corner, Entity, FocusHandle, Focusable, HighlightStyle, Hsla,
-    Render, Subscription, Task, TextStyle, WeakEntity, actions,
+    Action as _, AppContext, Context, Corner, Entity, FocusHandle, Focusable, HighlightStyle, Hsla, Render,
+    Subscription, Task, TextStyle, WeakEntity, actions,
 };
 use language::{Anchor, Buffer, CharScopeContext, CodeLabel, TextBufferSnapshot, ToOffset};
 use menu::{Confirm, SelectNext, SelectPrevious};
@@ -152,17 +152,10 @@ impl Console {
         self.session.read(cx).has_new_output(self.last_token)
     }
 
-    fn add_messages(
-        &mut self,
-        events: Vec<OutputEvent>,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> Task<Result<()>> {
+    fn add_messages(&mut self, events: Vec<OutputEvent>, window: &mut Window, cx: &mut App) -> Task<Result<()>> {
         self.console.update(cx, |_, cx| {
             cx.spawn_in(window, async move |console, cx| {
-                let mut len = console
-                    .update(cx, |this, cx| this.buffer().read(cx).len(cx))?
-                    .0;
+                let mut len = console.update(cx, |this, cx| this.buffer().read(cx).len(cx))?.0;
                 let (output, spans, background_spans) = cx
                     .background_spawn(async move {
                         let mut all_spans = Vec::new();
@@ -173,8 +166,7 @@ impl Console {
                         for event in &events {
                             scratch.clear();
                             let mut ansi_handler = ConsoleHandler::default();
-                            let mut ansi_processor =
-                                ansi::Processor::<ansi::StdSyncHandler>::default();
+                            let mut ansi_processor = ansi::Processor::<ansi::StdSyncHandler>::default();
 
                             let trimmed_output = event.output.trim_end();
                             let _ = writeln!(&mut scratch, "{trimmed_output}");
@@ -182,8 +174,7 @@ impl Console {
                             let output = std::mem::take(&mut ansi_handler.output);
                             to_insert.extend(output.chars());
                             let mut spans = std::mem::take(&mut ansi_handler.spans);
-                            let mut background_spans =
-                                std::mem::take(&mut ansi_handler.background_spans);
+                            let mut background_spans = std::mem::take(&mut ansi_handler.background_spans);
                             if ansi_handler.current_range_start < output.len() {
                                 spans.push((
                                     ansi_handler.current_range_start..output.len(),
@@ -231,19 +222,10 @@ impl Console {
                         let range = buffer.anchor_after(MultiBufferOffset(range.start))
                             ..buffer.anchor_before(MultiBufferOffset(range.end));
                         let style = HighlightStyle {
-                            color: Some(terminal_view::terminal_element::convert_color(
-                                &color,
-                                cx.theme(),
-                            )),
+                            color: Some(terminal_view::terminal_element::convert_color(&color, cx.theme())),
                             ..Default::default()
                         };
-                        console.highlight_text_key::<ConsoleAnsiHighlight>(
-                            start_offset,
-                            vec![range],
-                            style,
-                            false,
-                            cx,
-                        );
+                        console.highlight_text_key::<ConsoleAnsiHighlight>(start_offset, vec![range], style, false, cx);
                     }
 
                     for (range, color) in background_spans {
@@ -268,12 +250,7 @@ impl Console {
         })
     }
 
-    pub fn watch_expression(
-        &mut self,
-        _: &WatchExpression,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn watch_expression(&mut self, _: &WatchExpression, window: &mut Window, cx: &mut Context<Self>) {
         let expression = self.query_bar.update(cx, |editor, cx| {
             let expression = editor.text(cx);
             cx.defer_in(window, |editor, window, cx| {
@@ -296,9 +273,7 @@ impl Console {
                 .detach();
 
             if let Some(stack_frame_id) = self.stack_frame_list.read(cx).opened_stack_frame_id() {
-                session
-                    .add_watcher(expression.into(), stack_frame_id, cx)
-                    .detach();
+                session.add_watcher(expression.into(), stack_frame_id, cx).detach();
             }
         });
     }
@@ -367,10 +342,7 @@ impl Console {
                     ),
             )
             .when(
-                self.stack_frame_list
-                    .read(cx)
-                    .opened_stack_frame_id()
-                    .is_some(),
+                self.stack_frame_list.read(cx).opened_stack_frame_id().is_some(),
                 |this| {
                     this.menu(move |window, cx| {
                         Some(ContextMenu::build(window, cx, |context_menu, _, _| {
@@ -483,27 +455,18 @@ impl Render for Console {
                         .bg(cx.theme().colors().editor_background)
                         .child(self.render_query_bar(cx))
                         .child(SplitButton::new(
-                            ui::ButtonLike::new_rounded_all(ElementId::Name(
-                                "split-button-left-confirm-button".into(),
-                            ))
-                            .on_click(move |_, window, cx| {
-                                window.dispatch_action(Box::new(Confirm), cx)
-                            })
-                            .layer(ui::ElevationIndex::ModalSurface)
-                            .size(ui::ButtonSize::Compact)
-                            .child(Label::new("Evaluate"))
-                            .tooltip({
-                                let query_focus_handle = query_focus_handle.clone();
+                            ui::ButtonLike::new_rounded_all(ElementId::Name("split-button-left-confirm-button".into()))
+                                .on_click(move |_, window, cx| window.dispatch_action(Box::new(Confirm), cx))
+                                .layer(ui::ElevationIndex::ModalSurface)
+                                .size(ui::ButtonSize::Compact)
+                                .child(Label::new("Evaluate"))
+                                .tooltip({
+                                    let query_focus_handle = query_focus_handle.clone();
 
-                                move |_window, cx| {
-                                    Tooltip::for_action_in(
-                                        "Evaluate",
-                                        &Confirm,
-                                        &query_focus_handle,
-                                        cx,
-                                    )
-                                }
-                            }),
+                                    move |_window, cx| {
+                                        Tooltip::for_action_in("Evaluate", &Confirm, &query_focus_handle, cx)
+                                    }
+                                }),
                             self.render_submit_menu(
                                 ElementId::Name("split-button-right-confirm-button".into()),
                                 Some(query_focus_handle.clone()),
@@ -605,9 +568,10 @@ impl ConsoleQueryBarCompletionProvider {
             let mut variables = HashMap::default();
             let mut string_matches = Vec::default();
 
-            for variable in console.variable_list.update(cx, |variable_list, cx| {
-                variable_list.completion_variables(cx)
-            }) {
+            for variable in console
+                .variable_list
+                .update(cx, |variable_list, cx| variable_list.completion_variables(cx))
+            {
                 if let Some(evaluate_name) = &variable.evaluate_name
                     && variables
                         .insert(evaluate_name.clone(), variable.value.clone())
@@ -668,9 +632,7 @@ impl ConsoleQueryBarCompletionProvider {
                         match_start: None,
                         snippet_deduplication_key: None,
                         icon_path: None,
-                        documentation: Some(CompletionDocumentation::MultiLineMarkdown(
-                            variable_value.into(),
-                        )),
+                        documentation: Some(CompletionDocumentation::MultiLineMarkdown(variable_value.into())),
                         confirm: None,
                         source: project::CompletionSource::Custom,
                         insert_text_mode: None,
@@ -712,12 +674,8 @@ impl ConsoleQueryBarCompletionProvider {
         match completion_type {
             CompletionItemType::Field | CompletionItemType::Property => 0,
             CompletionItemType::Variable | CompletionItemType::Value => 1,
-            CompletionItemType::Method
-            | CompletionItemType::Function
-            | CompletionItemType::Constructor => 2,
-            CompletionItemType::Class
-            | CompletionItemType::Interface
-            | CompletionItemType::Module => 3,
+            CompletionItemType::Method | CompletionItemType::Function | CompletionItemType::Constructor => 2,
+            CompletionItemType::Class | CompletionItemType::Interface | CompletionItemType::Module => 3,
             _ => 4,
         }
     }
@@ -726,9 +684,7 @@ impl ConsoleQueryBarCompletionProvider {
         completion_item.sort_text.clone().unwrap_or_else(|| {
             format!(
                 "{:03}_{}",
-                Self::completion_type_score(
-                    completion_item.type_.unwrap_or(CompletionItemType::Text)
-                ),
+                Self::completion_type_score(completion_item.type_.unwrap_or(CompletionItemType::Text)),
                 completion_item.label.to_ascii_lowercase()
             )
         })
@@ -745,10 +701,7 @@ impl ConsoleQueryBarCompletionProvider {
             console.session.update(cx, |state, cx| {
                 let frame_id = console.stack_frame_list.read(cx).opened_stack_frame_id();
 
-                state.completions(
-                    CompletionsQuery::new(buffer.read(cx), buffer_position, frame_id),
-                    cx,
-                )
+                state.completions(CompletionsQuery::new(buffer.read(cx), buffer_position, frame_id), cx)
             })
         });
         let snapshot = buffer.read(cx).text_snapshot();
@@ -761,11 +714,7 @@ impl ConsoleQueryBarCompletionProvider {
                 .into_iter()
                 .map(|completion| {
                     let sort_text = Self::completion_item_sort_text(&completion);
-                    let new_text = completion
-                        .text
-                        .as_ref()
-                        .unwrap_or(&completion.label)
-                        .to_owned();
+                    let new_text = completion.text.as_ref().unwrap_or(&completion.label).to_owned();
 
                     project::Completion {
                         replace_range: Self::replace_range_for_completion(
@@ -777,9 +726,9 @@ impl ConsoleQueryBarCompletionProvider {
                         new_text,
                         label: CodeLabel::plain(completion.label, None),
                         icon_path: None,
-                        documentation: completion.detail.map(|detail| {
-                            CompletionDocumentation::MultiLineMarkdown(detail.into())
-                        }),
+                        documentation: completion
+                            .detail
+                            .map(|detail| CompletionDocumentation::MultiLineMarkdown(detail.into())),
                         match_start: None,
                         snippet_deduplication_key: None,
                         confirm: None,
@@ -812,10 +761,8 @@ struct ConsoleHandler {
 
 impl ConsoleHandler {
     fn break_span(&mut self, color: Option<ansi::Color>) {
-        self.spans.push((
-            self.current_range_start..self.output.len(),
-            self.current_color,
-        ));
+        self.spans
+            .push((self.current_range_start..self.output.len(), self.current_color));
         self.current_color = color;
         self.current_range_start = self.pos;
     }
@@ -842,8 +789,7 @@ impl ansi::Handler for ConsoleHandler {
     }
 
     fn put_tab(&mut self, count: u16) {
-        self.output
-            .extend(std::iter::repeat('\t').take(count as usize));
+        self.output.extend(std::iter::repeat('\t').take(count as usize));
         self.pos += count as usize;
     }
 
@@ -954,20 +900,11 @@ mod tests {
     use language::Point;
 
     #[track_caller]
-    fn assert_completion_range(
-        input: &str,
-        expect: &str,
-        replacement: &str,
-        cx: &mut EditorTestContext,
-    ) {
+    fn assert_completion_range(input: &str, expect: &str, replacement: &str, cx: &mut EditorTestContext) {
         cx.set_state(input);
 
-        let buffer_position = cx.editor(|editor, _, cx| {
-            editor
-                .selections
-                .newest::<Point>(&editor.display_snapshot(cx))
-                .start
-        });
+        let buffer_position =
+            cx.editor(|editor, _, cx| editor.selections.newest::<Point>(&editor.display_snapshot(cx)).start);
 
         let snapshot = &cx.buffer_snapshot();
 
@@ -1001,11 +938,6 @@ mod tests {
         assert_completion_range("resˇ", "result", "result", &mut cx);
         assert_completion_range("print(resˇ)", "print(result)", "result", &mut cx);
         assert_completion_range("$author->nˇ", "$author->name", "$author->name", &mut cx);
-        assert_completion_range(
-            "$author->books[ˇ",
-            "$author->books[0]",
-            "$author->books[0]",
-            &mut cx,
-        );
+        assert_completion_range("$author->books[ˇ", "$author->books[0]", "$author->books[0]", &mut cx);
     }
 }

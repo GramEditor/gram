@@ -1,9 +1,8 @@
 use crate::{
     LocationLink,
     lsp_command::{
-        LspCommand, file_path_to_lsp_url, location_link_from_lsp, location_link_from_proto,
-        location_link_to_proto, location_links_from_lsp, location_links_from_proto,
-        location_links_to_proto,
+        LspCommand, file_path_to_lsp_url, location_link_from_lsp, location_link_from_proto, location_link_to_proto,
+        location_links_from_lsp, location_links_from_proto, location_links_to_proto,
     },
     lsp_store::LspStore,
     make_lsp_text_document_position, make_text_document_identifier,
@@ -72,13 +71,7 @@ impl LspCommand for ExpandMacro {
         true
     }
 
-    fn to_lsp(
-        &self,
-        path: &Path,
-        _: &Buffer,
-        _: &Arc<LanguageServer>,
-        _: &App,
-    ) -> Result<ExpandMacroParams> {
+    fn to_lsp(&self, path: &Path, _: &Buffer, _: &Arc<LanguageServer>, _: &App) -> Result<ExpandMacroParams> {
         Ok(ExpandMacroParams {
             text_document: make_text_document_identifier(path)?,
             position: point_to_lsp(self.position),
@@ -105,9 +98,7 @@ impl LspCommand for ExpandMacro {
         proto::LspExtExpandMacro {
             project_id,
             buffer_id: buffer.remote_id().into(),
-            position: Some(language::proto::serialize_anchor(
-                &buffer.anchor_before(self.position),
-            )),
+            position: Some(language::proto::serialize_anchor(&buffer.anchor_before(self.position))),
         }
     }
 
@@ -204,13 +195,7 @@ impl LspCommand for OpenDocs {
         true
     }
 
-    fn to_lsp(
-        &self,
-        path: &Path,
-        _: &Buffer,
-        _: &Arc<LanguageServer>,
-        _: &App,
-    ) -> Result<OpenDocsParams> {
+    fn to_lsp(&self, path: &Path, _: &Buffer, _: &Arc<LanguageServer>, _: &App) -> Result<OpenDocsParams> {
         Ok(OpenDocsParams {
             text_document: lsp::TextDocumentIdentifier {
                 uri: lsp::Uri::from_file_path(path).unwrap(),
@@ -239,9 +224,7 @@ impl LspCommand for OpenDocs {
         proto::LspExtOpenDocs {
             project_id,
             buffer_id: buffer.remote_id().into(),
-            position: Some(language::proto::serialize_anchor(
-                &buffer.anchor_before(self.position),
-            )),
+            position: Some(language::proto::serialize_anchor(&buffer.anchor_before(self.position))),
         }
     }
 
@@ -338,16 +321,8 @@ impl LspCommand for SwitchSourceHeader {
         true
     }
 
-    fn to_lsp(
-        &self,
-        path: &Path,
-        _: &Buffer,
-        _: &Arc<LanguageServer>,
-        _: &App,
-    ) -> Result<SwitchSourceHeaderParams> {
-        Ok(SwitchSourceHeaderParams(make_text_document_identifier(
-            path,
-        )?))
+    fn to_lsp(&self, path: &Path, _: &Buffer, _: &Arc<LanguageServer>, _: &App) -> Result<SwitchSourceHeaderParams> {
+        Ok(SwitchSourceHeaderParams(make_text_document_identifier(path)?))
     }
 
     async fn response_from_lsp(
@@ -452,9 +427,7 @@ impl LspCommand for GoToParentModule {
         proto::LspExtGoToParentModule {
             project_id,
             buffer_id: buffer.remote_id().to_proto(),
-            position: Some(language::proto::serialize_anchor(
-                &buffer.anchor_before(self.position),
-            )),
+            position: Some(language::proto::serialize_anchor(&buffer.anchor_before(self.position))),
         }
     }
 
@@ -598,13 +571,7 @@ impl LspCommand for GetLspRunnables {
         true
     }
 
-    fn to_lsp(
-        &self,
-        path: &Path,
-        buffer: &Buffer,
-        _: &Arc<LanguageServer>,
-        _: &App,
-    ) -> Result<RunnablesParams> {
+    fn to_lsp(&self, path: &Path, buffer: &Buffer, _: &Arc<LanguageServer>, _: &App) -> Result<RunnablesParams> {
         let url = file_path_to_lsp_url(path)?;
         Ok(RunnablesParams {
             text_document: lsp::TextDocumentIdentifier::new(url),
@@ -626,10 +593,9 @@ impl LspCommand for GetLspRunnables {
 
         for runnable in lsp_runnables {
             let location = match runnable.location {
-                Some(location) => Some(
-                    location_link_from_lsp(location, &lsp_store, &buffer, server_id, &mut cx)
-                        .await?,
-                ),
+                Some(location) => {
+                    Some(location_link_from_lsp(location, &lsp_store, &buffer, server_id, &mut cx).await?)
+                }
                 None => None,
             };
             let mut task_template = TaskTemplate::default();
@@ -638,23 +604,14 @@ impl LspCommand for GetLspRunnables {
                 RunnableArgs::Cargo(cargo) => {
                     match cargo.override_cargo {
                         Some(override_cargo) => {
-                            let mut override_parts =
-                                override_cargo.split(" ").map(|s| s.to_string());
-                            task_template.command = override_parts
-                                .next()
-                                .unwrap_or_else(|| override_cargo.clone());
+                            let mut override_parts = override_cargo.split(" ").map(|s| s.to_string());
+                            task_template.command = override_parts.next().unwrap_or_else(|| override_cargo.clone());
                             task_template.args.extend(override_parts);
                         }
                         None => task_template.command = "cargo".to_string(),
                     };
                     task_template.env = cargo.environment;
-                    task_template.cwd = Some(
-                        cargo
-                            .workspace_root
-                            .unwrap_or(cargo.cwd)
-                            .to_string_lossy()
-                            .to_string(),
-                    );
+                    task_template.cwd = Some(cargo.workspace_root.unwrap_or(cargo.cwd).to_string_lossy().to_string());
                     task_template.args.extend(cargo.cargo_args);
                     if !cargo.executable_args.is_empty() {
                         let shell_kind = task_template.shell.shell_kind(cfg!(windows));
@@ -682,9 +639,7 @@ impl LspCommand for GetLspRunnables {
                                 // We cannot escape all shell arguments unconditionally, as we use this for ssh commands, which may involve paths starting with `~`.
                                 // That bit is not auto-expanded when using single quotes.
                                 // Escape extra cargo args unconditionally as those are unlikely to contain `~`.
-                                .flat_map(|extra_arg| {
-                                    shell_kind.try_quote(&extra_arg).map(|s| s.to_string())
-                                }),
+                                .flat_map(|extra_arg| shell_kind.try_quote(&extra_arg).map(|s| s.to_string())),
                         );
                     }
                 }
@@ -718,10 +673,7 @@ impl LspCommand for GetLspRunnables {
     ) -> Result<Self> {
         let buffer_id = Self::buffer_id_from_proto(&message)?;
         let position = message.position.and_then(deserialize_anchor);
-        Ok(Self {
-            buffer_id,
-            position,
-        })
+        Ok(Self { buffer_id, position })
     }
 
     fn response_to_proto(
@@ -736,8 +688,7 @@ impl LspCommand for GetLspRunnables {
                 .runnables
                 .into_iter()
                 .map(|(location, task_template)| proto::LspRunnable {
-                    location: location
-                        .map(|location| location_link_to_proto(location, lsp_store, peer_id, cx)),
+                    location: location.map(|location| location_link_to_proto(location, lsp_store, peer_id, cx)),
                     task_template: serde_json::to_vec(&task_template).unwrap(),
                 })
                 .collect(),
@@ -751,15 +702,11 @@ impl LspCommand for GetLspRunnables {
         _: Entity<Buffer>,
         mut cx: AsyncApp,
     ) -> Result<LspRunnables> {
-        let mut runnables = LspRunnables {
-            runnables: Vec::new(),
-        };
+        let mut runnables = LspRunnables { runnables: Vec::new() };
 
         for lsp_runnable in message.runnables {
             let location = match lsp_runnable.location {
-                Some(location) => {
-                    Some(location_link_from_proto(location, lsp_store.clone(), &mut cx).await?)
-                }
+                Some(location) => Some(location_link_from_proto(location, lsp_store.clone(), &mut cx).await?),
                 None => None,
             };
             let task_template = serde_json::from_slice(&lsp_runnable.task_template)

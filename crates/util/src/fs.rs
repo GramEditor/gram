@@ -55,9 +55,7 @@ where
             if let Some(entry) = entry.log_err() {
                 let entry_path = entry.path();
 
-                if let Some(file_name) = entry_path
-                    .file_name()
-                    .map(|file_name| file_name.to_string_lossy())
+                if let Some(file_name) = entry_path.file_name().map(|file_name| file_name.to_string_lossy())
                     && predicate(&file_name)
                 {
                     return Some(entry_path);
@@ -69,10 +67,7 @@ where
     None
 }
 
-pub async fn move_folder_files_to_folder<P: AsRef<Path>>(
-    source_path: P,
-    target_path: P,
-) -> Result<()> {
+pub async fn move_folder_files_to_folder<P: AsRef<Path>>(source_path: P, target_path: P) -> Result<()> {
     if !target_path.as_ref().is_dir() {
         bail!("Folder not found or is not a directory");
     }
@@ -95,11 +90,7 @@ pub async fn move_folder_files_to_folder<P: AsRef<Path>>(
 /// Set the permissions for the given path so that the file becomes executable.
 /// This is a noop for non-unix platforms.
 pub async fn make_file_executable(path: &Path) -> std::io::Result<()> {
-    fs::set_permissions(
-        path,
-        <fs::Permissions as fs::unix::PermissionsExt>::from_mode(0o755),
-    )
-    .await
+    fs::set_permissions(path, <fs::Permissions as fs::unix::PermissionsExt>::from_mode(0o755)).await
 }
 
 #[cfg(not(unix))]

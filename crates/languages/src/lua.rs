@@ -62,9 +62,7 @@ impl LspInstaller for LuaLspAdapter {
         _: Option<Toolchain>,
         _: &AsyncApp,
     ) -> Option<LanguageServerBinary> {
-        let path = delegate
-            .which(with_exe("lua-language-server").as_ref())
-            .await?;
+        let path = delegate.which(with_exe("lua-language-server").as_ref()).await?;
         Some(LanguageServerBinary {
             path,
             arguments: vec![],
@@ -78,19 +76,11 @@ impl LspInstaller for LuaLspAdapter {
         pre_release: bool,
         _cx: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        let release = latest_github_release(
-            "LuaLS/lua-language-server",
-            pre_release,
-            true,
-            delegate.http_client(),
-        )
-        .await?;
+        let release =
+            latest_github_release("LuaLS/lua-language-server", pre_release, true, delegate.http_client()).await?;
 
         let Some(binary_name) = Self::binary_name() else {
-            return Err(anyhow!(
-                "unsupported architecture: {}",
-                std::env::consts::ARCH
-            ));
+            return Err(anyhow!("unsupported architecture: {}", std::env::consts::ARCH));
         };
 
         let extension = match Self::ASSET_KIND {
@@ -140,8 +130,7 @@ impl LspInstaller for LuaLspAdapter {
         } = version;
 
         let destination_path = container_dir.join(format!("lua-language-server-{version_name}"));
-        let server_path = Self::server_path(&destination_path)
-            .ok_or_else(|| anyhow!("Unsupported architecture"))?;
+        let server_path = Self::server_path(&destination_path).ok_or_else(|| anyhow!("Unsupported architecture"))?;
 
         let binary = LanguageServerBinary {
             path: server_path.clone(),
@@ -174,11 +163,9 @@ impl LspInstaller for LuaLspAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        match find_cached_server_binary(
-            &container_dir,
-            Some("lua-language-server-"),
-            async |path| Self::server_path(path),
-        )
+        match find_cached_server_binary(&container_dir, Some("lua-language-server-"), async |path| {
+            Self::server_path(path)
+        })
         .await
         {
             Some(path) => Some(LanguageServerBinary {
@@ -223,12 +210,7 @@ impl LspAdapter for LuaLspAdapter {
         }
     }
 
-    async fn label_for_symbol(
-        &self,
-        name: &str,
-        kind: SymbolKind,
-        language: &Arc<Language>,
-    ) -> Option<CodeLabel> {
+    async fn label_for_symbol(&self, name: &str, kind: SymbolKind, language: &Arc<Language>) -> Option<CodeLabel> {
         let suffix = match kind {
             SymbolKind::METHOD => "()",
             _ => "",

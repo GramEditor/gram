@@ -60,10 +60,7 @@ pub trait HttpClient: 'static + Send + Sync {
 
     fn proxy(&self) -> Option<&Url>;
 
-    fn send(
-        &self,
-        req: http::Request<AsyncBody>,
-    ) -> BoxFuture<'static, anyhow::Result<Response<AsyncBody>>>;
+    fn send(&self, req: http::Request<AsyncBody>) -> BoxFuture<'static, anyhow::Result<Response<AsyncBody>>>;
 
     fn get(
         &self,
@@ -86,11 +83,7 @@ pub trait HttpClient: 'static + Send + Sync {
         }
     }
 
-    fn post_json(
-        &self,
-        uri: &str,
-        body: AsyncBody,
-    ) -> BoxFuture<'static, anyhow::Result<Response<AsyncBody>>> {
+    fn post_json(&self, uri: &str, body: AsyncBody) -> BoxFuture<'static, anyhow::Result<Response<AsyncBody>>> {
         let request = Builder::new()
             .uri(uri)
             .method(Method::POST)
@@ -135,10 +128,7 @@ impl HttpClientWithProxy {
 }
 
 impl HttpClient for HttpClientWithProxy {
-    fn send(
-        &self,
-        req: Request<AsyncBody>,
-    ) -> BoxFuture<'static, anyhow::Result<Response<AsyncBody>>> {
+    fn send(&self, req: Request<AsyncBody>) -> BoxFuture<'static, anyhow::Result<Response<AsyncBody>>> {
         self.client.send(req)
     }
 
@@ -179,10 +169,7 @@ impl HttpClientWithUrl {
 }
 
 impl HttpClient for HttpClientWithUrl {
-    fn send(
-        &self,
-        req: Request<AsyncBody>,
-    ) -> BoxFuture<'static, anyhow::Result<Response<AsyncBody>>> {
+    fn send(&self, req: Request<AsyncBody>) -> BoxFuture<'static, anyhow::Result<Response<AsyncBody>>> {
         self.client.send(req)
     }
 
@@ -231,10 +218,7 @@ impl BlockedHttpClient {
 }
 
 impl HttpClient for BlockedHttpClient {
-    fn send(
-        &self,
-        _req: Request<AsyncBody>,
-    ) -> BoxFuture<'static, anyhow::Result<Response<AsyncBody>>> {
+    fn send(&self, _req: Request<AsyncBody>) -> BoxFuture<'static, anyhow::Result<Response<AsyncBody>>> {
         Box::pin(async {
             Err(std::io::Error::new(
                 std::io::ErrorKind::PermissionDenied,
@@ -259,12 +243,8 @@ impl HttpClient for BlockedHttpClient {
 }
 
 #[cfg(feature = "test-support")]
-type FakeHttpHandler = Arc<
-    dyn Fn(Request<AsyncBody>) -> BoxFuture<'static, anyhow::Result<Response<AsyncBody>>>
-        + Send
-        + Sync
-        + 'static,
->;
+type FakeHttpHandler =
+    Arc<dyn Fn(Request<AsyncBody>) -> BoxFuture<'static, anyhow::Result<Response<AsyncBody>>> + Send + Sync + 'static>;
 
 #[cfg(feature = "test-support")]
 pub struct FakeHttpClient {
@@ -291,21 +271,11 @@ impl FakeHttpClient {
     }
 
     pub fn with_404_response() -> Arc<HttpClientWithUrl> {
-        Self::create(|_| async move {
-            Ok(Response::builder()
-                .status(404)
-                .body(Default::default())
-                .unwrap())
-        })
+        Self::create(|_| async move { Ok(Response::builder().status(404).body(Default::default()).unwrap()) })
     }
 
     pub fn with_200_response() -> Arc<HttpClientWithUrl> {
-        Self::create(|_| async move {
-            Ok(Response::builder()
-                .status(200)
-                .body(Default::default())
-                .unwrap())
-        })
+        Self::create(|_| async move { Ok(Response::builder().status(200).body(Default::default()).unwrap()) })
     }
 
     pub fn replace_handler<Fut, F>(&self, new_handler: F)
@@ -315,9 +285,7 @@ impl FakeHttpClient {
     {
         let mut handler = self.handler.lock();
         let old_handler = handler.take().unwrap();
-        *handler = Some(Arc::new(move |req| {
-            Box::pin(new_handler(old_handler.clone(), req))
-        }));
+        *handler = Some(Arc::new(move |req| Box::pin(new_handler(old_handler.clone(), req))));
     }
 }
 
@@ -330,10 +298,7 @@ impl fmt::Debug for FakeHttpClient {
 
 #[cfg(feature = "test-support")]
 impl HttpClient for FakeHttpClient {
-    fn send(
-        &self,
-        req: Request<AsyncBody>,
-    ) -> BoxFuture<'static, anyhow::Result<Response<AsyncBody>>> {
+    fn send(&self, req: Request<AsyncBody>) -> BoxFuture<'static, anyhow::Result<Response<AsyncBody>>> {
         ((self.handler.lock().as_ref().unwrap())(req)) as _
     }
 

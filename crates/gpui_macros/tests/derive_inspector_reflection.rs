@@ -88,9 +88,7 @@ fn test_derive_inspector_reflection() {
     let tripled = find_method::<Number>("triple").unwrap().invoke(num.clone());
     assert_eq!(tripled, Number(15));
 
-    let incremented = find_method::<Number>("increment")
-        .unwrap()
-        .invoke(num.clone());
+    let incremented = find_method::<Number>("increment").unwrap().invoke(num.clone());
     assert_eq!(incremented, Number(6));
 
     let quadrupled = find_method::<Number>("quadruple").unwrap().invoke(num);

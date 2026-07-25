@@ -15,9 +15,7 @@ fn to_tab_point_benchmark(c: &mut Criterion) {
 
     let create_tab_map = |length: usize| {
         let mut rng = StdRng::seed_from_u64(1);
-        let text = RandomCharIter::new(&mut rng)
-            .take(length)
-            .collect::<String>();
+        let text = RandomCharIter::new(&mut rng).take(length).collect::<String>();
         let buffer = cx.update(|cx| MultiBuffer::build_simple(&text, cx));
 
         let buffer_snapshot = cx.read(|cx| buffer.read(cx).snapshot(cx));
@@ -61,9 +59,7 @@ fn to_fold_point_benchmark(c: &mut Criterion) {
 
     let create_tab_map = |length: usize| {
         let mut rng = StdRng::seed_from_u64(1);
-        let text = RandomCharIter::new(&mut rng)
-            .take(length)
-            .collect::<String>();
+        let text = RandomCharIter::new(&mut rng).take(length).collect::<String>();
         let buffer = cx.update(|cx| MultiBuffer::build_simple(&text, cx));
 
         let buffer_snapshot = cx.read(|cx| buffer.read(cx).snapshot(cx));

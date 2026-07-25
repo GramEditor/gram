@@ -39,12 +39,7 @@ impl Vim {
         }
     }
 
-    pub(crate) fn create_visual_marks(
-        &mut self,
-        mode: Mode,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub(crate) fn create_visual_marks(&mut self, mode: Mode, window: &mut Window, cx: &mut Context<Self>) {
         let mut starts = vec![];
         let mut ends = vec![];
         let mut reversed = vec![];
@@ -159,23 +154,16 @@ impl Vim {
                             .map(|p| {
                                 if line {
                                     let point = p.to_display_point(&map.display_snapshot);
-                                    motion::first_non_whitespace(
-                                        &map.display_snapshot,
-                                        false,
-                                        point,
-                                    )
-                                    .to_point(&map.display_snapshot)
+                                    motion::first_non_whitespace(&map.display_snapshot, false, point)
+                                        .to_point(&map.display_snapshot)
                                 } else {
                                     p
                                 }
                             })
                             .collect();
-                        editor.change_selections(
-                            SelectionEffects::no_nav_history(),
-                            window,
-                            cx,
-                            |s| s.select_ranges(points.into_iter().map(|p| p..p)),
-                        )
+                        editor.change_selections(SelectionEffects::no_nav_history(), window, cx, |s| {
+                            s.select_ranges(points.into_iter().map(|p| p..p))
+                        })
                     })
                 }
             })
@@ -195,9 +183,7 @@ impl Vim {
             self.pop_operator(window, cx);
         }
         let mark = self
-            .update_editor(cx, |vim, editor, cx| {
-                vim.get_mark(&text, editor, window, cx)
-            })
+            .update_editor(cx, |vim, editor, cx| vim.get_mark(&text, editor, window, cx))
             .flatten();
         let anchors = match mark {
             None => None,
@@ -220,21 +206,13 @@ impl Vim {
         let is_active_operator = self.active_operator().is_some();
         if is_active_operator {
             if let Some(anchor) = anchors.last() {
-                self.motion(
-                    Motion::Jump {
-                        anchor: *anchor,
-                        line,
-                    },
-                    window,
-                    cx,
-                )
+                self.motion(Motion::Jump { anchor: *anchor, line }, window, cx)
             }
         } else {
             // Save the last anchor so as to jump to it later.
             let anchor: Option<Anchor> = anchors.last_mut().map(|anchor| *anchor);
-            let should_jump = self.mode == Mode::Visual
-                || self.mode == Mode::VisualLine
-                || self.mode == Mode::VisualBlock;
+            let should_jump =
+                self.mode == Mode::Visual || self.mode == Mode::VisualLine || self.mode == Mode::VisualBlock;
 
             self.update_editor(cx, |_, editor, cx| {
                 let map = editor.snapshot(window, cx);
@@ -255,9 +233,7 @@ impl Vim {
                 }
 
                 if !should_jump && !ranges.is_empty() {
-                    editor.change_selections(Default::default(), window, cx, |s| {
-                        s.select_anchor_ranges(ranges)
-                    });
+                    editor.change_selections(Default::default(), window, cx, |s| s.select_anchor_ranges(ranges));
                 }
             });
 
@@ -296,13 +272,7 @@ impl Vim {
         });
     }
 
-    pub fn get_mark(
-        &self,
-        mut name: &str,
-        editor: &mut Editor,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> Option<Mark> {
+    pub fn get_mark(&self, mut name: &str, editor: &mut Editor, window: &mut Window, cx: &mut App) -> Option<Mark> {
         if name == "`" {
             name = "'";
         }
@@ -335,13 +305,7 @@ impl Vim {
         })
     }
 
-    pub fn delete_mark(
-        &self,
-        name: String,
-        editor: &mut Editor,
-        window: &mut Window,
-        cx: &mut App,
-    ) {
+    pub fn delete_mark(&self, name: String, editor: &mut Editor, window: &mut Window, cx: &mut App) {
         let Some(workspace) = self.workspace(window) else {
             return;
         };
@@ -360,11 +324,7 @@ impl Vim {
     }
 }
 
-pub fn jump_motion(
-    map: &DisplaySnapshot,
-    anchor: Anchor,
-    line: bool,
-) -> (DisplayPoint, SelectionGoal) {
+pub fn jump_motion(map: &DisplaySnapshot, anchor: Anchor, line: bool) -> (DisplayPoint, SelectionGoal) {
     let mut point = anchor.to_display_point(map);
     if line {
         point = motion::first_non_whitespace(map, false, point)
@@ -413,12 +373,7 @@ mod test {
 
         let _ = cx
             .workspace(|workspace, window, cx| {
-                workspace.open_abs_path(
-                    path!("/first.rs").into(),
-                    OpenOptions::default(),
-                    window,
-                    cx,
-                )
+                workspace.open_abs_path(path!("/first.rs").into(), OpenOptions::default(), window, cx)
             })
             .await;
 
@@ -426,12 +381,7 @@ mod test {
 
         let _ = cx
             .workspace(|workspace, window, cx| {
-                workspace.open_abs_path(
-                    path!("/second.rs").into(),
-                    OpenOptions::default(),
-                    window,
-                    cx,
-                )
+                workspace.open_abs_path(path!("/second.rs").into(), OpenOptions::default(), window, cx)
             })
             .await;
 
@@ -452,12 +402,7 @@ mod test {
         cx.workspace(|workspace, _, cx| {
             let active_editor = workspace.active_item_as::<Editor>(cx).unwrap();
 
-            let buffer = active_editor
-                .read(cx)
-                .buffer()
-                .read(cx)
-                .as_singleton()
-                .unwrap();
+            let buffer = active_editor.read(cx).buffer().read(cx).as_singleton().unwrap();
 
             let file = buffer.read(cx).file().unwrap();
             let file_path = file.as_local().unwrap().abs_path(cx);

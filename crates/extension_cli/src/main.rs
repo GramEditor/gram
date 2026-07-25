@@ -162,15 +162,11 @@ async fn copy_extension_resources(
     fs::create_dir_all(output_dir).context("failed to create output dir")?;
 
     let manifest_toml = toml::to_string(&manifest).context("failed to serialize manifest")?;
-    fs::write(output_dir.join("extension.toml"), &manifest_toml)
-        .context("failed to write extension.toml")?;
+    fs::write(output_dir.join("extension.toml"), &manifest_toml).context("failed to write extension.toml")?;
 
     if manifest.lib.kind.is_some() {
-        fs::copy(
-            extension_path.join("extension.wasm"),
-            output_dir.join("extension.wasm"),
-        )
-        .context("failed to copy extension.wasm")?;
+        fs::copy(extension_path.join("extension.wasm"), output_dir.join("extension.wasm"))
+            .context("failed to copy extension.wasm")?;
     }
 
     if !manifest.grammars.is_empty() {
@@ -206,15 +202,9 @@ async fn copy_extension_resources(
         for icon_theme_path in &manifest.icon_themes {
             fs::copy(
                 extension_path.join(icon_theme_path),
-                output_icon_themes_dir.join(
-                    icon_theme_path
-                        .file_name()
-                        .context("invalid icon theme path")?,
-                ),
+                output_icon_themes_dir.join(icon_theme_path.file_name().context("invalid icon theme path")?),
             )
-            .with_context(|| {
-                format!("failed to copy icon theme '{}'", icon_theme_path.display())
-            })?;
+            .with_context(|| format!("failed to copy icon theme '{}'", icon_theme_path.display()))?;
         }
 
         let output_icons_dir = output_dir.join("icons");
@@ -239,17 +229,14 @@ async fn copy_extension_resources(
             copy_recursive(
                 fs.as_ref(),
                 &extension_path.join(language_path),
-                &output_languages_dir
-                    .join(language_path.file_name().context("invalid language path")?),
+                &output_languages_dir.join(language_path.file_name().context("invalid language path")?),
                 CopyOptions {
                     overwrite: true,
                     ignore_if_exists: false,
                 },
             )
             .await
-            .with_context(|| {
-                format!("failed to copy language dir '{}'", language_path.display())
-            })?;
+            .with_context(|| format!("failed to copy language dir '{}'", language_path.display()))?;
         }
     }
 
@@ -274,12 +261,7 @@ async fn copy_extension_resources(
                 },
             )
             .await
-            .with_context(|| {
-                format!(
-                    "failed to copy debug adapter schema '{}'",
-                    schema_path.display()
-                )
-            })?;
+            .with_context(|| format!("failed to copy debug adapter schema '{}'", schema_path.display()))?;
         }
     }
 
@@ -369,23 +351,14 @@ fn test_languages(
     Ok(())
 }
 
-async fn test_themes(
-    manifest: &ExtensionManifest,
-    extension_path: &Path,
-    fs: Arc<dyn Fs>,
-) -> Result<()> {
+async fn test_themes(manifest: &ExtensionManifest, extension_path: &Path, fs: Arc<dyn Fs>) -> Result<()> {
     for relative_theme_path in &manifest.themes {
         let theme_path = extension_path.join(relative_theme_path);
         let theme_family = theme::read_user_theme(&theme_path, fs.clone()).await?;
         log::info!("loaded theme family {}", theme_family.name);
 
         for theme in &theme_family.themes {
-            if theme
-                .style
-                .colors
-                .deprecated_scrollbar_thumb_background
-                .is_some()
-            {
+            if theme.style.colors.deprecated_scrollbar_thumb_background.is_some() {
                 bail!(
                     r#"Theme "{theme_name}" is using a deprecated style property: scrollbar_thumb.background. Use `scrollbar.thumb.background` instead."#,
                     theme_name = theme.name

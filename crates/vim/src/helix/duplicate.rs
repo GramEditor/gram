@@ -68,12 +68,9 @@ impl Vim {
                 selections.push(display_point_range_to_offset_range(&origin, &map));
                 let mut last_origin = origin;
                 for _ in 1..=times {
-                    if let Some(duplicate) = find_next_valid_duplicate_space(
-                        last_origin.clone(),
-                        &map,
-                        &advance_search,
-                        &end_search,
-                    ) {
+                    if let Some(duplicate) =
+                        find_next_valid_duplicate_space(last_origin.clone(), &map, &advance_search, &end_search)
+                    {
                         selections.push(display_point_range_to_offset_range(&duplicate, &map));
                         last_origin = duplicate;
                     } else {
@@ -108,10 +105,7 @@ fn find_next_valid_duplicate_space(
     None
 }
 
-fn display_point_range_to_offset_range(
-    range: &Range<DisplayPoint>,
-    map: &DisplaySnapshot,
-) -> Range<MultiBufferOffset> {
+fn display_point_range_to_offset_range(range: &Range<DisplayPoint>, map: &DisplaySnapshot) -> Range<MultiBufferOffset> {
     range.start.to_offset(map, Bias::Left)..range.end.to_offset(map, Bias::Right)
 }
 

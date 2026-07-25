@@ -1,6 +1,4 @@
-use crate::{
-    BackgroundExecutor, Clock, ForegroundExecutor, Scheduler, SessionId, TestClock, Timer,
-};
+use crate::{BackgroundExecutor, Clock, ForegroundExecutor, Scheduler, SessionId, TestClock, Timer};
 use async_task::Runnable;
 use backtrace::{Backtrace, BacktraceFrame};
 use futures::{FutureExt as _, channel::oneshot, future::LocalBoxFuture};
@@ -41,17 +39,12 @@ impl TestScheduler {
     }
 
     /// Run a test multiple times with sequential seeds (0, 1, 2, ...)
-    pub fn many<R>(
-        default_iterations: usize,
-        mut f: impl AsyncFnMut(Arc<TestScheduler>) -> R,
-    ) -> Vec<R> {
+    pub fn many<R>(default_iterations: usize, mut f: impl AsyncFnMut(Arc<TestScheduler>) -> R) -> Vec<R> {
         let num_iterations = std::env::var("ITERATIONS")
             .map(|iterations| iterations.parse().unwrap())
             .unwrap_or(default_iterations);
 
-        let seed = std::env::var("SEED")
-            .map(|seed| seed.parse().unwrap())
-            .unwrap_or(0);
+        let seed = std::env::var("SEED").map(|seed| seed.parse().unwrap()).unwrap_or(0);
 
         (seed..num_iterations as u64)
             .map(|seed| {
@@ -227,9 +220,7 @@ impl TestScheduler {
             }
             panic!("Parking forbidden. Pending traces:\n{}", pending_traces);
         } else {
-            panic!(
-                "Parking forbidden. Re-run with {PENDING_TRACES_VAR_NAME}=1 to show pending traces"
-            );
+            panic!("Parking forbidden. Re-run with {PENDING_TRACES_VAR_NAME}=1 to show pending traces");
         }
     }
 }
@@ -242,12 +233,7 @@ impl Scheduler for TestScheduler {
     /// is provided. This is to allow testing a mix of deterministic and
     /// non-deterministic async behavior, such as when interacting with I/O in
     /// an otherwise deterministic test.
-    fn block(
-        &self,
-        session_id: Option<SessionId>,
-        mut future: LocalBoxFuture<()>,
-        timeout: Option<Duration>,
-    ) {
+    fn block(&self, session_id: Option<SessionId>, mut future: LocalBoxFuture<()>, timeout: Option<Duration>) {
         if let Some(session_id) = session_id {
             self.state.lock().blocked_sessions.push(session_id);
         }
@@ -262,9 +248,7 @@ impl Scheduler for TestScheduler {
         });
         let waker = unsafe { Waker::new(Box::into_raw(waker) as *const (), &WAKER_VTABLE) };
         let max_ticks = if timeout.is_some() {
-            self.rng
-                .lock()
-                .random_range(self.state.lock().timeout_ticks.clone())
+            self.rng.lock().random_range(self.state.lock().timeout_ticks.clone())
         } else {
             usize::MAX
         };
@@ -307,9 +291,7 @@ impl Scheduler for TestScheduler {
                 .iter()
                 .rposition(|task| task.session_id == Some(session_id))
                 .map_or(0, |ix| ix + 1);
-            self.rng
-                .lock()
-                .random_range(start_ix..=state.runnables.len())
+            self.rng.lock().random_range(start_ix..=state.runnables.len())
         } else {
             state.runnables.len()
         };
@@ -386,8 +368,7 @@ impl Default for TestSchedulerConfig {
             seed: 0,
             randomize_order: true,
             allow_parking: false,
-            capture_pending_traces: env::var(PENDING_TRACES_VAR_NAME)
-                .map_or(false, |var| var == "1" || var == "true"),
+            capture_pending_traces: env::var(PENDING_TRACES_VAR_NAME).map_or(false, |var| var == "1" || var == "true"),
             timeout_ticks: 0..=1000,
         }
     }
@@ -483,10 +464,7 @@ impl TracingWaker {
     fn clone_raw(waker: *const ()) -> RawWaker {
         let waker = waker as *const TracingWaker;
         let waker = unsafe { &*waker };
-        RawWaker::new(
-            Box::into_raw(Box::new(waker.clone())) as *const (),
-            &WAKER_VTABLE,
-        )
+        RawWaker::new(Box::into_raw(Box::new(waker.clone())) as *const (), &WAKER_VTABLE)
     }
 
     fn wake_raw(waker: *const ()) {

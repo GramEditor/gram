@@ -7,16 +7,14 @@ use app_actions::{ChangeKeybinding, OpenDocs, OpenDocsAt, OpenGramUrl, docs_sear
 use assets::lookup_docs;
 use editor::EditorEvent;
 use gpui::{
-    Action, Entity, EventEmitter, FocusHandle, Focusable, IsZero as _, ListState,
-    RetainAllImageCache, Task, WeakEntity, list,
+    Action, Entity, EventEmitter, FocusHandle, Focusable, IsZero as _, ListState, RetainAllImageCache, Task,
+    WeakEntity, list,
 };
 use language::LanguageRegistry;
 use markdown_preview::markdown_elements::{Link, ParsedMarkdown, ParsedMarkdownElement};
 use markdown_preview::markdown_parser::parse_markdown;
 use markdown_preview::markdown_renderer::{MermaidState, RenderContext, render_markdown_block};
-use markdown_preview::{
-    ScrollDown, ScrollDownByItem, ScrollPageDown, ScrollPageUp, ScrollUp, ScrollUpByItem,
-};
+use markdown_preview::{ScrollDown, ScrollDownByItem, ScrollPageDown, ScrollPageUp, ScrollUp, ScrollUpByItem};
 use regex::Regex;
 use settings::Settings as _;
 use theme::ThemeSettings;
@@ -118,63 +116,51 @@ impl Render for DocumentationView {
                             };
 
                             let current = current.clone();
-                            let mut render_cx = RenderContext::new(
-                                Some(this.workspace.clone()),
-                                &this.mermaid_state,
-                                window,
-                                cx,
-                            )
-                            .with_link_clicked_callback(move |link: Link, window, cx| match link {
-                                Link::Web { url } => open_doc_url(url.into(), window, cx),
-                                Link::Path { path, .. } => {
-                                    let from = if let Some(base) = Path::new(&current).parent() {
-                                        let path = path.to_str().unwrap().to_string();
-                                        if path.starts_with("../") {
-                                            Path::new(".").join(
-                                                base.parent()
-                                                    .unwrap()
-                                                    .join(path.strip_prefix("../").unwrap()),
-                                            )
-                                        } else if path.starts_with("./") {
-                                            base.join(path.strip_prefix("./").unwrap())
-                                        } else {
-                                            base.join(path.as_str())
-                                        }
-                                    } else {
-                                        path
-                                    };
+                            let mut render_cx =
+                                RenderContext::new(Some(this.workspace.clone()), &this.mermaid_state, window, cx)
+                                    .with_link_clicked_callback(move |link: Link, window, cx| match link {
+                                        Link::Web { url } => open_doc_url(url.into(), window, cx),
+                                        Link::Path { path, .. } => {
+                                            let from = if let Some(base) = Path::new(&current).parent() {
+                                                let path = path.to_str().unwrap().to_string();
+                                                if path.starts_with("../") {
+                                                    Path::new(".").join(
+                                                        base.parent().unwrap().join(path.strip_prefix("../").unwrap()),
+                                                    )
+                                                } else if path.starts_with("./") {
+                                                    base.join(path.strip_prefix("./").unwrap())
+                                                } else {
+                                                    base.join(path.as_str())
+                                                }
+                                            } else {
+                                                path
+                                            };
 
-                                    open_doc_url(
-                                        SharedString::from(from.to_str().unwrap().to_string()),
-                                        window,
-                                        cx,
-                                    )
-                                }
-                            });
+                                            open_doc_url(
+                                                SharedString::from(from.to_str().unwrap().to_string()),
+                                                window,
+                                                cx,
+                                            )
+                                        }
+                                    });
 
                             let block = contents.children.get(ix).unwrap();
                             let rendered_block = render_markdown_block(block, &mut render_cx);
                             let selected_block = this.selected_block;
                             let scaled_rems = render_cx.scaled_rems(1.0);
 
-                            let should_apply_padding = Self::should_apply_padding_between(
-                                block,
-                                contents.children.get(ix + 1),
-                            );
+                            let should_apply_padding =
+                                Self::should_apply_padding_between(block, contents.children.get(ix + 1));
 
                             div()
                                 .id(ix)
-                                .when(should_apply_padding, |this| {
-                                    this.pb(render_cx.scaled_rems(0.75))
-                                })
+                                .when(should_apply_padding, |this| this.pb(render_cx.scaled_rems(0.75)))
                                 .group("markdown-block")
                                 .map(move |container| {
                                     let indicator = div()
                                         .h_full()
                                         .w(px(4.0))
-                                        .when(ix == selected_block, |this| {
-                                            this.bg(cx.theme().colors().border)
-                                        })
+                                        .when(ix == selected_block, |this| this.bg(cx.theme().colors().border))
                                         .group_hover("markdown-block", |s| {
                                             if ix == selected_block {
                                                 s
@@ -238,27 +224,16 @@ pub fn open_doc_url(url: SharedString, window: &mut Window, cx: &mut App) {
 }
 
 impl DocumentationView {
-    pub fn register(
-        workspace: &mut Workspace,
-        _window: Option<&mut Window>,
-        _cx: &mut Context<Workspace>,
-    ) {
+    pub fn register(workspace: &mut Workspace, _window: Option<&mut Window>, _cx: &mut Context<Workspace>) {
         workspace
             .register_action(move |workspace, _: &OpenDocs, window, cx| {
                 DocumentationView::open_documentation_page(workspace, None, window, cx);
                 cx.notify();
             })
-            .register_action(
-                move |workspace, OpenDocsAt { path }: &OpenDocsAt, window, cx| {
-                    DocumentationView::open_documentation_page(
-                        workspace,
-                        Some(path.into()),
-                        window,
-                        cx,
-                    );
-                    cx.notify();
-                },
-            );
+            .register_action(move |workspace, OpenDocsAt { path }: &OpenDocsAt, window, cx| {
+                DocumentationView::open_documentation_page(workspace, Some(path.into()), window, cx);
+                cx.notify();
+            });
     }
 
     fn new(
@@ -270,8 +245,7 @@ impl DocumentationView {
     ) -> Self {
         let list_state = ListState::new(0, gpui::ListAlignment::Top, px(1000.));
         let focus_handle = cx.focus_handle();
-        cx.on_focus_in(&focus_handle, window, Self::focus_in)
-            .detach();
+        cx.on_focus_in(&focus_handle, window, Self::focus_in).detach();
 
         let mut this = Self {
             workspace,
@@ -301,12 +275,7 @@ impl DocumentationView {
         self.parse_markdown_from_text(false, window, cx);
     }
 
-    fn parse_markdown_from_text(
-        &mut self,
-        wait_for_debounce: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn parse_markdown_from_text(&mut self, wait_for_debounce: bool, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(text) = get_docs(&self.current) {
             self.parsing_markdown_task =
                 Some(self.parse_markdown_in_background(wait_for_debounce, text.into(), window, cx));
@@ -366,12 +335,7 @@ impl DocumentationView {
         cx.notify();
     }
 
-    fn scroll_page_down(
-        &mut self,
-        _: &ScrollPageDown,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn scroll_page_down(&mut self, _: &ScrollPageDown, _window: &mut Window, cx: &mut Context<Self>) {
         let viewport_height = self.list_state.viewport_bounds().size.height;
         if viewport_height.is_zero() {
             return;
@@ -405,12 +369,7 @@ impl DocumentationView {
         cx.notify();
     }
 
-    fn scroll_up_by_item(
-        &mut self,
-        _: &ScrollUpByItem,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn scroll_up_by_item(&mut self, _: &ScrollUpByItem, _window: &mut Window, cx: &mut Context<Self>) {
         let scroll_top = self.list_state.logical_scroll_top();
         if let Some(bounds) = self.list_state.bounds_for_item(scroll_top.item_ix) {
             self.list_state.scroll_by(-bounds.size.height);
@@ -418,12 +377,7 @@ impl DocumentationView {
         cx.notify();
     }
 
-    fn scroll_down_by_item(
-        &mut self,
-        _: &ScrollDownByItem,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn scroll_down_by_item(&mut self, _: &ScrollDownByItem, _window: &mut Window, cx: &mut Context<Self>) {
         let scroll_top = self.list_state.logical_scroll_top();
         if let Some(bounds) = self.list_state.bounds_for_item(scroll_top.item_ix) {
             self.list_state.scroll_by(bounds.size.height);
@@ -453,20 +407,12 @@ impl DocumentationView {
             existing.update(cx, |this, cx| this.update_text(path, false, window, cx));
             workspace.activate_item(&existing, true, !is_active, window, cx);
         } else {
-            let view = cx.new(|cx| {
-                DocumentationView::new(path, workspace_handle, window, language_registry, cx)
-            });
+            let view = cx.new(|cx| DocumentationView::new(path, workspace_handle, window, language_registry, cx));
             workspace.add_item_to_active_pane(Box::new(view), None, true, window, cx);
         }
     }
 
-    pub(crate) fn update_text(
-        &mut self,
-        path: &str,
-        nav: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub(crate) fn update_text(&mut self, path: &str, nav: bool, window: &mut Window, cx: &mut Context<Self>) {
         if self.current != path {
             let current = self.current.clone();
             self.back.push(current);
@@ -534,11 +480,6 @@ impl Item for DocumentationView {
     type Event = EditorEvent;
 
     fn tab_content_text(&self, _detail: usize, _cx: &App) -> SharedString {
-        SharedString::from(
-            self.current
-                .strip_suffix(".md")
-                .unwrap_or(&self.current)
-                .to_string(),
-        )
+        SharedString::from(self.current.strip_suffix(".md").unwrap_or(&self.current).to_string())
     }
 }

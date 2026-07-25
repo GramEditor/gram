@@ -1,14 +1,11 @@
 use crate::{
-    Copy, CopyAndTrim, CopyPermalinkToLine, Cut, DisplayPoint, DisplaySnapshot, Editor,
-    EvaluateSelectedText, FindAllReferences, GoToDeclaration, GoToDefinition, GoToImplementation,
-    GoToTypeDefinition, Paste, Rename, RevealInFileManager, RunToCursor, SelectMode,
-    SelectionEffects, SelectionExt, ToDisplayPoint, ToggleCodeActions,
+    Copy, CopyAndTrim, CopyPermalinkToLine, Cut, DisplayPoint, DisplaySnapshot, Editor, EvaluateSelectedText,
+    FindAllReferences, GoToDeclaration, GoToDefinition, GoToImplementation, GoToTypeDefinition, Paste, Rename,
+    RevealInFileManager, RunToCursor, SelectMode, SelectionEffects, SelectionExt, ToDisplayPoint, ToggleCodeActions,
     actions::{Format, FormatSelections},
     selections_collection::SelectionsCollection,
 };
-use app_actions::preview::{
-    markdown::OpenPreview as OpenMarkdownPreview, svg::OpenPreview as OpenSvgPreview,
-};
+use app_actions::preview::{markdown::OpenPreview as OpenMarkdownPreview, svg::OpenPreview as OpenSvgPreview};
 use gpui::prelude::FluentBuilder;
 use gpui::{Context, DismissEvent, Entity, Focusable as _, Pixels, Point, Subscription, Window};
 use std::ops::Range;
@@ -64,13 +61,7 @@ impl MouseContextMenu {
             source,
             offset: position - (source_position + content_origin),
         };
-        Some(MouseContextMenu::new(
-            editor,
-            menu_position,
-            context_menu,
-            window,
-            cx,
-        ))
+        Some(MouseContextMenu::new(editor, menu_position, context_menu, window, cx))
     }
 
     pub(crate) fn new(
@@ -118,10 +109,7 @@ impl MouseContextMenu {
                     .display_map
                     .update(cx, |display_map, cx| display_map.snapshot(cx));
                 let selection_init_range = selection_init.display_range(display_snapshot);
-                let selection_now_range = editor
-                    .selections
-                    .newest_anchor()
-                    .display_range(display_snapshot);
+                let selection_now_range = editor.selections.newest_anchor().display_range(display_snapshot);
                 if selection_now_range == selection_init_range {
                     return;
                 }
@@ -203,16 +191,14 @@ pub fn deploy_context_menu(
             .all::<PointUtf16>(&display_map)
             .into_iter()
             .any(|s| !s.is_empty());
-        let has_git_repo = buffer
-            .buffer_id_for_anchor(anchor)
-            .is_some_and(|buffer_id| {
-                project
-                    .read(cx)
-                    .git_store()
-                    .read(cx)
-                    .repository_and_path_for_buffer_id(buffer_id, cx)
-                    .is_some()
-            });
+        let has_git_repo = buffer.buffer_id_for_anchor(anchor).is_some_and(|buffer_id| {
+            project
+                .read(cx)
+                .git_store()
+                .read(cx)
+                .repository_and_path_for_buffer_id(buffer_id, cx)
+                .is_some()
+        });
 
         let evaluate_selection = window.is_action_available(&EvaluateSelectedText, cx);
         let run_to_cursor = window.is_action_available(&RunToCursor, cx);
@@ -244,18 +230,14 @@ pub fn deploy_context_menu(
                 .when(evaluate_selection && has_selections, |builder| {
                     builder.action("Evaluate Selection", Box::new(EvaluateSelectedText))
                 })
-                .when(
-                    run_to_cursor || (evaluate_selection && has_selections),
-                    |builder| builder.separator(),
-                )
+                .when(run_to_cursor || (evaluate_selection && has_selections), |builder| {
+                    builder.separator()
+                })
                 .action("Go to Definition", Box::new(GoToDefinition))
                 .action("Go to Declaration", Box::new(GoToDeclaration))
                 .action("Go to Type Definition", Box::new(GoToTypeDefinition))
                 .action("Go to Implementation", Box::new(GoToImplementation))
-                .action(
-                    "Find All References",
-                    Box::new(FindAllReferences::default()),
-                )
+                .action("Find All References", Box::new(FindAllReferences::default()))
                 .separator()
                 .action("Rename Symbol", Box::new(Rename))
                 .action("Format Buffer", Box::new(Format))
@@ -290,21 +272,9 @@ pub fn deploy_context_menu(
                 .when(is_svg, |builder| {
                     builder.action("Open SVG Preview", Box::new(OpenSvgPreview))
                 })
-                .action_disabled_when(
-                    !has_reveal_target,
-                    "Open in Terminal",
-                    Box::new(OpenInTerminal),
-                )
-                .action_disabled_when(
-                    !has_git_repo,
-                    "Copy Permalink",
-                    Box::new(CopyPermalinkToLine),
-                )
-                .action_disabled_when(
-                    !has_git_repo,
-                    "View File History",
-                    Box::new(git::FileHistory),
-                );
+                .action_disabled_when(!has_reveal_target, "Open in Terminal", Box::new(OpenInTerminal))
+                .action_disabled_when(!has_git_repo, "Copy Permalink", Box::new(CopyPermalinkToLine))
+                .action_disabled_when(!has_git_repo, "View File History", Box::new(git::FileHistory));
             match focus {
                 Some(focus) => builder.context(focus),
                 None => builder,
@@ -313,27 +283,14 @@ pub fn deploy_context_menu(
     };
 
     editor.mouse_context_menu = match position {
-        Some(position) => MouseContextMenu::pinned_to_editor(
-            editor,
-            source_anchor,
-            position,
-            context_menu,
-            window,
-            cx,
-        ),
+        Some(position) => MouseContextMenu::pinned_to_editor(editor, source_anchor, position, context_menu, window, cx),
         None => {
             let character_size = editor.character_dimensions(window);
             let menu_position = MenuPosition::PinnedToEditor {
                 source: source_anchor,
                 offset: gpui::point(character_size.em_width, character_size.line_height),
             };
-            Some(MouseContextMenu::new(
-                editor,
-                menu_position,
-                context_menu,
-                window,
-                cx,
-            ))
+            Some(MouseContextMenu::new(editor, menu_position, context_menu, window, cx))
         }
     };
     cx.notify();

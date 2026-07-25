@@ -2,14 +2,13 @@ use crate::session::running::{RunningState, memory_view::MemoryView};
 
 use super::stack_frame_list::{StackFrameList, StackFrameListEvent};
 use dap::{
-    ScopePresentationHint, StackFrameId, VariablePresentationHint, VariablePresentationHintKind,
-    VariableReference,
+    ScopePresentationHint, StackFrameId, VariablePresentationHint, VariablePresentationHintKind, VariableReference,
 };
 use editor::Editor;
 use gpui::{
-    Action, AnyElement, ClickEvent, ClipboardItem, Context, DismissEvent, Empty, Entity,
-    FocusHandle, Focusable, Hsla, MouseDownEvent, Point, Subscription, TextStyleRefinement,
-    UniformListScrollHandle, WeakEntity, actions, anchored, deferred, uniform_list,
+    Action, AnyElement, ClickEvent, ClipboardItem, Context, DismissEvent, Empty, Entity, FocusHandle, Focusable, Hsla,
+    MouseDownEvent, Point, Subscription, TextStyleRefinement, UniformListScrollHandle, WeakEntity, actions, anchored,
+    deferred, uniform_list,
 };
 use itertools::Itertools;
 use menu::{SelectFirst, SelectLast, SelectNext, SelectPrevious};
@@ -85,12 +84,7 @@ impl EntryPath {
     fn with_child(&self, name: SharedString) -> Self {
         Self {
             leaf_name: None,
-            indices: self
-                .indices
-                .iter()
-                .cloned()
-                .chain(std::iter::once(name))
-                .collect(),
+            indices: self.indices.iter().cloned().chain(std::iter::once(name)).collect(),
         }
     }
 }
@@ -273,9 +267,9 @@ impl VariableList {
 
         let mut entries = vec![];
 
-        let scopes: Vec<_> = self.session.update(cx, |session, cx| {
-            session.scopes(stack_frame_id, cx).to_vec()
-        });
+        let scopes: Vec<_> = self
+            .session
+            .update(cx, |session, cx| session.scopes(stack_frame_id, cx).to_vec());
 
         let mut contains_local_scope = false;
 
@@ -323,8 +317,7 @@ impl VariableList {
 
         let scopes_count = stack.len();
 
-        while let Some((container_reference, variables_reference, mut path, dap_kind)) = stack.pop()
-        {
+        while let Some((container_reference, variables_reference, mut path, dap_kind)) = stack.pop() {
             match &dap_kind {
                 DapEntry::Watcher(watcher) => path = path.with_child(watcher.expression.clone()),
                 DapEntry::Variable(dap) => path = path.with_name(dap.name.clone().into()),
@@ -424,12 +417,7 @@ impl VariableList {
             .collect()
     }
 
-    fn render_entries(
-        &mut self,
-        ix: Range<usize>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Vec<AnyElement> {
+    fn render_entries(&mut self, ix: Range<usize>, window: &mut Window, cx: &mut Context<Self>) -> Vec<AnyElement> {
         ix.into_iter()
             .filter_map(|ix| {
                 let (entry, state) = self
@@ -438,9 +426,7 @@ impl VariableList {
                     .and_then(|entry| Some(entry).zip(self.entry_states.get(&entry.path)))?;
 
                 match &entry.entry {
-                    DapEntry::Watcher { .. } => {
-                        Some(self.render_watcher(entry, *state, window, cx))
-                    }
+                    DapEntry::Watcher { .. } => Some(self.render_watcher(entry, *state, window, cx)),
                     DapEntry::Variable(_) => Some(self.render_variable(entry, *state, window, cx)),
                     DapEntry::Scope(_) => Some(self.render_scope(entry, *state, cx)),
                 }
@@ -485,9 +471,7 @@ impl VariableList {
                 }
             });
 
-            if let Some(new_selection) =
-                index.and_then(|ix| self.entries.get(ix).map(|var| var.path.clone()))
-            {
+            if let Some(new_selection) = index.and_then(|ix| self.entries.get(ix).map(|var| var.path.clone())) {
                 self.selection = Some(new_selection);
                 self.build_entries(cx);
             } else {
@@ -509,9 +493,7 @@ impl VariableList {
                 }
             });
 
-            if let Some(new_selection) =
-                index.and_then(|ix| self.entries.get(ix).map(|var| var.path.clone()))
-            {
+            if let Some(new_selection) = index.and_then(|ix| self.entries.get(ix).map(|var| var.path.clone())) {
                 self.selection = Some(new_selection);
                 self.build_entries(cx);
             } else {
@@ -546,23 +528,12 @@ impl VariableList {
             let value = editor.read(cx).text(cx);
 
             self.session.update(cx, |session, cx| {
-                session.set_variable_value(
-                    stack_frame_id,
-                    variables_reference,
-                    name.into(),
-                    value,
-                    cx,
-                )
+                session.set_variable_value(stack_frame_id, variables_reference, name.into(), value, cx)
             });
         }
     }
 
-    fn collapse_selected_entry(
-        &mut self,
-        _: &CollapseSelectedEntry,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn collapse_selected_entry(&mut self, _: &CollapseSelectedEntry, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(ref selected_entry) = self.selection {
             let Some(entry_state) = self.entry_states.get_mut(selected_entry) else {
                 debug_panic!("Trying to toggle variable in variable list that has an no state");
@@ -578,12 +549,7 @@ impl VariableList {
         }
     }
 
-    fn expand_selected_entry(
-        &mut self,
-        _: &ExpandSelectedEntry,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn expand_selected_entry(&mut self, _: &ExpandSelectedEntry, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(selected_entry) = &self.selection {
             let Some(entry_state) = self.entry_states.get_mut(selected_entry) else {
                 debug_panic!("Trying to toggle variable in variable list that has an no state");
@@ -599,22 +565,18 @@ impl VariableList {
         }
     }
 
-    fn jump_to_variable_memory(
-        &mut self,
-        _: &GoToMemory,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn jump_to_variable_memory(&mut self, _: &GoToMemory, window: &mut Window, cx: &mut Context<Self>) {
         _ = maybe!({
             let selection = self.selection.as_ref()?;
             let entry = self.entries.iter().find(|entry| &entry.path == selection)?;
             let var = entry.entry.as_variable()?;
             let memory_reference = var.memory_reference.as_deref()?;
 
-            let sizeof_expr = if var.type_.as_ref().is_some_and(|t| {
-                t.chars()
-                    .all(|c| c.is_whitespace() || c.is_alphabetic() || c == '*')
-            }) {
+            let sizeof_expr = if var
+                .type_
+                .as_ref()
+                .is_some_and(|t| t.chars().all(|c| c.is_whitespace() || c.is_alphabetic() || c == '*'))
+            {
                 var.type_.as_deref()
             } else {
                 var.evaluate_name
@@ -622,22 +584,13 @@ impl VariableList {
                     .map(|name| name.strip_prefix("/nat ").unwrap_or_else(|| name))
             };
             self.memory_view.update(cx, |this, cx| {
-                this.go_to_memory_reference(
-                    memory_reference,
-                    sizeof_expr,
-                    self.selected_stack_frame_id,
-                    cx,
-                );
+                this.go_to_memory_reference(memory_reference, sizeof_expr, self.selected_stack_frame_id, cx);
             });
             let weak_panel = self.weak_running.clone();
 
             window.defer(cx, move |window, cx| {
                 _ = weak_panel.update(cx, |this, cx| {
-                    this.activate_item(
-                        crate::persistence::DebuggerPaneItem::MemoryView,
-                        window,
-                        cx,
-                    );
+                    this.activate_item(crate::persistence::DebuggerPaneItem::MemoryView, window, cx);
                 });
             });
             Some(())
@@ -654,40 +607,29 @@ impl VariableList {
         let (supports_set_variable, supports_data_breakpoints, supports_go_to_memory) =
             self.session.read_with(cx, |session, _| {
                 (
-                    session
-                        .capabilities()
-                        .supports_set_variable
-                        .unwrap_or_default(),
-                    session
-                        .capabilities()
-                        .supports_data_breakpoints
-                        .unwrap_or_default(),
-                    session
-                        .capabilities()
-                        .supports_read_memory_request
-                        .unwrap_or_default(),
+                    session.capabilities().supports_set_variable.unwrap_or_default(),
+                    session.capabilities().supports_data_breakpoints.unwrap_or_default(),
+                    session.capabilities().supports_read_memory_request.unwrap_or_default(),
                 )
             });
-        let can_toggle_data_breakpoint = entry
-            .as_variable()
-            .filter(|_| supports_data_breakpoints)
-            .and_then(|variable| {
-                let variables_reference = self
-                    .entry_states
-                    .get(&entry.path)
-                    .map(|state| state.parent_reference)?;
-                Some(self.session.update(cx, |session, cx| {
-                    session.data_breakpoint_info(
-                        Arc::new(DataBreakpointContext::Variable {
-                            variables_reference,
-                            name: variable.name.clone(),
-                            bytes: None,
-                        }),
-                        None,
-                        cx,
-                    )
-                }))
-            });
+        let can_toggle_data_breakpoint =
+            entry
+                .as_variable()
+                .filter(|_| supports_data_breakpoints)
+                .and_then(|variable| {
+                    let variables_reference = self.entry_states.get(&entry.path).map(|state| state.parent_reference)?;
+                    Some(self.session.update(cx, |session, cx| {
+                        session.data_breakpoint_info(
+                            Arc::new(DataBreakpointContext::Variable {
+                                variables_reference,
+                                name: variable.name.clone(),
+                                bytes: None,
+                            }),
+                            None,
+                            cx,
+                        )
+                    }))
+                });
 
         let focus_handle = self.focus_handle.clone();
         cx.spawn_in(window, async move |this, cx| {
@@ -718,8 +660,7 @@ impl VariableList {
                                                 match access {
                                                     dap::DataBreakpointAccessType::Read => "Read",
                                                     dap::DataBreakpointAccessType::Write => "Write",
-                                                    dap::DataBreakpointAccessType::ReadWrite =>
-                                                        "Read/Write",
+                                                    dap::DataBreakpointAccessType::ReadWrite => "Read/Write",
                                                 }
                                             ),
                                             crate::ToggleDataBreakpoint {
@@ -733,8 +674,7 @@ impl VariableList {
                                 } else {
                                     menu.action(
                                         "Toggle Data Breakpoint",
-                                        crate::ToggleDataBreakpoint { access_type: None }
-                                            .boxed_clone(),
+                                        crate::ToggleDataBreakpoint { access_type: None }.boxed_clone(),
                                     )
                                 }
                             })
@@ -752,10 +692,8 @@ impl VariableList {
 
                 _ = this.update(cx, |this, cx| {
                     cx.focus_view(&context_menu, window);
-                    let subscription = cx.subscribe_in(
-                        &context_menu,
-                        window,
-                        |this, _, _: &DismissEvent, window, cx| {
+                    let subscription =
+                        cx.subscribe_in(&context_menu, window, |this, _, _: &DismissEvent, window, cx| {
                             if this.open_context_menu.as_ref().is_some_and(|context_menu| {
                                 context_menu.0.focus_handle(cx).contains_focused(window, cx)
                             }) {
@@ -763,8 +701,7 @@ impl VariableList {
                             }
                             this.open_context_menu.take();
                             cx.notify();
-                        },
-                    );
+                        });
 
                     this.open_context_menu = Some((context_menu, position, subscription));
                 });
@@ -787,11 +724,11 @@ impl VariableList {
             return;
         };
 
-        let Some((name, var_ref)) = entry.as_variable().map(|var| &var.name).zip(
-            self.entry_states
-                .get(&entry.path)
-                .map(|state| state.parent_reference),
-        ) else {
+        let Some((name, var_ref)) = entry
+            .as_variable()
+            .map(|var| &var.name)
+            .zip(self.entry_states.get(&entry.path).map(|state| state.parent_reference))
+        else {
             return;
         };
 
@@ -844,12 +781,7 @@ impl VariableList {
         .detach();
     }
 
-    fn copy_variable_name(
-        &mut self,
-        _: &CopyVariableName,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn copy_variable_name(&mut self, _: &CopyVariableName, _window: &mut Window, cx: &mut Context<Self>) {
         let Some(selection) = self.selection.as_ref() else {
             return;
         };
@@ -867,12 +799,7 @@ impl VariableList {
         cx.write_to_clipboard(ClipboardItem::new_string(variable_name));
     }
 
-    fn copy_variable_value(
-        &mut self,
-        _: &CopyVariableValue,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn copy_variable_value(&mut self, _: &CopyVariableValue, _window: &mut Window, cx: &mut Context<Self>) {
         let Some(selection) = self.selection.as_ref() else {
             return;
         };
@@ -929,10 +856,7 @@ impl VariableList {
         };
 
         let add_watcher_task = self.session.update(cx, |session, cx| {
-            let expression = variable
-                .evaluate_name
-                .clone()
-                .unwrap_or_else(|| variable.name.clone());
+            let expression = variable.evaluate_name.clone().unwrap_or_else(|| variable.name.clone());
 
             session.add_watcher(expression.into(), stack_frame_id, cx)
         });
@@ -1049,12 +973,7 @@ impl VariableList {
             let mut editor = Editor::single_line(window, cx);
 
             let refinement = TextStyleRefinement {
-                font_size: Some(
-                    TextSize::XSmall
-                        .rems(cx)
-                        .to_pixels(window.rem_size())
-                        .into(),
-                ),
+                font_size: Some(TextSize::XSmall.rems(cx).to_pixels(window.rem_size()).into()),
                 ..Default::default()
             };
             editor.set_text_style_refinement(refinement);
@@ -1108,11 +1027,7 @@ impl VariableList {
                 .w_full()
                 .id(entry.item_value_id())
                 .map(|this| {
-                    if let Some((_, editor)) = self
-                        .edited_path
-                        .as_ref()
-                        .filter(|(path, _)| path == &entry.path)
-                    {
+                    if let Some((_, editor)) = self.edited_path.as_ref().filter(|(path, _)| path == &entry.path) {
                         this.child(div().size_full().px_2().child(editor.clone()))
                     } else {
                         this.text_color(cx.theme().colors().text_muted)
@@ -1127,21 +1042,15 @@ impl VariableList {
                                 |this| {
                                     let path = entry.path.clone();
                                     let variable_value = value.clone();
-                                    this.on_click(cx.listener(
-                                        move |this, click: &ClickEvent, window, cx| {
-                                            if click.click_count() < 2 {
-                                                return;
-                                            }
-                                            let editor = Self::create_variable_editor(
-                                                &variable_value,
-                                                window,
-                                                cx,
-                                            );
-                                            this.edited_path = Some((path.clone(), editor));
+                                    this.on_click(cx.listener(move |this, click: &ClickEvent, window, cx| {
+                                        if click.click_count() < 2 {
+                                            return;
+                                        }
+                                        let editor = Self::create_variable_editor(&variable_value, window, cx);
+                                        this.edited_path = Some((path.clone(), editor));
 
-                                            cx.notify();
-                                        },
-                                    ))
+                                        cx.notify();
+                                    }))
                                 },
                             )
                             .child(
@@ -1150,9 +1059,7 @@ impl VariableList {
                                     .truncate()
                                     .size(LabelSize::Small)
                                     .color(Color::Muted)
-                                    .when_some(variable_color.value, |this, color| {
-                                        this.color(Color::from(color))
-                                    }),
+                                    .when_some(variable_color.value, |this, color| this.color(Color::from(color))),
                             )
                             .tooltip(Tooltip::text(value))
                     }
@@ -1225,11 +1132,7 @@ impl VariableList {
         let var_ref = watcher.variables_reference;
 
         let colors = get_entry_color(cx);
-        let bg_hover_color = if !is_selected {
-            colors.hover
-        } else {
-            colors.default
-        };
+        let bg_hover_color = if !is_selected { colors.hover } else { colors.default };
         let border_color = if is_selected {
             colors.marked_active
         } else {
@@ -1261,92 +1164,69 @@ impl VariableList {
                 }
             }))
             .child(
-                ListItem::new(SharedString::from(format!(
-                    "watcher-{}",
-                    watcher.expression
-                )))
-                .selectable(false)
-                .disabled(self.disabled)
-                .selectable(false)
-                .indent_level(state.depth)
-                .indent_step_size(INDENT_STEP_SIZE)
-                .always_show_disclosure_icon(true)
-                .when(var_ref > 0, |list_item| {
-                    list_item.toggle(state.is_expanded).on_toggle(cx.listener({
-                        let var_path = entry.path.clone();
-                        move |this, _, _, cx| {
-                            this.session.update(cx, |session, cx| {
-                                session.variables(var_ref, cx);
-                            });
+                ListItem::new(SharedString::from(format!("watcher-{}", watcher.expression)))
+                    .selectable(false)
+                    .disabled(self.disabled)
+                    .selectable(false)
+                    .indent_level(state.depth)
+                    .indent_step_size(INDENT_STEP_SIZE)
+                    .always_show_disclosure_icon(true)
+                    .when(var_ref > 0, |list_item| {
+                        list_item.toggle(state.is_expanded).on_toggle(cx.listener({
+                            let var_path = entry.path.clone();
+                            move |this, _, _, cx| {
+                                this.session.update(cx, |session, cx| {
+                                    session.variables(var_ref, cx);
+                                });
 
-                            this.toggle_entry(&var_path, cx);
+                                this.toggle_entry(&var_path, cx);
+                            }
+                        }))
+                    })
+                    .on_secondary_mouse_down(cx.listener({
+                        let path = path.clone();
+                        let entry = entry.clone();
+                        move |this, event: &MouseDownEvent, window, cx| {
+                            this.selection = Some(path.clone());
+                            this.deploy_list_entry_context_menu(entry.clone(), event.position, window, cx);
+                            cx.stop_propagation();
                         }
                     }))
-                })
-                .on_secondary_mouse_down(cx.listener({
-                    let path = path.clone();
-                    let entry = entry.clone();
-                    move |this, event: &MouseDownEvent, window, cx| {
-                        this.selection = Some(path.clone());
-                        this.deploy_list_entry_context_menu(
-                            entry.clone(),
-                            event.position,
-                            window,
-                            cx,
-                        );
-                        cx.stop_propagation();
-                    }
-                }))
-                .child(
-                    h_flex()
-                        .gap_1()
-                        .text_ui_sm(cx)
-                        .w_full()
-                        .child(
-                            Label::new(&Self::center_truncate_string(
-                                watcher.expression.as_ref(),
-                                watcher_len,
-                            ))
-                            .when_some(variable_color.name, |this, color| {
-                                this.color(Color::from(color))
-                            }),
-                        )
-                        .child(self.render_variable_value(
-                            entry,
-                            &variable_color,
-                            watcher.value.to_string(),
-                            cx,
-                        )),
-                )
-                .end_slot(
-                    IconButton::new(
-                        SharedString::from(format!("watcher-{}-remove-button", watcher.expression)),
-                        IconName::Close,
+                    .child(
+                        h_flex()
+                            .gap_1()
+                            .text_ui_sm(cx)
+                            .w_full()
+                            .child(
+                                Label::new(&Self::center_truncate_string(watcher.expression.as_ref(), watcher_len))
+                                    .when_some(variable_color.name, |this, color| this.color(Color::from(color))),
+                            )
+                            .child(self.render_variable_value(entry, &variable_color, watcher.value.to_string(), cx)),
                     )
-                    .on_click({
-                        move |_, window, cx| {
-                            weak.update(cx, |variable_list, cx| {
-                                variable_list.selection = Some(path.clone());
-                                variable_list.remove_watcher(&RemoveWatch, window, cx);
-                            })
-                            .ok();
-                        }
-                    })
-                    .tooltip(move |_window, cx| {
-                        Tooltip::for_action_in("Remove Watch", &RemoveWatch, &focus_handle, cx)
-                    })
-                    .icon_size(ui::IconSize::Indicator),
-                ),
+                    .end_slot(
+                        IconButton::new(
+                            SharedString::from(format!("watcher-{}-remove-button", watcher.expression)),
+                            IconName::Close,
+                        )
+                        .on_click({
+                            move |_, window, cx| {
+                                weak.update(cx, |variable_list, cx| {
+                                    variable_list.selection = Some(path.clone());
+                                    variable_list.remove_watcher(&RemoveWatch, window, cx);
+                                })
+                                .ok();
+                            }
+                        })
+                        .tooltip(move |_window, cx| {
+                            Tooltip::for_action_in("Remove Watch", &RemoveWatch, &focus_handle, cx)
+                        })
+                        .icon_size(ui::IconSize::Indicator),
+                    ),
             )
             .into_any()
     }
 
-    fn render_scope(
-        &self,
-        entry: &ListEntry,
-        state: EntryState,
-        cx: &mut Context<Self>,
-    ) -> AnyElement {
+    fn render_scope(&self, entry: &ListEntry, state: EntryState, cx: &mut Context<Self>) -> AnyElement {
         let Some(scope) = entry.as_scope() else {
             debug_panic!("Called render scope on non scope variable list entry variant");
             return div().into_any_element();
@@ -1359,11 +1239,7 @@ impl VariableList {
             .is_some_and(|selection| selection == &entry.path);
 
         let colors = get_entry_color(cx);
-        let bg_hover_color = if !is_selected {
-            colors.hover
-        } else {
-            colors.default
-        };
+        let bg_hover_color = if !is_selected { colors.hover } else { colors.default };
         let border_color = if is_selected {
             colors.marked_active
         } else {
@@ -1405,9 +1281,7 @@ impl VariableList {
                             .text_ui(cx)
                             .w_full()
                             .truncate()
-                            .when(self.disabled, |this| {
-                                this.text_color(Color::Disabled.color(cx))
-                            })
+                            .when(self.disabled, |this| this.text_color(Color::Disabled.color(cx)))
                             .child(scope.name.clone()),
                     ),
             )
@@ -1435,11 +1309,7 @@ impl VariableList {
             .as_ref()
             .is_some_and(|selected_path| *selected_path == variable.path);
 
-        let bg_hover_color = if !is_selected {
-            colors.hover
-        } else {
-            colors.default
-        };
+        let bg_hover_color = if !is_selected { colors.hover } else { colors.default };
         let border_color = if is_selected && self.focus_handle.contains_focused(window, cx) {
             colors.marked_active
         } else {
@@ -1489,12 +1359,7 @@ impl VariableList {
                     let entry = variable.clone();
                     move |this, event: &MouseDownEvent, window, cx| {
                         this.selection = Some(path.clone());
-                        this.deploy_list_entry_context_menu(
-                            entry.clone(),
-                            event.position,
-                            window,
-                            cx,
-                        );
+                        this.deploy_list_entry_context_menu(entry.clone(), event.position, window, cx);
                         cx.stop_propagation();
                     }
                 }))
@@ -1504,16 +1369,10 @@ impl VariableList {
                         .text_ui_sm(cx)
                         .w_full()
                         .child(
-                            Label::new(&dap.name).when_some(variable_color.name, |this, color| {
-                                this.color(Color::from(color))
-                            }),
+                            Label::new(&dap.name)
+                                .when_some(variable_color.name, |this, color| this.color(Color::from(color))),
                         )
-                        .child(self.render_variable_value(
-                            variable,
-                            &variable_color,
-                            dap.value.clone(),
-                            cx,
-                        )),
+                        .child(self.render_variable_value(variable, &variable_color, dap.value.clone(), cx)),
                 ),
             )
             .into_any()
@@ -1553,9 +1412,7 @@ impl Render for VariableList {
                 uniform_list(
                     "variable-list",
                     self.entries.len(),
-                    cx.processor(move |this, range: Range<usize>, window, cx| {
-                        this.render_entries(range, window, cx)
-                    }),
+                    cx.processor(move |this, range: Range<usize>, window, cx| this.render_entries(range, window, cx)),
                 )
                 .track_scroll(&self.list_handle)
                 .with_width_from_item(self.max_width_index)
@@ -1612,10 +1469,7 @@ mod tests {
         assert_eq!(VariableList::center_truncate_string("short", 10), "short");
 
         // Test exact length - should not be truncated
-        assert_eq!(
-            VariableList::center_truncate_string("exactly_10", 10),
-            "exactly_10"
-        );
+        assert_eq!(VariableList::center_truncate_string("exactly_10", 10), "exactly_10");
 
         // Test simple truncation
         assert_eq!(
@@ -1625,10 +1479,7 @@ mod tests {
 
         // Test with very long expression
         assert_eq!(
-            VariableList::center_truncate_string(
-                "object->property1->property2->property3->property4->property5",
-                30
-            ),
+            VariableList::center_truncate_string("object->property1->property2->property3->property4->property5", 30),
             "object->prope...ty4->property5"
         );
 

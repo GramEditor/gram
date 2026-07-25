@@ -3,9 +3,8 @@ use futures::Future;
 use git::repository::{FileHistory, FileHistoryEntry, RepoPath};
 use git::{GitHostingProviderRegistry, GitRemote, parse_git_remote_url};
 use gpui::{
-    AnyElement, AnyEntity, App, Asset, Context, Entity, EventEmitter, FocusHandle, Focusable,
-    IntoElement, Render, ScrollStrategy, Task, UniformListScrollHandle, WeakEntity, Window,
-    actions, uniform_list,
+    AnyElement, AnyEntity, App, Asset, Context, Entity, EventEmitter, FocusHandle, Focusable, IntoElement, Render,
+    ScrollStrategy, Task, UniformListScrollHandle, WeakEntity, Window, actions, uniform_list,
 };
 use project::{
     Project, ProjectPath,
@@ -59,9 +58,8 @@ impl FileHistoryView {
     ) {
         let file_history_task = git_store
             .update(cx, |git_store, cx| {
-                repo.upgrade().map(|repo| {
-                    git_store.file_history_paginated(&repo, path.clone(), 0, Some(PAGE_SIZE), cx)
-                })
+                repo.upgrade()
+                    .map(|repo| git_store.file_history_paginated(&repo, path.clone(), 0, Some(PAGE_SIZE), cx))
             })
             .ok()
             .flatten();
@@ -163,15 +161,8 @@ impl FileHistoryView {
         let task = window.spawn(cx, async move |cx| {
             let file_history_task = git_store
                 .update(cx, |git_store, cx| {
-                    repo.upgrade().map(|repo| {
-                        git_store.file_history_paginated(
-                            &repo,
-                            path,
-                            current_count,
-                            Some(PAGE_SIZE),
-                            cx,
-                        )
-                    })
+                    repo.upgrade()
+                        .map(|repo| git_store.file_history_paginated(&repo, path, current_count, Some(PAGE_SIZE), cx))
                 })
                 .ok()
                 .flatten();
@@ -208,12 +199,7 @@ impl FileHistoryView {
         self.select_ix(ix, cx);
     }
 
-    fn select_previous(
-        &mut self,
-        _: &menu::SelectPrevious,
-        _: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn select_previous(&mut self, _: &menu::SelectPrevious, _: &mut Window, cx: &mut Context<Self>) {
         let entry_count = self.history.entries.len();
         let ix = match self.selected_entry {
             _ if entry_count == 0 => None,
@@ -237,11 +223,7 @@ impl FileHistoryView {
 
     fn select_last(&mut self, _: &menu::SelectLast, _: &mut Window, cx: &mut Context<Self>) {
         let entry_count = self.history.entries.len();
-        let ix = if entry_count != 0 {
-            Some(entry_count - 1)
-        } else {
-            None
-        };
+        let ix = if entry_count != 0 { Some(entry_count - 1) } else { None };
         self.select_ix(ix, cx);
     }
 
@@ -258,10 +240,7 @@ impl FileHistoryView {
     }
 
     fn open_commit_view(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let Some(entry) = self
-            .selected_entry
-            .and_then(|ix| self.history.entries.get(ix))
-        else {
+        let Some(entry) = self.selected_entry.and_then(|ix| self.history.entries.get(ix)) else {
             return;
         };
 
@@ -279,12 +258,7 @@ impl FileHistoryView {
         }
     }
 
-    fn render_commit_avatar(
-        &self,
-        sha: &SharedString,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> impl IntoElement {
+    fn render_commit_avatar(&self, sha: &SharedString, window: &mut Window, cx: &mut App) -> impl IntoElement {
         let remote = self.remote.as_ref().filter(|r| r.host_supports_avatars());
         let size = rems(1.25);
 
@@ -312,8 +286,7 @@ impl FileHistoryView {
             .rfind("(#")
             .and_then(|start| {
                 let rest = &entry.subject[start + 2..];
-                rest.find(')')
-                    .and_then(|end| rest[..end].parse::<u32>().ok())
+                rest.find(')').and_then(|end| rest[..end].parse::<u32>().ok())
             })
             .map(|num| format!("#{}", num))
             .unwrap_or_else(|| {
@@ -324,8 +297,8 @@ impl FileHistoryView {
                 }
             });
 
-        let commit_time = OffsetDateTime::from_unix_timestamp(entry.commit_timestamp)
-            .unwrap_or_else(|_| OffsetDateTime::UNIX_EPOCH);
+        let commit_time =
+            OffsetDateTime::from_unix_timestamp(entry.commit_timestamp).unwrap_or_else(|_| OffsetDateTime::UNIX_EPOCH);
         let relative_timestamp = time_format::format_localized_timestamp(
             commit_time,
             OffsetDateTime::now_utc(),
@@ -407,21 +380,13 @@ impl Asset for CommitAvatarAsset {
     type Source = Self;
     type Output = Option<SharedString>;
 
-    fn load(
-        source: Self::Source,
-        cx: &mut App,
-    ) -> impl Future<Output = Self::Output> + Send + 'static {
+    fn load(source: Self::Source, cx: &mut App) -> impl Future<Output = Self::Output> + Send + 'static {
         let client = cx.http_client();
         async move {
             match source
                 .remote
                 .host
-                .commit_author_avatar_url(
-                    &source.remote.owner,
-                    &source.remote.repo,
-                    source.sha.clone(),
-                    client,
-                )
+                .commit_author_avatar_url(&source.remote.owner, &source.remote.repo, source.sha.clone(), client)
                 .await
             {
                 Ok(Some(url)) => Some(SharedString::from(url.to_string())),
@@ -500,26 +465,20 @@ impl Render for FileHistoryView {
                     .size_full()
                     .child({
                         let view = cx.weak_entity();
-                        uniform_list(
-                            "file-history-list",
-                            entry_count,
-                            move |range, window, cx| {
-                                let Some(view) = view.upgrade() else {
-                                    return Vec::new();
-                                };
-                                view.update(cx, |this, cx| {
-                                    let mut items = Vec::with_capacity(range.end - range.start);
-                                    for ix in range {
-                                        if let Some(entry) = this.history.entries.get(ix) {
-                                            items.push(
-                                                this.render_commit_entry(ix, entry, window, cx),
-                                            );
-                                        }
+                        uniform_list("file-history-list", entry_count, move |range, window, cx| {
+                            let Some(view) = view.upgrade() else {
+                                return Vec::new();
+                            };
+                            view.update(cx, |this, cx| {
+                                let mut items = Vec::with_capacity(range.end - range.start);
+                                for ix in range {
+                                    if let Some(entry) = this.history.entries.get(ix) {
+                                        items.push(this.render_commit_entry(ix, entry, window, cx));
                                     }
-                                    items
-                                })
-                            },
-                        )
+                                }
+                                items
+                            })
+                        })
                         .flex_1()
                         .size_full()
                         .track_scroll(&self.scroll_handle)
@@ -593,12 +552,7 @@ impl Item for FileHistoryView {
         Task::ready(Ok(()))
     }
 
-    fn reload(
-        &mut self,
-        _project: Entity<Project>,
-        _window: &mut Window,
-        _: &mut Context<Self>,
-    ) -> Task<Result<()>> {
+    fn reload(&mut self, _project: Entity<Project>, _window: &mut Window, _: &mut Context<Self>) -> Task<Result<()>> {
         Task::ready(Ok(()))
     }
 
@@ -610,20 +564,11 @@ impl Item for FileHistoryView {
         false
     }
 
-    fn breadcrumbs(
-        &self,
-        _theme: &theme::Theme,
-        _cx: &App,
-    ) -> Option<Vec<workspace::item::BreadcrumbText>> {
+    fn breadcrumbs(&self, _theme: &theme::Theme, _cx: &App) -> Option<Vec<workspace::item::BreadcrumbText>> {
         None
     }
 
-    fn added_to_workspace(
-        &mut self,
-        _workspace: &mut Workspace,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn added_to_workspace(&mut self, _workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Self>) {
         window.focus(&self.focus_handle, cx);
     }
 
@@ -635,20 +580,9 @@ impl Item for FileHistoryView {
         None
     }
 
-    fn set_nav_history(
-        &mut self,
-        _: workspace::ItemNavHistory,
-        _window: &mut Window,
-        _: &mut Context<Self>,
-    ) {
-    }
+    fn set_nav_history(&mut self, _: workspace::ItemNavHistory, _window: &mut Window, _: &mut Context<Self>) {}
 
-    fn act_as_type<'a>(
-        &'a self,
-        type_id: TypeId,
-        self_handle: &'a Entity<Self>,
-        _: &'a App,
-    ) -> Option<AnyEntity> {
+    fn act_as_type<'a>(&'a self, type_id: TypeId, self_handle: &'a Entity<Self>, _: &'a App) -> Option<AnyEntity> {
         if type_id == TypeId::of::<Self>() {
             Some(self_handle.clone().into())
         } else {

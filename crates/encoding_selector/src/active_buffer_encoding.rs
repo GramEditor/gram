@@ -1,8 +1,6 @@
 use editor::Editor;
 use encoding_rs::{Encoding, UTF_8};
-use gpui::{
-    Context, Entity, IntoElement, ParentElement, Render, Styled, Subscription, Window, div,
-};
+use gpui::{Context, Entity, IntoElement, ParentElement, Render, Styled, Subscription, Window, div};
 use ui::{Button, ButtonCommon, Clickable, Tooltip};
 use workspace::{
     StatusBarSettings, StatusItemView, Workspace,
@@ -79,8 +77,7 @@ impl StatusItemView for ActiveBufferEncoding {
         cx: &mut Context<Self>,
     ) {
         if let Some(editor) = active_pane_item.and_then(|item| item.downcast::<Editor>()) {
-            self._observe_active_editor =
-                Some(cx.observe_in(&editor, window, Self::update_encoding));
+            self._observe_active_editor = Some(cx.observe_in(&editor, window, Self::update_encoding));
             self.update_encoding(editor, window, cx);
         } else {
             self.active_encoding = None;

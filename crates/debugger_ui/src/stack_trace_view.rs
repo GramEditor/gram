@@ -3,12 +3,12 @@ use std::any::{Any, TypeId};
 use collections::HashMap;
 use dap::StackFrameId;
 use editor::{
-    Anchor, Bias, DebugStackFrameLine, Editor, EditorEvent, ExcerptId, ExcerptRange, MultiBuffer,
-    RowHighlightOptions, SelectionEffects, ToPoint, scroll::Autoscroll,
+    Anchor, Bias, DebugStackFrameLine, Editor, EditorEvent, ExcerptId, ExcerptRange, MultiBuffer, RowHighlightOptions,
+    SelectionEffects, ToPoint, scroll::Autoscroll,
 };
 use gpui::{
-    App, AppContext, Entity, EventEmitter, Focusable, IntoElement, Render, SharedString,
-    Subscription, Task, WeakEntity, Window,
+    App, AppContext, Entity, EventEmitter, Focusable, IntoElement, Render, SharedString, Subscription, Task,
+    WeakEntity, Window,
 };
 use language::{BufferSnapshot, Capability, Point, Selection, SelectionGoal, TreeSitterOptions};
 use project::{Project, ProjectPath};
@@ -46,8 +46,7 @@ impl StackTraceView {
     ) -> Self {
         let multibuffer = cx.new(|_| MultiBuffer::new(Capability::ReadWrite));
         let editor = cx.new(|cx| {
-            let mut editor =
-                Editor::for_multibuffer(multibuffer.clone(), Some(project.clone()), window, cx);
+            let mut editor = Editor::for_multibuffer(multibuffer.clone(), Some(project.clone()), window, cx);
             editor.set_vertical_scroll_margin(5, cx);
             editor
         });
@@ -55,10 +54,7 @@ impl StackTraceView {
         cx.subscribe_in(&editor, window, |this, editor, event, window, cx| {
             if let EditorEvent::SelectionsChanged { local: true } = event {
                 let excerpt_id = editor.update(cx, |editor, cx| {
-                    let position: Point = editor
-                        .selections
-                        .newest(&editor.display_snapshot(cx))
-                        .head();
+                    let position: Point = editor.selections.newest(&editor.display_snapshot(cx)).head();
 
                     editor
                         .snapshot(window, cx)
@@ -84,8 +80,7 @@ impl StackTraceView {
             window,
             |this, stack_frame_list, event, window, cx| match event {
                 StackFrameListEvent::BuiltEntries => {
-                    this.selected_stack_frame_id =
-                        stack_frame_list.read(cx).opened_stack_frame_id();
+                    this.selected_stack_frame_id = stack_frame_list.read(cx).opened_stack_frame_id();
                     this.update_excerpts(window, cx);
                 }
                 StackFrameListEvent::SelectedStackFrameChanged(selected_frame_id) => {
@@ -99,12 +94,8 @@ impl StackTraceView {
                         .map(|highlight| highlight.1)
                     {
                         this.editor.update(cx, |editor, cx| {
-                            if frame_anchor.excerpt_id
-                                != editor.selections.newest_anchor().head().excerpt_id
-                            {
-                                let effects = SelectionEffects::scroll(
-                                    Autoscroll::center().for_anchor(frame_anchor),
-                                );
+                            if frame_anchor.excerpt_id != editor.selections.newest_anchor().head().excerpt_id {
+                                let effects = SelectionEffects::scroll(Autoscroll::center().for_anchor(frame_anchor));
 
                                 editor.change_selections(effects, window, cx, |selections| {
                                     let selection_id = selections.new_selection_id();
@@ -146,9 +137,8 @@ impl StackTraceView {
 
     fn update_excerpts(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.refresh_task.take();
-        self.editor.update(cx, |editor, cx| {
-            editor.clear_highlights::<DebugStackFrameLine>(cx)
-        });
+        self.editor
+            .update(cx, |editor, cx| editor.clear_highlights::<DebugStackFrameLine>(cx));
 
         let stack_frames = self
             .stack_frame_list
@@ -165,8 +155,7 @@ impl StackTraceView {
             })
             .collect();
 
-        self.multibuffer
-            .update(cx, |multi_buffer, cx| multi_buffer.clear(cx));
+        self.multibuffer.update(cx, |multi_buffer, cx| multi_buffer.clear(cx));
 
         let task = cx.spawn_in(window, async move |this, cx| {
             let mut to_highlights = Vec::default();
@@ -175,9 +164,9 @@ impl StackTraceView {
                 let (worktree, relative_path) = this
                     .update(cx, |this, cx| {
                         this.workspace.update(cx, |workspace, cx| {
-                            workspace.project().update(cx, |this, cx| {
-                                this.find_or_create_worktree(&abs_path, false, cx)
-                            })
+                            workspace
+                                .project()
+                                .update(cx, |this, cx| this.find_or_create_worktree(&abs_path, false, cx))
                         })
                     })??
                     .await?;
@@ -196,10 +185,8 @@ impl StackTraceView {
                     this.update(cx, |this, cx| {
                         this.multibuffer.update(cx, |multi_buffer, cx| {
                             let line_point = Point::new(line, 0);
-                            let start_context = Self::heuristic_syntactic_expand(
-                                &buffer.read(cx).snapshot(),
-                                line_point,
-                            );
+                            let start_context =
+                                Self::heuristic_syntactic_expand(&buffer.read(cx).snapshot(), line_point);
 
                             // Users will want to see what happened before an active debug line in most cases
                             let range = ExcerptRange {
@@ -208,12 +195,10 @@ impl StackTraceView {
                             };
                             multi_buffer.push_excerpts(buffer.clone(), vec![range], cx);
 
-                            let line_anchor =
-                                multi_buffer.buffer_point_to_anchor(&buffer, line_point, cx);
+                            let line_anchor = multi_buffer.buffer_point_to_anchor(&buffer, line_point, cx);
 
                             if let Some(line_anchor) = line_anchor {
-                                this.excerpt_for_frames
-                                    .insert(line_anchor.excerpt_id, stack_frame_id);
+                                this.excerpt_for_frames.insert(line_anchor.excerpt_id, stack_frame_id);
                                 to_highlights.push((stack_frame_id, line_anchor));
                             }
                         });
@@ -235,9 +220,8 @@ impl StackTraceView {
     }
 
     fn update_highlights(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        self.editor.update(cx, |editor, _| {
-            editor.clear_row_highlights::<DebugStackFrameLine>()
-        });
+        self.editor
+            .update(cx, |editor, _| editor.clear_row_highlights::<DebugStackFrameLine>());
 
         let stack_frames = self
             .stack_frame_list
@@ -276,21 +260,14 @@ impl StackTraceView {
                 let end = start + Point::new(1, 0);
                 let start = snapshot.buffer_snapshot().anchor_before(start);
                 let end = snapshot.buffer_snapshot().anchor_before(end);
-                editor.highlight_rows::<DebugStackFrameLine>(
-                    start..end,
-                    color,
-                    RowHighlightOptions::default(),
-                    cx,
-                );
+                editor.highlight_rows::<DebugStackFrameLine>(start..end, color, RowHighlightOptions::default(), cx);
             }
         })
     }
 
     fn heuristic_syntactic_expand(snapshot: &BufferSnapshot, selected_point: Point) -> Point {
-        let mut text_objects = snapshot.text_object_ranges(
-            selected_point..selected_point,
-            TreeSitterOptions::max_start_depth(4),
-        );
+        let mut text_objects =
+            snapshot.text_object_ranges(selected_point..selected_point, TreeSitterOptions::max_start_depth(4));
 
         let mut start_position = text_objects
             .find(|(_, obj)| matches!(obj, language::TextObject::AroundFunction))
@@ -327,18 +304,11 @@ impl Item for StackTraceView {
     }
 
     fn deactivated(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        self.editor
-            .update(cx, |editor, cx| editor.deactivated(window, cx));
+        self.editor.update(cx, |editor, cx| editor.deactivated(window, cx));
     }
 
-    fn navigate(
-        &mut self,
-        data: Box<dyn Any>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> bool {
-        self.editor
-            .update(cx, |editor, cx| editor.navigate(data, window, cx))
+    fn navigate(&mut self, data: Box<dyn Any>, window: &mut Window, cx: &mut Context<Self>) -> bool {
+        self.editor.update(cx, |editor, cx| editor.navigate(data, window, cx))
     }
 
     fn tab_tooltip_text(&self, _: &App) -> Option<SharedString> {
@@ -349,20 +319,11 @@ impl Item for StackTraceView {
         "Stack Frames".into()
     }
 
-    fn for_each_project_item(
-        &self,
-        cx: &App,
-        f: &mut dyn FnMut(gpui::EntityId, &dyn project::ProjectItem),
-    ) {
+    fn for_each_project_item(&self, cx: &App, f: &mut dyn FnMut(gpui::EntityId, &dyn project::ProjectItem)) {
         self.editor.for_each_project_item(cx, f)
     }
 
-    fn set_nav_history(
-        &mut self,
-        nav_history: ItemNavHistory,
-        _: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn set_nav_history(&mut self, nav_history: ItemNavHistory, _: &mut Window, cx: &mut Context<Self>) {
         self.editor.update(cx, |editor, _| {
             editor.set_nav_history(Some(nav_history));
         });
@@ -404,12 +365,7 @@ impl Item for StackTraceView {
         unreachable!()
     }
 
-    fn reload(
-        &mut self,
-        project: Entity<Project>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Task<Result<()>> {
+    fn reload(&mut self, project: Entity<Project>, window: &mut Window, cx: &mut Context<Self>) -> Task<Result<()>> {
         self.editor.reload(project, window, cx)
     }
 
@@ -440,14 +396,8 @@ impl Item for StackTraceView {
         self.editor.breadcrumbs(theme, cx)
     }
 
-    fn added_to_workspace(
-        &mut self,
-        workspace: &mut Workspace,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        self.editor.update(cx, |editor, cx| {
-            editor.added_to_workspace(workspace, window, cx)
-        });
+    fn added_to_workspace(&mut self, workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Self>) {
+        self.editor
+            .update(cx, |editor, cx| editor.added_to_workspace(workspace, window, cx));
     }
 }

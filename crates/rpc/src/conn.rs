@@ -2,10 +2,8 @@ use async_tungstenite::tungstenite::Message as WebSocketMessage;
 use futures::{SinkExt as _, StreamExt as _};
 
 pub struct Connection {
-    pub(crate) tx:
-        Box<dyn 'static + Send + Unpin + futures::Sink<WebSocketMessage, Error = anyhow::Error>>,
-    pub(crate) rx:
-        Box<dyn 'static + Send + Unpin + futures::Stream<Item = anyhow::Result<WebSocketMessage>>>,
+    pub(crate) tx: Box<dyn 'static + Send + Unpin + futures::Sink<WebSocketMessage, Error = anyhow::Error>>,
+    pub(crate) rx: Box<dyn 'static + Send + Unpin + futures::Stream<Item = anyhow::Result<WebSocketMessage>>>,
 }
 
 impl Connection {
@@ -40,11 +38,7 @@ impl Connection {
         let killed = Arc::new(AtomicBool::new(false));
         let (a_tx, a_rx) = channel(killed.clone(), executor.clone());
         let (b_tx, b_rx) = channel(killed.clone(), executor);
-        return (
-            Self { tx: a_tx, rx: b_rx },
-            Self { tx: b_tx, rx: a_rx },
-            killed,
-        );
+        return (Self { tx: a_tx, rx: b_rx }, Self { tx: b_tx, rx: a_rx }, killed);
 
         #[allow(clippy::type_complexity)]
         fn channel(

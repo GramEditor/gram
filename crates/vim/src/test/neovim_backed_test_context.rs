@@ -45,12 +45,7 @@ impl SharedState {
                     {}
                     # gram ({}):
                     {}"},
-                self.initial,
-                self.recent_keystrokes,
-                self.neovim_mode,
-                self.neovim,
-                self.editor_mode,
-                self.editor,
+                self.initial, self.recent_keystrokes, self.neovim_mode, self.neovim, self.editor_mode, self.editor,
             )
         }
     }
@@ -58,10 +53,7 @@ impl SharedState {
     #[track_caller]
     pub fn assert_eq(&mut self, marked_text: &str) {
         let marked_text = marked_text.replace('•', " ");
-        if self.neovim == marked_text
-            && self.neovim == self.editor
-            && self.neovim_mode == self.editor_mode
-        {
+        if self.neovim == marked_text && self.neovim == self.editor && self.neovim_mode == self.editor_mode {
             return;
         }
 
@@ -280,20 +272,13 @@ impl NeovimBackedTestContext {
             panic!("nvim doesn't support columns < 12")
         }
         self.neovim.set_option("wrap").await;
-        self.neovim
-            .set_option(&format!("columns={}", columns))
-            .await;
+        self.neovim.set_option(&format!("columns={}", columns)).await;
 
         self.update(|_, cx| {
             SettingsStore::update_global(cx, |settings, cx| {
                 settings.update_user_settings(cx, |settings| {
-                    settings.project.all_languages.defaults.soft_wrap =
-                        Some(SoftWrap::PreferredLineLength);
-                    settings
-                        .project
-                        .all_languages
-                        .defaults
-                        .preferred_line_length = Some(columns);
+                    settings.project.all_languages.defaults.soft_wrap = Some(SoftWrap::PreferredLineLength);
+                    settings.project.all_languages.defaults.preferred_line_length = Some(columns);
                 });
             })
         })
@@ -306,10 +291,7 @@ impl NeovimBackedTestContext {
         self.neovim.set_option(&format!("lines={}", rows + 2)).await;
         let (line_height, visible_line_count) = self.update_editor(|editor, window, cx| {
             (
-                editor
-                    .style(cx)
-                    .text
-                    .line_height_in_pixels(window.rem_size()),
+                editor.style(cx).text.line_height_in_pixels(window.rem_size()),
                 editor.visible_line_count().unwrap(),
             )
         });
@@ -321,10 +303,7 @@ impl NeovimBackedTestContext {
             })
             .unwrap();
 
-        self.simulate_window_resize(
-            self.window,
-            size(px(1000.), margin + (rows as f32) * line_height),
-        );
+        self.simulate_window_resize(self.window, size(px(1000.), margin + (rows as f32) * line_height));
     }
 
     pub async fn set_neovim_option(&mut self, option: &str) {
@@ -367,21 +346,13 @@ impl NeovimBackedTestContext {
             neovim_mode: mode,
             editor: self.editor_state(),
             editor_mode: self.mode(),
-            initial: self
-                .last_set_state
-                .as_ref()
-                .cloned()
-                .unwrap_or("N/A".to_string()),
+            initial: self.last_set_state.as_ref().cloned().unwrap_or("N/A".to_string()),
             recent_keystrokes: self.recent_keystrokes.join(" "),
         }
     }
 
     #[must_use]
-    pub async fn simulate_at_each_offset(
-        &mut self,
-        keystrokes: &str,
-        marked_positions: &str,
-    ) -> SharedState {
+    pub async fn simulate_at_each_offset(&mut self, keystrokes: &str, marked_positions: &str) -> SharedState {
         let (unmarked_text, cursor_offsets) = marked_text_offsets(marked_positions);
 
         for cursor_offset in cursor_offsets.iter() {

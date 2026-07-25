@@ -1,7 +1,4 @@
-use gpui::{
-    App, Application, Bounds, Context, Window, WindowBounds, WindowOptions, div, prelude::*, px,
-    size,
-};
+use gpui::{App, Application, Bounds, Context, Window, WindowBounds, WindowOptions, div, prelude::*, px, size};
 
 struct Scrollable {}
 
@@ -22,22 +19,17 @@ impl Render for Scrollable {
                     .bg(gpui::blue().opacity(0.05))
                     .p_4()
                     .child(
-                        div()
-                            .mb_5()
-                            .w_full()
-                            .id("horizontal")
-                            .overflow_scroll()
-                            .child(
-                                div()
-                                    .w(px(2000.))
-                                    .h(px(150.))
-                                    .bg(gpui::green().opacity(0.1))
-                                    .hover(|this| this.bg(gpui::green().opacity(0.2)))
-                                    .border_1()
-                                    .border_color(gpui::green())
-                                    .p_4()
-                                    .child("Scroll Horizontal"),
-                            ),
+                        div().mb_5().w_full().id("horizontal").overflow_scroll().child(
+                            div()
+                                .w(px(2000.))
+                                .h(px(150.))
+                                .bg(gpui::green().opacity(0.1))
+                                .hover(|this| this.bg(gpui::green().opacity(0.2)))
+                                .border_1()
+                                .border_color(gpui::green())
+                                .p_4()
+                                .child("Scroll Horizontal"),
+                        ),
                     )
                     .child("Scroll Vertical"),
             )

@@ -21,11 +21,7 @@ pub trait PanelHeader: workspace::Panel {
     }
 
     fn panel_header_container(&self, _window: &mut Window, cx: &mut App) -> Div {
-        h_flex()
-            .h(self.header_height(cx))
-            .w_full()
-            .px_1()
-            .flex_none()
+        h_flex().h(self.header_height(cx)).w_full().px_1().flex_none()
     }
 }
 

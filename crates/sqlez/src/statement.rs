@@ -47,10 +47,7 @@ impl<'a> Statement<'a> {
         let sql = CString::new(query.as_ref()).context("Error creating cstr")?;
         let mut remaining_sql = sql.as_c_str();
         while {
-            let remaining_sql_str = remaining_sql
-                .to_str()
-                .context("Parsing remaining sql")?
-                .trim();
+            let remaining_sql_str = remaining_sql.to_str().context("Parsing remaining sql")?.trim();
             remaining_sql_str != ";" && !remaining_sql_str.is_empty()
         } {
             let mut raw_statement = ptr::null_mut::<sqlite3_stmt>();
@@ -300,10 +297,7 @@ impl<'a> Statement<'a> {
     }
 
     pub fn map<R>(&mut self, callback: impl FnMut(&mut Statement) -> Result<R>) -> Result<Vec<R>> {
-        fn logic<R>(
-            this: &mut Statement,
-            mut callback: impl FnMut(&mut Statement) -> Result<R>,
-        ) -> Result<Vec<R>> {
+        fn logic<R>(this: &mut Statement, mut callback: impl FnMut(&mut Statement) -> Result<R>) -> Result<Vec<R>> {
             let mut mapped_rows = Vec::new();
             while this.step()? == StepResult::Row {
                 mapped_rows.push(callback(this)?);
@@ -321,10 +315,7 @@ impl<'a> Statement<'a> {
     }
 
     pub fn single<R>(&mut self, callback: impl FnOnce(&mut Statement) -> Result<R>) -> Result<R> {
-        fn logic<R>(
-            this: &mut Statement,
-            callback: impl FnOnce(&mut Statement) -> Result<R>,
-        ) -> Result<R> {
+        fn logic<R>(this: &mut Statement, callback: impl FnOnce(&mut Statement) -> Result<R>) -> Result<R> {
             println!("{:?}", std::any::type_name::<R>());
             anyhow::ensure!(
                 this.step()? == StepResult::Row,
@@ -348,21 +339,13 @@ impl<'a> Statement<'a> {
         self.single(|this| this.column::<R>())
     }
 
-    pub fn maybe<R>(
-        &mut self,
-        callback: impl FnOnce(&mut Statement) -> Result<R>,
-    ) -> Result<Option<R>> {
-        fn logic<R>(
-            this: &mut Statement,
-            callback: impl FnOnce(&mut Statement) -> Result<R>,
-        ) -> Result<Option<R>> {
+    pub fn maybe<R>(&mut self, callback: impl FnOnce(&mut Statement) -> Result<R>) -> Result<Option<R>> {
+        fn logic<R>(this: &mut Statement, callback: impl FnOnce(&mut Statement) -> Result<R>) -> Result<Option<R>> {
             if this.step().context("Failed on step call")? != StepResult::Row {
                 return Ok(None);
             }
 
-            let result = callback(this)
-                .map(|r| Some(r))
-                .context("Failed to parse row result")?;
+            let result = callback(this).map(|r| Some(r)).context("Failed to parse row result")?;
 
             anyhow::ensure!(
                 this.step().context("Second step call")? == StepResult::Done,
@@ -402,8 +385,7 @@ mod test {
 
     #[test]
     fn binding_multiple_statements_with_parameter_gaps() {
-        let connection =
-            Connection::open_memory(Some("binding_multiple_statements_with_parameter_gaps"));
+        let connection = Connection::open_memory(Some("binding_multiple_statements_with_parameter_gaps"));
 
         connection
             .exec(indoc! {"
@@ -445,8 +427,7 @@ mod test {
 
         let blob = &[0, 1, 2, 4, 8, 16, 32, 64];
 
-        let mut write =
-            Statement::prepare(&connection1, "INSERT INTO blobs (data) VALUES (?)").unwrap();
+        let mut write = Statement::prepare(&connection1, "INSERT INTO blobs (data) VALUES (?)").unwrap();
         write.bind_blob(1, blob).unwrap();
         assert_eq!(write.step().unwrap(), StepResult::Done);
 
@@ -475,19 +456,14 @@ mod test {
         .unwrap();
 
         assert!(
-            connection
-                .select_row::<String>("SELECT text FROM texts")
-                .unwrap()()
-            .unwrap()
-            .is_none()
+            connection.select_row::<String>("SELECT text FROM texts").unwrap()()
+                .unwrap()
+                .is_none()
         );
 
         let text_to_insert = "This is a test";
 
-        connection
-            .exec_bound("INSERT INTO texts VALUES (?)")
-            .unwrap()(text_to_insert)
-        .unwrap();
+        connection.exec_bound("INSERT INTO texts VALUES (?)").unwrap()(text_to_insert).unwrap();
 
         assert_eq!(
             connection.select_row("SELECT text FROM texts").unwrap()().unwrap(),

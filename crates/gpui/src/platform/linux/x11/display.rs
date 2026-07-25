@@ -12,11 +12,7 @@ pub(crate) struct X11Display {
 }
 
 impl X11Display {
-    pub(crate) fn new(
-        xcb: &XCBConnection,
-        scale_factor: f32,
-        x_screen_index: usize,
-    ) -> anyhow::Result<Self> {
+    pub(crate) fn new(xcb: &XCBConnection, scale_factor: f32, x_screen_index: usize) -> anyhow::Result<Self> {
         let screen = xcb
             .setup()
             .roots

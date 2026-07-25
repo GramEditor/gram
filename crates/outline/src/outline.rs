@@ -9,9 +9,8 @@ use editor::{Anchor, AnchorRangeExt, Editor, scroll::Autoscroll};
 use editor::{MultiBufferOffset, RowHighlightOptions, SelectionEffects};
 use fuzzy::StringMatch;
 use gpui::{
-    App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, HighlightStyle,
-    ParentElement, Point, Render, Styled, StyledText, Task, TextStyle, WeakEntity, Window, div,
-    rems,
+    App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, HighlightStyle, ParentElement, Point,
+    Render, Styled, StyledText, Task, TextStyle, WeakEntity, Window, div, rems,
 };
 use language::{Outline, OutlineItem};
 use ordered_float::OrderedFloat;
@@ -35,12 +34,7 @@ pub fn init(cx: &mut App) {
         .ok();
 }
 
-pub fn toggle(
-    editor: Entity<Editor>,
-    _: &app_actions::outline::ToggleOutline,
-    window: &mut Window,
-    cx: &mut App,
-) {
+pub fn toggle(editor: Entity<Editor>, _: &app_actions::outline::ToggleOutline, window: &mut Window, cx: &mut App) {
     let outline = editor
         .read(cx)
         .buffer()
@@ -51,9 +45,7 @@ pub fn toggle(
     let workspace = window.root::<Workspace>().flatten();
     if let Some((workspace, outline)) = workspace.zip(outline) {
         workspace.update(cx, |workspace, cx| {
-            workspace.toggle_modal(window, cx, |window, cx| {
-                OutlineView::new(outline, editor, window, cx)
-            });
+            workspace.toggle_modal(window, cx, |window, cx| OutlineView::new(outline, editor, window, cx));
         })
     }
 }
@@ -70,14 +62,9 @@ impl Focusable for OutlineView {
 
 impl EventEmitter<DismissEvent> for OutlineView {}
 impl ModalView for OutlineView {
-    fn on_before_dismiss(
-        &mut self,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> DismissDecision {
-        self.picker.update(cx, |picker, cx| {
-            picker.delegate.restore_active_editor(window, cx)
-        });
+    fn on_before_dismiss(&mut self, window: &mut Window, cx: &mut Context<Self>) -> DismissDecision {
+        self.picker
+            .update(cx, |picker, cx| picker.delegate.restore_active_editor(window, cx));
         DismissDecision::Dismiss(true)
     }
 }
@@ -169,13 +156,7 @@ impl OutlineViewDelegate {
         })
     }
 
-    fn set_selected_index(
-        &mut self,
-        ix: usize,
-        navigate: bool,
-
-        cx: &mut Context<Picker<OutlineViewDelegate>>,
-    ) {
+    fn set_selected_index(&mut self, ix: usize, navigate: bool, cx: &mut Context<Picker<OutlineViewDelegate>>) {
         self.selected_match_index = ix;
 
         if navigate && !self.matches.is_empty() {
@@ -214,12 +195,7 @@ impl PickerDelegate for OutlineViewDelegate {
         self.selected_match_index
     }
 
-    fn set_selected_index(
-        &mut self,
-        ix: usize,
-        _: &mut Window,
-        cx: &mut Context<Picker<OutlineViewDelegate>>,
-    ) {
+    fn set_selected_index(&mut self, ix: usize, _: &mut Window, cx: &mut Context<Picker<OutlineViewDelegate>>) {
         self.set_selected_index(ix, true, cx);
     }
 
@@ -275,10 +251,7 @@ impl PickerDelegate for OutlineViewDelegate {
                 .map(|(ix, _, _)| ix)
                 .unwrap_or(0);
         } else {
-            self.matches = smol::block_on(
-                self.outline
-                    .search(&query, cx.background_executor().clone()),
-            );
+            self.matches = smol::block_on(self.outline.search(&query, cx.background_executor().clone()));
             selected_index = self
                 .matches
                 .iter()
@@ -292,26 +265,16 @@ impl PickerDelegate for OutlineViewDelegate {
         Task::ready(())
     }
 
-    fn confirm(
-        &mut self,
-        _: bool,
-        window: &mut Window,
-        cx: &mut Context<Picker<OutlineViewDelegate>>,
-    ) {
+    fn confirm(&mut self, _: bool, window: &mut Window, cx: &mut Context<Picker<OutlineViewDelegate>>) {
         self.prev_scroll_position.take();
         self.set_selected_index(self.selected_match_index, true, cx);
 
         self.active_editor.update(cx, |active_editor, cx| {
-            let highlight = active_editor
-                .highlighted_rows::<OutlineRowHighlights>()
-                .next();
+            let highlight = active_editor.highlighted_rows::<OutlineRowHighlights>().next();
             if let Some((rows, _)) = highlight {
-                active_editor.change_selections(
-                    SelectionEffects::scroll(Autoscroll::center()),
-                    window,
-                    cx,
-                    |s| s.select_ranges([rows.start..rows.start]),
-                );
+                active_editor.change_selections(SelectionEffects::scroll(Autoscroll::center()), window, cx, |s| {
+                    s.select_ranges([rows.start..rows.start])
+                });
                 active_editor.clear_row_highlights::<OutlineRowHighlights>();
                 window.focus(&active_editor.focus_handle(cx), cx);
             }
@@ -321,9 +284,7 @@ impl PickerDelegate for OutlineViewDelegate {
     }
 
     fn dismissed(&mut self, window: &mut Window, cx: &mut Context<Picker<OutlineViewDelegate>>) {
-        self.outline_view
-            .update(cx, |_, cx| cx.emit(DismissEvent))
-            .log_err();
+        self.outline_view.update(cx, |_, cx| cx.emit(DismissEvent)).log_err();
         self.restore_active_editor(window, cx);
     }
 
@@ -342,12 +303,11 @@ impl PickerDelegate for OutlineViewDelegate {
                 .inset(true)
                 .spacing(ListItemSpacing::Sparse)
                 .toggle_state(selected)
-                .child(
-                    div()
-                        .text_ui(cx)
-                        .pl(rems(outline_item.depth as f32))
-                        .child(render_item(outline_item, mat.ranges(), cx)),
-                ),
+                .child(div().text_ui(cx).pl(rems(outline_item.depth as f32)).child(render_item(
+                    outline_item,
+                    mat.ranges(),
+                    cx,
+                ))),
         )
     }
 }
@@ -361,9 +321,7 @@ pub fn render_item<T>(
         background_color: Some(cx.theme().colors().text_accent.alpha(0.3)),
         ..Default::default()
     };
-    let custom_highlights = match_ranges
-        .into_iter()
-        .map(|range| (range, highlight_style));
+    let custom_highlights = match_ranges.into_iter().map(|range| (range, highlight_style));
 
     let settings = ThemeSettings::get_global(cx);
 
@@ -380,10 +338,7 @@ pub fn render_item<T>(
         line_height: relative(1.),
         ..Default::default()
     };
-    let highlights = gpui::combine_highlights(
-        custom_highlights,
-        outline_item.highlight_ranges.iter().cloned(),
-    );
+    let highlights = gpui::combine_highlights(custom_highlights, outline_item.highlight_ranges.iter().cloned());
 
     StyledText::new(outline_item.text.clone()).with_default_highlights(&text_style, highlights)
 }
@@ -422,17 +377,14 @@ mod tests {
         let project = Project::test(fs, [path!("/dir").as_ref()], cx).await;
         project.read_with(cx, |project, _| project.languages().add(rust_lang()));
 
-        let (workspace, cx) =
-            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
         let worktree_id = workspace.update(cx, |workspace, cx| {
-            workspace.project().update(cx, |project, cx| {
-                project.worktrees(cx).next().unwrap().read(cx).id()
-            })
+            workspace
+                .project()
+                .update(cx, |project, cx| project.worktrees(cx).next().unwrap().read(cx).id())
         });
         let _buffer = project
-            .update(cx, |project, cx| {
-                project.open_local_buffer(path!("/dir/a.rs"), cx)
-            })
+            .update(cx, |project, cx| project.open_local_buffer(path!("/dir/a.rs"), cx))
             .await
             .unwrap();
         let editor = workspace
@@ -443,19 +395,14 @@ mod tests {
             .unwrap()
             .downcast::<Editor>()
             .unwrap();
-        let ensure_outline_view_contents =
-            |outline_view: &Entity<Picker<OutlineViewDelegate>>, cx: &mut VisualTestContext| {
-                assert_eq!(query(outline_view, cx), "");
-                assert_eq!(
-                    outline_names(outline_view, cx),
-                    vec![
-                        "struct SingleLine",
-                        "struct MultiLine",
-                        "field_1",
-                        "field_2"
-                    ],
-                );
-            };
+        let ensure_outline_view_contents = |outline_view: &Entity<Picker<OutlineViewDelegate>>,
+                                            cx: &mut VisualTestContext| {
+            assert_eq!(query(outline_view, cx), "");
+            assert_eq!(
+                outline_names(outline_view, cx),
+                vec!["struct SingleLine", "struct MultiLine", "field_1", "field_2"],
+            );
+        };
 
         let outline_view = open_outline_view(&workspace, cx);
         ensure_outline_view_contents(&outline_view, cx);
@@ -542,17 +489,11 @@ mod tests {
         })
     }
 
-    fn query(
-        outline_view: &Entity<Picker<OutlineViewDelegate>>,
-        cx: &mut VisualTestContext,
-    ) -> String {
+    fn query(outline_view: &Entity<Picker<OutlineViewDelegate>>, cx: &mut VisualTestContext) -> String {
         outline_view.update(cx, |outline_view, cx| outline_view.query(cx))
     }
 
-    fn outline_names(
-        outline_view: &Entity<Picker<OutlineViewDelegate>>,
-        cx: &mut VisualTestContext,
-    ) -> Vec<String> {
+    fn outline_names(outline_view: &Entity<Picker<OutlineViewDelegate>>, cx: &mut VisualTestContext) -> Vec<String> {
         outline_view.read_with(cx, |outline_view, _| {
             let items = &outline_view.delegate.outline.items;
             outline_view
@@ -667,11 +608,7 @@ mod tests {
     }
 
     #[track_caller]
-    fn assert_single_caret_at_row(
-        editor: &Entity<Editor>,
-        buffer_row: u32,
-        cx: &mut VisualTestContext,
-    ) {
+    fn assert_single_caret_at_row(editor: &Entity<Editor>, buffer_row: u32, cx: &mut VisualTestContext) {
         let selections = editor.update(cx, |editor, cx| {
             editor
                 .selections

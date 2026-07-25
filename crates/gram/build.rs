@@ -2,7 +2,7 @@
 use std::process::Command;
 
 fn main() {
-println!("cargo:rerun-if-env-changed=GRAM_UPDATE_EXPLANATION");
+    println!("cargo:rerun-if-env-changed=GRAM_UPDATE_EXPLANATION");
 
     if let Ok(explanation) = std::env::var("GRAM_UPDATE_EXPLANATION") {
         println!("cargo:rustc-env=GRAM_UPDATE_EXPLANATION={explanation}");
@@ -26,10 +26,7 @@ println!("cargo:rerun-if-env-changed=GRAM_UPDATE_EXPLANATION");
 
     // Populate git sha environment variable if git is available
     println!("cargo:rerun-if-changed=../../.git/logs/HEAD");
-    println!(
-        "cargo:rustc-env=TARGET={}",
-        std::env::var("TARGET").unwrap()
-    );
+    println!("cargo:rustc-env=TARGET={}", std::env::var("TARGET").unwrap());
 
     if let Some(output) = Command::new("git")
         .args(["rev-parse", "HEAD"])

@@ -1,9 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use gpui::AsyncApp;
-use language::{
-    LspAdapter, LspAdapterDelegate, LspInstaller, Toolchain, language_settings::AllLanguageSettings,
-};
+use language::{LspAdapter, LspAdapterDelegate, LspInstaller, Toolchain, language_settings::AllLanguageSettings};
 use lsp::{LanguageServerBinary, LanguageServerName, Uri};
 use node_runtime::{NodeRuntime, VersionStrategy};
 use project::lsp_store::language_server_settings;
@@ -43,9 +41,7 @@ impl LspInstaller for YamlLspAdapter {
         _: bool,
         _: &mut AsyncApp,
     ) -> Result<String> {
-        self.node
-            .npm_package_latest_version("yaml-language-server")
-            .await
+        self.node.npm_package_latest_version("yaml-language-server").await
     }
 
     async fn check_if_user_installed(
@@ -73,10 +69,7 @@ impl LspInstaller for YamlLspAdapter {
         let server_path = container_dir.join(SERVER_PATH);
 
         self.node
-            .npm_install_packages(
-                &container_dir,
-                &[(Self::PACKAGE_NAME, latest_version.as_str())],
-            )
+            .npm_install_packages(&container_dir, &[(Self::PACKAGE_NAME, latest_version.as_str())])
             .await?;
 
         Ok(LanguageServerBinary {
@@ -154,8 +147,7 @@ impl LspAdapter for YamlLspAdapter {
         });
 
         let project_options = cx.update(|cx| {
-            language_server_settings(delegate.as_ref(), &Self::SERVER_NAME, cx)
-                .and_then(|s| s.settings.clone())
+            language_server_settings(delegate.as_ref(), &Self::SERVER_NAME, cx).and_then(|s| s.settings.clone())
         })?;
         if let Some(override_options) = project_options {
             merge_json_value_into(override_options, &mut options);
@@ -164,16 +156,10 @@ impl LspAdapter for YamlLspAdapter {
     }
 }
 
-async fn get_cached_server_binary(
-    container_dir: PathBuf,
-    node: &NodeRuntime,
-) -> Option<LanguageServerBinary> {
+async fn get_cached_server_binary(container_dir: PathBuf, node: &NodeRuntime) -> Option<LanguageServerBinary> {
     maybe!(async {
         let server_path = container_dir.join(SERVER_PATH);
-        anyhow::ensure!(
-            server_path.exists(),
-            "missing executable in directory {server_path:?}"
-        );
+        anyhow::ensure!(server_path.exists(), "missing executable in directory {server_path:?}");
         Ok(LanguageServerBinary {
             path: node.binary_path().await?,
             env: None,

@@ -28,12 +28,7 @@ pub trait FluentBuilder {
     }
 
     /// Conditionally modify self with the given closure.
-    fn when_else(
-        self,
-        condition: bool,
-        then: impl FnOnce(Self) -> Self,
-        else_fn: impl FnOnce(Self) -> Self,
-    ) -> Self
+    fn when_else(self, condition: bool, then: impl FnOnce(Self) -> Self, else_fn: impl FnOnce(Self) -> Self) -> Self
     where
         Self: Sized,
     {

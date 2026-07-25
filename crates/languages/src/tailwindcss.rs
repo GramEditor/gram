@@ -25,8 +25,7 @@ pub struct TailwindCssLspAdapter {
 
 // Implements the LSP adapter for the Tailwind CSS LSP fork: https://github.com/zed-industries/zed/pull/39517#issuecomment-3368206678
 impl TailwindCssLspAdapter {
-    const SERVER_NAME: LanguageServerName =
-        LanguageServerName::new_static("tailwindcss-intellisense-css");
+    const SERVER_NAME: LanguageServerName = LanguageServerName::new_static("tailwindcss-intellisense-css");
     const PACKAGE_NAME: &str = "@tailwindcss/language-server";
 
     pub fn new(node: NodeRuntime) -> Self {
@@ -43,9 +42,7 @@ impl LspInstaller for TailwindCssLspAdapter {
         _: bool,
         _: &mut AsyncApp,
     ) -> Result<Self::BinaryVersion> {
-        self.node
-            .npm_package_latest_version(Self::PACKAGE_NAME)
-            .await
+        self.node.npm_package_latest_version(Self::PACKAGE_NAME).await
     }
 
     async fn check_if_user_installed(
@@ -74,10 +71,7 @@ impl LspInstaller for TailwindCssLspAdapter {
         let latest_version = latest_version.to_string();
 
         self.node
-            .npm_install_packages(
-                &container_dir,
-                &[(Self::PACKAGE_NAME, latest_version.as_str())],
-            )
+            .npm_install_packages(&container_dir, &[(Self::PACKAGE_NAME, latest_version.as_str())])
             .await?;
 
         Ok(LanguageServerBinary {
@@ -160,8 +154,7 @@ impl LspAdapter for TailwindCssLspAdapter {
         });
 
         let project_options = cx.update(|cx| {
-            language_server_settings(delegate.as_ref(), &self.name(), cx)
-                .and_then(|s| s.settings.clone())
+            language_server_settings(delegate.as_ref(), &self.name(), cx).and_then(|s| s.settings.clone())
         })?;
 
         if let Some(override_options) = project_options {
@@ -172,16 +165,10 @@ impl LspAdapter for TailwindCssLspAdapter {
     }
 }
 
-async fn get_cached_server_binary(
-    container_dir: PathBuf,
-    node: &NodeRuntime,
-) -> Option<LanguageServerBinary> {
+async fn get_cached_server_binary(container_dir: PathBuf, node: &NodeRuntime) -> Option<LanguageServerBinary> {
     maybe!(async {
         let server_path = container_dir.join(SERVER_PATH);
-        anyhow::ensure!(
-            server_path.exists(),
-            "missing executable in directory {server_path:?}"
-        );
+        anyhow::ensure!(server_path.exists(), "missing executable in directory {server_path:?}");
         Ok(LanguageServerBinary {
             path: node.binary_path().await?,
             env: None,

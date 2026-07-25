@@ -37,13 +37,7 @@ pub(crate) fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
 }
 
 impl Vim {
-    pub fn substitute(
-        &mut self,
-        count: Option<usize>,
-        line_mode: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn substitute(&mut self, count: Option<usize>, line_mode: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.store_visual_marks(window, cx);
         self.update_editor(cx, |vim, editor, cx| {
             editor.set_clip_at_line_ends(false, cx);
@@ -52,13 +46,7 @@ impl Vim {
                 editor.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
                     s.move_with(|map, selection| {
                         if selection.start == selection.end {
-                            Motion::Right.expand_selection(
-                                map,
-                                selection,
-                                count,
-                                &text_layout_details,
-                                false,
-                            );
+                            Motion::Right.expand_selection(map, selection, count, &text_layout_details, false);
                         }
                         if line_mode {
                             // in Visual mode when the selection contains the newline at the end
@@ -66,17 +54,8 @@ impl Vim {
                             if !selection.is_empty() && selection.end.column() == 0 {
                                 selection.end = movement::left(map, selection.end);
                             }
-                            Motion::CurrentLine.expand_selection(
-                                map,
-                                selection,
-                                None,
-                                &text_layout_details,
-                                false,
-                            );
-                            if let Some((point, _)) = (Motion::FirstNonWhitespace {
-                                display_lines: false,
-                            })
-                            .move_point(
+                            Motion::CurrentLine.expand_selection(map, selection, None, &text_layout_details, false);
+                            if let Some((point, _)) = (Motion::FirstNonWhitespace { display_lines: false }).move_point(
                                 map,
                                 selection.start,
                                 selection.goal,
@@ -94,10 +73,7 @@ impl Vim {
                     MotionKind::Exclusive
                 };
                 vim.copy_selections_content(editor, kind, window, cx);
-                let selections = editor
-                    .selections
-                    .all::<Point>(&editor.display_snapshot(cx))
-                    .into_iter();
+                let selections = editor.selections.all::<Point>(&editor.display_snapshot(cx)).into_iter();
                 let edits = selections.map(|selection| (selection.start..selection.end, ""));
                 editor.edit(edits, cx);
             });

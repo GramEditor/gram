@@ -8,11 +8,9 @@ pub trait SearchActionsRegistrar {
     fn register_handler<A: Action>(&mut self, callback: impl ActionExecutor<A>);
 }
 
-type SearchBarActionCallback<A> =
-    fn(&mut BufferSearchBar, &A, &mut Window, &mut Context<BufferSearchBar>);
+type SearchBarActionCallback<A> = fn(&mut BufferSearchBar, &A, &mut Window, &mut Context<BufferSearchBar>);
 
-type GetSearchBar<T> =
-    for<'a, 'b> fn(&'a T, &'a mut Window, &mut Context<'b, T>) -> Option<Entity<BufferSearchBar>>;
+type GetSearchBar<T> = for<'a, 'b> fn(&'a T, &'a mut Window, &mut Context<'b, T>) -> Option<Entity<BufferSearchBar>>;
 
 /// Registers search actions on a div that can be taken out.
 pub struct DivRegistrar<'a, 'b, T: 'static> {
@@ -43,9 +41,7 @@ impl<T: 'static> SearchActionsRegistrar for DivRegistrar<'_, '_, T> {
             div.on_action(self.cx.listener(move |this, action, window, cx| {
                 let should_notify = (getter)(this, window, cx)
                     .map(|search_bar| {
-                        search_bar.update(cx, |search_bar, cx| {
-                            callback.execute(search_bar, action, window, cx)
-                        })
+                        search_bar.update(cx, |search_bar, cx| callback.execute(search_bar, action, window, cx))
                     })
                     .unwrap_or(false);
                 if should_notify {

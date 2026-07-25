@@ -3,9 +3,7 @@ use std::sync::Arc;
 
 use editor::{Editor, EditorMode, MultiBuffer};
 use futures::future::Shared;
-use gpui::{
-    App, Entity, Hsla, RetainAllImageCache, Task, TextStyleRefinement, image_cache, prelude::*,
-};
+use gpui::{App, Entity, Hsla, RetainAllImageCache, Task, TextStyleRefinement, image_cache, prelude::*};
 use language::{Buffer, Language, LanguageRegistry};
 use markdown_preview::{markdown_parser::parse_markdown, markdown_renderer::render_markdown_block};
 use nbformat::v4::{CellId, CellMetadata, CellType};
@@ -64,10 +62,7 @@ impl CellControl {
 }
 
 impl Clickable for CellControl {
-    fn on_click(
-        self,
-        handler: impl Fn(&gpui::ClickEvent, &mut Window, &mut App) + 'static,
-    ) -> Self {
+    fn on_click(self, handler: impl Fn(&gpui::ClickEvent, &mut Window, &mut App) + 'static) -> Self {
         let button = self.button.on_click(handler);
         Self { button }
     }
@@ -85,28 +80,19 @@ pub enum Cell {
     Raw(Entity<RawCell>),
 }
 
-fn convert_outputs(
-    outputs: &Vec<nbformat::v4::Output>,
-    window: &mut Window,
-    cx: &mut App,
-) -> Vec<Output> {
+fn convert_outputs(outputs: &Vec<nbformat::v4::Output>, window: &mut Window, cx: &mut App) -> Vec<Output> {
     outputs
         .iter()
         .map(|output| match output {
             nbformat::v4::Output::Stream { text, .. } => Output::Stream {
                 content: cx.new(|cx| TerminalOutput::from(&text.0, window, cx)),
             },
-            nbformat::v4::Output::DisplayData(display_data) => {
-                Output::new(&display_data.data, None, window, cx)
-            }
-            nbformat::v4::Output::ExecuteResult(execute_result) => {
-                Output::new(&execute_result.data, None, window, cx)
-            }
+            nbformat::v4::Output::DisplayData(display_data) => Output::new(&display_data.data, None, window, cx),
+            nbformat::v4::Output::ExecuteResult(execute_result) => Output::new(&execute_result.data, None, window, cx),
             nbformat::v4::Output::Error(error) => Output::ErrorOutput(ErrorView {
                 ename: error.ename.clone(),
                 evalue: error.evalue.clone(),
-                traceback: cx
-                    .new(|cx| TerminalOutput::from(&error.traceback.join("\n"), window, cx)),
+                traceback: cx.new(|cx| TerminalOutput::from(&error.traceback.join("\n"), window, cx)),
             }),
         })
         .collect()
@@ -122,10 +108,7 @@ impl Cell {
     ) -> Self {
         match cell {
             nbformat::v4::Cell::Markdown {
-                id,
-                metadata,
-                source,
-                ..
+                id, metadata, source, ..
             } => {
                 let source = source.join("");
 
@@ -136,9 +119,7 @@ impl Cell {
 
                         cx.spawn_in(window, async move |this, cx| {
                             let parsed_markdown = cx
-                                .background_spawn(async move {
-                                    parse_markdown(&source, None, Some(languages)).await
-                                })
+                                .background_spawn(async move { parse_markdown(&source, None, Some(languages)).await })
                                 .await;
 
                             this.update(cx, |cell: &mut MarkdownCell, _| {
@@ -227,11 +208,7 @@ impl Cell {
                     cell_position: None,
                 }
             })),
-            nbformat::v4::Cell::Raw {
-                id,
-                metadata,
-                source,
-            } => Cell::Raw(cx.new(|_| RawCell {
+            nbformat::v4::Cell::Raw { id, metadata, source } => Cell::Raw(cx.new(|_| RawCell {
                 id: id.clone(),
                 metadata: metadata.clone(),
                 source: source.join(""),
@@ -394,12 +371,8 @@ impl Render for MarkdownCell {
             return div();
         };
 
-        let mut markdown_render_context = markdown_preview::markdown_renderer::RenderContext::new(
-            None,
-            &self.mermaid_state,
-            window,
-            cx,
-        );
+        let mut markdown_render_context =
+            markdown_preview::markdown_renderer::RenderContext::new(None, &self.mermaid_state, window, cx);
 
         v_flex()
             .size_full()
@@ -423,9 +396,11 @@ impl Render for MarkdownCell {
                             .font_ui(cx)
                             .text_size(TextSize::Default.rems(cx))
                             .children(parsed.children.iter().map(|child| {
-                                div().relative().child(div().relative().child(
-                                    render_markdown_block(child, &mut markdown_render_context),
-                                ))
+                                div().relative().child(
+                                    div()
+                                        .relative()
+                                        .child(render_markdown_block(child, &mut markdown_render_context)),
+                                )
                             })),
                     ),
             )
@@ -563,8 +538,7 @@ impl RunnableCell for CodeCell {
     }
 
     fn execution_count(&self) -> Option<i32> {
-        self.execution_count
-            .filter(|&count| count > 0)
+        self.execution_count.filter(|&count| count > 0)
     }
 
     fn set_execution_count(&mut self, count: i32) -> &mut Self {
@@ -627,45 +601,31 @@ impl Render for CodeCell {
                                 .border_1()
                                 // .border_color(cx.theme().colors().border)
                                 // .bg(cx.theme().colors().editor_background)
-                                .child(div().w_full().children(self.outputs.iter().map(
-                                    |output| {
-                                        let content = match output {
-                                            Output::Plain { content, .. } => {
-                                                Some(content.clone().into_any_element())
-                                            }
-                                            Output::Markdown { content, .. } => {
-                                                Some(content.clone().into_any_element())
-                                            }
-                                            Output::Stream { content, .. } => {
-                                                Some(content.clone().into_any_element())
-                                            }
-                                            Output::Image { content, .. } => {
-                                                Some(content.clone().into_any_element())
-                                            }
-                                            Output::Message(message) => Some(
-                                                div().child(message.clone()).into_any_element(),
-                                            ),
-                                            Output::Table { content, .. } => {
-                                                Some(content.clone().into_any_element())
-                                            }
-                                            Output::ErrorOutput(error_view) => {
-                                                error_view.render(window, cx)
-                                            }
-                                            Output::ClearOutputWaitMarker => None,
-                                        };
+                                .child(div().w_full().children(self.outputs.iter().map(|output| {
+                                    let content = match output {
+                                        Output::Plain { content, .. } => Some(content.clone().into_any_element()),
+                                        Output::Markdown { content, .. } => Some(content.clone().into_any_element()),
+                                        Output::Stream { content, .. } => Some(content.clone().into_any_element()),
+                                        Output::Image { content, .. } => Some(content.clone().into_any_element()),
+                                        Output::Message(message) => {
+                                            Some(div().child(message.clone()).into_any_element())
+                                        }
+                                        Output::Table { content, .. } => Some(content.clone().into_any_element()),
+                                        Output::ErrorOutput(error_view) => error_view.render(window, cx),
+                                        Output::ClearOutputWaitMarker => None,
+                                    };
 
-                                        div()
-                                            // .w_full()
-                                            // .mt_3()
-                                            // .p_3()
-                                            // .rounded_sm()
-                                            // .bg(cx.theme().colors().editor_background)
-                                            // .border(px(1.))
-                                            // .border_color(cx.theme().colors().border)
-                                            // .shadow_xs()
-                                            .children(content)
-                                    },
-                                ))),
+                                    div()
+                                        // .w_full()
+                                        // .mt_3()
+                                        // .p_3()
+                                        // .rounded_sm()
+                                        // .bg(cx.theme().colors().editor_background)
+                                        // .border(px(1.))
+                                        // .border_color(cx.theme().colors().border)
+                                        // .shadow_xs()
+                                        .children(content)
+                                }))),
                         ),
                     ),
             )

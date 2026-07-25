@@ -98,9 +98,7 @@ pub struct NativeRunningKernel {
 
 impl Debug for NativeRunningKernel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("RunningKernel")
-            .field("process", &self.process)
-            .finish()
+        f.debug_struct("RunningKernel").field("process", &self.process).finish()
     }
 }
 
@@ -154,20 +152,15 @@ impl NativeRunningKernel {
             let session_id = Uuid::new_v4().to_string();
 
             let mut iopub_socket =
-                runtimelib::create_client_iopub_connection(&connection_info, "", &session_id)
-                    .await?;
+                runtimelib::create_client_iopub_connection(&connection_info, "", &session_id).await?;
             let peer_identity = runtimelib::peer_identity_for_session(&session_id)?;
-            let mut shell_socket = runtimelib::create_client_shell_connection_with_identity(
-                &connection_info,
-                &session_id,
-                peer_identity,
-            )
-            .await?;
+            let mut shell_socket =
+                runtimelib::create_client_shell_connection_with_identity(&connection_info, &session_id, peer_identity)
+                    .await?;
             let mut control_socket =
                 runtimelib::create_client_control_connection(&connection_info, &session_id).await?;
 
-            let (request_tx, mut request_rx) =
-                futures::channel::mpsc::channel::<JupyterMessage>(100);
+            let (request_tx, mut request_rx) = futures::channel::mpsc::channel::<JupyterMessage>(100);
 
             let (mut control_reply_tx, control_reply_rx) = futures::channel::mpsc::channel(100);
             let (mut shell_reply_tx, shell_reply_rx) = futures::channel::mpsc::channel(100);
@@ -207,8 +200,7 @@ impl NativeRunningKernel {
                 }
             });
 
-            let (mut control_request_tx, mut control_request_rx) =
-                futures::channel::mpsc::channel(100);
+            let (mut control_request_tx, mut control_request_rx) = futures::channel::mpsc::channel(100);
             let (mut shell_request_tx, mut shell_request_rx) = futures::channel::mpsc::channel(100);
 
             let routing_task = cx.background_spawn({
@@ -282,10 +274,7 @@ impl NativeRunningKernel {
             cx.spawn({
                 let session = session.clone();
                 async move |cx| {
-                    async fn with_name(
-                        name: &'static str,
-                        task: Task<Result<()>>,
-                    ) -> (&'static str, Result<()>) {
+                    async fn with_name(name: &'static str, task: Task<Result<()>>) -> (&'static str, Result<()>) {
                         (name, task.await)
                     }
 
@@ -301,10 +290,7 @@ impl NativeRunningKernel {
 
                             session
                                 .update(cx, |session, cx| {
-                                    session.kernel_errored(
-                                        format!("handling failed for {name}: {err}"),
-                                        cx,
-                                    );
+                                    session.kernel_errored(format!("handling failed for {name}: {err}"), cx);
                                     cx.notify();
                                 })
                                 .ok();

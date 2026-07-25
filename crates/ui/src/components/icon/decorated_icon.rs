@@ -36,38 +36,18 @@ impl Component for DecoratedIcon {
     }
 
     fn preview(_window: &mut Window, cx: &mut App) -> Option<AnyElement> {
-        let decoration_x = IconDecoration::new(
-            IconDecorationKind::X,
-            cx.theme().colors().surface_background,
-            cx,
-        )
-        .color(cx.theme().status().error)
-        .position(Point {
-            x: px(-2.),
-            y: px(-2.),
-        });
+        let decoration_x = IconDecoration::new(IconDecorationKind::X, cx.theme().colors().surface_background, cx)
+            .color(cx.theme().status().error)
+            .position(Point { x: px(-2.), y: px(-2.) });
 
-        let decoration_triangle = IconDecoration::new(
-            IconDecorationKind::Triangle,
-            cx.theme().colors().surface_background,
-            cx,
-        )
-        .color(cx.theme().status().error)
-        .position(Point {
-            x: px(-2.),
-            y: px(-2.),
-        });
+        let decoration_triangle =
+            IconDecoration::new(IconDecorationKind::Triangle, cx.theme().colors().surface_background, cx)
+                .color(cx.theme().status().error)
+                .position(Point { x: px(-2.), y: px(-2.) });
 
-        let decoration_dot = IconDecoration::new(
-            IconDecorationKind::Dot,
-            cx.theme().colors().surface_background,
-            cx,
-        )
-        .color(cx.theme().status().error)
-        .position(Point {
-            x: px(-2.),
-            y: px(-2.),
-        });
+        let decoration_dot = IconDecoration::new(IconDecorationKind::Dot, cx.theme().colors().surface_background, cx)
+            .color(cx.theme().status().error)
+            .position(Point { x: px(-2.), y: px(-2.) });
 
         Some(
             v_flex()
@@ -77,26 +57,20 @@ impl Component for DecoratedIcon {
                     vec![
                         single_example(
                             "No Decoration",
-                            DecoratedIcon::new(Icon::new(IconName::FileDoc), None)
-                                .into_any_element(),
+                            DecoratedIcon::new(Icon::new(IconName::FileDoc), None).into_any_element(),
                         ),
                         single_example(
                             "X Decoration",
-                            DecoratedIcon::new(Icon::new(IconName::FileDoc), Some(decoration_x))
-                                .into_any_element(),
+                            DecoratedIcon::new(Icon::new(IconName::FileDoc), Some(decoration_x)).into_any_element(),
                         ),
                         single_example(
                             "Triangle Decoration",
-                            DecoratedIcon::new(
-                                Icon::new(IconName::FileDoc),
-                                Some(decoration_triangle),
-                            )
-                            .into_any_element(),
+                            DecoratedIcon::new(Icon::new(IconName::FileDoc), Some(decoration_triangle))
+                                .into_any_element(),
                         ),
                         single_example(
                             "Dot Decoration",
-                            DecoratedIcon::new(Icon::new(IconName::FileDoc), Some(decoration_dot))
-                                .into_any_element(),
+                            DecoratedIcon::new(Icon::new(IconName::FileDoc), Some(decoration_dot)).into_any_element(),
                         ),
                     ],
                 )])

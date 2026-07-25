@@ -8,10 +8,7 @@ use windows::{
         ViewManagement::{UIColorType, UISettings},
     },
     Wdk::System::SystemServices::RtlGetVersion,
-    Win32::{
-        Foundation::*, Graphics::Dwm::*, System::LibraryLoader::LoadLibraryA,
-        UI::WindowsAndMessaging::*,
-    },
+    Win32::{Foundation::*, Graphics::Dwm::*, System::LibraryLoader::LoadLibraryA, UI::WindowsAndMessaging::*},
     core::{BOOL, HSTRING, PCSTR},
 };
 
@@ -91,11 +88,7 @@ pub(crate) unsafe fn get_window_long(hwnd: HWND, nindex: WINDOW_LONG_PTR_INDEX) 
     }
 }
 
-pub(crate) unsafe fn set_window_long(
-    hwnd: HWND,
-    nindex: WINDOW_LONG_PTR_INDEX,
-    dwnewlong: isize,
-) -> isize {
+pub(crate) unsafe fn set_window_long(hwnd: HWND, nindex: WINDOW_LONG_PTR_INDEX, dwnewlong: isize) -> isize {
     #[cfg(target_pointer_width = "64")]
     unsafe {
         SetWindowLongPtrW(hwnd, nindex, dwnewlong)
@@ -122,10 +115,9 @@ pub(crate) fn load_cursor(style: CursorStyle) -> Option<HCURSOR> {
         | CursorStyle::ResizeRight
         | CursorStyle::ResizeLeftRight
         | CursorStyle::ResizeColumn => (&SIZEWE, IDC_SIZEWE),
-        CursorStyle::ResizeUp
-        | CursorStyle::ResizeDown
-        | CursorStyle::ResizeUpDown
-        | CursorStyle::ResizeRow => (&SIZENS, IDC_SIZENS),
+        CursorStyle::ResizeUp | CursorStyle::ResizeDown | CursorStyle::ResizeUpDown | CursorStyle::ResizeRow => {
+            (&SIZENS, IDC_SIZENS)
+        }
         CursorStyle::OperationNotAllowed => (&NO, IDC_NO),
         CursorStyle::None => return None,
         _ => (&ARROW, IDC_ARROW),
@@ -202,9 +194,7 @@ pub(crate) fn with_dll_library<R, F>(dll_name: PCSTR, f: F) -> Result<R>
 where
     F: FnOnce(HMODULE) -> Result<R>,
 {
-    let library = unsafe {
-        LoadLibraryA(dll_name).with_context(|| format!("Loading dll: {}", dll_name.display()))?
-    };
+    let library = unsafe { LoadLibraryA(dll_name).with_context(|| format!("Loading dll: {}", dll_name.display()))? };
     let result = f(library);
     unsafe {
         FreeLibrary(library)

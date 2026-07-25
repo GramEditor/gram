@@ -2,15 +2,13 @@ use std::ffi::c_void;
 
 use objc2::rc::Retained;
 use objc2_app_kit::{
-    NSPasteboard, NSPasteboardNameFind, NSPasteboardType, NSPasteboardTypePNG,
-    NSPasteboardTypeString, NSPasteboardTypeTIFF,
+    NSPasteboard, NSPasteboardNameFind, NSPasteboardType, NSPasteboardTypePNG, NSPasteboardTypeString,
+    NSPasteboardTypeTIFF,
 };
 use objc2_foundation::{NSData, NSUInteger, ns_string};
 use strum::IntoEnumIterator as _;
 
-use crate::{
-    ClipboardEntry, ClipboardItem, ClipboardString, Image, ImageFormat, asset_cache::hash,
-};
+use crate::{ClipboardEntry, ClipboardItem, ClipboardString, Image, ImageFormat, asset_cache::hash};
 
 static TEXT_HASH_TYPE: &'static str = "gram-text-hash";
 static METADATA_TYPE: &'static str = "gram-metadata";
@@ -25,9 +23,7 @@ impl Pasteboard {
     }
 
     pub fn find() -> Self {
-        Self::new(NSPasteboard::pasteboardWithName(unsafe {
-            NSPasteboardNameFind
-        }))
+        Self::new(NSPasteboard::pasteboardWithName(unsafe { NSPasteboardNameFind }))
     }
 
     #[cfg(test)]
@@ -166,30 +162,21 @@ impl Pasteboard {
         self.inner.clearContents();
 
         unsafe {
-            let text_bytes = NSData::dataWithBytes_length(
-                string.text.as_ptr() as *const c_void,
-                string.text.len() as NSUInteger,
-            );
-            self.inner
-                .setData_forType(Some(&text_bytes), NSPasteboardTypeString);
+            let text_bytes =
+                NSData::dataWithBytes_length(string.text.as_ptr() as *const c_void, string.text.len() as NSUInteger);
+            self.inner.setData_forType(Some(&text_bytes), NSPasteboardTypeString);
         }
 
         if let Some(metadata) = string.metadata.as_ref() {
             let hash_bytes = ClipboardString::text_hash(&string.text).to_be_bytes();
             unsafe {
-                let hash_bytes = NSData::dataWithBytes_length(
-                    hash_bytes.as_ptr() as *const c_void,
-                    hash_bytes.len() as NSUInteger,
-                );
-                self.inner
-                    .setData_forType(Some(&hash_bytes), text_hash_type);
+                let hash_bytes =
+                    NSData::dataWithBytes_length(hash_bytes.as_ptr() as *const c_void, hash_bytes.len() as NSUInteger);
+                self.inner.setData_forType(Some(&hash_bytes), text_hash_type);
 
-                let metadata_bytes = NSData::dataWithBytes_length(
-                    metadata.as_ptr() as *const c_void,
-                    metadata.len() as NSUInteger,
-                );
-                self.inner
-                    .setData_forType(Some(&metadata_bytes), metadata_type);
+                let metadata_bytes =
+                    NSData::dataWithBytes_length(metadata.as_ptr() as *const c_void, metadata.len() as NSUInteger);
+                self.inner.setData_forType(Some(&metadata_bytes), metadata_type);
             }
         }
     }
@@ -198,10 +185,8 @@ impl Pasteboard {
         self.inner.clearContents();
 
         unsafe {
-            let bytes = NSData::dataWithBytes_length(
-                image.bytes.as_ptr() as *const c_void,
-                image.bytes.len() as NSUInteger,
-            );
+            let bytes =
+                NSData::dataWithBytes_length(image.bytes.as_ptr() as *const c_void, image.bytes.len() as NSUInteger);
 
             self.inner
                 .setData_forType(Some(&bytes), Into::<UTType>::into(image.format).inner());
@@ -302,9 +287,7 @@ mod tests {
                 text_from_other_app.as_ptr() as *const c_void,
                 text_from_other_app.len() as NSUInteger,
             );
-            pasteboard
-                .inner
-                .setData_forType(Some(&bytes), NSPasteboardTypeString);
+            pasteboard.inner.setData_forType(Some(&bytes), NSPasteboardTypeString);
         }
         assert_eq!(
             pasteboard.read(),

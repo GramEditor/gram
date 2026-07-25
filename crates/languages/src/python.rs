@@ -62,14 +62,7 @@ impl ManifestProvider for PyprojectTomlManifestProvider {
         SharedString::new_static("pyproject.toml").into()
     }
 
-    fn search(
-        &self,
-        ManifestQuery {
-            path,
-            depth,
-            delegate,
-        }: ManifestQuery,
-    ) -> Option<Arc<RelPath>> {
+    fn search(&self, ManifestQuery { path, depth, delegate }: ManifestQuery) -> Option<Arc<RelPath>> {
         for path in path.ancestors().take(depth) {
             let p = path.join(RelPath::unix("pyproject.toml").unwrap());
             if delegate.exists(&p, Some(false)) {
@@ -136,10 +129,7 @@ fn process_pyright_completions(items: &mut [lsp::CompletionItem]) {
             _ => '8',
         };
 
-        item.sort_text = Some(format!(
-            "{}{}{}",
-            visibility_priority, kind_priority, item.label
-        ));
+        item.sort_text = Some(format!("{}{}{}", visibility_priority, kind_priority, item.label));
     }
 }
 
@@ -214,11 +204,7 @@ impl LspAdapter for TyLspAdapter {
         };
 
         let mut text = label.clone();
-        if let Some(completion_details) = item
-            .label_details
-            .as_ref()
-            .and_then(|details| details.detail.as_ref())
-        {
+        if let Some(completion_details) = item.label_details.as_ref().and_then(|details| details.detail.as_ref()) {
             write!(&mut text, " {}", completion_details).ok();
         }
 
@@ -226,10 +212,7 @@ impl LspAdapter for TyLspAdapter {
             text,
             label_len,
             item.filter_text.as_deref(),
-            highlight_id
-                .map(|id| (0..label_len, id))
-                .into_iter()
-                .collect(),
+            highlight_id.map(|id| (0..label_len, id)).into_iter().collect(),
         ))
     }
 
@@ -242,16 +225,14 @@ impl LspAdapter for TyLspAdapter {
     ) -> Result<Value> {
         let mut ret = cx
             .update(|cx| {
-                language_server_settings(delegate.as_ref(), &self.name(), cx)
-                    .and_then(|s| s.settings.clone())
+                language_server_settings(delegate.as_ref(), &self.name(), cx).and_then(|s| s.settings.clone())
             })?
             .unwrap_or_else(|| json!({}));
-        if let Some(toolchain) = toolchain.and_then(|toolchain| {
-            serde_json::from_value::<PythonToolchainData>(toolchain.as_json).ok()
-        }) {
+        if let Some(toolchain) =
+            toolchain.and_then(|toolchain| serde_json::from_value::<PythonToolchainData>(toolchain.as_json).ok())
+        {
             _ = maybe!({
-                let uri =
-                    url::Url::from_file_path(toolchain.environment.executable.as_ref()?).ok()?;
+                let uri = url::Url::from_file_path(toolchain.environment.executable.as_ref()?).ok()?;
                 let sys_prefix = toolchain.environment.prefix.clone()?;
                 let environment = json!({
                     "executable": {
@@ -277,8 +258,7 @@ impl LspInstaller for TyLspAdapter {
         _: bool,
         _: &mut AsyncApp,
     ) -> Result<Self::BinaryVersion> {
-        let release =
-            latest_github_release("astral-sh/ty", true, false, delegate.http_client()).await?;
+        let release = latest_github_release("astral-sh/ty", true, false, delegate.http_client()).await?;
         let (_, asset_name) = Self::build_asset_name()?;
         let asset = release
             .assets
@@ -301,9 +281,7 @@ impl LspInstaller for TyLspAdapter {
         let ty_in_venv = if let Some(toolchain) = toolchain
             && toolchain.language_name.as_ref() == "Python"
         {
-            Path::new(toolchain.path.as_str())
-                .parent()
-                .map(|path| path.join("ty"))
+            Path::new(toolchain.path.as_str()).parent().map(|path| path.join("ty"))
         } else {
             None
         };
@@ -338,9 +316,7 @@ impl LspInstaller for TyLspAdapter {
         async_fs::create_dir_all(&destination_path).await?;
 
         let server_path = match Self::GITHUB_ASSET_KIND {
-            AssetKind::TarGz | AssetKind::Gz => destination_path
-                .join(Self::build_asset_name()?.0)
-                .join("ty"),
+            AssetKind::TarGz | AssetKind::Gz => destination_path.join(Self::build_asset_name()?.0).join("ty"),
             AssetKind::Zip => destination_path.clone().join("ty.exe"),
         };
 
@@ -378,14 +354,12 @@ impl LspInstaller for TyLspAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        match find_cached_server_binary(&container_dir, None, async |path| {
-            match Self::build_asset_name() {
-                Ok(name) => Some(match TyLspAdapter::GITHUB_ASSET_KIND {
-                    AssetKind::TarGz | AssetKind::Gz => path.join(name.0).join("ty"),
-                    AssetKind::Zip => path.join("ty.exe"),
-                }),
-                Err(_) => None,
-            }
+        match find_cached_server_binary(&container_dir, None, async |path| match Self::build_asset_name() {
+            Ok(name) => Some(match TyLspAdapter::GITHUB_ASSET_KIND {
+                AssetKind::TarGz | AssetKind::Gz => path.join(name.0).join("ty"),
+                AssetKind::Zip => path.join("ty.exe"),
+            }),
+            Err(_) => None,
         })
         .await
         {
@@ -412,10 +386,7 @@ impl PyrightLspAdapter {
         PyrightLspAdapter { node }
     }
 
-    async fn get_cached_server_binary(
-        container_dir: PathBuf,
-        node: &NodeRuntime,
-    ) -> Option<LanguageServerBinary> {
+    async fn get_cached_server_binary(container_dir: PathBuf, node: &NodeRuntime) -> Option<LanguageServerBinary> {
         let server_path = container_dir.join(Self::SERVER_PATH);
         if server_path.exists() {
             Some(LanguageServerBinary {
@@ -436,10 +407,7 @@ impl LspAdapter for PyrightLspAdapter {
         Self::SERVER_NAME
     }
 
-    async fn initialization_options(
-        self: Arc<Self>,
-        _: &Arc<dyn LspAdapterDelegate>,
-    ) -> Result<Option<Value>> {
+    async fn initialization_options(self: Arc<Self>, _: &Arc<dyn LspAdapterDelegate>) -> Result<Option<Value>> {
         // Provide minimal initialization options
         // Virtual environment configuration will be handled through workspace configuration
         Ok(Some(json!({
@@ -487,10 +455,7 @@ impl LspAdapter for PyrightLspAdapter {
             text,
             label_len,
             item.filter_text.as_deref(),
-            highlight_id
-                .map(|id| (0..label_len, id))
-                .into_iter()
-                .collect(),
+            highlight_id.map(|id| (0..label_len, id)).into_iter().collect(),
         ))
     }
 
@@ -537,15 +502,13 @@ impl LspAdapter for PyrightLspAdapter {
         cx: &mut AsyncApp,
     ) -> Result<Value> {
         cx.update(move |cx| {
-            let mut user_settings =
-                language_server_settings(adapter.as_ref(), &Self::SERVER_NAME, cx)
-                    .and_then(|s| s.settings.clone())
-                    .unwrap_or_default();
+            let mut user_settings = language_server_settings(adapter.as_ref(), &Self::SERVER_NAME, cx)
+                .and_then(|s| s.settings.clone())
+                .unwrap_or_default();
 
             // If we have a detected toolchain, configure Pyright to use it
             if let Some(toolchain) = toolchain
-                && let Ok(env) =
-                    serde_json::from_value::<PythonToolchainData>(toolchain.as_json.clone())
+                && let Ok(env) = serde_json::from_value::<PythonToolchainData>(toolchain.as_json.clone())
             {
                 if !user_settings.is_object() {
                     user_settings = Value::Object(serde_json::Map::default());
@@ -587,14 +550,8 @@ impl LspAdapter for PyrightLspAdapter {
                 let python = python.as_object_mut().unwrap();
 
                 // Set both pythonPath and defaultInterpreterPath for compatibility
-                python.insert(
-                    "pythonPath".to_owned(),
-                    Value::String(interpreter_path.clone()),
-                );
-                python.insert(
-                    "defaultInterpreterPath".to_owned(),
-                    Value::String(interpreter_path),
-                );
+                python.insert("pythonPath".to_owned(), Value::String(interpreter_path.clone()));
+                python.insert("defaultInterpreterPath".to_owned(), Value::String(interpreter_path));
             }
 
             user_settings
@@ -611,9 +568,7 @@ impl LspInstaller for PyrightLspAdapter {
         _: bool,
         _: &mut AsyncApp,
     ) -> Result<String> {
-        self.node
-            .npm_package_latest_version(Self::SERVER_NAME.as_ref())
-            .await
+        self.node.npm_package_latest_version(Self::SERVER_NAME.as_ref()).await
     }
 
     async fn check_if_user_installed(
@@ -656,10 +611,7 @@ impl LspInstaller for PyrightLspAdapter {
         let server_path = container_dir.join(Self::SERVER_PATH);
 
         self.node
-            .npm_install_packages(
-                &container_dir,
-                &[(Self::SERVER_NAME.as_ref(), latest_version.as_str())],
-            )
+            .npm_install_packages(&container_dir, &[(Self::SERVER_NAME.as_ref(), latest_version.as_str())])
             .await?;
 
         let env = delegate.shell_env().await;
@@ -713,14 +665,11 @@ impl LspInstaller for PyrightLspAdapter {
 
 pub(crate) struct PythonContextProvider;
 
-const PYTHON_TEST_TARGET_TASK_VARIABLE: VariableName =
-    VariableName::Custom(Cow::Borrowed("PYTHON_TEST_TARGET"));
+const PYTHON_TEST_TARGET_TASK_VARIABLE: VariableName = VariableName::Custom(Cow::Borrowed("PYTHON_TEST_TARGET"));
 
-const PYTHON_ACTIVE_TOOLCHAIN_PATH: VariableName =
-    VariableName::Custom(Cow::Borrowed("PYTHON_ACTIVE_GRAM_TOOLCHAIN"));
+const PYTHON_ACTIVE_TOOLCHAIN_PATH: VariableName = VariableName::Custom(Cow::Borrowed("PYTHON_ACTIVE_GRAM_TOOLCHAIN"));
 
-const PYTHON_MODULE_NAME_TASK_VARIABLE: VariableName =
-    VariableName::Custom(Cow::Borrowed("PYTHON_MODULE_NAME"));
+const PYTHON_MODULE_NAME_TASK_VARIABLE: VariableName = VariableName::Custom(Cow::Borrowed("PYTHON_MODULE_NAME"));
 
 impl ContextProvider for PythonContextProvider {
     fn build_context(
@@ -731,11 +680,10 @@ impl ContextProvider for PythonContextProvider {
         toolchains: Arc<dyn LanguageToolchainStore>,
         cx: &mut gpui::App,
     ) -> Task<Result<task::TaskVariables>> {
-        let test_target =
-            match selected_test_runner(location.file_location.buffer.read(cx).file(), cx) {
-                TestRunner::UNITTEST => self.build_unittest_target(variables),
-                TestRunner::PYTEST => self.build_pytest_target(variables),
-            };
+        let test_target = match selected_test_runner(location.file_location.buffer.read(cx).file(), cx) {
+            TestRunner::UNITTEST => self.build_unittest_target(variables),
+            TestRunner::PYTEST => self.build_pytest_target(variables),
+        };
 
         let module_target = self.build_module_target(variables);
         let location_file = location.file_location.buffer.read(cx).file().cloned();
@@ -752,10 +700,7 @@ impl ContextProvider for PythonContextProvider {
                 toolchains
                     .active_toolchain(worktree_id, file_path, "Python".into(), cx)
                     .await
-                    .map_or_else(
-                        || String::from("python3"),
-                        |toolchain| toolchain.path.to_string(),
-                    )
+                    .map_or_else(|| String::from("python3"), |toolchain| toolchain.path.to_string())
             } else {
                 String::from("python3")
             };
@@ -763,19 +708,12 @@ impl ContextProvider for PythonContextProvider {
             let toolchain = (PYTHON_ACTIVE_TOOLCHAIN_PATH, active_toolchain);
 
             Ok(task::TaskVariables::from_iter(
-                test_target
-                    .into_iter()
-                    .chain(module_target)
-                    .chain([toolchain]),
+                test_target.into_iter().chain(module_target).chain([toolchain]),
             ))
         })
     }
 
-    fn associated_tasks(
-        &self,
-        file: Option<Arc<dyn language::File>>,
-        cx: &App,
-    ) -> Task<Option<TaskTemplates>> {
+    fn associated_tasks(&self, file: Option<Arc<dyn language::File>>, cx: &App) -> Task<Option<TaskTemplates>> {
         let test_runner = selected_test_runner(file.as_ref(), cx);
 
         let mut tasks = vec![
@@ -802,10 +740,7 @@ impl ContextProvider for PythonContextProvider {
             TaskTemplate {
                 label: format!("run module '{}'", VariableName::File.template_value()),
                 command: PYTHON_ACTIVE_TOOLCHAIN_PATH.template_value(),
-                args: vec![
-                    "-m".to_owned(),
-                    PYTHON_MODULE_NAME_TASK_VARIABLE.template_value(),
-                ],
+                args: vec!["-m".to_owned(), PYTHON_MODULE_NAME_TASK_VARIABLE.template_value()],
                 cwd: Some(VariableName::WorktreeRoot.template_value()),
                 tags: vec!["python-module-main-method".to_owned()],
                 ..TaskTemplate::default()
@@ -836,10 +771,7 @@ impl ContextProvider for PythonContextProvider {
                             "unittest".to_owned(),
                             PYTHON_TEST_TARGET_TASK_VARIABLE.template_value_with_whitespace(),
                         ],
-                        tags: vec![
-                            "python-unittest-class".to_owned(),
-                            "python-unittest-method".to_owned(),
-                        ],
+                        tags: vec!["python-unittest-class".to_owned(), "python-unittest-method".to_owned()],
                         cwd: Some(VariableName::WorktreeRoot.template_value()),
                         ..TaskTemplate::default()
                     },
@@ -869,10 +801,7 @@ impl ContextProvider for PythonContextProvider {
                             PYTHON_TEST_TARGET_TASK_VARIABLE.template_value_with_whitespace(),
                         ],
                         cwd: Some(VariableName::WorktreeRoot.template_value()),
-                        tags: vec![
-                            "python-pytest-class".to_owned(),
-                            "python-pytest-method".to_owned(),
-                        ],
+                        tags: vec!["python-pytest-class".to_owned(), "python-pytest-method".to_owned()],
                         ..TaskTemplate::default()
                     },
                 ]
@@ -894,19 +823,12 @@ fn selected_test_runner(location: Option<&Arc<dyn language::File>>, cx: &App) ->
 }
 
 impl PythonContextProvider {
-    fn build_unittest_target(
-        &self,
-        variables: &task::TaskVariables,
-    ) -> Option<(VariableName, String)> {
-        let python_module_name =
-            python_module_name_from_relative_path(variables.get(&VariableName::RelativeFile)?)?;
+    fn build_unittest_target(&self, variables: &task::TaskVariables) -> Option<(VariableName, String)> {
+        let python_module_name = python_module_name_from_relative_path(variables.get(&VariableName::RelativeFile)?)?;
 
-        let unittest_class_name =
-            variables.get(&VariableName::Custom(Cow::Borrowed("_unittest_class_name")));
+        let unittest_class_name = variables.get(&VariableName::Custom(Cow::Borrowed("_unittest_class_name")));
 
-        let unittest_method_name = variables.get(&VariableName::Custom(Cow::Borrowed(
-            "_unittest_method_name",
-        )));
+        let unittest_method_name = variables.get(&VariableName::Custom(Cow::Borrowed("_unittest_method_name")));
 
         let unittest_target_str = match (unittest_class_name, unittest_method_name) {
             (Some(class_name), Some(method_name)) => {
@@ -918,23 +840,15 @@ impl PythonContextProvider {
             (None, Some(_)) => return None,
         };
 
-        Some((
-            PYTHON_TEST_TARGET_TASK_VARIABLE.clone(),
-            unittest_target_str,
-        ))
+        Some((PYTHON_TEST_TARGET_TASK_VARIABLE.clone(), unittest_target_str))
     }
 
-    fn build_pytest_target(
-        &self,
-        variables: &task::TaskVariables,
-    ) -> Option<(VariableName, String)> {
+    fn build_pytest_target(&self, variables: &task::TaskVariables) -> Option<(VariableName, String)> {
         let file_path = variables.get(&VariableName::RelativeFile)?;
 
-        let pytest_class_name =
-            variables.get(&VariableName::Custom(Cow::Borrowed("_pytest_class_name")));
+        let pytest_class_name = variables.get(&VariableName::Custom(Cow::Borrowed("_pytest_class_name")));
 
-        let pytest_method_name =
-            variables.get(&VariableName::Custom(Cow::Borrowed("_pytest_method_name")));
+        let pytest_method_name = variables.get(&VariableName::Custom(Cow::Borrowed("_pytest_method_name")));
 
         let pytest_target_str = match (pytest_class_name, pytest_method_name) {
             (Some(class_name), Some(method_name)) => {
@@ -952,10 +866,7 @@ impl PythonContextProvider {
         Some((PYTHON_TEST_TARGET_TASK_VARIABLE.clone(), pytest_target_str))
     }
 
-    fn build_module_target(
-        &self,
-        variables: &task::TaskVariables,
-    ) -> Result<(VariableName, String)> {
+    fn build_module_target(&self, variables: &task::TaskVariables) -> Result<(VariableName, String)> {
         let python_module_name = variables
             .get(&VariableName::RelativeFile)
             .and_then(|module| python_module_name_from_relative_path(module))
@@ -1053,14 +964,9 @@ fn env_priority(kind: Option<PythonEnvironmentKind>) -> usize {
 ///
 /// https://virtualfish.readthedocs.io/en/latest/plugins.html#auto-activation-auto-activation
 async fn get_worktree_venv_declaration(worktree_root: &Path) -> Option<String> {
-    let file = async_fs::File::open(worktree_root.join(".venv"))
-        .await
-        .ok()?;
+    let file = async_fs::File::open(worktree_root.join(".venv")).await.ok()?;
     let mut venv_name = String::new();
-    smol::io::BufReader::new(file)
-        .read_line(&mut venv_name)
-        .await
-        .ok()?;
+    smol::io::BufReader::new(file).read_line(&mut venv_name).await.ok()?;
     Some(venv_name.trim().to_string())
 }
 
@@ -1092,11 +998,7 @@ enum SubprojectDistance {
     NotInWorktree,
 }
 
-fn wr_distance(
-    wr: &PathBuf,
-    subroot_relative_path: &RelPath,
-    venv: Option<&PathBuf>,
-) -> SubprojectDistance {
+fn wr_distance(wr: &PathBuf, subroot_relative_path: &RelPath, venv: Option<&PathBuf>) -> SubprojectDistance {
     if let Some(venv) = venv
         && let Ok(p) = venv.strip_prefix(wr)
     {
@@ -1183,25 +1085,25 @@ impl ToolchainLister for PythonToolchainProvider {
         //     executable path
         toolchains.sort_by(|lhs, rhs| {
             // Compare venv names against worktree .venv file
-            let venv_ordering =
-                wr_venv
-                    .as_ref()
-                    .map_or(Ordering::Equal, |venv| match (&lhs.name, &rhs.name) {
-                        (Some(l), Some(r)) => (r == venv).cmp(&(l == venv)),
-                        (Some(l), None) if l == venv => Ordering::Less,
-                        (None, Some(r)) if r == venv => Ordering::Greater,
-                        _ => Ordering::Equal,
-                    });
+            let venv_ordering = wr_venv
+                .as_ref()
+                .map_or(Ordering::Equal, |venv| match (&lhs.name, &rhs.name) {
+                    (Some(l), Some(r)) => (r == venv).cmp(&(l == venv)),
+                    (Some(l), None) if l == venv => Ordering::Less,
+                    (None, Some(r)) if r == venv => Ordering::Greater,
+                    _ => Ordering::Equal,
+                });
 
             // Compare project paths against worktree root
-            let proj_ordering =
-                || {
-                    let lhs_project = lhs.project.clone().or_else(|| get_venv_parent_dir(lhs));
-                    let rhs_project = rhs.project.clone().or_else(|| get_venv_parent_dir(rhs));
-                    wr_distance(&wr, &subroot_relative_path, lhs_project.as_ref()).cmp(
-                        &wr_distance(&wr, &subroot_relative_path, rhs_project.as_ref()),
-                    )
-                };
+            let proj_ordering = || {
+                let lhs_project = lhs.project.clone().or_else(|| get_venv_parent_dir(lhs));
+                let rhs_project = rhs.project.clone().or_else(|| get_venv_parent_dir(rhs));
+                wr_distance(&wr, &subroot_relative_path, lhs_project.as_ref()).cmp(&wr_distance(
+                    &wr,
+                    &subroot_relative_path,
+                    rhs_project.as_ref(),
+                ))
+            };
 
             // Compare environment priorities
             let priority_ordering = || env_priority(lhs.kind).cmp(&env_priority(rhs.kind));
@@ -1212,9 +1114,8 @@ impl ToolchainLister for PythonToolchainProvider {
                     environment
                         .get_env_var("CONDA_PREFIX".to_string())
                         .map(|conda_prefix| {
-                            let is_match = |exe: &Option<PathBuf>| {
-                                exe.as_ref().is_some_and(|e| e.starts_with(&conda_prefix))
-                            };
+                            let is_match =
+                                |exe: &Option<PathBuf>| exe.as_ref().is_some_and(|e| e.starts_with(&conda_prefix));
                             match (is_match(&lhs.executable), is_match(&rhs.executable)) {
                                 (true, false) => Ordering::Less,
                                 (false, true) => Ordering::Greater,
@@ -1283,9 +1184,7 @@ impl ToolchainLister for PythonToolchainProvider {
     }
 
     fn activation_script(&self, toolchain: &Toolchain, shell: ShellKind, cx: &App) -> Vec<String> {
-        let Ok(toolchain) =
-            serde_json::from_value::<PythonToolchainData>(toolchain.as_json.clone())
-        else {
+        let Ok(toolchain) = serde_json::from_value::<PythonToolchainData>(toolchain.as_json.clone()) else {
             return vec![];
         };
 
@@ -1319,8 +1218,7 @@ impl ToolchainLister for PythonToolchainProvider {
                 // [required for micromamba]
                 if manager == "micromamba" {
                     let shell = micromamba_shell_name(shell);
-                    activation_script
-                        .push(format!(r#"eval "$({manager} shell hook --shell {shell})""#));
+                    activation_script.push(format!(r#"eval "$({manager} shell hook --shell {shell})""#));
                 }
 
                 if let Some(name) = &toolchain.environment.name {
@@ -1339,9 +1237,7 @@ impl ToolchainLister for PythonToolchainProvider {
                 if let Some(activation_scripts) = &toolchain.activation_scripts {
                     if let Some(activate_script_path) = activation_scripts.get(&shell) {
                         let activate_keyword = shell.activate_keyword();
-                        if let Some(quoted) =
-                            shell.try_quote(&activate_script_path.to_string_lossy())
-                        {
+                        if let Some(quoted) = shell.try_quote(&activate_script_path.to_string_lossy()) {
                             activation_script.push(format!("{activate_keyword} {quoted}"));
                         }
                     }
@@ -1408,13 +1304,7 @@ async fn venv_to_toolchain(venv: PythonEnvironment, fs: &dyn Fs) -> Option<Toolc
 
     Some(Toolchain {
         name: name.into(),
-        path: data
-            .environment
-            .executable
-            .as_ref()?
-            .to_str()?
-            .to_owned()
-            .into(),
+        path: data.environment.executable.as_ref()?.to_str()?.to_owned().into(),
         language_name: LanguageName::new_static("Python"),
         as_json: serde_json::to_value(data).ok()?,
     })
@@ -1511,10 +1401,7 @@ impl pet_core::os_environment::Environment for EnvironmentApi<'_> {
                 }
             }
 
-            let mut paths = paths
-                .into_iter()
-                .filter(|p| p.exists())
-                .collect::<Vec<PathBuf>>();
+            let mut paths = paths.into_iter().filter(|p| p.exists()).collect::<Vec<PathBuf>>();
 
             self.global_search_locations.lock().append(&mut paths);
         }
@@ -1570,12 +1457,7 @@ impl PyLspAdapter {
             // Try to detect situations where `python3` exists but is not a real Python interpreter.
             // Notably, on fresh Windows installs, `python3` is a shim that opens the Microsoft Store app
             // when run with no arguments, and just fails otherwise.
-            let Some(output) = new_smol_command(&path)
-                .args(["-c", "print(1 + 2)"])
-                .output()
-                .await
-                .ok()
-            else {
+            let Some(output) = new_smol_command(&path).args(["-c", "print(1 + 2)"]).output().await.ok() else {
                 continue;
             };
             if output.stdout.trim_ascii() != b"3" {
@@ -1588,21 +1470,13 @@ impl PyLspAdapter {
 
     async fn base_venv(&self, delegate: &dyn LspAdapterDelegate) -> Result<Arc<Path>, String> {
         self.python_venv_base
-            .get_or_init(move || async move {
-                Self::ensure_venv(delegate)
-                    .await
-                    .map_err(|e| format!("{e}"))
-            })
+            .get_or_init(move || async move { Self::ensure_venv(delegate).await.map_err(|e| format!("{e}")) })
             .await
             .clone()
     }
 }
 
-const BINARY_DIR: &str = if cfg!(target_os = "windows") {
-    "Scripts"
-} else {
-    "bin"
-};
+const BINARY_DIR: &str = if cfg!(target_os = "windows") { "Scripts" } else { "bin" };
 
 #[async_trait(?Send)]
 impl LspAdapter for PyLspAdapter {
@@ -1677,21 +1551,20 @@ impl LspAdapter for PyLspAdapter {
         cx: &mut AsyncApp,
     ) -> Result<Value> {
         cx.update(move |cx| {
-            let mut user_settings =
-                language_server_settings(adapter.as_ref(), &Self::SERVER_NAME, cx)
-                    .and_then(|s| s.settings.clone())
-                    .unwrap_or_else(|| {
-                        json!({
-                            "plugins": {
-                                "pycodestyle": {"enabled": false},
-                                "rope_autoimport": {"enabled": true, "memory": true},
-                                "pylsp_mypy": {"enabled": false}
-                            },
-                            "rope": {
-                                "ropeFolder": null
-                            },
-                        })
-                    });
+            let mut user_settings = language_server_settings(adapter.as_ref(), &Self::SERVER_NAME, cx)
+                .and_then(|s| s.settings.clone())
+                .unwrap_or_else(|| {
+                    json!({
+                        "plugins": {
+                            "pycodestyle": {"enabled": false},
+                            "rope_autoimport": {"enabled": true, "memory": true},
+                            "pylsp_mypy": {"enabled": false}
+                        },
+                        "rope": {
+                            "ropeFolder": null
+                        },
+                    })
+                });
 
             // If user did not explicitly modify their python venv, use one from picker.
             if let Some(toolchain) = toolchain {
@@ -1728,10 +1601,7 @@ impl LspAdapter for PyLspAdapter {
                     }
                 }
             }
-            user_settings = Value::Object(serde_json::Map::from_iter([(
-                "pylsp".to_string(),
-                user_settings,
-            )]));
+            user_settings = Value::Object(serde_json::Map::from_iter([("pylsp".to_string(), user_settings)]));
 
             user_settings
         })
@@ -1764,12 +1634,7 @@ impl LspInstaller for PyLspAdapter {
         }
     }
 
-    async fn fetch_latest_server_version(
-        &self,
-        _: &dyn LspAdapterDelegate,
-        _: bool,
-        _: &mut AsyncApp,
-    ) -> Result<()> {
+    async fn fetch_latest_server_version(&self, _: &dyn LspAdapterDelegate, _: bool, _: &mut AsyncApp) -> Result<()> {
         Ok(())
     }
 
@@ -1845,10 +1710,7 @@ impl BasedPyrightLspAdapter {
         BasedPyrightLspAdapter { node }
     }
 
-    async fn get_cached_server_binary(
-        container_dir: PathBuf,
-        node: &NodeRuntime,
-    ) -> Option<LanguageServerBinary> {
+    async fn get_cached_server_binary(container_dir: PathBuf, node: &NodeRuntime) -> Option<LanguageServerBinary> {
         let server_path = container_dir.join(Self::SERVER_PATH);
         if server_path.exists() {
             Some(LanguageServerBinary {
@@ -1869,10 +1731,7 @@ impl LspAdapter for BasedPyrightLspAdapter {
         Self::SERVER_NAME
     }
 
-    async fn initialization_options(
-        self: Arc<Self>,
-        _: &Arc<dyn LspAdapterDelegate>,
-    ) -> Result<Option<Value>> {
+    async fn initialization_options(self: Arc<Self>, _: &Arc<dyn LspAdapterDelegate>) -> Result<Option<Value>> {
         // Provide minimal initialization options
         // Virtual environment configuration will be handled through workspace configuration
         Ok(Some(json!({
@@ -1920,10 +1779,7 @@ impl LspAdapter for BasedPyrightLspAdapter {
             text,
             label_len,
             item.filter_text.as_deref(),
-            highlight_id
-                .map(|id| (0..label.len(), id))
-                .into_iter()
-                .collect(),
+            highlight_id.map(|id| (0..label.len(), id)).into_iter().collect(),
         ))
     }
 
@@ -1969,16 +1825,14 @@ impl LspAdapter for BasedPyrightLspAdapter {
         cx: &mut AsyncApp,
     ) -> Result<Value> {
         cx.update(move |cx| {
-            let mut user_settings =
-                language_server_settings(adapter.as_ref(), &Self::SERVER_NAME, cx)
-                    .and_then(|s| s.settings.clone())
-                    .unwrap_or_default();
+            let mut user_settings = language_server_settings(adapter.as_ref(), &Self::SERVER_NAME, cx)
+                .and_then(|s| s.settings.clone())
+                .unwrap_or_default();
 
             // If we have a detected toolchain, configure Pyright to use it
             if let Some(toolchain) = toolchain
-                && let Ok(env) = serde_json::from_value::<
-                    pet_core::python_environment::PythonEnvironment,
-                >(toolchain.as_json.clone())
+                && let Ok(env) =
+                    serde_json::from_value::<pet_core::python_environment::PythonEnvironment>(toolchain.as_json.clone())
             {
                 if !user_settings.is_object() {
                     user_settings = Value::Object(serde_json::Map::default());
@@ -2013,31 +1867,21 @@ impl LspAdapter for BasedPyrightLspAdapter {
                     .or_insert(Value::Object(serde_json::Map::default()))
                     .as_object_mut()
                 {
-                    python.insert(
-                        "pythonPath".to_owned(),
-                        Value::String(interpreter_path.clone()),
-                    );
-                    python.insert(
-                        "defaultInterpreterPath".to_owned(),
-                        Value::String(interpreter_path),
-                    );
+                    python.insert("pythonPath".to_owned(), Value::String(interpreter_path.clone()));
+                    python.insert("defaultInterpreterPath".to_owned(), Value::String(interpreter_path));
                 }
                 // Basedpyright by default uses `strict` type checking, we tone it down as to not surpris users
                 maybe!({
                     let analysis = object
                         .entry("basedpyright.analysis")
                         .or_insert(Value::Object(serde_json::Map::default()));
-                    if let serde_json::map::Entry::Vacant(v) =
-                        analysis.as_object_mut()?.entry("typeCheckingMode")
-                    {
+                    if let serde_json::map::Entry::Vacant(v) = analysis.as_object_mut()?.entry("typeCheckingMode") {
                         v.insert(Value::String("standard".to_owned()));
                     }
                     Some(())
                 });
                 // Disable basedpyright's organizeImports so ruff handles it instead
-                if let serde_json::map::Entry::Vacant(v) =
-                    object.entry("basedpyright.disableOrganizeImports")
-                {
+                if let serde_json::map::Entry::Vacant(v) = object.entry("basedpyright.disableOrganizeImports") {
                     v.insert(Value::Bool(true));
                 }
             }
@@ -2056,9 +1900,7 @@ impl LspInstaller for BasedPyrightLspAdapter {
         _: bool,
         _: &mut AsyncApp,
     ) -> Result<String> {
-        self.node
-            .npm_package_latest_version(Self::SERVER_NAME.as_ref())
-            .await
+        self.node.npm_package_latest_version(Self::SERVER_NAME.as_ref()).await
     }
 
     async fn check_if_user_installed(
@@ -2102,10 +1944,7 @@ impl LspInstaller for BasedPyrightLspAdapter {
         let server_path = container_dir.join(Self::SERVER_PATH);
 
         self.node
-            .npm_install_packages(
-                &container_dir,
-                &[(Self::SERVER_NAME.as_ref(), latest_version.as_str())],
-            )
+            .npm_install_packages(&container_dir, &[(Self::SERVER_NAME.as_ref(), latest_version.as_str())])
             .await?;
 
         let env = delegate.shell_env().await;
@@ -2205,18 +2044,12 @@ impl RuffLspAdapter {
                                 .collect();
 
                             if !enum_values.is_empty() {
-                                schema_entry
-                                    .insert("type".to_string(), serde_json::json!("string"));
-                                schema_entry.insert(
-                                    "enum".to_string(),
-                                    serde_json::Value::Array(enum_values),
-                                );
+                                schema_entry.insert("type".to_string(), serde_json::json!("string"));
+                                schema_entry.insert("enum".to_string(), serde_json::Value::Array(enum_values));
                             }
                         } else if value_type.starts_with("list[") {
                             schema_entry.insert("type".to_string(), serde_json::json!("array"));
-                            if let Some(item_type) = value_type
-                                .strip_prefix("list[")
-                                .and_then(|s| s.strip_suffix(']'))
+                            if let Some(item_type) = value_type.strip_prefix("list[").and_then(|s| s.strip_suffix(']'))
                             {
                                 let json_type = match item_type {
                                     "str" => "string",
@@ -2224,10 +2057,7 @@ impl RuffLspAdapter {
                                     "bool" => "boolean",
                                     _ => "string",
                                 };
-                                schema_entry.insert(
-                                    "items".to_string(),
-                                    serde_json::json!({"type": json_type}),
-                                );
+                                schema_entry.insert("items".to_string(), serde_json::json!({"type": json_type}));
                             }
                         } else if value_type.starts_with("dict[") {
                             schema_entry.insert("type".to_string(), serde_json::json!("object"));
@@ -2238,10 +2068,7 @@ impl RuffLspAdapter {
                                 "str" => "string",
                                 _ => "string",
                             };
-                            schema_entry.insert(
-                                "type".to_string(),
-                                serde_json::Value::String(json_type.to_string()),
-                            );
+                            schema_entry.insert("type".to_string(), serde_json::Value::String(json_type.to_string()));
                         }
                     }
 
@@ -2415,8 +2242,7 @@ impl LspInstaller for RuffLspAdapter {
         _: bool,
         _: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        let release =
-            latest_github_release("astral-sh/ruff", true, false, delegate.http_client()).await?;
+        let release = latest_github_release("astral-sh/ruff", true, false, delegate.http_client()).await?;
         let (_, asset_name) = Self::build_asset_name()?;
         let asset = release
             .assets
@@ -2443,9 +2269,7 @@ impl LspInstaller for RuffLspAdapter {
         } = latest_version;
         let destination_path = container_dir.join(format!("ruff-{name}"));
         let server_path = match Self::GITHUB_ASSET_KIND {
-            AssetKind::TarGz | AssetKind::Gz => destination_path
-                .join(Self::build_asset_name()?.0)
-                .join("ruff"),
+            AssetKind::TarGz | AssetKind::Gz => destination_path.join(Self::build_asset_name()?.0).join("ruff"),
             AssetKind::Zip => destination_path.clone().join("ruff.exe"),
         };
 
@@ -2456,9 +2280,7 @@ impl LspInstaller for RuffLspAdapter {
         };
 
         let metadata_path = destination_path.with_extension("metadata");
-        let metadata = GithubBinaryMetadata::read_from_file(&metadata_path)
-            .await
-            .ok();
+        let metadata = GithubBinaryMetadata::read_from_file(&metadata_path).await.ok();
         if let Some(metadata) = metadata {
             let validity_check = async || {
                 delegate
@@ -2468,13 +2290,9 @@ impl LspInstaller for RuffLspAdapter {
                         env: None,
                     })
                     .await
-                    .inspect_err(|err| {
-                        log::warn!("Unable to run {server_path:?} asset, redownloading: {err:#}",)
-                    })
+                    .inspect_err(|err| log::warn!("Unable to run {server_path:?} asset, redownloading: {err:#}",))
             };
-            if let (Some(actual_digest), Some(expected_digest)) =
-                (&metadata.digest, &expected_digest)
-            {
+            if let (Some(actual_digest), Some(expected_digest)) = (&metadata.digest, &expected_digest) {
                 if actual_digest == expected_digest {
                     if validity_check().await.is_ok() {
                         return Ok(binary);
@@ -2533,9 +2351,7 @@ impl LspInstaller for RuffLspAdapter {
 
             let path = last.context("no cached binary")?;
             let path = match Self::GITHUB_ASSET_KIND {
-                AssetKind::TarGz | AssetKind::Gz => {
-                    path.join(Self::build_asset_name()?.0).join("ruff")
-                }
+                AssetKind::TarGz | AssetKind::Gz => path.join(Self::build_asset_name()?.0).join("ruff"),
                 AssetKind::Zip => path.join("ruff.exe"),
             };
 
@@ -2606,10 +2422,7 @@ mod tests {
 
             // indent lines after else
             append(&mut buffer, "\n", cx);
-            assert_eq!(
-                buffer.text(),
-                "def a():\n  \n  if a:\n    b()\n  else:\n    "
-            );
+            assert_eq!(buffer.text(), "def a():\n  \n  if a:\n    b()\n  else:\n    ");
 
             // indent after an open paren. the closing paren is not indented
             // because there is another token before it on the same line.
@@ -2621,11 +2434,7 @@ mod tests {
 
             // dedent the closing paren if it is shifted to the beginning of the line
             let argument_ix = buffer.text().find('1').unwrap();
-            buffer.edit(
-                [(argument_ix..argument_ix + 1, "")],
-                Some(AutoindentMode::EachLine),
-                cx,
-            );
+            buffer.edit([(argument_ix..argument_ix + 1, "")], Some(AutoindentMode::EachLine), cx);
             assert_eq!(
                 buffer.text(),
                 "def a():\n  \n  if a:\n    b()\n  else:\n    foo(\n    )"
@@ -2761,10 +2570,7 @@ mod tests {
         let converted = RuffLspAdapter::convert_ruff_schema(&raw_schema);
 
         assert!(converted.is_object());
-        assert_eq!(
-            converted.get("type").and_then(|v| v.as_str()),
-            Some("object")
-        );
+        assert_eq!(converted.get("type").and_then(|v| v.as_str()), Some("object"));
 
         let properties = converted
             .get("properties")
@@ -2782,14 +2588,8 @@ mod tests {
             .as_object()
             .expect("line-length should be an object");
 
-        assert_eq!(
-            line_length.get("type").and_then(|v| v.as_str()),
-            Some("integer")
-        );
-        assert_eq!(
-            line_length.get("default").and_then(|v| v.as_str()),
-            Some("88")
-        );
+        assert_eq!(line_length.get("type").and_then(|v| v.as_str()), Some("integer"));
+        assert_eq!(line_length.get("default").and_then(|v| v.as_str()), Some("88"));
 
         let lint = properties
             .get("lint")
@@ -2821,14 +2621,9 @@ mod tests {
             .as_object()
             .expect("isort properties should be an object");
 
-        let case_sensitive = isort_props
-            .get("case-sensitive")
-            .expect("should have case-sensitive");
+        let case_sensitive = isort_props.get("case-sensitive").expect("should have case-sensitive");
 
-        assert_eq!(
-            case_sensitive.get("type").and_then(|v| v.as_str()),
-            Some("boolean")
-        );
+        assert_eq!(case_sensitive.get("type").and_then(|v| v.as_str()), Some("boolean"));
         assert!(case_sensitive.get("markdownDescription").is_some());
 
         let format = properties
@@ -2843,14 +2638,9 @@ mod tests {
             .as_object()
             .expect("format properties should be an object");
 
-        let quote_style = format_props
-            .get("quote-style")
-            .expect("should have quote-style");
+        let quote_style = format_props.get("quote-style").expect("should have quote-style");
 
-        assert_eq!(
-            quote_style.get("type").and_then(|v| v.as_str()),
-            Some("string")
-        );
+        assert_eq!(quote_style.get("type").and_then(|v| v.as_str()), Some("string"));
 
         let enum_values = quote_style
             .get("enum")

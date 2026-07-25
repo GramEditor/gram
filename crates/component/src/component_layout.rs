@@ -1,6 +1,5 @@
 use gpui::{
-    AnyElement, App, IntoElement, Pixels, RenderOnce, SharedString, Window, div, pattern_slash,
-    prelude::*, px, rems,
+    AnyElement, App, IntoElement, Pixels, RenderOnce, SharedString, Window, div, pattern_slash, prelude::*, px, rems,
 };
 use theme::ActiveTheme;
 
@@ -120,19 +119,8 @@ impl RenderOnce for ComponentExampleGroup {
                         .gap_3()
                         .mt_4()
                         .mb_1()
-                        .child(
-                            div()
-                                .flex_none()
-                                .text_size(px(10.))
-                                .child(title.to_uppercase()),
-                        )
-                        .child(
-                            div()
-                                .h_px()
-                                .w_full()
-                                .flex_1()
-                                .bg(cx.theme().colors().border),
-                        ),
+                        .child(div().flex_none().text_size(px(10.)).child(title.to_uppercase()))
+                        .child(div().h_px().w_full().flex_1().bg(cx.theme().colors().border)),
                 )
             })
             .child(
@@ -182,15 +170,22 @@ impl ComponentExampleGroup {
     }
 }
 
-pub fn single_example(
-    variant_name: impl Into<SharedString>,
-    example: AnyElement,
-) -> ComponentExample {
+pub fn single_example(variant_name: impl Into<SharedString>, example: AnyElement) -> ComponentExample {
     ComponentExample::new(variant_name, example)
 }
 
 pub fn empty_example(variant_name: impl Into<SharedString>) -> ComponentExample {
-    ComponentExample::new(variant_name, div().w_full().text_center().items_center().text_xs().opacity(0.4).child("This space is intentionally left blank. It indicates a case that should render nothing.").into_any_element())
+    ComponentExample::new(
+        variant_name,
+        div()
+            .w_full()
+            .text_center()
+            .items_center()
+            .text_xs()
+            .opacity(0.4)
+            .child("This space is intentionally left blank. It indicates a case that should render nothing.")
+            .into_any_element(),
+    )
 }
 
 pub fn example_group(examples: Vec<ComponentExample>) -> ComponentExampleGroup {

@@ -133,11 +133,7 @@ impl RenderOnce for Callout {
                 Color::Warning,
                 cx.theme().status().warning_background.opacity(0.2),
             ),
-            Severity::Error => (
-                IconName::XCircle,
-                Color::Error,
-                cx.theme().status().error.opacity(0.08),
-            ),
+            Severity::Error => (IconName::XCircle, Color::Error, cx.theme().status().error.opacity(0.08)),
         };
 
         h_flex()
@@ -180,12 +176,8 @@ impl RenderOnce for Callout {
                                 this.child(
                                     h_flex()
                                         .gap_0p5()
-                                        .when_some(self.actions_slot, |this, action| {
-                                            this.child(action)
-                                        })
-                                        .when_some(self.dismiss_action, |this, action| {
-                                            this.child(action)
-                                        }),
+                                        .when_some(self.actions_slot, |this, action| this.child(action))
+                                        .when_some(self.dismiss_action, |this, action| this.child(action)),
                                 )
                             }),
                     )

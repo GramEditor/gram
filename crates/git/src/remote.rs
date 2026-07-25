@@ -59,22 +59,13 @@ mod tests {
                 "github.com",
                 "/octocat/zed.git",
             ),
-            (
-                "file:///path/to/local/zed",
-                "file",
-                "",
-                "/path/to/local/zed",
-            ),
+            ("file:///path/to/local/zed", "file", "", "/path/to/local/zed"),
         ];
 
         for (input, expected_scheme, expected_host, expected_path) in valid_urls {
             let parsed = input.parse::<RemoteUrl>().expect("failed to parse URL");
             let url = parsed.0;
-            assert_eq!(
-                url.scheme(),
-                expected_scheme,
-                "unexpected scheme for {input:?}",
-            );
+            assert_eq!(url.scheme(), expected_scheme, "unexpected scheme for {input:?}",);
             assert_eq!(
                 url.host_str().unwrap_or(""),
                 expected_host,

@@ -100,11 +100,7 @@ mod tests {
             .collect(),
         };
 
-        let capture_names = &[
-            "function.special",
-            "function.async.rust",
-            "variable.builtin.self",
-        ];
+        let capture_names = &["function.special", "function.async.rust", "variable.builtin.self"];
 
         let map = HighlightMap::new(capture_names, &theme);
         assert_eq!(map.get(0).name(&theme), Some("function"));

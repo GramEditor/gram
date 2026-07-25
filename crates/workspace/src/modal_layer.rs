@@ -1,6 +1,5 @@
 use gpui::{
-    AnyView, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable as _, ManagedView,
-    MouseButton, Subscription,
+    AnyView, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable as _, ManagedView, MouseButton, Subscription,
 };
 use ui::prelude::*;
 
@@ -11,11 +10,7 @@ pub enum DismissDecision {
 }
 
 pub trait ModalView: ManagedView {
-    fn on_before_dismiss(
-        &mut self,
-        _window: &mut Window,
-        _: &mut Context<Self>,
-    ) -> DismissDecision {
+    fn on_before_dismiss(&mut self, _window: &mut Window, _: &mut Context<Self>) -> DismissDecision {
         DismissDecision::Dismiss(true)
     }
 
@@ -108,13 +103,9 @@ impl ModalLayer {
         self.active_modal = Some(ActiveModal {
             modal: Box::new(new_modal.clone()),
             _subscriptions: [
-                cx.subscribe_in(
-                    &new_modal,
-                    window,
-                    |this, _, _: &DismissEvent, window, cx| {
-                        this.hide_modal(window, cx);
-                    },
-                ),
+                cx.subscribe_in(&new_modal, window, |this, _, _: &DismissEvent, window, cx| {
+                    this.hide_modal(window, cx);
+                }),
                 cx.on_focus_out(&focus_handle, window, |this, _event, window, cx| {
                     if this.dismiss_on_focus_lost {
                         this.hide_modal(window, cx);
@@ -208,14 +199,12 @@ impl Render for ModalLayer {
                     .flex_col()
                     .items_center()
                     .track_focus(&active_modal.focus_handle)
-                    .child(
-                        h_flex()
-                            .occlude()
-                            .child(active_modal.modal.view())
-                            .on_mouse_down(MouseButton::Left, |_, _, cx| {
-                                cx.stop_propagation();
-                            }),
-                    ),
+                    .child(h_flex().occlude().child(active_modal.modal.view()).on_mouse_down(
+                        MouseButton::Left,
+                        |_, _, cx| {
+                            cx.stop_propagation();
+                        },
+                    )),
             )
             .into_any_element()
     }

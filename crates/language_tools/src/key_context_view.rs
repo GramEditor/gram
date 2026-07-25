@@ -1,15 +1,13 @@
 use gpui::{
-    Action, App, AppContext as _, Entity, EventEmitter, FocusHandle, Focusable,
-    KeyBindingContextPredicate, KeyContext, Keystroke, MouseButton, Render, Subscription, Task,
-    actions,
+    Action, App, AppContext as _, Entity, EventEmitter, FocusHandle, Focusable, KeyBindingContextPredicate, KeyContext,
+    Keystroke, MouseButton, Render, Subscription, Task, actions,
 };
 use itertools::Itertools;
 use serde_json::json;
 use ui::{Button, ButtonStyle};
 use ui::{
-    ButtonCommon, Clickable, Context, FluentBuilder, InteractiveElement, Label, LabelCommon,
-    LabelSize, ParentElement, SharedString, StatefulInteractiveElement, Styled, Window, div,
-    h_flex, px, v_flex,
+    ButtonCommon, Clickable, Context, FluentBuilder, InteractiveElement, Label, LabelCommon, LabelSize, ParentElement,
+    SharedString, StatefulInteractiveElement, Styled, Window, div, h_flex, px, v_flex,
 };
 use workspace::{Item, SplitDirection, Workspace};
 
@@ -25,12 +23,7 @@ pub fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, _, _| {
         workspace.register_action(|workspace, _: &OpenKeyContextView, window, cx| {
             let key_context_view = cx.new(|cx| KeyContextView::new(window, cx));
-            workspace.split_item(
-                SplitDirection::Right,
-                Box::new(key_context_view),
-                window,
-                cx,
-            )
+            workspace.split_item(SplitDirection::Right, Box::new(key_context_view), window, cx)
         });
     })
     .detach();
@@ -52,11 +45,7 @@ impl KeyContextView {
             pending.push(e.keystroke.clone());
             let mut possibilities = cx.all_bindings_for_input(&pending);
             possibilities.reverse();
-            this.last_keystrokes = Some(
-                json!(pending.iter().map(|p| p.unparse()).join(" "))
-                    .to_string()
-                    .into(),
-            );
+            this.last_keystrokes = Some(json!(pending.iter().map(|p| p.unparse()).join(" ")).to_string().into());
             this.context_stack = e.context_stack.clone();
             this.last_possibilities = possibilities
                 .into_iter()
@@ -86,11 +75,7 @@ impl KeyContextView {
                         name = "(null)"
                     }
 
-                    (
-                        name.to_owned().into(),
-                        json!(predicate).to_string().into(),
-                        match_state,
-                    )
+                    (name.to_owned().into(), json!(predicate).to_string().into(), match_state)
                 })
                 .collect();
             cx.notify();

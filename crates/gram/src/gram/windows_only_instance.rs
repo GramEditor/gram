@@ -9,13 +9,13 @@ use windows::{
     Win32::{
         Foundation::{CloseHandle, ERROR_ALREADY_EXISTS, GENERIC_WRITE, GetLastError, HANDLE},
         Storage::FileSystem::{
-            CreateFileW, FILE_FLAGS_AND_ATTRIBUTES, FILE_SHARE_MODE, OPEN_EXISTING,
-            PIPE_ACCESS_INBOUND, ReadFile, WriteFile,
+            CreateFileW, FILE_FLAGS_AND_ATTRIBUTES, FILE_SHARE_MODE, OPEN_EXISTING, PIPE_ACCESS_INBOUND, ReadFile,
+            WriteFile,
         },
         System::{
             Pipes::{
-                ConnectNamedPipe, CreateNamedPipeW, DisconnectNamedPipe, PIPE_READMODE_MESSAGE,
-                PIPE_TYPE_MESSAGE, PIPE_WAIT,
+                ConnectNamedPipe, CreateNamedPipeW, DisconnectNamedPipe, PIPE_READMODE_MESSAGE, PIPE_TYPE_MESSAGE,
+                PIPE_WAIT,
             },
             Threading::CreateMutexW,
         },
@@ -75,9 +75,7 @@ fn with_pipe(f: impl Fn(String)) {
         )
     };
     if pipe.is_invalid() {
-        log::error!("Failed to create named pipe: {:?}", unsafe {
-            GetLastError()
-        });
+        log::error!("Failed to create named pipe: {:?}", unsafe { GetLastError() });
         return;
     }
 
@@ -114,8 +112,7 @@ fn send_args_to_instance(args: &Args) -> anyhow::Result<()> {
         return write_message_to_instance_pipe(url.as_bytes());
     }
 
-    let (server, server_name) =
-        IpcOneShotServer::<IpcHandshake>::new().context("Handshake before Gram spawn")?;
+    let (server, server_name) = IpcOneShotServer::<IpcHandshake>::new().context("Handshake before Gram spawn")?;
     let url = format!("gram-cli://{server_name}");
 
     let request = {
@@ -144,10 +141,7 @@ fn send_args_to_instance(args: &Args) -> anyhow::Result<()> {
             let old = std::fs::canonicalize(&path[0]).log_err();
             let new = std::fs::canonicalize(&path[1]).log_err();
             if let Some((old, new)) = old.zip(new) {
-                diff_paths.push([
-                    old.to_string_lossy().into_owned(),
-                    new.to_string_lossy().into_owned(),
-                ]);
+                diff_paths.push([old.to_string_lossy().into_owned(), new.to_string_lossy().into_owned()]);
             }
         }
 

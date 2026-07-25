@@ -37,11 +37,7 @@ pub struct DropdownMenu {
 }
 
 impl DropdownMenu {
-    pub fn new(
-        id: impl Into<ElementId>,
-        label: impl Into<SharedString>,
-        menu: Entity<ContextMenu>,
-    ) -> Self {
+    pub fn new(id: impl Into<ElementId>, label: impl Into<SharedString>, menu: Entity<ContextMenu>) -> Self {
         Self {
             id: id.into(),
             label: LabelKind::Text(label.into()),
@@ -60,11 +56,7 @@ impl DropdownMenu {
         }
     }
 
-    pub fn new_with_element(
-        id: impl Into<ElementId>,
-        label: AnyElement,
-        menu: Entity<ContextMenu>,
-    ) -> Self {
+    pub fn new_with_element(id: impl Into<ElementId>, label: AnyElement, menu: Entity<ContextMenu>) -> Self {
         Self {
             id: id.into(),
             label: LabelKind::Element(label),
@@ -93,10 +85,7 @@ impl DropdownMenu {
         self
     }
 
-    pub fn trigger_tooltip(
-        mut self,
-        tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static,
-    ) -> Self {
+    pub fn trigger_tooltip(mut self, tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static) -> Self {
         self.trigger_tooltip = Some(Box::new(tooltip));
         self
     }
@@ -202,13 +191,9 @@ impl RenderOnce for DropdownMenu {
             .menu(move |_window, _cx| Some(self.menu.clone()));
 
         popover = match (text_button, element_button, self.trigger_tooltip) {
-            (Some(text_button), None, Some(tooltip)) => {
-                popover.trigger_with_tooltip(text_button, tooltip)
-            }
+            (Some(text_button), None, Some(tooltip)) => popover.trigger_with_tooltip(text_button, tooltip),
             (Some(text_button), None, None) => popover.trigger(text_button),
-            (None, Some(element_button), Some(tooltip)) => {
-                popover.trigger_with_tooltip(element_button, tooltip)
-            }
+            (None, Some(element_button), Some(tooltip)) => popover.trigger_with_tooltip(element_button, tooltip),
             (None, Some(element_button), None) => popover.trigger(element_button),
             _ => popover,
         };
@@ -274,18 +259,13 @@ impl Component for DropdownMenu {
                         vec![
                             single_example(
                                 "Default",
-                                DropdownMenu::new("default", "Select an option", menu.clone())
-                                    .into_any_element(),
+                                DropdownMenu::new("default", "Select an option", menu.clone()).into_any_element(),
                             ),
                             single_example(
                                 "Full Width",
-                                DropdownMenu::new(
-                                    "full-width",
-                                    "Full Width Dropdown",
-                                    menu.clone(),
-                                )
-                                .full_width(true)
-                                .into_any_element(),
+                                DropdownMenu::new("full-width", "Full Width Dropdown", menu.clone())
+                                    .full_width(true)
+                                    .into_any_element(),
                             ),
                         ],
                     ),
@@ -293,8 +273,7 @@ impl Component for DropdownMenu {
                         "Submenus",
                         vec![single_example(
                             "With Submenus",
-                            DropdownMenu::new("submenu", "Submenu", menu_with_submenu)
-                                .into_any_element(),
+                            DropdownMenu::new("submenu", "Submenu", menu_with_submenu).into_any_element(),
                         )],
                     ),
                     example_group_with_title(

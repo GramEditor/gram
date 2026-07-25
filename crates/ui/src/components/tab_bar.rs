@@ -37,23 +37,16 @@ impl TabBar {
     where
         Self: Sized,
     {
-        self.start_children_mut()
-            .push(start_child.into_element().into_any());
+        self.start_children_mut().push(start_child.into_element().into_any());
         self
     }
 
-    pub fn start_children(
-        mut self,
-        start_children: impl IntoIterator<Item = impl IntoElement>,
-    ) -> Self
+    pub fn start_children(mut self, start_children: impl IntoIterator<Item = impl IntoElement>) -> Self
     where
         Self: Sized,
     {
-        self.start_children_mut().extend(
-            start_children
-                .into_iter()
-                .map(|child| child.into_any_element()),
-        );
+        self.start_children_mut()
+            .extend(start_children.into_iter().map(|child| child.into_any_element()));
         self
     }
 
@@ -65,8 +58,7 @@ impl TabBar {
     where
         Self: Sized,
     {
-        self.end_children_mut()
-            .push(end_child.into_element().into_any());
+        self.end_children_mut().push(end_child.into_element().into_any());
         self
     }
 
@@ -74,11 +66,8 @@ impl TabBar {
     where
         Self: Sized,
     {
-        self.end_children_mut().extend(
-            end_children
-                .into_iter()
-                .map(|child| child.into_any_element()),
-        );
+        self.end_children_mut()
+            .extend(end_children.into_iter().map(|child| child.into_any_element()));
         self
     }
 }
@@ -131,9 +120,7 @@ impl RenderOnce for TabBar {
                             .id("tabs")
                             .flex_grow()
                             .overflow_x_scroll()
-                            .when_some(self.scroll_handle, |cx, scroll_handle| {
-                                cx.track_scroll(&scroll_handle)
-                            })
+                            .when_some(self.scroll_handle, |cx, scroll_handle| cx.track_scroll(&scroll_handle))
                             .children(self.children),
                     ),
             )
@@ -173,10 +160,7 @@ impl Component for TabBar {
                     example_group_with_title(
                         "Basic Usage",
                         vec![
-                            single_example(
-                                "Empty TabBar",
-                                TabBar::new("empty_tab_bar").into_any_element(),
-                            ),
+                            single_example("Empty TabBar", TabBar::new("empty_tab_bar").into_any_element()),
                             single_example(
                                 "With Tabs",
                                 TabBar::new("tab_bar_with_tabs")

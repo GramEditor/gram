@@ -26,10 +26,7 @@ impl LineCol {
         let str = str.as_ref();
         match str.split_once(':') {
             Some((line, col)) => match (line.parse::<u32>(), col.parse::<u32>()) {
-                (Ok(line), Ok(col)) => Some(Self {
-                    line,
-                    col: Some(col),
-                }),
+                (Ok(line), Ok(col)) => Some(Self { line, col: Some(col) }),
                 _ => None,
             },
             None => match str.parse::<u32>() {
@@ -97,22 +94,10 @@ mod tests {
     #[test]
     fn test_linecol_parsing() {
         let line_col = LineCol::new("10:5");
-        assert_eq!(
-            line_col,
-            Some(LineCol {
-                line: 10,
-                col: Some(5)
-            })
-        );
+        assert_eq!(line_col, Some(LineCol { line: 10, col: Some(5) }));
 
         let line_only = LineCol::new("42");
-        assert_eq!(
-            line_only,
-            Some(LineCol {
-                line: 42,
-                col: None
-            })
-        );
+        assert_eq!(line_only, Some(LineCol { line: 42, col: None }));
 
         assert_eq!(LineCol::new(""), None);
         assert_eq!(LineCol::new("not a number"), None);

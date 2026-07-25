@@ -10,8 +10,8 @@ use futures::{
     channel::mpsc::{UnboundedSender, unbounded},
 };
 use gpui::{
-    App, AppContext, Context, Empty, Entity, EventEmitter, FocusHandle, Focusable, IntoElement,
-    ParentElement, Render, SharedString, Styled, Subscription, WeakEntity, Window, actions, div,
+    App, AppContext, Context, Empty, Entity, EventEmitter, FocusHandle, Focusable, IntoElement, ParentElement, Render,
+    SharedString, Styled, Subscription, WeakEntity, Window, actions, div,
 };
 use project::{
     Project,
@@ -129,12 +129,7 @@ impl MessageKind {
 }
 
 impl DebugAdapterState {
-    fn new(
-        id: SessionId,
-        adapter_name: DebugAdapterName,
-        session_label: SharedString,
-        has_adapter_logs: bool,
-    ) -> Self {
+    fn new(id: SessionId, adapter_name: DebugAdapterName, session_label: SharedString, has_adapter_logs: bool) -> Self {
         Self {
             id,
             log_messages: VecDeque::new(),
@@ -232,10 +227,7 @@ impl LogStore {
         );
     }
 
-    fn get_debug_adapter_state(
-        &mut self,
-        id: &LogStoreEntryIdentifier<'_>,
-    ) -> Option<&mut DebugAdapterState> {
+    fn get_debug_adapter_state(&mut self, id: &LogStoreEntryIdentifier<'_>) -> Option<&mut DebugAdapterState> {
         self.projects
             .get_mut(&id.project)
             .and_then(|state| state.debug_sessions.get_mut(&id.session_id))
@@ -281,13 +273,7 @@ impl LogStore {
             rpc_messages.last_message_kind = Some(kind);
         }
 
-        let entry = Self::get_debug_adapter_entry(
-            &mut rpc_messages.messages,
-            id.to_owned(),
-            message,
-            LogKind::Rpc,
-            cx,
-        );
+        let entry = Self::get_debug_adapter_entry(&mut rpc_messages.messages, id.to_owned(), message, LogKind::Rpc, cx);
 
         if is_init_seq {
             if rpc_messages.last_init_message_kind != Some(kind) {
@@ -338,9 +324,7 @@ impl LogStore {
         kind: LogKind,
         cx: &mut Context<Self>,
     ) -> SharedString {
-        if let Some(excess) = log_lines
-            .len()
-            .checked_sub(RpcMessages::MESSAGE_QUEUE_LIMIT)
+        if let Some(excess) = log_lines.len().checked_sub(RpcMessages::MESSAGE_QUEUE_LIMIT)
             && excess > 0
         {
             log_lines.drain(..excess);
@@ -349,14 +333,9 @@ impl LogStore {
         let format_messages = DebuggerSettings::get_global(cx).format_dap_log_messages;
 
         let entry = if format_messages {
-            maybe!({
-                serde_json::to_string_pretty::<serde_json::Value>(
-                    &serde_json::from_str(&message).ok()?,
-                )
-                .ok()
-            })
-            .map(SharedString::from)
-            .unwrap_or(message)
+            maybe!({ serde_json::to_string_pretty::<serde_json::Value>(&serde_json::from_str(&message).ok()?,).ok() })
+                .map(SharedString::from)
+                .unwrap_or(message)
         } else {
             message
         };
@@ -379,28 +358,23 @@ impl LogStore {
     ) {
         maybe!({
             let project_entry = self.projects.get_mut(&id.project)?;
-            let std::collections::btree_map::Entry::Vacant(state) =
-                project_entry.debug_sessions.entry(id.session_id)
+            let std::collections::btree_map::Entry::Vacant(state) = project_entry.debug_sessions.entry(id.session_id)
             else {
                 return None;
             };
 
-            let (adapter_name, session_label, has_adapter_logs) =
-                session.read_with(cx, |session, _| {
-                    (
-                        session.adapter(),
-                        session.label(),
-                        session
-                            .adapter_client()
-                            .is_some_and(|client| client.has_adapter_logs()),
-                    )
-                });
+            let (adapter_name, session_label, has_adapter_logs) = session.read_with(cx, |session, _| {
+                (
+                    session.adapter(),
+                    session.label(),
+                    session.adapter_client().is_some_and(|client| client.has_adapter_logs()),
+                )
+            });
 
             state.insert(DebugAdapterState::new(
                 id.session_id,
                 adapter_name,
-                session_label
-                    .unwrap_or_else(|| format!("Session {} (child)", id.session_id.0).into()),
+                session_label.unwrap_or_else(|| format!("Session {} (child)", id.session_id.0).into()),
                 has_adapter_logs,
             ));
 
@@ -465,26 +439,16 @@ impl LogStore {
         cx.notify();
     }
 
-    fn log_messages_for_session(
-        &mut self,
-        id: &LogStoreEntryIdentifier<'_>,
-    ) -> Option<&mut VecDeque<SharedString>> {
-        self.get_debug_adapter_state(id)
-            .map(|state| &mut state.log_messages)
+    fn log_messages_for_session(&mut self, id: &LogStoreEntryIdentifier<'_>) -> Option<&mut VecDeque<SharedString>> {
+        self.get_debug_adapter_state(id).map(|state| &mut state.log_messages)
     }
 
-    fn rpc_messages_for_session(
-        &mut self,
-        id: &LogStoreEntryIdentifier<'_>,
-    ) -> Option<&mut VecDeque<SharedString>> {
+    fn rpc_messages_for_session(&mut self, id: &LogStoreEntryIdentifier<'_>) -> Option<&mut VecDeque<SharedString>> {
         self.get_debug_adapter_state(id)
             .map(|state| &mut state.rpc_messages.messages)
     }
 
-    fn initialization_sequence_for_session(
-        &mut self,
-        id: &LogStoreEntryIdentifier<'_>,
-    ) -> Option<&Vec<SharedString>> {
+    fn initialization_sequence_for_session(&mut self, id: &LogStoreEntryIdentifier<'_>) -> Option<&Vec<SharedString>> {
         self.get_debug_adapter_state(id)
             .map(|state| &state.rpc_messages.initialization_sequence)
     }
@@ -514,8 +478,8 @@ impl Render for DapLogToolbarItemView {
             )
         });
 
-        let current_client = current_session_id
-            .and_then(|session_id| menu_rows.iter().find(|row| row.session_id == session_id));
+        let current_client =
+            current_session_id.and_then(|session_id| menu_rows.iter().find(|row| row.session_id == session_id));
 
         let dap_menu: PopoverMenu<_> = PopoverMenu::new("DapLogView")
             .anchor(gpui::Corner::TopLeft)
@@ -547,11 +511,8 @@ impl Render for DapLogToolbarItemView {
                                 .w_full()
                                 .pl_2()
                                 .child(
-                                    Label::new(format!(
-                                        "{} - {}",
-                                        row.adapter_name, row.session_label
-                                    ))
-                                    .color(workspace::ui::Color::Muted),
+                                    Label::new(format!("{} - {}", row.adapter_name, row.session_label))
+                                        .color(workspace::ui::Color::Muted),
                                 )
                                 .into_any_element()
                         });
@@ -559,11 +520,7 @@ impl Render for DapLogToolbarItemView {
                         if row.has_adapter_logs {
                             menu = menu.custom_entry(
                                 move |_window, _cx| {
-                                    div()
-                                        .w_full()
-                                        .pl_4()
-                                        .child(Label::new(ADAPTER_LOGS))
-                                        .into_any_element()
+                                    div().w_full().pl_4().child(Label::new(ADAPTER_LOGS)).into_any_element()
                                 },
                                 window.handler_for(&log_view, {
                                     let project = project.clone();
@@ -581,11 +538,7 @@ impl Render for DapLogToolbarItemView {
                         menu = menu
                             .custom_entry(
                                 move |_window, _cx| {
-                                    div()
-                                        .w_full()
-                                        .pl_4()
-                                        .child(Label::new(RPC_MESSAGES))
-                                        .into_any_element()
+                                    div().w_full().pl_4().child(Label::new(RPC_MESSAGES)).into_any_element()
                                 },
                                 window.handler_for(&log_view, {
                                     let project = project.clone();
@@ -613,9 +566,7 @@ impl Render for DapLogToolbarItemView {
                                         session_id: row.session_id,
                                     };
                                     move |view, window, cx| {
-                                        view.show_initialization_sequence_for_server(
-                                            &id, window, cx,
-                                        );
+                                        view.show_initialization_sequence_for_server(&id, window, cx);
                                     }
                                 }),
                             );
@@ -632,19 +583,17 @@ impl Render for DapLogToolbarItemView {
             .child(
                 div()
                     .child(
-                        Button::new("clear_log_button", "Clear").on_click(cx.listener(
-                            |this, _, window, cx| {
-                                if let Some(log_view) = this.log_view.as_ref() {
-                                    log_view.update(cx, |log_view, cx| {
-                                        log_view.editor.update(cx, |editor, cx| {
-                                            editor.set_read_only(false);
-                                            editor.clear(window, cx);
-                                            editor.set_read_only(true);
-                                        });
-                                    })
-                                }
-                            },
-                        )),
+                        Button::new("clear_log_button", "Clear").on_click(cx.listener(|this, _, window, cx| {
+                            if let Some(log_view) = this.log_view.as_ref() {
+                                log_view.update(cx, |log_view, cx| {
+                                    log_view.editor.update(cx, |editor, cx| {
+                                        editor.set_read_only(false);
+                                        editor.clear(window, cx);
+                                        editor.set_read_only(true);
+                                    });
+                                })
+                            }
+                        })),
                     )
                     .ml_2(),
             )
@@ -689,8 +638,7 @@ impl DapLogView {
         let events_subscriptions = cx.subscribe(&log_store, |log_view, _, event, cx| match event {
             Event::NewLogEntry { id, entry, kind } => {
                 let is_current_view = match (log_view.current_view, *kind) {
-                    (Some((i, View::AdapterLogs)), LogKind::Adapter)
-                    | (Some((i, View::RpcMessages)), LogKind::Rpc)
+                    (Some((i, View::AdapterLogs)), LogKind::Adapter) | (Some((i, View::RpcMessages)), LogKind::Rpc)
                         if i == id.session_id =>
                     {
                         log_view.project == *id.project
@@ -702,10 +650,7 @@ impl DapLogView {
                         editor.set_read_only(false);
                         let last_point = editor.buffer().read(cx).len(cx);
                         editor.edit(
-                            vec![
-                                (last_point..last_point, entry.trim()),
-                                (last_point..last_point, "\n"),
-                            ],
+                            vec![(last_point..last_point, entry.trim()), (last_point..last_point, "\n")],
                             cx,
                         );
                         editor.set_read_only(true);
@@ -714,17 +659,13 @@ impl DapLogView {
             }
         });
         let weak_project = project.downgrade();
-        let state_info = log_store
-            .read(cx)
-            .projects
-            .get(&weak_project)
-            .and_then(|project| {
-                project
-                    .debug_sessions
-                    .values()
-                    .next_back()
-                    .map(|session| (session.id, session.has_adapter_logs))
-            });
+        let state_info = log_store.read(cx).projects.get(&weak_project).and_then(|project| {
+            project
+                .debug_sessions
+                .values()
+                .next_back()
+                .map(|session| (session.id, session.has_adapter_logs))
+        });
 
         let mut this = Self {
             editor,
@@ -769,14 +710,12 @@ impl DapLogView {
             editor.set_read_only(true);
             editor
         });
-        let editor_subscription = cx.subscribe(
-            &editor,
-            |_, _, event: &EditorEvent, cx: &mut Context<DapLogView>| cx.emit(event.clone()),
-        );
-        let search_subscription = cx.subscribe(
-            &editor,
-            |_, _, event: &SearchEvent, cx: &mut Context<DapLogView>| cx.emit(event.clone()),
-        );
+        let editor_subscription = cx.subscribe(&editor, |_, _, event: &EditorEvent, cx: &mut Context<DapLogView>| {
+            cx.emit(event.clone())
+        });
+        let search_subscription = cx.subscribe(&editor, |_, _, event: &SearchEvent, cx: &mut Context<DapLogView>| {
+            cx.emit(event.clone())
+        });
         (editor, vec![editor_subscription, search_subscription])
     }
 
@@ -795,9 +734,7 @@ impl DapLogView {
                         adapter_name: state.adapter_name.clone(),
                         session_label: state.session_label.clone(),
                         has_adapter_logs: state.has_adapter_logs,
-                        selected_entry: self
-                            .current_view
-                            .map_or(View::AdapterLogs, |(_, kind)| kind),
+                        selected_entry: self.current_view.map_or(View::AdapterLogs, |(_, kind)| kind),
                     })
                     .collect::<Vec<_>>()
             })
@@ -939,9 +876,8 @@ const INITIALIZATION_SEQUENCE: &str = "Initialization Sequence";
 
 impl Render for DapLogView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        self.editor.update(cx, |editor, cx| {
-            editor.render(window, cx).into_any_element()
-        })
+        self.editor
+            .update(cx, |editor, cx| editor.render(window, cx).into_any_element())
     }
 }
 
@@ -969,9 +905,7 @@ pub fn init(cx: &mut App) {
         let log_store = log_store.clone();
         workspace.register_action(move |workspace, _: &OpenDebugAdapterLogs, window, cx| {
             workspace.add_item_to_active_pane(
-                Box::new(cx.new(|cx| {
-                    DapLogView::new(workspace.project().clone(), log_store.clone(), window, cx)
-                })),
+                Box::new(cx.new(|cx| DapLogView::new(workspace.project().clone(), log_store.clone(), window, cx))),
                 None,
                 true,
                 window,
@@ -993,11 +927,7 @@ impl Item for DapLogView {
         "DAP Logs".into()
     }
 
-    fn as_searchable(
-        &self,
-        handle: &Entity<Self>,
-        _: &App,
-    ) -> Option<Box<dyn SearchableItemHandle>> {
+    fn as_searchable(&self, handle: &Entity<Self>, _: &App) -> Option<Box<dyn SearchableItemHandle>> {
         Some(Box::new(handle.clone()))
     }
 }
@@ -1016,40 +946,22 @@ impl SearchableItem for DapLogView {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        self.editor.update(cx, |e, cx| {
-            e.update_matches(matches, active_match_index, window, cx)
-        })
+        self.editor
+            .update(cx, |e, cx| e.update_matches(matches, active_match_index, window, cx))
     }
 
-    fn query_suggestion(
-        &mut self,
-        ignore_settings: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> String {
+    fn query_suggestion(&mut self, ignore_settings: bool, window: &mut Window, cx: &mut Context<Self>) -> String {
         self.editor
             .update(cx, |e, cx| e.query_suggestion(ignore_settings, window, cx))
     }
 
-    fn activate_match(
-        &mut self,
-        index: usize,
-        matches: &[Self::Match],
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn activate_match(&mut self, index: usize, matches: &[Self::Match], window: &mut Window, cx: &mut Context<Self>) {
         self.editor
             .update(cx, |e, cx| e.activate_match(index, matches, window, cx))
     }
 
-    fn select_matches(
-        &mut self,
-        matches: &[Self::Match],
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        self.editor
-            .update(cx, |e, cx| e.select_matches(matches, window, cx))
+    fn select_matches(&mut self, matches: &[Self::Match], window: &mut Window, cx: &mut Context<Self>) {
+        self.editor.update(cx, |e, cx| e.select_matches(matches, window, cx))
     }
 
     fn find_matches(
@@ -1058,17 +970,10 @@ impl SearchableItem for DapLogView {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> gpui::Task<Vec<Self::Match>> {
-        self.editor
-            .update(cx, |e, cx| e.find_matches(query, window, cx))
+        self.editor.update(cx, |e, cx| e.find_matches(query, window, cx))
     }
 
-    fn replace(
-        &mut self,
-        _: &Self::Match,
-        _: &SearchQuery,
-        _window: &mut Window,
-        _: &mut Context<Self>,
-    ) {
+    fn replace(&mut self, _: &Self::Match, _: &SearchQuery, _window: &mut Window, _: &mut Context<Self>) {
         // Since DAP Log is read-only, it doesn't make sense to support replace operation.
     }
 
@@ -1090,9 +995,8 @@ impl SearchableItem for DapLogView {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Option<usize> {
-        self.editor.update(cx, |e, cx| {
-            e.active_match_index(direction, matches, window, cx)
-        })
+        self.editor
+            .update(cx, |e, cx| e.active_match_index(direction, matches, window, cx))
     }
 }
 
@@ -1122,9 +1026,9 @@ impl LogStore {
     }
 
     pub fn contained_session_ids(&self, project: &WeakEntity<Project>) -> Vec<SessionId> {
-        self.projects.get(project).map_or(vec![], |state| {
-            state.debug_sessions.keys().copied().collect()
-        })
+        self.projects
+            .get(project)
+            .map_or(vec![], |state| state.debug_sessions.keys().copied().collect())
     }
 
     pub fn rpc_messages_for_session_id(

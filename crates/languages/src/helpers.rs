@@ -11,10 +11,7 @@ pub fn with_exe(name: &str) -> String {
     format!("{}{}", name, suffix)
 }
 
-pub async fn write_metadata(
-    destination_path: &PathBuf,
-    expected_digest: Option<String>,
-) -> Result<()> {
+pub async fn write_metadata(destination_path: &PathBuf, expected_digest: Option<String>) -> Result<()> {
     let metadata_path = destination_path.with_extension("metadata");
     GithubBinaryMetadata::write_to_file(
         &GithubBinaryMetadata {
@@ -33,9 +30,7 @@ pub async fn verify_metadata(
     delegate: &dyn LspAdapterDelegate,
 ) -> bool {
     let metadata_path = destination_path.with_extension("metadata");
-    let metadata = GithubBinaryMetadata::read_from_file(&metadata_path)
-        .await
-        .ok();
+    let metadata = GithubBinaryMetadata::read_from_file(&metadata_path).await.ok();
     let Some(metadata) = metadata else {
         return false;
     };
@@ -48,9 +43,7 @@ pub async fn verify_metadata(
                 env: None,
             })
             .await
-            .inspect_err(|err| {
-                log::warn!("Unable to run {server_path:?} asset, redownloading: {err:#}",)
-            })
+            .inspect_err(|err| log::warn!("Unable to run {server_path:?} asset, redownloading: {err:#}",))
     };
     if let (Some(actual_digest), Some(expected_digest)) = (&metadata.digest, &expected_digest) {
         if actual_digest == expected_digest {

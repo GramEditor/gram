@@ -61,9 +61,7 @@ impl<T: ToPoint> OutlineItem<T> {
         let mut cursor = node.walk();
         loop {
             let node = cursor.node();
-            if node.start_position() >= range.start.to_ts_point()
-                && node.end_position() <= range.end.to_ts_point()
-            {
+            if node.start_position() >= range.start.to_ts_point() && node.end_position() <= range.end.to_ts_point() {
                 break;
             }
             cursor.goto_first_child_for_point(range.start.to_ts_point());
@@ -190,9 +188,7 @@ impl<T> Outline<T> {
 
             if is_path_query {
                 let prefix_len = self.path_candidate_prefixes[string_match.candidate_id];
-                string_match
-                    .positions
-                    .retain(|position| *position >= prefix_len);
+                string_match.positions.retain(|position| *position >= prefix_len);
                 for position in &mut string_match.positions {
                     *position -= prefix_len;
                 }

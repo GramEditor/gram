@@ -15,9 +15,7 @@ use async_trait::async_trait;
 use collections::HashMap;
 use dap::{
     Capabilities, DapRegistry, DebugRequest, EvaluateArgumentsContext, StackFrameId,
-    adapters::{
-        DapDelegate, DebugAdapterBinary, DebugAdapterName, DebugTaskDefinition, TcpArguments,
-    },
+    adapters::{DapDelegate, DebugAdapterBinary, DebugAdapterName, DebugTaskDefinition, TcpArguments},
     client::SessionId,
     inline_value::VariableLookupKind,
     messages::Message,
@@ -58,10 +56,7 @@ pub enum DapStoreEvent {
     DebugClientStarted(SessionId),
     DebugSessionInitialized(SessionId),
     DebugClientShutdown(SessionId),
-    DebugClientEvent {
-        session_id: SessionId,
-        message: Message,
-    },
+    DebugClientEvent { session_id: SessionId, message: Message },
     Notification(String),
     RemoteHasInitialized,
 }
@@ -183,13 +178,7 @@ impl DapStore {
         fs: Arc<dyn Fs>,
         cx: &mut Context<Self>,
     ) -> Self {
-        Self::new(
-            DapStoreMode::Collab,
-            breakpoint_store,
-            worktree_store,
-            fs,
-            cx,
-        )
+        Self::new(DapStoreMode::Collab, breakpoint_store, worktree_store, fs, cx)
     }
 
     fn new(
@@ -278,14 +267,7 @@ impl DapStore {
                 let worktree = worktree.clone();
                 cx.spawn(async move |this, cx| {
                     let mut binary = adapter
-                        .get_binary(
-                            &delegate,
-                            &definition,
-                            user_installed_path,
-                            user_args,
-                            user_env,
-                            cx,
-                        )
+                        .get_binary(&delegate, &definition, user_installed_path, user_args, user_env, cx)
                         .await?;
 
                     let env = this
@@ -293,9 +275,7 @@ impl DapStore {
                             this.as_local()
                                 .unwrap()
                                 .environment
-                                .update(cx, |environment, cx| {
-                                    environment.worktree_environment(worktree, cx)
-                                })
+                                .update(cx, |environment, cx| environment.worktree_environment(worktree, cx))
                         })?
                         .await;
 
@@ -308,14 +288,12 @@ impl DapStore {
                 })
             }
             DapStoreMode::Remote(remote) => {
-                let request = remote
-                    .upstream_client
-                    .request(proto::GetDebugAdapterBinary {
-                        session_id: session_id.to_proto(),
-                        project_id: remote.upstream_project_id,
-                        worktree_id: worktree.read(cx).id().to_proto(),
-                        definition: Some(definition.to_proto()),
-                    });
+                let request = remote.upstream_client.request(proto::GetDebugAdapterBinary {
+                    session_id: session_id.to_proto(),
+                    project_id: remote.upstream_project_id,
+                    worktree_id: worktree.read(cx).id().to_proto(),
+                    definition: Some(definition.to_proto()),
+                });
                 let remote = remote.remote_client.clone();
 
                 cx.spawn(async move |_, cx| {
@@ -364,9 +342,7 @@ impl DapStore {
                     })
                 })
             }
-            DapStoreMode::Collab => {
-                Task::ready(Err(anyhow!("Debugging is not yet supported via collab")))
-            }
+            DapStoreMode::Collab => Task::ready(Err(anyhow!("Debugging is not yet supported via collab"))),
         }
     }
 
@@ -434,9 +410,7 @@ impl DapStore {
                     DebugRequest::from_proto(response)
                 })
             }
-            DapStoreMode::Collab => {
-                Task::ready(Err(anyhow!("Debugging is not yet supported via collab")))
-            }
+            DapStoreMode::Collab => Task::ready(Err(anyhow!("Debugging is not yet supported via collab"))),
         }
     }
 
@@ -522,28 +496,17 @@ impl DapStore {
             async move |this, cx| {
                 let binary = this
                     .update(cx, |this, cx| {
-                        this.get_debug_adapter_binary(
-                            definition.clone(),
-                            session_id,
-                            &worktree,
-                            console,
-                            cx,
-                        )
+                        this.get_debug_adapter_binary(definition.clone(), session_id, &worktree, console, cx)
                     })?
                     .await?;
                 session
-                    .update(cx, |session, cx| {
-                        session.boot(binary, worktree, dap_store, cx)
-                    })?
+                    .update(cx, |session, cx| session.boot(binary, worktree, dap_store, cx))?
                     .await
             }
         })
     }
 
-    pub fn session_by_id(
-        &self,
-        session_id: impl Borrow<SessionId>,
-    ) -> Option<Entity<session::Session>> {
+    pub fn session_by_id(&self, session_id: impl Borrow<SessionId>) -> Option<Entity<session::Session>> {
         let session_id = session_id.borrow();
 
         self.sessions.get(session_id).cloned()
@@ -552,11 +515,7 @@ impl DapStore {
         self.sessions.values()
     }
 
-    pub fn capabilities_by_id(
-        &self,
-        session_id: impl Borrow<SessionId>,
-        cx: &App,
-    ) -> Option<Capabilities> {
+    pub fn capabilities_by_id(&self, session_id: impl Borrow<SessionId>, cx: &App) -> Option<Capabilities> {
         let session_id = session_id.borrow();
         self.sessions
             .get(session_id)
@@ -626,14 +585,12 @@ impl DapStore {
         cx: &mut Context<Self>,
     ) -> Task<Result<Vec<InlayHint>>> {
         let snapshot = buffer_handle.read(cx).snapshot();
-        let local_variables =
-            session
-                .read(cx)
-                .variables_by_stack_frame_id(stack_frame_id, false, true);
-        let global_variables =
-            session
-                .read(cx)
-                .variables_by_stack_frame_id(stack_frame_id, true, false);
+        let local_variables = session
+            .read(cx)
+            .variables_by_stack_frame_id(stack_frame_id, false, true);
+        let global_variables = session
+            .read(cx)
+            .variables_by_stack_frame_id(stack_frame_id, true, false);
 
         fn format_value(mut value: String) -> String {
             const LIMIT: usize = 100;
@@ -667,18 +624,17 @@ impl DapStore {
 
                 match inline_value_location.lookup {
                     VariableLookupKind::Variable => {
-                        let variable_search =
-                            if inline_value_location.scope
-                                == dap::inline_value::VariableScope::Local
-                            {
-                                local_variables.iter().chain(global_variables.iter()).find(
-                                    |variable| variable.name == inline_value_location.variable_name,
-                                )
-                            } else {
-                                global_variables.iter().find(|variable| {
-                                    variable.name == inline_value_location.variable_name
-                                })
-                            };
+                        let variable_search = if inline_value_location.scope == dap::inline_value::VariableScope::Local
+                        {
+                            local_variables
+                                .iter()
+                                .chain(global_variables.iter())
+                                .find(|variable| variable.name == inline_value_location.variable_name)
+                        } else {
+                            global_variables
+                                .iter()
+                                .find(|variable| variable.name == inline_value_location.variable_name)
+                        };
 
                         let Some(variable) = variable_search else {
                             continue;
@@ -736,11 +692,7 @@ impl DapStore {
         })
     }
 
-    pub fn shutdown_session(
-        &mut self,
-        session_id: SessionId,
-        cx: &mut Context<Self>,
-    ) -> Task<Result<()>> {
+    pub fn shutdown_session(&mut self, session_id: SessionId, cx: &mut Context<Self>) -> Task<Result<()>> {
         let Some(session) = self.sessions.remove(&session_id) else {
             return Task::ready(Err(anyhow!("Could not find session: {:?}", session_id)));
         };
@@ -791,12 +743,7 @@ impl DapStore {
         })
     }
 
-    pub fn shared(
-        &mut self,
-        project_id: u64,
-        downstream_client: AnyProtoClient,
-        _: &mut Context<Self>,
-    ) {
+    pub fn shared(&mut self, project_id: u64, downstream_client: AnyProtoClient, _: &mut Context<Self>) {
         self.downstream_client = Some((downstream_client, project_id));
     }
 
@@ -811,16 +758,11 @@ impl DapStore {
         envelope: TypedEnvelope<proto::RunDebugLocators>,
         mut cx: AsyncApp,
     ) -> Result<proto::DebugRequest> {
-        let task = envelope
-            .payload
-            .build_command
-            .context("missing definition")?;
+        let task = envelope.payload.build_command.context("missing definition")?;
         let build_task = SpawnInTerminal::from_proto(task);
         let locator = envelope.payload.locator;
         let request = this
-            .update(&mut cx, |this, cx| {
-                this.run_debug_locator(&locator, build_task, cx)
-            })?
+            .update(&mut cx, |this, cx| this.run_debug_locator(&locator, build_task, cx))?
             .await?;
 
         Ok(request.to_proto())
@@ -831,9 +773,7 @@ impl DapStore {
         envelope: TypedEnvelope<proto::GetDebugAdapterBinary>,
         mut cx: AsyncApp,
     ) -> Result<proto::DebugAdapterBinary> {
-        let definition = DebugTaskDefinition::from_proto(
-            envelope.payload.definition.context("missing definition")?,
-        )?;
+        let definition = DebugTaskDefinition::from_proto(envelope.payload.definition.context("missing definition")?)?;
         let (tx, mut rx) = mpsc::unbounded();
         let session_id = envelope.payload.session_id;
         cx.spawn({
@@ -866,13 +806,7 @@ impl DapStore {
             .context("Failed to find worktree with a given ID")?;
         let binary = this
             .update(&mut cx, |this, cx| {
-                this.get_debug_adapter_binary(
-                    definition,
-                    SessionId::from_proto(session_id),
-                    &worktree,
-                    tx,
-                    cx,
-                )
+                this.get_debug_adapter_binary(definition, SessionId::from_proto(session_id), &worktree, tx, cx)
             })?
             .await?;
         Ok(binary.to_proto())
@@ -889,19 +823,12 @@ impl DapStore {
                 return;
             };
             session.update(cx, |session, cx| {
-                session
-                    .console_output(cx)
-                    .unbounded_send(envelope.payload.message)
-                    .ok();
+                session.console_output(cx).unbounded_send(envelope.payload.message).ok();
             })
         })
     }
 
-    pub fn sync_adapter_options(
-        &mut self,
-        session: &Entity<Session>,
-        cx: &App,
-    ) -> Arc<PersistedAdapterOptions> {
+    pub fn sync_adapter_options(&mut self, session: &Entity<Session>, cx: &App) -> Arc<PersistedAdapterOptions> {
         let session = session.read(cx);
         let adapter = session.adapter();
         let exceptions = session.exception_breakpoints();
@@ -913,18 +840,12 @@ impl DapStore {
                 )
             })
             .collect();
-        let options = Arc::new(PersistedAdapterOptions {
-            exception_breakpoints,
-        });
+        let options = Arc::new(PersistedAdapterOptions { exception_breakpoints });
         self.adapter_options.insert(adapter, options.clone());
         options
     }
 
-    pub fn set_adapter_options(
-        &mut self,
-        adapter: DebugAdapterName,
-        options: PersistedAdapterOptions,
-    ) {
+    pub fn set_adapter_options(&mut self, adapter: DebugAdapterName, options: PersistedAdapterOptions) {
         self.adapter_options.insert(adapter, Arc::new(options));
     }
 

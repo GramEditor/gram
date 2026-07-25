@@ -132,12 +132,7 @@ pub(crate) fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
 }
 
 impl Vim {
-    fn search_under_cursor(
-        &mut self,
-        action: &SearchUnderCursor,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn search_under_cursor(&mut self, action: &SearchUnderCursor, window: &mut Window, cx: &mut Context<Self>) {
         self.move_to_internal(
             Direction::Next,
             action.case_sensitive,
@@ -178,12 +173,7 @@ impl Vim {
         )
     }
 
-    fn move_to_previous(
-        &mut self,
-        action: &MoveToPrevious,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn move_to_previous(&mut self, action: &MoveToPrevious, window: &mut Window, cx: &mut Context<Self>) {
         self.move_to_internal(
             Direction::Prev,
             action.case_sensitive,
@@ -195,21 +185,11 @@ impl Vim {
         )
     }
 
-    fn move_to_next_match(
-        &mut self,
-        _: &MoveToNextMatch,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn move_to_next_match(&mut self, _: &MoveToNextMatch, window: &mut Window, cx: &mut Context<Self>) {
         self.move_to_match_internal(self.search.direction, window, cx)
     }
 
-    fn move_to_previous_match(
-        &mut self,
-        _: &MoveToPreviousMatch,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn move_to_previous_match(&mut self, _: &MoveToPreviousMatch, window: &mut Window, cx: &mut Context<Self>) {
         self.move_to_match_internal(self.search.direction.opposite(), window, cx)
     }
 
@@ -226,12 +206,7 @@ impl Vim {
         Vim::take_forced_motion(cx);
         let prior_selections = self.editor_selections(window, cx);
 
-        let Some(search_bar) = pane
-            .read(cx)
-            .toolbar()
-            .read(cx)
-            .item_of_type::<BufferSearchBar>()
-        else {
+        let Some(search_bar) = pane.read(cx).toolbar().read(cx).item_of_type::<BufferSearchBar>() else {
             return;
         };
 
@@ -275,11 +250,7 @@ impl Vim {
             }
         });
 
-        let prior_mode = if self.temp_mode {
-            Mode::Insert
-        } else {
-            self.mode
-        };
+        let prior_mode = if self.temp_mode { Mode::Insert } else { self.mode };
 
         self.search = SearchState {
             direction,
@@ -352,8 +323,7 @@ impl Vim {
         // If the active editor has changed during a search, don't panic.
         if prior_selections.iter().any(|s| {
             self.update_editor(cx, |_, editor, cx| {
-                !s.start
-                    .is_valid(&editor.snapshot(window, cx).buffer_snapshot())
+                !s.start.is_valid(&editor.snapshot(window, cx).buffer_snapshot())
             })
             .unwrap_or(true)
         }) {
@@ -376,12 +346,7 @@ impl Vim {
         );
     }
 
-    pub fn move_to_match_internal(
-        &mut self,
-        direction: Direction,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn move_to_match_internal(&mut self, direction: Direction, window: &mut Window, cx: &mut Context<Self>) {
         let Some(pane) = self.pane(window, cx) else {
             return;
         };
@@ -515,10 +480,7 @@ impl Vim {
 
                     let mut options = SearchOptions::REGEX | SearchOptions::CASE_SENSITIVE;
                     if search_bar.should_use_smartcase_search(cx) {
-                        options.set(
-                            SearchOptions::CASE_SENSITIVE,
-                            search_bar.is_contains_uppercase(&query),
-                        );
+                        options.set(SearchOptions::CASE_SENSITIVE, search_bar.is_contains_uppercase(&query));
                     }
 
                     Some(search_bar.search(&query, Some(options), true, window, cx))
@@ -542,17 +504,9 @@ impl Vim {
         })
     }
 
-    fn replace_command(
-        &mut self,
-        action: &ReplaceCommand,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn replace_command(&mut self, action: &ReplaceCommand, window: &mut Window, cx: &mut Context<Self>) {
         let replacement = action.replacement.clone();
-        let Some(((pane, workspace), editor)) = self
-            .pane(window, cx)
-            .zip(self.workspace(window))
-            .zip(self.editor())
+        let Some(((pane, workspace), editor)) = self.pane(window, cx).zip(self.workspace(window)).zip(self.editor())
         else {
             return;
         };
@@ -561,8 +515,7 @@ impl Vim {
             let snapshot = editor.snapshot(window, cx);
             let snapshot = snapshot.buffer_snapshot();
             let end_point = Point::new(range.end.0, snapshot.line_len(range.end));
-            let range = snapshot.anchor_before(Point::new(range.start.0, 0))
-                ..snapshot.anchor_after(end_point);
+            let range = snapshot.anchor_before(Point::new(range.start.0, 0))..snapshot.anchor_after(end_point);
             editor.set_search_within_ranges(&[range], cx);
             anyhow::Ok(())
         }) {
@@ -570,9 +523,8 @@ impl Vim {
                 result.notify_err(workspace, cx);
             })
         }
-        let Some(search_bar) = pane.update(cx, |pane, cx| {
-            pane.toolbar().read(cx).item_of_type::<BufferSearchBar>()
-        }) else {
+        let Some(search_bar) = pane.update(cx, |pane, cx| pane.toolbar().read(cx).item_of_type::<BufferSearchBar>())
+        else {
             return;
         };
         let mut options = SearchOptions::REGEX;
@@ -590,10 +542,7 @@ impl Vim {
             if let Some(case) = replacement.case_sensitive {
                 options.set(SearchOptions::CASE_SENSITIVE, case)
             } else if search_bar.should_use_smartcase_search(cx) {
-                options.set(
-                    SearchOptions::CASE_SENSITIVE,
-                    search_bar.is_contains_uppercase(&search),
-                );
+                options.set(SearchOptions::CASE_SENSITIVE, search_bar.is_contains_uppercase(&search));
             } else {
                 // Fallback: no explicit i/I flags and smartcase disabled;
                 // use global editor.search.case_sensitive.
@@ -614,14 +563,7 @@ impl Vim {
             Some(search_bar.search(&search, Some(options), true, window, cx))
         });
         if replacement.flag_n {
-            self.move_cursor(
-                Motion::StartOfLine {
-                    display_lines: false,
-                },
-                None,
-                window,
-                cx,
-            );
+            self.move_cursor(Motion::StartOfLine { display_lines: false }, None, window, cx);
             return;
         }
         let Some(search) = search else { return };
@@ -638,14 +580,7 @@ impl Vim {
                 editor.update(cx, |editor, cx| editor.clear_search_within_ranges(cx));
                 let _ = search_bar.search(&search_bar.query(cx), None, false, window, cx);
                 vim.update(cx, |vim, cx| {
-                    vim.move_cursor(
-                        Motion::StartOfLine {
-                            display_lines: false,
-                        },
-                        None,
-                        window,
-                        cx,
-                    )
+                    vim.move_cursor(Motion::StartOfLine { display_lines: false }, None, window, cx)
                 })
                 .ok();
 
@@ -900,9 +835,7 @@ mod test {
         cx.wait_for_search();
         cx.simulate_keystrokes("enter");
         cx.assert_state("aa\nbb\nˇdd\ncc\nbb\n", Mode::Normal);
-        cx.update_editor(|editor, window, cx| {
-            editor.move_to_beginning(&Default::default(), window, cx)
-        });
+        cx.update_editor(|editor, window, cx| editor.move_to_beginning(&Default::default(), window, cx));
         cx.assert_state("ˇaa\nbb\ndd\ncc\nbb\n", Mode::Normal);
         cx.simulate_keystrokes("/ b");
         cx.wait_for_search();
@@ -1153,10 +1086,7 @@ mod test {
 
         let search_bar = cx.update_workspace(|workspace, _, cx| {
             workspace.active_pane().update(cx, |pane, cx| {
-                pane.toolbar()
-                    .read(cx)
-                    .item_of_type::<BufferSearchBar>()
-                    .unwrap()
+                pane.toolbar().read(cx).item_of_type::<BufferSearchBar>().unwrap()
             })
         });
         cx.update_entity(search_bar, |search_bar, _, cx| {
@@ -1332,9 +1262,7 @@ mod test {
     }
 
     #[gpui::test]
-    async fn test_search_dismiss_after_editor_focus_does_not_restore(
-        cx: &mut gpui::TestAppContext,
-    ) {
+    async fn test_search_dismiss_after_editor_focus_does_not_restore(cx: &mut gpui::TestAppContext) {
         let mut cx = VimTestContext::new(cx, true).await;
         cx.set_state("ˇhello world\nfoo bar\nhello again\n", Mode::Normal);
 
@@ -1355,14 +1283,8 @@ mod test {
         // Now dismiss the search bar directly
         cx.workspace(|workspace, window, cx| {
             let pane = workspace.active_pane().read(cx);
-            if let Some(search_bar) = pane
-                .toolbar()
-                .read(cx)
-                .item_of_type::<search::BufferSearchBar>()
-            {
-                search_bar.update(cx, |bar, cx| {
-                    bar.dismiss(&search::buffer_search::Dismiss, window, cx)
-                });
+            if let Some(search_bar) = pane.toolbar().read(cx).item_of_type::<search::BufferSearchBar>() {
+                search_bar.update(cx, |bar, cx| bar.dismiss(&search::buffer_search::Dismiss, window, cx));
             }
         });
         cx.run_until_parked();

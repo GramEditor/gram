@@ -38,15 +38,7 @@ where
     let new_tool = cx.new(|cx| new_tool(window, cx));
     match workspace.find_pane_in_direction(destination, cx) {
         Some(right_pane) => {
-            workspace.add_item(
-                right_pane,
-                new_tool.boxed_clone(),
-                None,
-                true,
-                true,
-                window,
-                cx,
-            );
+            workspace.add_item(right_pane, new_tool.boxed_clone(), None, true, true, window, cx);
         }
         None => {
             workspace.split_item(destination, new_tool.boxed_clone(), window, cx);

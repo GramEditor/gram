@@ -4,9 +4,7 @@ use lyon::geom::Angle;
 use lyon::math::{Vector, vector};
 use lyon::path::traits::SvgPathBuilder;
 use lyon::path::{ArcFlags, Polygon};
-use lyon::tessellation::{
-    BuffersBuilder, FillTessellator, FillVertex, StrokeTessellator, StrokeVertex, VertexBuffers,
-};
+use lyon::tessellation::{BuffersBuilder, FillTessellator, FillVertex, StrokeTessellator, StrokeVertex, VertexBuffers};
 
 pub use lyon::math::Transform;
 pub use lyon::tessellation::{FillOptions, FillRule, StrokeOptions};
@@ -141,14 +139,8 @@ impl PathBuilder {
     /// Adds a cubic Bézier to the [`Path`] given its two control points
     /// and its end point.
     #[inline]
-    pub fn cubic_bezier_to(
-        &mut self,
-        to: Point<Pixels>,
-        control_a: Point<Pixels>,
-        control_b: Point<Pixels>,
-    ) {
-        self.raw
-            .cubic_bezier_to(control_a.into(), control_b.into(), to.into());
+    pub fn cubic_bezier_to(&mut self, to: Point<Pixels>, control_a: Point<Pixels>, control_b: Point<Pixels>) {
+        self.raw.cubic_bezier_to(control_a.into(), control_b.into(), to.into());
     }
 
     /// Adds an elliptical arc.
@@ -254,10 +246,7 @@ impl PathBuilder {
         }
     }
 
-    fn tessellate_fill(
-        path: &lyon::path::Path,
-        options: &FillOptions,
-    ) -> Result<Path<Pixels>, Error> {
+    fn tessellate_fill(path: &lyon::path::Path, options: &FillOptions) -> Result<Path<Pixels>, Error> {
         // Will contain the result of the tessellation.
         let mut buf: VertexBuffers<lyon::math::Point, u16> = VertexBuffers::new();
         let mut tessellator = FillTessellator::new();
@@ -279,8 +268,7 @@ impl PathBuilder {
     ) -> Result<Path<Pixels>, Error> {
         let path = if let Some(dash_array) = dash_array {
             let measurements = lyon::algorithms::measure::PathMeasurements::from_path(path, 0.01);
-            let mut sampler = measurements
-                .create_sampler(path, lyon::algorithms::measure::SampleType::Normalized);
+            let mut sampler = measurements.create_sampler(path, lyon::algorithms::measure::SampleType::Normalized);
             let mut builder = lyon::path::Path::builder();
 
             let total_length = sampler.length();

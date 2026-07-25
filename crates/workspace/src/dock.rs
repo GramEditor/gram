@@ -3,10 +3,9 @@ use crate::{DraggedDock, Event, ModalLayer, Pane, StatusBarSettings};
 use crate::{Workspace, status_bar::StatusItemView};
 use anyhow::Context as _;
 use gpui::{
-    Action, AnyView, App, Axis, Context, Corner, Entity, EntityId, EventEmitter, FocusHandle,
-    Focusable, IntoElement, KeyContext, MouseButton, MouseDownEvent, MouseUpEvent, ParentElement,
-    Render, SharedString, StyleRefinement, Styled, Subscription, WeakEntity, Window, deferred, div,
-    px,
+    Action, AnyView, App, Axis, Context, Corner, Entity, EntityId, EventEmitter, FocusHandle, Focusable, IntoElement,
+    KeyContext, MouseButton, MouseDownEvent, MouseUpEvent, ParentElement, Render, SharedString, StyleRefinement,
+    Styled, Subscription, WeakEntity, Window, deferred, div, px,
 };
 use proto;
 use settings::{Settings, SettingsStore};
@@ -83,16 +82,12 @@ pub trait PanelHandle: Send + Sync {
     fn enabled(&self, cx: &App) -> bool;
     fn move_to_next_position(&self, window: &mut Window, cx: &mut App) {
         let current_position = self.position(window, cx);
-        let next_position = [
-            DockPosition::Left,
-            DockPosition::Bottom,
-            DockPosition::Right,
-        ]
-        .into_iter()
-        .filter(|position| self.position_is_valid(*position, cx))
-        .skip_while(|valid_position| *valid_position != current_position)
-        .nth(1)
-        .unwrap_or(DockPosition::Left);
+        let next_position = [DockPosition::Left, DockPosition::Bottom, DockPosition::Right]
+            .into_iter()
+            .filter(|position| self.position_is_valid(*position, cx))
+            .skip_while(|valid_position| *valid_position != current_position)
+            .nth(1)
+            .unwrap_or(DockPosition::Left);
 
         self.set_position(next_position, window, cx);
     }
@@ -278,12 +273,11 @@ impl Dock {
         let focus_handle = cx.focus_handle();
         let workspace = cx.entity();
         let dock = cx.new(|cx| {
-            let focus_subscription =
-                cx.on_focus(&focus_handle, window, |dock: &mut Dock, window, cx| {
-                    if let Some(active_entry) = dock.active_panel_entry() {
-                        active_entry.panel.panel_focus_handle(cx).focus(window, cx)
-                    }
-                });
+            let focus_subscription = cx.on_focus(&focus_handle, window, |dock: &mut Dock, window, cx| {
+                if let Some(active_entry) = dock.active_panel_entry() {
+                    active_entry.panel.panel_focus_handle(cx).focus(window, cx)
+                }
+            });
             let zoom_subscription = cx.subscribe(&workspace, |dock, workspace, e: &Event, cx| {
                 if matches!(e, Event::ZoomChanged) {
                     let is_zoomed = workspace.read(cx).zoomed.is_some();
@@ -396,8 +390,7 @@ impl Dock {
     }
 
     fn active_panel_entry(&self) -> Option<&PanelEntry> {
-        self.active_panel_index
-            .and_then(|index| self.panel_entries.get(index))
+        self.active_panel_index.and_then(|index| self.panel_entries.get(index))
     }
 
     pub fn active_panel_index(&self) -> Option<usize> {
@@ -415,13 +408,7 @@ impl Dock {
         }
     }
 
-    pub fn set_panel_zoomed(
-        &mut self,
-        panel: &AnyView,
-        zoomed: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn set_panel_zoomed(&mut self, panel: &AnyView, zoomed: bool, window: &mut Window, cx: &mut Context<Self>) {
         for entry in &mut self.panel_entries {
             if entry.panel.panel_id() == panel.entity_id() {
                 if zoomed != entry.panel.is_zoomed(window, cx) {
@@ -482,16 +469,15 @@ impl Dock {
                     };
 
                     let was_visible = this.is_open()
-                        && this.visible_panel().is_some_and(|active_panel| {
-                            active_panel.panel_id() == Entity::entity_id(&panel)
-                        });
+                        && this
+                            .visible_panel()
+                            .is_some_and(|active_panel| active_panel.panel_id() == Entity::entity_id(&panel));
 
                     this.remove_panel(&panel, window, cx);
 
                     new_dock.update(cx, |new_dock, cx| {
                         new_dock.remove_panel(&panel, window, cx);
-                        let index =
-                            new_dock.add_panel(panel.clone(), workspace.clone(), window, cx);
+                        let index = new_dock.add_panel(panel.clone(), workspace.clone(), window, cx);
                         if was_visible {
                             new_dock.set_open(true, window, cx);
                             new_dock.activate_panel(index, window, cx);
@@ -499,59 +485,53 @@ impl Dock {
                     });
                 }
             }),
-            cx.subscribe_in(
-                &panel,
-                window,
-                move |this, panel, event, window, cx| match event {
-                    PanelEvent::ZoomIn => {
-                        this.set_panel_zoomed(&panel.to_any(), true, window, cx);
-                        if !PanelHandle::panel_focus_handle(panel, cx).contains_focused(window, cx)
-                        {
-                            window.focus(&panel.focus_handle(cx), cx);
-                        }
-                        workspace
-                            .update(cx, |workspace, cx| {
-                                workspace.zoomed = Some(panel.downgrade().into());
-                                workspace.zoomed_position =
-                                    Some(panel.read(cx).position(window, cx));
+            cx.subscribe_in(&panel, window, move |this, panel, event, window, cx| match event {
+                PanelEvent::ZoomIn => {
+                    this.set_panel_zoomed(&panel.to_any(), true, window, cx);
+                    if !PanelHandle::panel_focus_handle(panel, cx).contains_focused(window, cx) {
+                        window.focus(&panel.focus_handle(cx), cx);
+                    }
+                    workspace
+                        .update(cx, |workspace, cx| {
+                            workspace.zoomed = Some(panel.downgrade().into());
+                            workspace.zoomed_position = Some(panel.read(cx).position(window, cx));
+                            cx.emit(Event::ZoomChanged);
+                        })
+                        .ok();
+                }
+                PanelEvent::ZoomOut => {
+                    this.set_panel_zoomed(&panel.to_any(), false, window, cx);
+                    workspace
+                        .update(cx, |workspace, cx| {
+                            if workspace.zoomed_position == Some(this.position) {
+                                workspace.zoomed = None;
+                                workspace.zoomed_position = None;
                                 cx.emit(Event::ZoomChanged);
-                            })
-                            .ok();
+                            }
+                            cx.notify();
+                        })
+                        .ok();
+                }
+                PanelEvent::Activate => {
+                    if let Some(ix) = this
+                        .panel_entries
+                        .iter()
+                        .position(|entry| entry.panel.panel_id() == Entity::entity_id(panel))
+                    {
+                        this.set_open(true, window, cx);
+                        this.activate_panel(ix, window, cx);
+                        window.focus(&panel.read(cx).focus_handle(cx), cx);
                     }
-                    PanelEvent::ZoomOut => {
-                        this.set_panel_zoomed(&panel.to_any(), false, window, cx);
-                        workspace
-                            .update(cx, |workspace, cx| {
-                                if workspace.zoomed_position == Some(this.position) {
-                                    workspace.zoomed = None;
-                                    workspace.zoomed_position = None;
-                                    cx.emit(Event::ZoomChanged);
-                                }
-                                cx.notify();
-                            })
-                            .ok();
+                }
+                PanelEvent::Close => {
+                    if this
+                        .visible_panel()
+                        .is_some_and(|p| p.panel_id() == Entity::entity_id(panel))
+                    {
+                        this.set_open(false, window, cx);
                     }
-                    PanelEvent::Activate => {
-                        if let Some(ix) = this
-                            .panel_entries
-                            .iter()
-                            .position(|entry| entry.panel.panel_id() == Entity::entity_id(panel))
-                        {
-                            this.set_open(true, window, cx);
-                            this.activate_panel(ix, window, cx);
-                            window.focus(&panel.read(cx).focus_handle(cx), cx);
-                        }
-                    }
-                    PanelEvent::Close => {
-                        if this
-                            .visible_panel()
-                            .is_some_and(|p| p.panel_id() == Entity::entity_id(panel))
-                        {
-                            this.set_open(false, window, cx);
-                        }
-                    }
-                },
-            ),
+                }
+            }),
         ];
 
         let index = match self
@@ -613,12 +593,7 @@ impl Dock {
         false
     }
 
-    pub fn remove_panel<T: Panel>(
-        &mut self,
-        panel: &Entity<T>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn remove_panel<T: Panel>(&mut self, panel: &Entity<T>, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(panel_ix) = self
             .panel_entries
             .iter()
@@ -671,11 +646,7 @@ impl Dock {
     }
 
     fn visible_entry(&self) -> Option<&PanelEntry> {
-        if self.is_open {
-            self.active_panel_entry()
-        } else {
-            None
-        }
+        if self.is_open { self.active_panel_entry() } else { None }
     }
 
     pub fn zoomed_panel(&self, window: &Window, cx: &App) -> Option<Arc<dyn PanelHandle>> {
@@ -696,19 +667,13 @@ impl Dock {
 
     pub fn active_panel_size(&self, window: &Window, cx: &App) -> Option<Pixels> {
         if self.is_open {
-            self.active_panel_entry()
-                .map(|entry| entry.panel.size(window, cx))
+            self.active_panel_entry().map(|entry| entry.panel.size(window, cx))
         } else {
             None
         }
     }
 
-    pub fn resize_active_panel(
-        &mut self,
-        size: Option<Pixels>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn resize_active_panel(&mut self, size: Option<Pixels>, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(entry) = self.active_panel_entry() {
             let size = size.map(|size| size.max(RESIZE_HANDLE_SIZE).round());
 
@@ -717,12 +682,7 @@ impl Dock {
         }
     }
 
-    pub fn resize_all_panels(
-        &mut self,
-        size: Option<Pixels>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn resize_all_panels(&mut self, size: Option<Pixels>, window: &mut Window, cx: &mut Context<Self>) {
         for entry in &mut self.panel_entries {
             let size = size.map(|size| size.max(RESIZE_HANDLE_SIZE).round());
             entry.panel.set_size(size, window, cx);
@@ -850,13 +810,9 @@ impl Render for Dock {
                                 .cached(StyleRefinement::default().v_flex().size_full()),
                         ),
                 )
-                .when(self.resizable(cx), |this| {
-                    this.child(create_resize_handle())
-                })
+                .when(self.resizable(cx), |this| this.child(create_resize_handle()))
         } else {
-            div()
-                .key_context(dispatch_context)
-                .track_focus(&self.focus_handle(cx))
+            div().key_context(dispatch_context).track_focus(&self.focus_handle(cx))
         }
     }
 }
@@ -899,8 +855,7 @@ impl Render for PanelButtons {
                 let (action, tooltip) = if is_active_button {
                     let action = dock.toggle_action();
 
-                    let tooltip: SharedString =
-                        format!("Close {} Dock", dock.position.label()).into();
+                    let tooltip: SharedString = format!("Close {} Dock", dock.position.label()).into();
 
                     (action, tooltip)
                 } else {
@@ -914,25 +869,17 @@ impl Render for PanelButtons {
                 Some(
                     right_click_menu(name)
                         .menu(move |window, cx| {
-                            const POSITIONS: [DockPosition; 3] = [
-                                DockPosition::Left,
-                                DockPosition::Right,
-                                DockPosition::Bottom,
-                            ];
+                            const POSITIONS: [DockPosition; 3] =
+                                [DockPosition::Left, DockPosition::Right, DockPosition::Bottom];
 
                             ContextMenu::build(window, cx, |mut menu, _, cx| {
                                 for position in POSITIONS {
-                                    if position != dock_position
-                                        && panel.position_is_valid(position, cx)
-                                    {
+                                    if position != dock_position && panel.position_is_valid(position, cx) {
                                         let panel = panel.clone();
-                                        menu = menu.entry(
-                                            format!("Dock {}", position.label()),
-                                            None,
-                                            move |window, cx| {
+                                        menu =
+                                            menu.entry(format!("Dock {}", position.label()), None, move |window, cx| {
                                                 panel.set_position(position, window, cx);
-                                            },
-                                        )
+                                            })
                                     }
                                 }
                                 menu
@@ -954,9 +901,7 @@ impl Render for PanelButtons {
                                     }
                                 })
                                 .when(!is_active, |this| {
-                                    this.tooltip(move |_window, cx| {
-                                        Tooltip::for_action(tooltip.clone(), &*action, cx)
-                                    })
+                                    this.tooltip(move |_window, cx| Tooltip::for_action(tooltip.clone(), &*action, cx))
                                 })
                         }),
                 )
@@ -967,10 +912,9 @@ impl Render for PanelButtons {
 
         h_flex()
             .gap_1()
-            .when(
-                has_buttons && dock.position == DockPosition::Bottom,
-                |this| this.child(Divider::vertical().color(DividerColor::Border)),
-            )
+            .when(has_buttons && dock.position == DockPosition::Bottom, |this| {
+                this.child(Divider::vertical().color(DividerColor::Border))
+            })
             .children(buttons)
             .when(has_buttons && dock.position == DockPosition::Left, |this| {
                 this.child(Divider::vertical().color(DividerColor::Border))

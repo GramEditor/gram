@@ -133,10 +133,7 @@ impl<'a> SerializedThreadTaskTimings<'a> {
     /// # Params
     ///
     /// `anchor` - [`Instant`] that should be earlier than all timings to use as base anchor
-    pub fn convert(
-        anchor: Instant,
-        timings: ThreadTaskTimings,
-    ) -> SerializedThreadTaskTimings<'static> {
+    pub fn convert(anchor: Instant, timings: ThreadTaskTimings) -> SerializedThreadTaskTimings<'static> {
         let serialized_timings = SerializedTaskTiming::convert(anchor, &timings.timings);
 
         let mut hasher = DefaultHasher::new();
@@ -162,8 +159,7 @@ pub(crate) struct GlobalThreadTimings {
     pub timings: std::sync::Weak<GuardedTaskTimings>,
 }
 
-pub(crate) static GLOBAL_THREAD_TIMINGS: spin::Mutex<Vec<GlobalThreadTimings>> =
-    spin::Mutex::new(Vec::new());
+pub(crate) static GLOBAL_THREAD_TIMINGS: spin::Mutex<Vec<GlobalThreadTimings>> = spin::Mutex::new(Vec::new());
 
 thread_local! {
     pub(crate) static THREAD_TIMINGS: LazyCell<Arc<GuardedTaskTimings>> = LazyCell::new(|| {

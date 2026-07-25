@@ -6,10 +6,7 @@ pub fn derive_register_component(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
     let name = input.ident;
-    let register_fn_name = syn::Ident::new(
-        &format!("__component_registry_internal_register_{}", name),
-        name.span(),
-    );
+    let register_fn_name = syn::Ident::new(&format!("__component_registry_internal_register_{}", name), name.span());
     let expanded = quote! {
         const _: () = {
             struct AssertComponent<T: component::Component>(::std::marker::PhantomData<T>);

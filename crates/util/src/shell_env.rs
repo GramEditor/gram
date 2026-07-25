@@ -110,9 +110,7 @@ async fn capture_unix(
 
     // Parse the JSON output from gram --printenv
     let env_map: collections::HashMap<String, String> = serde_json::from_str(&env_output)
-        .with_context(|| {
-            format!("Failed to deserialize environment variables from json: {env_output}")
-        })?;
+        .with_context(|| format!("Failed to deserialize environment variables from json: {env_output}"))?;
     Ok(env_map)
 }
 
@@ -151,28 +149,19 @@ async fn capture_windows(
 ) -> Result<collections::HashMap<String, String>> {
     use std::process::Stdio;
 
-    let binary_path =
-        std::env::current_exe().context("Failed to determine current executable path.")?;
+    let binary_path = std::env::current_exe().context("Failed to determine current executable path.")?;
 
     let shell_kind = ShellKind::new(shell_path, true);
     let mut cmd = crate::command::new_smol_command(shell_path);
     cmd.args(args);
     let cmd = match shell_kind {
-        ShellKind::Csh
-        | ShellKind::Tcsh
-        | ShellKind::Rc
-        | ShellKind::Fish
-        | ShellKind::Xonsh
-        | ShellKind::Posix => cmd.args([
-            "-l",
-            "-i",
-            "-c",
-            &format!(
-                "cd '{}'; '{}' --printenv",
-                directory.display(),
-                binary_path.display()
-            ),
-        ]),
+        ShellKind::Csh | ShellKind::Tcsh | ShellKind::Rc | ShellKind::Fish | ShellKind::Xonsh | ShellKind::Posix => cmd
+            .args([
+                "-l",
+                "-i",
+                "-c",
+                &format!("cd '{}'; '{}' --printenv", directory.display(), binary_path.display()),
+            ]),
         ShellKind::PowerShell => cmd.args([
             "-NonInteractive",
             "-NoProfile",
@@ -185,11 +174,7 @@ async fn capture_windows(
         ]),
         ShellKind::Elvish => cmd.args([
             "-c",
-            &format!(
-                "cd '{}'; '{}' --printenv",
-                directory.display(),
-                binary_path.display()
-            ),
+            &format!("cd '{}'; '{}' --printenv", directory.display(), binary_path.display()),
         ]),
         ShellKind::Nushell => cmd.args([
             "-c",
@@ -215,10 +200,7 @@ async fn capture_windows(
     .stdin(Stdio::null())
     .stdout(Stdio::piped())
     .stderr(Stdio::piped());
-    let output = cmd
-        .output()
-        .await
-        .with_context(|| format!("command {cmd:?}"))?;
+    let output = cmd.output().await.with_context(|| format!("command {cmd:?}"))?;
     anyhow::ensure!(
         output.status.success(),
         "Command {cmd:?} failed with {}. stdout: {:?}, stderr: {:?}",
@@ -229,7 +211,6 @@ async fn capture_windows(
     let env_output = String::from_utf8_lossy(&output.stdout);
 
     // Parse the JSON output from gram --printenv
-    serde_json::from_str(&env_output).with_context(|| {
-        format!("Failed to deserialize environment variables from json: {env_output}")
-    })
+    serde_json::from_str(&env_output)
+        .with_context(|| format!("Failed to deserialize environment variables from json: {env_output}"))
 }

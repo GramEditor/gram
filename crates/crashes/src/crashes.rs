@@ -185,13 +185,7 @@ impl minidumper::ServerHandler for CrashServer {
     fn create_minidump_file(&self) -> Result<(File, PathBuf), io::Error> {
         let err_message = "Missing initialization data";
         let dump_path = paths::logs_dir()
-            .join(
-                &self
-                    .initialization_params
-                    .get()
-                    .expect(err_message)
-                    .session_id,
-            )
+            .join(&self.initialization_params.get().expect(err_message).session_id)
             .with_extension("dmp");
         let file = File::create(&dump_path)?;
         Ok((file, dump_path))
@@ -227,11 +221,7 @@ impl minidumper::ServerHandler for CrashServer {
         };
 
         let crash_info = CrashInfo {
-            init: self
-                .initialization_params
-                .get()
-                .expect("not initialized")
-                .clone(),
+            init: self.initialization_params.get().expect("not initialized").clone(),
             panic: self.panic_info.get().cloned(),
             minidump_error,
             active_gpu: self.active_gpu.get().cloned(),
@@ -250,20 +240,15 @@ impl minidumper::ServerHandler for CrashServer {
     fn on_message(&self, kind: u32, buffer: Vec<u8>) {
         match kind {
             1 => {
-                let init_data =
-                    serde_json::from_slice::<InitCrashHandler>(&buffer).expect("invalid init data");
-                self.initialization_params
-                    .set(init_data)
-                    .expect("already initialized");
+                let init_data = serde_json::from_slice::<InitCrashHandler>(&buffer).expect("invalid init data");
+                self.initialization_params.set(init_data).expect("already initialized");
             }
             2 => {
-                let panic_data =
-                    serde_json::from_slice::<CrashPanic>(&buffer).expect("invalid panic data");
+                let panic_data = serde_json::from_slice::<CrashPanic>(&buffer).expect("invalid panic data");
                 self.panic_info.set(panic_data).expect("already panicked");
             }
             3 => {
-                let gpu_specs: system_specs::GpuSpecs =
-                    bitcode::deserialize(&buffer).expect("gpu specs");
+                let gpu_specs: system_specs::GpuSpecs = bitcode::deserialize(&buffer).expect("gpu specs");
                 // we ignore the case where it was already set because this message is sent
                 // on each new window. in theory all gram windows should be using the same
                 // GPU so this is fine.
@@ -312,18 +297,12 @@ pub fn panic_hook(info: &PanicHookInfo) {
                 .map_or_else(|| "<unknown>".to_owned(), |location| location.to_string());
             log::error!("thread '{thread_name}' panicked at {location}:\n{message}...");
             client
-                .send_message(
-                    2,
-                    serde_json::to_vec(&CrashPanic { message, span }).unwrap(),
-                )
+                .send_message(2, serde_json::to_vec(&CrashPanic { message, span }).unwrap())
                 .ok();
             log::error!("triggering a crash to generate a minidump...");
 
             #[cfg(target_os = "macos")]
-            PANIC_THREAD_ID.store(
-                unsafe { mach2::mach_init::mach_thread_self() },
-                Ordering::SeqCst,
-            );
+            PANIC_THREAD_ID.store(unsafe { mach2::mach_init::mach_thread_self() }, Ordering::SeqCst);
 
             cfg_select! {
                 windows => {
@@ -346,8 +325,7 @@ fn spawn_crash_handler_windows(exe: &Path, socket_name: &Path) {
     use std::iter::once;
     use std::os::windows::ffi::OsStrExt;
     use windows::Win32::System::Threading::{
-        CreateProcessW, PROCESS_CREATION_FLAGS, PROCESS_INFORMATION, STARTF_FORCEOFFFEEDBACK,
-        STARTUPINFOW,
+        CreateProcessW, PROCESS_CREATION_FLAGS, PROCESS_INFORMATION, STARTF_FORCEOFFFEEDBACK, STARTUPINFOW,
     };
     use windows::core::PWSTR;
 

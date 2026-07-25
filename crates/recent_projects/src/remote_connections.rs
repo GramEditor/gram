@@ -9,22 +9,19 @@ use editor::Editor;
 use extension_host::ExtensionStore;
 use futures::channel::oneshot;
 use gpui::{
-    AnyWindowHandle, App, AsyncApp, DismissEvent, Entity, EventEmitter, Focusable, FontFeatures,
-    ParentElement as _, PromptLevel, Render, SharedString, Task, TextStyleRefinement, WeakEntity,
+    AnyWindowHandle, App, AsyncApp, DismissEvent, Entity, EventEmitter, Focusable, FontFeatures, ParentElement as _,
+    PromptLevel, Render, SharedString, Task, TextStyleRefinement, WeakEntity,
 };
 
 use language::{CursorShape, Point};
 use markdown::{Markdown, MarkdownElement, MarkdownStyle};
-use remote::{
-    ConnectionIdentifier, RemoteClient, RemoteConnection, RemoteConnectionOptions,
-    SshConnectionOptions,
-};
+use remote::{ConnectionIdentifier, RemoteClient, RemoteConnection, RemoteConnectionOptions, SshConnectionOptions};
 pub use settings::SshConnection;
 use settings::{ExtendingVec, RegisterSetting, Settings, WslConnection};
 use theme::ThemeSettings;
 use ui::{
-    ActiveTheme, Color, CommonAnimationExt, Context, Icon, IconName, IconSize, InteractiveElement,
-    IntoElement, Label, LabelCommon, Styled, Window, prelude::*,
+    ActiveTheme, Color, CommonAnimationExt, Context, Icon, IconName, IconSize, InteractiveElement, IntoElement, Label,
+    LabelCommon, Styled, Window, prelude::*,
 };
 use util::paths::PathWithPosition;
 use workspace::{AppState, ModalView, Workspace};
@@ -48,10 +45,7 @@ impl SshSettings {
 
     pub fn fill_connection_options_from_settings(&self, options: &mut SshConnectionOptions) {
         for conn in self.ssh_connections() {
-            if conn.host == options.host.to_string()
-                && conn.username == options.username
-                && conn.port == options.port
-            {
+            if conn.host == options.host.to_string() && conn.username == options.username && conn.port == options.port {
                 options.nickname = conn.nickname;
                 options.upload_binary_over_ssh = conn.upload_binary_over_ssh.unwrap_or_default();
                 options.args = Some(conn.args);
@@ -270,9 +264,7 @@ impl Render for RemoteConnectionPrompt {
                         .child(MarkdownElement::new(prompt.0.clone(), markdown_style))
                         .child(self.editor.clone()),
                 )
-                .when(window.capslock().on, |el| {
-                    el.child(Label::new("⚠️ ⇪ is on"))
-                })
+                .when(window.capslock().on, |el| el.child(Label::new("⚠️ ⇪ is on")))
             })
     }
 }
@@ -285,23 +277,18 @@ impl RemoteConnectionModal {
         cx: &mut Context<Self>,
     ) -> Self {
         let (connection_string, nickname, is_wsl) = match connection_options {
-            RemoteConnectionOptions::Ssh(options) => {
-                (options.connection_string(), options.nickname.clone(), false)
-            }
+            RemoteConnectionOptions::Ssh(options) => (options.connection_string(), options.nickname.clone(), false),
             RemoteConnectionOptions::Wsl(options) => (options.distro_name.clone(), None, true),
         };
         Self {
-            prompt: cx.new(|cx| {
-                RemoteConnectionPrompt::new(connection_string, nickname, is_wsl, window, cx)
-            }),
+            prompt: cx.new(|cx| RemoteConnectionPrompt::new(connection_string, nickname, is_wsl, window, cx)),
             finished: false,
             paths,
         }
     }
 
     fn confirm(&mut self, _: &menu::Confirm, window: &mut Window, cx: &mut Context<Self>) {
-        self.prompt
-            .update(cx, |prompt, cx| prompt.confirm(window, cx))
+        self.prompt.update(cx, |prompt, cx| prompt.confirm(window, cx))
     }
 
     pub fn finished(&mut self, cx: &mut Context<Self>) {
@@ -310,10 +297,7 @@ impl RemoteConnectionModal {
     }
 
     fn dismiss(&mut self, _: &menu::Cancel, _: &mut Window, cx: &mut Context<Self>) {
-        if let Some(tx) = self
-            .prompt
-            .update(cx, |prompt, _cx| prompt.cancellation.take())
-        {
+        if let Some(tx) = self.prompt.update(cx, |prompt, _cx| prompt.cancellation.take()) {
             tx.send(()).ok();
         }
         self.finished(cx);
@@ -364,18 +348,17 @@ impl RenderOnce for SshConnectionHeader {
                             .text_ellipsis()
                             .child(Headline::new(main_label).size(HeadlineSize::XSmall)),
                     )
-                    .children(
-                        meta_label.map(|label| {
-                            Label::new(label).color(Color::Muted).size(LabelSize::Small)
-                        }),
-                    )
-                    .child(div().overflow_x_hidden().text_ellipsis().children(
-                        self.paths.into_iter().map(|path| {
-                            Label::new(path.to_string_lossy().into_owned())
-                                .size(LabelSize::Small)
-                                .color(Color::Muted)
-                        }),
-                    )),
+                    .children(meta_label.map(|label| Label::new(label).color(Color::Muted).size(LabelSize::Small)))
+                    .child(
+                        div()
+                            .overflow_x_hidden()
+                            .text_ellipsis()
+                            .children(self.paths.into_iter().map(|path| {
+                                Label::new(path.to_string_lossy().into_owned())
+                                    .size(LabelSize::Small)
+                                    .color(Color::Muted)
+                            })),
+                    ),
             )
     }
 }
@@ -428,11 +411,7 @@ impl Focusable for RemoteConnectionModal {
 impl EventEmitter<DismissEvent> for RemoteConnectionModal {}
 
 impl ModalView for RemoteConnectionModal {
-    fn on_before_dismiss(
-        &mut self,
-        _window: &mut Window,
-        _: &mut Context<Self>,
-    ) -> workspace::DismissDecision {
+    fn on_before_dismiss(&mut self, _window: &mut Window, _: &mut Context<Self>) -> workspace::DismissDecision {
         workspace::DismissDecision::Dismiss(self.finished)
     }
 
@@ -449,12 +428,7 @@ pub struct RemoteClientDelegate {
 }
 
 impl remote::RemoteClientDelegate for RemoteClientDelegate {
-    fn ask_password(
-        &self,
-        prompt: String,
-        tx: oneshot::Sender<EncryptedPassword>,
-        cx: &mut AsyncApp,
-    ) {
+    fn ask_password(&self, prompt: String, tx: oneshot::Sender<EncryptedPassword>, cx: &mut AsyncApp) {
         let mut known_password = self.known_password.clone();
         if let Some(password) = known_password.take() {
             tx.send(password).ok();
@@ -536,8 +510,7 @@ pub async fn open_remote_project(
             .await
             .context("fetching ssh workspace position from db")?;
 
-        let mut options =
-            cx.update(|cx| (app_state.build_window_options)(workspace_position.display, cx))?;
+        let mut options = cx.update(|cx| (app_state.build_window_options)(workspace_position.display, cx))?;
         options.window_bounds = workspace_position.window_bounds;
 
         cx.open_window(options, |window, cx| {
@@ -581,9 +554,7 @@ pub async fn open_remote_project(
                 Some(Arc::new(RemoteClientDelegate {
                     window: window.window_handle(),
                     ui: ui.downgrade(),
-                    known_password: if let RemoteConnectionOptions::Ssh(options) =
-                        &connection_options
-                    {
+                    known_password: if let RemoteConnectionOptions::Ssh(options) = &connection_options {
                         options
                             .password
                             .as_deref()
@@ -597,48 +568,44 @@ pub async fn open_remote_project(
 
         let Some(delegate) = delegate else { break };
 
-        let remote_connection =
-            match remote::connect(connection_options.clone(), delegate.clone(), cx).await {
-                Ok(connection) => connection,
-                Err(e) => {
-                    window
-                        .update(cx, |workspace, _, cx| {
-                            if let Some(ui) = workspace.active_modal::<RemoteConnectionModal>(cx) {
-                                ui.update(cx, |modal, cx| modal.finished(cx))
-                            }
-                        })
-                        .ok();
-                    log::error!("Failed to open project: {e:#}");
-                    let response = window
-                        .update(cx, |_, window, cx| {
-                            window.prompt(
-                                PromptLevel::Critical,
-                                match connection_options {
-                                    RemoteConnectionOptions::Ssh(_) => "Failed to connect over SSH",
-                                    RemoteConnectionOptions::Wsl(_) => "Failed to connect to WSL",
-                                },
-                                Some(&format!("{e:#}")),
-                                &["Retry", "Cancel"],
-                                cx,
-                            )
-                        })?
-                        .await;
+        let remote_connection = match remote::connect(connection_options.clone(), delegate.clone(), cx).await {
+            Ok(connection) => connection,
+            Err(e) => {
+                window
+                    .update(cx, |workspace, _, cx| {
+                        if let Some(ui) = workspace.active_modal::<RemoteConnectionModal>(cx) {
+                            ui.update(cx, |modal, cx| modal.finished(cx))
+                        }
+                    })
+                    .ok();
+                log::error!("Failed to open project: {e:#}");
+                let response = window
+                    .update(cx, |_, window, cx| {
+                        window.prompt(
+                            PromptLevel::Critical,
+                            match connection_options {
+                                RemoteConnectionOptions::Ssh(_) => "Failed to connect over SSH",
+                                RemoteConnectionOptions::Wsl(_) => "Failed to connect to WSL",
+                            },
+                            Some(&format!("{e:#}")),
+                            &["Retry", "Cancel"],
+                            cx,
+                        )
+                    })?
+                    .await;
 
-                    if response == Ok(0) {
-                        continue;
-                    }
-
-                    if created_new_window {
-                        window
-                            .update(cx, |_, window, _| window.remove_window())
-                            .ok();
-                    }
-                    break;
+                if response == Ok(0) {
+                    continue;
                 }
-            };
 
-        let (paths, paths_with_positions) =
-            determine_paths_with_positions(&remote_connection, paths.clone()).await;
+                if created_new_window {
+                    window.update(cx, |_, window, _| window.remove_window()).ok();
+                }
+                break;
+            }
+        };
+
+        let (paths, paths_with_positions) = determine_paths_with_positions(&remote_connection, paths.clone()).await;
 
         let opened_items = cx
             .update(|cx| {
@@ -684,9 +651,7 @@ pub async fn open_remote_project(
                 }
 
                 if created_new_window {
-                    window
-                        .update(cx, |_, window, _| window.remove_window())
-                        .ok();
+                    window.update(cx, |_, window, _| window.remove_window()).ok();
                 }
             }
 
@@ -704,11 +669,7 @@ pub async fn open_remote_project(
                                 active_editor.update(cx, |editor, cx| {
                                     let row = row.saturating_sub(1);
                                     let col = path.column.unwrap_or(0).saturating_sub(1);
-                                    editor.go_to_singleton_buffer_point(
-                                        Point::new(row, col),
-                                        window,
-                                        cx,
-                                    );
+                                    editor.go_to_singleton_buffer_point(Point::new(row, col), window, cx);
                                 });
                             })
                             .ok();
@@ -720,8 +681,7 @@ pub async fn open_remote_project(
         window
             .update(cx, |workspace, _, cx| {
                 if let Some(client) = workspace.project().read(cx).remote_client() {
-                    ExtensionStore::global(cx)
-                        .update(cx, |store, cx| store.register_remote_client(client, cx));
+                    ExtensionStore::global(cx).update(cx, |store, cx| store.register_remote_client(client, cx));
                 }
             })
             .ok();

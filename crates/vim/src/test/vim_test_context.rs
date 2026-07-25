@@ -97,22 +97,15 @@ impl VimTestContext {
         SettingsStore::update_global(cx, |store, cx| {
             store.update_user_settings(cx, |s| s.vim_mode = Some(enabled));
         });
-        let mut default_key_bindings = settings::KeymapFile::load_asset_allow_partial_failure(
-            "keymaps/default-macos.jsonc",
-            cx,
-        )
-        .unwrap();
+        let mut default_key_bindings =
+            settings::KeymapFile::load_asset_allow_partial_failure("keymaps/default-macos.jsonc", cx).unwrap();
         for key_binding in &mut default_key_bindings {
             key_binding.set_meta(settings::KeybindSource::Default.meta());
         }
         cx.bind_keys(default_key_bindings);
         if enabled {
-            let vim_key_bindings = settings::KeymapFile::load_asset(
-                "keymaps/vim.jsonc",
-                Some(settings::KeybindSource::Vim),
-                cx,
-            )
-            .unwrap();
+            let vim_key_bindings =
+                settings::KeymapFile::load_asset("keymaps/vim.jsonc", Some(settings::KeybindSource::Vim), cx).unwrap();
             cx.bind_keys(vim_key_bindings);
         }
     }
@@ -208,8 +201,7 @@ impl VimTestContext {
 
     pub fn set_state(&mut self, text: &str, mode: Mode) {
         self.cx.set_state(text);
-        let vim =
-            self.update_editor(|editor, _window, _cx| editor.addon::<VimAddon>().cloned().unwrap());
+        let vim = self.update_editor(|editor, _window, _cx| editor.addon::<VimAddon>().cloned().unwrap());
 
         self.update(|window, cx| {
             vim.entity.update(cx, |vim, cx| {
@@ -240,12 +232,7 @@ impl VimTestContext {
         assert_eq!(self.active_operator(), None, "{}", self.assertion_context());
     }
 
-    pub fn assert_binding_normal(
-        &mut self,
-        keystrokes: &str,
-        initial_state: &str,
-        state_after: &str,
-    ) {
+    pub fn assert_binding_normal(&mut self, keystrokes: &str, initial_state: &str, state_after: &str) {
         self.set_state(initial_state, Mode::Normal);
         self.cx.simulate_keystrokes(keystrokes);
         self.cx.assert_editor_state(state_after);

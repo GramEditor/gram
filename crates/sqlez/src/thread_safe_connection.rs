@@ -68,47 +68,39 @@ impl<M: Migrator> ThreadSafeConnectionBuilder<M> {
     /// the connection will call the write_queue_constructor for each database file in
     /// this process. The constructor is responsible for setting up a background thread or
     /// async task which handles queued writes with the provided connection.
-    pub fn with_write_queue_constructor(
-        mut self,
-        write_queue_constructor: WriteQueueConstructor,
-    ) -> Self {
+    pub fn with_write_queue_constructor(mut self, write_queue_constructor: WriteQueueConstructor) -> Self {
         self.write_queue_constructor = Some(write_queue_constructor);
         self
     }
 
     pub async fn build(self) -> anyhow::Result<ThreadSafeConnection> {
-        self.connection
-            .initialize_queues(self.write_queue_constructor);
+        self.connection.initialize_queues(self.write_queue_constructor);
 
         let db_initialize_query = self.db_initialize_query;
 
         self.connection
             .write(move |connection| {
                 if let Some(db_initialize_query) = db_initialize_query {
-                    connection.exec(db_initialize_query).with_context(|| {
-                        format!(
-                            "Db initialize query failed to execute: {}",
-                            db_initialize_query
-                        )
-                    })?()?;
+                    connection
+                        .exec(db_initialize_query)
+                        .with_context(|| format!("Db initialize query failed to execute: {}", db_initialize_query))?(
+                    )?;
                 }
 
                 // Retry failed migrations in case they were run in parallel from different
                 // processes. This gives a best attempt at migrating before bailing
-                let mut migration_result =
-                    anyhow::Result::<()>::Err(anyhow::anyhow!("Migration never run"));
+                let mut migration_result = anyhow::Result::<()>::Err(anyhow::anyhow!("Migration never run"));
 
-                let foreign_keys_enabled: bool =
-                    connection.select_row::<i32>("PRAGMA foreign_keys")?()
-                        .unwrap_or(None)
-                        .map(|enabled| enabled != 0)
-                        .unwrap_or(false);
+                let foreign_keys_enabled: bool = connection.select_row::<i32>("PRAGMA foreign_keys")?()
+                    .unwrap_or(None)
+                    .map(|enabled| enabled != 0)
+                    .unwrap_or(false);
 
                 connection.exec("PRAGMA foreign_keys = OFF;")?()?;
 
                 for _ in 0..MIGRATION_RETRIES {
-                    migration_result = connection
-                        .with_savepoint("thread_safe_multi_migration", || M::migrate(connection));
+                    migration_result =
+                        connection.with_savepoint("thread_safe_multi_migration", || M::migrate(connection));
 
                     if migration_result.is_ok() {
                         break;
@@ -131,8 +123,7 @@ impl ThreadSafeConnection {
         if !QUEUES.read().contains_key(&self.uri) {
             let mut queues = QUEUES.write();
             if !queues.contains_key(&self.uri) {
-                let mut write_queue_constructor =
-                    write_queue_constructor.unwrap_or_else(background_thread_queue);
+                let mut write_queue_constructor = write_queue_constructor.unwrap_or_else(background_thread_queue);
                 queues.insert(self.uri.clone(), write_queue_constructor());
                 return true;
             }
@@ -203,15 +194,9 @@ impl ThreadSafeConnection {
         if let Some(initialize_query) = connection_initialize_query {
             let mut last_error = None;
             let initialized = (0..CONNECTION_INITIALIZE_RETRIES).any(|attempt| {
-                match connection
-                    .exec(initialize_query)
-                    .and_then(|mut statement| statement())
-                {
+                match connection.exec(initialize_query).and_then(|mut statement| statement()) {
                     Ok(()) => true,
-                    Err(err)
-                        if is_schema_lock_error(&err)
-                            && attempt + 1 < CONNECTION_INITIALIZE_RETRIES =>
-                    {
+                    Err(err) if is_schema_lock_error(&err) && attempt + 1 < CONNECTION_INITIALIZE_RETRIES => {
                         last_error = Some(err);
                         thread::sleep(CONNECTION_INITIALIZE_RETRY_DELAY);
                         false
@@ -226,8 +211,7 @@ impl ThreadSafeConnection {
             });
 
             if !initialized {
-                let err = last_error
-                    .expect("connection initialization retries should record the last error");
+                let err = last_error.expect("connection initialization retries should record the last error");
                 panic!(
                     "Initialize query failed to execute after retries: {}\n\nCaused by:\n{err:#}",
                     initialize_query
@@ -273,9 +257,8 @@ impl Deref for ThreadSafeConnection {
     type Target = Connection;
 
     fn deref(&self) -> &Self::Target {
-        self.connections.get_or(|| {
-            Self::create_connection(self.persistent, &self.uri, self.connection_initialize_query)
-        })
+        self.connections
+            .get_or(|| Self::create_connection(self.persistent, &self.uri, self.connection_initialize_query))
     }
 }
 
@@ -334,10 +317,9 @@ mod test {
 
         for _ in 0..100 {
             handles.push(thread::spawn(|| {
-                let builder =
-                    ThreadSafeConnection::builder::<TestDomain>("annoying-test.db", false)
-                        .with_db_initialization_query("PRAGMA journal_mode=WAL")
-                        .with_connection_initialize_query(indoc! {"
+                let builder = ThreadSafeConnection::builder::<TestDomain>("annoying-test.db", false)
+                    .with_db_initialization_query("PRAGMA journal_mode=WAL")
+                    .with_connection_initialize_query(indoc! {"
                                 PRAGMA synchronous=NORMAL;
                                 PRAGMA busy_timeout=1;
                                 PRAGMA foreign_keys=TRUE;
@@ -358,10 +340,7 @@ mod test {
         let name = "connection_initialize_query_retries_transient_schema_lock";
         let locking_connection = crate::connection::Connection::open_memory(Some(name));
         locking_connection.exec("BEGIN IMMEDIATE").unwrap()().unwrap();
-        locking_connection
-            .exec("CREATE TABLE test(col TEXT)")
-            .unwrap()()
-        .unwrap();
+        locking_connection.exec("CREATE TABLE test(col TEXT)").unwrap()().unwrap();
 
         let releaser = thread::spawn(move || {
             thread::sleep(Duration::from_millis(10));

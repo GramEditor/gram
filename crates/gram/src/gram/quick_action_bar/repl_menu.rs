@@ -2,14 +2,13 @@ use gpui::ElementId;
 use gpui::{AnyElement, Entity};
 use picker::Picker;
 use repl::{
-    ExecutionState, JupyterSettings, Kernel, KernelSpecification, KernelStatus, Session,
-    SessionSupport,
+    ExecutionState, JupyterSettings, Kernel, KernelSpecification, KernelStatus, Session, SessionSupport,
     components::{KernelPickerDelegate, KernelSelector},
     worktree_id_for_editor,
 };
 use ui::{
-    ButtonLike, CommonAnimationExt, ContextMenu, IconWithIndicator, Indicator, IntoElement,
-    PopoverMenu, PopoverMenuHandle, Tooltip, prelude::*,
+    ButtonLike, CommonAnimationExt, ContextMenu, IconWithIndicator, Indicator, IntoElement, PopoverMenu,
+    PopoverMenuHandle, Tooltip, prelude::*,
 };
 use util::ResultExt;
 
@@ -252,8 +251,7 @@ impl QuickActionBar {
         kernel_specification: KernelSpecification,
         cx: &mut Context<Self>,
     ) -> Option<AnyElement> {
-        let tooltip: SharedString =
-            SharedString::from(format!("Start REPL for {}", kernel_specification.name()));
+        let tooltip: SharedString = SharedString::from(format!("Start REPL for {}", kernel_specification.name()));
 
         Some(
             h_flex()
@@ -264,9 +262,7 @@ impl QuickActionBar {
                         .icon_color(Color::Muted)
                         .style(ButtonStyle::Subtle)
                         .tooltip(Tooltip::text(tooltip))
-                        .on_click(|_, window, cx| {
-                            window.dispatch_action(Box::new(repl::Run {}), cx)
-                        }),
+                        .on_click(|_, window, cx| window.dispatch_action(Box::new(repl::Run {}), cx)),
                 )
                 .into_any_element(),
         )
@@ -286,9 +282,7 @@ impl QuickActionBar {
         let session = repl::session(editor.downgrade(), cx);
 
         let current_kernelspec = match session {
-            SessionSupport::ActiveSession(session) => {
-                Some(session.read(cx).kernel_specification.clone())
-            }
+            SessionSupport::ActiveSession(session) => Some(session.read(cx).kernel_specification.clone()),
             SessionSupport::Inactive(kernel_specification) => Some(kernel_specification),
             SessionSupport::RequiresSetup(_language_name) => None,
             SessionSupport::Unsupported => None,
@@ -296,8 +290,7 @@ impl QuickActionBar {
 
         let current_kernel_name = current_kernelspec.as_ref().map(|spec| spec.name());
 
-        let menu_handle: PopoverMenuHandle<Picker<KernelPickerDelegate>> =
-            PopoverMenuHandle::default();
+        let menu_handle: PopoverMenuHandle<Picker<KernelPickerDelegate>> = PopoverMenuHandle::default();
         KernelSelector::new(
             {
                 Box::new(move |kernelspec, window, cx| {
@@ -313,24 +306,20 @@ impl QuickActionBar {
                         .w_full()
                         .gap_0p5()
                         .child(
-                            div()
-                                .overflow_x_hidden()
-                                .flex_grow()
-                                .whitespace_nowrap()
-                                .child(
-                                    Label::new(if let Some(name) = current_kernel_name {
-                                        name
-                                    } else {
-                                        SharedString::from("Select Kernel")
-                                    })
-                                    .size(LabelSize::Small)
-                                    .color(if current_kernelspec.is_some() {
-                                        Color::Default
-                                    } else {
-                                        Color::Placeholder
-                                    })
-                                    .into_any_element(),
-                                ),
+                            div().overflow_x_hidden().flex_grow().whitespace_nowrap().child(
+                                Label::new(if let Some(name) = current_kernel_name {
+                                    name
+                                } else {
+                                    SharedString::from("Select Kernel")
+                                })
+                                .size(LabelSize::Small)
+                                .color(if current_kernelspec.is_some() {
+                                    Color::Default
+                                } else {
+                                    Color::Placeholder
+                                })
+                                .into_any_element(),
+                            ),
                         )
                         .child(
                             Icon::new(IconName::ChevronDown)
@@ -357,9 +346,7 @@ impl QuickActionBar {
                         .icon_size(ui::IconSize::Small)
                         .icon_color(Color::Muted)
                         .tooltip(Tooltip::text(tooltip))
-                        .on_click(|_, _window, cx| {
-                            cx.open_url(&format!("{}#installation", GRAM_REPL_DOCUMENTATION))
-                        }),
+                        .on_click(|_, _window, cx| cx.open_url(&format!("{}#installation", GRAM_REPL_DOCUMENTATION))),
                 )
                 .into_any_element(),
         )
@@ -388,41 +375,22 @@ fn session_state(session: Entity<Session>, cx: &mut App) -> ReplMenuState {
         }
     };
 
-    let transitional =
-        |tooltip: SharedString, animating: bool, popover_disabled: bool| ReplMenuState {
-            tooltip,
-            icon_is_animating: animating,
-            popover_disabled,
-            icon_color: Color::Muted,
-            indicator: Some(Indicator::dot().color(Color::Muted)),
-            status: session.kernel.status(),
-            ..fill_fields()
-        };
+    let transitional = |tooltip: SharedString, animating: bool, popover_disabled: bool| ReplMenuState {
+        tooltip,
+        icon_is_animating: animating,
+        popover_disabled,
+        icon_color: Color::Muted,
+        indicator: Some(Indicator::dot().color(Color::Muted)),
+        status: session.kernel.status(),
+        ..fill_fields()
+    };
 
     let starting = || transitional(format!("{} is starting", kernel_name).into(), true, true);
     let restarting = || transitional(format!("Restarting {}", kernel_name).into(), true, true);
-    let shutting_down = || {
-        transitional(
-            format!("{} is shutting down", kernel_name).into(),
-            false,
-            true,
-        )
-    };
-    let auto_restarting = || {
-        transitional(
-            format!("Auto-restarting {}", kernel_name).into(),
-            true,
-            true,
-        )
-    };
+    let shutting_down = || transitional(format!("{} is shutting down", kernel_name).into(), false, true);
+    let auto_restarting = || transitional(format!("Auto-restarting {}", kernel_name).into(), true, true);
     let unknown = || transitional(format!("{} state unknown", kernel_name).into(), false, true);
-    let other = |state: &str| {
-        transitional(
-            format!("{} state: {}", kernel_name, state).into(),
-            false,
-            true,
-        )
-    };
+    let other = |state: &str| transitional(format!("{} state: {}", kernel_name, state).into(), false, true);
 
     let shutdown = || ReplMenuState {
         tooltip: "Nothing running".into(),

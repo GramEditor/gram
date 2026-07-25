@@ -2,9 +2,9 @@ use anyhow::{Context as _, Result};
 use collections::{BTreeMap, HashMap, IndexMap};
 use fs::Fs;
 use gpui::{
-    Action, ActionBuildError, App, InvalidKeystrokeError, KEYSTROKE_PARSE_EXPECTED_MESSAGE,
-    KeyBinding, KeyBindingContextPredicate, KeyBindingMetaIndex, KeybindingKeystroke, Keystroke,
-    NoAction, SharedString, register_action,
+    Action, ActionBuildError, App, InvalidKeystrokeError, KEYSTROKE_PARSE_EXPECTED_MESSAGE, KeyBinding,
+    KeyBindingContextPredicate, KeyBindingMetaIndex, KeybindingKeystroke, Keystroke, NoAction, SharedString,
+    register_action,
 };
 use schemars::{JsonSchema, json_schema};
 use serde::Deserialize;
@@ -20,8 +20,7 @@ use util::{
 
 use crate::SettingsAssets;
 use settings_json::{
-    append_top_level_array_value_in_json_text, parse_json_with_comments,
-    replace_top_level_array_value_in_json_text,
+    append_top_level_array_value_in_json_text, parse_json_with_comments, replace_top_level_array_value_in_json_text,
 };
 
 pub trait KeyBindingValidator: Send + Sync {
@@ -158,11 +157,7 @@ impl KeymapFile {
         parse_json_with_comments::<Self>(content)
     }
 
-    pub fn load_asset(
-        asset_path: &str,
-        source: Option<KeybindSource>,
-        cx: &App,
-    ) -> anyhow::Result<Vec<KeyBinding>> {
+    pub fn load_asset(asset_path: &str, source: Option<KeybindSource>, cx: &App) -> anyhow::Result<Vec<KeyBinding>> {
         match Self::load(asset_str::<SettingsAssets>(asset_path).as_ref(), cx) {
             KeymapFileLoadResult::Success { mut key_bindings } => match source {
                 Some(source) => Ok({
@@ -182,10 +177,7 @@ impl KeymapFile {
         }
     }
 
-    pub fn load_asset_allow_partial_failure(
-        asset_path: &str,
-        cx: &App,
-    ) -> anyhow::Result<Vec<KeyBinding>> {
+    pub fn load_asset_allow_partial_failure(asset_path: &str, cx: &App) -> anyhow::Result<Vec<KeyBinding>> {
         match Self::load(asset_str::<SettingsAssets>(asset_path).as_ref(), cx) {
             KeymapFileLoadResult::SomeFailedToLoad {
                 key_bindings,
@@ -243,10 +235,7 @@ impl KeymapFile {
                     Err(err) => {
                         // Leading space is to separate from the message indicating which section
                         // the error occurred in.
-                        errors.push((
-                            context,
-                            format!(" Parse error in section `context` field: {}", err),
-                        ));
+                        errors.push((context, format!(" Parse error in section `context` field: {}", err)));
                         continue;
                     }
                 }
@@ -265,13 +254,8 @@ impl KeymapFile {
 
             if let Some(bindings) = bindings {
                 for (keystrokes, action) in bindings {
-                    let result = Self::load_keybinding(
-                        keystrokes,
-                        action,
-                        context_predicate.clone(),
-                        *use_key_equivalents,
-                        cx,
-                    );
+                    let result =
+                        Self::load_keybinding(keystrokes, action, context_predicate.clone(), *use_key_equivalents, cx);
                     match result {
                         Ok(key_binding) => {
                             key_bindings.push(key_binding);
@@ -362,9 +346,7 @@ impl KeymapFile {
         }
     }
 
-    pub fn parse_action(
-        action: &KeymapAction,
-    ) -> Result<Option<(&String, Option<&Value>)>, String> {
+    pub fn parse_action(action: &KeymapAction) -> Result<Option<(&String, Option<&Value>)>, String> {
         let name_and_input = match &action.0 {
             Value::Array(items) => {
                 if items.len() != 2 {
@@ -401,15 +383,10 @@ impl KeymapFile {
         cx: &App,
     ) -> std::result::Result<(Box<dyn Action>, Option<String>), String> {
         let (build_result, action_input_string) = match Self::parse_action(action)? {
-            Some((name, action_input)) if name.as_str() == ActionSequence::name_for_type() => {
-                match action_input {
-                    Some(action_input) => (
-                        ActionSequence::build_sequence(action_input.clone(), cx),
-                        None,
-                    ),
-                    None => (Err(ActionSequence::expected_array_error()), None),
-                }
-            }
+            Some((name, action_input)) if name.as_str() == ActionSequence::name_for_type() => match action_input {
+                Some(action_input) => (ActionSequence::build_sequence(action_input.clone(), cx), None),
+                None => (Err(ActionSequence::expected_array_error()), None),
+            },
             Some((name, Some(action_input))) => {
                 let action_input_string = action_input.to_string();
                 (
@@ -500,10 +477,7 @@ impl KeymapFile {
         }
 
         fn add_description(schema: &mut schemars::Schema, description: &str) {
-            schema.insert(
-                "description".to_string(),
-                Value::String(description.to_string()),
-            );
+            schema.insert("description".to_string(), Value::String(description.to_string()));
         }
 
         let empty_object = json_schema!({
@@ -601,8 +575,7 @@ impl KeymapFile {
             });
             add_deprecation(
                 &mut actions_with_empty_input,
-                "This action does not take input - just the action name string should be used."
-                    .to_string(),
+                "This action does not take input - just the action name string should be used.".to_string(),
             );
             keymap_action_alternatives.push(actions_with_empty_input);
         }
@@ -686,8 +659,7 @@ impl KeymapFile {
             let target_action_value = target
                 .action_value()
                 .context("Failed to generate target action JSON value")?;
-            let Some((index, keystrokes_str)) =
-                find_binding(&keymap, &target, &target_action_value, keyboard_mapper)
+            let Some((index, keystrokes_str)) = find_binding(&keymap, &target, &target_action_value, keyboard_mapper)
             else {
                 anyhow::bail!("Failed to find keybinding to remove");
             };
@@ -700,14 +672,8 @@ impl KeymapFile {
             } else {
                 &["bindings", keystrokes_str]
             };
-            let (replace_range, replace_value) = replace_top_level_array_value_in_json_text(
-                &keymap_contents,
-                key_path,
-                None,
-                None,
-                index,
-                tab_size,
-            );
+            let (replace_range, replace_value) =
+                replace_top_level_array_value_in_json_text(&keymap_contents, key_path, None, None, index, tab_size);
             keymap_contents.replace_range(replace_range, &replace_value);
             return Ok(keymap_contents);
         }
@@ -720,8 +686,7 @@ impl KeymapFile {
                 .action_value()
                 .context("Failed to generate source action JSON value")?;
 
-            if let Some((index, keystrokes_str)) =
-                find_binding(&keymap, &target, &target_action_value, keyboard_mapper)
+            if let Some((index, keystrokes_str)) = find_binding(&keymap, &target, &target_action_value, keyboard_mapper)
             {
                 if target.context == source.context {
                     // if we are only changing the keybinding (common case)
@@ -827,11 +792,8 @@ impl KeymapFile {
                 bindings.into()
             });
 
-            let (replace_range, replace_value) = append_top_level_array_value_in_json_text(
-                &keymap_contents,
-                &value.into(),
-                tab_size,
-            );
+            let (replace_range, replace_value) =
+                append_top_level_array_value_in_json_text(&keymap_contents, &value.into(), tab_size);
             keymap_contents.replace_range(replace_range, &replace_value);
         }
         return Ok(keymap_contents);
@@ -842,11 +804,9 @@ impl KeymapFile {
             target_action_value: &Value,
             keyboard_mapper: &dyn gpui::PlatformKeyboardMapper,
         ) -> Option<(usize, &'b str)> {
-            let target_context_parsed =
-                KeyBindingContextPredicate::parse(target.context.unwrap_or("")).ok();
+            let target_context_parsed = KeyBindingContextPredicate::parse(target.context.unwrap_or("")).ok();
             for (index, section) in keymap.sections().enumerate() {
-                let section_context_parsed =
-                    KeyBindingContextPredicate::parse(&section.context).ok();
+                let section_context_parsed = KeyBindingContextPredicate::parse(&section.context).ok();
                 if section_context_parsed != target_context_parsed {
                     continue;
                 }
@@ -858,11 +818,7 @@ impl KeymapFile {
                         .split_whitespace()
                         .map(|source| {
                             let keystroke = Keystroke::parse(source)?;
-                            Ok(KeybindingKeystroke::new_with_mapper(
-                                keystroke,
-                                false,
-                                keyboard_mapper,
-                            ))
+                            Ok(KeybindingKeystroke::new_with_mapper(keystroke, false, keyboard_mapper))
                         })
                         .collect::<Result<Vec<_>, InvalidKeystrokeError>>()
                     else {
@@ -928,8 +884,7 @@ impl<'a> KeybindUpdateTarget<'a> {
         let action_name: Value = self.action_name.into();
         let value = match self.action_arguments {
             Some(args) if !args.is_empty() => {
-                let args = serde_json::from_str::<Value>(args)
-                    .context("Failed to parse action arguments as JSON")?;
+                let args = serde_json::from_str::<Value>(args).context("Failed to parse action arguments as JSON")?;
                 serde_json::json!([action_name, args])
             }
             _ => action_name,
@@ -1020,28 +975,23 @@ pub struct ActionSequence(pub Vec<Box<dyn Action>>);
 register_action!(ActionSequence);
 
 impl ActionSequence {
-    fn build_sequence(
-        value: Value,
-        cx: &App,
-    ) -> std::result::Result<Box<dyn Action>, ActionBuildError> {
+    fn build_sequence(value: Value, cx: &App) -> std::result::Result<Box<dyn Action>, ActionBuildError> {
         match value {
             Value::Array(values) => {
                 let actions = values
                     .into_iter()
                     .enumerate()
-                    .map(|(index, action)| {
-                        match KeymapFile::build_keymap_action(&KeymapAction(action), cx) {
+                    .map(
+                        |(index, action)| match KeymapFile::build_keymap_action(&KeymapAction(action), cx) {
                             Ok((action, _)) => Ok(action),
                             Err(err) => {
                                 return Err(ActionBuildError::BuildError {
                                     name: Self::name_for_type().to_string(),
-                                    error: anyhow::anyhow!(
-                                        "error at sequence index {index}: {err}"
-                                    ),
+                                    error: anyhow::anyhow!("error at sequence index {index}: {err}"),
                                 });
                             }
-                        }
-                    })
+                        },
+                    )
                     .collect::<Result<Vec<_>, _>>()?;
                 Ok(Box::new(Self(actions)))
             }
@@ -1070,33 +1020,19 @@ impl Action for ActionSequence {
     }
 
     fn partial_eq(&self, action: &dyn Action) -> bool {
-        action
-            .as_any()
-            .downcast_ref::<Self>()
-            .map_or(false, |other| {
-                self.0.len() == other.0.len()
-                    && self
-                        .0
-                        .iter()
-                        .zip(other.0.iter())
-                        .all(|(a, b)| a.partial_eq(b.as_ref()))
-            })
+        action.as_any().downcast_ref::<Self>().map_or(false, |other| {
+            self.0.len() == other.0.len() && self.0.iter().zip(other.0.iter()).all(|(a, b)| a.partial_eq(b.as_ref()))
+        })
     }
 
     fn boxed_clone(&self) -> Box<dyn Action> {
         Box::new(ActionSequence(
-            self.0
-                .iter()
-                .map(|action| action.boxed_clone())
-                .collect::<Vec<_>>(),
+            self.0.iter().map(|action| action.boxed_clone()).collect::<Vec<_>>(),
         ))
     }
 
     fn build(_value: Value) -> Result<Box<dyn Action>> {
-        Err(anyhow::anyhow!(
-            "{} cannot be built directly",
-            Self::name_for_type()
-        ))
+        Err(anyhow::anyhow!("{} cannot be built directly", Self::name_for_type()))
     }
 
     fn action_json_schema(generator: &mut schemars::SchemaGenerator) -> Option<schemars::Schema> {
@@ -1149,18 +1085,9 @@ mod tests {
     }
 
     #[track_caller]
-    fn check_keymap_update(
-        input: impl ToString,
-        operation: KeybindUpdateOperation,
-        expected: impl ToString,
-    ) {
-        let result = KeymapFile::update_keybinding(
-            operation,
-            input.to_string(),
-            4,
-            &gpui::DummyKeyboardMapper,
-        )
-        .expect("Update succeeded");
+    fn check_keymap_update(input: impl ToString, operation: KeybindUpdateOperation, expected: impl ToString) {
+        let result = KeymapFile::update_keybinding(operation, input.to_string(), 4, &gpui::DummyKeyboardMapper)
+            .expect("Update succeeded");
         pretty_assertions::assert_eq!(expected.to_string(), result);
     }
 

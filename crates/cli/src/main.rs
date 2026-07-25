@@ -33,11 +33,7 @@ struct Detect;
 trait InstalledApp {
     fn gram_version_string(&self) -> String;
     fn launch(&self, ipc_url: String, user_data_dir: Option<&str>) -> anyhow::Result<()>;
-    fn run_foreground(
-        &self,
-        ipc_url: String,
-        user_data_dir: Option<&str>,
-    ) -> io::Result<ExitStatus>;
+    fn run_foreground(&self, ipc_url: String, user_data_dir: Option<&str>) -> io::Result<ExitStatus>;
     fn path(&self) -> PathBuf;
 }
 
@@ -78,10 +74,7 @@ struct Args {
     /// This overrides the default platform-specific data directory location:
     #[cfg_attr(target_os = "macos", doc = "`~/Library/Application Support/Gram`.")]
     #[cfg_attr(target_os = "windows", doc = "`%LOCALAPPDATA%\\Gram`.")]
-    #[cfg_attr(
-        not(any(target_os = "windows", target_os = "macos")),
-        doc = "`$XDG_DATA_HOME/gram`."
-    )]
+    #[cfg_attr(not(any(target_os = "windows", target_os = "macos")), doc = "`$XDG_DATA_HOME/gram`.")]
     #[arg(long, value_name = "DIR")]
     user_data_dir: Option<String>,
     /// The paths to open in Gram (space-separated).
@@ -117,10 +110,7 @@ struct Args {
     #[arg(long, action = clap::ArgAction::Append, num_args = 2, value_names = ["OLD_PATH", "NEW_PATH"])]
     diff: Vec<String>,
     /// Uninstall Gram from user system
-    #[cfg(all(
-        any(target_os = "linux", target_os = "macos"),
-        not(feature = "no-bundled-uninstall")
-    ))]
+    #[cfg(all(any(target_os = "linux", target_os = "macos"), not(feature = "no-bundled-uninstall")))]
     #[arg(long)]
     uninstall: bool,
 
@@ -261,8 +251,7 @@ mod tests {
         assert_eq!(result, target_path.to_string_lossy());
 
         // Relative path
-        let result =
-            with_cwd(temp_tree.path(), || parse_path_with_position("symlink.txt")).unwrap();
+        let result = with_cwd(temp_tree.path(), || parse_path_with_position("symlink.txt")).unwrap();
         assert_eq!(result, target_path.to_string_lossy());
     }
 
@@ -285,9 +274,7 @@ mod tests {
         std::os::unix::fs::symlink(&dir_path, &symlink_path).unwrap();
 
         // Absolute path
-        let result =
-            parse_path_with_position(symlink_path.join("ec/tory/file.txt").to_str().unwrap())
-                .unwrap();
+        let result = parse_path_with_position(symlink_path.join("ec/tory/file.txt").to_str().unwrap()).unwrap();
         assert_eq!(result, expected);
 
         // Relative path
@@ -317,11 +304,7 @@ fn parse_path_in_wsl(source: &str, wsl: &str) -> Result<String> {
         args.push(user);
     }
 
-    let command = [
-        OsStr::new("realpath"),
-        OsStr::new("-s"),
-        source.path.as_ref(),
-    ];
+    let command = [OsStr::new("realpath"), OsStr::new("-s"), source.path.as_ref()];
 
     let output = util::command::new_std_command("wsl.exe")
         .args(&args)
@@ -399,10 +382,7 @@ fn main() -> Result<()> {
         anyhow::bail!(msg.join("\n"));
     }
 
-    #[cfg(all(
-        any(target_os = "linux", target_os = "macos"),
-        not(feature = "no-bundled-uninstall")
-    ))]
+    #[cfg(all(any(target_os = "linux", target_os = "macos"), not(feature = "no-bundled-uninstall")))]
     if args.uninstall {
         static UNINSTALL_SCRIPT: &[u8] = include_bytes!("../../../script/uninstall.sh");
 
@@ -422,8 +402,7 @@ fn main() -> Result<()> {
         std::process::exit(status.code().unwrap_or(1));
     }
 
-    let (server, server_name) =
-        IpcOneShotServer::<IpcHandshake>::new().context("Handshake before Gram spawn")?;
+    let (server, server_name) = IpcOneShotServer::<IpcHandshake>::new().context("Handshake before Gram spawn")?;
     let url = format!("gram-cli://{server_name}");
 
     let open_new_workspace = if args.new {
@@ -474,10 +453,7 @@ fn main() -> Result<()> {
     let mut anonymous_fd_tmp_files = vec![];
 
     for path in args.diff.chunks(2) {
-        diff_paths.push([
-            parse_path_with_position(&path[0])?,
-            parse_path_with_position(&path[1])?,
-        ]);
+        diff_paths.push([parse_path_with_position(&path[0])?, parse_path_with_position(&path[1])?]);
     }
 
     #[cfg(target_os = "windows")]
@@ -555,19 +531,18 @@ fn main() -> Result<()> {
         })
         .unwrap();
 
-    let stdin_pipe_handle: Option<JoinHandle<anyhow::Result<()>>> =
-        stdin_tmp_file.map(|mut tmp_file| {
-            thread::Builder::new()
-                .name("CliStdin".to_string())
-                .spawn(move || {
-                    let mut stdin = std::io::stdin().lock();
-                    if !io::IsTerminal::is_terminal(&stdin) {
-                        io::copy(&mut stdin, &mut tmp_file)?;
-                    }
-                    Ok(())
-                })
-                .unwrap()
-        });
+    let stdin_pipe_handle: Option<JoinHandle<anyhow::Result<()>>> = stdin_tmp_file.map(|mut tmp_file| {
+        thread::Builder::new()
+            .name("CliStdin".to_string())
+            .spawn(move || {
+                let mut stdin = std::io::stdin().lock();
+                if !io::IsTerminal::is_terminal(&stdin) {
+                    io::copy(&mut stdin, &mut tmp_file)?;
+                }
+                Ok(())
+            })
+            .unwrap()
+    });
 
     let anonymous_fd_pipe_handles: Vec<_> = anonymous_fd_tmp_files
         .into_iter()
@@ -671,17 +646,11 @@ mod linux {
 
                 // libexec is the standard, lib/gram is for Arch (and other non-libexec distros),
                 // ./gram is for the target directory in development builds.
-                let possible_locations = [
-                    "../libexec/gram-editor",
-                    "../lib/gram/gram-editor",
-                    "./gram",
-                ];
+                let possible_locations = ["../libexec/gram-editor", "../lib/gram/gram-editor", "./gram"];
                 possible_locations
                     .iter()
                     .find_map(|p| dir.join(p).canonicalize().ok().filter(|path| path != &cli))
-                    .with_context(|| {
-                        format!("could not find any of: {}", possible_locations.join(", "))
-                    })?
+                    .with_context(|| format!("could not find any of: {}", possible_locations.join(", ")))?
             };
 
             Ok(App(path))
@@ -717,10 +686,7 @@ mod linux {
                 .map(PathBuf::from)
                 .unwrap_or_else(|| paths::data_dir().clone());
 
-            let sock_path = data_dir.join(format!(
-                "gram-{}.sock",
-                *release_channel::RELEASE_CHANNEL_NAME
-            ));
+            let sock_path = data_dir.join(format!("gram-{}.sock", *release_channel::RELEASE_CHANNEL_NAME));
             let sock = UnixDatagram::unbound()?;
             if sock.connect(&sock_path).is_err() {
                 self.boot_background(ipc_url, user_data_dir)?;
@@ -730,11 +696,7 @@ mod linux {
             Ok(())
         }
 
-        fn run_foreground(
-            &self,
-            ipc_url: String,
-            user_data_dir: Option<&str>,
-        ) -> io::Result<ExitStatus> {
+        fn run_foreground(&self, ipc_url: String, user_data_dir: Option<&str>) -> io::Result<ExitStatus> {
             let mut cmd = std::process::Command::new(self.0.clone());
             cmd.arg(ipc_url);
             if let Some(dir) = user_data_dir {
@@ -749,11 +711,7 @@ mod linux {
     }
 
     impl App {
-        fn boot_background(
-            &self,
-            ipc_url: String,
-            user_data_dir: Option<&str>,
-        ) -> anyhow::Result<()> {
+        fn boot_background(&self, ipc_url: String, user_data_dir: Option<&str>) -> anyhow::Result<()> {
             let path = &self.0;
 
             match fork::fork() {
@@ -767,8 +725,7 @@ mod linux {
                     if fork::close_fd().is_err() {
                         eprintln!("failed to close_fd: {}", std::io::Error::last_os_error());
                     }
-                    let mut args: Vec<OsString> =
-                        vec![path.as_os_str().to_owned(), OsString::from(ipc_url)];
+                    let mut args: Vec<OsString> = vec![path.as_os_str().to_owned(), OsString::from(ipc_url)];
                     if let Some(dir) = user_data_dir {
                         args.push(OsString::from("--user-data-dir"));
                         args.push(OsString::from(dir));
@@ -782,11 +739,7 @@ mod linux {
             }
         }
 
-        fn wait_for_socket(
-            &self,
-            sock_addr: &SocketAddr,
-            sock: &mut UnixDatagram,
-        ) -> Result<(), std::io::Error> {
+        fn wait_for_socket(&self, sock_addr: &SocketAddr, sock: &mut UnixDatagram) -> Result<(), std::io::Error> {
             for _ in 0..100 {
                 thread::sleep(Duration::from_millis(10));
                 if sock.connect_addr(sock_addr).is_ok() {
@@ -828,9 +781,7 @@ mod flatpak {
         if let Some(flatpak_dir) = get_flatpak_dir() {
             let mut args = vec!["/usr/bin/flatpak-spawn".into(), "--host".into()];
             args.append(&mut get_xdg_env_args());
-            args.push(
-                "--env=GRAM_NO_BUNDLED_UNINSTALL=Please use flatpak to uninstall gram".into(),
-            );
+            args.push("--env=GRAM_NO_BUNDLED_UNINSTALL=Please use flatpak to uninstall gram".into());
             args.push(
                 format!(
                     "--env={EXTRA_LIB_ENV_NAME}={}",
@@ -894,12 +845,7 @@ mod flatpak {
     }
 
     fn get_xdg_env_args() -> Vec<OsString> {
-        let xdg_keys = [
-            "XDG_DATA_HOME",
-            "XDG_CONFIG_HOME",
-            "XDG_CACHE_HOME",
-            "XDG_STATE_HOME",
-        ];
+        let xdg_keys = ["XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"];
         env::vars()
             .filter(|(key, _)| xdg_keys.contains(&key.as_str()))
             .map(|(key, val)| format!("--env=FLATPAK_{}={}", key, val).into())
@@ -914,9 +860,7 @@ mod windows {
     use windows::{
         Win32::{
             Foundation::{CloseHandle, ERROR_ALREADY_EXISTS, GENERIC_WRITE, GetLastError},
-            Storage::FileSystem::{
-                CreateFileW, FILE_FLAGS_AND_ATTRIBUTES, FILE_SHARE_MODE, OPEN_EXISTING, WriteFile,
-            },
+            Storage::FileSystem::{CreateFileW, FILE_FLAGS_AND_ATTRIBUTES, FILE_SHARE_MODE, OPEN_EXISTING, WriteFile},
             System::Threading::CreateMutexW,
         },
         core::HSTRING,
@@ -995,11 +939,7 @@ mod windows {
             Ok(())
         }
 
-        fn run_foreground(
-            &self,
-            ipc_url: String,
-            user_data_dir: Option<&str>,
-        ) -> io::Result<ExitStatus> {
+        fn run_foreground(&self, ipc_url: String, user_data_dir: Option<&str>) -> io::Result<ExitStatus> {
             let mut cmd = std::process::Command::new(self.0.clone());
             cmd.arg(ipc_url).arg("--foreground");
             if let Some(dir) = user_data_dir {
@@ -1023,15 +963,11 @@ mod windows {
 
                 // ../Gram.exe is the standard, lib/gram is for MSYS2, ./gram.exe is for the target
                 // directory in development builds.
-                let possible_locations =
-                    ["../Gram.exe", "../lib/gram/gram-editor.exe", "./gram.exe"];
+                let possible_locations = ["../Gram.exe", "../lib/gram/gram-editor.exe", "./gram.exe"];
                 possible_locations
                     .iter()
                     .find_map(|p| dir.join(p).canonicalize().ok().filter(|path| path != &cli))
-                    .context(format!(
-                        "could not find any of: {}",
-                        possible_locations.join(", ")
-                    ))?
+                    .context(format!("could not find any of: {}", possible_locations.join(", ")))?
             };
 
             Ok(App(path))
@@ -1064,23 +1000,15 @@ mod mac_os {
     }
 
     enum Bundle {
-        App {
-            app_bundle: PathBuf,
-            plist: InfoPlist,
-        },
-        LocalPath {
-            executable: PathBuf,
-        },
+        App { app_bundle: PathBuf, plist: InfoPlist },
+        LocalPath { executable: PathBuf },
     }
 
     fn locate_bundle() -> Result<PathBuf> {
         let cli_path = std::env::current_exe()?.canonicalize()?;
         let mut app_path = cli_path.clone();
         while app_path.extension() != Some(OsStr::new("app")) {
-            anyhow::ensure!(
-                app_path.pop(),
-                "cannot find app bundle containing {cli_path:?}"
-            );
+            anyhow::ensure!(app_path.pop(), "cannot find app bundle containing {cli_path:?}");
         }
         Ok(app_path)
     }
@@ -1098,10 +1026,8 @@ mod mac_os {
             match bundle_path.extension().and_then(|ext| ext.to_str()) {
                 Some("app") => {
                     let plist_path = bundle_path.join("Contents/Info.plist");
-                    let plist =
-                        plist::from_file::<_, InfoPlist>(&plist_path).with_context(|| {
-                            format!("Reading *.app bundle plist file at {plist_path:?}")
-                        })?;
+                    let plist = plist::from_file::<_, InfoPlist>(&plist_path)
+                        .with_context(|| format!("Reading *.app bundle plist file at {plist_path:?}"))?;
                     Ok(Bundle::App {
                         app_bundle: bundle_path,
                         plist,
@@ -1142,8 +1068,7 @@ mod mac_os {
                         LSOpenFromURLSpec(
                             NonNull::from(&LSLaunchURLSpec {
                                 appURL: CFRetained::as_ptr(&app_url).as_ptr(),
-                                itemURLs: CFRetained::as_ptr(&urls_to_open).as_ptr()
-                                    as *const CFArray,
+                                itemURLs: CFRetained::as_ptr(&urls_to_open).as_ptr() as *const CFArray,
                                 passThruParams: ptr::null(),
                                 launchFlags: LSLaunchFlags::Defaults,
                                 asyncRefCon: ptr::null_mut(),
@@ -1152,25 +1077,18 @@ mod mac_os {
                         )
                     };
 
-                    anyhow::ensure!(
-                        status == 0,
-                        "cannot start app bundle {}",
-                        self.gram_version_string()
-                    );
+                    anyhow::ensure!(status == 0, "cannot start app bundle {}", self.gram_version_string());
                 }
 
                 Self::LocalPath { executable, .. } => {
                     let executable_parent = executable
                         .parent()
                         .with_context(|| format!("Executable {executable:?} path has no parent"))?;
-                    let subprocess_stdout_file = fs::File::create(
-                        executable_parent.join("gram_dev.log"),
-                    )
-                    .with_context(|| format!("Log file creation in {executable_parent:?}"))?;
-                    let subprocess_stdin_file =
-                        subprocess_stdout_file.try_clone().with_context(|| {
-                            format!("Cloning descriptor for file {subprocess_stdout_file:?}")
-                        })?;
+                    let subprocess_stdout_file = fs::File::create(executable_parent.join("gram_dev.log"))
+                        .with_context(|| format!("Log file creation in {executable_parent:?}"))?;
+                    let subprocess_stdin_file = subprocess_stdout_file
+                        .try_clone()
+                        .with_context(|| format!("Cloning descriptor for file {subprocess_stdout_file:?}"))?;
                     let mut command = std::process::Command::new(executable);
                     command.env(FORCE_CLI_MODE_ENV_VAR_NAME, "");
                     if let Some(dir) = user_data_dir {
@@ -1181,20 +1099,14 @@ mod mac_os {
                         .stdout(subprocess_stdin_file)
                         .arg(url);
 
-                    command
-                        .spawn()
-                        .with_context(|| format!("Spawning {command:?}"))?;
+                    command.spawn().with_context(|| format!("Spawning {command:?}"))?;
                 }
             }
 
             Ok(())
         }
 
-        fn run_foreground(
-            &self,
-            ipc_url: String,
-            user_data_dir: Option<&str>,
-        ) -> io::Result<ExitStatus> {
+        fn run_foreground(&self, ipc_url: String, user_data_dir: Option<&str>) -> io::Result<ExitStatus> {
             let path = match self {
                 Bundle::App { app_bundle, .. } => app_bundle.join("Contents/MacOS/gram"),
                 Bundle::LocalPath { executable, .. } => executable.clone(),
@@ -1244,19 +1156,10 @@ mod mac_os {
     ) -> Result<()> {
         use anyhow::bail;
 
-        let app_path_prompt = format!(
-            "POSIX path of (path to application \"{}\")",
-            channel.display_name()
-        );
-        let app_path_output = Command::new("osascript")
-            .arg("-e")
-            .arg(&app_path_prompt)
-            .output()?;
+        let app_path_prompt = format!("POSIX path of (path to application \"{}\")", channel.display_name());
+        let app_path_output = Command::new("osascript").arg("-e").arg(&app_path_prompt).output()?;
         if !app_path_output.status.success() {
-            bail!(
-                "Could not determine app path for {}",
-                channel.display_name()
-            );
+            bail!("Could not determine app path for {}", channel.display_name());
         }
         let app_path = String::from_utf8(app_path_output.stdout)?.trim().to_owned();
         let cli_path = format!("{app_path}/Contents/MacOS/cli");

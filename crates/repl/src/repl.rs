@@ -19,9 +19,7 @@ pub use runtimelib::ExecutionState;
 pub use crate::jupyter_settings::JupyterSettings;
 pub use crate::kernels::{Kernel, KernelSpecification, KernelStatus};
 pub use crate::repl_editor::*;
-pub use crate::repl_sessions_ui::{
-    ClearOutputs, Interrupt, ReplSessionsPage, Restart, Run, Sessions, Shutdown,
-};
+pub use crate::repl_sessions_ui::{ClearOutputs, Interrupt, ReplSessionsPage, Restart, Run, Sessions, Shutdown};
 pub use crate::repl_settings::ReplSettings;
 use crate::repl_store::ReplStore;
 pub use crate::session::Session;
@@ -45,8 +43,7 @@ fn editor_dispatcher(cx: &mut App) -> impl Dispatcher {
     // other crates in Gram.
     impl Dispatcher for GramDispatcher {
         fn dispatch(&self, runnable: Runnable) {
-            self.dispatcher
-                .dispatch(RunnableVariant::Compat(runnable), None);
+            self.dispatcher.dispatch(RunnableVariant::Compat(runnable), None);
         }
 
         fn dispatch_after(&self, duration: Duration, runnable: Runnable) {

@@ -52,19 +52,11 @@ impl Cursor {
             return;
         }
         let result = if let Some(theme_name) = theme_name.as_ref() {
-            CursorTheme::load_from_name(
-                &self.connection,
-                self.shm.clone(),
-                theme_name,
-                self.scaled_size,
-            )
+            CursorTheme::load_from_name(&self.connection, self.shm.clone(), theme_name, self.scaled_size)
         } else {
             CursorTheme::load(&self.connection, self.shm.clone(), self.scaled_size)
         };
-        if let Some(theme) = result
-            .context("Wayland: Failed to load cursor theme")
-            .log_err()
-        {
+        if let Some(theme) = result.context("Wayland: Failed to load cursor theme").log_err() {
             self.loaded_theme = Some(LoadedTheme {
                 theme,
                 name: theme_name,
@@ -91,13 +83,7 @@ impl Cursor {
         self.set_scaled_size(size);
     }
 
-    pub fn set_icon(
-        &mut self,
-        wl_pointer: &WlPointer,
-        serial_id: u32,
-        mut cursor_icon_names: &[&str],
-        scale: i32,
-    ) {
+    pub fn set_icon(&mut self, wl_pointer: &WlPointer, serial_id: u32, mut cursor_icon_names: &[&str], scale: i32) {
         self.set_scaled_size(self.size * scale as u32);
 
         let Some(loaded_theme) = &mut self.loaded_theme else {

@@ -114,9 +114,7 @@ pub struct FileWatcherSettingsContent {
     pub poll_interval_ms: Option<u32>,
 }
 
-#[derive(
-    Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema, MergeFrom, Hash,
-)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema, MergeFrom, Hash)]
 #[serde(rename_all = "snake_case")]
 pub enum FileWatcherMode {
     /// Use platform-specific file watcher (inotify / FSEvents)
@@ -164,9 +162,7 @@ impl Default for LspSettings {
 }
 
 #[with_fallible_options]
-#[derive(
-    Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, JsonSchema, MergeFrom, Hash,
-)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, JsonSchema, MergeFrom, Hash)]
 pub struct BinarySettings {
     pub path: Option<String>,
     pub arguments: Option<Vec<String>>,
@@ -177,9 +173,7 @@ pub struct BinarySettings {
 }
 
 #[with_fallible_options]
-#[derive(
-    Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, JsonSchema, MergeFrom, Hash,
-)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, JsonSchema, MergeFrom, Hash)]
 pub struct FetchSettings {
     // Whether to consider pre-releases for fetching
     pub pre_release: Option<bool>,
@@ -205,9 +199,7 @@ pub struct DapSettingsContent {
 }
 
 #[with_fallible_options]
-#[derive(
-    Default, Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize, JsonSchema, MergeFrom,
-)]
+#[derive(Default, Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize, JsonSchema, MergeFrom)]
 pub struct SessionSettingsContent {
     /// Whether or not to restore unsaved buffers on restart.
     ///
@@ -383,9 +375,7 @@ pub struct DiagnosticsSettingsContent {
 }
 
 #[with_fallible_options]
-#[derive(
-    Clone, Copy, Debug, Default, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, Eq,
-)]
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, Eq)]
 pub struct LspPullDiagnosticsSettingsContent {
     /// Whether to pull for diagnostics or not.
     ///
@@ -399,9 +389,7 @@ pub struct LspPullDiagnosticsSettingsContent {
 }
 
 #[with_fallible_options]
-#[derive(
-    Clone, Copy, Debug, PartialEq, Default, Serialize, Deserialize, JsonSchema, MergeFrom, Eq,
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Default, Serialize, Deserialize, JsonSchema, MergeFrom, Eq)]
 pub struct InlineDiagnosticsSettingsContent {
     /// Whether or not to show inline diagnostics
     ///

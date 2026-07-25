@@ -44,11 +44,7 @@ impl TryFrom<&str> for EncryptedPassword {
             }
             if len != 0 {
                 unsafe {
-                    CryptProtectMemory(
-                        value.as_mut_ptr() as _,
-                        padded_length,
-                        CRYPTPROTECTMEMORY_SAME_PROCESS,
-                    )?;
+                    CryptProtectMemory(value.as_mut_ptr() as _, padded_length, CRYPTPROTECTMEMORY_SAME_PROCESS)?;
                 }
             }
             Ok(Self(value, len))
@@ -68,8 +64,7 @@ impl EncryptedPassword {
         {
             use anyhow::Context;
             use windows::Win32::Security::Cryptography::{
-                CRYPTPROTECTMEMORY_BLOCK_SIZE, CRYPTPROTECTMEMORY_SAME_PROCESS,
-                CryptUnprotectMemory,
+                CRYPTPROTECTMEMORY_BLOCK_SIZE, CRYPTPROTECTMEMORY_SAME_PROCESS, CryptUnprotectMemory,
             };
             assert_eq!(
                 self.0.len() % CRYPTPROTECTMEMORY_BLOCK_SIZE as usize,

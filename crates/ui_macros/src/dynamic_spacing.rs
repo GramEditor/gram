@@ -1,8 +1,6 @@
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
-use syn::{
-    LitInt, Token, parse::Parse, parse::ParseStream, parse_macro_input, punctuated::Punctuated,
-};
+use syn::{LitInt, Token, parse::Parse, parse::ParseStream, parse_macro_input, punctuated::Punctuated};
 
 struct DynamicSpacingInput {
     values: Punctuated<DynamicSpacingValue, Token![,]>,

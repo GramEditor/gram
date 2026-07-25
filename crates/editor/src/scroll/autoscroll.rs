@@ -61,9 +61,7 @@ impl Autoscroll {
     pub fn for_anchor(self, anchor: Anchor) -> Self {
         match self {
             Autoscroll::Next => self,
-            Autoscroll::Strategy(autoscroll_strategy, _) => {
-                Self::Strategy(autoscroll_strategy, Some(anchor))
-            }
+            Autoscroll::Strategy(autoscroll_strategy, _) => Self::Strategy(autoscroll_strategy, Some(anchor)),
         }
     }
 }
@@ -120,8 +118,7 @@ impl Editor {
         if let Some(last_bounds) = self.expect_bounds_change.take()
             && scroll_position.y != 0.
         {
-            scroll_position.y +=
-                ScrollOffset::from((bounds.top() - last_bounds.top()) / line_height);
+            scroll_position.y += ScrollOffset::from((bounds.top() - last_bounds.top()) / line_height);
             if scroll_position.y < 0. {
                 scroll_position.y = 0.;
             }
@@ -142,9 +139,7 @@ impl Editor {
 
         let mut target_top;
         let mut target_bottom;
-        if let Some(first_highlighted_row) =
-            self.highlighted_display_row_for_autoscroll(&display_map)
-        {
+        if let Some(first_highlighted_row) = self.highlighted_display_row_for_autoscroll(&display_map) {
             target_top = first_highlighted_row.as_f64();
             target_bottom = target_top + 1.;
         } else {
@@ -167,11 +162,8 @@ impl Editor {
                 .as_f64();
 
             let selections_fit = target_bottom - target_top <= visible_lines;
-            if matches!(
-                autoscroll,
-                Autoscroll::Strategy(AutoscrollStrategy::Newest, _)
-            ) || (matches!(autoscroll, Autoscroll::Strategy(AutoscrollStrategy::Fit, _))
-                && !selections_fit)
+            if matches!(autoscroll, Autoscroll::Strategy(AutoscrollStrategy::Newest, _))
+                || (matches!(autoscroll, Autoscroll::Strategy(AutoscrollStrategy::Fit, _)) && !selections_fit)
             {
                 let newest_selection_top = selections
                     .iter()
@@ -263,12 +255,8 @@ impl Editor {
             }
         };
 
-        self.scroll_manager.last_autoscroll = Some((
-            self.scroll_manager.anchor.offset,
-            target_top,
-            target_bottom,
-            strategy,
-        ));
+        self.scroll_manager.last_autoscroll =
+            Some((self.scroll_manager.anchor.offset, target_top, target_bottom, strategy));
 
         let was_scrolled = WasScrolled(editor_was_scrolled.0 || was_autoscrolled.0);
         (NeedsHorizontalAutoscroll(true), was_scrolled)
@@ -297,28 +285,21 @@ impl Editor {
         let mut target_left;
         let mut target_right: f64;
 
-        if self
-            .highlighted_display_row_for_autoscroll(&display_map)
-            .is_none()
-        {
+        if self.highlighted_display_row_for_autoscroll(&display_map).is_none() {
             target_left = f64::INFINITY;
             target_right = 0.;
             for selection in selections {
                 let head = selection.head().to_display_point(&display_map);
-                if head.row() >= start_row
-                    && head.row() < DisplayRow(start_row.0 + layouts.len() as u32)
-                {
+                if head.row() >= start_row && head.row() < DisplayRow(start_row.0 + layouts.len() as u32) {
                     let start_column = head.column();
                     let end_column = cmp::min(display_map.line_len(head.row()), head.column());
                     target_left = target_left.min(ScrollOffset::from(
-                        layouts[head.row().minus(start_row) as usize]
-                            .x_for_index(start_column as usize)
+                        layouts[head.row().minus(start_row) as usize].x_for_index(start_column as usize)
                             + self.gutter_dimensions.margin,
                     ));
                     target_right = target_right.max(
                         ScrollOffset::from(
-                            layouts[head.row().minus(start_row) as usize]
-                                .x_for_index(end_column as usize),
+                            layouts[head.row().minus(start_row) as usize].x_for_index(end_column as usize),
                         ) + em_advance,
                     );
                 }
@@ -347,11 +328,7 @@ impl Editor {
             WasScrolled(false)
         };
 
-        if was_scrolled.0 {
-            Some(scroll_position)
-        } else {
-            None
-        }
+        if was_scrolled.0 { Some(scroll_position) } else { None }
     }
 
     pub fn request_autoscroll(&mut self, autoscroll: Autoscroll, cx: &mut Context<Self>) {
@@ -359,11 +336,7 @@ impl Editor {
         cx.notify();
     }
 
-    pub(crate) fn request_autoscroll_remotely(
-        &mut self,
-        autoscroll: Autoscroll,
-        cx: &mut Context<Self>,
-    ) {
+    pub(crate) fn request_autoscroll_remotely(&mut self, autoscroll: Autoscroll, cx: &mut Context<Self>) {
         self.scroll_manager.autoscroll_request = Some((autoscroll, false));
         cx.notify();
     }

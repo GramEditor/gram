@@ -10,32 +10,23 @@ use futures::{AsyncRead, io::BufReader};
 pub async fn extract_zip<R: AsyncRead + Unpin>(destination: &Path, reader: R) -> Result<()> {
     let mut reader = read::stream::ZipFileReader::new(BufReader::new(reader));
 
-    let destination = &destination
-        .canonicalize()
-        .unwrap_or_else(|_| destination.to_path_buf());
+    let destination = &destination.canonicalize().unwrap_or_else(|_| destination.to_path_buf());
 
     while let Some(mut item) = reader.next_with_entry().await? {
         let entry_reader = item.reader_mut();
         let entry = entry_reader.entry();
-        let path = destination.join(
-            entry
-                .filename()
-                .as_str()
-                .context("reading zip entry file name")?,
-        );
+        let path = destination.join(entry.filename().as_str().context("reading zip entry file name")?);
 
         if entry
             .dir()
             .with_context(|| format!("reading zip entry metadata for path {path:?}"))?
         {
-            std::fs::create_dir_all(&path)
-                .with_context(|| format!("creating directory {path:?}"))?;
+            std::fs::create_dir_all(&path).with_context(|| format!("creating directory {path:?}"))?;
         } else {
             let parent_dir = path
                 .parent()
                 .with_context(|| format!("no parent directory for {path:?}"))?;
-            std::fs::create_dir_all(parent_dir)
-                .with_context(|| format!("creating parent directory {parent_dir:?}"))?;
+            std::fs::create_dir_all(parent_dir).with_context(|| format!("creating parent directory {parent_dir:?}"))?;
             let mut file = smol::fs::File::create(&path)
                 .await
                 .with_context(|| format!("creating file {path:?}"))?;
@@ -68,36 +59,24 @@ pub async fn extract_zip<R: AsyncRead + Unpin>(destination: &Path, reader: R) ->
 }
 
 #[cfg(not(windows))]
-pub async fn extract_seekable_zip<R: AsyncRead + AsyncSeek + Unpin>(
-    destination: &Path,
-    reader: R,
-) -> Result<()> {
+pub async fn extract_seekable_zip<R: AsyncRead + AsyncSeek + Unpin>(destination: &Path, reader: R) -> Result<()> {
     let mut reader = read::seek::ZipFileReader::new(BufReader::new(reader))
         .await
         .context("reading the zip archive")?;
-    let destination = &destination
-        .canonicalize()
-        .unwrap_or_else(|_| destination.to_path_buf());
+    let destination = &destination.canonicalize().unwrap_or_else(|_| destination.to_path_buf());
     for (i, entry) in reader.file().entries().to_vec().into_iter().enumerate() {
-        let path = destination.join(
-            entry
-                .filename()
-                .as_str()
-                .context("reading zip entry file name")?,
-        );
+        let path = destination.join(entry.filename().as_str().context("reading zip entry file name")?);
 
         if entry
             .dir()
             .with_context(|| format!("reading zip entry metadata for path {path:?}"))?
         {
-            std::fs::create_dir_all(&path)
-                .with_context(|| format!("creating directory {path:?}"))?;
+            std::fs::create_dir_all(&path).with_context(|| format!("creating directory {path:?}"))?;
         } else {
             let parent_dir = path
                 .parent()
                 .with_context(|| format!("no parent directory for {path:?}"))?;
-            std::fs::create_dir_all(parent_dir)
-                .with_context(|| format!("creating parent directory {parent_dir:?}"))?;
+            std::fs::create_dir_all(parent_dir).with_context(|| format!("creating parent directory {parent_dir:?}"))?;
             let mut file = smol::fs::File::create(&path)
                 .await
                 .with_context(|| format!("creating file {path:?}"))?;
@@ -154,8 +133,7 @@ mod tests {
 
             #[cfg(unix)]
             {
-                let mut builder =
-                    ZipEntryBuilder::new(filename.into(), async_zip::Compression::Deflate);
+                let mut builder = ZipEntryBuilder::new(filename.into(), async_zip::Compression::Deflate);
                 use std::os::unix::fs::PermissionsExt;
                 let metadata = std::fs::metadata(path)?;
                 let perms = keep_file_permissions.then(|| metadata.permissions().mode() as u16);
@@ -164,8 +142,7 @@ mod tests {
             }
             #[cfg(not(unix))]
             {
-                let builder =
-                    ZipEntryBuilder::new(filename.into(), async_zip::Compression::Deflate);
+                let builder = ZipEntryBuilder::new(filename.into(), async_zip::Compression::Deflate);
                 writer.write_entry_whole(builder, &data).await?;
             }
         }
@@ -209,9 +186,7 @@ mod tests {
         let zip_file = test_dir.path().join("test.zip");
 
         smol::block_on(async {
-            compress_zip(test_dir.path(), &zip_file, true)
-                .await
-                .unwrap();
+            compress_zip(test_dir.path(), &zip_file, true).await.unwrap();
             let reader = read_archive(&zip_file).await;
 
             let dir = tempfile::tempdir().unwrap();
@@ -242,9 +217,7 @@ mod tests {
 
             // Create zip
             let zip_file = test_dir.path().join("test.zip");
-            compress_zip(test_dir.path(), &zip_file, true)
-                .await
-                .unwrap();
+            compress_zip(test_dir.path(), &zip_file, true).await.unwrap();
 
             // Extract to new location
             let extract_dir = tempfile::tempdir().unwrap();
@@ -274,9 +247,7 @@ mod tests {
 
             // Create zip
             let zip_file = test_dir.path().join("test.zip");
-            compress_zip(test_dir.path(), &zip_file, false)
-                .await
-                .unwrap();
+            compress_zip(test_dir.path(), &zip_file, false).await.unwrap();
 
             // Extract to new location
             let extract_dir = tempfile::tempdir().unwrap();

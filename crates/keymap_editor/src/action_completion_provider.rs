@@ -12,10 +12,7 @@ pub struct ActionCompletionProvider {
 }
 
 impl ActionCompletionProvider {
-    pub fn new(
-        action_names: Vec<&'static str>,
-        humanized_names: HashMap<&'static str, SharedString>,
-    ) -> Self {
+    pub fn new(action_names: Vec<&'static str>, humanized_names: HashMap<&'static str, SharedString>) -> Self {
         Self {
             action_names,
             humanized_names,
@@ -44,11 +41,7 @@ impl CompletionProvider for ActionCompletionProvider {
             }
         }
 
-        let start_anchor = buffer.anchor_before(
-            buffer_position
-                .to_offset(&buffer)
-                .saturating_sub(count_back),
-        );
+        let start_anchor = buffer.anchor_before(buffer_position.to_offset(&buffer).saturating_sub(count_back));
 
         let replace_range = start_anchor..buffer_position;
         let snapshot = buffer.text_snapshot();
@@ -60,11 +53,7 @@ impl CompletionProvider for ActionCompletionProvider {
             .iter()
             .enumerate()
             .map(|(ix, &name)| {
-                let humanized = self
-                    .humanized_names
-                    .get(name)
-                    .cloned()
-                    .unwrap_or_else(|| name.into());
+                let humanized = self.humanized_names.get(name).cloned().unwrap_or_else(|| name.into());
                 StringMatchCandidate::new(ix, &humanized)
             })
             .collect();
@@ -113,9 +102,7 @@ impl CompletionProvider for ActionCompletionProvider {
 
             Ok(vec![project::CompletionResponse {
                 completions,
-                display_options: CompletionDisplayOptions {
-                    dynamic_width: true,
-                },
+                display_options: CompletionDisplayOptions { dynamic_width: true },
                 is_incomplete: false,
             }])
         })
@@ -129,8 +116,8 @@ impl CompletionProvider for ActionCompletionProvider {
         _trigger_in_words: bool,
         _cx: &mut Context<Editor>,
     ) -> bool {
-        text.chars().last().is_some_and(|last_char| {
-            last_char.is_ascii_alphanumeric() || last_char == '_' || last_char == ':'
-        })
+        text.chars()
+            .last()
+            .is_some_and(|last_char| last_char.is_ascii_alphanumeric() || last_char == '_' || last_char == ':')
     }
 }

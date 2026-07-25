@@ -36,9 +36,7 @@ pub trait Dismissable {
     fn set_dismissed(is_dismissed: bool, cx: &mut App) {
         write_and_log(cx, move || async move {
             if is_dismissed {
-                KEY_VALUE_STORE
-                    .write_kvp(Self::KEY.into(), "1".into())
-                    .await
+                KEY_VALUE_STORE.write_kvp(Self::KEY.into(), "1".into()).await
             } else {
                 KEY_VALUE_STORE.delete_kvp(Self::KEY.into()).await
             }
@@ -81,19 +79,13 @@ mod tests {
 
         assert_eq!(db.read_kvp("key-1").unwrap(), None);
 
-        db.write_kvp("key-1".to_string(), "one".to_string())
-            .await
-            .unwrap();
+        db.write_kvp("key-1".to_string(), "one".to_string()).await.unwrap();
         assert_eq!(db.read_kvp("key-1").unwrap(), Some("one".to_string()));
 
-        db.write_kvp("key-1".to_string(), "one-2".to_string())
-            .await
-            .unwrap();
+        db.write_kvp("key-1".to_string(), "one-2".to_string()).await.unwrap();
         assert_eq!(db.read_kvp("key-1").unwrap(), Some("one-2".to_string()));
 
-        db.write_kvp("key-2".to_string(), "two".to_string())
-            .await
-            .unwrap();
+        db.write_kvp("key-2".to_string(), "two".to_string()).await.unwrap();
         assert_eq!(db.read_kvp("key-2").unwrap(), Some("two".to_string()));
 
         db.delete_kvp("key-1".to_string()).await.unwrap();

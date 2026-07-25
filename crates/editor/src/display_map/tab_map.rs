@@ -198,9 +198,7 @@ impl TabSnapshot {
     pub fn text_summary_for_range(&self, range: Range<TabPoint>) -> TextSummary {
         let input_start = self.tab_point_to_fold_point(range.start, Bias::Left).0;
         let input_end = self.tab_point_to_fold_point(range.end, Bias::Right).0;
-        let input_summary = self
-            .fold_snapshot
-            .text_summary_for_range(input_start..input_end);
+        let input_summary = self.fold_snapshot.text_summary_for_range(input_start..input_end);
 
         let line_end = if range.start.row() == range.end.row() {
             range.end
@@ -240,8 +238,7 @@ impl TabSnapshot {
         language_aware: bool,
         highlights: Highlights<'a>,
     ) -> TabChunks<'a> {
-        let (input_start, expanded_char_column, to_next_stop) =
-            self.tab_point_to_fold_point(range.start, Bias::Left);
+        let (input_start, expanded_char_column, to_next_stop) = self.tab_point_to_fold_point(range.start, Bias::Left);
         let input_column = input_start.column();
         let input_start = input_start.to_offset(&self.fold_snapshot);
         let input_end = self
@@ -256,11 +253,9 @@ impl TabSnapshot {
 
         TabChunks {
             snapshot: self,
-            fold_chunks: self.fold_snapshot.chunks(
-                input_start..input_end,
-                language_aware,
-                highlights,
-            ),
+            fold_chunks: self
+                .fold_snapshot
+                .chunks(input_start..input_end, language_aware, highlights),
             input_column,
             column: expanded_char_column,
             max_expansion_column: self.max_expansion_column,
@@ -282,13 +277,9 @@ impl TabSnapshot {
 
     #[cfg(test)]
     pub fn text(&self) -> String {
-        self.chunks(
-            TabPoint::zero()..self.max_point(),
-            false,
-            Highlights::default(),
-        )
-        .map(|chunk| chunk.text)
-        .collect()
+        self.chunks(TabPoint::zero()..self.max_point(), false, Highlights::default())
+            .map(|chunk| chunk.text)
+            .collect()
     }
 
     pub fn max_point(&self) -> TabPoint {
@@ -314,14 +305,11 @@ impl TabSnapshot {
     }
 
     pub fn tab_point_to_fold_point(&self, output: TabPoint, bias: Bias) -> (FoldPoint, u32, u32) {
-        let chunks = self
-            .fold_snapshot
-            .chunks_at(FoldPoint::new(output.row(), 0));
+        let chunks = self.fold_snapshot.chunks_at(FoldPoint::new(output.row(), 0));
 
         let tab_cursor = TabStopCursor::new(chunks);
         let expanded = output.column();
-        let (collapsed, expanded_char_column, to_next_stop) =
-            self.collapse_tabs(tab_cursor, expanded, bias);
+        let (collapsed, expanded_char_column, to_next_stop) = self.collapse_tabs(tab_cursor, expanded, bias);
 
         (
             FoldPoint::new(output.row(), collapsed),
@@ -339,9 +327,7 @@ impl TabSnapshot {
     pub fn tab_point_to_point(&self, point: TabPoint, bias: Bias) -> Point {
         let fold_point = self.tab_point_to_fold_point(point, bias).0;
         let inlay_point = fold_point.to_inlay_point(&self.fold_snapshot);
-        self.fold_snapshot
-            .inlay_snapshot
-            .to_buffer_point(inlay_point)
+        self.fold_snapshot.inlay_snapshot.to_buffer_point(inlay_point)
     }
 
     fn expand_tabs<'a, I>(&self, mut cursor: TabStopCursor<'a, I>, column: u32) -> u32
@@ -371,18 +357,12 @@ impl TabSnapshot {
         };
 
         let collapsed_bytes = cursor.byte_offset() + left_over_char_bytes;
-        let expanded_bytes =
-            cursor.byte_offset() + expanded_tab_len - tab_count + left_over_char_bytes;
+        let expanded_bytes = cursor.byte_offset() + expanded_tab_len - tab_count + left_over_char_bytes;
 
         expanded_bytes + column.saturating_sub(collapsed_bytes)
     }
 
-    fn collapse_tabs<'a, I>(
-        &self,
-        mut cursor: TabStopCursor<'a, I>,
-        column: u32,
-        bias: Bias,
-    ) -> (u32, u32, u32)
+    fn collapse_tabs<'a, I>(&self, mut cursor: TabStopCursor<'a, I>, column: u32, bias: Bias) -> (u32, u32, u32)
     where
         I: Iterator<Item = Chunk<'a>>,
     {
@@ -410,18 +390,14 @@ impl TabSnapshot {
                 // We expanded past the search target, so need to account for the offshoot
                 expanded_chars -= expanded_bytes - column;
                 return match bias {
-                    Bias::Left => (
-                        cursor.byte_offset() - 1,
-                        expanded_chars,
-                        expanded_bytes - column,
-                    ),
+                    Bias::Left => (cursor.byte_offset() - 1, expanded_chars, expanded_bytes - column),
                     Bias::Right => (cursor.byte_offset(), expanded_chars, 0),
                 };
             } else {
                 // otherwise we only want to move the cursor collapse column forward
                 collapsed_column = collapsed_column - tab_len + 1;
-                seek_target = (collapsed_column - cursor.byte_offset)
-                    .min(self.max_expansion_column - cursor.byte_offset);
+                seek_target =
+                    (collapsed_column - cursor.byte_offset).min(self.max_expansion_column - cursor.byte_offset);
             }
         }
 
@@ -542,9 +518,8 @@ pub struct TabChunks<'a> {
 
 impl TabChunks<'_> {
     pub(crate) fn seek(&mut self, range: Range<TabPoint>) {
-        let (input_start, expanded_char_column, to_next_stop) = self
-            .snapshot
-            .tab_point_to_fold_point(range.start, Bias::Left);
+        let (input_start, expanded_char_column, to_next_stop) =
+            self.snapshot.tab_point_to_fold_point(range.start, Bias::Left);
         let input_column = input_start.column();
         let input_start = input_start.to_offset(&self.snapshot.fold_snapshot);
         let input_end = self
@@ -619,10 +594,8 @@ impl<'a> Iterator for TabChunks<'a> {
                         1
                     };
                     let mut len = tab_size - self.column % tab_size;
-                    let next_output_position = cmp::min(
-                        self.output_position + Point::new(0, len),
-                        self.max_output_position,
-                    );
+                    let next_output_position =
+                        cmp::min(self.output_position + Point::new(0, len), self.max_output_position);
                     len = next_output_position.column - self.output_position.column;
                     self.column += len;
                     self.input_column += 1;
@@ -695,9 +668,7 @@ mod tests {
                     if expanded_bytes > column {
                         expanded_chars -= expanded_bytes - column;
                         return match bias {
-                            Bias::Left => {
-                                (collapsed_bytes, expanded_chars, expanded_bytes - column)
-                            }
+                            Bias::Left => (collapsed_bytes, expanded_chars, expanded_bytes - column),
                             Bias::Right => (collapsed_bytes + 1, expanded_chars, 0),
                         };
                     }
@@ -755,8 +726,7 @@ mod tests {
         fn expected_to_fold_point(&self, output: TabPoint, bias: Bias) -> (FoldPoint, u32, u32) {
             let chars = self.fold_snapshot.chars_at(FoldPoint::new(output.row(), 0));
             let expanded = output.column();
-            let (collapsed, expanded_char_column, to_next_stop) =
-                self.expected_collapse_tabs(chars, expanded, bias);
+            let (collapsed, expanded_char_column, to_next_stop) = self.expected_collapse_tabs(chars, expanded, bias);
             (
                 FoldPoint::new(output.row(), collapsed),
                 expanded_char_column,
@@ -1022,8 +992,7 @@ mod tests {
             let mut chunks = Vec::new();
             let mut was_tab = false;
             let mut text = String::new();
-            for chunk in snapshot.chunks(start..snapshot.max_point(), false, Highlights::default())
-            {
+            for chunk in snapshot.chunks(start..snapshot.max_point(), false, Highlights::default()) {
                 if chunk.is_tab != was_tab {
                     if !text.is_empty() {
                         chunks.push((mem::take(&mut text), was_tab));
@@ -1045,9 +1014,7 @@ mod tests {
         let tab_size = NonZeroU32::new(rng.random_range(1..=4)).unwrap();
         let len = rng.random_range(0..30);
         let buffer = if rng.random() {
-            let text = util::RandomCharIter::new(&mut rng)
-                .take(len)
-                .collect::<String>();
+            let text = util::RandomCharIter::new(&mut rng).take(len).collect::<String>();
             MultiBuffer::build_simple(&text, cx)
         } else {
             MultiBuffer::build_random(&mut rng, cx)
@@ -1068,11 +1035,7 @@ mod tests {
         let tabs_snapshot = tab_map.set_max_expansion_column(32);
 
         let text = text::Rope::from(tabs_snapshot.text().as_str());
-        log::info!(
-            "TabMap text (tab size: {}): {:?}",
-            tab_size,
-            tabs_snapshot.text(),
-        );
+        log::info!("TabMap text (tab size: {}): {:?}", tab_size, tabs_snapshot.text(),);
 
         for _ in 0..5 {
             let end_row = rng.random_range(0..=text.max_point().row);
@@ -1080,8 +1043,7 @@ mod tests {
             let mut end = TabPoint(text.clip_point(Point::new(end_row, end_column), Bias::Right));
             let start_row = rng.random_range(0..=text.max_point().row);
             let start_column = rng.random_range(0..=text.line_len(start_row));
-            let mut start =
-                TabPoint(text.clip_point(Point::new(start_row, start_column), Bias::Left));
+            let mut start = TabPoint(text.clip_point(Point::new(start_row, start_column), Bias::Left));
             if start > end {
                 mem::swap(&mut start, &mut end);
             }
@@ -1110,11 +1072,7 @@ mod tests {
         }
 
         for row in 0..=text.max_point().row {
-            assert_eq!(
-                tabs_snapshot.line_len(row),
-                text.line_len(row),
-                "line_len({row})"
-            );
+            assert_eq!(tabs_snapshot.line_len(row), text.line_len(row), "line_len({row})");
         }
     }
 
@@ -1124,9 +1082,7 @@ mod tests {
         let len = rng.random_range(0..=2000);
 
         // Generate random text using RandomCharIter
-        let text = util::RandomCharIter::new(&mut rng)
-            .take(len)
-            .collect::<String>();
+        let text = util::RandomCharIter::new(&mut rng).take(len).collect::<String>();
 
         // Create buffer and tab map
         let buffer = MultiBuffer::build_simple(&text, cx);
@@ -1367,9 +1323,7 @@ mod tests {
     fn test_tab_stop_cursor_random_utf16(cx: &mut gpui::App, mut rng: StdRng) {
         // Generate random input string with up to 512 characters including tabs
         let len = rng.random_range(0..=2048);
-        let input = util::RandomCharIter::new(&mut rng)
-            .take(len)
-            .collect::<String>();
+        let input = util::RandomCharIter::new(&mut rng).take(len).collect::<String>();
 
         // Build the buffer and create cursor
         let buffer = MultiBuffer::build_simple(&input, cx);
@@ -1494,10 +1448,8 @@ where
 
         let mut distance_traversed = 0;
 
-        while let Some((mut chunk, chunk_position)) = self
-            .current_chunk
-            .take()
-            .or_else(|| self.chunks.next().zip(Some(0)))
+        while let Some((mut chunk, chunk_position)) =
+            self.current_chunk.take().or_else(|| self.chunks.next().zip(Some(0)))
         {
             if chunk.tabs == 0 {
                 let chunk_distance = chunk.text.len() as u32 - chunk_position;
@@ -1530,10 +1482,8 @@ where
             if distance_traversed + tab_position - chunk_position > distance {
                 let cursor_position = distance_traversed.abs_diff(distance);
 
-                self.char_offset += get_char_offset(
-                    chunk_position..(chunk_position + cursor_position - 1),
-                    chunk.chars,
-                );
+                self.char_offset +=
+                    get_char_offset(chunk_position..(chunk_position + cursor_position - 1), chunk.chars);
                 self.current_chunk = Some((chunk, cursor_position + chunk_position));
                 self.byte_offset += cursor_position;
 
@@ -1572,11 +1522,7 @@ where
 #[inline(always)]
 fn get_char_offset(range: Range<u32>, bit_map: u128) -> u32 {
     if range.start == range.end {
-        return if (1u128 << range.start) & bit_map == 0 {
-            0
-        } else {
-            1
-        };
+        return if (1u128 << range.start) & bit_map == 0 { 0 } else { 1 };
     }
     let end_shift: u128 = 127u128 - range.end as u128;
     let mut bit_mask = (u128::MAX >> range.start) << range.start;

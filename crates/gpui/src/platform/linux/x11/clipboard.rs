@@ -38,9 +38,8 @@ use x11rb::{
     protocol::{
         Event,
         xproto::{
-            Atom, AtomEnum, ConnectionExt as _, CreateWindowAux, EventMask, PropMode, Property,
-            PropertyNotifyEvent, SELECTION_NOTIFY_EVENT, SelectionNotifyEvent,
-            SelectionRequestEvent, Time, WindowClass,
+            Atom, AtomEnum, ConnectionExt as _, CreateWindowAux, EventMask, PropMode, Property, PropertyNotifyEvent,
+            SELECTION_NOTIFY_EVENT, SelectionNotifyEvent, SelectionRequestEvent, Time, WindowClass,
         },
     },
     rust_connection::RustConnection,
@@ -141,10 +140,8 @@ struct Inner {
 impl XContext {
     fn new() -> Result<Self> {
         // create a new connection to an X11 server
-        let (conn, screen_num): (RustConnection, _) =
-            RustConnection::connect(None).map_err(|_| {
-                Error::unknown("X11 server connection timed out because it was unreachable")
-            })?;
+        let (conn, screen_num): (RustConnection, _) = RustConnection::connect(None)
+            .map_err(|_| Error::unknown("X11 server connection timed out because it was unreachable"))?;
         let screen = conn
             .setup()
             .roots
@@ -226,12 +223,7 @@ impl Inner {
         })
     }
 
-    fn write(
-        &self,
-        data: Vec<ClipboardData>,
-        selection: ClipboardKind,
-        wait: WaitConfig,
-    ) -> Result<()> {
+    fn write(&self, data: Vec<ClipboardData>, selection: ClipboardKind, wait: WaitConfig) -> Result<()> {
         if self.serve_stopped.load(Ordering::Relaxed) {
             return Err(Error::unknown(
                 "The clipboard handler thread seems to have stopped. Logging messages may reveal the cause. (See the `log` crate.)",
@@ -298,27 +290,21 @@ impl Inner {
         }
         let reader = XContext::new()?;
 
-        let highest_precedence_format =
-            match self.read_single(&reader, selection, self.atoms.TARGETS) {
-                Err(err) => {
-                    log::trace!("Clipboard TARGETS query failed with {err:?}");
+        let highest_precedence_format = match self.read_single(&reader, selection, self.atoms.TARGETS) {
+            Err(err) => {
+                log::trace!("Clipboard TARGETS query failed with {err:?}");
+                None
+            }
+            Ok(ClipboardData { bytes, format }) => {
+                if format == self.atoms.ATOM {
+                    let available_formats = Self::parse_formats(&bytes);
+                    formats.iter().find(|format| available_formats.contains(format))
+                } else {
+                    log::trace!("Unexpected clipboard TARGETS format {}", self.atom_name(format));
                     None
                 }
-                Ok(ClipboardData { bytes, format }) => {
-                    if format == self.atoms.ATOM {
-                        let available_formats = Self::parse_formats(&bytes);
-                        formats
-                            .iter()
-                            .find(|format| available_formats.contains(format))
-                    } else {
-                        log::trace!(
-                            "Unexpected clipboard TARGETS format {}",
-                            self.atom_name(format)
-                        );
-                        None
-                    }
-                }
-            };
+            }
+        };
 
         if let Some(&format) = highest_precedence_format {
             let data = self.read_single(&reader, selection, format)?;
@@ -369,12 +355,7 @@ impl Inner {
             .collect()
     }
 
-    fn read_single(
-        &self,
-        reader: &XContext,
-        selection: ClipboardKind,
-        target_format: Atom,
-    ) -> Result<ClipboardData> {
+    fn read_single(&self, reader: &XContext, selection: ClipboardKind, target_format: Atom) -> Result<ClipboardData> {
         // Delete the property so that we can detect (using property notify)
         // when the selection owner receives our request.
         reader
@@ -452,10 +433,7 @@ impl Inner {
                         });
                     }
                 }
-                _ => log::trace!(
-                    "An unexpected event arrived while reading the clipboard: {:?}",
-                    event
-                ),
+                _ => log::trace!("An unexpected event arrived while reading the clipboard: {:?}", event),
             }
         }
         log::info!("Time-out hit while reading the clipboard.");
@@ -565,14 +543,7 @@ impl Inner {
         // request the selection
         let mut reply = reader
             .conn
-            .get_property(
-                true,
-                event.requestor,
-                event.property,
-                property_type,
-                0,
-                u32::MAX / 4,
-            )
+            .get_property(true, event.requestor, event.property, property_type, 0, u32::MAX / 4)
             .map_err(into_unknown)?
             .reply()
             .map_err(into_unknown)?;
@@ -585,24 +556,14 @@ impl Inner {
             // property type. But the type didn't match in the previous call.
             reply = reader
                 .conn
-                .get_property(
-                    true,
-                    event.requestor,
-                    event.property,
-                    self.atoms.INCR,
-                    0,
-                    u32::MAX / 4,
-                )
+                .get_property(true, event.requestor, event.property, self.atoms.INCR, 0, u32::MAX / 4)
                 .map_err(into_unknown)?
                 .reply()
                 .map_err(into_unknown)?;
             log::trace!("Receiving INCR segments");
             *using_incr = true;
             if reply.value_len == 4 {
-                let min_data_len = reply
-                    .value32()
-                    .and_then(|mut vals| vals.next())
-                    .unwrap_or(0);
+                let min_data_len = reply.value32().and_then(|mut vals| vals.next()).unwrap_or(0);
                 incr_data.reserve(min_data_len as usize);
             }
             Ok(ReadSelNotifyResult::IncrStarted)
@@ -678,10 +639,7 @@ impl Inner {
         let success;
         // we are asked for a list of supported conversion targets
         if event.target == self.atoms.TARGETS {
-            log::trace!(
-                "Handling TARGETS, dst property is {}",
-                self.atom_name(event.property)
-            );
+            log::trace!("Handling TARGETS, dst property is {}", self.atom_name(event.property));
             let mut targets = Vec::with_capacity(10);
             targets.push(self.atoms.TARGETS);
             targets.push(self.atoms.SAVE_TARGETS);
@@ -739,11 +697,7 @@ impl Inner {
             }
         }
         // on failure we notify the requester of it
-        let property = if success {
-            event.property
-        } else {
-            AtomEnum::NONE.into()
-        };
+        let property = if success { event.property } else { AtomEnum::NONE.into() };
         // tell the requestor that we finished sending data
         self.server
             .conn
@@ -777,12 +731,7 @@ impl Inner {
             // We are not owning the clipboard, nothing to do.
             return Ok(());
         }
-        if self
-            .selection_of(ClipboardKind::Clipboard)
-            .data
-            .read()
-            .is_none()
-        {
+        if self.selection_of(ClipboardKind::Clipboard).data.read().is_none() {
             // If we don't have any data, there's nothing to do.
             return Ok(());
         }
@@ -810,17 +759,13 @@ impl Inner {
 
         // Note that we are using a parking_lot condvar here, which doesn't wake up
         // spuriously
-        let result = self
-            .handover_cv
-            .wait_for(&mut handover_state, max_handover_duration);
+        let result = self.handover_cv.wait_for(&mut handover_state, max_handover_duration);
 
         if *handover_state == ManagerHandoverState::Finished {
             return Ok(());
         }
         if result.timed_out() {
-            log::warn!(
-                "Could not hand the clipboard contents over to the clipboard manager. The request timed out."
-            );
+            log::warn!("Could not hand the clipboard contents over to the clipboard manager. The request timed out.");
             return Ok(());
         }
 
@@ -884,9 +829,7 @@ fn serve_requests(context: Arc<Inner>) -> Result<(), Box<dyn std::error::Error>>
                     context.atom_name(event.target),
                 );
                 // Someone is requesting the clipboard content from us.
-                context
-                    .handle_selection_request(event)
-                    .map_err(into_unknown)?;
+                context.handle_selection_request(event).map_err(into_unknown)?;
 
                 // if we are in the progress of saving to the clipboard manager
                 // make sure we save that we have finished writing
@@ -920,9 +863,7 @@ fn serve_requests(context: Arc<Inner>) -> Result<(), Box<dyn std::error::Error>>
                     // Note that some clipboard managers send a selection notify
                     // before even sending a request for the actual contents.
                     // (That's why we use the "notified" & "written" flags)
-                    log::trace!(
-                        "The clipboard manager indicated that it's done requesting the contents from us."
-                    );
+                    log::trace!("The clipboard manager indicated that it's done requesting the contents from us.");
                     notified = true;
 
                     // One would think that we could also finish if the property
@@ -976,12 +917,7 @@ impl Clipboard {
         Ok(Self { inner: ctx })
     }
 
-    pub(crate) fn set_text(
-        &self,
-        message: Cow<'_, str>,
-        selection: ClipboardKind,
-        wait: WaitConfig,
-    ) -> Result<()> {
+    pub(crate) fn set_text(&self, message: Cow<'_, str>, selection: ClipboardKind, wait: WaitConfig) -> Result<()> {
         let data = vec![ClipboardData {
             bytes: message.into_owned().into_bytes(),
             format: self.inner.atoms.UTF8_STRING,
@@ -990,12 +926,7 @@ impl Clipboard {
     }
 
     #[allow(unused)]
-    pub(crate) fn set_image(
-        &self,
-        image: Image,
-        selection: ClipboardKind,
-        wait: WaitConfig,
-    ) -> Result<()> {
+    pub(crate) fn set_image(&self, image: Image, selection: ClipboardKind, wait: WaitConfig) -> Result<()> {
         let format = match image.format {
             ImageFormat::Png => self.inner.atoms.PNG__MIME,
             ImageFormat::Jpeg => self.inner.atoms.JPEG_MIME,
@@ -1058,10 +989,7 @@ impl Clipboard {
 
         let result = self.inner.read(&format_atoms, selection)?;
 
-        log::trace!(
-            "read clipboard as format {:?}",
-            self.inner.atom_name(result.format)
-        );
+        log::trace!("read clipboard as format {:?}", self.inner.atom_name(result.format));
 
         for (format_atom, image_format) in image_format_atoms.into_iter().zip(image_formats) {
             if result.format == format_atom {
@@ -1105,18 +1033,10 @@ impl Drop for Clipboard {
             // and send the data to the clipboard manager
 
             if let Err(e) = self.inner.ask_clipboard_manager_to_request_our_data() {
-                log::error!(
-                    "Could not hand the clipboard data over to the clipboard manager: {}",
-                    e
-                );
+                log::error!("Could not hand the clipboard data over to the clipboard manager: {}", e);
             }
             let global_cb = global_cb.take();
-            if let Err(e) = self
-                .inner
-                .server
-                .conn
-                .destroy_window(self.inner.server.win_id)
-            {
+            if let Err(e) = self.inner.server.conn.destroy_window(self.inner.server.win_id) {
                 log::error!("Failed to destroy the clipboard window. Error: {}", e);
                 return;
             }
@@ -1137,10 +1057,7 @@ impl Drop for Clipboard {
                     message = None;
                 }
                 if let Some(message) = message {
-                    log::error!(
-                        "The clipboard server thread panicked. Panic message: '{}'",
-                        message,
-                    );
+                    log::error!("The clipboard server thread panicked. Panic message: '{}'", message,);
                 } else {
                     log::error!("The clipboard server thread panicked.");
                 }

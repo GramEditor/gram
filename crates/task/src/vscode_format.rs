@@ -42,10 +42,7 @@ enum Command {
 }
 
 impl VsCodeTaskDefinition {
-    fn into_gram_format(
-        self,
-        replacer: &EnvVariableReplacer,
-    ) -> anyhow::Result<Option<TaskTemplate>> {
+    fn into_gram_format(self, replacer: &EnvVariableReplacer) -> anyhow::Result<Option<TaskTemplate>> {
         if self.other_attributes.contains_key("dependsOn") {
             log::warn!(
                 "Skipping deserializing of a task `{}` with the unsupported `dependsOn` key",
@@ -94,26 +91,15 @@ impl TryFrom<VsCodeTaskFile> for TaskTemplates {
 
     fn try_from(value: VsCodeTaskFile) -> Result<Self, Self::Error> {
         let replacer = EnvVariableReplacer::new(HashMap::from_iter([
-            (
-                "workspaceFolder".to_owned(),
-                VariableName::WorktreeRoot.to_string(),
-            ),
+            ("workspaceFolder".to_owned(), VariableName::WorktreeRoot.to_string()),
             ("file".to_owned(), VariableName::File.to_string()),
             ("lineNumber".to_owned(), VariableName::Row.to_string()),
-            (
-                "selectedText".to_owned(),
-                VariableName::SelectedText.to_string(),
-            ),
+            ("selectedText".to_owned(), VariableName::SelectedText.to_string()),
         ]));
         let templates = value
             .tasks
             .into_iter()
-            .filter_map(|vscode_definition| {
-                vscode_definition
-                    .into_gram_format(&replacer)
-                    .log_err()
-                    .flatten()
-            })
+            .filter_map(|vscode_definition| vscode_definition.into_gram_format(&replacer).log_err().flatten())
             .collect();
         Ok(Self(templates))
     }
@@ -155,10 +141,7 @@ mod tests {
         assert_eq!(replacer.replace("${PATH}"), "${PATH}");
         assert_eq!(replacer.replace("${PATH:food}"), "${PATH:food}");
         // And now, the actual replacing
-        let replacer = EnvVariableReplacer::new(HashMap::from_iter([(
-            "PATH".to_owned(),
-            "GRAM_PATH".to_owned(),
-        )]));
+        let replacer = EnvVariableReplacer::new(HashMap::from_iter([("PATH".to_owned(), "GRAM_PATH".to_owned())]));
         assert_eq!(replacer.replace("Food"), "Food");
         assert_eq!(
             replacer.replace("$PATH is an environment variable"),
@@ -171,8 +154,7 @@ mod tests {
     #[test]
     fn can_deserialize_ts_tasks() {
         const TYPESCRIPT_TASKS: &str = include_str!("../test_data/typescript.json");
-        let vscode_definitions: VsCodeTaskFile =
-            serde_json_lenient::from_str(TYPESCRIPT_TASKS).unwrap();
+        let vscode_definitions: VsCodeTaskFile = serde_json_lenient::from_str(TYPESCRIPT_TASKS).unwrap();
 
         let expected = vec![
             VsCodeTaskDefinition {
@@ -261,8 +243,7 @@ mod tests {
     #[test]
     fn can_deserialize_rust_analyzer_tasks() {
         const RUST_ANALYZER_TASKS: &str = include_str!("../test_data/rust-analyzer.json");
-        let vscode_definitions: VsCodeTaskFile =
-            serde_json_lenient::from_str(RUST_ANALYZER_TASKS).unwrap();
+        let vscode_definitions: VsCodeTaskFile = serde_json_lenient::from_str(RUST_ANALYZER_TASKS).unwrap();
         let expected = vec![
             VsCodeTaskDefinition {
                 label: "Build Extension in Background".to_string(),

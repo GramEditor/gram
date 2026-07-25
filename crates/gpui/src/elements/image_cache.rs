@@ -1,8 +1,7 @@
 use crate::{
-    AnyElement, AnyEntity, App, AppContext, Asset, AssetLogger, Bounds, Element, ElementId, Entity,
-    GlobalElementId, ImageAssetLoader, ImageCacheError, InspectorElementId, IntoElement, LayoutId,
-    ParentElement, Pixels, RenderImage, Resource, Style, StyleRefinement, Styled, Task, Window,
-    hash,
+    AnyElement, AnyEntity, App, AppContext, Asset, AssetLogger, Bounds, Element, ElementId, Entity, GlobalElementId,
+    ImageAssetLoader, ImageCacheError, InspectorElementId, IntoElement, LayoutId, ParentElement, Pixels, RenderImage,
+    Resource, Style, StyleRefinement, Styled, Task, Window, hash,
 };
 
 use futures::{FutureExt, future::Shared};
@@ -178,9 +177,7 @@ impl std::fmt::Debug for ImageCacheItem {
             ImageCacheItem::Loading(_) => &"Loading...".to_string(),
             ImageCacheItem::Loaded(render_image) => &format!("{:?}", render_image),
         };
-        f.debug_struct("ImageCacheItem")
-            .field("status", status)
-            .finish()
+        f.debug_struct("ImageCacheItem").field("status", status).finish()
     }
 }
 
@@ -340,13 +337,10 @@ impl ImageCacheProvider for RetainAllImageCacheProvider {
     fn provide(&mut self, window: &mut Window, cx: &mut App) -> AnyImageCache {
         window
             .with_global_id(self.id.clone(), |global_id, window| {
-                window.with_element_state::<Entity<RetainAllImageCache>, _>(
-                    global_id,
-                    |cache, _window| {
-                        let mut cache = cache.unwrap_or_else(|| RetainAllImageCache::new(cx));
-                        (cache.clone(), cache)
-                    },
-                )
+                window.with_element_state::<Entity<RetainAllImageCache>, _>(global_id, |cache, _window| {
+                    let mut cache = cache.unwrap_or_else(|| RetainAllImageCache::new(cx));
+                    (cache.clone(), cache)
+                })
             })
             .into()
     }

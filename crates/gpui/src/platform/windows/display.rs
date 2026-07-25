@@ -50,11 +50,7 @@ impl WindowsDisplay {
             display_id,
             scale_factor,
             bounds: Bounds {
-                origin: logical_point(
-                    monitor_size.left as f32,
-                    monitor_size.top as f32,
-                    scale_factor,
-                ),
+                origin: logical_point(monitor_size.left as f32, monitor_size.top as f32, scale_factor),
                 size: physical_size.to_pixels(scale_factor),
             },
             visible_bounds: Bounds {
@@ -93,11 +89,7 @@ impl WindowsDisplay {
             display_id: DisplayId(display_id as _),
             scale_factor,
             bounds: Bounds {
-                origin: logical_point(
-                    monitor_size.left as f32,
-                    monitor_size.top as f32,
-                    scale_factor,
-                ),
+                origin: logical_point(monitor_size.left as f32, monitor_size.top as f32, scale_factor),
                 size: physical_size.to_pixels(scale_factor),
             },
             visible_bounds: Bounds {
@@ -132,11 +124,7 @@ impl WindowsDisplay {
             display_id,
             scale_factor,
             bounds: Bounds {
-                origin: logical_point(
-                    monitor_size.left as f32,
-                    monitor_size.top as f32,
-                    scale_factor,
-                ),
+                origin: logical_point(monitor_size.left as f32, monitor_size.top as f32, scale_factor),
                 size: physical_size.to_pixels(scale_factor),
             },
             visible_bounds: Bounds {
@@ -160,10 +148,7 @@ impl WindowsDisplay {
         const POINT_ZERO: POINT = POINT { x: 0, y: 0 };
         let monitor = unsafe { MonitorFromPoint(POINT_ZERO, MONITOR_DEFAULTTOPRIMARY) };
         if monitor.is_invalid() {
-            log::error!(
-                "can not find the primary monitor: {}",
-                std::io::Error::last_os_error()
-            );
+            log::error!("can not find the primary monitor: {}", std::io::Error::last_os_error());
             return None;
         }
         WindowsDisplay::new_with_handle(monitor).log_err()
@@ -192,9 +177,10 @@ impl WindowsDisplay {
             .into_iter()
             .enumerate()
             .filter_map(|(id, handle)| {
-                Some(Rc::new(
-                    WindowsDisplay::new_with_handle_and_id(handle, DisplayId(id as _)).ok()?,
-                ) as Rc<dyn PlatformDisplay>)
+                Some(
+                    Rc::new(WindowsDisplay::new_with_handle_and_id(handle, DisplayId(id as _)).ok()?)
+                        as Rc<dyn PlatformDisplay>,
+                )
             })
             .collect()
     }
@@ -242,12 +228,7 @@ fn available_monitors() -> SmallVec<[HMONITOR; 4]> {
     monitors
 }
 
-unsafe extern "system" fn monitor_enum_proc(
-    hmonitor: HMONITOR,
-    _hdc: HDC,
-    _place: *mut RECT,
-    data: LPARAM,
-) -> BOOL {
+unsafe extern "system" fn monitor_enum_proc(hmonitor: HMONITOR, _hdc: HDC, _place: *mut RECT, data: LPARAM) -> BOOL {
     let monitors = data.0 as *mut SmallVec<[HMONITOR; 4]>;
     unsafe { (*monitors).push(hmonitor) };
     BOOL(1)
@@ -256,12 +237,7 @@ unsafe extern "system" fn monitor_enum_proc(
 fn get_monitor_info(hmonitor: HMONITOR) -> anyhow::Result<MONITORINFOEXW> {
     let mut monitor_info: MONITORINFOEXW = unsafe { std::mem::zeroed() };
     monitor_info.monitorInfo.cbSize = std::mem::size_of::<MONITORINFOEXW>() as u32;
-    let status = unsafe {
-        GetMonitorInfoW(
-            hmonitor,
-            &mut monitor_info as *mut MONITORINFOEXW as *mut MONITORINFO,
-        )
-    };
+    let status = unsafe { GetMonitorInfoW(hmonitor, &mut monitor_info as *mut MONITORINFOEXW as *mut MONITORINFO) };
     if status.as_bool() {
         Ok(monitor_info)
     } else {
@@ -270,10 +246,7 @@ fn get_monitor_info(hmonitor: HMONITOR) -> anyhow::Result<MONITORINFOEXW> {
 }
 
 fn generate_uuid(device_name: &[u16]) -> Uuid {
-    let name = device_name
-        .iter()
-        .flat_map(|&a| a.to_be_bytes())
-        .collect_vec();
+    let name = device_name.iter().flat_map(|&a| a.to_be_bytes()).collect_vec();
     Uuid::new_v5(&Uuid::NAMESPACE_DNS, &name)
 }
 

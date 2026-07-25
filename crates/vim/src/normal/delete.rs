@@ -34,15 +34,8 @@ impl Vim {
                     s.move_with(|map, selection| {
                         let original_head = selection.head();
                         original_columns.insert(selection.id, original_head.column());
-                        let kind = motion.expand_selection(
-                            map,
-                            selection,
-                            times,
-                            &text_layout_details,
-                            forced_motion,
-                        );
-                        ranges_to_copy
-                            .push(selection.start.to_point(map)..selection.end.to_point(map));
+                        let kind = motion.expand_selection(map, selection, times, &text_layout_details, forced_motion);
+                        ranges_to_copy.push(selection.start.to_point(map)..selection.end.to_point(map));
 
                         // When deleting line-wise, we always want to delete a newline.
                         // If there is one after the current line, it goes; otherwise we
@@ -55,8 +48,7 @@ impl Vim {
                             } else if start.row > 0 {
                                 selection.start = Point::new(
                                     start.row - 1,
-                                    map.buffer_snapshot()
-                                        .line_len(MultiBufferRow(start.row - 1)),
+                                    map.buffer_snapshot().line_len(MultiBufferRow(start.row - 1)),
                                 )
                                 .to_display_point(map)
                             }
@@ -124,12 +116,11 @@ impl Vim {
                                 let start = selection.start.to_offset(map, Bias::Left);
                                 if selection.start.row().0 > 0 {
                                     should_move_to_start.insert(selection.id);
-                                    selection.start =
-                                        (start - '\n'.len_utf8()).to_display_point(map);
+                                    selection.start = (start - '\n'.len_utf8()).to_display_point(map);
                                 }
                             };
-                        let range = selection.start.to_offset(map, Bias::Left)
-                            ..selection.end.to_offset(map, Bias::Right);
+                        let range =
+                            selection.start.to_offset(map, Bias::Left)..selection.end.to_offset(map, Bias::Right);
                         let contains_only_newlines = map
                             .buffer_chars_at(range.start)
                             .take_while(|(_, p)| p < &range.end)
@@ -287,9 +278,7 @@ mod test {
         .await
         .assert_matches();
 
-        cx.simulate("d shift-w", "Test teˇst-test test")
-            .await
-            .assert_matches();
+        cx.simulate("d shift-w", "Test teˇst-test test").await.assert_matches();
     }
 
     #[gpui::test]
@@ -314,9 +303,7 @@ mod test {
         .await
         .assert_matches();
 
-        cx.simulate("d e", "Test teˇst-test test")
-            .await
-            .assert_matches();
+        cx.simulate("d e", "Test teˇst-test test").await.assert_matches();
     }
 
     #[gpui::test]
@@ -324,9 +311,7 @@ mod test {
         let mut cx = NeovimBackedTestContext::new(cx).await;
         cx.simulate("d b", "Teˇst Test").await.assert_matches();
         cx.simulate("d b", "Test ˇtest").await.assert_matches();
-        cx.simulate("d b", "Test1 test2 ˇtest3")
-            .await
-            .assert_matches();
+        cx.simulate("d b", "Test1 test2 ˇtest3").await.assert_matches();
         cx.simulate(
             "d b",
             indoc! {"
@@ -345,9 +330,7 @@ mod test {
         .await
         .assert_matches();
 
-        cx.simulate("d shift-b", "Test test-test ˇtest")
-            .await
-            .assert_matches();
+        cx.simulate("d shift-b", "Test test-test ˇtest").await.assert_matches();
     }
 
     #[gpui::test]

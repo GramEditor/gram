@@ -2,9 +2,7 @@ use std::sync::Arc;
 
 use git::GitHostingProviderRegistry;
 use gpui::App;
-use settings::{
-    GitHostingProviderConfig, GitHostingProviderKind, RegisterSetting, Settings, SettingsStore,
-};
+use settings::{GitHostingProviderConfig, GitHostingProviderKind, RegisterSetting, Settings, SettingsStore};
 use url::Url;
 use util::ResultExt as _;
 
@@ -41,15 +39,11 @@ fn update_git_hosting_providers_from_settings(cx: &mut App) {
             let url = Url::parse(&provider.base_url).log_err()?;
 
             Some(match provider.provider {
-                GitHostingProviderKind::Bitbucket => {
-                    Arc::new(Bitbucket::new(&provider.name, url)) as _
-                }
+                GitHostingProviderKind::Bitbucket => Arc::new(Bitbucket::new(&provider.name, url)) as _,
                 GitHostingProviderKind::Github => Arc::new(Github::new(&provider.name, url)) as _,
                 GitHostingProviderKind::Gitlab => Arc::new(Gitlab::new(&provider.name, url)) as _,
                 GitHostingProviderKind::Forgejo => Arc::new(Forgejo::new(&provider.name, url)) as _,
-                GitHostingProviderKind::Sourcehut => {
-                    Arc::new(Sourcehut::new(&provider.name, url)) as _
-                }
+                GitHostingProviderKind::Sourcehut => Arc::new(Sourcehut::new(&provider.name, url)) as _,
             })
         });
 
@@ -64,12 +58,7 @@ pub struct GitHostingProviderSettings {
 impl Settings for GitHostingProviderSettings {
     fn from_settings(content: &settings::SettingsContent) -> Self {
         Self {
-            git_hosting_providers: content
-                .project
-                .git_hosting_providers
-                .clone()
-                .unwrap()
-                .into(),
+            git_hosting_providers: content.project.git_hosting_providers.clone().unwrap().into(),
         }
     }
 }

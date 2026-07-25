@@ -1,7 +1,5 @@
 use fuzzy::{StringMatch, StringMatchCandidate, match_strings};
-use gpui::{
-    App, Context, DismissEvent, Entity, EventEmitter, Focusable, Render, Task, WeakEntity, Window,
-};
+use gpui::{App, Context, DismissEvent, Entity, EventEmitter, Focusable, Render, Task, WeakEntity, Window};
 use picker::{Picker, PickerDelegate};
 use settings::{ActiveSettingsProfileName, SettingsStore};
 use ui::{HighlightedLabel, ListItem, ListItemSpacing, prelude::*};
@@ -15,11 +13,7 @@ pub fn init(cx: &mut App) {
     });
 }
 
-fn toggle_settings_profile_selector(
-    workspace: &mut Workspace,
-    window: &mut Window,
-    cx: &mut Context<Workspace>,
-) {
+fn toggle_settings_profile_selector(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>) {
     workspace.toggle_modal(window, cx, |window, cx| {
         let delegate = SettingsProfileSelectorDelegate::new(cx.entity().downgrade(), window, cx);
         SettingsProfileSelector::new(delegate, window, cx)
@@ -47,11 +41,7 @@ impl Render for SettingsProfileSelector {
 }
 
 impl SettingsProfileSelector {
-    pub fn new(
-        delegate: SettingsProfileSelectorDelegate,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn new(delegate: SettingsProfileSelectorDelegate, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let picker = cx.new(|cx| Picker::uniform_list(delegate, window, cx));
         Self { picker }
     }
@@ -91,9 +81,7 @@ impl SettingsProfileSelectorDelegate {
             })
             .collect();
 
-        let profile_name = cx
-            .try_global::<ActiveSettingsProfileName>()
-            .map(|p| p.0.clone());
+        let profile_name = cx.try_global::<ActiveSettingsProfileName>().map(|p| p.0.clone());
 
         let mut this = Self {
             matches,
@@ -120,10 +108,7 @@ impl SettingsProfileSelectorDelegate {
             .unwrap_or(self.selected_index);
     }
 
-    fn set_selected_profile(
-        &self,
-        cx: &mut Context<Picker<SettingsProfileSelectorDelegate>>,
-    ) -> Option<String> {
+    fn set_selected_profile(&self, cx: &mut Context<Picker<SettingsProfileSelectorDelegate>>) -> Option<String> {
         let mat = self.matches.get(self.selected_index)?;
         let profile_name = self.profile_names.get(mat.candidate_id)?;
         Self::update_active_profile_name_global(profile_name.clone(), cx)
@@ -198,16 +183,7 @@ impl PickerDelegate for SettingsProfileSelectorDelegate {
                     })
                     .collect()
             } else {
-                match_strings(
-                    &candidates,
-                    &query,
-                    false,
-                    true,
-                    100,
-                    &Default::default(),
-                    background,
-                )
-                .await
+                match_strings(&candidates, &query, false, true, 100, &Default::default(), background).await
             };
 
             this.update_in(cx, |this, _, cx| {
@@ -222,12 +198,7 @@ impl PickerDelegate for SettingsProfileSelectorDelegate {
         })
     }
 
-    fn confirm(
-        &mut self,
-        _: bool,
-        _: &mut Window,
-        cx: &mut Context<Picker<SettingsProfileSelectorDelegate>>,
-    ) {
+    fn confirm(&mut self, _: bool, _: &mut Window, cx: &mut Context<Picker<SettingsProfileSelectorDelegate>>) {
         self.selection_completed = true;
         self.selector
             .update(cx, |_, cx| {
@@ -236,16 +207,9 @@ impl PickerDelegate for SettingsProfileSelectorDelegate {
             .ok();
     }
 
-    fn dismissed(
-        &mut self,
-        _: &mut Window,
-        cx: &mut Context<Picker<SettingsProfileSelectorDelegate>>,
-    ) {
+    fn dismissed(&mut self, _: &mut Window, cx: &mut Context<Picker<SettingsProfileSelectorDelegate>>) {
         if !self.selection_completed {
-            SettingsProfileSelectorDelegate::update_active_profile_name_global(
-                self.original_profile_name.clone(),
-                cx,
-            );
+            SettingsProfileSelectorDelegate::update_active_profile_name_global(self.original_profile_name.clone(), cx);
         }
         self.selector.update(cx, |_, cx| cx.emit(DismissEvent)).ok();
     }
@@ -265,10 +229,7 @@ impl PickerDelegate for SettingsProfileSelectorDelegate {
                 .inset(true)
                 .spacing(ListItemSpacing::Sparse)
                 .toggle_state(selected)
-                .child(HighlightedLabel::new(
-                    display_name(profile_name),
-                    mat.positions.clone(),
-                )),
+                .child(HighlightedLabel::new(display_name(profile_name), mat.positions.clone())),
         )
     }
 }
@@ -280,6 +241,7 @@ fn display_name(profile_name: &Option<String>) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use app_actions::settings_profile_selector;
     use editor;
     use gpui::{TestAppContext, UpdateGlobal, VisualTestContext};
     use menu::{Cancel, Confirm, SelectNext, SelectPrevious};
@@ -288,7 +250,6 @@ mod tests {
     use settings::Settings;
     use theme::{self, ThemeSettings};
     use workspace::{self, AppState};
-    use app_actions::settings_profile_selector;
 
     async fn init_test(
         profiles_json: serde_json::Value,
@@ -312,16 +273,13 @@ mod tests {
                     "profiles": profiles_json,
                 });
 
-                store
-                    .set_user_settings(&settings_json.to_string(), cx)
-                    .unwrap();
+                store.set_user_settings(&settings_json.to_string(), cx).unwrap();
             });
         });
 
         let fs = FakeFs::new(cx.executor());
         let project = Project::test(fs, ["/test".as_ref()], cx).await;
-        let (workspace, cx) =
-            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
 
         cx.update(|_, cx| {
             assert!(!cx.has_global::<ActiveSettingsProfileName>());
@@ -367,10 +325,7 @@ mod tests {
         picker.read_with(cx, |picker, cx| {
             assert_eq!(picker.delegate.matches.len(), 3);
             assert_eq!(picker.delegate.matches[0].string, display_name(&None));
-            assert_eq!(
-                picker.delegate.matches[1].string,
-                classroom_and_streaming_profile_name
-            );
+            assert_eq!(picker.delegate.matches[1].string, classroom_and_streaming_profile_name);
             assert_eq!(picker.delegate.matches[2].string, demo_videos_profile_name);
             assert_eq!(picker.delegate.matches.get(3), None);
 
@@ -399,8 +354,7 @@ mod tests {
             );
 
             assert_eq!(
-                cx.try_global::<ActiveSettingsProfileName>()
-                    .map(|p| p.0.clone()),
+                cx.try_global::<ActiveSettingsProfileName>().map(|p| p.0.clone()),
                 Some(classroom_and_streaming_profile_name.clone())
             );
 
@@ -427,8 +381,7 @@ mod tests {
             );
 
             assert_eq!(
-                cx.try_global::<ActiveSettingsProfileName>()
-                    .map(|p| p.0.clone()),
+                cx.try_global::<ActiveSettingsProfileName>().map(|p| p.0.clone()),
                 Some(classroom_and_streaming_profile_name.clone())
             );
 
@@ -445,8 +398,7 @@ mod tests {
             );
 
             assert_eq!(
-                cx.try_global::<ActiveSettingsProfileName>()
-                    .map(|p| p.0.clone()),
+                cx.try_global::<ActiveSettingsProfileName>().map(|p| p.0.clone()),
                 Some(demo_videos_profile_name.clone())
             );
 
@@ -457,8 +409,7 @@ mod tests {
 
         cx.update(|_, cx| {
             assert_eq!(
-                cx.try_global::<ActiveSettingsProfileName>()
-                    .map(|p| p.0.clone()),
+                cx.try_global::<ActiveSettingsProfileName>().map(|p| p.0.clone()),
                 Some(demo_videos_profile_name.clone())
             );
             assert_eq!(ThemeSettings::get_global(cx).buffer_font_size(cx), px(15.0));
@@ -475,8 +426,7 @@ mod tests {
             );
 
             assert_eq!(
-                cx.try_global::<ActiveSettingsProfileName>()
-                    .map(|p| p.0.clone()),
+                cx.try_global::<ActiveSettingsProfileName>().map(|p| p.0.clone()),
                 Some(demo_videos_profile_name.clone())
             );
             assert_eq!(ThemeSettings::get_global(cx).buffer_font_size(cx), px(15.0));
@@ -492,8 +442,7 @@ mod tests {
             );
 
             assert_eq!(
-                cx.try_global::<ActiveSettingsProfileName>()
-                    .map(|p| p.0.clone()),
+                cx.try_global::<ActiveSettingsProfileName>().map(|p| p.0.clone()),
                 Some(classroom_and_streaming_profile_name.clone())
             );
 
@@ -504,8 +453,7 @@ mod tests {
 
         cx.update(|_, cx| {
             assert_eq!(
-                cx.try_global::<ActiveSettingsProfileName>()
-                    .map(|p| p.0.clone()),
+                cx.try_global::<ActiveSettingsProfileName>().map(|p| p.0.clone()),
                 Some(demo_videos_profile_name.clone())
             );
 
@@ -523,8 +471,7 @@ mod tests {
             );
 
             assert_eq!(
-                cx.try_global::<ActiveSettingsProfileName>()
-                    .map(|p| p.0.clone()),
+                cx.try_global::<ActiveSettingsProfileName>().map(|p| p.0.clone()),
                 Some(demo_videos_profile_name)
             );
 
@@ -541,8 +488,7 @@ mod tests {
             );
 
             assert_eq!(
-                cx.try_global::<ActiveSettingsProfileName>()
-                    .map(|p| p.0.clone()),
+                cx.try_global::<ActiveSettingsProfileName>().map(|p| p.0.clone()),
                 Some(classroom_and_streaming_profile_name)
             );
 
@@ -555,11 +501,7 @@ mod tests {
             assert_eq!(picker.delegate.selected_index, 0);
             assert_eq!(picker.delegate.selected_profile_name, None);
 
-            assert_eq!(
-                cx.try_global::<ActiveSettingsProfileName>()
-                    .map(|p| p.0.clone()),
-                None
-            );
+            assert_eq!(cx.try_global::<ActiveSettingsProfileName>().map(|p| p.0.clone()), None);
 
             assert_eq!(ThemeSettings::get_global(cx).buffer_font_size(cx), px(10.0));
         });
@@ -573,9 +515,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_settings_profile_selector_is_in_user_configuration_order(
-        cx: &mut TestAppContext,
-    ) {
+    async fn test_settings_profile_selector_is_in_user_configuration_order(cx: &mut TestAppContext) {
         // Must be unique names (HashMap)
         let profiles_json = json!({
             "z": {},

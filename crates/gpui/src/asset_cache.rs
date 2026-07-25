@@ -45,10 +45,7 @@ pub trait Asset: 'static {
     type Output: Clone + Send;
 
     /// Load the asset asynchronously
-    fn load(
-        source: Self::Source,
-        cx: &mut App,
-    ) -> impl Future<Output = Self::Output> + Send + 'static;
+    fn load(source: Self::Source, cx: &mut App) -> impl Future<Output = Self::Output> + Send + 'static;
 }
 
 /// An asset Loader which logs the [`Err`] variant of a [`Result`] during loading
@@ -67,10 +64,7 @@ where
 
     type Output = T::Output;
 
-    fn load(
-        source: Self::Source,
-        cx: &mut App,
-    ) -> impl Future<Output = Self::Output> + Send + 'static {
+    fn load(source: Self::Source, cx: &mut App) -> impl Future<Output = Self::Output> + Send + 'static {
         let load = T::load(source, cx);
         load.inspect_err(|e| log::error!("Failed to load asset: {}", e))
     }

@@ -19,12 +19,7 @@ use std::{
 };
 
 pub trait Scheduler: Send + Sync {
-    fn block(
-        &self,
-        session_id: Option<SessionId>,
-        future: LocalBoxFuture<()>,
-        timeout: Option<Duration>,
-    );
+    fn block(&self, session_id: Option<SessionId>, future: LocalBoxFuture<()>, timeout: Option<Duration>);
     fn schedule_foreground(&self, session_id: SessionId, runnable: Runnable);
     fn schedule_background(&self, runnable: Runnable);
     fn timer(&self, timeout: Duration) -> Timer;

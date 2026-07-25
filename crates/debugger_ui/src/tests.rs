@@ -49,18 +49,12 @@ pub fn init_test(cx: &mut gpui::TestAppContext) {
     });
 }
 
-pub async fn init_test_workspace(
-    project: &Entity<Project>,
-    cx: &mut TestAppContext,
-) -> WindowHandle<Workspace> {
-    let workspace_handle =
-        cx.add_window(|window, cx| Workspace::test_new(project.clone(), window, cx));
+pub async fn init_test_workspace(project: &Entity<Project>, cx: &mut TestAppContext) -> WindowHandle<Workspace> {
+    let workspace_handle = cx.add_window(|window, cx| Workspace::test_new(project.clone(), window, cx));
 
     let debugger_panel = workspace_handle
         .update(cx, |_, window, cx| {
-            cx.spawn_in(window, async move |this, cx| {
-                DebugPanel::load(this, cx).await
-            })
+            cx.spawn_in(window, async move |this, cx| DebugPanel::load(this, cx).await)
         })
         .unwrap()
         .await
@@ -68,9 +62,7 @@ pub async fn init_test_workspace(
 
     let terminal_panel = workspace_handle
         .update(cx, |_, window, cx| {
-            cx.spawn_in(window, async |this, cx| {
-                TerminalPanel::load(this, cx.clone()).await
-            })
+            cx.spawn_in(window, async |this, cx| TerminalPanel::load(this, cx.clone()).await)
         })
         .unwrap()
         .await
@@ -86,16 +78,11 @@ pub async fn init_test_workspace(
 }
 
 #[track_caller]
-pub fn active_debug_session_panel(
-    workspace: WindowHandle<Workspace>,
-    cx: &mut TestAppContext,
-) -> Entity<DebugSession> {
+pub fn active_debug_session_panel(workspace: WindowHandle<Workspace>, cx: &mut TestAppContext) -> Entity<DebugSession> {
     workspace
         .update(cx, |workspace, _window, cx| {
             let debug_panel = workspace.panel::<DebugPanel>(cx).unwrap();
-            debug_panel
-                .update(cx, |this, _| this.active_session())
-                .unwrap()
+            debug_panel.update(cx, |this, _| this.active_session()).unwrap()
         })
         .unwrap()
 }
@@ -108,14 +95,7 @@ pub fn start_debug_session_with<T: Fn(&Arc<DebugAdapterClient>) + 'static>(
 ) -> Result<Entity<Session>> {
     let _subscription = project::debugger::test::intercept_debug_sessions(cx, configure);
     workspace.update(cx, |workspace, window, cx| {
-        workspace.start_debug_session(
-            config.to_scenario(),
-            TaskContext::default(),
-            None,
-            None,
-            window,
-            cx,
-        )
+        workspace.start_debug_session(config.to_scenario(), TaskContext::default(), None, None, window, cx)
     })?;
     cx.run_until_parked();
     let session = workspace.read_with(cx, |workspace, cx| {

@@ -13,9 +13,7 @@ use async_trait::async_trait;
 use codelldb::CodeLldbDebugAdapter;
 use dap::{
     DapRegistry,
-    adapters::{
-        self, AdapterVersion, DapDelegate, DebugAdapter, DebugAdapterBinary, DebugAdapterName,
-    },
+    adapters::{self, AdapterVersion, DapDelegate, DebugAdapter, DebugAdapterBinary, DebugAdapterName},
     configure_tcp_connection,
 };
 use gdb::GdbDebugAdapter;

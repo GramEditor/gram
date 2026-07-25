@@ -34,16 +34,8 @@ impl Workspace {
             }
         }
 
-        if let Some(spawn_in_terminal) =
-            task_to_resolve.resolve_task(&task_source_kind.to_id_base(), task_cx)
-        {
-            self.schedule_resolved_task(
-                task_source_kind,
-                spawn_in_terminal,
-                omit_history,
-                window,
-                cx,
-            );
+        if let Some(spawn_in_terminal) = task_to_resolve.resolve_task(&task_source_kind.to_id_base(), task_cx) {
+            self.schedule_resolved_task(task_source_kind, spawn_in_terminal, omit_history, window, cx);
         }
     }
 
@@ -62,9 +54,7 @@ impl Workspace {
             }
 
             self.project().update(cx, |project, cx| {
-                if let Some(task_inventory) =
-                    project.task_store().read(cx).task_inventory().cloned()
-                {
+                if let Some(task_inventory) = project.task_store().read(cx).task_inventory().cloned() {
                     task_inventory.update(cx, |inventory, _| {
                         inventory.task_scheduled(task_source_kind, resolved_task);
                     })
@@ -80,9 +70,7 @@ impl Workspace {
                     workspace
                         .terminal_provider
                         .as_ref()
-                        .map(|terminal_provider| {
-                            terminal_provider.spawn(spawn_in_terminal, window, cx)
-                        })
+                        .map(|terminal_provider| terminal_provider.spawn(spawn_in_terminal, window, cx))
                 });
                 if let Some(spawn_task) = spawn_task.ok().flatten() {
                     let res = cx.background_spawn(spawn_task).await;
@@ -109,11 +97,7 @@ impl Workspace {
         }
     }
 
-    pub async fn save_for_task(
-        workspace: &WeakEntity<Self>,
-        save_strategy: SaveStrategy,
-        cx: &mut AsyncWindowContext,
-    ) {
+    pub async fn save_for_task(workspace: &WeakEntity<Self>, save_strategy: SaveStrategy, cx: &mut AsyncWindowContext) {
         let save_action = match save_strategy {
             SaveStrategy::All => {
                 let save_all = workspace.update_in(cx, |workspace, window, cx| {
@@ -145,14 +129,7 @@ impl Workspace {
         cx: &mut Context<Self>,
     ) {
         if let Some(provider) = self.debugger_provider.as_mut() {
-            provider.start_session(
-                scenario,
-                task_context,
-                active_buffer,
-                worktree_id,
-                window,
-                cx,
-            )
+            provider.start_session(scenario, task_context, active_buffer, worktree_id, window, cx)
         }
     }
 
@@ -197,13 +174,7 @@ mod tests {
     async fn test_schedule_resolved_task_save_all(cx: &mut TestAppContext) {
         let (fixture, cx) = create_fixture(cx, SaveStrategy::All).await;
         fixture.workspace.update_in(cx, |workspace, window, cx| {
-            workspace.schedule_resolved_task(
-                TaskSourceKind::UserInput,
-                fixture.task,
-                false,
-                window,
-                cx,
-            );
+            workspace.schedule_resolved_task(TaskSourceKind::UserInput, fixture.task, false, window, cx);
         });
         cx.executor().run_until_parked();
 
@@ -217,13 +188,7 @@ mod tests {
         // Add a second inactive dirty item
         let inactive = add_test_item(&fixture.workspace, "file2.txt", false, cx);
         fixture.workspace.update_in(cx, |workspace, window, cx| {
-            workspace.schedule_resolved_task(
-                TaskSourceKind::UserInput,
-                fixture.task,
-                false,
-                window,
-                cx,
-            );
+            workspace.schedule_resolved_task(TaskSourceKind::UserInput, fixture.task, false, window, cx);
         });
         cx.executor().run_until_parked();
 
@@ -238,13 +203,7 @@ mod tests {
     async fn test_schedule_resolved_task_save_none(cx: &mut TestAppContext) {
         let (fixture, cx) = create_fixture(cx, SaveStrategy::None).await;
         fixture.workspace.update_in(cx, |workspace, window, cx| {
-            workspace.schedule_resolved_task(
-                TaskSourceKind::UserInput,
-                fixture.task,
-                false,
-                window,
-                cx,
-            );
+            workspace.schedule_resolved_task(TaskSourceKind::UserInput, fixture.task, false, window, cx);
         });
         cx.executor().run_until_parked();
 
@@ -263,11 +222,9 @@ mod tests {
             register_serializable_item::<TestItem>(cx);
         });
         let fs = FakeFs::new(cx.executor());
-        fs.insert_tree("/root", json!({ "file.txt": "dirty" }))
-            .await;
+        fs.insert_tree("/root", json!({ "file.txt": "dirty" })).await;
         let project = Project::test(fs.clone(), ["/root".as_ref()], cx).await;
-        let (workspace, cx) =
-            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
 
         // Add a dirty item to the workspace
         let item = add_test_item(&workspace, "file.txt", true, cx);
@@ -278,9 +235,7 @@ mod tests {
             save: save_strategy,
             ..Default::default()
         };
-        let task = template
-            .resolve_task("test", &task::TaskContext::default())
-            .unwrap();
+        let task = template.resolve_task("test", &task::TaskContext::default()).unwrap();
         let dirty_before_spawn: Arc<Mutex<Option<bool>>> = Arc::default();
         let terminal_provider = Box::new(TestTerminalProvider {
             item: item.clone(),

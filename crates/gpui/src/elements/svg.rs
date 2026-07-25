@@ -1,10 +1,9 @@
 use std::{fs, path::Path, sync::Arc};
 
 use crate::{
-    App, Asset, Bounds, Element, GlobalElementId, Hitbox, InspectorElementId, InteractiveElement,
-    Interactivity, IntoElement, LayoutId, Pixels, Point, Radians, SharedString, Size,
-    StyleRefinement, Styled, TransformationMatrix, Window, geometry::Negate as _, point, px,
-    radians, size,
+    App, Asset, Bounds, Element, GlobalElementId, Hitbox, InspectorElementId, InteractiveElement, Interactivity,
+    IntoElement, LayoutId, Pixels, Point, Radians, SharedString, Size, StyleRefinement, Styled, TransformationMatrix,
+    Window, geometry::Negate as _, point, px, radians, size,
 };
 use util::ResultExt;
 
@@ -67,13 +66,11 @@ impl Element for Svg {
         window: &mut Window,
         cx: &mut App,
     ) -> (LayoutId, Self::RequestLayoutState) {
-        let layout_id = self.interactivity.request_layout(
-            global_id,
-            inspector_id,
-            window,
-            cx,
-            |style, window, cx| window.request_layout(style, None, cx),
-        );
+        let layout_id = self
+            .interactivity
+            .request_layout(global_id, inspector_id, window, cx, |style, window, cx| {
+                window.request_layout(style, None, cx)
+            });
         (layout_id, ())
     }
 
@@ -121,41 +118,25 @@ impl Element for Svg {
                     let transformation = self
                         .transformation
                         .as_ref()
-                        .map(|transformation| {
-                            transformation.into_matrix(bounds.center(), window.scale_factor())
-                        })
+                        .map(|transformation| transformation.into_matrix(bounds.center(), window.scale_factor()))
                         .unwrap_or_default();
 
                     window
                         .paint_svg(bounds, path.clone(), None, transformation, color, cx)
                         .log_err();
-                } else if let Some((path, color)) =
-                    self.external_path.as_ref().zip(style.text.color)
-                {
-                    let Some(bytes) = window
-                        .use_asset::<SvgAsset>(path, cx)
-                        .and_then(|asset| asset.log_err())
-                    else {
+                } else if let Some((path, color)) = self.external_path.as_ref().zip(style.text.color) {
+                    let Some(bytes) = window.use_asset::<SvgAsset>(path, cx).and_then(|asset| asset.log_err()) else {
                         return;
                     };
 
                     let transformation = self
                         .transformation
                         .as_ref()
-                        .map(|transformation| {
-                            transformation.into_matrix(bounds.center(), window.scale_factor())
-                        })
+                        .map(|transformation| transformation.into_matrix(bounds.center(), window.scale_factor()))
                         .unwrap_or_default();
 
                     window
-                        .paint_svg(
-                            bounds,
-                            path.clone(),
-                            Some(&bytes),
-                            transformation,
-                            color,
-                            cx,
-                        )
+                        .paint_svg(bounds, path.clone(), Some(&bytes), transformation, color, cx)
                         .log_err();
                 }
             },
@@ -264,10 +245,7 @@ impl Asset for SvgAsset {
     type Source = SharedString;
     type Output = Result<Arc<[u8]>, Arc<std::io::Error>>;
 
-    fn load(
-        source: Self::Source,
-        _cx: &mut App,
-    ) -> impl Future<Output = Self::Output> + Send + 'static {
+    fn load(source: Self::Source, _cx: &mut App) -> impl Future<Output = Self::Output> + Send + 'static {
         async move {
             let bytes = fs::read(Path::new(source.as_ref())).map_err(|e| Arc::new(e))?;
             let bytes = Arc::from(bytes);

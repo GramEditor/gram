@@ -69,15 +69,11 @@ impl Anchor {
     }
 
     pub fn is_min(&self) -> bool {
-        self.excerpt_id == ExcerptId::min()
-            && self.text_anchor.is_min()
-            && self.diff_base_anchor.is_none()
+        self.excerpt_id == ExcerptId::min() && self.text_anchor.is_min() && self.diff_base_anchor.is_none()
     }
 
     pub fn is_max(&self) -> bool {
-        self.excerpt_id == ExcerptId::max()
-            && self.text_anchor.is_max()
-            && self.diff_base_anchor.is_none()
+        self.excerpt_id == ExcerptId::max() && self.text_anchor.is_max() && self.diff_base_anchor.is_none()
     }
 
     pub fn cmp(&self, other: &Anchor, snapshot: &MultiBufferSnapshot) -> Ordering {
@@ -106,10 +102,7 @@ impl Anchor {
                 return text_cmp;
             }
             if (self.diff_base_anchor.is_some() || other.diff_base_anchor.is_some())
-                && let Some(base_text) = snapshot
-                    .diffs
-                    .get(&excerpt.buffer_id)
-                    .map(|diff| diff.base_text())
+                && let Some(base_text) = snapshot.diffs.get(&excerpt.buffer_id).map(|diff| diff.base_text())
             {
                 let self_anchor = self.diff_base_anchor.filter(|a| a.is_valid(base_text));
                 let other_anchor = other.diff_base_anchor.filter(|a| a.is_valid(base_text));
@@ -142,10 +135,7 @@ impl Anchor {
                 excerpt_id: excerpt.id,
                 text_anchor: self.text_anchor.bias_left(&excerpt.buffer),
                 diff_base_anchor: self.diff_base_anchor.map(|a| {
-                    if let Some(base_text) = snapshot
-                        .diffs
-                        .get(&excerpt.buffer_id)
-                        .map(|diff| diff.base_text())
+                    if let Some(base_text) = snapshot.diffs.get(&excerpt.buffer_id).map(|diff| diff.base_text())
                         && a.is_valid(&base_text)
                     {
                         return a.bias_left(base_text);
@@ -165,10 +155,7 @@ impl Anchor {
                 excerpt_id: excerpt.id,
                 text_anchor: self.text_anchor.bias_right(&excerpt.buffer),
                 diff_base_anchor: self.diff_base_anchor.map(|a| {
-                    if let Some(base_text) = snapshot
-                        .diffs
-                        .get(&excerpt.buffer_id)
-                        .map(|diff| diff.base_text())
+                    if let Some(base_text) = snapshot.diffs.get(&excerpt.buffer_id).map(|diff| diff.base_text())
                         && a.is_valid(&base_text)
                     {
                         return a.bias_right(base_text);

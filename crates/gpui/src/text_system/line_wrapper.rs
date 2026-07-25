@@ -24,11 +24,7 @@ impl LineWrapper {
     /// The maximum indent that can be applied to a line.
     pub const MAX_INDENT: u32 = 256;
 
-    pub(crate) fn new(
-        font_id: FontId,
-        font_size: Pixels,
-        text_system: Arc<dyn PlatformTextSystem>,
-    ) -> Self {
+    pub(crate) fn new(font_id: FontId, font_size: Pixels, text_system: Arc<dyn PlatformTextSystem>) -> Self {
         Self {
             platform_text_system: text_system,
             font_id,
@@ -89,8 +85,7 @@ impl LineWrapper {
                         self.width_for_char(c)
                     }
                     WrapBoundaryCandidate::Element {
-                        width: element_width,
-                        ..
+                        width: element_width, ..
                     } => {
                         if prev_c == ' ' && first_non_whitespace_ix.is_some() {
                             last_candidate_ix = ix;
@@ -107,11 +102,8 @@ impl LineWrapper {
 
                 width += item_width;
                 if width > wrap_width && ix > last_wrap_ix {
-                    if let (None, Some(first_non_whitespace_ix)) = (indent, first_non_whitespace_ix)
-                    {
-                        indent = Some(
-                            Self::MAX_INDENT.min((first_non_whitespace_ix - last_wrap_ix) as u32),
-                        );
+                    if let (None, Some(first_non_whitespace_ix)) = (indent, first_non_whitespace_ix) {
+                        indent = Some(Self::MAX_INDENT.min((first_non_whitespace_ix - last_wrap_ix) as u32));
                     }
 
                     if last_candidate_ix > 0 {
@@ -197,16 +189,10 @@ impl LineWrapper {
         runs: &'a [TextRun],
         truncate_from: TruncateFrom,
     ) -> (SharedString, Cow<'a, [TextRun]>) {
-        if let Some(truncate_ix) =
-            self.should_truncate_line(&line, truncate_width, truncation_affix, truncate_from)
-        {
+        if let Some(truncate_ix) = self.should_truncate_line(&line, truncate_width, truncation_affix, truncate_from) {
             let result = match truncate_from {
-                TruncateFrom::Start => {
-                    SharedString::from(format!("{truncation_affix}{}", &line[truncate_ix + 1..]))
-                }
-                TruncateFrom::End => {
-                    SharedString::from(format!("{}{truncation_affix}", &line[..truncate_ix]))
-                }
+                TruncateFrom::Start => SharedString::from(format!("{truncation_affix}{}", &line[truncate_ix + 1..])),
+                TruncateFrom::End => SharedString::from(format!("{}{truncation_affix}", &line[..truncate_ix])),
             };
             let mut runs = runs.to_vec();
             update_runs_after_truncation(&result, truncation_affix, &mut runs, truncate_from);
@@ -282,12 +268,7 @@ impl LineWrapper {
     }
 }
 
-fn update_runs_after_truncation(
-    result: &str,
-    ellipsis: &str,
-    runs: &mut Vec<TextRun>,
-    truncate_from: TruncateFrom,
-) {
+fn update_runs_after_truncation(result: &str, ellipsis: &str, runs: &mut Vec<TextRun>, truncate_from: TruncateFrom) {
     let mut truncate_at = result.len() - ellipsis.len();
     match truncate_from {
         TruncateFrom::Start => {
@@ -429,44 +410,25 @@ mod tests {
             wrapper
                 .wrap_line(&[LineFragment::text("aa bbb cccc ddddd eeee")], px(72.))
                 .collect::<Vec<_>>(),
-            &[
-                Boundary::new(7, 0),
-                Boundary::new(12, 0),
-                Boundary::new(18, 0)
-            ],
+            &[Boundary::new(7, 0), Boundary::new(12, 0), Boundary::new(18, 0)],
         );
         assert_eq!(
             wrapper
                 .wrap_line(&[LineFragment::text("aaa aaaaaaaaaaaaaaaaaa")], px(72.0))
                 .collect::<Vec<_>>(),
-            &[
-                Boundary::new(4, 0),
-                Boundary::new(11, 0),
-                Boundary::new(18, 0)
-            ],
+            &[Boundary::new(4, 0), Boundary::new(11, 0), Boundary::new(18, 0)],
         );
         assert_eq!(
             wrapper
                 .wrap_line(&[LineFragment::text("     aaaaaaa")], px(72.))
                 .collect::<Vec<_>>(),
-            &[
-                Boundary::new(7, 5),
-                Boundary::new(9, 5),
-                Boundary::new(11, 5),
-            ]
+            &[Boundary::new(7, 5), Boundary::new(9, 5), Boundary::new(11, 5),]
         );
         assert_eq!(
             wrapper
-                .wrap_line(
-                    &[LineFragment::text("                            ")],
-                    px(72.)
-                )
+                .wrap_line(&[LineFragment::text("                            ")], px(72.))
                 .collect::<Vec<_>>(),
-            &[
-                Boundary::new(7, 0),
-                Boundary::new(14, 0),
-                Boundary::new(21, 0)
-            ]
+            &[Boundary::new(7, 0), Boundary::new(14, 0), Boundary::new(21, 0)]
         );
         assert_eq!(
             wrapper
@@ -484,18 +446,11 @@ mod tests {
         assert_eq!(
             wrapper
                 .wrap_line(
-                    &[
-                        LineFragment::text("aa bbb "),
-                        LineFragment::text("cccc ddddd eeee")
-                    ],
+                    &[LineFragment::text("aa bbb "), LineFragment::text("cccc ddddd eeee")],
                     px(72.)
                 )
                 .collect::<Vec<_>>(),
-            &[
-                Boundary::new(7, 0),
-                Boundary::new(12, 0),
-                Boundary::new(18, 0)
-            ],
+            &[Boundary::new(7, 0), Boundary::new(12, 0), Boundary::new(18, 0)],
         );
 
         // Test wrapping with a mix of text and element fragments
@@ -512,11 +467,7 @@ mod tests {
                     px(72.)
                 )
                 .collect::<Vec<_>>(),
-            &[
-                Boundary::new(5, 0),
-                Boundary::new(9, 0),
-                Boundary::new(11, 0)
-            ],
+            &[Boundary::new(5, 0), Boundary::new(9, 0), Boundary::new(11, 0)],
         );
 
         // Test with element at the beginning and text afterward
@@ -563,21 +514,11 @@ mod tests {
     fn test_truncate_line_end() {
         let mut wrapper = build_wrapper();
 
-        fn perform_test(
-            wrapper: &mut LineWrapper,
-            text: &'static str,
-            expected: &'static str,
-            ellipsis: &str,
-        ) {
+        fn perform_test(wrapper: &mut LineWrapper, text: &'static str, expected: &'static str, ellipsis: &str) {
             let dummy_run_lens = vec![text.len()];
             let dummy_runs = generate_test_runs(&dummy_run_lens);
-            let (result, dummy_runs) = wrapper.truncate_line(
-                text.into(),
-                px(220.),
-                ellipsis,
-                &dummy_runs,
-                TruncateFrom::End,
-            );
+            let (result, dummy_runs) =
+                wrapper.truncate_line(text.into(), px(220.), ellipsis, &dummy_runs, TruncateFrom::End);
             assert_eq!(result, expected);
             assert_eq!(dummy_runs.first().unwrap().len, result.len());
         }
@@ -606,21 +547,11 @@ mod tests {
     fn test_truncate_line_start() {
         let mut wrapper = build_wrapper();
 
-        fn perform_test(
-            wrapper: &mut LineWrapper,
-            text: &'static str,
-            expected: &'static str,
-            ellipsis: &str,
-        ) {
+        fn perform_test(wrapper: &mut LineWrapper, text: &'static str, expected: &'static str, ellipsis: &str) {
             let dummy_run_lens = vec![text.len()];
             let dummy_runs = generate_test_runs(&dummy_run_lens);
-            let (result, dummy_runs) = wrapper.truncate_line(
-                text.into(),
-                px(220.),
-                ellipsis,
-                &dummy_runs,
-                TruncateFrom::Start,
-            );
+            let (result, dummy_runs) =
+                wrapper.truncate_line(text.into(), px(220.), ellipsis, &dummy_runs, TruncateFrom::Start);
             assert_eq!(result, expected);
             assert_eq!(dummy_runs.first().unwrap().len, result.len());
         }
@@ -679,14 +610,7 @@ mod tests {
         // Truncate res: abcdef… (truncate_at = 6)
         // Runs res: Run0 { string: abcd, len: 4, ... }, Run1 { string: ef…, len:
         // 5, ... }
-        perform_test(
-            &mut wrapper,
-            "abcdefghijkl",
-            "abcdef…",
-            &[4, 4, 4],
-            &[4, 5],
-            px(70.),
-        );
+        perform_test(&mut wrapper, "abcdefghijkl", "abcdef…", &[4, 4, 4], &[4, 5], px(70.));
         // Case 2: Truncate at start of some run
         // Text: abcdefghijkl
         // Runs: Run0 { len: 4, ... }, Run1 { len: 4, ... }, Run2 { len: 4, ... }
@@ -718,13 +642,8 @@ mod tests {
             line_width: Pixels,
         ) {
             let dummy_runs = generate_test_runs(run_lens);
-            let (result, dummy_runs) = wrapper.truncate_line(
-                text.into(),
-                line_width,
-                "…",
-                &dummy_runs,
-                TruncateFrom::Start,
-            );
+            let (result, dummy_runs) =
+                wrapper.truncate_line(text.into(), line_width, "…", &dummy_runs, TruncateFrom::Start);
             assert_eq!(result, expected);
             for (run, result_len) in dummy_runs.iter().zip(result_run_len) {
                 assert_eq!(run.len, *result_len);
@@ -744,14 +663,7 @@ mod tests {
         // Truncate res: …ghijkl (truncate_at = 7)
         // Runs res: Run0 { string: …gh, len: 5, ... }, Run1 { string: ijkl, len:
         // 4, ... }
-        perform_test(
-            &mut wrapper,
-            "abcdefghijkl",
-            "…ghijkl",
-            &[4, 4, 4],
-            &[5, 4],
-            px(70.),
-        );
+        perform_test(&mut wrapper, "abcdefghijkl", "…ghijkl", &[4, 4, 4], &[5, 4], px(70.));
         // Case 2: Truncate at start of some run
         // Text: abcdefghijkl
         // Runs: Run0 { len: 4, ... }, Run1 { len: 4, ... }, Run2 { len: 4, ... }
@@ -911,10 +823,7 @@ mod tests {
             assert_eq!(
                 lines[0].layout.wrap_boundaries(),
                 &[
-                    WrapBoundary {
-                        run_ix: 0,
-                        glyph_ix: 7
-                    },
+                    WrapBoundary { run_ix: 0, glyph_ix: 7 },
                     WrapBoundary {
                         run_ix: 0,
                         glyph_ix: 12

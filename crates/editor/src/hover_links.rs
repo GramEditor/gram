@@ -1,8 +1,7 @@
 use crate::{
-    Anchor, Editor, EditorSettings, EditorSnapshot, FindAllReferences, GoToDefinition,
-    GoToDefinitionSplit, GoToTypeDefinition, GoToTypeDefinitionSplit, GotoDefinitionKind,
-    Navigated, PointForPosition, SelectPhase, editor_settings::GoToDefinitionFallback,
-    scroll::ScrollAmount,
+    Anchor, Editor, EditorSettings, EditorSnapshot, FindAllReferences, GoToDefinition, GoToDefinitionSplit,
+    GoToTypeDefinition, GoToTypeDefinitionSplit, GotoDefinitionKind, Navigated, PointForPosition, SelectPhase,
+    editor_settings::GoToDefinitionFallback, scroll::ScrollAmount,
 };
 use gpui::{App, AsyncWindowContext, Context, Entity, Modifiers, Task, Window, px};
 use language::{Bias, ToOffset};
@@ -39,11 +38,7 @@ impl RangeInEditor {
         }
     }
 
-    pub fn point_within_range(
-        &self,
-        trigger_point: &TriggerPoint,
-        snapshot: &EditorSnapshot,
-    ) -> bool {
+    pub fn point_within_range(&self, trigger_point: &TriggerPoint, snapshot: &EditorSnapshot) -> bool {
         match (self, trigger_point) {
             (Self::Text(range), TriggerPoint::Text(point)) => {
                 let point_after_start = range.start.cmp(point, &snapshot.buffer_snapshot()).is_le();
@@ -54,8 +49,7 @@ impl RangeInEditor {
                     && highlight.range.contains(&point.range.start)
                     && highlight.range.contains(&point.range.end)
             }
-            (Self::Inlay(_), TriggerPoint::Text(_))
-            | (Self::Text(_), TriggerPoint::InlayHint(_, _, _)) => false,
+            (Self::Inlay(_), TriggerPoint::Text(_)) | (Self::Text(_), TriggerPoint::InlayHint(_, _, _)) => false,
         }
     }
 }
@@ -104,9 +98,7 @@ pub fn exclude_link_to_position(
             .bias_right(&snapshot)
             .cmp(&location.target.range.start, &snapshot)
             .is_ge()
-        && current_position
-            .cmp(&location.target.range.end, &snapshot)
-            .is_le())
+        && current_position.cmp(&location.target.range.end, &snapshot).is_le())
 }
 
 impl Editor {
@@ -183,12 +175,7 @@ impl Editor {
         .detach();
     }
 
-    pub fn scroll_hover(
-        &mut self,
-        amount: ScrollAmount,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> bool {
+    pub fn scroll_hover(&mut self, amount: ScrollAmount, window: &mut Window, cx: &mut Context<Self>) -> bool {
         let selection = self.selections.newest_anchor().head();
         let snapshot = self.snapshot(window, cx);
 
@@ -222,13 +209,8 @@ impl Editor {
                 }
 
                 // exclude links pointing back to the current anchor
-                let current_position = point
-                    .next_valid
-                    .to_point(&self.snapshot(window, cx).display_snapshot);
-                let Some((buffer, anchor)) = self
-                    .buffer()
-                    .read(cx)
-                    .text_anchor_for_position(current_position, cx)
+                let current_position = point.next_valid.to_point(&self.snapshot(window, cx).display_snapshot);
+                let Some((buffer, anchor)) = self.buffer().read(cx).text_anchor_for_position(current_position, cx)
                 else {
                     return Task::ready(Ok(Navigated::No));
                 };
@@ -265,9 +247,7 @@ impl Editor {
         let navigate_task = if point.as_valid().is_some() {
             let split = Self::is_alt_pressed(&modifiers, cx);
             match (modifiers.shift, split) {
-                (true, true) => {
-                    self.go_to_type_definition_split(&GoToTypeDefinitionSplit, window, cx)
-                }
+                (true, true) => self.go_to_type_definition_split(&GoToTypeDefinitionSplit, window, cx),
                 (true, false) => self.go_to_type_definition(&GoToTypeDefinition, window, cx),
                 (false, true) => self.go_to_definition_split(&GoToDefinitionSplit, window, cx),
                 (false, false) => self.go_to_definition(&GoToDefinition, window, cx),
@@ -293,21 +273,20 @@ pub fn show_link_definition(
         _ => GotoDefinitionKind::Type,
     };
 
-    let (mut hovered_link_state, is_cached) =
-        if let Some(existing) = editor.hovered_link_state.take() {
-            (existing, true)
-        } else {
-            (
-                HoveredLinkState {
-                    last_trigger_point: trigger_point.clone(),
-                    symbol_range: None,
-                    preferred_kind,
-                    links: vec![],
-                    task: None,
-                },
-                false,
-            )
-        };
+    let (mut hovered_link_state, is_cached) = if let Some(existing) = editor.hovered_link_state.take() {
+        (existing, true)
+    } else {
+        (
+            HoveredLinkState {
+                last_trigger_point: trigger_point.clone(),
+                symbol_range: None,
+                preferred_kind,
+                links: vec![],
+                task: None,
+            },
+            false,
+        )
+    };
 
     if editor.pending_rename.is_some() {
         return;
@@ -334,9 +313,7 @@ pub fn show_link_definition(
             || hovered_link_state
                 .symbol_range
                 .as_ref()
-                .is_some_and(|symbol_range| {
-                    symbol_range.point_within_range(&trigger_point, snapshot)
-                })
+                .is_some_and(|symbol_range| symbol_range.point_within_range(&trigger_point, snapshot))
         {
             editor.hovered_link_state = Some(hovered_link_state);
             return;
@@ -355,8 +332,7 @@ pub fn show_link_definition(
                     if let Some((url_range, url)) = find_url(&buffer, text_anchor, cx.clone()) {
                         this.read_with(cx, |_, _| {
                             let range = maybe!({
-                                let range =
-                                    snapshot.anchor_range_in_excerpt(excerpt_id, url_range)?;
+                                let range = snapshot.anchor_range_in_excerpt(excerpt_id, url_range)?;
                                 Some(RangeInEditor::Text(range))
                             });
                             (range, vec![HoverLink::Url(url)])
@@ -366,25 +342,20 @@ pub fn show_link_definition(
                         find_file(&buffer, project.clone(), text_anchor, cx).await
                     {
                         let range = maybe!({
-                            let range =
-                                snapshot.anchor_range_in_excerpt(excerpt_id, filename_range)?;
+                            let range = snapshot.anchor_range_in_excerpt(excerpt_id, filename_range)?;
                             Some(RangeInEditor::Text(range))
                         });
 
                         Some((range, vec![HoverLink::File(filename)]))
                     } else if let Some(provider) = provider {
-                        let task = cx.update(|_, cx| {
-                            provider.definitions(&buffer, text_anchor, preferred_kind, cx)
-                        })?;
+                        let task = cx.update(|_, cx| provider.definitions(&buffer, text_anchor, preferred_kind, cx))?;
                         if let Some(task) = task {
                             task.await.ok().flatten().map(|definition_result| {
                                 (
                                     definition_result.iter().find_map(|link| {
                                         link.origin.as_ref().and_then(|origin| {
-                                            let range = snapshot.anchor_range_in_excerpt(
-                                                excerpt_id,
-                                                origin.range.clone(),
-                                            )?;
+                                            let range =
+                                                snapshot.anchor_range_in_excerpt(excerpt_id, origin.range.clone())?;
                                             Some(RangeInEditor::Text(range))
                                         })
                                     }),
@@ -412,15 +383,13 @@ pub fn show_link_definition(
                     return;
                 };
                 hovered_link_state.preferred_kind = preferred_kind;
-                hovered_link_state.symbol_range = result
-                    .as_ref()
-                    .and_then(|(symbol_range, _)| symbol_range.clone());
+                hovered_link_state.symbol_range = result.as_ref().and_then(|(symbol_range, _)| symbol_range.clone());
 
                 if let Some((symbol_range, definitions)) = result {
                     hovered_link_state.links = definitions;
 
-                    let underline_hovered_link = !hovered_link_state.links.is_empty()
-                        || hovered_link_state.symbol_range.is_some();
+                    let underline_hovered_link =
+                        !hovered_link_state.links.is_empty() || hovered_link_state.symbol_range.is_some();
 
                     if underline_hovered_link {
                         let style = gpui::HighlightStyle {
@@ -431,27 +400,24 @@ pub fn show_link_definition(
                             color: Some(cx.theme().colors().link_text_hover),
                             ..Default::default()
                         };
-                        let highlight_range =
-                            symbol_range.unwrap_or_else(|| match &trigger_point {
-                                TriggerPoint::Text(trigger_anchor) => {
-                                    // If no symbol range returned from language server, use the surrounding word.
-                                    let (offset_range, _) =
-                                        snapshot.surrounding_word(*trigger_anchor, None);
-                                    RangeInEditor::Text(
-                                        snapshot.anchor_before(offset_range.start)
-                                            ..snapshot.anchor_after(offset_range.end),
-                                    )
-                                }
-                                TriggerPoint::InlayHint(highlight, _, _) => {
-                                    RangeInEditor::Inlay(highlight.clone())
-                                }
-                            });
+                        let highlight_range = symbol_range.unwrap_or_else(|| match &trigger_point {
+                            TriggerPoint::Text(trigger_anchor) => {
+                                // If no symbol range returned from language server, use the surrounding word.
+                                let (offset_range, _) = snapshot.surrounding_word(*trigger_anchor, None);
+                                RangeInEditor::Text(
+                                    snapshot.anchor_before(offset_range.start)..snapshot.anchor_after(offset_range.end),
+                                )
+                            }
+                            TriggerPoint::InlayHint(highlight, _, _) => RangeInEditor::Inlay(highlight.clone()),
+                        });
 
                         match highlight_range {
-                            RangeInEditor::Text(text_range) => editor
-                                .highlight_text::<HoveredLinkState>(vec![text_range], style, cx),
-                            RangeInEditor::Inlay(highlight) => editor
-                                .highlight_inlays::<HoveredLinkState>(vec![highlight], style, cx),
+                            RangeInEditor::Text(text_range) => {
+                                editor.highlight_text::<HoveredLinkState>(vec![text_range], style, cx)
+                            }
+                            RangeInEditor::Inlay(highlight) => {
+                                editor.highlight_inlays::<HoveredLinkState>(vec![highlight], style, cx)
+                            }
                         }
                     }
                 } else {
@@ -495,10 +461,7 @@ pub(crate) fn find_url(
         return None;
     }
 
-    for ch in snapshot
-        .chars_at(offset)
-        .take(LIMIT - (offset - token_start))
-    {
+    for ch in snapshot.chars_at(offset).take(LIMIT - (offset - token_start)) {
         if ch.is_whitespace() {
             found_end = true;
             break;
@@ -513,15 +476,13 @@ pub(crate) fn find_url(
 
     let mut finder = LinkFinder::new();
     finder.kinds(&[LinkKind::Url]);
-    let input = snapshot
-        .text_for_range(token_start..token_end)
-        .collect::<String>();
+    let input = snapshot.text_for_range(token_start..token_end).collect::<String>();
 
     let relative_offset = offset - token_start;
     for link in finder.links(&input) {
         if link.start() <= relative_offset && link.end() >= relative_offset {
-            let range = snapshot.anchor_before(token_start + link.start())
-                ..snapshot.anchor_after(token_start + link.end());
+            let range =
+                snapshot.anchor_before(token_start + link.start())..snapshot.anchor_after(token_start + link.end());
             return Some((range, link.as_str().to_string()));
         }
     }
@@ -571,9 +532,7 @@ pub(crate) fn find_url_from_range(
         return None;
     }
 
-    let text = snapshot
-        .text_for_range(token_start..token_end)
-        .collect::<String>();
+    let text = snapshot.text_for_range(token_start..token_end).collect::<String>();
 
     let mut finder = LinkFinder::new();
     finder.kinds(&[LinkKind::Url]);
@@ -636,9 +595,7 @@ pub(crate) async fn find_file(
                 }
 
                 let suffixed_candidate = format!("{pattern_candidate}.{suffix}");
-                if let Some(existing_path) =
-                    check_path(&suffixed_candidate, &project, buffer, cx).await
-                {
+                if let Some(existing_path) = check_path(&suffixed_candidate, &project, buffer, cx).await {
                     let offset_range = range.to_offset(&snapshot);
                     let actual_start = offset_range.start + pattern_range.start;
                     let actual_end = offset_range.end - (candidate_len - pattern_range.end);
@@ -815,17 +772,14 @@ mod tests {
 
         cx.run_until_parked();
 
-        let mut requests =
-            cx.set_request_handler::<GotoTypeDefinition, _, _>(move |url, _, _| async move {
-                Ok(Some(lsp::GotoTypeDefinitionResponse::Link(vec![
-                    lsp::LocationLink {
-                        origin_selection_range: Some(symbol_range),
-                        target_uri: url.clone(),
-                        target_range,
-                        target_selection_range: target_range,
-                    },
-                ])))
-            });
+        let mut requests = cx.set_request_handler::<GotoTypeDefinition, _, _>(move |url, _, _| async move {
+            Ok(Some(lsp::GotoTypeDefinitionResponse::Link(vec![lsp::LocationLink {
+                origin_selection_range: Some(symbol_range),
+                target_uri: url.clone(),
+                target_range,
+                target_selection_range: target_range,
+            }])))
+        });
 
         let modifiers = if cfg!(target_os = "macos") {
             Modifiers::command_shift()
@@ -891,17 +845,14 @@ mod tests {
                 fn «do_work»() { test(); }
             "});
 
-        let mut requests =
-            cx.set_request_handler::<GotoDefinition, _, _>(move |url, _, _| async move {
-                Ok(Some(lsp::GotoDefinitionResponse::Link(vec![
-                    lsp::LocationLink {
-                        origin_selection_range: Some(symbol_range),
-                        target_uri: url.clone(),
-                        target_range,
-                        target_selection_range: target_range,
-                    },
-                ])))
-            });
+        let mut requests = cx.set_request_handler::<GotoDefinition, _, _>(move |url, _, _| async move {
+            Ok(Some(lsp::GotoDefinitionResponse::Link(vec![lsp::LocationLink {
+                origin_selection_range: Some(symbol_range),
+                target_uri: url.clone(),
+                target_range,
+                target_selection_range: target_range,
+            }])))
+        });
 
         cx.simulate_mouse_move(hover_point, None, Modifiers::secondary_key());
         requests.next().await;
@@ -918,17 +869,14 @@ mod tests {
                 fn do_work() { test(); }
             "});
 
-        let mut requests =
-            cx.set_request_handler::<GotoDefinition, _, _>(move |url, _, _| async move {
-                Ok(Some(lsp::GotoDefinitionResponse::Link(vec![
-                    lsp::LocationLink {
-                        origin_selection_range: Some(symbol_range),
-                        target_uri: url.clone(),
-                        target_range,
-                        target_selection_range: target_range,
-                    },
-                ])))
-            });
+        let mut requests = cx.set_request_handler::<GotoDefinition, _, _>(move |url, _, _| async move {
+            Ok(Some(lsp::GotoDefinitionResponse::Link(vec![lsp::LocationLink {
+                origin_selection_range: Some(symbol_range),
+                target_uri: url.clone(),
+                target_range,
+                target_selection_range: target_range,
+            }])))
+        });
 
         cx.simulate_mouse_move(hover_point, None, Modifiers::secondary_key());
         requests.next().await;
@@ -943,12 +891,12 @@ mod tests {
                 fˇn test() { do_work(); }
                 fn do_work() { test(); }
             "});
-        let mut requests =
-            cx.lsp
-                .set_request_handler::<GotoDefinition, _, _>(move |_, _| async move {
-                    // No definitions returned
-                    Ok(Some(lsp::GotoDefinitionResponse::Link(vec![])))
-                });
+        let mut requests = cx
+            .lsp
+            .set_request_handler::<GotoDefinition, _, _>(move |_, _| async move {
+                // No definitions returned
+                Ok(Some(lsp::GotoDefinitionResponse::Link(vec![])))
+            });
         cx.simulate_mouse_move(hover_point, None, Modifiers::secondary_key());
 
         requests.next().await;
@@ -982,17 +930,14 @@ mod tests {
                 fn do_work() { test(); }
             "});
 
-        let mut requests =
-            cx.set_request_handler::<GotoDefinition, _, _>(move |url, _, _| async move {
-                Ok(Some(lsp::GotoDefinitionResponse::Link(vec![
-                    lsp::LocationLink {
-                        origin_selection_range: Some(symbol_range),
-                        target_uri: url,
-                        target_range,
-                        target_selection_range: target_range,
-                    },
-                ])))
-            });
+        let mut requests = cx.set_request_handler::<GotoDefinition, _, _>(move |url, _, _| async move {
+            Ok(Some(lsp::GotoDefinitionResponse::Link(vec![lsp::LocationLink {
+                origin_selection_range: Some(symbol_range),
+                target_uri: url,
+                target_range,
+                target_selection_range: target_range,
+            }])))
+        });
 
         cx.simulate_modifiers_change(Modifiers::secondary_key());
 
@@ -1059,17 +1004,14 @@ mod tests {
                 fn «do_work»() { test(); }
             "});
 
-        let mut requests =
-            cx.set_request_handler::<GotoDefinition, _, _>(move |url, _, _| async move {
-                Ok(Some(lsp::GotoDefinitionResponse::Link(vec![
-                    lsp::LocationLink {
-                        origin_selection_range: None,
-                        target_uri: url,
-                        target_range,
-                        target_selection_range: target_range,
-                    },
-                ])))
-            });
+        let mut requests = cx.set_request_handler::<GotoDefinition, _, _>(move |url, _, _| async move {
+            Ok(Some(lsp::GotoDefinitionResponse::Link(vec![lsp::LocationLink {
+                origin_selection_range: None,
+                target_uri: url,
+                target_range,
+                target_selection_range: target_range,
+            }])))
+        });
         cx.simulate_click(hover_point, Modifiers::secondary_key());
         requests.next().await;
         cx.background_executor.run_until_parked();
@@ -1088,17 +1030,14 @@ mod tests {
                 fn test() { do_work(); }
                 fn «do_work»() { test(); }
             "});
-        let mut requests =
-            cx.set_request_handler::<GotoDefinition, _, _>(move |url, _, _| async move {
-                Ok(Some(lsp::GotoDefinitionResponse::Link(vec![
-                    lsp::LocationLink {
-                        origin_selection_range: None,
-                        target_uri: url,
-                        target_range,
-                        target_selection_range: target_range,
-                    },
-                ])))
-            });
+        let mut requests = cx.set_request_handler::<GotoDefinition, _, _>(move |url, _, _| async move {
+            Ok(Some(lsp::GotoDefinitionResponse::Link(vec![lsp::LocationLink {
+                origin_selection_range: None,
+                target_uri: url,
+                target_range,
+                target_selection_range: target_range,
+            }])))
+        });
 
         // create a pending selection
         let selection_range = cx.ranges(indoc! {"
@@ -1253,14 +1192,17 @@ mod tests {
         cx.simulate_mouse_move(hover_point, None, Modifiers::none());
         // Assert no link highlights
         cx.update_editor(|editor, window, cx| {
-                let snapshot = editor.snapshot(window, cx);
-                let actual_ranges = snapshot
-                    .text_highlight_ranges::<HoveredLinkState>()
-                    .map(|ranges| ranges.as_ref().clone().1)
-                    .unwrap_or_default();
+            let snapshot = editor.snapshot(window, cx);
+            let actual_ranges = snapshot
+                .text_highlight_ranges::<HoveredLinkState>()
+                .map(|ranges| ranges.as_ref().clone().1)
+                .unwrap_or_default();
 
-                assert!(actual_ranges.is_empty(), "When no cmd is pressed, should have no hint label selected, but got: {actual_ranges:?}");
-            });
+            assert!(
+                actual_ranges.is_empty(),
+                "When no cmd is pressed, should have no hint label selected, but got: {actual_ranges:?}"
+            );
+        });
 
         cx.simulate_modifiers_change(Modifiers::secondary_key());
         cx.background_executor.run_until_parked();
@@ -1278,13 +1220,7 @@ mod tests {
     #[gpui::test]
     async fn test_urls(cx: &mut gpui::TestAppContext) {
         init_test(cx, |_| {});
-        let mut cx = EditorLspTestContext::new_rust(
-            lsp::ServerCapabilities {
-                ..Default::default()
-            },
-            cx,
-        )
-        .await;
+        let mut cx = EditorLspTestContext::new_rust(lsp::ServerCapabilities { ..Default::default() }, cx).await;
 
         cx.set_state(indoc! {"
             Let's test a [complex](https://codeberg.org/channel/had-(oops)) caseˇ.
@@ -1300,27 +1236,17 @@ mod tests {
         "});
 
         cx.simulate_click(screen_coord, Modifiers::secondary_key());
-        assert_eq!(
-            cx.opened_url(),
-            Some("https://codeberg.org/channel/had-(oops)".into())
-        );
+        assert_eq!(cx.opened_url(), Some("https://codeberg.org/channel/had-(oops)".into()));
     }
 
     #[gpui::test]
     async fn test_urls_at_beginning_of_buffer(cx: &mut gpui::TestAppContext) {
         init_test(cx, |_| {});
-        let mut cx = EditorLspTestContext::new_rust(
-            lsp::ServerCapabilities {
-                ..Default::default()
-            },
-            cx,
-        )
-        .await;
+        let mut cx = EditorLspTestContext::new_rust(lsp::ServerCapabilities { ..Default::default() }, cx).await;
 
         cx.set_state(indoc! {"https://codeberg.org/releases is a cool ˇwebpage."});
 
-        let screen_coord =
-            cx.pixel_position(indoc! {"https://codeberg.org/relˇeases is a cool webpage."});
+        let screen_coord = cx.pixel_position(indoc! {"https://codeberg.org/relˇeases is a cool webpage."});
 
         cx.simulate_mouse_move(screen_coord, None, Modifiers::secondary_key());
         cx.assert_editor_text_highlights::<HoveredLinkState>(
@@ -1328,27 +1254,17 @@ mod tests {
         );
 
         cx.simulate_click(screen_coord, Modifiers::secondary_key());
-        assert_eq!(
-            cx.opened_url(),
-            Some("https://codeberg.org/releases".into())
-        );
+        assert_eq!(cx.opened_url(), Some("https://codeberg.org/releases".into()));
     }
 
     #[gpui::test]
     async fn test_urls_at_end_of_buffer(cx: &mut gpui::TestAppContext) {
         init_test(cx, |_| {});
-        let mut cx = EditorLspTestContext::new_rust(
-            lsp::ServerCapabilities {
-                ..Default::default()
-            },
-            cx,
-        )
-        .await;
+        let mut cx = EditorLspTestContext::new_rust(lsp::ServerCapabilities { ..Default::default() }, cx).await;
 
         cx.set_state(indoc! {"A cool ˇwebpage is https://codeberg.org/releases"});
 
-        let screen_coord =
-            cx.pixel_position(indoc! {"A cool webpage is https://codeberg.org/releˇases"});
+        let screen_coord = cx.pixel_position(indoc! {"A cool webpage is https://codeberg.org/releˇases"});
 
         cx.simulate_mouse_move(screen_coord, None, Modifiers::secondary_key());
         cx.assert_editor_text_highlights::<HoveredLinkState>(
@@ -1356,10 +1272,7 @@ mod tests {
         );
 
         cx.simulate_click(screen_coord, Modifiers::secondary_key());
-        assert_eq!(
-            cx.opened_url(),
-            Some("https://codeberg.org/releases".into())
-        );
+        assert_eq!(cx.opened_url(), Some("https://codeberg.org/releases".into()));
     }
 
     #[test]
@@ -1368,19 +1281,13 @@ mod tests {
             .into_iter()
             .map(|(c, _)| c)
             .collect();
-        assert_eq!(
-            candidates,
-            vec!["[LinkTitle](link_file.txt)", "link_file.txt",]
-        );
+        assert_eq!(candidates, vec!["[LinkTitle](link_file.txt)", "link_file.txt",]);
         // Link title with spaces in it
         let candidates: Vec<String> = link_pattern_file_candidates("LinkTitle](link_file.txt)")
             .into_iter()
             .map(|(c, _)| c)
             .collect();
-        assert_eq!(
-            candidates,
-            vec!["LinkTitle](link_file.txt)", "link_file.txt",]
-        );
+        assert_eq!(candidates, vec!["LinkTitle](link_file.txt)", "link_file.txt",]);
 
         // Link with spaces
         let candidates: Vec<String> = link_pattern_file_candidates("LinkTitle](link\\ _file.txt)")
@@ -1388,10 +1295,7 @@ mod tests {
             .map(|(c, _)| c)
             .collect();
 
-        assert_eq!(
-            candidates,
-            vec!["LinkTitle](link\\ _file.txt)", "link\\ _file.txt",]
-        );
+        assert_eq!(candidates, vec!["LinkTitle](link\\ _file.txt)", "link\\ _file.txt",]);
         //
         // Square brackets not strictly necessary
         let candidates: Vec<String> = link_pattern_file_candidates("(link_file.txt)")
@@ -1402,11 +1306,10 @@ mod tests {
         assert_eq!(candidates, vec!["(link_file.txt)", "link_file.txt",]);
 
         // No nesting
-        let candidates: Vec<String> =
-            link_pattern_file_candidates("LinkTitle](link_(link_file)file.txt)")
-                .into_iter()
-                .map(|(c, _)| c)
-                .collect();
+        let candidates: Vec<String> = link_pattern_file_candidates("LinkTitle](link_(link_file)file.txt)")
+            .into_iter()
+            .map(|(c, _)| c)
+            .collect();
 
         assert_eq!(
             candidates,
@@ -1417,13 +1320,7 @@ mod tests {
     #[gpui::test]
     async fn test_surrounding_filename(cx: &mut gpui::TestAppContext) {
         init_test(cx, |_| {});
-        let mut cx = EditorLspTestContext::new_rust(
-            lsp::ServerCapabilities {
-                ..Default::default()
-            },
-            cx,
-        )
-        .await;
+        let mut cx = EditorLspTestContext::new_rust(lsp::ServerCapabilities { ..Default::default() }, cx).await;
 
         let test_cases = [
             ("file ˇ name", None),
@@ -1479,11 +1376,7 @@ mod tests {
                 let (_, path) = result.unwrap();
                 assert_eq!(&path, expected, "Incorrect file path for input: {}", input);
             } else {
-                assert!(
-                    result.is_none(),
-                    "Expected no result, but got one: {:?}",
-                    result
-                );
+                assert!(result.is_none(), "Expected no result, but got one: {:?}", result);
             }
         }
     }
@@ -1491,21 +1384,12 @@ mod tests {
     #[gpui::test]
     async fn test_hover_filenames(cx: &mut gpui::TestAppContext) {
         init_test(cx, |_| {});
-        let mut cx = EditorLspTestContext::new_rust(
-            lsp::ServerCapabilities {
-                ..Default::default()
-            },
-            cx,
-        )
-        .await;
+        let mut cx = EditorLspTestContext::new_rust(lsp::ServerCapabilities { ..Default::default() }, cx).await;
 
         // Insert a new file
         let fs = cx.update_workspace(|workspace, _, cx| workspace.project().read(cx).fs().clone());
         fs.as_fake()
-            .insert_file(
-                path!("/root/dir/file2.rs"),
-                "This is file2.rs".as_bytes().to_vec(),
-            )
+            .insert_file(path!("/root/dir/file2.rs"), "This is file2.rs".as_bytes().to_vec())
             .await;
 
         #[cfg(not(target_os = "windows"))]
@@ -1706,33 +1590,19 @@ mod tests {
         cx.update_workspace(|workspace, _, cx| {
             let active_editor = workspace.active_item_as::<Editor>(cx).unwrap();
 
-            let buffer = active_editor
-                .read(cx)
-                .buffer()
-                .read(cx)
-                .as_singleton()
-                .unwrap();
+            let buffer = active_editor.read(cx).buffer().read(cx).as_singleton().unwrap();
 
             let file = buffer.read(cx).file().unwrap();
             let file_path = file.as_local().unwrap().abs_path(cx);
 
-            assert_eq!(
-                file_path,
-                std::path::PathBuf::from(path!("/root/dir/file2.rs"))
-            );
+            assert_eq!(file_path, std::path::PathBuf::from(path!("/root/dir/file2.rs")));
         });
     }
 
     #[gpui::test]
     async fn test_hover_directories(cx: &mut gpui::TestAppContext) {
         init_test(cx, |_| {});
-        let mut cx = EditorLspTestContext::new_rust(
-            lsp::ServerCapabilities {
-                ..Default::default()
-            },
-            cx,
-        )
-        .await;
+        let mut cx = EditorLspTestContext::new_rust(lsp::ServerCapabilities { ..Default::default() }, cx).await;
 
         // Insert a new file
         let fs = cx.update_workspace(|workspace, _, cx| workspace.project().read(cx).fs().clone());
@@ -1770,13 +1640,7 @@ mod tests {
     #[gpui::test]
     async fn test_hover_unicode(cx: &mut gpui::TestAppContext) {
         init_test(cx, |_| {});
-        let mut cx = EditorLspTestContext::new_rust(
-            lsp::ServerCapabilities {
-                ..Default::default()
-            },
-            cx,
-        )
-        .await;
+        let mut cx = EditorLspTestContext::new_rust(lsp::ServerCapabilities { ..Default::default() }, cx).await;
 
         cx.set_state(indoc! {"
             You can't open ˇ\"🤩\" because it's an emoji.
@@ -1838,17 +1702,14 @@ mod tests {
                     fn «do_work»() { test(); }
                 "});
 
-        let mut requests =
-            cx.set_request_handler::<GotoDefinition, _, _>(move |url, _, _| async move {
-                Ok(Some(lsp::GotoDefinitionResponse::Link(vec![
-                    lsp::LocationLink {
-                        origin_selection_range: Some(symbol_range),
-                        target_uri: url.clone(),
-                        target_range,
-                        target_selection_range: target_range,
-                    },
-                ])))
-            });
+        let mut requests = cx.set_request_handler::<GotoDefinition, _, _>(move |url, _, _| async move {
+            Ok(Some(lsp::GotoDefinitionResponse::Link(vec![lsp::LocationLink {
+                origin_selection_range: Some(symbol_range),
+                target_uri: url.clone(),
+                target_range,
+                target_selection_range: target_range,
+            }])))
+        });
 
         cx.simulate_mouse_move(hover_point, None, Modifiers::none());
 

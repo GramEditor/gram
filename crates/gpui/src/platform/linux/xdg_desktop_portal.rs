@@ -44,18 +44,12 @@ impl XDPEventSource {
                 }
 
                 // If u32 is used here, it throws invalid type error
-                if let Ok(initial_size) = settings
-                    .read::<i32>("org.gnome.desktop.interface", "cursor-size")
-                    .await
-                {
+                if let Ok(initial_size) = settings.read::<i32>("org.gnome.desktop.interface", "cursor-size").await {
                     sender.send(Event::CursorSize(initial_size as u32))?;
                 }
 
                 if let Ok(mut cursor_theme_changed) = settings
-                    .receive_setting_changed_with_args(
-                        "org.gnome.desktop.interface",
-                        "cursor-theme",
-                    )
+                    .receive_setting_changed_with_args("org.gnome.desktop.interface", "cursor-theme")
                     .await
                 {
                     let sender = sender.clone();
@@ -71,10 +65,7 @@ impl XDPEventSource {
                 }
 
                 if let Ok(mut cursor_size_changed) = settings
-                    .receive_setting_changed_with_args::<i32>(
-                        "org.gnome.desktop.interface",
-                        "cursor-size",
-                    )
+                    .receive_setting_changed_with_args::<i32>("org.gnome.desktop.interface", "cursor-size")
                     .await
                 {
                     let sender = sender.clone();
@@ -91,9 +82,7 @@ impl XDPEventSource {
 
                 let mut appearance_changed = settings.receive_color_scheme_changed().await?;
                 while let Some(scheme) = appearance_changed.next().await {
-                    sender.send(Event::WindowAppearance(WindowAppearance::from_native(
-                        scheme,
-                    )))?;
+                    sender.send(Event::WindowAppearance(WindowAppearance::from_native(scheme)))?;
                 }
 
                 anyhow::Ok(())
@@ -128,21 +117,13 @@ impl EventSource for XDPEventSource {
         Ok(PostAction::Continue)
     }
 
-    fn register(
-        &mut self,
-        poll: &mut Poll,
-        token_factory: &mut TokenFactory,
-    ) -> calloop::Result<()> {
+    fn register(&mut self, poll: &mut Poll, token_factory: &mut TokenFactory) -> calloop::Result<()> {
         self.channel.register(poll, token_factory)?;
 
         Ok(())
     }
 
-    fn reregister(
-        &mut self,
-        poll: &mut Poll,
-        token_factory: &mut TokenFactory,
-    ) -> calloop::Result<()> {
+    fn reregister(&mut self, poll: &mut Poll, token_factory: &mut TokenFactory) -> calloop::Result<()> {
         self.channel.reregister(poll, token_factory)?;
 
         Ok(())

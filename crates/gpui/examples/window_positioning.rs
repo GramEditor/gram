@@ -1,7 +1,6 @@
 use gpui::{
-    App, Application, Bounds, Context, DisplayId, Hsla, Pixels, SharedString, Size, Window,
-    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, div, point, prelude::*,
-    px, rgb,
+    App, Application, Bounds, Context, DisplayId, Hsla, Pixels, SharedString, Size, Window, WindowBackgroundAppearance,
+    WindowBounds, WindowKind, WindowOptions, div, point, prelude::*, px, rgb,
 };
 
 struct WindowContent {
@@ -31,10 +30,7 @@ impl Render for WindowContent {
                     .size_full()
                     .child(format!(
                         "origin: {}, {} size: {}, {}",
-                        self.bounds.origin.x,
-                        self.bounds.origin.y,
-                        self.bounds.size.width,
-                        self.bounds.size.height
+                        self.bounds.origin.x, self.bounds.origin.y, self.bounds.size.width, self.bounds.size.height
                     ))
                     .child(format!(
                         "cx.bounds() origin: {}, {} size {}, {}",
@@ -92,8 +88,7 @@ fn main() {
             .unwrap();
 
             let bounds = Bounds {
-                origin: screen.bounds().top_right()
-                    - point(size.width + margin_offset, -margin_offset),
+                origin: screen.bounds().top_right() - point(size.width + margin_offset, -margin_offset),
                 size,
             };
 
@@ -107,8 +102,7 @@ fn main() {
             .unwrap();
 
             let bounds = Bounds {
-                origin: screen.bounds().bottom_left()
-                    - point(-margin_offset, size.height + margin_offset),
+                origin: screen.bounds().bottom_left() - point(-margin_offset, size.height + margin_offset),
                 size,
             };
 
@@ -122,8 +116,7 @@ fn main() {
             .unwrap();
 
             let bounds = Bounds {
-                origin: screen.bounds().bottom_right()
-                    - point(size.width + margin_offset, size.height + margin_offset),
+                origin: screen.bounds().bottom_right() - point(size.width + margin_offset, size.height + margin_offset),
                 size,
             };
 

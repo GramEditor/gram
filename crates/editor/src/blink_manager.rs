@@ -18,16 +18,10 @@ pub struct BlinkManager {
 }
 
 impl BlinkManager {
-    pub fn new(
-        blink_interval: Duration,
-        blink_enabled_in_settings: fn(&App) -> bool,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn new(blink_interval: Duration, blink_enabled_in_settings: fn(&App) -> bool, cx: &mut Context<Self>) -> Self {
         // Make sure we blink the cursors if the setting is re-enabled
-        cx.observe_global::<SettingsStore>(move |this, cx| {
-            this.blink_cursors(this.blink_epoch, cx)
-        })
-        .detach();
+        cx.observe_global::<SettingsStore>(move |this, cx| this.blink_cursors(this.blink_epoch, cx))
+            .detach();
 
         Self {
             blink_interval,
@@ -74,8 +68,7 @@ impl BlinkManager {
                 cx.spawn(async move |this, cx| {
                     Timer::after(interval).await;
                     if let Some(this) = this.upgrade() {
-                        this.update(cx, |this, cx| this.blink_cursors(epoch, cx))
-                            .ok();
+                        this.update(cx, |this, cx| this.blink_cursors(epoch, cx)).ok();
                     }
                 })
                 .detach();

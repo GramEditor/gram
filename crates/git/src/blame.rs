@@ -203,26 +203,15 @@ fn parse_git_blame(output: &str) -> Result<Vec<BlameEntry>> {
             None => {
                 let mut new_entry = BlameEntry::new_from_blame_line(line)?;
 
-                if let Some(existing_entry) = index
-                    .get(&new_entry.sha)
-                    .and_then(|slot| entries.get(*slot))
-                {
+                if let Some(existing_entry) = index.get(&new_entry.sha).and_then(|slot| entries.get(*slot)) {
                     new_entry.author.clone_from(&existing_entry.author);
-                    new_entry
-                        .author_mail
-                        .clone_from(&existing_entry.author_mail);
+                    new_entry.author_mail.clone_from(&existing_entry.author_mail);
                     new_entry.author_time = existing_entry.author_time;
                     new_entry.author_tz.clone_from(&existing_entry.author_tz);
-                    new_entry
-                        .committer_name
-                        .clone_from(&existing_entry.committer_name);
-                    new_entry
-                        .committer_email
-                        .clone_from(&existing_entry.committer_email);
+                    new_entry.committer_name.clone_from(&existing_entry.committer_name);
+                    new_entry.committer_email.clone_from(&existing_entry.committer_email);
                     new_entry.committer_time = existing_entry.committer_time;
-                    new_entry
-                        .committer_tz
-                        .clone_from(&existing_entry.committer_tz);
+                    new_entry.committer_tz.clone_from(&existing_entry.committer_tz);
                     new_entry.summary.clone_from(&existing_entry.summary);
                 }
 
@@ -243,16 +232,12 @@ fn parse_git_blame(output: &str) -> Result<Vec<BlameEntry>> {
                     "summary" if is_committed => entry.summary = Some(value.into()),
                     "author" if is_committed => entry.author = Some(value.into()),
                     "author-mail" if is_committed => entry.author_mail = Some(value.into()),
-                    "author-time" if is_committed => {
-                        entry.author_time = Some(value.parse::<i64>()?)
-                    }
+                    "author-time" if is_committed => entry.author_time = Some(value.parse::<i64>()?),
                     "author-tz" if is_committed => entry.author_tz = Some(value.into()),
 
                     "committer" if is_committed => entry.committer_name = Some(value.into()),
                     "committer-mail" if is_committed => entry.committer_email = Some(value.into()),
-                    "committer-time" if is_committed => {
-                        entry.committer_time = Some(value.parse::<i64>()?)
-                    }
+                    "committer-time" if is_committed => entry.committer_time = Some(value.parse::<i64>()?),
                     "committer-tz" if is_committed => entry.committer_tz = Some(value.into()),
                     _ => {}
                 }
@@ -294,8 +279,7 @@ mod tests {
         path.push("golden");
         path.push(format!("{}.json", golden_filename));
 
-        let mut have_json =
-            serde_json::to_string_pretty(&entries).expect("could not serialize entries to JSON");
+        let mut have_json = serde_json::to_string_pretty(&entries).expect("could not serialize entries to JSON");
         // We always want to save with a trailing newline.
         have_json.push('\n');
 
@@ -304,8 +288,7 @@ mod tests {
             .unwrap_or(false);
 
         if update {
-            std::fs::create_dir_all(path.parent().unwrap())
-                .expect("could not create golden test data directory");
+            std::fs::create_dir_all(path.parent().unwrap()).expect("could not create golden test data directory");
             std::fs::write(&path, have_json).expect("could not write out golden data");
         } else {
             let want_json =

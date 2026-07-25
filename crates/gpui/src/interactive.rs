@@ -1,6 +1,6 @@
 use crate::{
-    Bounds, Capslock, Context, Empty, IntoElement, Keystroke, Modifiers, Pixels, Point, Render,
-    Window, point, seal::Sealed,
+    Bounds, Capslock, Context, Empty, IntoElement, Keystroke, Modifiers, Pixels, Point, Render, Window, point,
+    seal::Sealed,
 };
 use smallvec::SmallVec;
 use std::{any::Any, fmt::Debug, ops::Deref, path::PathBuf};
@@ -291,9 +291,7 @@ impl ClickEvent {
     pub fn standard_click(&self) -> bool {
         match self {
             ClickEvent::Keyboard(_) => true,
-            ClickEvent::Mouse(event) => {
-                event.down.button == MouseButton::Left && event.up.button == MouseButton::Left
-            }
+            ClickEvent::Mouse(event) => event.down.button == MouseButton::Left && event.up.button == MouseButton::Left,
         }
     }
 
@@ -478,33 +476,17 @@ impl ScrollDelta {
     pub fn coalesce(self, other: ScrollDelta) -> ScrollDelta {
         match (self, other) {
             (ScrollDelta::Pixels(a), ScrollDelta::Pixels(b)) => {
-                let x = if a.x.signum() == b.x.signum() {
-                    a.x + b.x
-                } else {
-                    b.x
-                };
+                let x = if a.x.signum() == b.x.signum() { a.x + b.x } else { b.x };
 
-                let y = if a.y.signum() == b.y.signum() {
-                    a.y + b.y
-                } else {
-                    b.y
-                };
+                let y = if a.y.signum() == b.y.signum() { a.y + b.y } else { b.y };
 
                 ScrollDelta::Pixels(point(x, y))
             }
 
             (ScrollDelta::Lines(a), ScrollDelta::Lines(b)) => {
-                let x = if a.x.signum() == b.x.signum() {
-                    a.x + b.x
-                } else {
-                    b.x
-                };
+                let x = if a.x.signum() == b.x.signum() { a.x + b.x } else { b.x };
 
-                let y = if a.y.signum() == b.y.signum() {
-                    a.y + b.y
-                } else {
-                    b.y
-                };
+                let y = if a.y.signum() == b.y.signum() { a.y + b.y } else { b.y };
 
                 ScrollDelta::Lines(point(x, y))
             }
@@ -653,8 +635,8 @@ impl PlatformInput {
 mod test {
 
     use crate::{
-        self as gpui, AppContext as _, Context, FocusHandle, InteractiveElement, IntoElement,
-        KeyBinding, Keystroke, ParentElement, Render, TestAppContext, Window, div,
+        self as gpui, AppContext as _, Context, FocusHandle, InteractiveElement, IntoElement, KeyBinding, Keystroke,
+        ParentElement, Render, TestAppContext, Window, div,
     };
 
     struct TestView {
@@ -674,9 +656,7 @@ mod test {
                         cx.stop_propagation();
                         this.saw_key_down = true
                     }))
-                    .on_action(cx.listener(|this: &mut TestView, _: &TestAction, _, _| {
-                        this.saw_action = true
-                    }))
+                    .on_action(cx.listener(|this: &mut TestView, _: &TestAction, _, _| this.saw_action = true))
                     .child(
                         div()
                             .key_context("nested")
@@ -705,9 +685,7 @@ mod test {
         });
 
         window
-            .update(cx, |test_view, window, cx| {
-                window.focus(&test_view.focus_handle, cx)
-            })
+            .update(cx, |test_view, window, cx| window.focus(&test_view.focus_handle, cx))
             .unwrap();
 
         cx.dispatch_keystroke(*window, Keystroke::parse("a").unwrap());

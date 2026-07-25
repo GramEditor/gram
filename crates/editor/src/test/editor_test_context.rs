@@ -8,8 +8,8 @@ use futures::Future;
 
 use git::repository::RepoPath;
 use gpui::{
-    AnyWindowHandle, App, Context, Entity, Focusable as _, Keystroke, Pixels, Point,
-    VisualTestContext, Window, WindowHandle, prelude::*,
+    AnyWindowHandle, App, Context, Entity, Focusable as _, Keystroke, Pixels, Point, VisualTestContext, Window,
+    WindowHandle, prelude::*,
 };
 use itertools::Itertools;
 use language::{Buffer, BufferSnapshot, LanguageRegistry};
@@ -54,16 +54,12 @@ impl EditorTestContext {
         .await;
         let project = Project::test(fs.clone(), [root], cx).await;
         let buffer = project
-            .update(cx, |project, cx| {
-                project.open_local_buffer(root.join("file"), cx)
-            })
+            .update(cx, |project, cx| project.open_local_buffer(root.join("file"), cx))
             .await
             .unwrap();
 
         let language = project
-            .read_with(cx, |project, _cx| {
-                project.languages().language_for_name("Plain Text")
-            })
+            .read_with(cx, |project, _cx| project.languages().language_for_name("Plain Text"))
             .await
             .unwrap();
         buffer.update(cx, |buffer, cx| {
@@ -71,12 +67,7 @@ impl EditorTestContext {
         });
 
         let editor = cx.add_window(|window, cx| {
-            let editor = build_editor_with_project(
-                project,
-                MultiBuffer::build_from_buffer(buffer, cx),
-                window,
-                cx,
-            );
+            let editor = build_editor_with_project(project, MultiBuffer::build_from_buffer(buffer, cx), window, cx);
 
             window.focus(&editor.focus_handle(cx), cx);
             editor
@@ -153,12 +144,8 @@ impl EditorTestContext {
         }
     }
 
-    pub fn condition(
-        &self,
-        predicate: impl FnMut(&Editor, &App) -> bool,
-    ) -> impl Future<Output = ()> {
-        self.editor
-            .condition::<crate::EditorEvent>(&self.cx, predicate)
+    pub fn condition(&self, predicate: impl FnMut(&Editor, &App) -> bool) -> impl Future<Output = ()> {
+        self.editor.condition::<crate::EditorEvent>(&self.cx, predicate)
     }
 
     #[track_caller]
@@ -211,15 +198,7 @@ impl EditorTestContext {
     }
 
     pub fn language_registry(&mut self) -> Arc<LanguageRegistry> {
-        self.editor(|editor, _, cx| {
-            editor
-                .project
-                .as_ref()
-                .unwrap()
-                .read(cx)
-                .languages()
-                .clone()
-        })
+        self.editor(|editor, _, cx| editor.project.as_ref().unwrap().read(cx).languages().clone())
     }
 
     pub fn update_buffer<F, T>(&mut self, update: F) -> T
@@ -264,9 +243,9 @@ impl EditorTestContext {
 
     pub fn display_point(&mut self, marked_text: &str) -> DisplayPoint {
         let ranges = self.ranges(marked_text);
-        let snapshot = self.editor.update_in(&mut self.cx, |editor, window, cx| {
-            editor.snapshot(window, cx)
-        });
+        let snapshot = self
+            .editor
+            .update_in(&mut self.cx, |editor, window, cx| editor.snapshot(window, cx));
         MultiBufferOffset(ranges[0].start).to_display_point(&snapshot)
     }
 
@@ -277,21 +256,14 @@ impl EditorTestContext {
 
     pub fn pixel_position_for(&mut self, display_point: DisplayPoint) -> Point<Pixels> {
         self.update_editor(|editor, window, cx| {
-            let newest_point = editor
-                .selections
-                .newest_display(&editor.display_snapshot(cx))
-                .head();
+            let newest_point = editor.selections.newest_display(&editor.display_snapshot(cx)).head();
             let pixel_position = editor.pixel_position_of_newest_cursor.unwrap();
-            let line_height = editor
-                .style(cx)
-                .text
-                .line_height_in_pixels(window.rem_size());
+            let line_height = editor.style(cx).text.line_height_in_pixels(window.rem_size());
             let snapshot = editor.snapshot(window, cx);
             let details = editor.text_layout_details(window);
 
             let y = pixel_position.y
-                + f32::from(line_height)
-                    * Pixels::from(display_point.row().as_f64() - newest_point.row().as_f64());
+                + f32::from(line_height) * Pixels::from(display_point.row().as_f64() - newest_point.row().as_f64());
             let x = pixel_position.x + snapshot.x_for_display_point(display_point, &details)
                 - snapshot.x_for_display_point(newest_point, &details);
             Point::new(x, y)
@@ -313,8 +285,7 @@ impl EditorTestContext {
 
     pub fn set_head_text(&mut self, diff_base: &str) {
         self.cx.run_until_parked();
-        let fs =
-            self.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).fs().as_fake());
+        let fs = self.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).fs().as_fake());
         let path = self.update_buffer(|buffer, _| buffer.file().unwrap().path().clone());
         fs.set_head_for_repo(
             &Self::root_path().join(".git"),
@@ -326,16 +297,14 @@ impl EditorTestContext {
 
     pub fn clear_index_text(&mut self) {
         self.cx.run_until_parked();
-        let fs =
-            self.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).fs().as_fake());
+        let fs = self.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).fs().as_fake());
         fs.set_index_for_repo(&Self::root_path().join(".git"), &[]);
         self.cx.run_until_parked();
     }
 
     pub fn set_index_text(&mut self, diff_base: &str) {
         self.cx.run_until_parked();
-        let fs =
-            self.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).fs().as_fake());
+        let fs = self.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).fs().as_fake());
         let path = self.update_buffer(|buffer, _| buffer.file().unwrap().path().clone());
         fs.set_index_for_repo(
             &Self::root_path().join(".git"),
@@ -346,15 +315,11 @@ impl EditorTestContext {
 
     #[track_caller]
     pub fn assert_index_text(&mut self, expected: Option<&str>) {
-        let fs =
-            self.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).fs().as_fake());
+        let fs = self.update_editor(|editor, _, cx| editor.project().unwrap().read(cx).fs().as_fake());
         let path = self.update_buffer(|buffer, _| buffer.file().unwrap().path().clone());
         let mut found = None;
         fs.with_git_state(&Self::root_path().join(".git"), false, |git_state| {
-            found = git_state
-                .index_contents
-                .get(&RepoPath::from_rel_path(&path))
-                .cloned();
+            found = git_state.index_contents.get(&RepoPath::from_rel_path(&path)).cloned();
         })
         .unwrap();
         assert_eq!(expected, found.as_deref());
@@ -370,10 +335,8 @@ impl EditorTestContext {
     /// See the `util::test::marked_text_ranges` function for more information.
     #[track_caller]
     pub fn set_state(&mut self, marked_text: &str) -> ContextHandle {
-        let state_context = self.add_assertion_context(format!(
-            "Initial Editor State: \"{}\"",
-            marked_text.escape_debug()
-        ));
+        let state_context =
+            self.add_assertion_context(format!("Initial Editor State: \"{}\"", marked_text.escape_debug()));
         let (unmarked_text, selection_ranges) = marked_text_ranges(marked_text, true);
         self.editor.update_in(&mut self.cx, |editor, window, cx| {
             editor.set_text(unmarked_text, window, cx);
@@ -391,10 +354,8 @@ impl EditorTestContext {
     /// Only change the editor's selections
     #[track_caller]
     pub fn set_selections_state(&mut self, marked_text: &str) -> ContextHandle {
-        let state_context = self.add_assertion_context(format!(
-            "Initial Editor State: \"{}\"",
-            marked_text.escape_debug()
-        ));
+        let state_context =
+            self.add_assertion_context(format!("Initial Editor State: \"{}\"", marked_text.escape_debug()));
         let (unmarked_text, selection_ranges) = marked_text_ranges(marked_text, true);
         self.editor.update_in(&mut self.cx, |editor, window, cx| {
             assert_eq!(editor.text(cx), unmarked_text);
@@ -464,10 +425,8 @@ impl EditorTestContext {
         );
 
         for (ix, (excerpt_id, snapshot, range)) in excerpts.into_iter().enumerate() {
-            let is_folded = self
-                .update_editor(|editor, _, cx| editor.is_buffer_folded(snapshot.remote_id(), cx));
-            let (expected_text, expected_selections) =
-                marked_text_ranges(expected_excerpts[ix], true);
+            let is_folded = self.update_editor(|editor, _, cx| editor.is_buffer_folded(snapshot.remote_id(), cx));
+            let (expected_text, expected_selections) = marked_text_ranges(expected_excerpts[ix], true);
             if expected_text == "[FOLDED]\n" {
                 assert!(is_folded, "excerpt {} should be folded", ix);
                 let is_selected = selections.iter().any(|s| s.head().excerpt_id == excerpt_id);
@@ -609,8 +568,7 @@ impl EditorTestContext {
     #[track_caller]
     pub fn assert_editor_selections(&mut self, expected_selections: Vec<Range<usize>>) {
         let expected_marked_text =
-            generate_marked_text(&self.buffer_text(), &expected_selections, true)
-                .replace(" \n", "•\n");
+            generate_marked_text(&self.buffer_text(), &expected_selections, true).replace(" \n", "•\n");
 
         self.assert_selections(expected_selections, expected_marked_text)
     }
@@ -619,9 +577,7 @@ impl EditorTestContext {
     fn editor_selections(&mut self) -> Vec<Range<usize>> {
         self.editor
             .update(&mut self.cx, |editor, cx| {
-                editor
-                    .selections
-                    .all::<MultiBufferOffset>(&editor.display_snapshot(cx))
+                editor.selections.all::<MultiBufferOffset>(&editor.display_snapshot(cx))
             })
             .into_iter()
             .map(|s| {
@@ -635,15 +591,10 @@ impl EditorTestContext {
     }
 
     #[track_caller]
-    fn assert_selections(
-        &mut self,
-        expected_selections: Vec<Range<usize>>,
-        expected_marked_text: String,
-    ) {
+    fn assert_selections(&mut self, expected_selections: Vec<Range<usize>>, expected_marked_text: String) {
         let actual_selections = self.editor_selections();
         let actual_marked_text =
-            generate_marked_text(&self.buffer_text(), &actual_selections, true)
-                .replace(" \n", "•\n");
+            generate_marked_text(&self.buffer_text(), &actual_selections, true).replace(" \n", "•\n");
         if expected_selections != actual_selections {
             pretty_assertions::assert_eq!(
                 actual_marked_text,
@@ -709,11 +660,7 @@ impl std::fmt::Display for FormatMultiBufferAsMarkedText {
 }
 
 #[track_caller]
-pub fn assert_state_with_diff(
-    editor: &Entity<Editor>,
-    cx: &mut VisualTestContext,
-    expected_diff_text: &str,
-) {
+pub fn assert_state_with_diff(editor: &Entity<Editor>, cx: &mut VisualTestContext, expected_diff_text: &str) {
     let (snapshot, selections) = editor.update_in(cx, |editor, window, cx| {
         let snapshot = editor.snapshot(window, cx);
         (

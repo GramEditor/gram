@@ -87,10 +87,7 @@ impl PrivateKey {
 impl TryFrom<PublicKey> for String {
     type Error = anyhow::Error;
     fn try_from(key: PublicKey) -> Result<Self> {
-        let bytes = key
-            .0
-            .to_pkcs1_der()
-            .context("failed to serialize public key")?;
+        let bytes = key.0.to_pkcs1_der().context("failed to serialize public key")?;
         let string = BASE64_URL_SAFE.encode(&bytes);
         Ok(string)
     }
@@ -214,9 +211,7 @@ mod tests {
         for _ in 0..5 {
             let token = random_token();
             let (public_key, _) = keypair().unwrap();
-            let encrypted_token = public_key
-                .encrypt_string(&token, EncryptionFormat::V1)
-                .unwrap();
+            let encrypted_token = public_key.encrypt_string(&token, EncryptionFormat::V1).unwrap();
             let public_key_str = String::try_from(public_key).unwrap();
 
             assert_printable(&token);
@@ -227,12 +222,7 @@ mod tests {
 
     fn assert_printable(token: &str) {
         for c in token.chars() {
-            assert!(
-                c.is_ascii_graphic(),
-                "token {:?} has non-printable char {}",
-                token,
-                c
-            );
+            assert!(c.is_ascii_graphic(), "token {:?} has non-printable char {}", token, c);
             assert_ne!(c, '/', "token {:?} is not URL-safe", token);
             assert_ne!(c, '&', "token {:?} is not URL-safe", token);
         }

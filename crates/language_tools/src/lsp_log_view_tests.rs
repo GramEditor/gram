@@ -68,8 +68,7 @@ async fn test_lsp_log_view(cx: &mut TestAppContext) {
         .receive_notification::<lsp::notification::DidOpenTextDocument>()
         .await;
 
-    let window =
-        cx.add_window(|window, cx| LspLogView::new(project.clone(), log_store.clone(), window, cx));
+    let window = cx.add_window(|window, cx| LspLogView::new(project.clone(), log_store.clone(), window, cx));
     let log_view = window.root(cx).unwrap();
     let mut cx = VisualTestContext::from_window(*window, cx);
 

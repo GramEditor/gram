@@ -4,8 +4,8 @@ use gpui::{AppContext, DismissEvent, Entity, EventEmitter, Focusable, Subscripti
 use picker::Picker;
 use remote::{RemoteConnectionOptions, WslConnectionOptions};
 use ui::{
-    App, Context, HighlightedLabel, Icon, IconName, InteractiveElement, ListItem, ParentElement,
-    Render, Styled, StyledExt, Toggleable, Window, div, h_flex, rems, v_flex,
+    App, Context, HighlightedLabel, Icon, IconName, InteractiveElement, ListItem, ParentElement, Render, Styled,
+    StyledExt, Toggleable, Window, div, h_flex, rems, v_flex,
 };
 use util::ResultExt as _;
 use workspace::{ModalView, Workspace};
@@ -37,9 +37,7 @@ impl WslPickerDelegate {
     }
 
     pub fn selected_distro(&self) -> Option<String> {
-        self.matches
-            .get(self.selected_index)
-            .map(|m| m.string.clone())
+        self.matches.get(self.selected_index).map(|m| m.string.clone())
     }
 }
 
@@ -83,12 +81,7 @@ impl picker::PickerDelegate for WslPickerDelegate {
         self.selected_index
     }
 
-    fn set_selected_index(
-        &mut self,
-        ix: usize,
-        _window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) {
+    fn set_selected_index(&mut self, ix: usize, _window: &mut Window, cx: &mut Context<Picker<Self>>) {
         self.selected_index = ix;
         cx.notify();
     }
@@ -97,12 +90,7 @@ impl picker::PickerDelegate for WslPickerDelegate {
         Arc::from("Enter WSL distro name")
     }
 
-    fn update_matches(
-        &mut self,
-        query: String,
-        _window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) -> Task<()> {
+    fn update_matches(&mut self, query: String, _window: &mut Window, cx: &mut Context<Picker<Self>>) -> Task<()> {
         use fuzzy::StringMatchCandidate;
 
         let needs_fetch = self.distro_list.is_none();
@@ -173,14 +161,9 @@ impl picker::PickerDelegate for WslPickerDelegate {
                 .inset(true)
                 .spacing(ui::ListItemSpacing::Sparse)
                 .child(
-                    h_flex()
-                        .flex_grow()
-                        .gap_3()
-                        .child(Icon::new(IconName::Linux))
-                        .child(v_flex().child(HighlightedLabel::new(
-                            matched.string.clone(),
-                            matched.positions.clone(),
-                        ))),
+                    h_flex().flex_grow().gap_3().child(Icon::new(IconName::Linux)).child(
+                        v_flex().child(HighlightedLabel::new(matched.string.clone(), matched.positions.clone())),
+                    ),
                 ),
         )
     }
@@ -194,30 +177,17 @@ pub(crate) struct WslOpenModal {
 }
 
 impl WslOpenModal {
-    pub fn new(
-        paths: Vec<PathBuf>,
-        create_new_window: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn new(paths: Vec<PathBuf>, create_new_window: bool, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let delegate = WslPickerDelegate::new();
         let picker = cx.new(|cx| Picker::uniform_list(delegate, window, cx).modal(false));
 
-        let selected = cx.subscribe_in(
-            &picker,
-            window,
-            |this, _, event: &WslDistroSelected, window, cx| {
-                this.confirm(&event.distro, event.secondary, window, cx);
-            },
-        );
+        let selected = cx.subscribe_in(&picker, window, |this, _, event: &WslDistroSelected, window, cx| {
+            this.confirm(&event.distro, event.secondary, window, cx);
+        });
 
-        let dismissed = cx.subscribe_in(
-            &picker,
-            window,
-            |this, _, _: &WslPickerDismissed, window, cx| {
-                this.cancel(&menu::Cancel, window, cx);
-            },
-        );
+        let dismissed = cx.subscribe_in(&picker, window, |this, _, _: &WslPickerDismissed, window, cx| {
+            this.cancel(&menu::Cancel, window, cx);
+        });
 
         WslOpenModal {
             paths,
@@ -227,13 +197,7 @@ impl WslOpenModal {
         }
     }
 
-    fn confirm(
-        &mut self,
-        distro: &str,
-        secondary: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn confirm(&mut self, distro: &str, secondary: bool, window: &mut Window, cx: &mut Context<Self>) {
         let app_state = workspace::AppState::global(cx);
         let Some(app_state) = app_state.upgrade() else {
             return;

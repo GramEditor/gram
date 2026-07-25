@@ -1,6 +1,6 @@
 use crate::{
-    GLOBAL_THREAD_TIMINGS, PlatformDispatcher, RunnableVariant, THREAD_TIMINGS, TaskLabel,
-    TaskTiming, ThreadTaskTimings,
+    GLOBAL_THREAD_TIMINGS, PlatformDispatcher, RunnableVariant, THREAD_TIMINGS, TaskLabel, TaskTiming,
+    ThreadTaskTimings,
 };
 use calloop::{
     EventLoop,
@@ -31,8 +31,7 @@ const MIN_THREADS: usize = 2;
 impl LinuxDispatcher {
     pub fn new(main_sender: Sender<RunnableVariant>) -> Self {
         let (background_sender, background_receiver) = flume::unbounded::<RunnableVariant>();
-        let thread_count =
-            std::thread::available_parallelism().map_or(MIN_THREADS, |i| i.get().max(MIN_THREADS));
+        let thread_count = std::thread::available_parallelism().map_or(MIN_THREADS, |i| i.get().max(MIN_THREADS));
 
         let mut background_threads = (0..thread_count)
             .map(|i| {
@@ -74,11 +73,7 @@ impl LinuxDispatcher {
                             location.end = Some(end);
                             Self::add_task_timing(location);
 
-                            log::trace!(
-                                "background thread {}: ran runnable. took: {:?}",
-                                i,
-                                start.elapsed()
-                            );
+                            log::trace!("background thread {}: ran runnable. took: {:?}", i, start.elapsed());
                         }
                     })
                     .unwrap()
@@ -89,8 +84,7 @@ impl LinuxDispatcher {
         let timer_thread = std::thread::Builder::new()
             .name("Timer".to_owned())
             .spawn(|| {
-                let mut event_loop: EventLoop<()> =
-                    EventLoop::try_new().expect("Failed to initialize timer loop!");
+                let mut event_loop: EventLoop<()> = EventLoop::try_new().expect("Failed to initialize timer loop!");
 
                 let handle = event_loop.handle();
                 let timer_handle = event_loop.handle();
@@ -100,44 +94,41 @@ impl LinuxDispatcher {
                             // This has to be in an option to satisfy the borrow checker. The callback below should only be scheduled once.
                             let mut runnable = Some(timer.runnable);
                             timer_handle
-                                .insert_source(
-                                    calloop::timer::Timer::from_duration(timer.duration),
-                                    move |_, _, _| {
-                                        if let Some(runnable) = runnable.take() {
-                                            let start = Instant::now();
-                                            let mut timing = match runnable {
-                                                RunnableVariant::Meta(runnable) => {
-                                                    let location = runnable.metadata().location;
-                                                    let timing = TaskTiming {
-                                                        location,
-                                                        start,
-                                                        end: None,
-                                                    };
-                                                    Self::add_task_timing(timing);
+                                .insert_source(calloop::timer::Timer::from_duration(timer.duration), move |_, _, _| {
+                                    if let Some(runnable) = runnable.take() {
+                                        let start = Instant::now();
+                                        let mut timing = match runnable {
+                                            RunnableVariant::Meta(runnable) => {
+                                                let location = runnable.metadata().location;
+                                                let timing = TaskTiming {
+                                                    location,
+                                                    start,
+                                                    end: None,
+                                                };
+                                                Self::add_task_timing(timing);
 
-                                                    runnable.run();
-                                                    timing
-                                                }
-                                                RunnableVariant::Compat(runnable) => {
-                                                    let timing = TaskTiming {
-                                                        location: core::panic::Location::caller(),
-                                                        start,
-                                                        end: None,
-                                                    };
-                                                    Self::add_task_timing(timing);
+                                                runnable.run();
+                                                timing
+                                            }
+                                            RunnableVariant::Compat(runnable) => {
+                                                let timing = TaskTiming {
+                                                    location: core::panic::Location::caller(),
+                                                    start,
+                                                    end: None,
+                                                };
+                                                Self::add_task_timing(timing);
 
-                                                    runnable.run();
-                                                    timing
-                                                }
-                                            };
-                                            let end = Instant::now();
+                                                runnable.run();
+                                                timing
+                                            }
+                                        };
+                                        let end = Instant::now();
 
-                                            timing.end = Some(end);
-                                            Self::add_task_timing(timing);
-                                        }
-                                        TimeoutAction::Drop
-                                    },
-                                )
+                                        timing.end = Some(end);
+                                        Self::add_task_timing(timing);
+                                    }
+                                    TimeoutAction::Drop
+                                })
                                 .expect("Failed to start timer");
                         }
                     })
@@ -218,8 +209,6 @@ impl PlatformDispatcher for LinuxDispatcher {
     }
 
     fn dispatch_after(&self, duration: Duration, runnable: RunnableVariant) {
-        self.timer_sender
-            .send(TimerAfter { duration, runnable })
-            .ok();
+        self.timer_sender.send(TimerAfter { duration, runnable }).ok();
     }
 }

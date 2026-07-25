@@ -31,17 +31,9 @@ impl IndentGuideColors {
 pub struct IndentGuides {
     colors: IndentGuideColors,
     indent_size: Pixels,
-    compute_indents_fn:
-        Option<Box<dyn Fn(Range<usize>, &mut Window, &mut App) -> SmallVec<[usize; 64]>>>,
-    render_fn: Option<
-        Box<
-            dyn Fn(
-                RenderIndentGuideParams,
-                &mut Window,
-                &mut App,
-            ) -> SmallVec<[RenderedIndentGuide; 12]>,
-        >,
-    >,
+    compute_indents_fn: Option<Box<dyn Fn(Range<usize>, &mut Window, &mut App) -> SmallVec<[usize; 64]>>>,
+    render_fn:
+        Option<Box<dyn Fn(RenderIndentGuideParams, &mut Window, &mut App) -> SmallVec<[RenderedIndentGuide; 12]>>>,
     on_click: Option<Rc<dyn Fn(&IndentGuideLayout, &mut Window, &mut App)>>,
 }
 
@@ -57,10 +49,7 @@ pub fn indent_guides(indent_size: Pixels, colors: IndentGuideColors) -> IndentGu
 
 impl IndentGuides {
     /// Sets the callback that will be called when the user clicks on an indent guide.
-    pub fn on_click(
-        mut self,
-        on_click: impl Fn(&IndentGuideLayout, &mut Window, &mut App) + 'static,
-    ) -> Self {
+    pub fn on_click(mut self, on_click: impl Fn(&IndentGuideLayout, &mut Window, &mut App) + 'static) -> Self {
         self.on_click = Some(Rc::new(on_click));
         self
     }
@@ -69,13 +58,7 @@ impl IndentGuides {
     pub fn with_compute_indents_fn<V: Render>(
         mut self,
         entity: Entity<V>,
-        compute_indents_fn: impl Fn(
-            &mut V,
-            Range<usize>,
-            &mut Window,
-            &mut Context<V>,
-        ) -> SmallVec<[usize; 64]>
-        + 'static,
+        compute_indents_fn: impl Fn(&mut V, Range<usize>, &mut Window, &mut Context<V>) -> SmallVec<[usize; 64]> + 'static,
     ) -> Self {
         let compute_indents_fn = Box::new(move |range, window: &mut Window, cx: &mut App| {
             entity.update(cx, |this, cx| compute_indents_fn(this, range, window, cx))
@@ -88,12 +71,7 @@ impl IndentGuides {
     pub fn with_render_fn<V: Render>(
         mut self,
         entity: Entity<V>,
-        render_fn: impl Fn(
-            &mut V,
-            RenderIndentGuideParams,
-            &mut Window,
-            &mut App,
-        ) -> SmallVec<[RenderedIndentGuide; 12]>
+        render_fn: impl Fn(&mut V, RenderIndentGuideParams, &mut Window, &mut App) -> SmallVec<[RenderedIndentGuide; 12]>
         + 'static,
     ) -> Self {
         let render_fn = move |params, window: &mut Window, cx: &mut App| {
@@ -123,10 +101,7 @@ impl IndentGuides {
                 .into_iter()
                 .map(|layout| RenderedIndentGuide {
                     bounds: Bounds::new(
-                        point(
-                            layout.offset.x * self.indent_size,
-                            layout.offset.y * item_height,
-                        ),
+                        point(layout.offset.x * self.indent_size, layout.offset.y * item_height),
                         size(px(1.), layout.length * item_height),
                     ),
                     layout,
@@ -214,11 +189,7 @@ mod uniform_list {
                 panic!("compute_indents_fn is required for UniformListDecoration");
             };
             let visible_entries = &compute_indents_fn(visible_range.clone(), window, cx);
-            let indent_guides = compute_indent_guides(
-                visible_entries,
-                visible_range.start,
-                includes_trailing_indent,
-            );
+            let indent_guides = compute_indent_guides(visible_entries, visible_range.start, includes_trailing_indent);
             self.render_from_layout(indent_guides, bounds, item_height, window, cx)
         }
     }
@@ -296,10 +267,7 @@ impl Element for IndentGuidesElement {
                 .indent_guides
                 .as_ref()
                 .iter()
-                .map(|guide| {
-                    window
-                        .insert_hitbox(guide.hitbox.unwrap_or(guide.bounds), HitboxBehavior::Normal)
-                })
+                .map(|guide| window.insert_hitbox(guide.hitbox.unwrap_or(guide.bounds), HitboxBehavior::Normal))
                 .collect();
             Self::PrepaintState::Interactive {
                 hitboxes: Rc::new(hitboxes),
@@ -467,9 +435,7 @@ fn compute_indent_guides(
     indent_guides.extend(indent_stack);
 
     for guide in indent_guides.iter_mut() {
-        if includes_trailing_indent
-            && guide.offset.y + guide.length == offset + indents.len().saturating_sub(1)
-        {
+        if includes_trailing_indent && guide.offset.y + guide.length == offset + indents.len().saturating_sub(1) {
             guide.continues_offscreen = indents
                 .last()
                 .map(|last_indent| guide.offset.x < *last_indent)

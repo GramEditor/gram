@@ -7,18 +7,18 @@ use std::{
 
 use app_actions::OpenPerformanceProfiler;
 use gpui::{
-    App, AppContext, ClipboardItem, Context, Div, Entity, Hsla, InteractiveElement,
-    ParentElement as _, Render, SerializedTaskTiming, SharedString, StatefulInteractiveElement,
-    Styled, Task, TaskTiming, TitlebarOptions, UniformListScrollHandle, WindowBounds, WindowHandle,
-    WindowOptions, div, prelude::FluentBuilder, px, relative, size, uniform_list,
+    App, AppContext, ClipboardItem, Context, Div, Entity, Hsla, InteractiveElement, ParentElement as _, Render,
+    SerializedTaskTiming, SharedString, StatefulInteractiveElement, Styled, Task, TaskTiming, TitlebarOptions,
+    UniformListScrollHandle, WindowBounds, WindowHandle, WindowOptions, div, prelude::FluentBuilder, px, relative,
+    size, uniform_list,
 };
 use util::ResultExt;
 use workspace::{
     Workspace, WorkspaceSettings,
     item::Settings as _,
     ui::{
-        ActiveTheme, Button, ButtonCommon, ButtonStyle, Checkbox, Clickable, Divider,
-        ScrollableHandle as _, ToggleState, Tooltip, WithScrollbar, h_flex, v_flex,
+        ActiveTheme, Button, ButtonCommon, ButtonStyle, Checkbox, Clickable, Divider, ScrollableHandle as _,
+        ToggleState, Tooltip, WithScrollbar, h_flex, v_flex,
     },
 };
 
@@ -111,11 +111,7 @@ pub struct ProfilerWindow {
 }
 
 impl ProfilerWindow {
-    pub fn new(
-        startup_time: Instant,
-        workspace_handle: Option<WindowHandle<Workspace>>,
-        cx: &mut App,
-    ) -> Entity<Self> {
+    pub fn new(startup_time: Instant, workspace_handle: Option<WindowHandle<Workspace>>, cx: &mut App) -> Entity<Self> {
         let entity = cx.new(|cx| ProfilerWindow {
             startup_time,
             data: DataMode::Realtime(None),
@@ -132,10 +128,7 @@ impl ProfilerWindow {
     fn begin_listen(cx: &mut Context<Self>) -> Task<()> {
         cx.spawn(async move |this, cx| {
             loop {
-                let data = cx
-                    .foreground_executor()
-                    .dispatcher
-                    .get_current_thread_timings();
+                let data = cx.foreground_executor().dispatcher.get_current_thread_timings();
 
                 this.update(cx, |this: &mut ProfilerWindow, cx| {
                     this.data = DataMode::Realtime(Some(data));
@@ -144,9 +137,7 @@ impl ProfilerWindow {
                 .ok();
 
                 // yield to the executor
-                cx.background_executor()
-                    .timer(Duration::from_micros(1))
-                    .await;
+                cx.background_executor().timer(Duration::from_micros(1)).await;
             }
         })
     }
@@ -161,11 +152,7 @@ impl ProfilerWindow {
     fn render_timing(value_range: Range<Instant>, item: TimingBar, cx: &App) -> Div {
         let time_ms = item.end.duration_since(item.start).as_secs_f32() * 1000f32;
 
-        let remap = value_range
-            .end
-            .duration_since(value_range.start)
-            .as_secs_f32()
-            * 1000f32;
+        let remap = value_range.end.duration_since(value_range.start).as_secs_f32() * 1000f32;
 
         let start = (item.start.duration_since(value_range.start).as_secs_f32() * 1000f32) / remap;
         let end = (item.end.duration_since(value_range.start).as_secs_f32() * 1000f32) / remap;
@@ -199,9 +186,7 @@ impl ProfilerWindow {
                     .overflow_hidden()
                     .child(div().text_ellipsis().child(label.clone()))
                     .tooltip(Tooltip::text(label.clone()))
-                    .on_click(move |_, _, cx| {
-                        cx.write_to_clipboard(ClipboardItem::new_string(label.to_string()))
-                    }),
+                    .on_click(move |_, _, cx| cx.write_to_clipboard(ClipboardItem::new_string(label.to_string()))),
             )
             .child(
                 div()
@@ -232,11 +217,7 @@ impl ProfilerWindow {
 }
 
 impl Render for ProfilerWindow {
-    fn render(
-        &mut self,
-        window: &mut gpui::Window,
-        cx: &mut gpui::Context<Self>,
-    ) -> impl gpui::IntoElement {
+    fn render(&mut self, window: &mut gpui::Window, cx: &mut gpui::Context<Self>) -> impl gpui::IntoElement {
         let scroll_offset = self.scroll_handle.offset();
         let max_offset = self.scroll_handle.max_offset();
         self.autoscroll = -scroll_offset.y >= (max_offset.height - px(24.));
@@ -268,71 +249,59 @@ impl Render for ProfilerWindow {
                                     },
                                 )
                                 .style(ButtonStyle::Filled)
-                                .on_click(cx.listener(
-                                    |this, _, _window, cx| {
-                                        match &this.data {
-                                            DataMode::Realtime(Some(data)) => {
-                                                this._refresh = None;
-                                                this.data = DataMode::Snapshot(data.clone());
-                                            }
-                                            DataMode::Snapshot { .. } => {
-                                                this._refresh = Some(Self::begin_listen(cx));
-                                                this.data = DataMode::Realtime(None);
-                                            }
-                                            _ => {}
-                                        };
-                                        cx.notify();
-                                    },
-                                )),
+                                .on_click(cx.listener(|this, _, _window, cx| {
+                                    match &this.data {
+                                        DataMode::Realtime(Some(data)) => {
+                                            this._refresh = None;
+                                            this.data = DataMode::Snapshot(data.clone());
+                                        }
+                                        DataMode::Snapshot { .. } => {
+                                            this._refresh = Some(Self::begin_listen(cx));
+                                            this.data = DataMode::Realtime(None);
+                                        }
+                                        _ => {}
+                                    };
+                                    cx.notify();
+                                })),
                             )
-                            .child(
-                                Button::new("export-data", "Save")
-                                    .style(ButtonStyle::Filled)
-                                    .on_click(cx.listener(|this, _, _window, cx| {
-                                        let Some(workspace) = this.workspace else {
+                            .child(Button::new("export-data", "Save").style(ButtonStyle::Filled).on_click(
+                                cx.listener(|this, _, _window, cx| {
+                                    let Some(workspace) = this.workspace else {
+                                        return;
+                                    };
+
+                                    let Some(data) = this.get_timings() else {
+                                        return;
+                                    };
+                                    let timings = SerializedTaskTiming::convert(this.startup_time, &data);
+
+                                    let active_path = workspace
+                                        .read_with(cx, |workspace, cx| workspace.most_recent_active_path(cx))
+                                        .log_err()
+                                        .flatten()
+                                        .and_then(|p| p.parent().map(|p| p.to_owned()))
+                                        .unwrap_or_else(|| PathBuf::default());
+
+                                    let path =
+                                        cx.prompt_for_new_path(&active_path, Some("performance_profile.miniprof"));
+
+                                    cx.background_spawn(async move {
+                                        let path = path.await;
+                                        let path = path.log_err().and_then(|p| p.log_err()).flatten();
+
+                                        let Some(path) = path else {
                                             return;
                                         };
 
-                                        let Some(data) = this.get_timings() else {
+                                        let Some(timings) = serde_json::to_string(&timings).log_err() else {
                                             return;
                                         };
-                                        let timings =
-                                            SerializedTaskTiming::convert(this.startup_time, &data);
 
-                                        let active_path = workspace
-                                            .read_with(cx, |workspace, cx| {
-                                                workspace.most_recent_active_path(cx)
-                                            })
-                                            .log_err()
-                                            .flatten()
-                                            .and_then(|p| p.parent().map(|p| p.to_owned()))
-                                            .unwrap_or_else(|| PathBuf::default());
-
-                                        let path = cx.prompt_for_new_path(
-                                            &active_path,
-                                            Some("performance_profile.miniprof"),
-                                        );
-
-                                        cx.background_spawn(async move {
-                                            let path = path.await;
-                                            let path =
-                                                path.log_err().and_then(|p| p.log_err()).flatten();
-
-                                            let Some(path) = path else {
-                                                return;
-                                            };
-
-                                            let Some(timings) =
-                                                serde_json::to_string(&timings).log_err()
-                                            else {
-                                                return;
-                                            };
-
-                                            smol::fs::write(path, &timings).await.log_err();
-                                        })
-                                        .detach();
-                                    })),
-                            ),
+                                        smol::fs::write(path, &timings).await.log_err();
+                                    })
+                                    .detach();
+                                }),
+                            )),
                     )
                     .child(
                         Checkbox::new("include-self", self.include_self_timings)
@@ -384,19 +353,14 @@ impl Render for ProfilerWindow {
                                     let mut items = vec![];
                                     for i in visible_range {
                                         let timing = &timings[i];
-                                        let value_range =
-                                            max.checked_sub(Duration::from_secs(10)).unwrap_or(min)
-                                                ..max;
+                                        let value_range = max.checked_sub(Duration::from_secs(10)).unwrap_or(min)..max;
                                         items.push(Self::render_timing(
                                             value_range,
                                             TimingBar {
                                                 location: timing.location,
                                                 start: timing.start,
                                                 end: timing.end.unwrap_or_else(|| Instant::now()),
-                                                color: cx
-                                                    .theme()
-                                                    .accents()
-                                                    .color_for_index(i as u32),
+                                                color: cx.theme().accents().color_for_index(i as u32),
                                             },
                                             cx,
                                         ));

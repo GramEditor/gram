@@ -63,13 +63,7 @@ impl Vim {
                     s.move_with(|map, selection| {
                         let anchor = map.display_point_to_anchor(selection.head(), Bias::Right);
                         selection_starts.insert(selection.id, anchor);
-                        motion.expand_selection(
-                            map,
-                            selection,
-                            times,
-                            &text_layout_details,
-                            forced_motion,
-                        );
+                        motion.expand_selection(map, selection, times, &text_layout_details, forced_motion);
                     });
                 });
                 editor.rewrap_impl(
@@ -141,8 +135,6 @@ mod test {
 
         cx.set_shared_state("ˇhello\nworld\n").await;
         cx.simulate_shared_keystrokes("v j > g v").await;
-        cx.shared_state()
-            .await
-            .assert_eq("«    hello\n ˇ»   world\n");
+        cx.shared_state().await.assert_eq("«    hello\n ˇ»   world\n");
     }
 }

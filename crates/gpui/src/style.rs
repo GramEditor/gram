@@ -5,11 +5,10 @@ use std::{
 };
 
 use crate::{
-    AbsoluteLength, App, Background, BackgroundTag, BorderStyle, Bounds, ContentMask, Corners,
-    CornersRefinement, CursorStyle, DefiniteLength, DevicePixels, Edges, EdgesRefinement, Font,
-    FontFallbacks, FontFeatures, FontStyle, FontWeight, GridLocation, Hsla, Length, Pixels, Point,
-    PointRefinement, Rgba, SharedString, Size, SizeRefinement, Styled, TextRun, Window, black, phi,
-    point, quad, rems, size,
+    AbsoluteLength, App, Background, BackgroundTag, BorderStyle, Bounds, ContentMask, Corners, CornersRefinement,
+    CursorStyle, DefiniteLength, DevicePixels, Edges, EdgesRefinement, Font, FontFallbacks, FontFeatures, FontStyle,
+    FontWeight, GridLocation, Hsla, Length, Pixels, Point, PointRefinement, Rgba, SharedString, Size, SizeRefinement,
+    Styled, TextRun, Window, black, phi, point, quad, rems, size,
 };
 use collections::HashSet;
 use refineable::Refineable;
@@ -41,11 +40,7 @@ pub enum ObjectFit {
 
 impl ObjectFit {
     /// Get the bounds of the image within the given bounds.
-    pub fn get_bounds(
-        &self,
-        bounds: Bounds<Pixels>,
-        image_size: Size<DevicePixels>,
-    ) -> Bounds<Pixels> {
+    pub fn get_bounds(&self, bounds: Bounds<Pixels>, image_size: Size<DevicePixels>) -> Bounds<Pixels> {
         let image_size = image_size.map(|dimension| Pixels::from(u32::from(dimension)));
         let image_ratio = image_size.width / image_size.height;
         let bounds_ratio = bounds.size.width / bounds.size.height;
@@ -139,9 +134,7 @@ impl ObjectFit {
 }
 
 /// The minimum size of a column or row in a grid layout
-#[derive(
-    Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Default, JsonSchema, Serialize, Deserialize,
-)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Default, JsonSchema, Serialize, Deserialize)]
 pub enum TemplateColumnMinSize {
     /// The column size may be 0
     #[default]
@@ -154,18 +147,7 @@ pub enum TemplateColumnMinSize {
 
 /// A simplified representation of the grid-template-* value
 #[derive(
-    Copy,
-    Clone,
-    Refineable,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Debug,
-    Default,
-    JsonSchema,
-    Serialize,
-    Deserialize,
+    Copy, Clone, Refineable, PartialEq, Eq, PartialOrd, Ord, Debug, Default, JsonSchema, Serialize, Deserialize,
 )]
 pub struct GridTemplate {
     /// How this template directive should be repeated
@@ -583,20 +565,12 @@ impl Style {
 
     /// Get the text style in this element style.
     pub fn text_style(&self) -> Option<&TextStyleRefinement> {
-        if self.text.is_some() {
-            Some(&self.text)
-        } else {
-            None
-        }
+        if self.text.is_some() { Some(&self.text) } else { None }
     }
 
     /// Get the content mask for this element style, based on the given bounds.
     /// If the element does not hide its overflow, this will return `None`.
-    pub fn overflow_mask(
-        &self,
-        bounds: Bounds<Pixels>,
-        rem_size: Pixels,
-    ) -> Option<ContentMask<Pixels>> {
+    pub fn overflow_mask(&self, bounds: Bounds<Pixels>, rem_size: Pixels) -> Option<ContentMask<Pixels>> {
         match self.overflow {
             Point {
                 x: Overflow::Visible,
@@ -606,10 +580,7 @@ impl Style {
                 let mut min = bounds.origin;
                 let mut max = bounds.bottom_right();
 
-                if self
-                    .border_color
-                    .is_some_and(|color| !color.is_transparent())
-                {
+                if self.border_color.is_some_and(|color| !color.is_transparent()) {
                     min.x += self.border_widths.left.to_pixels(rem_size);
                     max.x -= self.border_widths.right.to_pixels(rem_size);
                     min.y += self.border_widths.top.to_pixels(rem_size);
@@ -623,15 +594,13 @@ impl Style {
                     // x and y both visible
                     (true, true) => return None,
                     // x visible, y hidden
-                    (true, false) => Bounds::from_corners(
-                        point(min.x, bounds.origin.y),
-                        point(max.x, bounds.bottom_right().y),
-                    ),
+                    (true, false) => {
+                        Bounds::from_corners(point(min.x, bounds.origin.y), point(max.x, bounds.bottom_right().y))
+                    }
                     // x hidden, y visible
-                    (false, true) => Bounds::from_corners(
-                        point(bounds.origin.x, min.y),
-                        point(bounds.bottom_right().x, max.y),
-                    ),
+                    (false, true) => {
+                        Bounds::from_corners(point(bounds.origin.x, min.y), point(bounds.bottom_right().x, max.y))
+                    }
                     // both hidden
                     (false, false) => Bounds::from_corners(min, max),
                 };
@@ -672,11 +641,7 @@ impl Style {
             let mut border_color = match background_color {
                 Some(color) => match color.tag {
                     BackgroundTag::Solid => color.solid,
-                    BackgroundTag::LinearGradient => color
-                        .colors
-                        .first()
-                        .map(|stop| stop.color)
-                        .unwrap_or_default(),
+                    BackgroundTag::LinearGradient => color.colors.first().map(|stop| stop.color).unwrap_or_default(),
                     BackgroundTag::PatternSlash => color.solid,
                 },
                 None => Hsla::default(),
@@ -738,30 +703,15 @@ impl Style {
             window.with_content_mask(Some(ContentMask { bounds: top_bounds }), |window| {
                 window.paint_quad(quad.clone());
             });
-            window.with_content_mask(
-                Some(ContentMask {
-                    bounds: right_bounds,
-                }),
-                |window| {
-                    window.paint_quad(quad.clone());
-                },
-            );
-            window.with_content_mask(
-                Some(ContentMask {
-                    bounds: bottom_bounds,
-                }),
-                |window| {
-                    window.paint_quad(quad.clone());
-                },
-            );
-            window.with_content_mask(
-                Some(ContentMask {
-                    bounds: left_bounds,
-                }),
-                |window| {
-                    window.paint_quad(quad);
-                },
-            );
+            window.with_content_mask(Some(ContentMask { bounds: right_bounds }), |window| {
+                window.paint_quad(quad.clone());
+            });
+            window.with_content_mask(Some(ContentMask { bounds: bottom_bounds }), |window| {
+                window.paint_quad(quad.clone());
+            });
+            window.with_content_mask(Some(ContentMask { bounds: left_bounds }), |window| {
+                window.paint_quad(quad);
+            });
         }
 
         #[cfg(debug_assertions)]
@@ -771,8 +721,7 @@ impl Style {
     }
 
     fn is_border_visible(&self) -> bool {
-        self.border_color
-            .is_some_and(|color| !color.is_transparent())
+        self.border_color.is_some_and(|color| !color.is_transparent())
             && self.border_widths.any(|length| !length.is_zero())
     }
 }
@@ -831,9 +780,7 @@ impl Default for Style {
 }
 
 /// The properties that can be applied to an underline.
-#[derive(
-    Refineable, Copy, Clone, Default, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema,
-)]
+#[derive(Refineable, Copy, Clone, Default, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 pub struct UnderlineStyle {
     /// The thickness of the underline.
     pub thickness: Pixels,
@@ -846,9 +793,7 @@ pub struct UnderlineStyle {
 }
 
 /// The properties that can be applied to a strikethrough.
-#[derive(
-    Refineable, Copy, Clone, Default, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema,
-)]
+#[derive(Refineable, Copy, Clone, Default, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 pub struct StrikethroughStyle {
     /// The thickness of the strikethrough.
     pub thickness: Pixels,
@@ -1530,9 +1475,6 @@ mod tests {
             style.text_style().unwrap().font_size
         );
 
-        assert_eq!(
-            Some(FontWeight::SEMIBOLD),
-            style.text_style().unwrap().font_weight
-        );
+        assert_eq!(Some(FontWeight::SEMIBOLD), style.text_style().unwrap().font_weight);
     }
 }

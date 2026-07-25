@@ -83,10 +83,7 @@ impl OpenRequest {
             } else {
                 (None, wsl)
             };
-            this.remote_connection = Some(RemoteConnectionOptions::Wsl(WslConnectionOptions {
-                distro_name,
-                user,
-            }));
+            this.remote_connection = Some(RemoteConnectionOptions::Wsl(WslConnectionOptions { distro_name, user }));
         }
 
         for url in request.urls {
@@ -131,9 +128,7 @@ impl OpenRequest {
                 } else {
                     path.to_string()
                 };
-                this.kind = Some(OpenRequestKind::Docs {
-                    path: path.to_string(),
-                });
+                this.kind = Some(OpenRequestKind::Docs { path: path.to_string() });
             } else if let Some(clone_path) = url.strip_prefix("gram://git/clone") {
                 this.parse_git_clone_url(clone_path)?
             } else if let Some(commit_path) = url.strip_prefix("gram://git/commit/") {
@@ -189,9 +184,7 @@ impl OpenRequest {
 
         self.open_paths.push(repo);
 
-        self.kind = Some(OpenRequestKind::GitCommit {
-            sha: sha.to_string(),
-        });
+        self.kind = Some(OpenRequestKind::GitCommit { sha: sha.to_string() });
 
         Ok(())
     }
@@ -204,12 +197,8 @@ impl OpenRequest {
             .to_string();
         let username = Some(url.username().to_string()).filter(|s| !s.is_empty());
         let port = url.port();
-        anyhow::ensure!(
-            self.open_paths.is_empty(),
-            "cannot open both local and ssh paths"
-        );
-        let mut connection_options =
-            SshSettings::get_global(cx).connection_options_for(host, port, username);
+        anyhow::ensure!(self.open_paths.is_empty(), "cannot open both local and ssh paths");
+        let mut connection_options = SshSettings::get_global(cx).connection_options_for(host, port, username);
         if let Some(password) = url.password() {
             connection_options.password = Some(password.to_string());
         }
@@ -278,11 +267,9 @@ pub fn listen_for_cli_connections(opener: OpenListener) -> Result<()> {
     Ok(())
 }
 
-fn connect_to_cli(
-    server_name: &str,
-) -> Result<(mpsc::Receiver<CliRequest>, IpcSender<CliResponse>)> {
-    let handshake_tx = cli::ipc::IpcSender::<IpcHandshake>::connect(server_name.to_string())
-        .context("error connecting to cli")?;
+fn connect_to_cli(server_name: &str) -> Result<(mpsc::Receiver<CliRequest>, IpcSender<CliResponse>)> {
+    let handshake_tx =
+        cli::ipc::IpcSender::<IpcHandshake>::connect(server_name.to_string()).context("error connecting to cli")?;
     let (request_tx, request_rx) = ipc::channel::<CliRequest>()?;
     let (response_tx, response_rx) = ipc::channel::<CliResponse>()?;
 
@@ -293,8 +280,7 @@ fn connect_to_cli(
         })
         .context("error sending ipc handshake")?;
 
-    let (mut async_request_tx, async_request_rx) =
-        futures::channel::mpsc::channel::<CliRequest>(16);
+    let (mut async_request_tx, async_request_rx) = futures::channel::mpsc::channel::<CliRequest>(16);
     thread::spawn(move || {
         while let Ok(cli_request) = request_rx.recv() {
             if smol::block_on(async_request_tx.send(cli_request)).is_err() {
@@ -313,10 +299,7 @@ pub async fn open_paths_with_positions(
     app_state: Arc<AppState>,
     open_options: workspace::OpenOptions,
     cx: &mut AsyncApp,
-) -> Result<(
-    WindowHandle<Workspace>,
-    Vec<Option<Result<Box<dyn ItemHandle>>>>,
-)> {
+) -> Result<(WindowHandle<Workspace>, Vec<Option<Result<Box<dyn ItemHandle>>>>)> {
     let mut caret_positions = HashMap::default();
 
     let paths = path_positions
@@ -394,14 +377,7 @@ pub async fn handle_cli_connection(
             } => {
                 if !urls.is_empty() {
                     cx.update(|cx| {
-                        match OpenRequest::parse(
-                            RawOpenRequest {
-                                urls,
-                                diff_paths,
-                                wsl,
-                            },
-                            cx,
-                        ) {
+                        match OpenRequest::parse(RawOpenRequest { urls, diff_paths, wsl }, cx) {
                             Ok(open_request) => {
                                 handle_open_request(open_request, app_state.clone(), cx);
                                 responses.send(CliResponse::Exit { status: 0 }).log_err();
@@ -459,9 +435,7 @@ async fn open_workspaces(
         if open_new_workspace == Some(true) {
             Vec::new()
         } else {
-            restorable_workspace_locations(cx, &app_state)
-                .await
-                .unwrap_or_default()
+            restorable_workspace_locations(cx, &app_state).await.unwrap_or_default()
         }
     } else {
         vec![(
@@ -524,10 +498,7 @@ async fn open_workspaces(
                 SerializedWorkspaceLocation::Remote(mut connection) => {
                     let app_state = app_state.clone();
                     if let RemoteConnectionOptions::Ssh(options) = &mut connection {
-                        cx.update(|cx| {
-                            SshSettings::get_global(cx)
-                                .fill_connection_options_from_settings(options)
-                        })?;
+                        cx.update(|cx| SshSettings::get_global(cx).fill_connection_options_from_settings(options))?;
                     }
                     cx.spawn(async move |cx| {
                         open_remote_project(
@@ -562,8 +533,7 @@ async fn open_local_workspace(
     app_state: &Arc<AppState>,
     cx: &mut AsyncApp,
 ) -> bool {
-    let paths_with_position =
-        derive_paths_with_position(app_state.fs.as_ref(), workspace_paths).await;
+    let paths_with_position = derive_paths_with_position(app_state.fs.as_ref(), workspace_paths).await;
 
     // If reuse flag is passed, open a new workspace in an existing window.
     let (open_new_workspace, replace_window) = if reuse {
@@ -792,13 +762,7 @@ mod tests {
             .unwrap();
 
         // Now open a file inside that workspace, but tell Gram to open a new window
-        open_workspace_file(
-            path!("/root/dir1/file1.txt"),
-            Some(true),
-            app_state.clone(),
-            cx,
-        )
-        .await;
+        open_workspace_file(path!("/root/dir1/file1.txt"), Some(true), app_state.clone(), cx).await;
 
         assert_eq!(cx.windows().len(), 2);
 
@@ -858,8 +822,7 @@ mod tests {
         assert!(matches!(poll!(&mut done_rx), Poll::Pending));
 
         let window = cx.windows()[0];
-        cx.update_window(window, |_, window, _| window.remove_window())
-            .unwrap();
+        cx.update_window(window, |_, window, _| window.remove_window()).unwrap();
         cx.background_executor.run_until_parked();
 
         let errored = done_rx.await.unwrap();
@@ -870,11 +833,7 @@ mod tests {
     async fn test_open_workspace_with_nonexistent_files(cx: &mut TestAppContext) {
         let app_state = init_test(cx);
 
-        app_state
-            .fs
-            .as_fake()
-            .insert_tree(path!("/root"), json!({}))
-            .await;
+        app_state.fs.as_fake().insert_tree(path!("/root"), json!({})).await;
 
         assert_eq!(cx.windows().len(), 0);
 
@@ -969,11 +928,7 @@ mod tests {
             .unwrap();
         app_state
             .fs
-            .save(
-                Path::new(file1_path),
-                &Rope::from("content1"),
-                LineEnding::Unix,
-            )
+            .save(Path::new(file1_path), &Rope::from("content1"), LineEnding::Unix)
             .await
             .unwrap();
         app_state
@@ -983,11 +938,7 @@ mod tests {
             .unwrap();
         app_state
             .fs
-            .save(
-                Path::new(file2_path),
-                &Rope::from("content2"),
-                LineEnding::Unix,
-            )
+            .save(Path::new(file2_path), &Rope::from("content2"), LineEnding::Unix)
             .await
             .unwrap();
 
@@ -1050,9 +1001,7 @@ mod tests {
         let request = cx.update(|cx| {
             OpenRequest::parse(
                 RawOpenRequest {
-                    urls: vec![
-                        "gram://git/clone/?repo=https://github.com/GramEditor/gram.git".into(),
-                    ],
+                    urls: vec!["gram://git/clone/?repo=https://github.com/GramEditor/gram.git".into()],
                     ..Default::default()
                 },
                 cx,
@@ -1075,9 +1024,7 @@ mod tests {
         let request = cx.update(|cx| {
             OpenRequest::parse(
                 RawOpenRequest {
-                    urls: vec![
-                        "gram://git/clone?repo=https://github.com/GramEditor/gram.git".into(),
-                    ],
+                    urls: vec!["gram://git/clone?repo=https://github.com/GramEditor/gram.git".into()],
                     ..Default::default()
                 },
                 cx,
@@ -1100,10 +1047,7 @@ mod tests {
         let request = cx.update(|cx| {
             OpenRequest::parse(
                 RawOpenRequest {
-                    urls: vec![
-                        "gram://git/clone/?repo=https%3A%2F%2Fgithub.com%2FGramEditor%2Fgram.git"
-                            .into(),
-                    ],
+                    urls: vec!["gram://git/clone/?repo=https%3A%2F%2Fgithub.com%2FGramEditor%2Fgram.git".into()],
                     ..Default::default()
                 },
                 cx,

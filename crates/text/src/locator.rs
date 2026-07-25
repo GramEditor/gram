@@ -121,10 +121,7 @@ mod tests {
         assert!(middle > lhs);
         assert!(middle < rhs);
         for ix in 0..middle.0.len() - 1 {
-            assert!(
-                middle.0[ix] == *lhs.0.get(ix).unwrap_or(&0)
-                    || middle.0[ix] == *rhs.0.get(ix).unwrap_or(&0)
-            );
+            assert!(middle.0[ix] == *lhs.0.get(ix).unwrap_or(&0) || middle.0[ix] == *rhs.0.get(ix).unwrap_or(&0));
         }
     }
 }

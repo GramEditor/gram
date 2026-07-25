@@ -1,6 +1,6 @@
 use gpui::{
-    App, Application, Bounds, Context, KeyBinding, PromptButton, PromptLevel, Timer, Window,
-    WindowBounds, WindowKind, WindowOptions, actions, div, prelude::*, px, rgb, size,
+    App, Application, Bounds, Context, KeyBinding, PromptButton, PromptLevel, Timer, Window, WindowBounds, WindowKind,
+    WindowOptions, actions, div, prelude::*, px, rgb, size,
 };
 
 struct SubWindow {
@@ -65,8 +65,7 @@ struct WindowDemo {}
 
 impl Render for WindowDemo {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let window_bounds =
-            WindowBounds::Windowed(Bounds::centered(None, size(px(300.0), px(300.0)), cx));
+        let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size(px(300.0), px(300.0)), cx));
 
         div()
             .p_4()
@@ -83,11 +82,7 @@ impl Render for WindowDemo {
                         window_bounds: Some(window_bounds),
                         ..Default::default()
                     },
-                    |_, cx| {
-                        cx.new(|_| SubWindow {
-                            custom_titlebar: false,
-                        })
-                    },
+                    |_, cx| cx.new(|_| SubWindow { custom_titlebar: false }),
                 )
                 .unwrap();
             }))
@@ -98,11 +93,7 @@ impl Render for WindowDemo {
                         kind: WindowKind::PopUp,
                         ..Default::default()
                     },
-                    |_, cx| {
-                        cx.new(|_| SubWindow {
-                            custom_titlebar: false,
-                        })
-                    },
+                    |_, cx| cx.new(|_| SubWindow { custom_titlebar: false }),
                 )
                 .unwrap();
             }))
@@ -113,11 +104,7 @@ impl Render for WindowDemo {
                         window_bounds: Some(window_bounds),
                         ..Default::default()
                     },
-                    |_, cx| {
-                        cx.new(|_| SubWindow {
-                            custom_titlebar: true,
-                        })
-                    },
+                    |_, cx| cx.new(|_| SubWindow { custom_titlebar: true }),
                 )
                 .unwrap();
             }))
@@ -128,11 +115,7 @@ impl Render for WindowDemo {
                         window_bounds: Some(window_bounds),
                         ..Default::default()
                     },
-                    |_, cx| {
-                        cx.new(|_| SubWindow {
-                            custom_titlebar: false,
-                        })
-                    },
+                    |_, cx| cx.new(|_| SubWindow { custom_titlebar: false }),
                 )
                 .unwrap();
             }))
@@ -144,11 +127,7 @@ impl Render for WindowDemo {
                         window_bounds: Some(window_bounds),
                         ..Default::default()
                     },
-                    |_, cx| {
-                        cx.new(|_| SubWindow {
-                            custom_titlebar: false,
-                        })
-                    },
+                    |_, cx| cx.new(|_| SubWindow { custom_titlebar: false }),
                 )
                 .unwrap();
             }))
@@ -159,11 +138,7 @@ impl Render for WindowDemo {
                         window_bounds: Some(window_bounds),
                         ..Default::default()
                     },
-                    |_, cx| {
-                        cx.new(|_| SubWindow {
-                            custom_titlebar: false,
-                        })
-                    },
+                    |_, cx| cx.new(|_| SubWindow { custom_titlebar: false }),
                 )
                 .unwrap();
             }))
@@ -174,11 +149,7 @@ impl Render for WindowDemo {
                         window_bounds: Some(window_bounds),
                         ..Default::default()
                     },
-                    |_, cx| {
-                        cx.new(|_| SubWindow {
-                            custom_titlebar: false,
-                        })
-                    },
+                    |_, cx| cx.new(|_| SubWindow { custom_titlebar: false }),
                 )
                 .unwrap();
             }))
@@ -200,13 +171,7 @@ impl Render for WindowDemo {
                 window.resize(size(content_size.height, content_size.width));
             }))
             .child(button("Prompt", |window, cx| {
-                let answer = window.prompt(
-                    PromptLevel::Info,
-                    "Are you sure?",
-                    None,
-                    &["Ok", "Cancel"],
-                    cx,
-                );
+                let answer = window.prompt(PromptLevel::Info, "Are you sure?", None, &["Ok", "Cancel"], cx);
 
                 cx.spawn(async move |_| {
                     if answer.await.unwrap() == 0 {

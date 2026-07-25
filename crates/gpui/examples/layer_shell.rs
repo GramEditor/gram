@@ -11,9 +11,8 @@ mod example {
     use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
     use gpui::{
-        App, Application, Bounds, Context, FontWeight, Size, Window, WindowBackgroundAppearance,
-        WindowBounds, WindowKind, WindowOptions, div, layer_shell::*, point, prelude::*, px, rems,
-        rgba, white,
+        App, Application, Bounds, Context, FontWeight, Size, Window, WindowBackgroundAppearance, WindowBounds,
+        WindowKind, WindowOptions, div, layer_shell::*, point, prelude::*, px, rems, rgba, white,
     };
 
     struct LayerShellExample;
@@ -23,9 +22,7 @@ mod example {
             cx.spawn(async move |this, cx| {
                 loop {
                     let _ = this.update(cx, |_, cx| cx.notify());
-                    cx.background_executor()
-                        .timer(Duration::from_millis(500))
-                        .await;
+                    cx.background_executor().timer(Duration::from_millis(500)).await;
                 }
             })
             .detach();
@@ -36,10 +33,7 @@ mod example {
 
     impl Render for LayerShellExample {
         fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-            let now = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs();
+            let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
 
             let hours = (now / 3600) % 24;
             let minutes = (now / 60) % 60;

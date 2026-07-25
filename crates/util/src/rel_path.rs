@@ -502,14 +502,8 @@ mod tests {
     #[test]
     fn test_rel_path_components() {
         let path = rel_path("foo/bar/baz");
-        assert_eq!(
-            path.components().collect::<Vec<_>>(),
-            vec!["foo", "bar", "baz"]
-        );
-        assert_eq!(
-            path.components().rev().collect::<Vec<_>>(),
-            vec!["baz", "bar", "foo"]
-        );
+        assert_eq!(path.components().collect::<Vec<_>>(), vec!["foo", "bar", "baz"]);
+        assert_eq!(path.components().rev().collect::<Vec<_>>(), vec!["baz", "bar", "foo"]);
 
         let path = rel_path("");
         let mut components = path.components();
@@ -551,9 +545,7 @@ mod tests {
         for [lhs, rhs] in test_cases.iter().array_combinations::<2>() {
             assert_eq!(
                 Path::new(lhs).cmp(Path::new(rhs)),
-                RelPath::unix(lhs)
-                    .unwrap()
-                    .cmp(&RelPath::unix(rhs).unwrap())
+                RelPath::unix(lhs).unwrap().cmp(&RelPath::unix(rhs).unwrap())
             );
         }
     }

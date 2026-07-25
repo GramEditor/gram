@@ -37,8 +37,7 @@ pub fn init(app_state: Arc<AppState>, cx: &mut App) {
 
     let div_inspector = OnceCell::new();
     cx.register_inspector_element(move |id, state: &DivInspectorState, window, cx| {
-        let div_inspector = div_inspector
-            .get_or_init(|| cx.new(|cx| DivInspector::new(project.clone(), window, cx)));
+        let div_inspector = div_inspector.get_or_init(|| cx.new(|cx| DivInspector::new(project.clone(), window, cx)));
         div_inspector.update(cx, |div_inspector, cx| {
             div_inspector.update_inspected_element(&id, state.clone(), window, cx);
             div_inspector.render(window, cx).into_any_element()
@@ -48,11 +47,7 @@ pub fn init(app_state: Arc<AppState>, cx: &mut App) {
     cx.set_inspector_renderer(Box::new(render_inspector));
 }
 
-fn render_inspector(
-    inspector: &mut Inspector,
-    window: &mut Window,
-    cx: &mut Context<Inspector>,
-) -> AnyElement {
+fn render_inspector(inspector: &mut Inspector, window: &mut Window, cx: &mut Context<Inspector>) -> AnyElement {
     let ui_font = theme::setup_ui_font(window, cx);
     let colors = cx.theme().colors();
     let inspector_id = inspector.active_element_id();
@@ -120,9 +115,7 @@ fn render_inspector_id(inspector_id: &InspectorElementId, cx: &App) -> Div {
                     div()
                         .id("instance-id")
                         .text_ui(cx)
-                        .tooltip(Tooltip::text(
-                            "Disambiguates elements from the same source location",
-                        ))
+                        .tooltip(Tooltip::text("Disambiguates elements from the same source location"))
                         .child(format!("Instance {}", inspector_id.instance_id)),
                 ),
         )
@@ -146,24 +139,15 @@ fn render_inspector_id(inspector_id: &InspectorElementId, cx: &App) -> Div {
                 .id("global-id")
                 .text_ui(cx)
                 .min_h_20()
-                .tooltip(Tooltip::text(
-                    "GlobalElementId of the nearest ancestor with an ID",
-                ))
+                .tooltip(Tooltip::text("GlobalElementId of the nearest ancestor with an ID"))
                 .child(inspector_id.path.global_id.to_string()),
         )
 }
 
-async fn open_editor_source_location(
-    location: &'static std::panic::Location<'static>,
-) -> anyhow::Result<()> {
+async fn open_editor_source_location(location: &'static std::panic::Location<'static>) -> anyhow::Result<()> {
     let mut path = Path::new(env!("GRAM_REPO_DIR")).to_path_buf();
     path.push(Path::new(location.file()));
-    let path_arg = format!(
-        "{}:{}:{}",
-        path.display(),
-        location.line(),
-        location.column()
-    );
+    let path_arg = format!("{}:{}:{}", path.display(), location.line(), location.column());
 
     let output = new_smol_command("gram")
         .arg(&path_arg)

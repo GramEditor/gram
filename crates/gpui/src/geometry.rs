@@ -231,10 +231,7 @@ where
 {
     /// Get the position of this point, relative to the given origin
     pub fn relative_to(&self, origin: &Point<T>) -> Point<T> {
-        point(
-            self.x.clone() - origin.x.clone(),
-            self.y.clone() - origin.y.clone(),
-        )
+        point(self.x.clone() - origin.x.clone(), self.y.clone() - origin.y.clone())
     }
 }
 
@@ -759,10 +756,7 @@ pub struct Bounds<T: Clone + Debug + Default + PartialEq> {
 }
 
 /// Create a bounds with the given origin and size
-pub fn bounds<T: Clone + Debug + Default + PartialEq>(
-    origin: Point<T>,
-    size: Size<T>,
-) -> Bounds<T> {
+pub fn bounds<T: Clone + Debug + Default + PartialEq>(origin: Point<T>, size: Size<T>) -> Bounds<T> {
     Bounds { origin, size }
 }
 
@@ -787,12 +781,10 @@ impl Bounds<Pixels> {
             .and_then(|id| cx.find_display(id))
             .or_else(|| cx.primary_display());
 
-        display
-            .map(|display| display.bounds())
-            .unwrap_or_else(|| Bounds {
-                origin: point(px(0.), px(0.)),
-                size: size(px(1024.), px(768.)),
-            })
+        display.map(|display| display.bounds()).unwrap_or_else(|| Bounds {
+            origin: point(px(0.), px(0.)),
+            size: size(px(1024.), px(768.)),
+        })
     }
 }
 
@@ -1058,13 +1050,7 @@ where
 
 impl<T> Bounds<T>
 where
-    T: Add<T, Output = T>
-        + Sub<T, Output = T>
-        + Neg<Output = T>
-        + Clone
-        + Debug
-        + Default
-        + PartialEq,
+    T: Add<T, Output = T> + Sub<T, Output = T> + Neg<Output = T> + Clone + Debug + Default + PartialEq,
 {
     /// Inset the bounds by a specified amount. Equivalent to `dilate` with the amount negated.
     ///
@@ -1074,9 +1060,7 @@ where
     }
 }
 
-impl<T: PartialOrd + Add<T, Output = T> + Sub<Output = T> + Clone + Debug + Default + PartialEq>
-    Bounds<T>
-{
+impl<T: PartialOrd + Add<T, Output = T> + Sub<Output = T> + Clone + Debug + Default + PartialEq> Bounds<T> {
     /// Calculates the intersection of two `Bounds` objects.
     ///
     /// This method computes the overlapping region of two `Bounds`. If the bounds do not intersect,
@@ -1112,10 +1096,7 @@ impl<T: PartialOrd + Add<T, Output = T> + Sub<Output = T> + Clone + Debug + Defa
     /// ```
     pub fn intersect(&self, other: &Self) -> Self {
         let upper_left = self.origin.max(&other.origin);
-        let bottom_right = self
-            .bottom_right()
-            .min(&other.bottom_right())
-            .max(&upper_left);
+        let bottom_right = self.bottom_right().min(&other.bottom_right()).max(&upper_left);
         Self::from_corners(upper_left, bottom_right)
     }
 
@@ -1556,8 +1537,7 @@ where
 {
     /// Convert a point to the coordinate space defined by this Bounds
     pub fn localize(&self, point: &Point<T>) -> Option<Point<T>> {
-        self.contains(point)
-            .then(|| point.relative_to(&self.origin))
+        self.contains(point).then(|| point.relative_to(&self.origin))
     }
 }
 
@@ -1580,13 +1560,7 @@ impl<T: PartialOrd + Clone + Debug + Default + PartialEq> Bounds<T> {
 
 impl<T: Clone + Debug + Default + PartialEq + Display + Add<T, Output = T>> Display for Bounds<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{} - {} (size {})",
-            self.origin,
-            self.bottom_right(),
-            self.size
-        )
+        write!(f, "{} - {} (size {})", self.origin, self.bottom_right(), self.size)
     }
 }
 
@@ -1840,10 +1814,7 @@ impl<T: Clone + Debug + Default + PartialEq> Edges<T> {
     /// assert!(!edges.any(|value| *value > 10));
     /// ```
     pub fn any<F: Fn(&T) -> bool>(&self, predicate: F) -> bool {
-        predicate(&self.top)
-            || predicate(&self.right)
-            || predicate(&self.bottom)
-            || predicate(&self.left)
+        predicate(&self.top) || predicate(&self.right) || predicate(&self.bottom) || predicate(&self.left)
     }
 }
 
@@ -2474,20 +2445,7 @@ impl From<Pixels> for Corners<Pixels> {
 
 /// Represents an angle in Radians
 #[derive(
-    Clone,
-    Copy,
-    Default,
-    Add,
-    AddAssign,
-    Sub,
-    SubAssign,
-    Neg,
-    Div,
-    DivAssign,
-    PartialEq,
-    Serialize,
-    Deserialize,
-    Debug,
+    Clone, Copy, Default, Add, AddAssign, Sub, SubAssign, Neg, Div, DivAssign, PartialEq, Serialize, Deserialize, Debug,
 )]
 #[repr(transparent)]
 pub struct Radians(pub f32);
@@ -2499,30 +2457,14 @@ pub fn radians(value: f32) -> Radians {
 
 /// A type representing a percentage value.
 #[derive(
-    Clone,
-    Copy,
-    Default,
-    Add,
-    AddAssign,
-    Sub,
-    SubAssign,
-    Neg,
-    Div,
-    DivAssign,
-    PartialEq,
-    Serialize,
-    Deserialize,
-    Debug,
+    Clone, Copy, Default, Add, AddAssign, Sub, SubAssign, Neg, Div, DivAssign, PartialEq, Serialize, Deserialize, Debug,
 )]
 #[repr(transparent)]
 pub struct Percentage(pub f32);
 
 /// Generate a `Radian` from a percentage of a full circle.
 pub fn percentage(value: f32) -> Percentage {
-    debug_assert!(
-        (0.0..=1.0).contains(&value),
-        "Percentage must be between 0 and 1"
-    );
+    debug_assert!((0.0..=1.0).contains(&value), "Percentage must be between 0 and 1");
     Percentage(value)
 }
 
@@ -3401,9 +3343,9 @@ impl TryFrom<&'_ str> for DefiniteLength {
 
     fn try_from(value: &'_ str) -> Result<Self, Self::Error> {
         if let Some(percentage) = value.strip_suffix('%') {
-            let fraction: f32 = percentage.parse::<f32>().with_context(|| {
-                format!("invalid DefiniteLength '{value}', expected {EXPECTED_DEFINITE_LENGTH}")
-            })?;
+            let fraction: f32 = percentage
+                .parse::<f32>()
+                .with_context(|| format!("invalid DefiniteLength '{value}', expected {EXPECTED_DEFINITE_LENGTH}"))?;
             Ok(DefiniteLength::Fraction(fraction / 100.0))
         } else if let Ok(absolute_length) = value.try_into() {
             Ok(DefiniteLength::Absolute(absolute_length))
@@ -3516,9 +3458,7 @@ impl TryFrom<&'_ str> for Length {
         } else if let Ok(definite_length) = value.try_into() {
             Ok(Length::Definite(definite_length))
         } else {
-            Err(anyhow!(
-                "invalid Length '{value}', expected {EXPECTED_LENGTH}"
-            ))
+            Err(anyhow!("invalid Length '{value}', expected {EXPECTED_LENGTH}"))
         }
     }
 }
@@ -3878,10 +3818,7 @@ where
     T: IsZero + Clone + Debug + Default + PartialEq,
 {
     fn is_zero(&self) -> bool {
-        self.top_left.is_zero()
-            && self.top_right.is_zero()
-            && self.bottom_right.is_zero()
-            && self.bottom_left.is_zero()
+        self.top_left.is_zero() && self.top_right.is_zero() && self.bottom_right.is_zero() && self.bottom_left.is_zero()
     }
 }
 

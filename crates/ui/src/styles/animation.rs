@@ -32,11 +32,7 @@ pub enum AnimationDirection {
 }
 
 pub trait DefaultAnimations: Styled + Sized + Element {
-    fn animate_in(
-        self,
-        animation_type: AnimationDirection,
-        fade_in: bool,
-    ) -> AnimationElement<Self> {
+    fn animate_in(self, animation_type: AnimationDirection, fade_in: bool) -> AnimationElement<Self> {
         let animation_name = match animation_type {
             AnimationDirection::FromBottom => "animate_from_bottom",
             AnimationDirection::FromLeft => "animate_from_left",
@@ -44,10 +40,9 @@ pub trait DefaultAnimations: Styled + Sized + Element {
             AnimationDirection::FromTop => "animate_from_top",
         };
 
-        let animation_id = self.id().map_or_else(
-            || ElementId::from(animation_name),
-            |id| (id, animation_name).into(),
-        );
+        let animation_id = self
+            .id()
+            .map_or_else(|| ElementId::from(animation_name), |id| (id, animation_name).into());
 
         self.with_animation(
             animation_id,
@@ -62,18 +57,10 @@ pub trait DefaultAnimations: Styled + Sized + Element {
                 }
 
                 match animation_type {
-                    AnimationDirection::FromBottom => {
-                        this.bottom(px(start_pos + delta * (end_pos - start_pos)))
-                    }
-                    AnimationDirection::FromLeft => {
-                        this.left(px(start_pos + delta * (end_pos - start_pos)))
-                    }
-                    AnimationDirection::FromRight => {
-                        this.right(px(start_pos + delta * (end_pos - start_pos)))
-                    }
-                    AnimationDirection::FromTop => {
-                        this.top(px(start_pos + delta * (end_pos - start_pos)))
-                    }
+                    AnimationDirection::FromBottom => this.bottom(px(start_pos + delta * (end_pos - start_pos))),
+                    AnimationDirection::FromLeft => this.left(px(start_pos + delta * (end_pos - start_pos))),
+                    AnimationDirection::FromRight => this.right(px(start_pos + delta * (end_pos - start_pos))),
+                    AnimationDirection::FromTop => this.top(px(start_pos + delta * (end_pos - start_pos))),
                 }
             },
         )

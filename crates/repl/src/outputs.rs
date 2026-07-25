@@ -159,41 +159,34 @@ impl Output {
                 .when(v.has_buffer_content(window, cx), |el| {
                     let v = v.clone();
                     el.child(
-                        IconButton::new(
-                            ElementId::Name("open-in-buffer".into()),
-                            IconName::FileTextOutlined,
-                        )
-                        .style(ButtonStyle::Transparent)
-                        .tooltip(Tooltip::text("Open in Buffer"))
-                        .on_click({
-                            let workspace = workspace.clone();
-                            move |_, window, cx| {
-                                let buffer_content =
-                                    v.update(cx, |item, cx| item.buffer_content(window, cx));
+                        IconButton::new(ElementId::Name("open-in-buffer".into()), IconName::FileTextOutlined)
+                            .style(ButtonStyle::Transparent)
+                            .tooltip(Tooltip::text("Open in Buffer"))
+                            .on_click({
+                                let workspace = workspace.clone();
+                                move |_, window, cx| {
+                                    let buffer_content = v.update(cx, |item, cx| item.buffer_content(window, cx));
 
-                                if let Some(buffer_content) = buffer_content.as_ref() {
-                                    let buffer = buffer_content.clone();
-                                    let editor = Box::new(cx.new(|cx| {
-                                        let multibuffer = cx.new(|cx| {
-                                            let mut multi_buffer =
-                                                MultiBuffer::singleton(buffer.clone(), cx);
+                                    if let Some(buffer_content) = buffer_content.as_ref() {
+                                        let buffer = buffer_content.clone();
+                                        let editor = Box::new(cx.new(|cx| {
+                                            let multibuffer = cx.new(|cx| {
+                                                let mut multi_buffer = MultiBuffer::singleton(buffer.clone(), cx);
 
-                                            multi_buffer.set_title("REPL Output".to_string(), cx);
-                                            multi_buffer
-                                        });
+                                                multi_buffer.set_title("REPL Output".to_string(), cx);
+                                                multi_buffer
+                                            });
 
-                                        Editor::for_multibuffer(multibuffer, None, window, cx)
-                                    }));
-                                    workspace
-                                        .update(cx, |workspace, cx| {
-                                            workspace.add_item_to_active_pane(
-                                                editor, None, true, window, cx,
-                                            );
-                                        })
-                                        .ok();
+                                            Editor::for_multibuffer(multibuffer, None, window, cx)
+                                        }));
+                                        workspace
+                                            .update(cx, |workspace, cx| {
+                                                workspace.add_item_to_active_pane(editor, None, true, window, cx);
+                                            })
+                                            .ok();
+                                    }
                                 }
-                            }
-                        }),
+                            }),
                     )
                 })
                 .into_any_element(),
@@ -224,18 +217,10 @@ impl Output {
             .items_start()
             .child(div().flex_1().children(content))
             .children(match self {
-                Self::Plain { content, .. } => {
-                    Self::render_output_controls(content.clone(), workspace, window, cx)
-                }
-                Self::Markdown { content, .. } => {
-                    Self::render_output_controls(content.clone(), workspace, window, cx)
-                }
-                Self::Stream { content, .. } => {
-                    Self::render_output_controls(content.clone(), workspace, window, cx)
-                }
-                Self::Image { content, .. } => {
-                    Self::render_output_controls(content.clone(), workspace, window, cx)
-                }
+                Self::Plain { content, .. } => Self::render_output_controls(content.clone(), workspace, window, cx),
+                Self::Markdown { content, .. } => Self::render_output_controls(content.clone(), workspace, window, cx),
+                Self::Stream { content, .. } => Self::render_output_controls(content.clone(), workspace, window, cx),
+                Self::Image { content, .. } => Self::render_output_controls(content.clone(), workspace, window, cx),
                 Self::ErrorOutput(err) => Some(
                     h_flex()
                         .pl_1()
@@ -246,8 +231,7 @@ impl Output {
                             let traceback_text = traceback.read(cx).full_text();
                             let full_error = format!("{}: {}\n{}", ename, evalue, traceback_text);
 
-                            CopyButton::new("copy-full-error", full_error)
-                                .tooltip_label("Copy Full Error")
+                            CopyButton::new("copy-full-error", full_error).tooltip_label("Copy Full Error")
                         })
                         .child(
                             IconButton::new(
@@ -263,29 +247,23 @@ impl Output {
                                 move |_, window, cx| {
                                     if let Some(workspace) = workspace.upgrade() {
                                         let traceback_text = traceback.read(cx).full_text();
-                                        let full_error =
-                                            format!("{}: {}\n{}", ename, evalue, traceback_text);
+                                        let full_error = format!("{}: {}\n{}", ename, evalue, traceback_text);
                                         let buffer = cx.new(|cx| {
                                             let mut buffer = Buffer::local(full_error, cx)
                                                 .with_language(language::PLAIN_TEXT.clone(), cx);
-                                            buffer
-                                                .set_capability(language::Capability::ReadOnly, cx);
+                                            buffer.set_capability(language::Capability::ReadOnly, cx);
                                             buffer
                                         });
                                         let editor = Box::new(cx.new(|cx| {
                                             let multibuffer = cx.new(|cx| {
-                                                let mut multi_buffer =
-                                                    MultiBuffer::singleton(buffer.clone(), cx);
-                                                multi_buffer
-                                                    .set_title("Full Error".to_string(), cx);
+                                                let mut multi_buffer = MultiBuffer::singleton(buffer.clone(), cx);
+                                                multi_buffer.set_title("Full Error".to_string(), cx);
                                                 multi_buffer
                                             });
                                             Editor::for_multibuffer(multibuffer, None, window, cx)
                                         }));
                                         workspace.update(cx, |workspace, cx| {
-                                            workspace.add_item_to_active_pane(
-                                                editor, None, true, window, cx,
-                                            );
+                                            workspace.add_item_to_active_pane(editor, None, true, window, cx);
                                         });
                                     }
                                 }
@@ -294,9 +272,7 @@ impl Output {
                         .into_any_element(),
                 ),
                 Self::Message(_) => None,
-                Self::Table { content, .. } => {
-                    Self::render_output_controls(content.clone(), workspace, window, cx)
-                }
+                Self::Table { content, .. } => Self::render_output_controls(content.clone(), workspace, window, cx),
                 Self::ClearOutputWaitMarker => None,
             })
     }
@@ -314,12 +290,7 @@ impl Output {
         }
     }
 
-    pub fn new(
-        data: &MimeBundle,
-        display_id: Option<String>,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> Self {
+    pub fn new(data: &MimeBundle, display_id: Option<String>, window: &mut Window, cx: &mut App) -> Self {
         match data.richest(rank_mime_type) {
             Some(MimeType::Plain(text)) => Output::Plain {
                 content: cx.new(|cx| TerminalOutput::from(text, window, cx)),
@@ -327,10 +298,7 @@ impl Output {
             },
             Some(MimeType::Markdown(text)) => {
                 let content = cx.new(|cx| MarkdownView::from(text.clone(), cx));
-                Output::Markdown {
-                    content,
-                    display_id,
-                }
+                Output::Markdown { content, display_id }
             }
             Some(MimeType::Png(data)) | Some(MimeType::Jpeg(data)) => match ImageView::from(data) {
                 Ok(view) => Output::Image {
@@ -380,11 +348,7 @@ impl EventEmitter<ExecutionViewFinishedEmpty> for ExecutionView {}
 impl EventEmitter<ExecutionViewFinishedSmall> for ExecutionView {}
 
 impl ExecutionView {
-    pub fn new(
-        status: ExecutionStatus,
-        workspace: WeakEntity<Workspace>,
-        _cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn new(status: ExecutionStatus, workspace: WeakEntity<Workspace>, _cx: &mut Context<Self>) -> Self {
         Self {
             workspace,
             outputs: Default::default(),
@@ -393,12 +357,7 @@ impl ExecutionView {
     }
 
     /// Accept a Jupyter message belonging to this execution
-    pub fn push_message(
-        &mut self,
-        message: &JupyterMessageContent,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn push_message(&mut self, message: &JupyterMessageContent, window: &mut Window, cx: &mut Context<Self>) {
         let output: Output = match message {
             JupyterMessageContent::ExecuteResult(result) => Output::new(
                 &result.data,
@@ -421,8 +380,7 @@ impl ExecutionView {
                 }
             }
             JupyterMessageContent::ErrorOutput(result) => {
-                let terminal =
-                    cx.new(|cx| TerminalOutput::from(&result.traceback.join("\n"), window, cx));
+                let terminal = cx.new(|cx| TerminalOutput::from(&result.traceback.join("\n"), window, cx));
 
                 Output::ErrorOutput(ErrorView {
                     ename: result.ename.clone(),
@@ -545,16 +503,9 @@ impl ExecutionView {
         Some(trimmed.to_string())
     }
 
-    fn apply_terminal_text(
-        &mut self,
-        text: &str,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Option<Output> {
+    fn apply_terminal_text(&mut self, text: &str, window: &mut Window, cx: &mut Context<Self>) -> Option<Output> {
         if let Some(last_output) = self.outputs.last_mut()
-            && let Output::Stream {
-                content: last_stream,
-            } = last_output
+            && let Output::Stream { content: last_stream } = last_output
         {
             // Don't need to add a new output, we already have a terminal output
             // and can just update the most recent terminal output
@@ -587,24 +538,16 @@ impl Render for ExecutionView {
                 )
                 .child(Label::new("Executing...").color(Color::Muted))
                 .into_any_element(),
-            ExecutionStatus::Finished => Icon::new(IconName::Check)
-                .size(IconSize::Small)
-                .into_any_element(),
-            ExecutionStatus::Unknown => Label::new("Unknown status")
-                .color(Color::Muted)
-                .into_any_element(),
+            ExecutionStatus::Finished => Icon::new(IconName::Check).size(IconSize::Small).into_any_element(),
+            ExecutionStatus::Unknown => Label::new("Unknown status").color(Color::Muted).into_any_element(),
             ExecutionStatus::ShuttingDown => Label::new("Kernel shutting down...")
                 .color(Color::Muted)
                 .into_any_element(),
             ExecutionStatus::Restarting => Label::new("Kernel restarting...")
                 .color(Color::Muted)
                 .into_any_element(),
-            ExecutionStatus::Shutdown => Label::new("Kernel shutdown")
-                .color(Color::Muted)
-                .into_any_element(),
-            ExecutionStatus::Queued => Label::new("Queued...")
-                .color(Color::Muted)
-                .into_any_element(),
+            ExecutionStatus::Shutdown => Label::new("Kernel shutdown").color(Color::Muted).into_any_element(),
+            ExecutionStatus::Queued => Label::new("Queued...").color(Color::Muted).into_any_element(),
             ExecutionStatus::KernelErrored(error) => Label::new(format!("Kernel error: {}", error))
                 .color(Color::Error)
                 .into_any_element(),

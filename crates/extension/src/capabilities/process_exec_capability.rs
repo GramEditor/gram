@@ -12,11 +12,7 @@ pub struct ProcessExecCapability {
 
 impl ProcessExecCapability {
     /// Returns whether the capability allows the given command and arguments.
-    pub fn allows(
-        &self,
-        desired_command: &str,
-        desired_args: &[impl AsRef<str> + std::fmt::Debug],
-    ) -> bool {
+    pub fn allows(&self, desired_command: &str, desired_args: &[impl AsRef<str> + std::fmt::Debug]) -> bool {
         if self.command != desired_command && self.command != "*" {
             return false;
         }
@@ -85,10 +81,7 @@ mod tests {
 
         assert_eq!(capability.allows("cargo", &["test"]), true);
         assert_eq!(capability.allows("cargo", &["test", "--all"]), true);
-        assert_eq!(
-            capability.allows("cargo", &["test", "--all", "--no-fail-fast"]),
-            true
-        );
+        assert_eq!(capability.allows("cargo", &["test", "--all", "--no-fail-fast"]), true);
         // Wrong first arg.
         assert_eq!(capability.allows("cargo", &["build"]), false);
     }
@@ -102,10 +95,7 @@ mod tests {
 
         assert_eq!(capability.allows("docker", &["run", "nginx"]), true);
         assert_eq!(capability.allows("docker", &["run"]), false);
-        assert_eq!(
-            capability.allows("docker", &["run", "ubuntu", "bash"]),
-            true
-        );
+        assert_eq!(capability.allows("docker", &["run", "ubuntu", "bash"]), true);
         assert_eq!(
             capability.allows("docker", &["run", "alpine", "sh", "-c", "echo hello"]),
             true

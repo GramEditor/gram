@@ -143,9 +143,7 @@ impl FileStatus {
 
     pub fn staging(self) -> StageStatus {
         match self {
-            FileStatus::Untracked | FileStatus::Ignored | FileStatus::Unmerged { .. } => {
-                StageStatus::Unstaged
-            }
+            FileStatus::Untracked | FileStatus::Ignored | FileStatus::Unmerged { .. } => StageStatus::Unstaged,
             FileStatus::Tracked(tracked) => match (tracked.index_status, tracked.worktree_status) {
                 (StatusCode::Unmodified, _) => StageStatus::Unstaged,
                 (_, StatusCode::Unmodified) => StageStatus::Staged,
@@ -163,11 +161,7 @@ impl FileStatus {
     }
 
     pub fn has_changes(&self) -> bool {
-        self.is_modified()
-            || self.is_created()
-            || self.is_deleted()
-            || self.is_untracked()
-            || self.is_conflicted()
+        self.is_modified() || self.is_created() || self.is_deleted() || self.is_untracked() || self.is_conflicted()
     }
 
     pub fn is_modified(self) -> bool {
@@ -250,9 +244,7 @@ impl StatusCode {
                 deleted: 1,
                 ..TrackedSummary::UNCHANGED
             },
-            StatusCode::Renamed | StatusCode::Copied | StatusCode::Unmodified => {
-                TrackedSummary::UNCHANGED
-            }
+            StatusCode::Renamed | StatusCode::Copied | StatusCode::Unmodified => TrackedSummary::UNCHANGED,
         }
     }
 
@@ -487,21 +479,13 @@ impl FromStr for GitStatus {
 
 impl Default for GitStatus {
     fn default() -> Self {
-        Self {
-            entries: Arc::new([]),
-        }
+        Self { entries: Arc::new([]) }
     }
 }
 
 pub enum DiffTreeType {
-    MergeBase {
-        base: SharedString,
-        head: SharedString,
-    },
-    Since {
-        base: SharedString,
-        head: SharedString,
-    },
+    MergeBase { base: SharedString, head: SharedString },
+    Since { base: SharedString, head: SharedString },
 }
 
 impl DiffTreeType {
@@ -547,18 +531,10 @@ impl FromStr for TreeDiff {
                 .ok_or_else(|| anyhow!("expected to find old_sha"))?
                 .to_owned()
                 .parse()?;
-            let _new_sha = fields
-                .next()
-                .ok_or_else(|| anyhow!("expected to find new_sha"))?;
+            let _new_sha = fields.next().ok_or_else(|| anyhow!("expected to find new_sha"))?;
             let status = fields
                 .next()
-                .and_then(|s| {
-                    if s.len() == 1 {
-                        s.as_bytes().first()
-                    } else {
-                        None
-                    }
-                })
+                .and_then(|s| if s.len() == 1 { s.as_bytes().first() } else { None })
                 .ok_or_else(|| anyhow!("expected to find status"))?;
 
             let result = match StatusCode::from_byte(*status)? {
@@ -594,10 +570,7 @@ mod tests {
             output,
             TreeDiff {
                 entries: [
-                    (
-                        RepoPath::new(".gram/settings.jsonc").unwrap(),
-                        TreeDiffStatus::Added,
-                    ),
+                    (RepoPath::new(".gram/settings.jsonc").unwrap(), TreeDiffStatus::Added,),
                     (
                         RepoPath::new("README.md").unwrap(),
                         TreeDiffStatus::Deleted {

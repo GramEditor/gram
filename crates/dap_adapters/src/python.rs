@@ -36,8 +36,7 @@ pub(crate) struct PythonDebugAdapter {
 
 impl PythonDebugAdapter {
     const ADAPTER_NAME: &'static str = "Debugpy";
-    const DEBUG_ADAPTER_NAME: DebugAdapterName =
-        DebugAdapterName(SharedString::new_static(Self::ADAPTER_NAME));
+    const DEBUG_ADAPTER_NAME: DebugAdapterName = DebugAdapterName(SharedString::new_static(Self::ADAPTER_NAME));
 
     const LANGUAGE_NAME: &'static str = "Python";
 
@@ -106,17 +105,10 @@ impl PythonDebugAdapter {
                 .or_insert(delegate.worktree_root_path().to_string_lossy().into());
         }
 
-        Ok(StartDebuggingRequestArguments {
-            configuration,
-            request,
-        })
+        Ok(StartDebuggingRequestArguments { configuration, request })
     }
 
-    async fn fetch_wheel(
-        &self,
-        toolchain: Option<Toolchain>,
-        delegate: &Arc<dyn DapDelegate>,
-    ) -> Result<Arc<Path>> {
+    async fn fetch_wheel(&self, toolchain: Option<Toolchain>, delegate: &Arc<dyn DapDelegate>) -> Result<Arc<Path>> {
         let download_dir = debug_adapters_dir().join(Self::ADAPTER_NAME).join("wheels");
         std::fs::create_dir_all(&download_dir)?;
         let venv_python = self.base_venv_path(toolchain, delegate).await?;
@@ -158,18 +150,10 @@ impl PythonDebugAdapter {
         Ok(Arc::from(wheel_path.path()))
     }
 
-    async fn maybe_fetch_new_wheel(
-        &self,
-        toolchain: Option<Toolchain>,
-        delegate: &Arc<dyn DapDelegate>,
-    ) -> Result<()> {
+    async fn maybe_fetch_new_wheel(&self, toolchain: Option<Toolchain>, delegate: &Arc<dyn DapDelegate>) -> Result<()> {
         let latest_release = delegate
             .http_client()
-            .get(
-                "https://pypi.org/pypi/debugpy/json",
-                AsyncBody::empty(),
-                false,
-            )
+            .get("https://pypi.org/pypi/debugpy/json", AsyncBody::empty(), false)
             .await
             .log_err();
         let response = latest_release
@@ -196,9 +180,7 @@ impl PythonDebugAdapter {
             .read_dir(&debug_adapters_dir().join(Self::ADAPTER_NAME))
             .await?
             .into_stream()
-            .any(async |entry| {
-                entry.is_ok_and(|e| e.file_name().is_some_and(|name| name == dist_info_dirname))
-            })
+            .any(async |entry| entry.is_ok_and(|e| e.file_name().is_some_and(|name| name == dist_info_dirname)))
             .await;
 
         if !is_up_to_date {
@@ -239,11 +221,7 @@ impl PythonDebugAdapter {
             .clone()
     }
 
-    async fn base_venv_path(
-        &self,
-        toolchain: Option<Toolchain>,
-        delegate: &Arc<dyn DapDelegate>,
-    ) -> Result<Arc<Path>> {
+    async fn base_venv_path(&self, toolchain: Option<Toolchain>, delegate: &Arc<dyn DapDelegate>) -> Result<Arc<Path>> {
         let result = self.base_venv_path
             .get_or_init(|| async {
                 let base_python = if let Some(toolchain) = toolchain {
@@ -308,12 +286,7 @@ impl PythonDebugAdapter {
             // Try to detect situations where `python3` exists but is not a real Python interpreter.
             // Notably, on fresh Windows installs, `python3` is a shim that opens the Microsoft Store app
             // when run with no arguments, and just fails otherwise.
-            let Some(output) = new_smol_command(&path)
-                .args(["-c", "print(1 + 2)"])
-                .output()
-                .await
-                .ok()
-            else {
+            let Some(output) = new_smol_command(&path).args(["-c", "print(1 + 2)"]).output().await.ok() else {
                 continue;
             };
             if output.stdout.trim_ascii() != b"3" {
@@ -341,9 +314,7 @@ impl PythonDebugAdapter {
             .get("connect")
             .map(|value| {
                 (
-                    value
-                        .get("port")
-                        .and_then(|val| val.as_u64().map(|p| p as u16)),
+                    value.get("port").and_then(|val| val.as_u64().map(|p| p as u16)),
                     value.get("host").and_then(|val| val.as_str()),
                 )
             })
@@ -406,11 +377,7 @@ impl PythonDebugAdapter {
         Ok(DebugAdapterBinary {
             command: Some(python_command),
             arguments,
-            connection: Some(adapters::TcpArguments {
-                host,
-                port,
-                timeout,
-            }),
+            connection: Some(adapters::TcpArguments { host, port, timeout }),
             cwd: Some(delegate.worktree_root_path().to_path_buf()),
             envs: user_env.unwrap_or_default(),
             request_args: self.request_args(delegate, config).await?,
@@ -811,19 +778,9 @@ impl DebugAdapter for PythonDebugAdapter {
         cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
         if let Some(local_path) = &user_installed_path {
-            log::debug!(
-                "Using user-installed debugpy adapter from: {}",
-                local_path.display()
-            );
+            log::debug!("Using user-installed debugpy adapter from: {}", local_path.display());
             return self
-                .get_installed_binary(
-                    delegate,
-                    config,
-                    Some(local_path.clone()),
-                    user_args,
-                    user_env,
-                    None,
-                )
+                .get_installed_binary(delegate, config, Some(local_path.clone()), user_args, user_env, None)
                 .await;
         }
 
@@ -1042,15 +999,10 @@ mod tests {
         assert_eq!(args_with_host[2], "192.168.1.100:");
         assert_eq!(args_with_host[3], "5678");
 
-        let args_normal = PythonDebugAdapter::generate_debugpy_arguments(
-            &host,
-            port,
-            DebugpyLaunchMode::Normal,
-            None,
-            None,
-        )
-        .await
-        .unwrap();
+        let args_normal =
+            PythonDebugAdapter::generate_debugpy_arguments(&host, port, DebugpyLaunchMode::Normal, None, None)
+                .await
+                .unwrap();
 
         assert!(args_normal[0].ends_with(expected_suffix));
         assert_eq!(args_normal[1], "--host=127.0.0.1");
@@ -1075,15 +1027,10 @@ mod tests {
         .await
         .unwrap();
 
-        let venv_args = PythonDebugAdapter::generate_debugpy_arguments(
-            &host,
-            port,
-            DebugpyLaunchMode::Normal,
-            None,
-            None,
-        )
-        .await
-        .unwrap();
+        let venv_args =
+            PythonDebugAdapter::generate_debugpy_arguments(&host, port, DebugpyLaunchMode::Normal, None, None)
+                .await
+                .unwrap();
 
         assert_eq!(user_args[0], "/custom/path/to/debugpy/src/debugpy/adapter");
         assert_eq!(user_args[1], "--host=127.0.0.1");

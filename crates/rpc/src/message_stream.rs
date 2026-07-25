@@ -48,28 +48,18 @@ where
         match message {
             Message::Envelope(message) => {
                 self.encoding_buffer.reserve(message.encoded_len());
-                message
-                    .encode(&mut self.encoding_buffer)
-                    .map_err(io::Error::from)?;
-                let buffer =
-                    zstd::stream::encode_all(self.encoding_buffer.as_slice(), COMPRESSION_LEVEL)
-                        .unwrap();
+                message.encode(&mut self.encoding_buffer).map_err(io::Error::from)?;
+                let buffer = zstd::stream::encode_all(self.encoding_buffer.as_slice(), COMPRESSION_LEVEL).unwrap();
 
                 self.encoding_buffer.clear();
                 self.encoding_buffer.shrink_to(MAX_BUFFER_LEN);
-                self.stream
-                    .send(WebSocketMessage::Binary(buffer.into()))
-                    .await?;
+                self.stream.send(WebSocketMessage::Binary(buffer.into())).await?;
             }
             Message::Ping => {
-                self.stream
-                    .send(WebSocketMessage::Ping(Default::default()))
-                    .await?;
+                self.stream.send(WebSocketMessage::Ping(Default::default())).await?;
             }
             Message::Pong => {
-                self.stream
-                    .send(WebSocketMessage::Pong(Default::default()))
-                    .await?;
+                self.stream.send(WebSocketMessage::Pong(Default::default())).await?;
             }
         }
 
@@ -87,8 +77,7 @@ where
             match bytes? {
                 WebSocketMessage::Binary(bytes) => {
                     zstd::stream::copy_decode(&bytes[..], &mut self.encoding_buffer)?;
-                    let envelope = Envelope::decode(self.encoding_buffer.as_slice())
-                        .map_err(io::Error::from)?;
+                    let envelope = Envelope::decode(self.encoding_buffer.as_slice()).map_err(io::Error::from)?;
 
                     self.encoding_buffer.clear();
                     self.encoding_buffer.shrink_to(MAX_BUFFER_LEN);

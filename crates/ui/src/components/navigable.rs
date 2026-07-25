@@ -51,11 +51,7 @@ impl Navigable {
         self
     }
 
-    fn find_focused(
-        selectable_children: &[NavigableEntry],
-        window: &mut Window,
-        cx: &mut App,
-    ) -> Option<usize> {
+    fn find_focused(selectable_children: &[NavigableEntry], window: &mut Window, cx: &mut App) -> Option<usize> {
         selectable_children
             .iter()
             .position(|entry| entry.focus_handle.contains_focused(window, cx))
@@ -70,9 +66,7 @@ impl RenderOnce for Navigable {
 
                 move |_: &menu::SelectNext, window, cx| {
                     let target = Self::find_focused(&children, window, cx)
-                        .and_then(|index| {
-                            index.checked_add(1).filter(|index| *index < children.len())
-                        })
+                        .and_then(|index| index.checked_add(1).filter(|index| *index < children.len()))
                         .unwrap_or(0);
                     if let Some(entry) = children.get(target) {
                         entry.focus_handle.focus(window, cx);

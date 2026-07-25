@@ -58,20 +58,13 @@ impl Component for SettingsGroup {
                     example_group_with_title(
                         "Basic Usage",
                         vec![
-                            single_example(
-                                "Empty Group",
-                                SettingsGroup::new("General Settings").into_any_element(),
-                            ),
+                            single_example("Empty Group", SettingsGroup::new("General Settings").into_any_element()),
                             single_example(
                                 "With Children",
                                 SettingsGroup::new("Appearance")
+                                    .child(Checkbox::new("dark_mode", ToggleState::Unselected).label("Dark Mode"))
                                     .child(
-                                        Checkbox::new("dark_mode", ToggleState::Unselected)
-                                            .label("Dark Mode"),
-                                    )
-                                    .child(
-                                        Checkbox::new("high_contrast", ToggleState::Unselected)
-                                            .label("High Contrast"),
+                                        Checkbox::new("high_contrast", ToggleState::Unselected).label("High Contrast"),
                                     )
                                     .into_any_element(),
                             ),
@@ -89,10 +82,7 @@ impl Component for SettingsGroup {
                                             Checkbox::new("line_numbers", ToggleState::Selected)
                                                 .label("Show Line Numbers"),
                                         )
-                                        .child(
-                                            Checkbox::new("word_wrap", ToggleState::Unselected)
-                                                .label("Word Wrap"),
-                                        ),
+                                        .child(Checkbox::new("word_wrap", ToggleState::Unselected).label("Word Wrap")),
                                 )
                                 .into_any_element(),
                         )],

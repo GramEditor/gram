@@ -73,10 +73,7 @@ impl<C: Client<XEvent = xproto::KeyPressEvent>> ClientHandler<C> for XimHandler 
         _input_context_id: u16,
         text: &str,
     ) -> Result<(), ClientError> {
-        self.last_callback_event = Some(XimCallbackEvent::XimCommitEvent(
-            self.window,
-            String::from(text),
-        ));
+        self.last_callback_event = Some(XimCallbackEvent::XimCommitEvent(self.window, String::from(text)));
         Ok(())
     }
 
@@ -93,8 +90,7 @@ impl<C: Client<XEvent = xproto::KeyPressEvent>> ClientHandler<C> for XimHandler 
                 self.last_callback_event = Some(XimCallbackEvent::XimXEvent(Event::KeyPress(xev)));
             }
             x11rb::protocol::xproto::KEY_RELEASE_EVENT => {
-                self.last_callback_event =
-                    Some(XimCallbackEvent::XimXEvent(Event::KeyRelease(xev)));
+                self.last_callback_event = Some(XimCallbackEvent::XimXEvent(Event::KeyRelease(xev)));
             }
             _ => {}
         }

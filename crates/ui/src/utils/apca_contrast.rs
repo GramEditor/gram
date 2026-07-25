@@ -102,8 +102,7 @@ pub fn apca_contrast(text_color: Hsla, background_color: Hsla) -> f32 {
 
     if bg_y_clamped > text_y_clamped {
         // Normal polarity: dark text on light background
-        sapc = (bg_y_clamped.powf(constants.norm_bg) - text_y_clamped.powf(constants.norm_txt))
-            * constants.scale_bow;
+        sapc = (bg_y_clamped.powf(constants.norm_bg) - text_y_clamped.powf(constants.norm_txt)) * constants.scale_bow;
 
         // Low contrast smooth rollout to prevent polarity reversal
         output_contrast = if sapc < constants.lo_clip {
@@ -113,8 +112,7 @@ pub fn apca_contrast(text_color: Hsla, background_color: Hsla) -> f32 {
         };
     } else {
         // Reverse polarity: light text on dark background
-        sapc = (bg_y_clamped.powf(constants.rev_bg) - text_y_clamped.powf(constants.rev_txt))
-            * constants.scale_wob;
+        sapc = (bg_y_clamped.powf(constants.rev_bg) - text_y_clamped.powf(constants.rev_txt)) * constants.scale_wob;
 
         output_contrast = if sapc > -constants.lo_clip {
             0.0
@@ -144,11 +142,7 @@ fn srgb_to_y(color: Hsla, constants: &APCAConstants) -> f32 {
 ///
 /// This implementation gradually adjusts the lightness while preserving the hue and
 /// saturation as much as possible, only falling back to black/white when necessary.
-pub fn ensure_minimum_contrast(
-    foreground: Hsla,
-    background: Hsla,
-    minimum_apca_contrast: f32,
-) -> Hsla {
+pub fn ensure_minimum_contrast(foreground: Hsla, background: Hsla, minimum_apca_contrast: f32) -> Hsla {
     if minimum_apca_contrast <= 0.0 {
         return foreground;
     }
@@ -168,8 +162,7 @@ pub fn ensure_minimum_contrast(
     }
 
     // If that's not enough, gradually reduce saturation while adjusting lightness
-    let desaturated =
-        adjust_lightness_and_saturation_for_contrast(foreground, background, minimum_apca_contrast);
+    let desaturated = adjust_lightness_and_saturation_for_contrast(foreground, background, minimum_apca_contrast);
 
     let desaturated_contrast = apca_contrast(desaturated, background).abs();
     if desaturated_contrast >= minimum_apca_contrast {
@@ -194,19 +187,11 @@ pub fn ensure_minimum_contrast(
     let black_contrast = apca_contrast(black, background).abs();
     let white_contrast = apca_contrast(white, background).abs();
 
-    if white_contrast > black_contrast {
-        white
-    } else {
-        black
-    }
+    if white_contrast > black_contrast { white } else { black }
 }
 
 /// Adjusts only the lightness to meet the minimum contrast, preserving hue and saturation
-fn adjust_lightness_for_contrast(
-    foreground: Hsla,
-    background: Hsla,
-    minimum_apca_contrast: f32,
-) -> Hsla {
+fn adjust_lightness_for_contrast(foreground: Hsla, background: Hsla, minimum_apca_contrast: f32) -> Hsla {
     // Determine if we need to go lighter or darker
     let bg_luminance = srgb_to_y(background, &APCAConstants::default());
     let should_go_darker = bg_luminance > 0.5;
@@ -378,11 +363,7 @@ mod tests {
         // Test known Y values
         let black = hsla(0.0, 0.0, 0.0, 1.0);
         let y_black = srgb_to_y(black, &constants);
-        assert!(
-            y_black.abs() < 0.001,
-            "Black should have Y near 0, got {}",
-            y_black
-        );
+        assert!(y_black.abs() < 0.001, "Black should have Y near 0, got {}", y_black);
 
         let white = hsla(0.0, 0.0, 1.0, 1.0);
         let y_white = srgb_to_y(white, &constants);

@@ -4,8 +4,7 @@ use settings::{RegisterSetting, Settings};
 use std::{fmt::Write, num::NonZeroU32, time::Duration};
 use text::{Bias, Point, Selection};
 use ui::{
-    Button, ButtonCommon, Clickable, Context, FluentBuilder, IntoElement, ParentElement, Render,
-    Tooltip, Window, div,
+    Button, ButtonCommon, Clickable, Context, FluentBuilder, IntoElement, ParentElement, Render, Tooltip, Window, div,
 };
 use util::paths::FILE_ROW_COLUMN_DELIMITER;
 use workspace::{StatusBarSettings, StatusItemView, Workspace, item::ItemHandle};
@@ -38,29 +37,25 @@ pub struct UserCaretPosition {
 }
 
 impl UserCaretPosition {
-    pub(crate) fn at_selection_end(
-        selection: &Selection<Point>,
-        snapshot: &DisplaySnapshot,
-    ) -> Self {
+    pub(crate) fn at_selection_end(selection: &Selection<Point>, snapshot: &DisplaySnapshot) -> Self {
         let buffer_snapshot = snapshot.buffer_snapshot();
         let selection_end = selection.head();
-        let (line, character) = if let Some((buffer_snapshot, point, _)) =
-            buffer_snapshot.point_to_buffer_point(selection_end)
-        {
-            let line_start = Point::new(point.row, 0);
+        let (line, character) =
+            if let Some((buffer_snapshot, point, _)) = buffer_snapshot.point_to_buffer_point(selection_end) {
+                let line_start = Point::new(point.row, 0);
 
-            let chars_to_last_position = buffer_snapshot
-                .text_summary_for_range::<text::TextSummary, _>(line_start..point)
-                .chars as u32;
-            (line_start.row, chars_to_last_position)
-        } else {
-            let line_start = Point::new(selection_end.row, 0);
+                let chars_to_last_position = buffer_snapshot
+                    .text_summary_for_range::<text::TextSummary, _>(line_start..point)
+                    .chars as u32;
+                (line_start.row, chars_to_last_position)
+            } else {
+                let line_start = Point::new(selection_end.row, 0);
 
-            let chars_to_last_position = buffer_snapshot
-                .text_summary_for_range::<MBTextSummary, _>(line_start..selection_end)
-                .chars as u32;
-            (selection_end.row, chars_to_last_position)
-        };
+                let chars_to_last_position = buffer_snapshot
+                    .text_summary_for_range::<MBTextSummary, _>(line_start..selection_end)
+                    .chars as u32;
+                (selection_end.row, chars_to_last_position)
+            };
 
         let column = snapshot
             .tab_snapshot()
@@ -124,11 +119,8 @@ impl CursorPosition {
                                     for selection in editor.selections.all_adjusted(&snapshot) {
                                         let selection_summary = snapshot
                                             .buffer_snapshot()
-                                            .text_summary_for_range::<MBTextSummary, _>(
-                                            selection.start..selection.end,
-                                        );
-                                        cursor_position.selected_count.characters +=
-                                            selection_summary.chars;
+                                            .text_summary_for_range::<MBTextSummary, _>(selection.start..selection.end);
+                                        cursor_position.selected_count.characters += selection_summary.chars;
                                         if selection.end != selection.start {
                                             cursor_position.selected_count.lines +=
                                                 (selection.end.row - selection.start.row) as usize;
@@ -136,15 +128,16 @@ impl CursorPosition {
                                                 cursor_position.selected_count.lines += 1;
                                             }
                                         }
-                                        if last_selection.as_ref().is_none_or(|last_selection| {
-                                            selection.id > last_selection.id
-                                        }) {
+                                        if last_selection
+                                            .as_ref()
+                                            .is_none_or(|last_selection| selection.id > last_selection.id)
+                                        {
                                             last_selection = Some(selection);
                                         }
                                     }
                                 }
-                                cursor_position.position = last_selection
-                                    .map(|s| UserCaretPosition::at_selection_end(&s, &snapshot));
+                                cursor_position.position =
+                                    last_selection.map(|s| UserCaretPosition::at_selection_end(&s, &snapshot));
                                 cursor_position.context = Some(editor.focus_handle(cx));
                             }
                         }
@@ -190,11 +183,7 @@ impl CursorPosition {
                 write!(text, ", ").unwrap();
             }
             let name = if is_short_format { &name[..1] } else { name };
-            let plural_suffix = if count > 1 && !is_short_format {
-                "s"
-            } else {
-                ""
-            };
+            let plural_suffix = if count > 1 && !is_short_format { "s" } else { "" };
             write!(text, "{count} {name}{plural_suffix}").unwrap();
             wrote_once = true;
         }
@@ -220,10 +209,7 @@ impl Render for CursorPosition {
         let icon_size = StatusBarSettings::get_global(cx).icon_size;
 
         div().when_some(self.position, |el, position| {
-            let mut text = format!(
-                "{}{FILE_ROW_COLUMN_DELIMITER}{}",
-                position.line, position.column,
-            );
+            let mut text = format!("{}{FILE_ROW_COLUMN_DELIMITER}{}", position.line, position.column,);
             self.write_position(&mut text, cx);
 
             let context = self.context.clone();
@@ -234,9 +220,8 @@ impl Render for CursorPosition {
                     .on_click(cx.listener(|this, _, window, cx| {
                         if let Some(workspace) = this.workspace.upgrade() {
                             workspace.update(cx, |workspace, cx| {
-                                if let Some(editor) = workspace
-                                    .active_item(cx)
-                                    .and_then(|item| item.act_as::<Editor>(cx))
+                                if let Some(editor) =
+                                    workspace.active_item(cx).and_then(|item| item.act_as::<Editor>(cx))
                                     && let Some((_, buffer, _)) = editor.read(cx).active_excerpt(cx)
                                 {
                                     workspace.toggle_modal(window, cx, |window, cx| {
@@ -247,17 +232,10 @@ impl Render for CursorPosition {
                         }
                     }))
                     .tooltip(move |_window, cx| match context.as_ref() {
-                        Some(context) => Tooltip::for_action_in(
-                            "Go to Line/Column",
-                            &editor::actions::ToggleGoToLine,
-                            context,
-                            cx,
-                        ),
-                        None => Tooltip::for_action(
-                            "Go to Line/Column",
-                            &editor::actions::ToggleGoToLine,
-                            cx,
-                        ),
+                        Some(context) => {
+                            Tooltip::for_action_in("Go to Line/Column", &editor::actions::ToggleGoToLine, context, cx)
+                        }
+                        None => Tooltip::for_action("Go to Line/Column", &editor::actions::ToggleGoToLine, cx),
                     }),
             )
         })
@@ -278,13 +256,9 @@ impl StatusItemView for CursorPosition {
                 &editor,
                 window,
                 |cursor_position, editor, event, window, cx| match event {
-                    EditorEvent::SelectionsChanged { .. } => Self::update_position(
-                        cursor_position,
-                        editor,
-                        Some(UPDATE_DEBOUNCE),
-                        window,
-                        cx,
-                    ),
+                    EditorEvent::SelectionsChanged { .. } => {
+                        Self::update_position(cursor_position, editor, Some(UPDATE_DEBOUNCE), window, cx)
+                    }
                     _ => {}
                 },
             ));

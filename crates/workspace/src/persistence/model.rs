@@ -1,7 +1,6 @@
 use super::{SerializedAxis, SerializedWindowBounds};
 use crate::{
-    Member, Pane, PaneAxis, SerializableItemRegistry, Workspace, WorkspaceId, item::ItemHandle,
-    path_list::PathList,
+    Member, Pane, PaneAxis, SerializableItemRegistry, Workspace, WorkspaceId, item::ItemHandle, path_list::PathList,
 };
 use anyhow::{Context, Result};
 use async_recursion::async_recursion;
@@ -24,9 +23,7 @@ use std::{
 use util::ResultExt;
 use uuid::Uuid;
 
-#[derive(
-    Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, serde::Serialize, serde::Deserialize,
-)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub(crate) struct RemoteConnectionId(pub u64);
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -93,14 +90,7 @@ impl Column for DockStructure {
         let (left, next_index) = DockData::column(statement, start_index)?;
         let (right, next_index) = DockData::column(statement, next_index)?;
         let (bottom, next_index) = DockData::column(statement, next_index)?;
-        Ok((
-            DockStructure {
-                left,
-                right,
-                bottom,
-            },
-            next_index,
-        ))
+        Ok((DockStructure { left, right, bottom }, next_index))
     }
 }
 
@@ -172,24 +162,15 @@ impl SerializedPaneGroup {
         workspace_id: WorkspaceId,
         workspace: WeakEntity<Workspace>,
         cx: &mut AsyncWindowContext,
-    ) -> Option<(
-        Member,
-        Option<Entity<Pane>>,
-        Vec<Option<Box<dyn ItemHandle>>>,
-    )> {
+    ) -> Option<(Member, Option<Entity<Pane>>, Vec<Option<Box<dyn ItemHandle>>>)> {
         match self {
-            SerializedPaneGroup::Group {
-                axis,
-                children,
-                flexes,
-            } => {
+            SerializedPaneGroup::Group { axis, children, flexes } => {
                 let mut current_active_pane = None;
                 let mut members = Vec::new();
                 let mut items = Vec::new();
                 for child in children {
-                    if let Some((new_member, active_pane, new_items)) = child
-                        .deserialize(project, workspace_id, workspace.clone(), cx)
-                        .await
+                    if let Some((new_member, active_pane, new_items)) =
+                        child.deserialize(project, workspace_id, workspace.clone(), cx).await
                     {
                         members.push(new_member);
                         items.extend(new_items);
@@ -213,9 +194,7 @@ impl SerializedPaneGroup {
             }
             SerializedPaneGroup::Pane(serialized_pane) => {
                 let pane = workspace
-                    .update_in(cx, |workspace, window, cx| {
-                        workspace.add_pane(window, cx).downgrade()
-                    })
+                    .update_in(cx, |workspace, window, cx| workspace.add_pane(window, cx).downgrade())
                     .log_err()?;
                 let active = serialized_pane.active;
                 let new_items = serialized_pane
@@ -224,16 +203,9 @@ impl SerializedPaneGroup {
                     .context("Could not deserialize pane)")
                     .log_err()?;
 
-                if pane
-                    .read_with(cx, |pane, _| pane.items_len() != 0)
-                    .log_err()?
-                {
+                if pane.read_with(cx, |pane, _| pane.items_len() != 0).log_err()? {
                     let pane = pane.upgrade()?;
-                    Some((
-                        Member::Pane(pane.clone()),
-                        active.then_some(pane),
-                        new_items,
-                    ))
+                    Some((Member::Pane(pane.clone()), active.then_some(pane), new_items))
                 } else {
                     let pane = pane.upgrade()?;
                     workspace

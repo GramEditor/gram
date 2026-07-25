@@ -1,6 +1,5 @@
 use gpui::{
-    DefiniteLength, FontStyle, FontWeight, HighlightStyle, SharedString, StrikethroughStyle,
-    UnderlineStyle, px,
+    DefiniteLength, FontStyle, FontWeight, HighlightStyle, SharedString, StrikethroughStyle, UnderlineStyle, px,
 };
 use language::HighlightId;
 use std::{fmt::Display, ops::Range, path::PathBuf};
@@ -161,9 +160,7 @@ impl Default for ParsedMarkdownTableRow {
 
 impl ParsedMarkdownTableRow {
     pub fn new() -> Self {
-        Self {
-            columns: Vec::new(),
-        }
+        Self { columns: Vec::new() }
     }
 
     pub fn with_columns(columns: Vec<ParsedMarkdownTableColumn>) -> Self {
@@ -299,9 +296,7 @@ impl Link {
         }
 
         // URL decode the text to handle spaces and other special characters
-        let decoded_text = urlencoding::decode(&text)
-            .map(|s| s.into_owned())
-            .unwrap_or(text);
+        let decoded_text = urlencoding::decode(&text).map(|s| s.into_owned()).unwrap_or(text);
 
         let path = PathBuf::from(&decoded_text);
         if path.is_absolute() && path.exists() {

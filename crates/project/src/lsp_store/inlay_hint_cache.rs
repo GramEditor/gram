@@ -150,21 +150,19 @@ impl BufferInlayHints {
             .entry(server_id)
             .or_insert_with(Vec::new);
         let existing_count = existing_hints.len();
-        existing_hints.extend(new_hints.into_iter().enumerate().filter_map(
-            |(i, (id, new_hint))| {
-                let new_hint_for_id = HintForId {
-                    chunk_id: chunk.id,
-                    server_id,
-                    position: existing_count + i,
-                };
-                if let hash_map::Entry::Vacant(vacant_entry) = self.hints_by_id.entry(id) {
-                    vacant_entry.insert(new_hint_for_id);
-                    Some((id, new_hint))
-                } else {
-                    None
-                }
-            },
-        ));
+        existing_hints.extend(new_hints.into_iter().enumerate().filter_map(|(i, (id, new_hint))| {
+            let new_hint_for_id = HintForId {
+                chunk_id: chunk.id,
+                server_id,
+                position: existing_count + i,
+            };
+            if let hash_map::Entry::Vacant(vacant_entry) = self.hints_by_id.entry(id) {
+                vacant_entry.insert(new_hint_for_id);
+                Some((id, new_hint))
+            } else {
+                None
+            }
+        }));
         *self.fetched_hints(&chunk) = None;
     }
 

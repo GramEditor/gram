@@ -9,10 +9,7 @@ use http_client::{AsyncBody, HttpClient, HttpRequestExt, Request};
 use serde::Deserialize;
 use url::Url;
 
-use git::{
-    BuildCommitPermalinkParams, BuildPermalinkParams, GitHostingProvider, ParsedGitRemote,
-    RemoteUrl,
-};
+use git::{BuildCommitPermalinkParams, BuildPermalinkParams, GitHostingProvider, ParsedGitRemote, RemoteUrl};
 
 use crate::get_host_from_git_remote_url;
 
@@ -141,10 +138,7 @@ impl Forgejo {
 
         if response.status().is_client_error() {
             let text = String::from_utf8_lossy(body.as_slice());
-            bail!(
-                "status error {}, response: {text:?}",
-                response.status().as_u16()
-            );
+            bail!("status error {}, response: {text:?}", response.status().as_u16());
         }
 
         let body_str = std::str::from_utf8(&body)?;
@@ -195,36 +189,22 @@ impl GitHostingProvider for Forgejo {
         })
     }
 
-    fn build_commit_permalink(
-        &self,
-        remote: &ParsedGitRemote,
-        params: BuildCommitPermalinkParams,
-    ) -> Url {
+    fn build_commit_permalink(&self, remote: &ParsedGitRemote, params: BuildCommitPermalinkParams) -> Url {
         let BuildCommitPermalinkParams { sha } = params;
         let ParsedGitRemote { owner, repo } = remote;
 
-        self.base_url()
-            .join(&format!("{owner}/{repo}/commit/{sha}"))
-            .unwrap()
+        self.base_url().join(&format!("{owner}/{repo}/commit/{sha}")).unwrap()
     }
 
     fn build_permalink(&self, remote: ParsedGitRemote, params: BuildPermalinkParams) -> Url {
         let ParsedGitRemote { owner, repo } = remote;
-        let BuildPermalinkParams {
-            sha,
-            path,
-            selection,
-        } = params;
+        let BuildPermalinkParams { sha, path, selection } = params;
 
         let mut permalink = self
             .base_url()
             .join(&format!("{owner}/{repo}/src/commit/{sha}/{path}"))
             .unwrap();
-        permalink.set_fragment(
-            selection
-                .map(|selection| self.line_fragment(&selection))
-                .as_deref(),
-        );
+        permalink.set_fragment(selection.map(|selection| self.line_fragment(&selection)).as_deref());
         permalink
     }
 
@@ -391,8 +371,7 @@ mod tests {
 
     #[test]
     fn test_build_forgejo_self_hosted_permalink_from_ssh_url() {
-        let forgejo =
-            Forgejo::from_remote_url("git@forgejo.some-enterprise.com:GramEditor/gram.git").unwrap();
+        let forgejo = Forgejo::from_remote_url("git@forgejo.some-enterprise.com:GramEditor/gram.git").unwrap();
         let permalink = forgejo.build_permalink(
             ParsedGitRemote {
                 owner: "GramEditor".into(),
@@ -411,8 +390,7 @@ mod tests {
 
     #[test]
     fn test_build_forgejo_self_hosted_permalink_from_https_url() {
-        let forgejo =
-            Forgejo::from_remote_url("https://forgejo-instance.big-co.com/GramEditor/gram.git").unwrap();
+        let forgejo = Forgejo::from_remote_url("https://forgejo-instance.big-co.com/GramEditor/gram.git").unwrap();
         let permalink = forgejo.build_permalink(
             ParsedGitRemote {
                 owner: "GramEditor".into(),

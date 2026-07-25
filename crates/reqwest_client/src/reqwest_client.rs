@@ -70,9 +70,7 @@ impl ReqwestClient {
             client_has_proxy = false;
         };
 
-        let client = client
-            .use_preconfigured_tls(http_client_tls::tls_config())
-            .build()?;
+        let client = client.use_preconfigured_tls(http_client_tls::tls_config()).build()?;
         let mut client: ReqwestClient = client.into();
         client.proxy = client_has_proxy.then_some(proxy).flatten();
         client.user_agent = Some(user_agent);
@@ -128,10 +126,7 @@ impl StreamReader {
 impl futures::Stream for StreamReader {
     type Item = std::io::Result<Bytes>;
 
-    fn poll_next(
-        mut self: Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
-    ) -> Poll<Option<Self::Item>> {
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Option<Self::Item>> {
         let mut this = self.as_mut();
 
         let mut reader = match this.reader.take() {
@@ -224,10 +219,7 @@ impl http_client::HttpClient for ReqwestClient {
     fn send(
         &self,
         req: http::Request<http_client::AsyncBody>,
-    ) -> futures::future::BoxFuture<
-        'static,
-        anyhow::Result<http_client::Response<http_client::AsyncBody>>,
-    > {
+    ) -> futures::future::BoxFuture<'static, anyhow::Result<http_client::Response<http_client::AsyncBody>>> {
         let (parts, body) = req.into_parts();
 
         let mut request = self.client.request(parts.method, parts.uri.to_string());
@@ -242,9 +234,7 @@ impl http_client::HttpClient for ReqwestClient {
         let request = request.body(match body.0 {
             http_client::Inner::Empty => reqwest::Body::default(),
             http_client::Inner::Bytes(cursor) => cursor.into_inner().into(),
-            http_client::Inner::AsyncReader(stream) => {
-                reqwest::Body::wrap_stream(StreamReader::new(stream))
-            }
+            http_client::Inner::AsyncReader(stream) => reqwest::Body::wrap_stream(StreamReader::new(stream)),
         });
 
         let handle = self.handle.clone();

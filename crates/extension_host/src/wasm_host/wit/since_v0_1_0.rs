@@ -259,10 +259,7 @@ impl HostWorktree for WasmState {
         latest::HostWorktree::id(self, delegate).await
     }
 
-    async fn root_path(
-        &mut self,
-        delegate: Resource<Arc<dyn WorktreeDelegate>>,
-    ) -> wasmtime::Result<String> {
+    async fn root_path(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<String> {
         latest::HostWorktree::root_path(self, delegate).await
     }
 
@@ -274,10 +271,7 @@ impl HostWorktree for WasmState {
         latest::HostWorktree::read_text_file(self, delegate, path).await
     }
 
-    async fn shell_env(
-        &mut self,
-        delegate: Resource<Arc<dyn WorktreeDelegate>>,
-    ) -> wasmtime::Result<EnvVars> {
+    async fn shell_env(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<EnvVars> {
         latest::HostWorktree::shell_env(self, delegate).await
     }
 
@@ -373,27 +367,19 @@ impl From<http_client::HttpMethod> for ::http_client::Method {
     }
 }
 
-fn convert_request(
-    extension_request: &http_client::HttpRequest,
-) -> anyhow::Result<::http_client::Request<AsyncBody>> {
+fn convert_request(extension_request: &http_client::HttpRequest) -> anyhow::Result<::http_client::Request<AsyncBody>> {
     let mut request = ::http_client::Request::builder()
         .method(::http_client::Method::from(extension_request.method))
         .uri(&extension_request.url)
         .follow_redirects(match extension_request.redirect_policy {
             http_client::RedirectPolicy::NoFollow => ::http_client::RedirectPolicy::NoFollow,
-            http_client::RedirectPolicy::FollowLimit(limit) => {
-                ::http_client::RedirectPolicy::FollowLimit(limit)
-            }
+            http_client::RedirectPolicy::FollowLimit(limit) => ::http_client::RedirectPolicy::FollowLimit(limit),
             http_client::RedirectPolicy::FollowAll => ::http_client::RedirectPolicy::FollowAll,
         });
     for (key, value) in &extension_request.headers {
         request = request.header(key, value);
     }
-    let body = extension_request
-        .body
-        .clone()
-        .map(AsyncBody::from)
-        .unwrap_or_default();
+    let body = extension_request.body.clone().map(AsyncBody::from).unwrap_or_default();
     request.body(body).map_err(anyhow::Error::from)
 }
 
@@ -411,10 +397,7 @@ async fn convert_response(
             .push((key.to_string(), value.to_str().unwrap_or("").to_string()));
     }
 
-    response
-        .body_mut()
-        .read_to_end(&mut extension_response.body)
-        .await?;
+    response.body_mut().read_to_end(&mut extension_response.body).await?;
 
     Ok(extension_response)
 }
@@ -430,25 +413,21 @@ impl ExtensionImports for WasmState {
     ) -> wasmtime::Result<Result<String, String>> {
         self.on_main_thread(|cx| {
             async move {
-                let path = location.as_ref().and_then(|location| {
-                    RelPath::new(Path::new(&location.path), PathStyle::Posix).ok()
-                });
-                let location = path
+                let path = location
                     .as_ref()
-                    .zip(location.as_ref())
-                    .map(|(path, location)| ::settings::SettingsLocation {
-                        worktree_id: WorktreeId::from_proto(location.worktree_id),
-                        path,
-                    });
+                    .and_then(|location| RelPath::new(Path::new(&location.path), PathStyle::Posix).ok());
+                let location =
+                    path.as_ref()
+                        .zip(location.as_ref())
+                        .map(|(path, location)| ::settings::SettingsLocation {
+                            worktree_id: WorktreeId::from_proto(location.worktree_id),
+                            path,
+                        });
 
                 cx.update(|cx| match category.as_str() {
                     "language" => {
                         let key = key.map(|k| LanguageName::new(&k));
-                        let settings = AllLanguageSettings::get(location, cx).language(
-                            location,
-                            key.as_ref(),
-                            cx,
-                        );
+                        let settings = AllLanguageSettings::get(location, cx).language(location, key.as_ref(), cx);
                         Ok(serde_json::to_string(&settings::LanguageSettings {
                             tab_size: settings.tab_size,
                         })?)
@@ -513,9 +492,7 @@ impl ExtensionImports for WasmState {
 
             self.host.fs.create_dir(&extension_work_dir).await?;
 
-            let destination_path = self
-                .host
-                .writeable_path_from_extension(&self.manifest.id, &path)?;
+            let destination_path = self.host.writeable_path_from_extension(&self.manifest.id, &path)?;
 
             let mut response = self
                 .host
@@ -534,18 +511,12 @@ impl ExtensionImports for WasmState {
             match file_type {
                 DownloadedFileType::Uncompressed => {
                     futures::pin_mut!(body);
-                    self.host
-                        .fs
-                        .create_file_with(&destination_path, body)
-                        .await?;
+                    self.host.fs.create_file_with(&destination_path, body).await?;
                 }
                 DownloadedFileType::Gzip => {
                     let body = GzipDecoder::new(body);
                     futures::pin_mut!(body);
-                    self.host
-                        .fs
-                        .create_file_with(&destination_path, body)
-                        .await?;
+                    self.host.fs.create_file_with(&destination_path, body).await?;
                 }
                 DownloadedFileType::GzipTar => {
                     let mut tar_gz_bytes = Vec::new();

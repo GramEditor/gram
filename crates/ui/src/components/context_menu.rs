@@ -1,11 +1,9 @@
 use crate::{
-    IconButtonShape, KeyBinding, List, ListItem, ListSeparator, ListSubHeader, Tooltip, prelude::*,
-    utils::WithRemSize,
+    IconButtonShape, KeyBinding, List, ListItem, ListSeparator, ListSubHeader, Tooltip, prelude::*, utils::WithRemSize,
 };
 use gpui::{
-    Action, AnyElement, App, Bounds, Corner, DismissEvent, Entity, EventEmitter, FocusHandle,
-    Focusable, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Point, Size,
-    Subscription, anchored, canvas, prelude::*, px,
+    Action, AnyElement, App, Bounds, Corner, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, MouseButton,
+    MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Point, Size, Subscription, anchored, canvas, prelude::*, px,
 };
 use menu::{SelectChild, SelectFirst, SelectLast, SelectNext, SelectParent, SelectPrevious};
 use settings::Settings;
@@ -265,30 +263,26 @@ impl ContextMenu {
         f: impl FnOnce(Self, &mut Window, &mut Context<Self>) -> Self,
     ) -> Self {
         let focus_handle = cx.focus_handle();
-        let _on_blur_subscription = cx.on_blur(
-            &focus_handle,
-            window,
-            |this: &mut ContextMenu, window, cx| {
-                if let Some(ignore_until) = this.ignore_blur_until {
-                    if Instant::now() < ignore_until {
+        let _on_blur_subscription = cx.on_blur(&focus_handle, window, |this: &mut ContextMenu, window, cx| {
+            if let Some(ignore_until) = this.ignore_blur_until {
+                if Instant::now() < ignore_until {
+                    return;
+                } else {
+                    this.ignore_blur_until = None;
+                }
+            }
+
+            if this.main_menu.is_none() {
+                if let SubmenuState::Open(open_submenu) = &this.submenu_state {
+                    let submenu_focus = open_submenu.entity.read(cx).focus_handle.clone();
+                    if submenu_focus.contains_focused(window, cx) {
                         return;
-                    } else {
-                        this.ignore_blur_until = None;
                     }
                 }
+            }
 
-                if this.main_menu.is_none() {
-                    if let SubmenuState::Open(open_submenu) = &this.submenu_state {
-                        let submenu_focus = open_submenu.entity.read(cx).focus_handle.clone();
-                        if submenu_focus.contains_focused(window, cx) {
-                            return;
-                        }
-                    }
-                }
-
-                this.cancel(&menu::Cancel, window, cx)
-            },
-        );
+            this.cancel(&menu::Cancel, window, cx)
+        });
         let _on_window_deactivate_subscription =
             cx.observe_window_activation(window, |this: &mut ContextMenu, window, cx| {
                 if !window.is_window_active() {
@@ -349,30 +343,26 @@ impl ContextMenu {
             let builder = Rc::new(builder);
 
             let focus_handle = cx.focus_handle();
-            let _on_blur_subscription = cx.on_blur(
-                &focus_handle,
-                window,
-                |this: &mut ContextMenu, window, cx| {
-                    if let Some(ignore_until) = this.ignore_blur_until {
-                        if Instant::now() < ignore_until {
+            let _on_blur_subscription = cx.on_blur(&focus_handle, window, |this: &mut ContextMenu, window, cx| {
+                if let Some(ignore_until) = this.ignore_blur_until {
+                    if Instant::now() < ignore_until {
+                        return;
+                    } else {
+                        this.ignore_blur_until = None;
+                    }
+                }
+
+                if this.main_menu.is_none() {
+                    if let SubmenuState::Open(open_submenu) = &this.submenu_state {
+                        let submenu_focus = open_submenu.entity.read(cx).focus_handle.clone();
+                        if submenu_focus.contains_focused(window, cx) {
                             return;
-                        } else {
-                            this.ignore_blur_until = None;
                         }
                     }
+                }
 
-                    if this.main_menu.is_none() {
-                        if let SubmenuState::Open(open_submenu) = &this.submenu_state {
-                            let submenu_focus = open_submenu.entity.read(cx).focus_handle.clone();
-                            if submenu_focus.contains_focused(window, cx) {
-                                return;
-                            }
-                        }
-                    }
-
-                    this.cancel(&menu::Cancel, window, cx)
-                },
-            );
+                this.cancel(&menu::Cancel, window, cx)
+            });
             let _on_window_deactivate_subscription =
                 cx.observe_window_activation(window, |this: &mut ContextMenu, window, cx| {
                     if !window.is_window_active() {
@@ -438,31 +428,26 @@ impl ContextMenu {
                 clicked: false,
                 end_slot_action: None,
                 key_context: "menu".into(),
-                _on_blur_subscription: cx.on_blur(
-                    &focus_handle,
-                    window,
-                    |this: &mut ContextMenu, window, cx| {
-                        if let Some(ignore_until) = this.ignore_blur_until {
-                            if Instant::now() < ignore_until {
+                _on_blur_subscription: cx.on_blur(&focus_handle, window, |this: &mut ContextMenu, window, cx| {
+                    if let Some(ignore_until) = this.ignore_blur_until {
+                        if Instant::now() < ignore_until {
+                            return;
+                        } else {
+                            this.ignore_blur_until = None;
+                        }
+                    }
+
+                    if this.main_menu.is_none() {
+                        if let SubmenuState::Open(open_submenu) = &this.submenu_state {
+                            let submenu_focus = open_submenu.entity.read(cx).focus_handle.clone();
+                            if submenu_focus.contains_focused(window, cx) {
                                 return;
-                            } else {
-                                this.ignore_blur_until = None;
                             }
                         }
+                    }
 
-                        if this.main_menu.is_none() {
-                            if let SubmenuState::Open(open_submenu) = &this.submenu_state {
-                                let submenu_focus =
-                                    open_submenu.entity.read(cx).focus_handle.clone();
-                                if submenu_focus.contains_focused(window, cx) {
-                                    return;
-                                }
-                            }
-                        }
-
-                        this.cancel(&menu::Cancel, window, cx)
-                    },
-                ),
+                    this.cancel(&menu::Cancel, window, cx)
+                }),
                 _on_window_deactivate_subscription: cx.observe_window_activation(
                     window,
                     |this: &mut ContextMenu, window, cx| {
@@ -652,10 +637,7 @@ impl ContextMenu {
         self
     }
 
-    pub fn custom_row(
-        mut self,
-        entry_render: impl Fn(&mut Window, &mut App) -> AnyElement + 'static,
-    ) -> Self {
+    pub fn custom_row(mut self, entry_render: impl Fn(&mut Window, &mut App) -> AnyElement + 'static) -> Self {
         self.items.push(ContextMenuItem::CustomEntry {
             entry_render: Box::new(entry_render),
             handler: Rc::new(|_, _, _| {}),
@@ -688,12 +670,7 @@ impl ContextMenu {
         self.action_checked(label, action, false)
     }
 
-    pub fn action_checked(
-        mut self,
-        label: impl Into<SharedString>,
-        action: Box<dyn Action>,
-        checked: bool,
-    ) -> Self {
+    pub fn action_checked(mut self, label: impl Into<SharedString>, action: Box<dyn Action>, checked: bool) -> Self {
         self.items.push(ContextMenuItem::Entry(ContextMenuEntry {
             toggle: if checked {
                 Some((IconPosition::Start, true))
@@ -862,13 +839,7 @@ impl ContextMenu {
         };
 
         if let Some(ContextMenuItem::Submenu { builder, .. }) = self.items.get(ix) {
-            self.open_submenu(
-                ix,
-                builder.clone(),
-                SubmenuOpenTrigger::Keyboard,
-                window,
-                cx,
-            );
+            self.open_submenu(ix, builder.clone(), SubmenuOpenTrigger::Keyboard, window, cx);
 
             if let SubmenuState::Open(open_submenu) = &self.submenu_state {
                 let focus_handle = open_submenu.entity.read(cx).focus_handle.clone();
@@ -988,12 +959,7 @@ impl ContextMenu {
         self.select_first(&SelectFirst, window, cx);
     }
 
-    pub fn select_previous(
-        &mut self,
-        _: &SelectPrevious,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn select_previous(&mut self, _: &SelectPrevious, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(ix) = self.selected_index {
             for (ix, item) in self.items.iter().enumerate().take(ix).rev() {
                 if item.is_selectable() {
@@ -1006,12 +972,7 @@ impl ContextMenu {
         self.handle_select_last(&SelectLast, window, cx);
     }
 
-    pub fn select_submenu_child(
-        &mut self,
-        _: &SelectChild,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn select_submenu_child(&mut self, _: &SelectChild, window: &mut Window, cx: &mut Context<Self>) {
         let Some(ix) = self.selected_index else {
             return;
         };
@@ -1020,13 +981,7 @@ impl ContextMenu {
             return;
         };
 
-        self.open_submenu(
-            ix,
-            builder.clone(),
-            SubmenuOpenTrigger::Keyboard,
-            window,
-            cx,
-        );
+        self.open_submenu(ix, builder.clone(), SubmenuOpenTrigger::Keyboard, window, cx);
 
         if let SubmenuState::Open(open_submenu) = &self.submenu_state {
             let focus_handle = open_submenu.entity.read(cx).focus_handle.clone();
@@ -1039,12 +994,7 @@ impl ContextMenu {
         cx.notify();
     }
 
-    pub fn select_submenu_parent(
-        &mut self,
-        _: &SelectParent,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn select_submenu_parent(&mut self, _: &SelectParent, window: &mut Window, cx: &mut Context<Self>) {
         if self.main_menu.is_none() {
             return;
         }
@@ -1072,12 +1022,7 @@ impl ContextMenu {
         cx.emit(DismissEvent);
     }
 
-    fn select_index(
-        &mut self,
-        ix: usize,
-        _window: &mut Window,
-        _cx: &mut Context<Self>,
-    ) -> Option<usize> {
+    fn select_index(&mut self, ix: usize, _window: &mut Window, _cx: &mut Context<Self>) -> Option<usize> {
         self.documentation_aside = None;
         let item = self.items.get(ix)?;
         if item.is_selectable() {
@@ -1131,11 +1076,7 @@ impl ContextMenu {
         cx.new(|cx| {
             let focus_handle = cx.focus_handle();
 
-            let _on_blur_subscription = cx.on_blur(
-                &focus_handle,
-                window,
-                |_this: &mut ContextMenu, _window, _cx| {},
-            );
+            let _on_blur_subscription = cx.on_blur(&focus_handle, window, |_this: &mut ContextMenu, _window, _cx| {});
             let _on_window_deactivate_subscription =
                 cx.observe_window_activation(window, |this: &mut ContextMenu, window, cx| {
                     if !window.is_window_active() {
@@ -1204,8 +1145,7 @@ impl ContextMenu {
             return;
         }
 
-        let (submenu, dismiss_subscription) =
-            Self::create_submenu(builder, cx.entity(), window, cx);
+        let (submenu, dismiss_subscription) = Self::create_submenu(builder, cx.entity(), window, cx);
 
         // If we're switching from one submenu item to another, throw away any previously-captured
         // offset so we don't reuse a stale position.
@@ -1234,12 +1174,7 @@ impl ContextMenu {
         cx.notify();
     }
 
-    pub fn on_action_dispatch(
-        &mut self,
-        dispatched: &dyn Action,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn on_action_dispatch(&mut self, dispatched: &dyn Action, window: &mut Window, cx: &mut Context<Self>) {
         if self.clicked {
             cx.propagate();
             return;
@@ -1262,9 +1197,7 @@ impl ContextMenu {
             cx.notify();
             let action = dispatched.boxed_clone();
             cx.spawn_in(window, async move |this, cx| {
-                cx.background_executor()
-                    .timer(Duration::from_millis(50))
-                    .await;
+                cx.background_executor().timer(Duration::from_millis(50)).await;
                 cx.update(|window, cx| {
                     this.update(cx, |this, cx| {
                         this.cancel(&menu::Cancel, window, cx);
@@ -1292,9 +1225,7 @@ impl ContextMenu {
     ) -> impl IntoElement + use<> {
         match item {
             ContextMenuItem::Separator => ListSeparator.into_any_element(),
-            ContextMenuItem::Header(header) => ListSubHeader::new(header.clone())
-                .inset(true)
-                .into_any_element(),
+            ContextMenuItem::Header(header) => ListSubHeader::new(header.clone()).inset(true).into_any_element(),
             ContextMenuItem::HeaderWithLink(header, label, url) => {
                 let url = url.clone();
                 let link_id = ElementId::Name(format!("link-{}", url).into());
@@ -1319,9 +1250,7 @@ impl ContextMenu {
                 .disabled(true)
                 .child(Label::new(label.clone()))
                 .into_any_element(),
-            ContextMenuItem::Entry(entry) => {
-                self.render_menu_entry(ix, entry, cx).into_any_element()
-            }
+            ContextMenuItem::Entry(entry) => self.render_menu_entry(ix, entry, cx).into_any_element(),
             ContextMenuItem::CustomEntry {
                 entry_render,
                 handler,
@@ -1337,12 +1266,10 @@ impl ContextMenu {
                 div()
                     .id(("context-menu-child", ix))
                     .when_some(documentation_aside.clone(), |this, documentation_aside| {
-                        this.occlude()
-                            .on_hover(cx.listener(move |menu, hovered, _, cx| {
+                        this.occlude().on_hover(cx.listener(move |menu, hovered, _, cx| {
                             if *hovered {
                                 menu.documentation_aside = Some((ix, documentation_aside.clone()));
-                            } else if matches!(menu.documentation_aside, Some((id, _)) if id == ix)
-                            {
+                            } else if matches!(menu.documentation_aside, Some((id, _)) if id == ix) {
                                 menu.documentation_aside = None;
                             }
                             cx.notify();
@@ -1432,9 +1359,7 @@ impl ContextMenu {
                 }
             }))
             .on_mouse_move(cx.listener(move |this, event: &MouseMoveEvent, _, cx| {
-                if matches!(&this.submenu_state, SubmenuState::Open(_))
-                    || this.selected_index == Some(ix)
-                {
+                if matches!(&this.submenu_state, SubmenuState::Open(_)) || this.selected_index == Some(ix) {
                     this.submenu_safety_threshold_x = Some(event.position.x - px(100.0));
                 }
 
@@ -1470,16 +1395,8 @@ impl ContextMenu {
                             this.hover_target = HoverTarget::MainMenu;
                             this.submenu_safety_threshold_x = Some(mouse_pos.x - px(50.0));
 
-                            if let Some(ContextMenuItem::Submenu { builder, .. }) =
-                                this.items.get(ix)
-                            {
-                                this.open_submenu(
-                                    ix,
-                                    builder.clone(),
-                                    SubmenuOpenTrigger::Pointer,
-                                    window,
-                                    cx,
-                                );
+                            if let Some(ContextMenuItem::Submenu { builder, .. }) = this.items.get(ix) {
+                                this.open_submenu(ix, builder.clone(), SubmenuOpenTrigger::Pointer, window, cx);
                             }
 
                             cx.notify();
@@ -1517,13 +1434,7 @@ impl ContextMenu {
                         }
 
                         if let Some(ContextMenuItem::Submenu { builder, .. }) = this.items.get(ix) {
-                            this.open_submenu(
-                                ix,
-                                builder.clone(),
-                                SubmenuOpenTrigger::Pointer,
-                                window,
-                                cx,
-                            );
+                            this.open_submenu(ix, builder.clone(), SubmenuOpenTrigger::Pointer, window, cx);
                         }
                     }))
                     .child(
@@ -1612,12 +1523,7 @@ impl ContextMenu {
             )
     }
 
-    fn render_menu_entry(
-        &self,
-        ix: usize,
-        entry: &ContextMenuEntry,
-        cx: &mut Context<Self>,
-    ) -> impl IntoElement {
+    fn render_menu_entry(&self, ix: usize, entry: &ContextMenuEntry, cx: &mut Context<Self>) -> impl IntoElement {
         let ContextMenuEntry {
             toggle,
             label,
@@ -1649,47 +1555,29 @@ impl ContextMenu {
             icon_color.unwrap_or(Color::Default)
         };
 
-        let label_color = if *disabled {
-            Color::Disabled
-        } else {
-            Color::Default
-        };
+        let label_color = if *disabled { Color::Disabled } else { Color::Default };
 
         let label_element = if let Some(custom_path) = custom_icon_path {
             h_flex()
                 .gap_1p5()
-                .when(
-                    *icon_position == IconPosition::Start && toggle.is_none(),
-                    |flex| {
-                        flex.child(
-                            Icon::from_path(custom_path.clone())
-                                .size(*icon_size)
-                                .color(icon_color),
-                        )
-                    },
-                )
+                .when(*icon_position == IconPosition::Start && toggle.is_none(), |flex| {
+                    flex.child(Icon::from_path(custom_path.clone()).size(*icon_size).color(icon_color))
+                })
                 .child(Label::new(label.clone()).color(label_color).truncate())
                 .when(*icon_position == IconPosition::End, |flex| {
-                    flex.child(
-                        Icon::from_path(custom_path.clone())
-                            .size(*icon_size)
-                            .color(icon_color),
-                    )
+                    flex.child(Icon::from_path(custom_path.clone()).size(*icon_size).color(icon_color))
                 })
                 .into_any_element()
         } else if let Some(custom_icon_svg) = custom_icon_svg {
             h_flex()
                 .gap_1p5()
-                .when(
-                    *icon_position == IconPosition::Start && toggle.is_none(),
-                    |flex| {
-                        flex.child(
-                            Icon::from_external_svg(custom_icon_svg.clone())
-                                .size(*icon_size)
-                                .color(icon_color),
-                        )
-                    },
-                )
+                .when(*icon_position == IconPosition::Start && toggle.is_none(), |flex| {
+                    flex.child(
+                        Icon::from_external_svg(custom_icon_svg.clone())
+                            .size(*icon_size)
+                            .color(icon_color),
+                    )
+                })
                 .child(Label::new(label.clone()).color(label_color).truncate())
                 .when(*icon_position == IconPosition::End, |flex| {
                     flex.child(
@@ -1702,10 +1590,9 @@ impl ContextMenu {
         } else if let Some(icon_name) = icon {
             h_flex()
                 .gap_1p5()
-                .when(
-                    *icon_position == IconPosition::Start && toggle.is_none(),
-                    |flex| flex.child(Icon::new(*icon_name).size(*icon_size).color(icon_color)),
-                )
+                .when(*icon_position == IconPosition::Start && toggle.is_none(), |flex| {
+                    flex.child(Icon::new(*icon_name).size(*icon_size).color(icon_color))
+                })
                 .child(Label::new(label.clone()).color(label_color).truncate())
                 .when(*icon_position == IconPosition::End, |flex| {
                     flex.child(Icon::new(*icon_name).size(*icon_size).color(icon_color))
@@ -1723,15 +1610,14 @@ impl ContextMenu {
         div()
             .id(("context-menu-child", ix))
             .when_some(documentation_aside.clone(), |this, documentation_aside| {
-                this.occlude()
-                    .on_hover(cx.listener(move |menu, hovered, _, cx| {
-                        if *hovered {
-                            menu.documentation_aside = Some((ix, documentation_aside.clone()));
-                        } else if matches!(menu.documentation_aside, Some((id, _)) if id == ix) {
-                            menu.documentation_aside = None;
-                        }
-                        cx.notify();
-                    }))
+                this.occlude().on_hover(cx.listener(move |menu, hovered, _, cx| {
+                    if *hovered {
+                        menu.documentation_aside = Some((ix, documentation_aside.clone()));
+                    } else if matches!(menu.documentation_aside, Some((id, _)) if id == ix) {
+                        menu.documentation_aside = None;
+                    }
+                    cx.notify();
+                }))
             })
             .when(documentation_aside.is_some(), |this| {
                 this.child(
@@ -1780,56 +1666,43 @@ impl ContextMenu {
                                 return;
                             }
 
-                            if let Some(ContextMenuItem::Submenu { builder, .. }) =
-                                this.items.get(ix)
-                            {
-                                this.open_submenu(
-                                    ix,
-                                    builder.clone(),
-                                    SubmenuOpenTrigger::Pointer,
-                                    window,
-                                    cx,
-                                );
+                            if let Some(ContextMenuItem::Submenu { builder, .. }) = this.items.get(ix) {
+                                this.open_submenu(ix, builder.clone(), SubmenuOpenTrigger::Pointer, window, cx);
                             }
                         }))
-                        .on_hover(cx.listener(
-                            move |this, hovered, window, cx| {
+                        .on_hover(cx.listener(move |this, hovered, window, cx| {
+                            if *hovered {
+                                this.clear_selected();
+                                cx.notify();
+                            }
+
+                            if let Some(parent) = &this.main_menu {
+                                let mouse_pos = window.mouse_position();
+                                let parent_clone = parent.clone();
+
                                 if *hovered {
-                                    this.clear_selected();
-                                    cx.notify();
-                                }
+                                    parent.update(cx, |parent, _| {
+                                        parent.clear_selected();
+                                        parent.hover_target = HoverTarget::Submenu;
+                                    });
+                                } else {
+                                    parent_clone.update(cx, |parent, cx| {
+                                        if matches!(&parent.submenu_state, SubmenuState::Open(_)) {
+                                            // Only close if mouse is to the left of the safety threshold
+                                            // (prevents accidental close when moving diagonally toward submenu)
+                                            let should_close = parent
+                                                .submenu_safety_threshold_x
+                                                .map(|threshold_x| mouse_pos.x < threshold_x)
+                                                .unwrap_or(true);
 
-                                if let Some(parent) = &this.main_menu {
-                                    let mouse_pos = window.mouse_position();
-                                    let parent_clone = parent.clone();
-
-                                    if *hovered {
-                                        parent.update(cx, |parent, _| {
-                                            parent.clear_selected();
-                                            parent.hover_target = HoverTarget::Submenu;
-                                        });
-                                    } else {
-                                        parent_clone.update(cx, |parent, cx| {
-                                            if matches!(
-                                                &parent.submenu_state,
-                                                SubmenuState::Open(_)
-                                            ) {
-                                                // Only close if mouse is to the left of the safety threshold
-                                                // (prevents accidental close when moving diagonally toward submenu)
-                                                let should_close = parent
-                                                    .submenu_safety_threshold_x
-                                                    .map(|threshold_x| mouse_pos.x < threshold_x)
-                                                    .unwrap_or(true);
-
-                                                if should_close {
-                                                    parent.close_submenu(true, cx);
-                                                }
+                                            if should_close {
+                                                parent.close_submenu(true, cx);
                                             }
-                                        });
-                                    }
+                                        }
+                                    });
                                 }
-                            },
-                        ))
+                            }
+                        }))
                     })
                     .when_some(*toggle, |list_item, (position, toggled)| {
                         let contents = div()
@@ -1862,16 +1735,10 @@ impl ContextMenu {
                                 div()
                                     .ml_4()
                                     .child(binding.disabled(*disabled))
-                                    .when(*disabled && documentation_aside.is_some(), |parent| {
-                                        parent.invisible()
-                                    })
+                                    .when(*disabled && documentation_aside.is_some(), |parent| parent.invisible())
                             }))
                             .when(*disabled && documentation_aside.is_some(), |parent| {
-                                parent.child(
-                                    Icon::new(IconName::Info)
-                                        .size(IconSize::XSmall)
-                                        .color(Color::Muted),
-                                )
+                                parent.child(Icon::new(IconName::Info).size(IconSize::XSmall).color(Color::Muted))
                             }),
                     )
                     .when_some(
@@ -1891,17 +1758,8 @@ impl ContextMenu {
                                         move |_window, cx| {
                                             action_context
                                                 .as_ref()
-                                                .map(|focus| {
-                                                    Tooltip::for_action_in(
-                                                        title.clone(),
-                                                        &*action,
-                                                        focus,
-                                                        cx,
-                                                    )
-                                                })
-                                                .unwrap_or_else(|| {
-                                                    Tooltip::for_action(title.clone(), &*action, cx)
-                                                })
+                                                .map(|focus| Tooltip::for_action_in(title.clone(), &*action, focus, cx))
+                                                .unwrap_or_else(|| Tooltip::for_action(title.clone(), &*action, cx))
                                         }
                                     })
                                     .on_click({
@@ -2045,12 +1903,8 @@ impl Render for ContextMenu {
                         .max_h(vh(0.75, window))
                         .flex_shrink_0()
                         .child(menu_bounds_measure)
-                        .when_some(self.fixed_width, |this, width| {
-                            this.w(width).overflow_x_hidden()
-                        })
-                        .when(self.fixed_width.is_none(), |this| {
-                            this.min_w(px(200.)).flex_1()
-                        })
+                        .when_some(self.fixed_width, |this, width| this.w(width).overflow_x_hidden())
+                        .when(self.fixed_width.is_none(), |this| this.min_w(px(200.)).flex_1())
                         .overflow_y_scroll()
                         .track_focus(&self.focus_handle(cx))
                         .key_context(self.key_context.as_ref())
@@ -2072,30 +1926,28 @@ impl Render for ContextMenu {
                                 }
                             }
                         }))
-                        .on_mouse_down_out(cx.listener(
-                            |this, event: &MouseDownEvent, window, cx| {
-                                if matches!(&this.submenu_state, SubmenuState::Open(_)) {
-                                    if let Some(padded_bounds) = this.padded_submenu_bounds() {
-                                        if padded_bounds.contains(&event.position) {
-                                            return;
-                                        }
-                                    }
-                                }
-
-                                if let Some(parent) = &this.main_menu {
-                                    let overridden_by_parent_trigger = parent
-                                        .read(cx)
-                                        .submenu_trigger_bounds
-                                        .get()
-                                        .is_some_and(|bounds| bounds.contains(&event.position));
-                                    if overridden_by_parent_trigger {
+                        .on_mouse_down_out(cx.listener(|this, event: &MouseDownEvent, window, cx| {
+                            if matches!(&this.submenu_state, SubmenuState::Open(_)) {
+                                if let Some(padded_bounds) = this.padded_submenu_bounds() {
+                                    if padded_bounds.contains(&event.position) {
                                         return;
                                     }
                                 }
+                            }
 
-                                this.cancel(&menu::Cancel, window, cx)
-                            },
-                        ))
+                            if let Some(parent) = &this.main_menu {
+                                let overridden_by_parent_trigger = parent
+                                    .read(cx)
+                                    .submenu_trigger_bounds
+                                    .get()
+                                    .is_some_and(|bounds| bounds.contains(&event.position));
+                                if overridden_by_parent_trigger {
+                                    return;
+                                }
+                            }
+
+                            this.cancel(&menu::Cancel, window, cx)
+                        }))
                         .when_some(self.end_slot_action.as_ref(), |el, action| {
                             el.on_boxed_action(&**action, cx.listener(ContextMenu::end_slot))
                         })
@@ -2107,10 +1959,7 @@ impl Render for ContextMenu {
                                     ..
                                 }) = item
                                 {
-                                    el = el.on_boxed_action(
-                                        &**action,
-                                        cx.listener(ContextMenu::on_action_dispatch),
-                                    );
+                                    el = el.on_boxed_action(&**action, cx.listener(ContextMenu::on_action_dispatch));
                                 }
                             }
                             el
@@ -2154,12 +2003,8 @@ impl Render for ContextMenu {
                     this.children(aside.map(|(_, aside)| {
                         h_flex()
                             .absolute()
-                            .when(aside.side == DocumentationSide::Left, |el| {
-                                el.right_full().mr_1()
-                            })
-                            .when(aside.side == DocumentationSide::Right, |el| {
-                                el.left_full().ml_1()
-                            })
+                            .when(aside.side == DocumentationSide::Left, |el| el.right_full().mr_1())
+                            .when(aside.side == DocumentationSide::Right, |el| el.left_full().ml_1())
                             .top(top)
                             .h(height)
                             .child(render_aside(aside, cx))

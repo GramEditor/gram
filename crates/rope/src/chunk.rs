@@ -263,9 +263,7 @@ impl<'a> ChunkSlice<'a> {
                     self.text.floor_char_boundary(range.end)
                 };
             }
-            let mask = (1 as Bitmap)
-                .unbounded_shl(range.end as u32)
-                .wrapping_sub(1);
+            let mask = (1 as Bitmap).unbounded_shl(range.end as u32).wrapping_sub(1);
             Self {
                 chars: (self.chars & mask) >> range.start,
                 chars_utf16: (self.chars_utf16 & mask) >> range.start,
@@ -379,21 +377,13 @@ impl<'a> ChunkSlice<'a> {
     #[inline(always)]
     pub fn point_to_offset(&self, point: Point) -> usize {
         if point.row > self.lines().row {
-            debug_panic!(
-                "point {:?} extends beyond rows for string {:?}",
-                point,
-                self.text
-            );
+            debug_panic!("point {:?} extends beyond rows for string {:?}", point, self.text);
             return self.len();
         }
 
         let row_offset_range = self.offset_range_for_row(point.row);
         if point.column > row_offset_range.len() as u32 {
-            debug_panic!(
-                "point {:?} extends beyond row for string {:?}",
-                point,
-                self.text
-            );
+            debug_panic!("point {:?} extends beyond row for string {:?}", point, self.text);
             row_offset_range.end
         } else {
             row_offset_range.start + point.column as usize
@@ -421,11 +411,7 @@ impl<'a> ChunkSlice<'a> {
     #[inline(always)]
     pub fn point_to_offset_utf16(&self, point: Point) -> OffsetUtf16 {
         if point.row > self.lines().row {
-            debug_panic!(
-                "point {:?} extends beyond rows for string {:?}",
-                point,
-                self.text
-            );
+            debug_panic!("point {:?} extends beyond rows for string {:?}", point, self.text);
             return self.len_utf16();
         }
         self.offset_to_offset_utf16(self.point_to_offset(point))
@@ -450,10 +436,8 @@ impl<'a> ChunkSlice<'a> {
             if ix == MAX_BASE {
                 MAX_BASE
             } else {
-                let utf8_additional_len = cmp::min(
-                    (self.chars_utf16 >> ix).trailing_zeros() as usize,
-                    self.text.len() - ix,
-                );
+                let utf8_additional_len =
+                    cmp::min((self.chars_utf16 >> ix).trailing_zeros() as usize, self.text.len() - ix);
                 ix + utf8_additional_len
             }
         }
@@ -482,11 +466,7 @@ impl<'a> ChunkSlice<'a> {
         let lines = self.lines();
         if point.row > lines.row {
             if !clip {
-                debug_panic!(
-                    "point {:?} is beyond this chunk's extent {:?}",
-                    point,
-                    self.text
-                );
+                debug_panic!("point {:?} is beyond this chunk's extent {:?}", point, self.text);
             }
             return self.len();
         }
@@ -513,11 +493,7 @@ impl<'a> ChunkSlice<'a> {
                     offset -= 1;
                 }
                 if !clip {
-                    debug_panic!(
-                        "point {:?} is within character in chunk {:?}",
-                        point,
-                        self.text,
-                    );
+                    debug_panic!("point {:?} is within character in chunk {:?}", point, self.text,);
                 }
             }
         }
@@ -567,9 +543,7 @@ impl<'a> ChunkSlice<'a> {
 
             let mut grapheme_cursor = GraphemeCursor::new(column, bytes.len(), true);
             loop {
-                if line.is_char_boundary(column)
-                    && grapheme_cursor.is_boundary(line.text, 0).unwrap_or(false)
-                {
+                if line.is_char_boundary(column) && grapheme_cursor.is_boundary(line.text, 0).unwrap_or(false) {
                     break;
                 }
 
@@ -822,10 +796,7 @@ mod tests {
     fn test_split_chunk_slice(mut rng: StdRng) {
         let text = &random_string_with_utf8_len(&mut rng, MAX_BASE);
         let chunk = Chunk::new(text);
-        let offset = char_offsets_with_end(text)
-            .into_iter()
-            .choose(&mut rng)
-            .unwrap();
+        let offset = char_offsets_with_end(text).into_iter().choose(&mut rng).unwrap();
         let (a, b) = chunk.as_slice().split_at(offset);
         let (a_str, b_str) = text.split_at(offset);
         verify_chunk(a, a_str);
@@ -844,13 +815,7 @@ mod tests {
 
         for (mut ix, position) in set_bits.into_iter().enumerate() {
             ix += 1;
-            assert_eq!(
-                nth_set_bit(n, ix),
-                position,
-                "nth_set_bit({:0128b}, {})",
-                n,
-                ix
-            );
+            assert_eq!(nth_set_bit(n, ix), position, "nth_set_bit({:0128b}, {})", n, ix);
         }
     }
 
@@ -913,12 +878,7 @@ mod tests {
         for (char_offset, c) in text.chars().enumerate() {
             let expected_point = chunk.offset_to_point(offset);
             assert_eq!(point, expected_point, "mismatch at offset {}", offset);
-            assert_eq!(
-                chunk.point_to_offset(point),
-                offset,
-                "mismatch at point {:?}",
-                point
-            );
+            assert_eq!(chunk.point_to_offset(point), offset, "mismatch at point {:?}", point);
             assert_eq!(
                 chunk.offset_to_offset_utf16(offset),
                 offset_utf16,
@@ -980,10 +940,7 @@ mod tests {
             }
 
             for i in 1..c.len_utf16() {
-                let test_point = Unclipped(PointUtf16::new(
-                    point_utf16.row,
-                    point_utf16.column + i as u32,
-                ));
+                let test_point = Unclipped(PointUtf16::new(point_utf16.row, point_utf16.column + i as u32));
                 assert_eq!(
                     chunk.unclipped_point_utf16_to_point(test_point),
                     point,
@@ -1041,12 +998,7 @@ mod tests {
 
         let final_point = chunk.offset_to_point(offset);
         assert_eq!(point, final_point, "mismatch at final offset {}", offset);
-        assert_eq!(
-            chunk.point_to_offset(point),
-            offset,
-            "mismatch at point {:?}",
-            point
-        );
+        assert_eq!(chunk.point_to_offset(point), offset, "mismatch at point {:?}", point);
         assert_eq!(
             chunk.offset_to_offset_utf16(offset),
             offset_utf16,
@@ -1116,10 +1068,7 @@ mod tests {
 
         // Verify length methods
         assert_eq!(chunk.len(), text.len());
-        assert_eq!(
-            chunk.len_utf16().0,
-            text.chars().map(|c| c.len_utf16()).sum::<usize>()
-        );
+        assert_eq!(chunk.len_utf16().0, text.chars().map(|c| c.len_utf16()).sum::<usize>());
 
         // Verify line counting
         let lines = chunk.lines();

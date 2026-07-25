@@ -5,8 +5,8 @@ use crate::{
 };
 use anyhow::Result;
 use gpui::{
-    Along, AnyView, AnyWeakView, Axis, Bounds, Entity, Hsla, IntoElement, Pixels, Point,
-    StyleRefinement, WeakEntity, Window, point, size,
+    Along, AnyView, AnyWeakView, Axis, Bounds, Entity, Hsla, IntoElement, Pixels, Point, StyleRefinement, WeakEntity,
+    Window, point, size,
 };
 use parking_lot::Mutex;
 use project::Project;
@@ -44,12 +44,7 @@ impl PaneGroup {
         }
     }
 
-    pub fn split(
-        &mut self,
-        old_pane: &Entity<Pane>,
-        new_pane: &Entity<Pane>,
-        direction: SplitDirection,
-    ) -> Result<()> {
+    pub fn split(&mut self, old_pane: &Entity<Pane>, new_pane: &Entity<Pane>, direction: SplitDirection) -> Result<()> {
         match &mut self.root {
             Member::Pane(pane) => {
                 if pane == old_pane {
@@ -84,11 +79,7 @@ impl PaneGroup {
     /// - Ok(true) if it found and moved a pane
     /// - Ok(false) if it found but did not move the pane
     /// - Err(_) if it did not find the pane
-    pub fn move_to_border(
-        &mut self,
-        active_pane: &Entity<Pane>,
-        direction: SplitDirection,
-    ) -> Result<bool> {
+    pub fn move_to_border(&mut self, active_pane: &Entity<Pane>, direction: SplitDirection) -> Result<bool> {
         if let Some(pane) = self.find_pane_at_border(direction)
             && pane == active_pane
         {
@@ -102,11 +93,7 @@ impl PaneGroup {
         if let Member::Axis(root) = &mut self.root
             && direction.axis() == root.axis
         {
-            let idx = if direction.increasing() {
-                root.members.len()
-            } else {
-                0
-            };
+            let idx = if direction.increasing() { root.members.len() } else { 0 };
             root.insert_pane(idx, active_pane);
             return Ok(true);
         }
@@ -143,13 +130,7 @@ impl PaneGroup {
         }
     }
 
-    pub fn resize(
-        &mut self,
-        pane: &Entity<Pane>,
-        direction: Axis,
-        amount: Pixels,
-        bounds: &Bounds<Pixels>,
-    ) {
+    pub fn resize(&mut self, pane: &Entity<Pane>, direction: Axis, amount: Pixels, bounds: &Bounds<Pixels>) {
         match &mut self.root {
             Member::Pane(_) => {}
             Member::Axis(axis) => {
@@ -214,18 +195,10 @@ impl PaneGroup {
         let distance_to_next = crate::HANDLE_HITBOX_SIZE;
 
         let target = match direction {
-            SplitDirection::Left => {
-                Point::new(bounding_box.left() - distance_to_next.into(), center.y)
-            }
-            SplitDirection::Right => {
-                Point::new(bounding_box.right() + distance_to_next.into(), center.y)
-            }
-            SplitDirection::Up => {
-                Point::new(center.x, bounding_box.top() - distance_to_next.into())
-            }
-            SplitDirection::Down => {
-                Point::new(center.x, bounding_box.bottom() + distance_to_next.into())
-            }
+            SplitDirection::Left => Point::new(bounding_box.left() - distance_to_next.into(), center.y),
+            SplitDirection::Right => Point::new(bounding_box.right() + distance_to_next.into(), center.y),
+            SplitDirection::Up => Point::new(center.x, bounding_box.top() - distance_to_next.into()),
+            SplitDirection::Down => Point::new(center.x, bounding_box.bottom() + distance_to_next.into()),
         };
         self.pane_at_pixel_position(target)
     }
@@ -268,10 +241,7 @@ pub struct ActivePaneDecorator<'a> {
 
 impl<'a> ActivePaneDecorator<'a> {
     pub fn new(active_pane: &'a Entity<Pane>, workspace: &'a WeakEntity<Workspace>) -> Self {
-        Self {
-            active_pane,
-            workspace,
-        }
+        Self { active_pane, workspace }
     }
 }
 
@@ -359,10 +329,7 @@ impl Member {
                         .relative()
                         .flex_1()
                         .size_full()
-                        .child(
-                            AnyView::from(pane.clone())
-                                .cached(StyleRefinement::default().v_flex().size_full()),
-                        )
+                        .child(AnyView::from(pane.clone()).cached(StyleRefinement::default().v_flex().size_full()))
                         .when_some(decoration.border, |this, color| {
                             this.child(
                                 div()
@@ -429,9 +396,7 @@ impl PaneAxis {
 
     pub fn load(axis: Axis, members: Vec<Member>, flexes: Option<Vec<f32>>) -> Self {
         let mut flexes = flexes.unwrap_or_else(|| vec![1.; members.len()]);
-        if flexes.len() != members.len()
-            || (flexes.iter().copied().sum::<f32>() - flexes.len() as f32).abs() >= 0.001
-        {
+        if flexes.len() != members.len() || (flexes.iter().copied().sum::<f32>() - flexes.len() as f32).abs() >= 0.001 {
             flexes = vec![1.; members.len()];
         }
 
@@ -445,12 +410,7 @@ impl PaneAxis {
         }
     }
 
-    fn split(
-        &mut self,
-        old_pane: &Entity<Pane>,
-        new_pane: &Entity<Pane>,
-        direction: SplitDirection,
-    ) -> Result<()> {
+    fn split(&mut self, old_pane: &Entity<Pane>, new_pane: &Entity<Pane>, direction: SplitDirection) -> Result<()> {
         for (mut idx, member) in self.members.iter_mut().enumerate() {
             match member {
                 Member::Axis(axis) => {
@@ -466,8 +426,7 @@ impl PaneAxis {
                             }
                             self.insert_pane(idx, new_pane);
                         } else {
-                            *member =
-                                Member::new_axis(old_pane.clone(), new_pane.clone(), direction);
+                            *member = Member::new_axis(old_pane.clone(), new_pane.clone(), direction);
                         }
                         return Ok(());
                     }
@@ -548,13 +507,7 @@ impl PaneAxis {
         }
     }
 
-    fn resize(
-        &mut self,
-        pane: &Entity<Pane>,
-        axis: Axis,
-        amount: Pixels,
-        bounds: &Bounds<Pixels>,
-    ) -> Option<bool> {
+    fn resize(&mut self, pane: &Entity<Pane>, axis: Axis, amount: Pixels, bounds: &Bounds<Pixels>) -> Option<bool> {
         let container_size = self
             .bounding_boxes
             .lock()
@@ -597,13 +550,9 @@ impl PaneAxis {
         let mut flexes = self.flexes.lock();
 
         let ix = if found_pane {
-            self.members.iter().position(|m| {
-                if let Member::Pane(p) = m {
-                    p == pane
-                } else {
-                    false
-                }
-            })
+            self.members
+                .iter()
+                .position(|m| if let Member::Pane(p) = m { p == pane } else { false })
         } else {
             found_axis_index
         };
@@ -614,9 +563,7 @@ impl PaneAxis {
 
         let ix = ix.unwrap_or(0);
 
-        let size = move |ix, flexes: &[f32]| {
-            container_size.along(axis) * (flexes[ix] / flexes.len() as f32)
-        };
+        let size = move |ix, flexes: &[f32]| container_size.along(axis) * (flexes[ix] / flexes.len() as f32);
 
         // Don't allow resizing to less than the minimum size, if elements are already too small
         if min_size - px(1.) > size(ix, flexes.as_slice()) {
@@ -630,25 +577,20 @@ impl PaneAxis {
             (current_target_flex, next_target_flex)
         };
 
-        let apply_changes =
-            |current_ix: usize, proposed_current_pixel_change: Pixels, flexes: &mut [f32]| {
-                let next_target_size = Pixels::max(
-                    size(current_ix + 1, flexes) - proposed_current_pixel_change,
-                    min_size,
-                );
-                let current_target_size = Pixels::max(
-                    size(current_ix, flexes) + size(current_ix + 1, flexes) - next_target_size,
-                    min_size,
-                );
+        let apply_changes = |current_ix: usize, proposed_current_pixel_change: Pixels, flexes: &mut [f32]| {
+            let next_target_size = Pixels::max(size(current_ix + 1, flexes) - proposed_current_pixel_change, min_size);
+            let current_target_size = Pixels::max(
+                size(current_ix, flexes) + size(current_ix + 1, flexes) - next_target_size,
+                min_size,
+            );
 
-                let current_pixel_change = current_target_size - size(current_ix, flexes);
+            let current_pixel_change = current_target_size - size(current_ix, flexes);
 
-                let (current_target_flex, next_target_flex) =
-                    flex_changes(current_pixel_change, current_ix, 1, flexes);
+            let (current_target_flex, next_target_flex) = flex_changes(current_pixel_change, current_ix, 1, flexes);
 
-                flexes[current_ix] = current_target_flex;
-                flexes[current_ix + 1] = next_target_flex;
-            };
+            flexes[current_ix] = current_target_flex;
+            flexes[current_ix + 1] = next_target_flex;
+        };
 
         if ix + 1 == flexes.len() {
             apply_changes(ix - 1, -1.0 * amount, flexes.as_mut_slice());
@@ -867,9 +809,9 @@ mod element {
     use std::{cell::RefCell, iter, rc::Rc, sync::Arc};
 
     use gpui::{
-        Along, AnyElement, App, Axis, BorderStyle, Bounds, Element, GlobalElementId,
-        HitboxBehavior, IntoElement, MouseDownEvent, MouseMoveEvent, MouseUpEvent, ParentElement,
-        Pixels, Point, Size, Style, WeakEntity, Window, px, relative, size,
+        Along, AnyElement, App, Axis, BorderStyle, Bounds, Element, GlobalElementId, HitboxBehavior, IntoElement,
+        MouseDownEvent, MouseMoveEvent, MouseUpEvent, ParentElement, Pixels, Point, Size, Style, WeakEntity, Window,
+        px, relative, size,
     };
     use gpui::{CursorStyle, Hitbox};
     use parking_lot::Mutex;
@@ -966,9 +908,7 @@ mod element {
             debug_assert!(flex_values_in_bounds(flexes.as_slice()));
 
             // Math to convert a flex value to a pixel value
-            let size = move |ix, flexes: &[f32]| {
-                container_size.along(axis) * (flexes[ix] / flexes.len() as f32)
-            };
+            let size = move |ix, flexes: &[f32]| container_size.along(axis) * (flexes[ix] / flexes.len() as f32);
 
             // Don't allow resizing to less than the minimum size, if elements are already too small
             if min_size - px(1.) > size(ix, flexes.as_slice()) {
@@ -1021,13 +961,11 @@ mod element {
                 );
 
                 let current_target_size = Pixels::max(
-                    size(current_ix, flexes.as_slice()) + size(current_ix + 1, flexes.as_slice())
-                        - next_target_size,
+                    size(current_ix, flexes.as_slice()) + size(current_ix + 1, flexes.as_slice()) - next_target_size,
                     min_size,
                 );
 
-                let current_pixel_change =
-                    current_target_size - size(current_ix, flexes.as_slice());
+                let current_pixel_change = current_target_size - size(current_ix, flexes.as_slice());
 
                 let (current_target_flex, next_target_flex) =
                     flex_changes(current_pixel_change, current_ix, 1, flexes.as_slice());
@@ -1055,9 +993,7 @@ mod element {
                 origin: pane_bounds.origin.apply_along(axis, |origin| {
                     origin + pane_bounds.size.along(axis) - px(HANDLE_HITBOX_SIZE / 2.)
                 }),
-                size: pane_bounds
-                    .size
-                    .apply_along(axis, |_| px(HANDLE_HITBOX_SIZE)),
+                size: pane_bounds.size.apply_along(axis, |_| px(HANDLE_HITBOX_SIZE)),
             };
             let divider_bounds = Bounds {
                 origin: pane_bounds
@@ -1119,13 +1055,11 @@ mod element {
             window: &mut Window,
             cx: &mut App,
         ) -> PaneAxisLayout {
-            let dragged_handle = window.with_element_state::<Rc<RefCell<Option<usize>>>, _>(
-                global_id.unwrap(),
-                |state, _cx| {
+            let dragged_handle =
+                window.with_element_state::<Rc<RefCell<Option<usize>>>, _>(global_id.unwrap(), |state, _cx| {
                     let state = state.unwrap_or_else(|| Rc::new(RefCell::new(None)));
                     (state.clone(), state)
-                },
-            );
+                });
             let flexes = self.flexes.lock().clone();
             let len = self.children.len();
             debug_assert!(flexes.len() == len);
@@ -1174,12 +1108,7 @@ mod element {
 
             for (ix, child_layout) in layout.children.iter_mut().enumerate() {
                 if ix < len - 1 {
-                    child_layout.handle = Some(Self::layout_handle(
-                        self.axis,
-                        child_layout.bounds,
-                        window,
-                        cx,
-                    ));
+                    child_layout.handle = Some(Self::layout_handle(self.axis, child_layout.bounds, window, cx));
                 }
             }
 
@@ -1221,20 +1150,11 @@ mod element {
                     // the overlay has to be painted in origin+1px with size width-1px
                     // in order to accommodate the divider between panels
                     let overlay_bounds = Bounds {
-                        origin: child
-                            .bounds
-                            .origin
-                            .apply_along(Axis::Horizontal, |val| val + px(1.)),
-                        size: child
-                            .bounds
-                            .size
-                            .apply_along(Axis::Horizontal, |val| val - px(1.)),
+                        origin: child.bounds.origin.apply_along(Axis::Horizontal, |val| val + px(1.)),
+                        size: child.bounds.size.apply_along(Axis::Horizontal, |val| val - px(1.)),
                     };
 
-                    if overlay_opacity.is_some()
-                        && child.is_leaf_pane
-                        && self.active_pane_ix != Some(ix)
-                    {
+                    if overlay_opacity.is_some() && child.is_leaf_pane && self.active_pane_ix != Some(ix) {
                         window.paint_quad(gpui::fill(overlay_bounds, overlay_background));
                     }
 
@@ -1269,10 +1189,7 @@ mod element {
                         window.set_cursor_style(cursor_style, &handle.hitbox);
                     }
 
-                    window.paint_quad(gpui::fill(
-                        handle.divider_bounds,
-                        cx.theme().colors().pane_group_border,
-                    ));
+                    window.paint_quad(gpui::fill(handle.divider_bounds, cx.theme().colors().pane_group_border));
 
                     window.on_mouse_event({
                         let dragged_handle = layout.dragged_handle.clone();

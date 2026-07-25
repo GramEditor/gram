@@ -24,9 +24,7 @@ pub struct RowChunks {
 
 impl std::fmt::Debug for RowChunks {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("RowChunks")
-            .field("chunks", &self.chunks)
-            .finish()
+        f.debug_struct("RowChunks").field("chunks", &self.chunks).finish()
     }
 }
 
@@ -83,9 +81,7 @@ impl RowChunks {
             .iter()
             .filter(move |chunk| -> bool {
                 let chunk_range = chunk.row_range().to_inclusive();
-                row_ranges
-                    .iter()
-                    .any(|row_range| chunk_range.overlaps(&row_range))
+                row_ranges.iter().any(|row_range| chunk_range.overlaps(&row_range))
             })
             .copied()
     }

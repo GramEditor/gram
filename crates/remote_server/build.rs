@@ -2,10 +2,7 @@
 use std::process::Command;
 
 fn main() {
-    println!(
-        "cargo:rustc-env=TARGET={}",
-        std::env::var("TARGET").unwrap()
-    );
+    println!("cargo:rustc-env=TARGET={}", std::env::var("TARGET").unwrap());
 
     // Populate git sha environment variable if git is available
     println!("cargo:rerun-if-changed=../../.git/logs/HEAD");

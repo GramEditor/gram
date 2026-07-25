@@ -85,9 +85,7 @@ impl RenderOnce for List {
                 (false, _) => this.children(self.children),
                 (true, Some(false)) => this,
                 (true, _) => match self.empty_message {
-                    EmptyMessage::Text(text) => {
-                        this.px_2().child(Label::new(text).color(Color::Muted))
-                    }
+                    EmptyMessage::Text(text) => this.px_2().child(Label::new(text).color(Color::Muted)),
                     EmptyMessage::Element(element) => this.child(element),
                 },
             })
@@ -100,9 +98,7 @@ impl Component for List {
     }
 
     fn description() -> Option<&'static str> {
-        Some(
-            "A container component for displaying a collection of list items with optional header and empty state.",
-        )
+        Some("A container component for displaying a collection of list items with optional header and empty state.")
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
@@ -130,9 +126,7 @@ impl Component for List {
                         ),
                         single_example(
                             "Empty List",
-                            List::new()
-                                .empty_message("No items to display")
-                                .into_any_element(),
+                            List::new().empty_message("No items to display").into_any_element(),
                         ),
                     ],
                 )])

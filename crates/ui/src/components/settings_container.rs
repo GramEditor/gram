@@ -57,10 +57,7 @@ impl Component for SettingsContainer {
                     example_group_with_title(
                         "Basic Usage",
                         vec![
-                            single_example(
-                                "Empty Container",
-                                SettingsContainer::new().into_any_element(),
-                            ),
+                            single_example("Empty Container", SettingsContainer::new().into_any_element()),
                             single_example(
                                 "With Content",
                                 SettingsContainer::new()

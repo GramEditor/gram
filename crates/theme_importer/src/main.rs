@@ -79,13 +79,8 @@ fn main() -> Result<()> {
         config.build()
     };
 
-    TermLogger::init(
-        LevelFilter::Trace,
-        log_config,
-        TerminalMode::Stderr,
-        ColorChoice::Auto,
-    )
-    .expect("could not initialize logger");
+    TermLogger::init(LevelFilter::Trace, log_config, TerminalMode::Stderr, ColorChoice::Auto)
+        .expect("could not initialize logger");
 
     let theme_file_path = args.theme_path;
 
@@ -98,8 +93,8 @@ fn main() -> Result<()> {
         }
     };
 
-    let vscode_theme: VsCodeTheme = serde_json_lenient::from_slice(&buffer)
-        .context(format!("failed to parse theme {theme_file_path:?}"))?;
+    let vscode_theme: VsCodeTheme =
+        serde_json_lenient::from_slice(&buffer).context(format!("failed to parse theme {theme_file_path:?}"))?;
 
     let theme_metadata = ThemeMetadata {
         name: vscode_theme.name.clone().unwrap_or("".to_string()),

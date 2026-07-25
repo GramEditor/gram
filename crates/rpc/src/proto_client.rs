@@ -8,8 +8,8 @@ use futures::{
 use gpui::{AnyEntity, AnyWeakEntity, AsyncApp, BackgroundExecutor, Entity, FutureExt as _};
 use parking_lot::Mutex;
 use proto::{
-    AnyTypedEnvelope, EntityMessage, Envelope, EnvelopedMessage, LspRequestId, LspRequestMessage,
-    RequestMessage, TypedEnvelope, error::ErrorExt as _,
+    AnyTypedEnvelope, EntityMessage, Envelope, EnvelopedMessage, LspRequestId, LspRequestMessage, RequestMessage,
+    TypedEnvelope, error::ErrorExt as _,
 };
 use std::{
     any::{Any, TypeId},
@@ -27,11 +27,7 @@ type RequestIds = Arc<
     Mutex<
         HashMap<
             LspRequestId,
-            oneshot::Sender<
-                Result<
-                    Option<TypedEnvelope<Vec<proto::ProtoLspResponse<Box<dyn AnyTypedEnvelope>>>>>,
-                >,
-            >,
+            oneshot::Sender<Result<Option<TypedEnvelope<Vec<proto::ProtoLspResponse<Box<dyn AnyTypedEnvelope>>>>>>>,
         >,
     >,
 >;
@@ -46,11 +42,7 @@ struct State {
 }
 
 pub trait ProtoClient: Send + Sync {
-    fn request(
-        &self,
-        envelope: Envelope,
-        request_type: &'static str,
-    ) -> BoxFuture<'static, Result<Envelope>>;
+    fn request(&self, envelope: Envelope, request_type: &'static str) -> BoxFuture<'static, Result<Envelope>>;
 
     fn send(&self, envelope: Envelope, message_type: &'static str) -> Result<()>;
 
@@ -73,12 +65,7 @@ pub struct ProtoMessageHandlerSet {
 pub type ProtoMessageHandler = Arc<
     dyn Send
         + Sync
-        + Fn(
-            AnyEntity,
-            Box<dyn AnyTypedEnvelope>,
-            AnyProtoClient,
-            AsyncApp,
-        ) -> LocalBoxFuture<'static, Result<()>>,
+        + Fn(AnyEntity, Box<dyn AnyTypedEnvelope>, AnyProtoClient, AsyncApp) -> LocalBoxFuture<'static, Result<()>>,
 >;
 
 impl ProtoMessageHandlerSet {
@@ -95,8 +82,7 @@ impl ProtoMessageHandlerSet {
         entity: gpui::AnyWeakEntity,
         handler: ProtoMessageHandler,
     ) {
-        self.entities_by_message_type
-            .insert(message_type_id, entity);
+        self.entities_by_message_type.insert(message_type_id, entity);
         let prev_handler = self.message_handlers.insert(message_type_id, handler);
         if prev_handler.is_some() {
             panic!("registered handler for the same message twice");
@@ -190,23 +176,15 @@ impl AnyProtoClient {
     pub fn new<T: ProtoClient + 'static>(client: Arc<T>) -> Self {
         Self(Arc::new(State {
             client,
-            next_lsp_request_id: NEXT_LSP_REQUEST_ID
-                .get_or_init(|| Arc::new(AtomicU64::new(0)))
-                .clone(),
+            next_lsp_request_id: NEXT_LSP_REQUEST_ID.get_or_init(|| Arc::new(AtomicU64::new(0))).clone(),
             request_ids: REQUEST_IDS.get_or_init(RequestIds::default).clone(),
         }))
     }
 
-    pub fn request<T: RequestMessage>(
-        &self,
-        request: T,
-    ) -> impl Future<Output = Result<T::Response>> + use<T> {
+    pub fn request<T: RequestMessage>(&self, request: T) -> impl Future<Output = Result<T::Response>> + use<T> {
         let envelope = request.into_envelope(0, None, None);
         let response = self.0.client.request(envelope, T::NAME);
-        async move {
-            T::Response::from_envelope(response.await?)
-                .context("received response of the wrong type")
-        }
+        async move { T::Response::from_envelope(response.await?).context("received response of the wrong type") }
     }
 
     pub fn send<T: EnvelopedMessage>(&self, request: T) -> Result<()> {
@@ -226,17 +204,11 @@ impl AnyProtoClient {
         timeout: Duration,
         executor: BackgroundExecutor,
         request: T,
-    ) -> impl Future<
-        Output = Result<Option<TypedEnvelope<Vec<proto::ProtoLspResponse<T::Response>>>>>,
-    > + use<T>
+    ) -> impl Future<Output = Result<Option<TypedEnvelope<Vec<proto::ProtoLspResponse<T::Response>>>>>> + use<T>
     where
         T: LspRequestMessage,
     {
-        let new_id = LspRequestId(
-            self.0
-                .next_lsp_request_id
-                .fetch_add(1, atomic::Ordering::Acquire),
-        );
+        let new_id = LspRequestId(self.0.next_lsp_request_id.fetch_add(1, atomic::Ordering::Acquire));
         let (tx, rx) = oneshot::channel();
         {
             self.0.request_ids.lock().insert(new_id, tx);
@@ -326,47 +298,20 @@ impl AnyProtoClient {
 
                         let server_id = response.server_id;
                         let response = match response.response? {
-                            Response::GetReferencesResponse(response) => {
-                                to_any_envelope(&envelope, response)
-                            }
-                            Response::GetDocumentColorResponse(response) => {
-                                to_any_envelope(&envelope, response)
-                            }
-                            Response::GetHoverResponse(response) => {
-                                to_any_envelope(&envelope, response)
-                            }
-                            Response::GetCodeActionsResponse(response) => {
-                                to_any_envelope(&envelope, response)
-                            }
-                            Response::GetSignatureHelpResponse(response) => {
-                                to_any_envelope(&envelope, response)
-                            }
-                            Response::GetCodeLensResponse(response) => {
-                                to_any_envelope(&envelope, response)
-                            }
-                            Response::GetDocumentDiagnosticsResponse(response) => {
-                                to_any_envelope(&envelope, response)
-                            }
-                            Response::GetDefinitionResponse(response) => {
-                                to_any_envelope(&envelope, response)
-                            }
-                            Response::GetDeclarationResponse(response) => {
-                                to_any_envelope(&envelope, response)
-                            }
-                            Response::GetTypeDefinitionResponse(response) => {
-                                to_any_envelope(&envelope, response)
-                            }
-                            Response::GetImplementationResponse(response) => {
-                                to_any_envelope(&envelope, response)
-                            }
-                            Response::InlayHintsResponse(response) => {
-                                to_any_envelope(&envelope, response)
-                            }
+                            Response::GetReferencesResponse(response) => to_any_envelope(&envelope, response),
+                            Response::GetDocumentColorResponse(response) => to_any_envelope(&envelope, response),
+                            Response::GetHoverResponse(response) => to_any_envelope(&envelope, response),
+                            Response::GetCodeActionsResponse(response) => to_any_envelope(&envelope, response),
+                            Response::GetSignatureHelpResponse(response) => to_any_envelope(&envelope, response),
+                            Response::GetCodeLensResponse(response) => to_any_envelope(&envelope, response),
+                            Response::GetDocumentDiagnosticsResponse(response) => to_any_envelope(&envelope, response),
+                            Response::GetDefinitionResponse(response) => to_any_envelope(&envelope, response),
+                            Response::GetDeclarationResponse(response) => to_any_envelope(&envelope, response),
+                            Response::GetTypeDefinitionResponse(response) => to_any_envelope(&envelope, response),
+                            Response::GetImplementationResponse(response) => to_any_envelope(&envelope, response),
+                            Response::InlayHintsResponse(response) => to_any_envelope(&envelope, response),
                         };
-                        Some(proto::ProtoLspResponse {
-                            server_id,
-                            response,
-                        })
+                        Some(proto::ProtoLspResponse { server_id, response })
                     })
                     .collect(),
             })))
@@ -381,33 +326,29 @@ impl AnyProtoClient {
         H: 'static + Sync + Fn(Entity<E>, TypedEnvelope<M>, AsyncApp) -> F + Send + Sync,
         F: 'static + Future<Output = Result<M::Response>>,
     {
-        self.0
-            .client
-            .message_handler_set()
-            .lock()
-            .add_message_handler(
-                TypeId::of::<M>(),
-                entity.into(),
-                Arc::new(move |entity, envelope, client, cx| {
-                    let entity = entity.downcast::<E>().unwrap();
-                    let envelope = envelope.into_any().downcast::<TypedEnvelope<M>>().unwrap();
-                    let request_id = envelope.message_id();
-                    handler(entity, *envelope, cx)
-                        .then(move |result| async move {
-                            match result {
-                                Ok(response) => {
-                                    client.send_response(request_id, response)?;
-                                    Ok(())
-                                }
-                                Err(error) => {
-                                    client.send_response(request_id, error.to_proto())?;
-                                    Err(error)
-                                }
+        self.0.client.message_handler_set().lock().add_message_handler(
+            TypeId::of::<M>(),
+            entity.into(),
+            Arc::new(move |entity, envelope, client, cx| {
+                let entity = entity.downcast::<E>().unwrap();
+                let envelope = envelope.into_any().downcast::<TypedEnvelope<M>>().unwrap();
+                let request_id = envelope.message_id();
+                handler(entity, *envelope, cx)
+                    .then(move |result| async move {
+                        match result {
+                            Ok(response) => {
+                                client.send_response(request_id, response)?;
+                                Ok(())
                             }
-                        })
-                        .boxed_local()
-                }),
-            )
+                            Err(error) => {
+                                client.send_response(request_id, error.to_proto())?;
+                                Err(error)
+                            }
+                        }
+                    })
+                    .boxed_local()
+            }),
+        )
     }
 
     pub fn add_entity_request_handler<M, E, H, F>(&self, handler: H)
@@ -426,34 +367,30 @@ impl AnyProtoClient {
                 .payload
                 .remote_entity_id()
         };
-        self.0
-            .client
-            .message_handler_set()
-            .lock()
-            .add_entity_message_handler(
-                message_type_id,
-                entity_type_id,
-                entity_id_extractor,
-                Arc::new(move |entity, envelope, client, cx| {
-                    let entity = entity.downcast::<E>().unwrap();
-                    let envelope = envelope.into_any().downcast::<TypedEnvelope<M>>().unwrap();
-                    let request_id = envelope.message_id();
-                    handler(entity, *envelope, cx)
-                        .then(move |result| async move {
-                            match result {
-                                Ok(response) => {
-                                    client.send_response(request_id, response)?;
-                                    Ok(())
-                                }
-                                Err(error) => {
-                                    client.send_response(request_id, error.to_proto())?;
-                                    Err(error)
-                                }
+        self.0.client.message_handler_set().lock().add_entity_message_handler(
+            message_type_id,
+            entity_type_id,
+            entity_id_extractor,
+            Arc::new(move |entity, envelope, client, cx| {
+                let entity = entity.downcast::<E>().unwrap();
+                let envelope = envelope.into_any().downcast::<TypedEnvelope<M>>().unwrap();
+                let request_id = envelope.message_id();
+                handler(entity, *envelope, cx)
+                    .then(move |result| async move {
+                        match result {
+                            Ok(response) => {
+                                client.send_response(request_id, response)?;
+                                Ok(())
                             }
-                        })
-                        .boxed_local()
-                }),
-            );
+                            Err(error) => {
+                                client.send_response(request_id, error.to_proto())?;
+                                Err(error)
+                            }
+                        }
+                    })
+                    .boxed_local()
+            }),
+        );
     }
 
     pub fn add_entity_message_handler<M, E, H, F>(&self, handler: H)
@@ -472,30 +409,23 @@ impl AnyProtoClient {
                 .payload
                 .remote_entity_id()
         };
-        self.0
-            .client
-            .message_handler_set()
-            .lock()
-            .add_entity_message_handler(
-                message_type_id,
-                entity_type_id,
-                entity_id_extractor,
-                Arc::new(move |entity, envelope, _, cx| {
-                    let entity = entity.downcast::<E>().unwrap();
-                    let envelope = envelope.into_any().downcast::<TypedEnvelope<M>>().unwrap();
-                    handler(entity, *envelope, cx).boxed_local()
-                }),
-            );
+        self.0.client.message_handler_set().lock().add_entity_message_handler(
+            message_type_id,
+            entity_type_id,
+            entity_id_extractor,
+            Arc::new(move |entity, envelope, _, cx| {
+                let entity = entity.downcast::<E>().unwrap();
+                let envelope = envelope.into_any().downcast::<TypedEnvelope<M>>().unwrap();
+                handler(entity, *envelope, cx).boxed_local()
+            }),
+        );
     }
 
     pub fn subscribe_to_entity<E: 'static>(&self, remote_id: u64, entity: &Entity<E>) {
         let id = (TypeId::of::<E>(), remote_id);
 
         let mut message_handlers = self.0.client.message_handler_set().lock();
-        if message_handlers
-            .entities_by_type_and_remote_id
-            .contains_key(&id)
-        {
+        if message_handlers.entities_by_type_and_remote_id.contains_key(&id) {
             panic!("already subscribed to entity");
         }
 

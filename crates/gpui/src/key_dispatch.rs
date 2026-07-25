@@ -50,8 +50,8 @@
 //!  KeyBinding::new("cmd-k left", pane::SplitLeft, Some("Pane"))
 
 use crate::{
-    Action, ActionRegistry, App, DispatchPhase, EntityId, FocusId, KeyBinding, KeyContext, Keymap,
-    Keystroke, ModifiersChangedEvent, Window,
+    Action, ActionRegistry, App, DispatchPhase, EntityId, FocusId, KeyBinding, KeyContext, Keymap, Keystroke,
+    ModifiersChangedEvent, Window,
 };
 use collections::FxHashMap;
 use smallvec::SmallVec;
@@ -325,9 +325,7 @@ impl DispatchTree {
     }
 
     pub fn on_modifiers_changed(&mut self, listener: ModifiersChangedListener) {
-        self.active_node()
-            .modifiers_changed_listeners
-            .push(listener);
+        self.active_node().modifiers_changed_listeners.push(listener);
     }
 
     pub fn on_action(
@@ -337,10 +335,7 @@ impl DispatchTree {
     ) {
         self.active_node()
             .action_listeners
-            .push(DispatchActionListener {
-                action_type,
-                listener,
-            });
+            .push(DispatchActionListener { action_type, listener });
     }
 
     pub fn focus_contains(&self, parent: FocusId, child: FocusId) -> bool {
@@ -365,8 +360,7 @@ impl DispatchTree {
         for node_id in self.dispatch_path(target) {
             let node = &self.nodes[node_id.0];
             for DispatchActionListener { action_type, .. } in &node.action_listeners {
-                if let Err(ix) = actions.binary_search_by_key(action_type, |a| a.as_any().type_id())
-                {
+                if let Err(ix) = actions.binary_search_by_key(action_type, |a| a.as_any().type_id()) {
                     // Intentionally silence these errors without logging.
                     // If an action cannot be built by default, it's not available.
                     let action = self.action_registry.build_action_type(action_type).ok();
@@ -398,19 +392,13 @@ impl DispatchTree {
     ///
     /// Bindings are only included if they are the highest precedence match for their keystrokes, so
     /// shadowed bindings are not included.
-    pub fn bindings_for_action(
-        &self,
-        action: &dyn Action,
-        context_stack: &[KeyContext],
-    ) -> Vec<KeyBinding> {
+    pub fn bindings_for_action(&self, action: &dyn Action, context_stack: &[KeyContext]) -> Vec<KeyBinding> {
         // Ideally this would return a `DoubleEndedIterator` to avoid `highest_precedence_*`
         // methods, but this can't be done very cleanly since keymap must be borrowed.
         let keymap = self.keymap.borrow();
         keymap
             .bindings_for_action(action)
-            .filter(|binding| {
-                Self::binding_matches_predicate_and_not_shadowed(&keymap, binding, context_stack)
-            })
+            .filter(|binding| Self::binding_matches_predicate_and_not_shadowed(&keymap, binding, context_stack))
             .cloned()
             .collect()
     }
@@ -426,9 +414,7 @@ impl DispatchTree {
         keymap
             .bindings_for_action(action)
             .rev()
-            .find(|binding| {
-                Self::binding_matches_predicate_and_not_shadowed(&keymap, binding, context_stack)
-            })
+            .find(|binding| Self::binding_matches_predicate_and_not_shadowed(&keymap, binding, context_stack))
             .cloned()
     }
 
@@ -455,10 +441,7 @@ impl DispatchTree {
             .filter_map(|node_id| self.node(*node_id).context.clone())
             .collect();
 
-        let (bindings, partial) = self
-            .keymap
-            .borrow()
-            .bindings_for_input(input, &context_stack);
+        let (bindings, partial) = self.keymap.borrow().bindings_for_input(input, &context_stack);
         (bindings, partial, context_stack)
     }
 
@@ -588,10 +571,9 @@ impl DispatchTree {
     pub fn view_path_reversed(&self, view_id: EntityId) -> impl Iterator<Item = EntityId> {
         let mut current_node_id = self.view_node_ids.get(&view_id).copied();
 
-        std::iter::successors(
-            current_node_id.map(|node_id| self.node(node_id)),
-            |node_id| Some(self.node(node_id.parent?)),
-        )
+        std::iter::successors(current_node_id.map(|node_id| self.node(node_id)), |node_id| {
+            Some(self.node(node_id.parent?))
+        })
         .filter_map(|node| node.view_id)
     }
 
@@ -621,17 +603,16 @@ impl DispatchTree {
 #[cfg(test)]
 mod tests {
     use crate::{
-        self as gpui, AppContext, DispatchResult, Element, ElementId, GlobalElementId,
-        InspectorElementId, Keystroke, LayoutId, Style,
+        self as gpui, AppContext, DispatchResult, Element, ElementId, GlobalElementId, InspectorElementId, Keystroke,
+        LayoutId, Style,
     };
     use core::panic;
     use smallvec::SmallVec;
     use std::{cell::RefCell, ops::Range, rc::Rc};
 
     use crate::{
-        Action, ActionRegistry, App, Bounds, Context, DispatchTree, FocusHandle, InputHandler,
-        IntoElement, KeyBinding, KeyContext, Keymap, Pixels, Point, Render, Subscription,
-        TestAppContext, UTF16Selection, Window,
+        Action, ActionRegistry, App, Bounds, Context, DispatchTree, FocusHandle, InputHandler, IntoElement, KeyBinding,
+        KeyContext, Keymap, Pixels, Point, Render, Subscription, TestAppContext, UTF16Selection, Window,
     };
 
     #[derive(PartialEq, Eq)]
@@ -667,11 +648,7 @@ mod tests {
 
     #[test]
     fn test_keybinding_for_action_bounds() {
-        let keymap = Keymap::new(vec![KeyBinding::new(
-            "cmd-n",
-            TestAction,
-            Some("ProjectPanel"),
-        )]);
+        let keymap = Keymap::new(vec![KeyBinding::new("cmd-n", TestAction, Some("ProjectPanel"))]);
 
         let mut registry = ActionRegistry::default();
 
@@ -813,12 +790,7 @@ mod tests {
         }
 
         impl InputHandler for CustomElement {
-            fn selected_text_range(
-                &mut self,
-                _: bool,
-                _: &mut Window,
-                _: &mut App,
-            ) -> Option<UTF16Selection> {
+            fn selected_text_range(&mut self, _: bool, _: &mut Window, _: &mut App) -> Option<UTF16Selection> {
                 None
             }
 
@@ -865,21 +837,11 @@ mod tests {
 
             fn unmark_text(&mut self, _: &mut Window, _: &mut App) {}
 
-            fn bounds_for_range(
-                &mut self,
-                _: Range<usize>,
-                _: &mut Window,
-                _: &mut App,
-            ) -> Option<Bounds<Pixels>> {
+            fn bounds_for_range(&mut self, _: Range<usize>, _: &mut Window, _: &mut App) -> Option<Bounds<Pixels>> {
                 None
             }
 
-            fn character_index_for_point(
-                &mut self,
-                _: Point<Pixels>,
-                _: &mut Window,
-                _: &mut App,
-            ) -> Option<usize> {
+            fn character_index_for_point(&mut self, _: Point<Pixels>, _: &mut Window, _: &mut App) -> Option<usize> {
                 None
             }
         }
@@ -1013,12 +975,7 @@ mod tests {
         }
 
         impl InputHandler for CustomElement {
-            fn selected_text_range(
-                &mut self,
-                _: bool,
-                _: &mut Window,
-                _: &mut App,
-            ) -> Option<UTF16Selection> {
+            fn selected_text_range(&mut self, _: bool, _: &mut Window, _: &mut App) -> Option<UTF16Selection> {
                 None
             }
 
@@ -1065,21 +1022,11 @@ mod tests {
 
             fn unmark_text(&mut self, _: &mut Window, _: &mut App) {}
 
-            fn bounds_for_range(
-                &mut self,
-                _: Range<usize>,
-                _: &mut Window,
-                _: &mut App,
-            ) -> Option<Bounds<Pixels>> {
+            fn bounds_for_range(&mut self, _: Range<usize>, _: &mut Window, _: &mut App) -> Option<Bounds<Pixels>> {
                 None
             }
 
-            fn character_index_for_point(
-                &mut self,
-                _: Point<Pixels>,
-                _: &mut Window,
-                _: &mut App,
-            ) -> Option<usize> {
+            fn character_index_for_point(&mut self, _: Point<Pixels>, _: &mut Window, _: &mut App) -> Option<usize> {
                 None
             }
         }

@@ -81,10 +81,7 @@ mod tests {
                 "https://jlannister@github.com/some-org/some-repo.git",
                 Some("github.com".to_string()),
             ),
-            (
-                "git@github.com:westeros/oldtown.git",
-                Some("github.com".to_string()),
-            ),
+            ("git@github.com:westeros/oldtown.git", Some("github.com".to_string())),
             (
                 "git@my.super.long.subdomain.com:westeros/oldtown.git",
                 Some("my.super.long.subdomain.com".to_string()),

@@ -44,13 +44,11 @@ impl settings::Settings for JournalSettings {
 }
 
 pub fn init(_: Arc<AppState>, cx: &mut App) {
-    cx.observe_new(
-        |workspace: &mut Workspace, _window, _cx: &mut Context<Workspace>| {
-            workspace.register_action(|workspace, _: &NewJournalEntry, window, cx| {
-                new_journal_entry(workspace, window, cx);
-            });
-        },
-    )
+    cx.observe_new(|workspace: &mut Workspace, _window, _cx: &mut Context<Workspace>| {
+        workspace.register_action(|workspace, _: &NewJournalEntry, window, cx| {
+            new_journal_entry(workspace, window, cx);
+        });
+    })
     .detach();
 }
 
@@ -109,12 +107,7 @@ pub fn new_journal_entry(workspace: &Workspace, window: &mut Window, cx: &mut Ap
             let opened = if open_new_workspace {
                 let (new_workspace, _) = cx
                     .update(|_window, cx| {
-                        workspace::open_paths(
-                            &[journal_dir],
-                            app_state,
-                            workspace::OpenOptions::default(),
-                            cx,
-                        )
+                        workspace::open_paths(&[journal_dir], app_state, workspace::OpenOptions::default(), cx)
                     })?
                     .await?;
                 new_workspace
@@ -153,12 +146,9 @@ pub fn new_journal_entry(workspace: &Workspace, window: &mut Window, cx: &mut Ap
             {
                 editor.update_in(cx, |editor, window, cx| {
                     let len = editor.buffer().read(cx).len(cx);
-                    editor.change_selections(
-                        SelectionEffects::scroll(Autoscroll::center()),
-                        window,
-                        cx,
-                        |s| s.select_ranges([len..len]),
-                    );
+                    editor.change_selections(SelectionEffects::scroll(Autoscroll::center()), window, cx, |s| {
+                        s.select_ranges([len..len])
+                    });
                     if len.0 > 0 {
                         editor.insert("\n\n", window, cx);
                     }

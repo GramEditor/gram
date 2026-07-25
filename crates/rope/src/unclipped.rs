@@ -10,9 +10,7 @@ impl<T> From<T> for Unclipped<T> {
     }
 }
 
-impl<'a, T: sum_tree::Dimension<'a, ChunkSummary>> sum_tree::Dimension<'a, ChunkSummary>
-    for Unclipped<T>
-{
+impl<'a, T: sum_tree::Dimension<'a, ChunkSummary>> sum_tree::Dimension<'a, ChunkSummary> for Unclipped<T> {
     fn zero(_: ()) -> Self {
         Self(T::zero(()))
     }

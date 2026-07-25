@@ -19,8 +19,8 @@ use std::str::FromStr;
 pub use adapter_schema::{AdapterSchema, AdapterSchemas};
 pub use app_actions::RevealTarget;
 pub use debug_format::{
-    AttachRequest, BuildTaskDefinition, DebugRequest, DebugScenario, DebugTaskFile,
-    GramDebugConfig, LaunchRequest, Request, TcpArgumentsTemplate,
+    AttachRequest, BuildTaskDefinition, DebugRequest, DebugScenario, DebugTaskFile, GramDebugConfig, LaunchRequest,
+    Request, TcpArgumentsTemplate,
 };
 pub use task_template::{
     DebugArgsRequest, HideStrategy, RevealStrategy, SaveStrategy, TaskTemplate, TaskTemplates,
@@ -84,15 +84,8 @@ impl SpawnInTerminal {
             label: self.label.clone(),
             command: self.command.clone(),
             args: self.args.clone(),
-            env: self
-                .env
-                .iter()
-                .map(|(k, v)| (k.clone(), v.clone()))
-                .collect(),
-            cwd: self
-                .cwd
-                .clone()
-                .map(|cwd| cwd.to_string_lossy().into_owned()),
+            env: self.env.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
+            cwd: self.cwd.clone().map(|cwd| cwd.to_string_lossy().into_owned()),
         }
     }
 
@@ -213,9 +206,7 @@ impl FromStr for VariableName {
             "ROW" => Self::Row,
             "COLUMN" => Self::Column,
             _ => {
-                if let Some(custom_name) =
-                    without_prefix.strip_prefix(GRAM_CUSTOM_VARIABLE_NAME_PREFIX)
-                {
+                if let Some(custom_name) = without_prefix.strip_prefix(GRAM_CUSTOM_VARIABLE_NAME_PREFIX) {
                     Self::Custom(Cow::Owned(custom_name.to_owned()))
                 } else {
                     return Err(());
@@ -246,10 +237,7 @@ impl std::fmt::Display for VariableName {
             Self::SelectedText => write!(f, "{GRAM_VARIABLE_NAME_PREFIX}SELECTED_TEXT"),
             Self::RunnableSymbol => write!(f, "{GRAM_VARIABLE_NAME_PREFIX}RUNNABLE_SYMBOL"),
             Self::PickProcessId => write!(f, "{GRAM_VARIABLE_NAME_PREFIX}PICK_PID"),
-            Self::Custom(s) => write!(
-                f,
-                "{GRAM_VARIABLE_NAME_PREFIX}{GRAM_CUSTOM_VARIABLE_NAME_PREFIX}{s}"
-            ),
+            Self::Custom(s) => write!(f, "{GRAM_VARIABLE_NAME_PREFIX}{GRAM_CUSTOM_VARIABLE_NAME_PREFIX}{s}"),
         }
     }
 }
@@ -368,10 +356,7 @@ impl EnvVariableReplacer {
         }
     }
 
-    fn with_commands(
-        mut self,
-        commands: impl IntoIterator<Item = (VsCodeCommand, GramEnvVariable)>,
-    ) -> Self {
+    fn with_commands(mut self, commands: impl IntoIterator<Item = (VsCodeCommand, GramEnvVariable)>) -> Self {
         self.commands = commands.into_iter().collect();
         self
     }

@@ -32,10 +32,7 @@ impl Bind for SerializedEditor {
     fn bind(&self, statement: &Statement, start_index: i32) -> Result<i32> {
         let start_index = statement.bind(&self.abs_path, start_index)?;
         let start_index = statement.bind(
-            &self
-                .abs_path
-                .as_ref()
-                .map(|p| p.to_string_lossy().into_owned()),
+            &self.abs_path.as_ref().map(|p| p.to_string_lossy().into_owned()),
             start_index,
         )?;
         let start_index = statement.bind(&self.contents, start_index)?;
@@ -60,18 +57,12 @@ impl Bind for SerializedEditor {
 
 impl Column for SerializedEditor {
     fn column(statement: &mut Statement, start_index: i32) -> Result<(Self, i32)> {
-        let (abs_path, start_index): (Option<PathBuf>, i32) =
-            Column::column(statement, start_index)?;
-        let (_abs_path, start_index): (Option<PathBuf>, i32) =
-            Column::column(statement, start_index)?;
-        let (contents, start_index): (Option<String>, i32) =
-            Column::column(statement, start_index)?;
-        let (language, start_index): (Option<String>, i32) =
-            Column::column(statement, start_index)?;
-        let (mtime_seconds, start_index): (Option<i64>, i32) =
-            Column::column(statement, start_index)?;
-        let (mtime_nanos, start_index): (Option<i32>, i32) =
-            Column::column(statement, start_index)?;
+        let (abs_path, start_index): (Option<PathBuf>, i32) = Column::column(statement, start_index)?;
+        let (_abs_path, start_index): (Option<PathBuf>, i32) = Column::column(statement, start_index)?;
+        let (contents, start_index): (Option<String>, i32) = Column::column(statement, start_index)?;
+        let (language, start_index): (Option<String>, i32) = Column::column(statement, start_index)?;
+        let (mtime_seconds, start_index): (Option<i64>, i32) = Column::column(statement, start_index)?;
+        let (mtime_nanos, start_index): (Option<i32>, i32) = Column::column(statement, start_index)?;
 
         let mtime = mtime_seconds
             .zip(mtime_nanos)
@@ -442,10 +433,7 @@ mod tests {
             .await
             .unwrap();
 
-        let have = DB
-            .get_serialized_editor(1234, workspace_id)
-            .unwrap()
-            .unwrap();
+        let have = DB.get_serialized_editor(1234, workspace_id).unwrap().unwrap();
         assert_eq!(have, serialized_editor);
 
         // Now update contents and language
@@ -460,10 +448,7 @@ mod tests {
             .await
             .unwrap();
 
-        let have = DB
-            .get_serialized_editor(1234, workspace_id)
-            .unwrap()
-            .unwrap();
+        let have = DB.get_serialized_editor(1234, workspace_id).unwrap().unwrap();
         assert_eq!(have, serialized_editor);
 
         // Now set all the fields to NULL
@@ -478,10 +463,7 @@ mod tests {
             .await
             .unwrap();
 
-        let have = DB
-            .get_serialized_editor(1234, workspace_id)
-            .unwrap()
-            .unwrap();
+        let have = DB.get_serialized_editor(1234, workspace_id).unwrap().unwrap();
         assert_eq!(have, serialized_editor);
 
         // Storing and retrieving mtime
@@ -496,10 +478,7 @@ mod tests {
             .await
             .unwrap();
 
-        let have = DB
-            .get_serialized_editor(1234, workspace_id)
-            .unwrap()
-            .unwrap();
+        let have = DB.get_serialized_editor(1234, workspace_id).unwrap().unwrap();
         assert_eq!(have, serialized_editor);
     }
 
@@ -520,22 +499,10 @@ mod tests {
 
         // Save folds with fingerprints (32-byte content samples at fold boundaries)
         let folds = vec![
-            (
-                100,
-                200,
-                "fn main() {".to_string(),
-                "} // end main".to_string(),
-            ),
-            (
-                300,
-                400,
-                "struct Foo {".to_string(),
-                "} // end Foo".to_string(),
-            ),
+            (100, 200, "fn main() {".to_string(), "} // end main".to_string()),
+            (300, 400, "struct Foo {".to_string(), "} // end Foo".to_string()),
         ];
-        DB.save_editor_folds(5678, workspace_id, folds.clone())
-            .await
-            .unwrap();
+        DB.save_editor_folds(5678, workspace_id, folds.clone()).await.unwrap();
 
         // Retrieve and verify fingerprints are preserved
         let retrieved = DB.get_editor_folds(5678, workspace_id).unwrap();
@@ -560,15 +527,8 @@ mod tests {
         );
 
         // Test overwrite: saving new folds replaces old ones
-        let new_folds = vec![(
-            500,
-            600,
-            "impl Bar {".to_string(),
-            "} // end impl".to_string(),
-        )];
-        DB.save_editor_folds(5678, workspace_id, new_folds)
-            .await
-            .unwrap();
+        let new_folds = vec![(500, 600, "impl Bar {".to_string(), "} // end impl".to_string())];
+        DB.save_editor_folds(5678, workspace_id, new_folds).await.unwrap();
 
         let retrieved = DB.get_editor_folds(5678, workspace_id).unwrap();
         assert_eq!(retrieved.len(), 1);

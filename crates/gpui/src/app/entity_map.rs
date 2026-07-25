@@ -146,9 +146,7 @@ impl EntityMap {
     }
 
     pub fn extend_accessed(&mut self, entities: &FxHashSet<EntityId>) {
-        self.accessed_entities
-            .borrow_mut()
-            .extend(entities.iter().copied());
+        self.accessed_entities.borrow_mut().extend(entities.iter().copied());
     }
 
     pub fn clear_accessed(&mut self) {
@@ -164,11 +162,7 @@ impl EntityMap {
             .into_iter()
             .filter_map(|entity_id| {
                 let count = ref_counts.counts.remove(entity_id).unwrap();
-                debug_assert_eq!(
-                    count.load(SeqCst),
-                    0,
-                    "dropped an entity that was referenced"
-                );
+                debug_assert_eq!(count.load(SeqCst), 0, "dropped an entity that was referenced");
                 accessed_entities.remove(&entity_id);
                 // If the EntityId was allocated with `Context::reserve`,
                 // the entity may not have been inserted.
@@ -431,11 +425,7 @@ impl<T: 'static> Entity<T> {
 
     /// Read the entity referenced by this handle with the given function.
     #[inline]
-    pub fn read_with<R, C: AppContext>(
-        &self,
-        cx: &C,
-        f: impl FnOnce(&T, &App) -> R,
-    ) -> C::Result<R> {
+    pub fn read_with<R, C: AppContext>(&self, cx: &C, f: impl FnOnce(&T, &App) -> R) -> C::Result<R> {
         cx.read_entity(self, f)
     }
 
@@ -626,9 +616,7 @@ impl AnyWeakEntity {
             .and_then(|ref_counts| Some(ref_counts.read().counts.get(self.entity_id)?.load(SeqCst)))
             .is_some()
         {
-            panic!(
-                "entity was recently dropped but resources are retained until the end of the effect cycle."
-            )
+            panic!("entity was recently dropped but resources are retained until the end of the effect cycle.")
         }
     }
 
@@ -742,11 +730,7 @@ impl<T: 'static> WeakEntity<T> {
     /// Updates the entity referenced by this handle with the given function if
     /// the referenced entity still exists. Returns an error if the entity has
     /// been released.
-    pub fn update<C, R>(
-        &self,
-        cx: &mut C,
-        update: impl FnOnce(&mut T, &mut Context<T>) -> R,
-    ) -> Result<R>
+    pub fn update<C, R>(&self, cx: &mut C, update: impl FnOnce(&mut T, &mut Context<T>) -> R) -> Result<R>
     where
         C: AppContext,
         Result<C::Result<R>>: crate::Flatten<R>,
@@ -922,10 +906,7 @@ impl LeakDetector {
         let id = util::post_inc(&mut self.next_handle_id);
         let handle_id = HandleId { id };
         let handles = self.entity_handles.entry(entity_id).or_default();
-        handles.insert(
-            handle_id,
-            LEAK_BACKTRACE.then(backtrace::Backtrace::new_unresolved),
-        );
+        handles.insert(handle_id, LEAK_BACKTRACE.then(backtrace::Backtrace::new_unresolved));
         handle_id
     }
 
@@ -955,11 +936,7 @@ impl LeakDetector {
                     backtrace.resolve();
                     writeln!(out, "Leaked handle:\n{:?}", backtrace).unwrap();
                 } else {
-                    writeln!(
-                        out,
-                        "Leaked handle: (export LEAK_BACKTRACE to find allocation site)"
-                    )
-                    .unwrap();
+                    writeln!(out, "Leaked handle: (export LEAK_BACKTRACE to find allocation site)").unwrap();
                 }
             }
             panic!("{out}");

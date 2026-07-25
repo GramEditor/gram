@@ -7,9 +7,9 @@ use windows::Win32::{
     Foundation::{HANDLE, HGLOBAL},
     System::{
         DataExchange::{
-            CloseClipboard, CountClipboardFormats, EmptyClipboard, EnumClipboardFormats,
-            GetClipboardData, GetClipboardFormatNameW, IsClipboardFormatAvailable, OpenClipboard,
-            RegisterClipboardFormatW, SetClipboardData,
+            CloseClipboard, CountClipboardFormats, EmptyClipboard, EnumClipboardFormats, GetClipboardData,
+            GetClipboardFormatNameW, IsClipboardFormatAvailable, OpenClipboard, RegisterClipboardFormatW,
+            SetClipboardData,
         },
         Memory::{GMEM_MOVEABLE, GlobalAlloc, GlobalLock, GlobalSize, GlobalUnlock},
         Ole::{CF_DIB, CF_HDROP, CF_UNICODETEXT},
@@ -18,9 +18,7 @@ use windows::Win32::{
 };
 use windows_core::PCWSTR;
 
-use crate::{
-    ClipboardEntry, ClipboardItem, ClipboardString, ExternalPaths, Image, ImageFormat, hash,
-};
+use crate::{ClipboardEntry, ClipboardItem, ClipboardString, ExternalPaths, Image, ImageFormat, hash};
 
 // https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-dragqueryfilew
 const DRAGDROP_GET_FILES_COUNT: u32 = 0xFFFFFFFF;
@@ -32,12 +30,9 @@ static CLIPBOARD_METADATA_FORMAT: LazyLock<u32> =
     LazyLock::new(|| register_clipboard_format(windows::core::w!("GPUI internal metadata")));
 static CLIPBOARD_SVG_FORMAT: LazyLock<u32> =
     LazyLock::new(|| register_clipboard_format(windows::core::w!("image/svg+xml")));
-static CLIPBOARD_GIF_FORMAT: LazyLock<u32> =
-    LazyLock::new(|| register_clipboard_format(windows::core::w!("GIF")));
-static CLIPBOARD_PNG_FORMAT: LazyLock<u32> =
-    LazyLock::new(|| register_clipboard_format(windows::core::w!("PNG")));
-static CLIPBOARD_JPG_FORMAT: LazyLock<u32> =
-    LazyLock::new(|| register_clipboard_format(windows::core::w!("JFIF")));
+static CLIPBOARD_GIF_FORMAT: LazyLock<u32> = LazyLock::new(|| register_clipboard_format(windows::core::w!("GIF")));
+static CLIPBOARD_PNG_FORMAT: LazyLock<u32> = LazyLock::new(|| register_clipboard_format(windows::core::w!("PNG")));
+static CLIPBOARD_JPG_FORMAT: LazyLock<u32> = LazyLock::new(|| register_clipboard_format(windows::core::w!("JFIF")));
 
 // Helper maps and sets
 static FORMATS_MAP: LazyLock<FxHashMap<u32, ClipboardFormatType>> = LazyLock::new(|| {
@@ -131,11 +126,7 @@ fn register_clipboard_format(format: PCWSTR) -> u32 {
             std::io::Error::last_os_error()
         );
     }
-    log::debug!(
-        "Registered clipboard format {} as {}",
-        unsafe { format.display() },
-        ret
-    );
+    log::debug!("Registered clipboard format {} as {}", unsafe { format.display() }, ret);
     ret
 }
 
@@ -175,8 +166,7 @@ fn write_string_to_clipboard(item: &ClipboardString) -> Result<()> {
             let hash = ClipboardString::text_hash(&item.text);
             hash.to_ne_bytes()
         };
-        let encode_wide =
-            unsafe { std::slice::from_raw_parts(hash_result.as_ptr().cast::<u16>(), 4) };
+        let encode_wide = unsafe { std::slice::from_raw_parts(hash_result.as_ptr().cast::<u16>(), 4) };
         set_data_to_clipboard(encode_wide, *CLIPBOARD_HASH_FORMAT)?;
 
         let metadata_wide = metadata.encode_utf16().chain(Some(0)).collect_vec();
@@ -231,10 +221,7 @@ fn write_image_to_clipboard(item: &Image) -> Result<()> {
 fn convert_image_to_png_format(bytes: &[u8], image_format: ImageFormat) -> Result<Vec<u8>> {
     let image = image::load_from_memory_with_format(bytes, image_format.into())?;
     let mut output_buf = Vec::new();
-    image.write_to(
-        &mut std::io::Cursor::new(&mut output_buf),
-        image::ImageFormat::Png,
-    )?;
+    image.write_to(&mut std::io::Cursor::new(&mut output_buf), image::ImageFormat::Png)?;
     Ok(output_buf)
 }
 
@@ -270,9 +257,7 @@ where
     }
 
     if let Some(entry) = [image, files, text].into_iter().flatten().next() {
-        return Some(ClipboardItem {
-            entries: vec![entry],
-        });
+        return Some(ClipboardItem { entries: vec![entry] });
     }
 
     // log the formats that we don't support yet.
@@ -322,11 +307,7 @@ fn read_hash_from_clipboard() -> Option<u64> {
         if size < 8 {
             return None;
         }
-        let hash_bytes: [u8; 8] = unsafe {
-            std::slice::from_raw_parts(data_ptr.cast::<u8>(), 8)
-                .try_into()
-                .ok()
-        }?;
+        let hash_bytes: [u8; 8] = unsafe { std::slice::from_raw_parts(data_ptr.cast::<u8>(), 8).try_into().ok() }?;
         Some(u64::from_ne_bytes(hash_bytes))
     })?
 }
@@ -394,11 +375,7 @@ fn format_number_to_image_format(format_number: u32) -> Option<&'static ImageFor
     IMAGE_FORMATS_MAP.get(&format_number)
 }
 
-fn read_image_for_type<F>(
-    format_number: u32,
-    format: ImageFormat,
-    convert: Option<F>,
-) -> Option<ClipboardEntry>
+fn read_image_for_type<F>(format_number: u32, format: ImageFormat, convert: Option<F>) -> Option<ClipboardEntry>
 where
     F: FnOnce(&[u8]) -> Option<Vec<u8>>,
 {
@@ -423,9 +400,7 @@ fn read_files_from_clipboard() -> Option<ClipboardEntry> {
         });
         filenames
     })?;
-    Some(ClipboardEntry::ExternalPaths(ExternalPaths(
-        filenames.into(),
-    )))
+    Some(ClipboardEntry::ExternalPaths(ExternalPaths(filenames.into())))
 }
 
 fn with_clipboard_data<F, R>(format: u32, f: F) -> Option<R>

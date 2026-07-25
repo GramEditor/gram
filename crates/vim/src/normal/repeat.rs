@@ -42,9 +42,7 @@ fn repeatable_insert(action: &ReplayableAction) -> Option<Box<dyn Action>> {
                 || super::InsertEndOfLine.partial_eq(&**action)
             {
                 Some(super::InsertBefore.boxed_clone())
-            } else if super::InsertLineAbove.partial_eq(&**action)
-                || super::InsertLineBelow.partial_eq(&**action)
-            {
+            } else if super::InsertLineAbove.partial_eq(&**action) || super::InsertLineBelow.partial_eq(&**action) {
                 Some(super::InsertLineBelow.boxed_clone())
             } else if crate::replace::ToggleReplace.partial_eq(&**action) {
                 Some(crate::replace::ToggleReplace.boxed_clone())
@@ -62,9 +60,7 @@ pub(crate) fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
         vim.switch_mode(Mode::Normal, false, window, cx)
     });
 
-    Vim::action(editor, cx, |vim, _: &Repeat, window, cx| {
-        vim.repeat(false, window, cx)
-    });
+    Vim::action(editor, cx, |vim, _: &Repeat, window, cx| vim.repeat(false, window, cx));
 
     Vim::action(editor, cx, |vim, _: &ToggleRecord, window, cx| {
         let globals = Vim::globals(cx);
@@ -185,12 +181,7 @@ impl Replayer {
 }
 
 impl Vim {
-    pub(crate) fn record_register(
-        &mut self,
-        register: char,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub(crate) fn record_register(&mut self, register: char, window: &mut Window, cx: &mut Context<Self>) {
         let globals = Vim::globals(cx);
         globals.recording_register = Some(register);
         globals.recordings.remove(&register);
@@ -198,12 +189,7 @@ impl Vim {
         self.clear_operator(window, cx)
     }
 
-    pub(crate) fn replay_register(
-        &mut self,
-        mut register: char,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub(crate) fn replay_register(&mut self, mut register: char, window: &mut Window, cx: &mut Context<Self>) {
         let mut count = Vim::take_count(cx).unwrap_or(1);
         Vim::take_forced_motion(cx);
         self.clear_operator(window, cx);
@@ -230,12 +216,7 @@ impl Vim {
         replayer.replay(repeated_actions, window, cx);
     }
 
-    pub(crate) fn repeat(
-        &mut self,
-        from_insert_mode: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub(crate) fn repeat(&mut self, from_insert_mode: bool, window: &mut Window, cx: &mut Context<Self>) {
         if self.active_operator().is_some() {
             Vim::update_globals(cx, |globals, _| {
                 globals.recording_actions.clear();
@@ -303,48 +284,20 @@ impl Vim {
                     }
                 }
                 RecordedSelection::Visual { rows, cols } => {
-                    self.visual_motion(
-                        Motion::Down {
-                            display_lines: false,
-                        },
-                        Some(rows as usize),
-                        window,
-                        cx,
-                    );
-                    self.visual_motion(
-                        Motion::StartOfLine {
-                            display_lines: false,
-                        },
-                        None,
-                        window,
-                        cx,
-                    );
+                    self.visual_motion(Motion::Down { display_lines: false }, Some(rows as usize), window, cx);
+                    self.visual_motion(Motion::StartOfLine { display_lines: false }, None, window, cx);
                     if cols > 1 {
                         self.visual_motion(Motion::Right, Some(cols as usize - 1), window, cx)
                     }
                 }
                 RecordedSelection::VisualBlock { rows, cols } => {
-                    self.visual_motion(
-                        Motion::Down {
-                            display_lines: false,
-                        },
-                        Some(rows as usize),
-                        window,
-                        cx,
-                    );
+                    self.visual_motion(Motion::Down { display_lines: false }, Some(rows as usize), window, cx);
                     if cols > 1 {
                         self.visual_motion(Motion::Right, Some(cols as usize - 1), window, cx);
                     }
                 }
                 RecordedSelection::VisualLine { rows } => {
-                    self.visual_motion(
-                        Motion::Down {
-                            display_lines: false,
-                        },
-                        Some(rows as usize),
-                        window,
-                        cx,
-                    );
+                    self.visual_motion(Motion::Down { display_lines: false }, Some(rows as usize), window, cx);
                 }
                 RecordedSelection::None => {}
             }
@@ -426,9 +379,7 @@ mod test {
         // "p" (note that it pastes the current clipboard)
         cx.simulate_shared_keystrokes("j y y p").await;
         cx.simulate_shared_keystrokes("shift-g y y .").await;
-        cx.shared_state()
-            .await
-            .assert_eq("\nworld\nworld\nrld\nˇrld");
+        cx.shared_state().await.assert_eq("\nworld\nworld\nrld\nˇrld");
 
         // "~" (note that counts apply to the action taken, not . itself)
         cx.set_shared_state("ˇthe quick brown fox").await;
@@ -486,33 +437,30 @@ mod test {
             Mode::Normal,
         );
 
-        let mut request = cx.set_request_handler::<lsp::request::Completion, _, _>(
-            move |_, params, _| async move {
-                let position = params.text_document_position.position;
-                Ok(Some(lsp::CompletionResponse::Array(vec![
-                    lsp::CompletionItem {
-                        label: "first".to_string(),
-                        text_edit: Some(lsp::CompletionTextEdit::Edit(lsp::TextEdit {
-                            range: lsp::Range::new(position, position),
-                            new_text: "first".to_string(),
-                        })),
-                        ..Default::default()
-                    },
-                    lsp::CompletionItem {
-                        label: "second".to_string(),
-                        text_edit: Some(lsp::CompletionTextEdit::Edit(lsp::TextEdit {
-                            range: lsp::Range::new(position, position),
-                            new_text: "second".to_string(),
-                        })),
-                        ..Default::default()
-                    },
-                ])))
-            },
-        );
+        let mut request = cx.set_request_handler::<lsp::request::Completion, _, _>(move |_, params, _| async move {
+            let position = params.text_document_position.position;
+            Ok(Some(lsp::CompletionResponse::Array(vec![
+                lsp::CompletionItem {
+                    label: "first".to_string(),
+                    text_edit: Some(lsp::CompletionTextEdit::Edit(lsp::TextEdit {
+                        range: lsp::Range::new(position, position),
+                        new_text: "first".to_string(),
+                    })),
+                    ..Default::default()
+                },
+                lsp::CompletionItem {
+                    label: "second".to_string(),
+                    text_edit: Some(lsp::CompletionTextEdit::Edit(lsp::TextEdit {
+                        range: lsp::Range::new(position, position),
+                        new_text: "second".to_string(),
+                    })),
+                    ..Default::default()
+                },
+            ])))
+        });
         cx.simulate_keystrokes("a .");
         request.next().await;
-        cx.condition(|editor, _| editor.context_menu_visible())
-            .await;
+        cx.condition(|editor, _| editor.context_menu_visible()).await;
         cx.simulate_keystrokes("down enter ! escape");
 
         cx.assert_state(
@@ -560,27 +508,22 @@ mod test {
             Mode::Normal,
         );
 
-        let mut request = cx.set_request_handler::<lsp::request::Completion, _, _>(
-            move |_, params, _| async move {
-                let position = params.text_document_position.position;
-                let mut to_the_left = position;
-                to_the_left.character -= 2;
-                Ok(Some(lsp::CompletionResponse::Array(vec![
-                    lsp::CompletionItem {
-                        label: "oops".to_string(),
-                        text_edit: Some(lsp::CompletionTextEdit::Edit(lsp::TextEdit {
-                            range: lsp::Range::new(to_the_left, position),
-                            new_text: "к!".to_string(),
-                        })),
-                        ..Default::default()
-                    },
-                ])))
-            },
-        );
+        let mut request = cx.set_request_handler::<lsp::request::Completion, _, _>(move |_, params, _| async move {
+            let position = params.text_document_position.position;
+            let mut to_the_left = position;
+            to_the_left.character -= 2;
+            Ok(Some(lsp::CompletionResponse::Array(vec![lsp::CompletionItem {
+                label: "oops".to_string(),
+                text_edit: Some(lsp::CompletionTextEdit::Edit(lsp::TextEdit {
+                    range: lsp::Range::new(to_the_left, position),
+                    new_text: "к!".to_string(),
+                })),
+                ..Default::default()
+            }])))
+        });
         cx.simulate_keystrokes("i .");
         request.next().await;
-        cx.condition(|editor, _| editor.context_menu_visible())
-            .await;
+        cx.condition(|editor, _| editor.context_menu_visible()).await;
         cx.simulate_keystrokes("enter escape");
         cx.assert_state(
             indoc! {"
@@ -660,8 +603,7 @@ mod test {
             the lazy dog"
         })
         .await;
-        cx.simulate_shared_keystrokes("ctrl-v j j shift-i o escape")
-            .await;
+        cx.simulate_shared_keystrokes("ctrl-v j j shift-i o escape").await;
         cx.shared_state().await.assert_eq(indoc! {
             "ˇothe quick brown
             ofox jumps over
@@ -681,8 +623,7 @@ mod test {
             the lazy dog"
         })
         .await;
-        cx.simulate_shared_keystrokes("shift-v shift-r o escape")
-            .await;
+        cx.simulate_shared_keystrokes("shift-v shift-r o escape").await;
         cx.shared_state().await.assert_eq(indoc! {
             "ˇo
             fox jumps over
@@ -817,8 +758,7 @@ mod test {
         let mut cx = NeovimBackedTestContext::new(cx).await;
 
         cx.set_shared_state("ˇhello world!!").await;
-        cx.simulate_shared_keystrokes("q a v 3 l s 0 escape l q")
-            .await;
+        cx.simulate_shared_keystrokes("q a v 3 l s 0 escape l q").await;
         cx.shared_state().await.assert_eq("0ˇo world!!");
         cx.simulate_shared_keystrokes("2 @ a").await;
         cx.shared_state().await.assert_eq("000ˇ!");

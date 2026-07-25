@@ -45,13 +45,7 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
 }
 
 impl Vim {
-    fn increment(
-        &mut self,
-        mut delta: i64,
-        step: i32,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn increment(&mut self, mut delta: i64, step: i32, window: &mut Window, cx: &mut Context<Self>) {
         self.store_visual_marks(window, cx);
         self.update_editor(cx, |vim, editor, cx| {
             let mut edits = Vec::new();
@@ -59,9 +53,7 @@ impl Vim {
 
             let snapshot = editor.buffer().read(cx).snapshot(cx);
             for selection in editor.selections.all_adjusted(&editor.display_snapshot(cx)) {
-                if !selection.is_empty()
-                    && (vim.mode != Mode::VisualBlock || new_anchors.is_empty())
-                {
+                if !selection.is_empty() && (vim.mode != Mode::VisualBlock || new_anchors.is_empty()) {
                     new_anchors.push((true, snapshot.anchor_before(selection.start)))
                 }
                 for row in selection.start.row..=selection.end.row {
@@ -210,11 +202,7 @@ fn find_target(
         .map_or(false, |ch| ch.is_ascii_hexdigit());
     let mut pre_char = String::new();
 
-    let next_offset = offset
-        + snapshot
-            .chars_at(start_offset)
-            .next()
-            .map_or(0, |ch| ch.len_utf8());
+    let next_offset = offset + snapshot.chars_at(start_offset).next().map_or(0, |ch| ch.len_utf8());
     // Backward scan to find the start of the number, but stop at start_offset
     for ch in snapshot.reversed_chars_at(next_offset) {
         // Search boundaries
@@ -254,11 +242,7 @@ fn find_target(
             break; // stop at end of selection
         }
 
-        if target == "0"
-            && (ch == 'b' || ch == 'B')
-            && chars.peek().is_some()
-            && chars.peek().unwrap().is_digit(2)
-        {
+        if target == "0" && (ch == 'b' || ch == 'B') && chars.peek().is_some() && chars.peek().unwrap().is_digit(2) {
             radix = 2;
             begin = None;
             target = String::new();
@@ -317,11 +301,7 @@ fn find_target(
         }
 
         let end = end.unwrap_or(offset);
-        Some((
-            begin.to_point(snapshot)..end.to_point(snapshot),
-            target,
-            radix,
-        ))
+        Some((begin.to_point(snapshot)..end.to_point(snapshot), target, radix))
     } else {
         None
     }
@@ -353,9 +333,7 @@ fn is_numeric_string(s: &str) -> bool {
 
 fn is_toggle_word(word: &str) -> bool {
     let lower = word.to_lowercase();
-    BOOLEAN_PAIRS
-        .iter()
-        .any(|(a, b)| lower == *a || lower == *b)
+    BOOLEAN_PAIRS.iter().any(|(a, b)| lower == *a || lower == *b)
 }
 
 fn increment_toggle_string(boolean: &str) -> String {
@@ -690,15 +668,9 @@ mod test {
     async fn test_increment_radix(cx: &mut gpui::TestAppContext) {
         let mut cx = NeovimBackedTestContext::new(cx).await;
 
-        cx.simulate("ctrl-a", "ˇ total: 0xff")
-            .await
-            .assert_matches();
-        cx.simulate("ctrl-x", "ˇ total: 0xff")
-            .await
-            .assert_matches();
-        cx.simulate("ctrl-x", "ˇ total: 0xFF")
-            .await
-            .assert_matches();
+        cx.simulate("ctrl-a", "ˇ total: 0xff").await.assert_matches();
+        cx.simulate("ctrl-x", "ˇ total: 0xff").await.assert_matches();
+        cx.simulate("ctrl-x", "ˇ total: 0xFF").await.assert_matches();
         cx.simulate("ctrl-a", "(ˇ0b10f)").await.assert_matches();
         cx.simulate("ctrl-a", "ˇ-1").await.assert_matches();
         cx.simulate("ctrl-a", "banˇana").await.assert_matches();
@@ -842,8 +814,7 @@ mod test {
         cx.shared_state().await.assert_eq(indoc! {"ˇ133"});
         cx.simulate_shared_keystrokes("l v l ctrl-a").await;
         cx.shared_state().await.assert_eq(indoc! {"1ˇ34"});
-        cx.simulate_shared_keystrokes("shift-v y p p ctrl-v k k l ctrl-a")
-            .await;
+        cx.simulate_shared_keystrokes("shift-v y p p ctrl-v k k l ctrl-a").await;
         cx.shared_state().await.assert_eq(indoc! {"ˇ144\n144\n144"});
     }
 }

@@ -38,10 +38,7 @@ fn generate_random_rope_ranges(rng: &mut StdRng, rope: &Rope) -> Vec<Range<usize
     let mut ranges = Vec::new();
     let mut start = 0;
     for _ in 0..num_ranges {
-        let range_start = rope.clip_offset(
-            rng.random_range(start..=(start + range_max_len)),
-            sum_tree::Bias::Left,
-        );
+        let range_start = rope.clip_offset(rng.random_range(start..=(start + range_max_len)), sum_tree::Bias::Left);
         let range_end = rope.clip_offset(
             rng.random_range(range_start..(range_start + range_max_len)),
             sum_tree::Bias::Right,

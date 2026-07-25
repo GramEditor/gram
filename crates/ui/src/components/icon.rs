@@ -298,22 +298,10 @@ impl Component for Icon {
                             "XSmall, Small, Default, Large",
                             h_flex()
                                 .gap_1()
-                                .child(
-                                    Icon::new(IconName::Star)
-                                        .size(IconSize::XSmall)
-                                        .into_any_element(),
-                                )
-                                .child(
-                                    Icon::new(IconName::Star)
-                                        .size(IconSize::Small)
-                                        .into_any_element(),
-                                )
+                                .child(Icon::new(IconName::Star).size(IconSize::XSmall).into_any_element())
+                                .child(Icon::new(IconName::Star).size(IconSize::Small).into_any_element())
                                 .child(Icon::new(IconName::Star).into_any_element())
-                                .child(
-                                    Icon::new(IconName::Star)
-                                        .size(IconSize::XLarge)
-                                        .into_any_element(),
-                                )
+                                .child(Icon::new(IconName::Star).size(IconSize::XLarge).into_any_element())
                                 .into_any_element(),
                         )],
                     ),
@@ -324,11 +312,7 @@ impl Component for Icon {
                             h_flex()
                                 .gap_1()
                                 .child(Icon::new(IconName::Star).into_any_element())
-                                .child(
-                                    Icon::new(IconName::Star)
-                                        .color(Color::Error)
-                                        .into_any_element(),
-                                )
+                                .child(Icon::new(IconName::Star).color(Color::Error).into_any_element())
                                 .into_any_element(),
                         )],
                     ),
@@ -340,19 +324,17 @@ impl Component for Icon {
                                 .image_cache(gpui::retain_all("all icons"))
                                 .flex_wrap()
                                 .gap_2()
-                                .children(<IconName as strum::IntoEnumIterator>::iter().map(
-                                    |icon_name| {
-                                        h_flex()
-                                            .p_1()
-                                            .gap_1()
-                                            .border_1()
-                                            .border_color(cx.theme().colors().border_variant)
-                                            .bg(cx.theme().colors().element_disabled)
-                                            .rounded_sm()
-                                            .child(Icon::new(icon_name).into_any_element())
-                                            .child(SharedString::new_static(icon_name.into()))
-                                    },
-                                ))
+                                .children(<IconName as strum::IntoEnumIterator>::iter().map(|icon_name| {
+                                    h_flex()
+                                        .p_1()
+                                        .gap_1()
+                                        .border_1()
+                                        .border_color(cx.theme().colors().border_variant)
+                                        .bg(cx.theme().colors().element_disabled)
+                                        .rounded_sm()
+                                        .child(Icon::new(icon_name).into_any_element())
+                                        .child(SharedString::new_static(icon_name.into()))
+                                }))
                                 .into_any_element(),
                         )],
                     ),

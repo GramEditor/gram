@@ -1,6 +1,6 @@
 use gpui::{
-    App, Application, Bounds, Context, SharedString, Window, WindowBounds, WindowOptions, div,
-    prelude::*, px, rgb, size,
+    App, Application, Bounds, Context, SharedString, Window, WindowBounds, WindowOptions, div, prelude::*, px, rgb,
+    size,
 };
 
 struct HelloWorld {
@@ -94,11 +94,7 @@ fn main() {
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
                 ..Default::default()
             },
-            |_, cx| {
-                cx.new(|_| HelloWorld {
-                    text: "World".into(),
-                })
-            },
+            |_, cx| cx.new(|_| HelloWorld { text: "World".into() }),
         )
         .unwrap();
         cx.activate();

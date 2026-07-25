@@ -1,7 +1,4 @@
-use gpui::{
-    ClipboardItem, Context, Empty, EventEmitter, IntoElement, ParentElement, Render, SharedString,
-    Window,
-};
+use gpui::{ClipboardItem, Context, Empty, EventEmitter, IntoElement, ParentElement, Render, SharedString, Window};
 use settings::Settings;
 use ui::{Button, Tooltip, prelude::*};
 use util::paths::PathStyle;
@@ -34,10 +31,7 @@ impl Render for ActiveFileName {
             return Empty.into_any_element();
         };
 
-        let tooltip_text = self
-            .full_path
-            .clone()
-            .unwrap_or_else(|| project_path.clone());
+        let tooltip_text = self.full_path.clone().unwrap_or_else(|| project_path.clone());
 
         div()
             .child(

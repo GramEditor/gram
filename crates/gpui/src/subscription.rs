@@ -7,9 +7,7 @@ use std::{
 };
 use util::post_inc;
 
-pub(crate) struct SubscriberSet<EmitterKey, Callback>(
-    Rc<RefCell<SubscriberSetState<EmitterKey, Callback>>>,
-);
+pub(crate) struct SubscriberSet<EmitterKey, Callback>(Rc<RefCell<SubscriberSetState<EmitterKey, Callback>>>);
 
 impl<EmitterKey, Callback> Clone for SubscriberSet<EmitterKey, Callback> {
     fn clone(&self) -> Self {
@@ -85,17 +83,13 @@ where
                 // We didn't manage to remove the subscription, which means it was dropped
                 // while invoking the callback. Mark it as dropped so that we can remove it
                 // later.
-                lock.dropped_subscribers
-                    .insert((emitter_key, subscriber_id));
+                lock.dropped_subscribers.insert((emitter_key, subscriber_id));
             })),
         };
         (subscription, move || active.set(true))
     }
 
-    pub fn remove(
-        &self,
-        emitter: &EmitterKey,
-    ) -> impl IntoIterator<Item = Callback> + use<EmitterKey, Callback> {
+    pub fn remove(&self, emitter: &EmitterKey) -> impl IntoIterator<Item = Callback> + use<EmitterKey, Callback> {
         let subscribers = self.0.borrow_mut().subscribers.remove(emitter);
         subscribers
             .unwrap_or_default()
@@ -117,13 +111,7 @@ where
     where
         F: FnMut(&mut Callback) -> bool,
     {
-        let Some(mut subscribers) = self
-            .0
-            .borrow_mut()
-            .subscribers
-            .get_mut(emitter)
-            .and_then(|s| s.take())
-        else {
+        let Some(mut subscribers) = self.0.borrow_mut().subscribers.get_mut(emitter).and_then(|s| s.take()) else {
             return;
         };
 

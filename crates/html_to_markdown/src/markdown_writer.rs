@@ -9,8 +9,7 @@ use regex::Regex;
 use crate::html_element::HtmlElement;
 
 fn empty_line_regex() -> &'static Regex {
-    static REGEX: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"^\s*$").expect("Failed to create empty_line_regex"));
+    static REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\s*$").expect("Failed to create empty_line_regex"));
     &REGEX
 }
 
@@ -94,9 +93,7 @@ impl MarkdownWriter {
                 // at this time.
             }
             NodeData::Element {
-                ref name,
-                ref attrs,
-                ..
+                ref name, ref attrs, ..
             } => {
                 let tag_name = name.local.to_string();
                 if !tag_name.is_empty() {
@@ -115,8 +112,7 @@ impl MarkdownWriter {
                 StartTagOutcome::Skip => return Ok(()),
             }
 
-            self.current_element_stack
-                .push_back(current_element.clone());
+            self.current_element_stack.push_back(current_element.clone());
         }
 
         if self.current_element_stack.len() < 200 {
@@ -182,11 +178,7 @@ pub trait HandleTag {
     fn should_handle(&self, tag: &str) -> bool;
 
     /// Handles the start of the given tag.
-    fn handle_tag_start(
-        &mut self,
-        _tag: &HtmlElement,
-        _writer: &mut MarkdownWriter,
-    ) -> StartTagOutcome {
+    fn handle_tag_start(&mut self, _tag: &HtmlElement, _writer: &mut MarkdownWriter) -> StartTagOutcome {
         StartTagOutcome::Continue
     }
 

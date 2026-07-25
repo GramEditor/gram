@@ -43,11 +43,7 @@ impl DapLocator for ZigLocator {
             },
             Some(arg) if arg == "test" => {
                 let test_exe_path = get_test_exe_path().unwrap();
-                let mut args: Vec<String> = task_template
-                    .args
-                    .into_iter()
-                    .map(|s| s.replace("\"", "'"))
-                    .collect();
+                let mut args: Vec<String> = task_template.args.into_iter().map(|s| s.replace("\"", "'")).collect();
                 args.push("--test-no-exec".into());
                 args.push(format!("-femit-bin={test_exe_path}"));
                 task_template.label = "zig test --test-no-exec".into();

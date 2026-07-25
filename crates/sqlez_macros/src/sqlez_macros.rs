@@ -31,12 +31,7 @@ pub fn sql(tokens: TokenStream) -> TokenStream {
     }
 }
 
-fn create_error(
-    spans: Vec<(usize, Span)>,
-    error_offset: usize,
-    error: String,
-    formatted_sql: &String,
-) -> TokenStream {
+fn create_error(spans: Vec<(usize, Span)>, error_offset: usize, error: String, formatted_sql: &String) -> TokenStream {
     let error_span = spans
         .into_iter()
         .skip_while(|(offset, _)| offset <= &error_offset)

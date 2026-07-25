@@ -1,6 +1,6 @@
 use gpui::{
-    App, Application, Bounds, ColorSpace, Context, Half, Render, Window, WindowOptions, canvas,
-    div, linear_color_stop, linear_gradient, point, prelude::*, px, size,
+    App, Application, Bounds, ColorSpace, Context, Half, Render, Window, WindowOptions, canvas, div, linear_color_stop,
+    linear_gradient, point, prelude::*, px, size,
 };
 
 struct GradientViewer {
@@ -208,10 +208,7 @@ impl Render for GradientViewer {
                 move |bounds, _, window, _| {
                     let size = size(bounds.size.width * 0.8, px(80.));
                     let square_bounds = Bounds {
-                        origin: point(
-                            bounds.size.width.half() - size.width.half(),
-                            bounds.origin.y,
-                        ),
+                        origin: point(bounds.size.width.half() - size.width.half(), bounds.origin.y),
                         size,
                     };
                     let height = square_bounds.size.height;
@@ -219,11 +216,8 @@ impl Render for GradientViewer {
                     let vertical_offset = px(30.);
                     let mut builder = gpui::PathBuilder::fill();
                     builder.move_to(square_bounds.bottom_left());
-                    builder
-                        .line_to(square_bounds.origin + point(horizontal_offset, vertical_offset));
-                    builder.line_to(
-                        square_bounds.top_right() + point(-horizontal_offset, vertical_offset),
-                    );
+                    builder.line_to(square_bounds.origin + point(horizontal_offset, vertical_offset));
+                    builder.line_to(square_bounds.top_right() + point(-horizontal_offset, vertical_offset));
 
                     builder.line_to(square_bounds.bottom_right());
                     builder.line_to(square_bounds.bottom_left());

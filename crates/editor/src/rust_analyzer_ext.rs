@@ -16,9 +16,8 @@ use rpc::proto;
 use text::ToPointUtf16;
 
 use crate::{
-    CancelFlycheck, ClearFlycheck, Editor, ExpandMacroRecursively, GoToParentModule,
-    GotoDefinitionKind, OpenDocs, RunFlycheck, element::register_action, hover_links::HoverLink,
-    lsp_ext::find_specific_language_server_in_selection,
+    CancelFlycheck, ClearFlycheck, Editor, ExpandMacroRecursively, GoToParentModule, GotoDefinitionKind, OpenDocs,
+    RunFlycheck, element::register_action, hover_links::HoverLink, lsp_ext::find_specific_language_server_in_selection,
 };
 
 fn is_rust_language(language: &Language) -> bool {
@@ -52,12 +51,7 @@ pub fn apply_related_actions(editor: &Entity<Editor>, window: &mut Window, cx: &
     }
 }
 
-pub fn go_to_parent_module(
-    editor: &mut Editor,
-    _: &GoToParentModule,
-    window: &mut Window,
-    cx: &mut Context<Editor>,
-) {
+pub fn go_to_parent_module(editor: &mut Editor, _: &GoToParentModule, window: &mut Window, cx: &mut Context<Editor>) {
     if editor.selections.count() == 0 {
         return;
     }
@@ -66,12 +60,7 @@ pub fn go_to_parent_module(
     };
 
     let Some((trigger_anchor, _, server_to_query, buffer)) =
-        find_specific_language_server_in_selection(
-            editor,
-            cx,
-            is_rust_language,
-            RUST_ANALYZER_NAME,
-        )
+        find_specific_language_server_in_selection(editor, cx, is_rust_language, RUST_ANALYZER_NAME)
     else {
         return;
     };
@@ -148,12 +137,7 @@ pub fn expand_macro_recursively(
     };
 
     let Some((trigger_anchor, rust_language, server_to_query, buffer)) =
-        find_specific_language_server_in_selection(
-            editor,
-            cx,
-            is_rust_language,
-            RUST_ANALYZER_NAME,
-        )
+        find_specific_language_server_in_selection(editor, cx, is_rust_language, RUST_ANALYZER_NAME)
     else {
         return;
     };
@@ -192,10 +176,7 @@ pub fn expand_macro_recursively(
         };
 
         if macro_expansion.is_empty() {
-            log::info!(
-                "Empty macro expansion for position {:?}",
-                trigger_anchor.text_anchor
-            );
+            log::info!("Empty macro expansion for position {:?}", trigger_anchor.text_anchor);
             return Ok(());
         }
 
@@ -208,8 +189,7 @@ pub fn expand_macro_recursively(
                 buffer.set_language(Some(rust_language), cx);
                 buffer.set_capability(Capability::ReadOnly, cx);
             });
-            let multibuffer =
-                cx.new(|cx| MultiBuffer::singleton(buffer, cx).with_title(macro_expansion.name));
+            let multibuffer = cx.new(|cx| MultiBuffer::singleton(buffer, cx).with_title(macro_expansion.name));
             workspace.add_item_to_active_pane(
                 Box::new(cx.new(|cx| {
                     let mut editor = Editor::for_multibuffer(multibuffer, None, window, cx);
@@ -238,12 +218,7 @@ pub fn open_docs(editor: &mut Editor, _: &OpenDocs, window: &mut Window, cx: &mu
     };
 
     let Some((trigger_anchor, _, server_to_query, buffer)) =
-        find_specific_language_server_in_selection(
-            editor,
-            cx,
-            is_rust_language,
-            RUST_ANALYZER_NAME,
-        )
+        find_specific_language_server_in_selection(editor, cx, is_rust_language, RUST_ANALYZER_NAME)
     else {
         return;
     };
@@ -283,10 +258,7 @@ pub fn open_docs(editor: &mut Editor, _: &OpenDocs, window: &mut Window, cx: &mu
         };
 
         if docs_urls.is_empty() {
-            log::debug!(
-                "Empty docs urls for position {:?}",
-                trigger_anchor.text_anchor
-            );
+            log::debug!("Empty docs urls for position {:?}", trigger_anchor.text_anchor);
             return Ok(());
         }
 
@@ -308,89 +280,53 @@ pub fn open_docs(editor: &mut Editor, _: &OpenDocs, window: &mut Window, cx: &mu
     .detach_and_log_err(cx);
 }
 
-fn cancel_flycheck_action(
-    editor: &mut Editor,
-    _: &CancelFlycheck,
-    _: &mut Window,
-    cx: &mut Context<Editor>,
-) {
+fn cancel_flycheck_action(editor: &mut Editor, _: &CancelFlycheck, _: &mut Window, cx: &mut Context<Editor>) {
     let Some(project) = &editor.project else {
         return;
     };
-    let buffer_id = editor
-        .selections
-        .disjoint_anchors_arc()
-        .iter()
-        .find_map(|selection| {
-            let buffer_id = selection
-                .start
-                .text_anchor
-                .buffer_id
-                .or(selection.end.text_anchor.buffer_id)?;
-            let project = project.read(cx);
-            let entry_id = project
-                .buffer_for_id(buffer_id, cx)?
-                .read(cx)
-                .entry_id(cx)?;
-            project.path_for_entry(entry_id, cx)
-        });
+    let buffer_id = editor.selections.disjoint_anchors_arc().iter().find_map(|selection| {
+        let buffer_id = selection
+            .start
+            .text_anchor
+            .buffer_id
+            .or(selection.end.text_anchor.buffer_id)?;
+        let project = project.read(cx);
+        let entry_id = project.buffer_for_id(buffer_id, cx)?.read(cx).entry_id(cx)?;
+        project.path_for_entry(entry_id, cx)
+    });
     cancel_flycheck(project.clone(), buffer_id, cx).detach_and_log_err(cx);
 }
 
-fn run_flycheck_action(
-    editor: &mut Editor,
-    _: &RunFlycheck,
-    _: &mut Window,
-    cx: &mut Context<Editor>,
-) {
+fn run_flycheck_action(editor: &mut Editor, _: &RunFlycheck, _: &mut Window, cx: &mut Context<Editor>) {
     let Some(project) = &editor.project else {
         return;
     };
-    let buffer_id = editor
-        .selections
-        .disjoint_anchors_arc()
-        .iter()
-        .find_map(|selection| {
-            let buffer_id = selection
-                .start
-                .text_anchor
-                .buffer_id
-                .or(selection.end.text_anchor.buffer_id)?;
-            let project = project.read(cx);
-            let entry_id = project
-                .buffer_for_id(buffer_id, cx)?
-                .read(cx)
-                .entry_id(cx)?;
-            project.path_for_entry(entry_id, cx)
-        });
+    let buffer_id = editor.selections.disjoint_anchors_arc().iter().find_map(|selection| {
+        let buffer_id = selection
+            .start
+            .text_anchor
+            .buffer_id
+            .or(selection.end.text_anchor.buffer_id)?;
+        let project = project.read(cx);
+        let entry_id = project.buffer_for_id(buffer_id, cx)?.read(cx).entry_id(cx)?;
+        project.path_for_entry(entry_id, cx)
+    });
     run_flycheck(project.clone(), buffer_id, cx).detach_and_log_err(cx);
 }
 
-fn clear_flycheck_action(
-    editor: &mut Editor,
-    _: &ClearFlycheck,
-    _: &mut Window,
-    cx: &mut Context<Editor>,
-) {
+fn clear_flycheck_action(editor: &mut Editor, _: &ClearFlycheck, _: &mut Window, cx: &mut Context<Editor>) {
     let Some(project) = &editor.project else {
         return;
     };
-    let buffer_id = editor
-        .selections
-        .disjoint_anchors_arc()
-        .iter()
-        .find_map(|selection| {
-            let buffer_id = selection
-                .start
-                .text_anchor
-                .buffer_id
-                .or(selection.end.text_anchor.buffer_id)?;
-            let project = project.read(cx);
-            let entry_id = project
-                .buffer_for_id(buffer_id, cx)?
-                .read(cx)
-                .entry_id(cx)?;
-            project.path_for_entry(entry_id, cx)
-        });
+    let buffer_id = editor.selections.disjoint_anchors_arc().iter().find_map(|selection| {
+        let buffer_id = selection
+            .start
+            .text_anchor
+            .buffer_id
+            .or(selection.end.text_anchor.buffer_id)?;
+        let project = project.read(cx);
+        let entry_id = project.buffer_for_id(buffer_id, cx)?.read(cx).entry_id(cx)?;
+        project.path_for_entry(entry_id, cx)
+    });
     clear_flycheck(project.clone(), buffer_id, cx).detach_and_log_err(cx);
 }

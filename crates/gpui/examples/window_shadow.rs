@@ -1,8 +1,7 @@
 use gpui::{
-    App, Application, Bounds, Context, CursorStyle, Decorations, HitboxBehavior, Hsla, MouseButton,
-    Pixels, Point, ResizeEdge, Size, Window, WindowBackgroundAppearance, WindowBounds,
-    WindowDecorations, WindowOptions, black, canvas, div, green, point, prelude::*, px, rgb, size,
-    transparent_black, white,
+    App, Application, Bounds, Context, CursorStyle, Decorations, HitboxBehavior, Hsla, MouseButton, Pixels, Point,
+    ResizeEdge, Size, Window, WindowBackgroundAppearance, WindowBounds, WindowDecorations, WindowOptions, black,
+    canvas, div, green, point, prelude::*, px, rgb, size, transparent_black, white,
 };
 
 struct WindowShadow {}
@@ -33,10 +32,7 @@ impl Render for WindowShadow {
                         canvas(
                             |_bounds, window, _cx| {
                                 window.insert_hitbox(
-                                    Bounds::new(
-                                        point(px(0.0), px(0.0)),
-                                        window.window_bounds().get_bounds().size,
-                                    ),
+                                    Bounds::new(point(px(0.0), px(0.0)), window.window_bounds().get_bounds().size),
                                     HitboxBehavior::Normal,
                                 )
                             },
@@ -48,12 +44,8 @@ impl Render for WindowShadow {
                                 };
                                 window.set_cursor_style(
                                     match edge {
-                                        ResizeEdge::Top | ResizeEdge::Bottom => {
-                                            CursorStyle::ResizeUpDown
-                                        }
-                                        ResizeEdge::Left | ResizeEdge::Right => {
-                                            CursorStyle::ResizeLeftRight
-                                        }
+                                        ResizeEdge::Top | ResizeEdge::Bottom => CursorStyle::ResizeUpDown,
+                                        ResizeEdge::Left | ResizeEdge::Right => CursorStyle::ResizeLeftRight,
                                         ResizeEdge::TopLeft | ResizeEdge::BottomRight => {
                                             CursorStyle::ResizeUpLeftDownRight
                                         }
@@ -68,9 +60,7 @@ impl Render for WindowShadow {
                         .size_full()
                         .absolute(),
                     )
-                    .when(!(tiling.top || tiling.right), |div| {
-                        div.rounded_tr(rounding)
-                    })
+                    .when(!(tiling.top || tiling.right), |div| div.rounded_tr(rounding))
                     .when(!(tiling.top || tiling.left), |div| div.rounded_tl(rounding))
                     .when(!tiling.top, |div| div.pt(shadow_size))
                     .when(!tiling.bottom, |div| div.pb(shadow_size))
@@ -95,9 +85,7 @@ impl Render for WindowShadow {
                         Decorations::Server => div,
                         Decorations::Client { tiling } => div
                             .border_color(grey)
-                            .when(!(tiling.top || tiling.right), |div| {
-                                div.rounded_tr(rounding)
-                            })
+                            .when(!(tiling.top || tiling.right), |div| div.rounded_tr(rounding))
                             .when(!(tiling.top || tiling.left), |div| div.rounded_tl(rounding))
                             .when(!tiling.top, |div| div.border_t(border_size))
                             .when(!tiling.bottom, |div| div.border_b(border_size))
@@ -158,12 +146,9 @@ impl Render for WindowShadow {
                                         .map(|div| match decorations {
                                             Decorations::Server => div,
                                             Decorations::Client { .. } => div
-                                                .on_mouse_down(
-                                                    MouseButton::Left,
-                                                    |_e, window, _| {
-                                                        window.start_window_move();
-                                                    },
-                                                )
+                                                .on_mouse_down(MouseButton::Left, |_e, window, _| {
+                                                    window.start_window_move();
+                                                })
                                                 .on_click(|e, window, _| {
                                                     if e.is_right_click() {
                                                         window.show_window_menu(e.position());

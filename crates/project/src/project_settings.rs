@@ -7,9 +7,8 @@ use gpui::{AsyncApp, BorrowAppContext, Context, Entity, EventEmitter, Subscripti
 use lsp::LanguageServerName;
 use paths::{
     EDITORCONFIG_NAME, local_debug_file_relative_path, local_settings_file_relative_path,
-    local_tasks_file_relative_path, local_vscode_launch_file_relative_path,
-    local_vscode_tasks_file_relative_path, local_vscodium_launch_file_relative_path,
-    local_vscodium_tasks_file_relative_path, task_file_name,
+    local_tasks_file_relative_path, local_vscode_launch_file_relative_path, local_vscode_tasks_file_relative_path,
+    local_vscodium_launch_file_relative_path, local_vscodium_tasks_file_relative_path, task_file_name,
 };
 use rpc::{
     AnyProtoClient, TypedEnvelope,
@@ -20,8 +19,8 @@ use serde::{Deserialize, Serialize};
 pub use settings::DirenvSettings;
 pub use settings::LspSettings;
 use settings::{
-    DapSettingsContent, InvalidSettingsError, LocalSettingsKind, RegisterSetting, Settings,
-    SettingsLocation, SettingsStore, parse_json_with_comments, watch_config_file,
+    DapSettingsContent, InvalidSettingsError, LocalSettingsKind, RegisterSetting, Settings, SettingsLocation,
+    SettingsStore, parse_json_with_comments, watch_config_file,
 };
 use std::{path::PathBuf, sync::Arc, time::Duration};
 use task::{DebugTaskFile, TaskTemplates, VsCodeDebugTaskFile, VsCodeTaskFile};
@@ -332,9 +331,7 @@ pub struct BranchPickerSettings {
 
 impl Default for BranchPickerSettings {
     fn default() -> Self {
-        Self {
-            show_author_name: true,
-        }
+        Self { show_author_name: true }
     }
 }
 
@@ -436,12 +433,7 @@ impl Settings for ProjectSettings {
                 .map(|(key, value)| (LanguageServerName(key.into()), value))
                 .collect(),
             global_lsp_settings: GlobalLspSettings {
-                button: content
-                    .global_lsp_settings
-                    .as_ref()
-                    .unwrap()
-                    .button
-                    .unwrap(),
+                button: content.global_lsp_settings.as_ref().unwrap().button.unwrap(),
             },
             dap: project
                 .dap
@@ -468,11 +460,7 @@ impl Settings for ProjectSettings {
             node: content.node.clone().unwrap().into(),
             load_direnv: project.load_direnv.clone().unwrap(),
             session: SessionSettings {
-                restore_unsaved_buffers: content
-                    .session
-                    .unwrap()
-                    .restore_unsaved_buffers
-                    .unwrap_or(true),
+                restore_unsaved_buffers: content.session.unwrap().restore_unsaved_buffers.unwrap_or(true),
             },
         }
     }
@@ -520,8 +508,7 @@ impl SettingsObserver {
         task_store: Entity<TaskStore>,
         cx: &mut Context<Self>,
     ) -> Self {
-        cx.subscribe(&worktree_store, Self::on_worktree_store_event)
-            .detach();
+        cx.subscribe(&worktree_store, Self::on_worktree_store_event).detach();
 
         Self {
             worktree_store,
@@ -557,9 +544,7 @@ impl SettingsObserver {
                 user_settings_watcher = Some(cx.observe_global::<SettingsStore>(move |_, cx| {
                     if let Some(new_settings) = cx.global::<SettingsStore>().raw_user_settings() {
                         if Some(new_settings) != user_settings.as_ref() {
-                            if let Some(new_settings_string) =
-                                serde_json::to_string(new_settings).ok()
-                            {
+                            if let Some(new_settings_string) = serde_json::to_string(new_settings).ok() {
                                 user_settings = Some(new_settings.clone());
                                 upstream_client
                                     .send(proto::UpdateUserSettings {
@@ -594,12 +579,7 @@ impl SettingsObserver {
         }
     }
 
-    pub fn shared(
-        &mut self,
-        project_id: u64,
-        downstream_client: AnyProtoClient,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn shared(&mut self, project_id: u64, downstream_client: AnyProtoClient, cx: &mut Context<Self>) {
         self.project_id = project_id;
         self.downstream_client = Some(downstream_client.clone());
 
@@ -614,9 +594,7 @@ impl SettingsObserver {
                         worktree_id,
                         path: path.to_proto(),
                         content: Some(content),
-                        kind: Some(
-                            local_settings_kind_to_proto(LocalSettingsKind::Settings).into(),
-                        ),
+                        kind: Some(local_settings_kind_to_proto(LocalSettingsKind::Settings).into()),
                     })
                     .log_err();
             }
@@ -627,9 +605,7 @@ impl SettingsObserver {
                         worktree_id,
                         path: path.to_proto(),
                         content: Some(content),
-                        kind: Some(
-                            local_settings_kind_to_proto(LocalSettingsKind::Editorconfig).into(),
-                        ),
+                        kind: Some(local_settings_kind_to_proto(LocalSettingsKind::Editorconfig).into()),
                     })
                     .log_err();
             }
@@ -646,28 +622,19 @@ impl SettingsObserver {
         mut cx: AsyncApp,
     ) -> anyhow::Result<()> {
         let kind = match envelope.payload.kind {
-            Some(kind) => proto::LocalSettingsKind::try_from(kind)
-                .with_context(|| format!("unknown kind {kind}"))?,
+            Some(kind) => proto::LocalSettingsKind::try_from(kind).with_context(|| format!("unknown kind {kind}"))?,
             None => proto::LocalSettingsKind::Settings,
         };
         let path = RelPath::from_proto(&envelope.payload.path)?;
         this.update(&mut cx, |this, cx| {
             let worktree_id = WorktreeId::from_proto(envelope.payload.worktree_id);
-            let Some(worktree) = this
-                .worktree_store
-                .read(cx)
-                .worktree_for_id(worktree_id, cx)
-            else {
+            let Some(worktree) = this.worktree_store.read(cx).worktree_for_id(worktree_id, cx) else {
                 return;
             };
 
             this.update_settings(
                 worktree,
-                [(
-                    path,
-                    local_settings_kind_from_proto(kind),
-                    envelope.payload.content,
-                )],
+                [(path, local_settings_kind_from_proto(kind), envelope.payload.content)],
                 cx,
             );
         })?;
@@ -734,12 +701,7 @@ impl SettingsObserver {
             } else if path.ends_with(local_tasks_file_relative_path()) {
                 let settings_dir = path
                     .ancestors()
-                    .nth(
-                        local_tasks_file_relative_path()
-                            .components()
-                            .count()
-                            .saturating_sub(1),
-                    )
+                    .nth(local_tasks_file_relative_path().components().count().saturating_sub(1))
                     .unwrap()
                     .into();
                 (settings_dir, LocalSettingsKind::Tasks)
@@ -770,12 +732,7 @@ impl SettingsObserver {
             } else if path.ends_with(local_debug_file_relative_path()) {
                 let settings_dir = path
                     .ancestors()
-                    .nth(
-                        local_debug_file_relative_path()
-                            .components()
-                            .count()
-                            .saturating_sub(1),
-                    )
+                    .nth(local_debug_file_relative_path().components().count().saturating_sub(1))
                     .unwrap()
                     .into();
                 (settings_dir, LocalSettingsKind::Debug)
@@ -825,40 +782,30 @@ impl SettingsObserver {
                         Some(
                             async move {
                                 let content = fs.load(&abs_path).await?;
-                                if abs_path.ends_with(local_vscode_tasks_file_relative_path().as_std_path()) || abs_path.ends_with(local_vscodium_tasks_file_relative_path().as_std_path())  {
-                                    let vscode_tasks =
-                                        parse_json_with_comments::<VsCodeTaskFile>(&content)
-                                            .with_context(|| {
-                                                format!("parsing VSCode/VSCodium tasks, file {abs_path:?}")
-                                            })?;
-                                    let gram_tasks = TaskTemplates::try_from(vscode_tasks)
+                                if abs_path.ends_with(local_vscode_tasks_file_relative_path().as_std_path())
+                                    || abs_path.ends_with(local_vscodium_tasks_file_relative_path().as_std_path())
+                                {
+                                    let vscode_tasks = parse_json_with_comments::<VsCodeTaskFile>(&content)
+                                        .with_context(|| format!("parsing VSCode/VSCodium tasks, file {abs_path:?}"))?;
+                                    let gram_tasks = TaskTemplates::try_from(vscode_tasks).with_context(|| {
+                                        format!("converting VSCode/VSCodium tasks into Gram ones, file {abs_path:?}")
+                                    })?;
+                                    serde_json::to_string(&gram_tasks)
+                                        .with_context(|| format!("serializing Gram tasks into JSON, file {abs_path:?}"))
+                                } else if abs_path.ends_with(local_vscode_launch_file_relative_path().as_std_path())
+                                    || abs_path.ends_with(local_vscodium_launch_file_relative_path().as_std_path())
+                                {
+                                    let vscode_tasks = parse_json_with_comments::<VsCodeDebugTaskFile>(&content)
                                         .with_context(|| {
-                                            format!(
-                                        "converting VSCode/VSCodium tasks into Gram ones, file {abs_path:?}"
-                                    )
+                                            format!("parsing VSCode/VSCodium debug tasks, file {abs_path:?}")
                                         })?;
-                                    serde_json::to_string(&gram_tasks).with_context(|| {
+                                    let gram_tasks = DebugTaskFile::try_from(vscode_tasks).with_context(|| {
                                         format!(
-                                            "serializing Gram tasks into JSON, file {abs_path:?}"
+                                            "converting VSCode/VSCodium debug tasks into Gram ones, file {abs_path:?}"
                                         )
-                                    })
-                                } else if abs_path.ends_with(local_vscode_launch_file_relative_path().as_std_path()) || abs_path.ends_with(local_vscodium_launch_file_relative_path().as_std_path())  {
-                                    let vscode_tasks =
-                                        parse_json_with_comments::<VsCodeDebugTaskFile>(&content)
-                                            .with_context(|| {
-                                                format!("parsing VSCode/VSCodium debug tasks, file {abs_path:?}")
-                                            })?;
-                                    let gram_tasks = DebugTaskFile::try_from(vscode_tasks)
-                                        .with_context(|| {
-                                            format!(
-                                        "converting VSCode/VSCodium debug tasks into Gram ones, file {abs_path:?}"
-                                    )
-                                        })?;
-                                    serde_json::to_string(&gram_tasks).with_context(|| {
-                                        format!(
-                                            "serializing Gram tasks into JSON, file {abs_path:?}"
-                                        )
-                                    })
+                                    })?;
+                                    serde_json::to_string(&gram_tasks)
+                                        .with_context(|| format!("serializing Gram tasks into JSON, file {abs_path:?}"))
                                 } else {
                                     Ok(content)
                                 }
@@ -876,15 +823,14 @@ impl SettingsObserver {
 
         let worktree = worktree.clone();
         cx.spawn(async move |this, cx| {
-            let settings_contents: Vec<(Arc<RelPath>, _, _)> =
-                futures::future::join_all(settings_contents).await;
+            let settings_contents: Vec<(Arc<RelPath>, _, _)> = futures::future::join_all(settings_contents).await;
             cx.update(|cx| {
                 this.update(cx, |this, cx| {
                     this.update_settings(
                         worktree,
-                        settings_contents.into_iter().map(|(path, kind, content)| {
-                            (path, kind, content.and_then(|c| c.log_err()))
-                        }),
+                        settings_contents
+                            .into_iter()
+                            .map(|(path, kind, content)| (path, kind, content.and_then(|c| c.log_err()))),
                         cx,
                     )
                 })
@@ -905,15 +851,10 @@ impl SettingsObserver {
 
         for (directory, kind, file_content) in settings_contents {
             match kind {
-                LocalSettingsKind::Settings | LocalSettingsKind::Editorconfig => cx
-                    .update_global::<SettingsStore, _>(|store, cx| {
-                        let result = store.set_local_settings(
-                            worktree_id,
-                            directory.clone(),
-                            kind,
-                            file_content.as_deref(),
-                            cx,
-                        );
+                LocalSettingsKind::Settings | LocalSettingsKind::Editorconfig => {
+                    cx.update_global::<SettingsStore, _>(|store, cx| {
+                        let result =
+                            store.set_local_settings(worktree_id, directory.clone(), kind, file_content.as_deref(), cx);
 
                         match result {
                             Err(InvalidSettingsError::LocalSettings { path, message }) => {
@@ -931,7 +872,8 @@ impl SettingsObserver {
                                     .join(local_settings_file_relative_path().as_std_path()))));
                             }
                         }
-                    }),
+                    })
+                }
                 LocalSettingsKind::Tasks => {
                     let result = task_store.update(cx, |task_store, cx| {
                         task_store.update_user_tasks(
@@ -975,9 +917,7 @@ impl SettingsObserver {
 
                     match result {
                         Err(InvalidSettingsError::Debug { path, message }) => {
-                            log::error!(
-                                "Failed to set local debug scenarios in {path:?}: {message:?}"
-                            );
+                            log::error!("Failed to set local debug scenarios in {path:?}: {message:?}");
                             cx.emit(SettingsObserverEvent::LocalTasksUpdated(Err(
                                 InvalidSettingsError::Debug { path, message },
                             )));
@@ -1008,29 +948,20 @@ impl SettingsObserver {
         }
     }
 
-    fn subscribe_to_global_task_file_changes(
-        fs: Arc<dyn Fs>,
-        file_path: PathBuf,
-        cx: &mut Context<Self>,
-    ) -> Task<()> {
-        let mut user_tasks_file_rx =
-            watch_config_file(cx.background_executor(), fs, file_path.clone());
+    fn subscribe_to_global_task_file_changes(fs: Arc<dyn Fs>, file_path: PathBuf, cx: &mut Context<Self>) -> Task<()> {
+        let mut user_tasks_file_rx = watch_config_file(cx.background_executor(), fs, file_path.clone());
         let user_tasks_content = cx.background_executor().block(user_tasks_file_rx.next());
         let weak_entry = cx.weak_entity();
         cx.spawn(async move |settings_observer, cx| {
-            let Ok(task_store) = settings_observer.read_with(cx, |settings_observer, _| {
-                settings_observer.task_store.clone()
-            }) else {
+            let Ok(task_store) =
+                settings_observer.read_with(cx, |settings_observer, _| settings_observer.task_store.clone())
+            else {
                 return;
             };
             if let Some(user_tasks_content) = user_tasks_content {
                 let Ok(()) = task_store.update(cx, |task_store, cx| {
                     task_store
-                        .update_user_tasks(
-                            TaskSettingsLocation::Global(&file_path),
-                            Some(&user_tasks_content),
-                            cx,
-                        )
+                        .update_user_tasks(TaskSettingsLocation::Global(&file_path), Some(&user_tasks_content), cx)
                         .log_err();
                 }) else {
                     return;
@@ -1049,9 +980,7 @@ impl SettingsObserver {
 
                 weak_entry
                     .update(cx, |_, cx| match result {
-                        Ok(()) => cx.emit(SettingsObserverEvent::LocalTasksUpdated(Ok(
-                            file_path.clone()
-                        ))),
+                        Ok(()) => cx.emit(SettingsObserverEvent::LocalTasksUpdated(Ok(file_path.clone()))),
                         Err(err) => cx.emit(SettingsObserverEvent::LocalTasksUpdated(Err(
                             InvalidSettingsError::Tasks {
                                 path: file_path.clone(),
@@ -1068,14 +997,13 @@ impl SettingsObserver {
         file_path: PathBuf,
         cx: &mut Context<Self>,
     ) -> Task<()> {
-        let mut user_tasks_file_rx =
-            watch_config_file(cx.background_executor(), fs, file_path.clone());
+        let mut user_tasks_file_rx = watch_config_file(cx.background_executor(), fs, file_path.clone());
         let user_tasks_content = cx.background_executor().block(user_tasks_file_rx.next());
         let weak_entry = cx.weak_entity();
         cx.spawn(async move |settings_observer, cx| {
-            let Ok(task_store) = settings_observer.read_with(cx, |settings_observer, _| {
-                settings_observer.task_store.clone()
-            }) else {
+            let Ok(task_store) =
+                settings_observer.read_with(cx, |settings_observer, _| settings_observer.task_store.clone())
+            else {
                 return;
             };
             if let Some(user_tasks_content) = user_tasks_content {
@@ -1104,15 +1032,13 @@ impl SettingsObserver {
 
                 weak_entry
                     .update(cx, |_, cx| match result {
-                        Ok(()) => cx.emit(SettingsObserverEvent::LocalDebugScenariosUpdated(Ok(
-                            file_path.clone(),
-                        ))),
-                        Err(err) => cx.emit(SettingsObserverEvent::LocalDebugScenariosUpdated(
-                            Err(InvalidSettingsError::Tasks {
+                        Ok(()) => cx.emit(SettingsObserverEvent::LocalDebugScenariosUpdated(Ok(file_path.clone()))),
+                        Err(err) => cx.emit(SettingsObserverEvent::LocalDebugScenariosUpdated(Err(
+                            InvalidSettingsError::Tasks {
                                 path: file_path.clone(),
                                 message: err.to_string(),
-                            }),
-                        )),
+                            },
+                        ))),
                     })
                     .ok();
             }

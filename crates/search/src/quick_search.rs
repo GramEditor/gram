@@ -7,20 +7,20 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::common::{
-    BottomResizeDrag, DEFAULT_PREVIEW_HEIGHT, DEFAULT_RESULTS_HEIGHT, DragPreview,
-    MAX_PREVIEW_HEIGHT, MIN_PANEL_HEIGHT, ResizeDrag, SEARCH_DEBOUNCE_MS, SearchDrag, SearchMatch,
+    BottomResizeDrag, DEFAULT_PREVIEW_HEIGHT, DEFAULT_RESULTS_HEIGHT, DragPreview, MAX_PREVIEW_HEIGHT,
+    MIN_PANEL_HEIGHT, ResizeDrag, SEARCH_DEBOUNCE_MS, SearchDrag, SearchMatch,
 };
 use crate::{
-    SearchOption, SearchOptions, SelectNextMatch, SelectPreviousMatch, ToggleCaseSensitive,
-    ToggleIncludeIgnored, ToggleRegex, ToggleReplace, ToggleWholeWord,
+    SearchOption, SearchOptions, SelectNextMatch, SelectPreviousMatch, ToggleCaseSensitive, ToggleIncludeIgnored,
+    ToggleRegex, ToggleReplace, ToggleWholeWord,
 };
 pub use app_actions::quick_search::Toggle;
 use editor::EditorSettings;
 use editor::{Editor, EditorEvent, EditorMode, RowHighlightOptions};
 use gpui::{
-    Action, App, AsyncApp, Context, DismissEvent, DragMoveEvent, Entity, EventEmitter, FocusHandle,
-    Focusable, Global, HighlightStyle, KeyContext, ParentElement, Render, Styled, StyledText,
-    Subscription, Task, WeakEntity, Window, actions, px, relative,
+    Action, App, AsyncApp, Context, DismissEvent, DragMoveEvent, Entity, EventEmitter, FocusHandle, Focusable, Global,
+    HighlightStyle, KeyContext, ParentElement, Render, Styled, StyledText, Subscription, Task, WeakEntity, Window,
+    actions, px, relative,
 };
 use language::Buffer;
 use language::language_settings::SoftWrap;
@@ -35,16 +35,13 @@ use text::{Anchor, Point, ToOffset};
 use theme::ActiveTheme;
 use ui::Divider;
 use ui::{
-    ButtonLike, ContextMenu, IconButton, IconName, KeyBinding, ListItem, ListItemSpacing,
-    PopoverMenu, PopoverMenuHandle, TintColor, Tooltip, prelude::*,
+    ButtonLike, ContextMenu, IconButton, IconName, KeyBinding, ListItem, ListItemSpacing, PopoverMenu,
+    PopoverMenuHandle, TintColor, Tooltip, prelude::*,
 };
 use util::{ResultExt, paths::PathMatcher};
 use workspace::{ModalView, SplitDirection, Workspace, pane};
 
-actions!(
-    quick_search,
-    [ReplaceNext, ReplaceAll, ToggleFilters, ToggleSplitMenu]
-);
+actions!(quick_search, [ReplaceNext, ReplaceAll, ToggleFilters, ToggleSplitMenu]);
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 enum InputPanel {
@@ -102,11 +99,7 @@ impl Focusable for QuickSearch {
 }
 
 impl QuickSearch {
-    fn register(
-        workspace: &mut Workspace,
-        _window: Option<&mut Window>,
-        _: &mut Context<Workspace>,
-    ) {
+    fn register(workspace: &mut Workspace, _window: Option<&mut Window>, _: &mut Context<Workspace>) {
         workspace.register_action(|workspace, _: &Toggle, window, cx| {
             let project = workspace.project().clone();
             let weak_workspace = cx.entity().downgrade();
@@ -196,33 +189,27 @@ impl QuickSearch {
                     cx.emit(DismissEvent);
                 }
             }),
-            cx.subscribe_in(
-                &preview_editor,
-                window,
-                |this, _, event: &EditorEvent, window, cx| {
-                    if matches!(event, EditorEvent::Edited { .. }) {
-                        this._autosave_task = Some(cx.spawn_in(window, async move |this, cx| {
-                            cx.background_executor()
-                                .timer(Duration::from_millis(500))
-                                .await;
+            cx.subscribe_in(&preview_editor, window, |this, _, event: &EditorEvent, window, cx| {
+                if matches!(event, EditorEvent::Edited { .. }) {
+                    this._autosave_task = Some(cx.spawn_in(window, async move |this, cx| {
+                        cx.background_executor().timer(Duration::from_millis(500)).await;
 
-                            this.update_in(cx, |this, _window, cx| {
-                                let delegate = &this.picker.read(cx).delegate;
-                                if let Some(m) = delegate.matches.get(delegate.selected_index) {
-                                    let buffer = m.buffer.clone();
-                                    let project = delegate.project.clone();
-                                    let mut buffers = HashSet::default();
-                                    buffers.insert(buffer);
-                                    project
-                                        .update(cx, |p, cx| p.save_buffers(buffers, cx))
-                                        .detach_and_log_err(cx);
-                                }
-                            })
-                            .log_err();
-                        }));
-                    }
-                },
-            ),
+                        this.update_in(cx, |this, _window, cx| {
+                            let delegate = &this.picker.read(cx).delegate;
+                            if let Some(m) = delegate.matches.get(delegate.selected_index) {
+                                let buffer = m.buffer.clone();
+                                let project = delegate.project.clone();
+                                let mut buffers = HashSet::default();
+                                buffers.insert(buffer);
+                                project
+                                    .update(cx, |p, cx| p.save_buffers(buffers, cx))
+                                    .detach_and_log_err(cx);
+                            }
+                        })
+                        .log_err();
+                    }));
+                }
+            }),
         ];
 
         Self {
@@ -255,8 +242,7 @@ impl QuickSearch {
 
         buffer.update(cx, |buffer, cx| {
             let snapshot = buffer.snapshot();
-            let range =
-                anchor_range.start.to_offset(&snapshot)..anchor_range.end.to_offset(&snapshot);
+            let range = anchor_range.start.to_offset(&snapshot)..anchor_range.end.to_offset(&snapshot);
             buffer.edit([(range, replacement.as_str())], None, cx);
         });
 
@@ -280,10 +266,8 @@ impl QuickSearch {
         let matches: Vec<_> = delegate.matches.clone();
         let project = delegate.project.clone();
 
-        let mut buffer_edits: std::collections::HashMap<
-            gpui::EntityId,
-            (Entity<Buffer>, Vec<Range<Anchor>>),
-        > = std::collections::HashMap::new();
+        let mut buffer_edits: std::collections::HashMap<gpui::EntityId, (Entity<Buffer>, Vec<Range<Anchor>>)> =
+            std::collections::HashMap::new();
 
         for m in &matches {
             let buffer_id = m.buffer.entity_id();
@@ -300,16 +284,11 @@ impl QuickSearch {
             buffer.update(cx, |buf, cx| {
                 let snapshot = buf.snapshot();
                 // Sort descending to avoid offset invalidation when editing
-                anchor_ranges.sort_by(|a, b| {
-                    b.start
-                        .to_offset(&snapshot)
-                        .cmp(&a.start.to_offset(&snapshot))
-                });
+                anchor_ranges.sort_by(|a, b| b.start.to_offset(&snapshot).cmp(&a.start.to_offset(&snapshot)));
 
                 for anchor_range in anchor_ranges {
                     let snapshot = buf.snapshot();
-                    let range = anchor_range.start.to_offset(&snapshot)
-                        ..anchor_range.end.to_offset(&snapshot);
+                    let range = anchor_range.start.to_offset(&snapshot)..anchor_range.end.to_offset(&snapshot);
                     buf.edit([(range, replacement.as_str())], None, cx);
                 }
             });
@@ -327,48 +306,23 @@ impl QuickSearch {
         });
     }
 
-    fn go_to_file_split_left(
-        &mut self,
-        _: &pane::SplitLeft,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn go_to_file_split_left(&mut self, _: &pane::SplitLeft, window: &mut Window, cx: &mut Context<Self>) {
         self.go_to_file_split_inner(SplitDirection::Left, window, cx);
     }
 
-    fn go_to_file_split_right(
-        &mut self,
-        _: &pane::SplitRight,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn go_to_file_split_right(&mut self, _: &pane::SplitRight, window: &mut Window, cx: &mut Context<Self>) {
         self.go_to_file_split_inner(SplitDirection::Right, window, cx);
     }
 
-    fn go_to_file_split_up(
-        &mut self,
-        _: &pane::SplitUp,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn go_to_file_split_up(&mut self, _: &pane::SplitUp, window: &mut Window, cx: &mut Context<Self>) {
         self.go_to_file_split_inner(SplitDirection::Up, window, cx);
     }
 
-    fn go_to_file_split_down(
-        &mut self,
-        _: &pane::SplitDown,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn go_to_file_split_down(&mut self, _: &pane::SplitDown, window: &mut Window, cx: &mut Context<Self>) {
         self.go_to_file_split_inner(SplitDirection::Down, window, cx);
     }
 
-    fn go_to_file_split_inner(
-        &mut self,
-        split_direction: SplitDirection,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn go_to_file_split_inner(&mut self, split_direction: SplitDirection, window: &mut Window, cx: &mut Context<Self>) {
         let delegate = &self.picker.read(cx).delegate;
         let Some(selected_match) = delegate.matches.get(delegate.selected_index) else {
             return;
@@ -395,12 +349,7 @@ impl Render for QuickSearch {
 
         let delegate = &self.picker.read(cx).delegate;
         let match_count = delegate.matches.len();
-        let file_count = delegate
-            .matches
-            .iter()
-            .map(|m| &m.path)
-            .collect::<HashSet<_>>()
-            .len();
+        let file_count = delegate.matches.iter().map(|m| &m.path).collect::<HashSet<_>>().len();
         let search_in_progress = delegate.search_in_progress;
         let replace_enabled = delegate.replace_enabled;
         let filters_enabled = delegate.filters_enabled;
@@ -444,28 +393,19 @@ impl Render for QuickSearch {
             }))
             .on_action(cx.listener(|this, _: &ToggleCaseSensitive, window, cx| {
                 this.picker.update(cx, |picker, cx| {
-                    picker
-                        .delegate
-                        .search_options
-                        .toggle(SearchOptions::CASE_SENSITIVE);
+                    picker.delegate.search_options.toggle(SearchOptions::CASE_SENSITIVE);
                     picker.refresh(window, cx);
                 });
             }))
             .on_action(cx.listener(|this, _: &ToggleWholeWord, window, cx| {
                 this.picker.update(cx, |picker, cx| {
-                    picker
-                        .delegate
-                        .search_options
-                        .toggle(SearchOptions::WHOLE_WORD);
+                    picker.delegate.search_options.toggle(SearchOptions::WHOLE_WORD);
                     picker.refresh(window, cx);
                 });
             }))
             .on_action(cx.listener(|this, _: &ToggleIncludeIgnored, window, cx| {
                 this.picker.update(cx, |picker, cx| {
-                    picker
-                        .delegate
-                        .search_options
-                        .toggle(SearchOptions::INCLUDE_IGNORED);
+                    picker.delegate.search_options.toggle(SearchOptions::INCLUDE_IGNORED);
                     picker.refresh(window, cx);
                 });
             }))
@@ -540,13 +480,11 @@ impl Render for QuickSearch {
                 },
                 |_, _, _, cx| cx.new(|_| DragPreview),
             )
-            .on_drag_move::<SearchDrag>(cx.listener(
-                |this, event: &DragMoveEvent<SearchDrag>, _window, cx| {
-                    let drag = event.drag(cx);
-                    this.offset = drag.offset_start + (event.event.position - drag.mouse_start);
-                    cx.notify();
-                },
-            ))
+            .on_drag_move::<SearchDrag>(cx.listener(|this, event: &DragMoveEvent<SearchDrag>, _window, cx| {
+                let drag = event.drag(cx);
+                this.offset = drag.offset_start + (event.event.position - drag.mouse_start);
+                cx.notify();
+            }))
             .child(
                 h_flex()
                     .px_4()
@@ -561,22 +499,16 @@ impl Render for QuickSearch {
                             .child(Label::new("Quick Search").size(LabelSize::Default))
                             .when(search_in_progress, |this| {
                                 this.child(
-                                    Label::new(format!(
-                                        "Searching... {} matches in {} files",
-                                        match_count, file_count
-                                    ))
-                                    .color(Color::Muted)
-                                    .size(LabelSize::Small),
+                                    Label::new(format!("Searching... {} matches in {} files", match_count, file_count))
+                                        .color(Color::Muted)
+                                        .size(LabelSize::Small),
                                 )
                             })
                             .when(!search_in_progress && has_matches, |this| {
                                 this.child(
-                                    Label::new(format!(
-                                        "{} matches in {} files",
-                                        match_count, file_count
-                                    ))
-                                    .color(Color::Muted)
-                                    .size(LabelSize::Small),
+                                    Label::new(format!("{} matches in {} files", match_count, file_count))
+                                        .color(Color::Muted)
+                                        .size(LabelSize::Small),
                                 )
                             }),
                     )
@@ -590,17 +522,11 @@ impl Render for QuickSearch {
                                     .size(ButtonSize::Compact)
                                     .toggle_state(replace_enabled)
                                     .tooltip(move |_window, cx| {
-                                        Tooltip::for_action_in(
-                                            "Toggle Replace",
-                                            &ToggleReplace,
-                                            &focus_handle,
-                                            cx,
-                                        )
+                                        Tooltip::for_action_in("Toggle Replace", &ToggleReplace, &focus_handle, cx)
                                     })
                                     .on_click(cx.listener(|this, _, window, cx| {
                                         this.picker.update(cx, |picker, cx| {
-                                            picker.delegate.replace_enabled =
-                                                !picker.delegate.replace_enabled;
+                                            picker.delegate.replace_enabled = !picker.delegate.replace_enabled;
                                             let focus_handle = if picker.delegate.replace_enabled {
                                                 picker.delegate.replacement_editor.focus_handle(cx)
                                             } else {
@@ -617,12 +543,7 @@ impl Render for QuickSearch {
                                     .size(ButtonSize::Compact)
                                     .toggle_state(filters_enabled)
                                     .tooltip(move |_window, cx| {
-                                        Tooltip::for_action_in(
-                                            "Toggle Filters",
-                                            &ToggleFilters,
-                                            &focus_handle,
-                                            cx,
-                                        )
+                                        Tooltip::for_action_in("Toggle Filters", &ToggleFilters, &focus_handle, cx)
                                     })
                                     .on_click(|_, window, cx| {
                                         window.dispatch_action(ToggleFilters.boxed_clone(), cx);
@@ -641,8 +562,7 @@ impl Render for QuickSearch {
                                         )
                                     })
                                     .on_click(|_, window, cx| {
-                                        window
-                                            .dispatch_action(SelectPreviousMatch.boxed_clone(), cx);
+                                        window.dispatch_action(SelectPreviousMatch.boxed_clone(), cx);
                                     })
                             })
                             .child({
@@ -650,12 +570,7 @@ impl Render for QuickSearch {
                                 IconButton::new("select-next-match", IconName::ChevronRight)
                                     .size(ButtonSize::Compact)
                                     .tooltip(move |_window, cx| {
-                                        Tooltip::for_action_in(
-                                            "Next Match",
-                                            &SelectNextMatch,
-                                            &focus_handle,
-                                            cx,
-                                        )
+                                        Tooltip::for_action_in("Next Match", &SelectNextMatch, &focus_handle, cx)
                                     })
                                     .on_click(|_, window, cx| {
                                         window.dispatch_action(SelectNextMatch.boxed_clone(), cx);
@@ -682,10 +597,7 @@ impl Render for QuickSearch {
 
                 let preview_header = selected_match.map(|m| {
                     let path = &m.path.path;
-                    let file_name = path
-                        .file_name()
-                        .map(|name| name.to_string())
-                        .unwrap_or_default();
+                    let file_name = path.file_name().map(|name| name.to_string()).unwrap_or_default();
                     let directory = path
                         .parent()
                         .map(|path| path.as_std_path().to_string_lossy().to_string())
@@ -706,11 +618,7 @@ impl Render for QuickSearch {
                             h_flex()
                                 .gap_2()
                                 .child(Label::new(file_name).size(LabelSize::Small))
-                                .child(
-                                    Label::new(directory)
-                                        .size(LabelSize::Small)
-                                        .color(Color::Muted),
-                                ),
+                                .child(Label::new(directory).size(LabelSize::Small).color(Color::Muted)),
                         )
                         .child(
                             PopoverMenu::new("split-menu-popover")
@@ -726,22 +634,13 @@ impl Render for QuickSearch {
                                         .child(Label::new("Split…").size(LabelSize::Small))
                                         .selected_style(ButtonStyle::Tinted(TintColor::Accent))
                                         .child(
-                                            KeyBinding::for_action_in(
-                                                &ToggleSplitMenu,
-                                                &focus_handle,
-                                                cx,
-                                            )
-                                            .size(TextSize::XSmall.rems(cx)),
+                                            KeyBinding::for_action_in(&ToggleSplitMenu, &focus_handle, cx)
+                                                .size(TextSize::XSmall.rems(cx)),
                                         ),
                                     {
                                         let focus_handle = focus_handle.clone();
                                         move |_window, cx| {
-                                            Tooltip::for_action_in(
-                                                "Open in Split",
-                                                &ToggleSplitMenu,
-                                                &focus_handle,
-                                                cx,
-                                            )
+                                            Tooltip::for_action_in("Open in Split", &ToggleSplitMenu, &focus_handle, cx)
                                         }
                                     },
                                 )
@@ -752,19 +651,10 @@ impl Render for QuickSearch {
                                             let focus_handle = focus_handle.clone();
                                             move |menu, _, _| {
                                                 menu.context(focus_handle)
-                                                    .action(
-                                                        "Split Left",
-                                                        pane::SplitLeft.boxed_clone(),
-                                                    )
-                                                    .action(
-                                                        "Split Right",
-                                                        pane::SplitRight.boxed_clone(),
-                                                    )
+                                                    .action("Split Left", pane::SplitLeft.boxed_clone())
+                                                    .action("Split Right", pane::SplitRight.boxed_clone())
                                                     .action("Split Up", pane::SplitUp.boxed_clone())
-                                                    .action(
-                                                        "Split Down",
-                                                        pane::SplitDown.boxed_clone(),
-                                                    )
+                                                    .action("Split Down", pane::SplitDown.boxed_clone())
                                             }
                                         }))
                                     }
@@ -788,23 +678,20 @@ impl Render for QuickSearch {
                         },
                         |_, _, _, cx| cx.new(|_| DragPreview),
                     )
-                    .on_drag_move::<ResizeDrag>(cx.listener(
-                        |this, event: &DragMoveEvent<ResizeDrag>, _window, cx| {
-                            let drag = event.drag(cx);
-                            let delta = event.event.position.y - drag.mouse_start_y;
-                            let total_height =
-                                drag.results_height_start + drag.preview_height_start;
+                    .on_drag_move::<ResizeDrag>(cx.listener(|this, event: &DragMoveEvent<ResizeDrag>, _window, cx| {
+                        let drag = event.drag(cx);
+                        let delta = event.event.position.y - drag.mouse_start_y;
+                        let total_height = drag.results_height_start + drag.preview_height_start;
 
-                            let new_results = (drag.results_height_start + delta)
-                                .max(px(MIN_PANEL_HEIGHT))
-                                .min(total_height - px(MIN_PANEL_HEIGHT));
-                            let new_preview = total_height - new_results;
+                        let new_results = (drag.results_height_start + delta)
+                            .max(px(MIN_PANEL_HEIGHT))
+                            .min(total_height - px(MIN_PANEL_HEIGHT));
+                        let new_preview = total_height - new_results;
 
-                            this.results_height = new_results;
-                            this.preview_height = new_preview;
-                            cx.notify();
-                        },
-                    ));
+                        this.results_height = new_results;
+                        this.preview_height = new_preview;
+                        cx.notify();
+                    }));
 
                 // Bottom resize handle for preview
                 let bottom_resize_handle = div()
@@ -970,8 +857,7 @@ impl QuickSearchDelegate {
                 );
 
                 // Highlight the match itself
-                let highlight_range =
-                    editor::Anchor::range_in_buffer(excerpt_id, anchor_range.clone());
+                let highlight_range = editor::Anchor::range_in_buffer(excerpt_id, anchor_range.clone());
 
                 editor.highlight_background::<SearchMatchHighlight>(
                     &[highlight_range],
@@ -1019,11 +905,7 @@ impl QuickSearchDelegate {
             let include_text = self.included_files_editor.read(cx).text(cx);
             match self.parse_path_matches(include_text, cx) {
                 Ok(matcher) => {
-                    if self
-                        .panels_with_errors
-                        .remove(&InputPanel::Include)
-                        .is_some()
-                    {
+                    if self.panels_with_errors.remove(&InputPanel::Include).is_some() {
                         cx.notify();
                     }
                     matcher
@@ -1048,11 +930,7 @@ impl QuickSearchDelegate {
             let exclude_text = self.excluded_files_editor.read(cx).text(cx);
             match self.parse_path_matches(exclude_text, cx) {
                 Ok(matcher) => {
-                    if self
-                        .panels_with_errors
-                        .remove(&InputPanel::Exclude)
-                        .is_some()
-                    {
+                    if self.panels_with_errors.remove(&InputPanel::Exclude).is_some() {
                         cx.notify();
                     }
                     matcher
@@ -1182,12 +1060,7 @@ impl PickerDelegate for QuickSearchDelegate {
         "Search all files...".into()
     }
 
-    fn render_editor(
-        &self,
-        editor: &Entity<Editor>,
-        window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) -> Div {
+    fn render_editor(&self, editor: &Entity<Editor>, window: &mut Window, cx: &mut Context<Picker<Self>>) -> Div {
         let search_options = self.search_options;
         let focus_handle = editor.focus_handle(cx);
 
@@ -1223,13 +1096,11 @@ impl PickerDelegate for QuickSearchDelegate {
                             .border_1()
                             .rounded_md()
                             .px_1()
-                            .border_color(
-                                if self.panels_with_errors.contains_key(&InputPanel::Query) {
-                                    Color::Error.color(cx)
-                                } else {
-                                    gpui::transparent_black()
-                                },
-                            )
+                            .border_color(if self.panels_with_errors.contains_key(&InputPanel::Query) {
+                                Color::Error.color(cx)
+                            } else {
+                                gpui::transparent_black()
+                            })
                             .child(editor.clone()),
                     )
                     .child({
@@ -1251,39 +1122,27 @@ impl PickerDelegate for QuickSearchDelegate {
                             })
                             .child({
                                 let focus_handle = focus_handle.clone();
-                                IconButton::new(
-                                    "case-sensitive",
-                                    SearchOption::CaseSensitive.icon(),
-                                )
-                                .size(ButtonSize::Compact)
-                                .toggle_state(
-                                    search_options.contains(SearchOptions::CASE_SENSITIVE),
-                                )
-                                .tooltip(move |_window, cx| {
-                                    Tooltip::for_action_in(
-                                        SearchOption::CaseSensitive.label(),
-                                        &ToggleCaseSensitive,
-                                        &focus_handle,
-                                        cx,
-                                    )
-                                })
-                                .on_click(cx.listener(
-                                    |picker, _, window, cx| {
-                                        picker
-                                            .delegate
-                                            .search_options
-                                            .toggle(SearchOptions::CASE_SENSITIVE);
+                                IconButton::new("case-sensitive", SearchOption::CaseSensitive.icon())
+                                    .size(ButtonSize::Compact)
+                                    .toggle_state(search_options.contains(SearchOptions::CASE_SENSITIVE))
+                                    .tooltip(move |_window, cx| {
+                                        Tooltip::for_action_in(
+                                            SearchOption::CaseSensitive.label(),
+                                            &ToggleCaseSensitive,
+                                            &focus_handle,
+                                            cx,
+                                        )
+                                    })
+                                    .on_click(cx.listener(|picker, _, window, cx| {
+                                        picker.delegate.search_options.toggle(SearchOptions::CASE_SENSITIVE);
                                         picker.refresh(window, cx);
-                                    },
-                                ))
+                                    }))
                             })
                             .child({
                                 let focus_handle = focus_handle.clone();
                                 IconButton::new("whole-word", SearchOption::WholeWord.icon())
                                     .size(ButtonSize::Compact)
-                                    .toggle_state(
-                                        search_options.contains(SearchOptions::WHOLE_WORD),
-                                    )
+                                    .toggle_state(search_options.contains(SearchOptions::WHOLE_WORD))
                                     .tooltip(move |_window, cx| {
                                         Tooltip::for_action_in(
                                             SearchOption::WholeWord.label(),
@@ -1293,10 +1152,7 @@ impl PickerDelegate for QuickSearchDelegate {
                                         )
                                     })
                                     .on_click(cx.listener(|picker, _, window, cx| {
-                                        picker
-                                            .delegate
-                                            .search_options
-                                            .toggle(SearchOptions::WHOLE_WORD);
+                                        picker.delegate.search_options.toggle(SearchOptions::WHOLE_WORD);
                                         picker.refresh(window, cx);
                                     }))
                             })
@@ -1326,12 +1182,7 @@ impl PickerDelegate for QuickSearchDelegate {
                         .h_9()
                         .px_2p5()
                         .gap_1()
-                        .child(
-                            div()
-                                .flex_1()
-                                .overflow_hidden()
-                                .child(self.replacement_editor.clone()),
-                        )
+                        .child(div().flex_1().overflow_hidden().child(self.replacement_editor.clone()))
                         .child({
                             h_flex()
                                 .flex_none()
@@ -1357,12 +1208,7 @@ impl PickerDelegate for QuickSearchDelegate {
                                     IconButton::new("replace-all", IconName::ReplaceAll)
                                         .shape(ui::IconButtonShape::Square)
                                         .tooltip(move |_window, cx| {
-                                            Tooltip::for_action_in(
-                                                "Replace All",
-                                                &ReplaceAll,
-                                                &focus_handle,
-                                                cx,
-                                            )
+                                            Tooltip::for_action_in("Replace All", &ReplaceAll, &focus_handle, cx)
                                         })
                                         .on_click(|_, window, cx| {
                                             window.dispatch_action(ReplaceAll.boxed_clone(), cx);
@@ -1382,11 +1228,7 @@ impl PickerDelegate for QuickSearchDelegate {
                             h_flex()
                                 .flex_1()
                                 .gap_1()
-                                .child(
-                                    Label::new("Include:")
-                                        .size(LabelSize::Small)
-                                        .color(Color::Muted),
-                                )
+                                .child(Label::new("Include:").size(LabelSize::Small).color(Color::Muted))
                                 .child(
                                     div()
                                         .flex_1()
@@ -1394,16 +1236,11 @@ impl PickerDelegate for QuickSearchDelegate {
                                         .border_1()
                                         .rounded_md()
                                         .px_1()
-                                        .border_color(
-                                            if self
-                                                .panels_with_errors
-                                                .contains_key(&InputPanel::Include)
-                                            {
-                                                Color::Error.color(cx)
-                                            } else {
-                                                gpui::transparent_black()
-                                            },
-                                        )
+                                        .border_color(if self.panels_with_errors.contains_key(&InputPanel::Include) {
+                                            Color::Error.color(cx)
+                                        } else {
+                                            gpui::transparent_black()
+                                        })
                                         .child(self.included_files_editor.clone()),
                                 ),
                         )
@@ -1411,11 +1248,7 @@ impl PickerDelegate for QuickSearchDelegate {
                             h_flex()
                                 .flex_1()
                                 .gap_1()
-                                .child(
-                                    Label::new("Exclude:")
-                                        .size(LabelSize::Small)
-                                        .color(Color::Muted),
-                                )
+                                .child(Label::new("Exclude:").size(LabelSize::Small).color(Color::Muted))
                                 .child(
                                     div()
                                         .flex_1()
@@ -1423,16 +1256,11 @@ impl PickerDelegate for QuickSearchDelegate {
                                         .border_1()
                                         .rounded_md()
                                         .px_1()
-                                        .border_color(
-                                            if self
-                                                .panels_with_errors
-                                                .contains_key(&InputPanel::Exclude)
-                                            {
-                                                Color::Error.color(cx)
-                                            } else {
-                                                gpui::transparent_black()
-                                            },
-                                        )
+                                        .border_color(if self.panels_with_errors.contains_key(&InputPanel::Exclude) {
+                                            Color::Error.color(cx)
+                                        } else {
+                                            gpui::transparent_black()
+                                        })
                                         .child(self.excluded_files_editor.clone()),
                                 ),
                         )
@@ -1453,28 +1281,19 @@ impl PickerDelegate for QuickSearchDelegate {
                                 .child(
                                     IconButton::new("include-ignored", IconName::Sliders)
                                         .size(ButtonSize::Compact)
-                                        .toggle_state(
-                                            self.search_options
-                                                .contains(SearchOptions::INCLUDE_IGNORED),
-                                        )
-                                        .tooltip(Tooltip::text(
-                                            "Also search files ignored by configuration",
-                                        ))
+                                        .toggle_state(self.search_options.contains(SearchOptions::INCLUDE_IGNORED))
+                                        .tooltip(Tooltip::text("Also search files ignored by configuration"))
                                         .on_click(cx.listener(|picker, _, window, cx| {
-                                            picker
-                                                .delegate
-                                                .search_options
-                                                .toggle(SearchOptions::INCLUDE_IGNORED);
+                                            picker.delegate.search_options.toggle(SearchOptions::INCLUDE_IGNORED);
                                             picker.refresh(window, cx);
                                         })),
                                 ),
                         ),
                 )
             })
-            .when(
-                self.editor_position() == PickerEditorPosition::Start,
-                |this| this.child(Divider::horizontal()),
-            )
+            .when(self.editor_position() == PickerEditorPosition::Start, |this| {
+                this.child(Divider::horizontal())
+            })
     }
 
     fn match_count(&self) -> usize {
@@ -1485,29 +1304,18 @@ impl PickerDelegate for QuickSearchDelegate {
         self.selected_index
     }
 
-    fn set_selected_index(
-        &mut self,
-        ix: usize,
-        window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) {
+    fn set_selected_index(&mut self, ix: usize, window: &mut Window, cx: &mut Context<Picker<Self>>) {
         self.selected_index = ix;
         self.last_selection_change_time = Some(std::time::Instant::now());
         self.update_preview(window, cx);
     }
 
-    fn update_matches(
-        &mut self,
-        query: String,
-        window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) -> Task<()> {
+    fn update_matches(&mut self, query: String, window: &mut Window, cx: &mut Context<Picker<Self>>) -> Task<()> {
         if !query.is_empty() {
             save_recent_query(&query, cx);
         }
 
-        self.cancel_flag
-            .store(true, std::sync::atomic::Ordering::SeqCst);
+        self.cancel_flag.store(true, std::sync::atomic::Ordering::SeqCst);
         self.cancel_flag = Arc::new(std::sync::atomic::AtomicBool::new(false));
 
         let cancel_flag = self.cancel_flag.clone();
@@ -1526,9 +1334,7 @@ impl PickerDelegate for QuickSearchDelegate {
             return Task::ready(());
         };
 
-        let search_results = self
-            .project
-            .update(cx, |project, cx| project.search(search_query, cx));
+        let search_results = self.project.update(cx, |project, cx| project.search(search_query, cx));
 
         self.matches.clear();
         self.selected_index = 0;
@@ -1558,9 +1364,7 @@ impl PickerDelegate for QuickSearchDelegate {
                 for result in results {
                     match result {
                         SearchResult::Buffer { buffer, ranges } => {
-                            if let Ok(matches) =
-                                QuickSearchDelegate::process_search_result(&buffer, &ranges, cx)
-                            {
+                            if let Ok(matches) = QuickSearchDelegate::process_search_result(&buffer, &ranges, cx) {
                                 batch_matches.extend(matches);
                             }
                         }
@@ -1575,15 +1379,11 @@ impl PickerDelegate for QuickSearchDelegate {
                         let delegate = &mut picker.delegate;
                         delegate.matches.extend(batch_matches);
 
-                        if delegate.selected_index >= delegate.matches.len()
-                            && !delegate.matches.is_empty()
-                        {
+                        if delegate.selected_index >= delegate.matches.len() && !delegate.matches.is_empty() {
                             delegate.selected_index = 0;
                         }
 
-                        if delegate.matches.len() == delegate.selected_index + 1
-                            || delegate.selected_index == 0
-                        {
+                        if delegate.matches.len() == delegate.selected_index + 1 || delegate.selected_index == 0 {
                             delegate.update_preview(window, cx);
                         }
 
@@ -1608,8 +1408,7 @@ impl PickerDelegate for QuickSearchDelegate {
     }
 
     fn confirm(&mut self, secondary: bool, window: &mut Window, cx: &mut Context<Picker<Self>>) {
-        let in_replace =
-            self.replace_enabled && self.replacement_editor.focus_handle(cx).is_focused(window);
+        let in_replace = self.replace_enabled && self.replacement_editor.focus_handle(cx).is_focused(window);
 
         if in_replace {
             if secondary {
@@ -1729,9 +1528,7 @@ impl PickerDelegate for QuickSearchDelegate {
 
                 for chunk in snapshot.chunks(range, true) {
                     let chunk_len = chunk.text.len();
-                    let syntax_style = chunk
-                        .syntax_highlight_id
-                        .and_then(|id| id.style(&syntax_theme));
+                    let syntax_style = chunk.syntax_highlight_id.and_then(|id| id.style(&syntax_theme));
 
                     let style = if is_match {
                         let mut style = syntax_style.unwrap_or_default();
@@ -1772,8 +1569,7 @@ impl PickerDelegate for QuickSearchDelegate {
                                 .text_ellipsis()
                                 .whitespace_nowrap()
                                 .child(
-                                    StyledText::new(line_text_string)
-                                        .with_default_highlights(&text_style, highlights),
+                                    StyledText::new(line_text_string).with_default_highlights(&text_style, highlights),
                                 ),
                         )
                         .child(

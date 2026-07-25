@@ -5,13 +5,12 @@ use objc2_core_graphics::CGKeyCode;
 use objc2_foundation::NSUInteger;
 
 use crate::{
-    Capslock, KeyDownEvent, KeyUpEvent, Keystroke, Modifiers, ModifiersChangedEvent, MouseButton,
-    MouseDownEvent, MouseExitEvent, MouseMoveEvent, MousePressureEvent, MouseUpEvent,
-    NavigationDirection, Pixels, PlatformInput, PressureStage, ScrollDelta, ScrollWheelEvent,
-    TouchPhase,
+    Capslock, KeyDownEvent, KeyUpEvent, Keystroke, Modifiers, ModifiersChangedEvent, MouseButton, MouseDownEvent,
+    MouseExitEvent, MouseMoveEvent, MousePressureEvent, MouseUpEvent, NavigationDirection, Pixels, PlatformInput,
+    PressureStage, ScrollDelta, ScrollWheelEvent, TouchPhase,
     platform::mac::{
-        LMGetKbdType, TISCopyCurrentKeyboardLayoutInputSource, TISGetInputSourceProperty,
-        UCKeyTranslate, kTISPropertyUnicodeKeyLayoutData,
+        LMGetKbdType, TISCopyCurrentKeyboardLayoutInputSource, TISGetInputSourceProperty, UCKeyTranslate,
+        kTISPropertyUnicodeKeyLayoutData,
     },
     point, px,
 };
@@ -111,10 +110,7 @@ fn read_modifiers(native_event: &NSEvent) -> Modifiers {
 }
 
 impl PlatformInput {
-    pub(crate) unsafe fn from_native(
-        native_event: &NSEvent,
-        window_height: Option<Pixels>,
-    ) -> Option<Self> {
+    pub(crate) unsafe fn from_native(native_event: &NSEvent, window_height: Option<Pixels>) -> Option<Self> {
         let event_type = native_event.r#type();
 
         // Filter out event types that aren't in the NSEventType enum.
@@ -130,9 +126,7 @@ impl PlatformInput {
             NSEventType::FlagsChanged => Some(Self::ModifiersChanged(ModifiersChangedEvent {
                 modifiers: read_modifiers(native_event),
                 capslock: Capslock {
-                    on: native_event
-                        .modifierFlags()
-                        .contains(NSEventModifierFlags::CapsLock),
+                    on: native_event.modifierFlags().contains(NSEventModifierFlags::CapsLock),
                 },
             })),
             NSEventType::KeyDown => {
@@ -147,9 +141,7 @@ impl PlatformInput {
             NSEventType::KeyUp => Some(Self::KeyUp(KeyUpEvent {
                 keystroke: parse_keystroke(native_event),
             })),
-            NSEventType::LeftMouseDown
-            | NSEventType::RightMouseDown
-            | NSEventType::OtherMouseDown => {
+            NSEventType::LeftMouseDown | NSEventType::RightMouseDown | NSEventType::OtherMouseDown => {
                 let button = match native_event.buttonNumber() {
                     0 => MouseButton::Left,
                     1 => MouseButton::Right,
@@ -271,9 +263,7 @@ impl PlatformInput {
                     modifiers: read_modifiers(native_event),
                 })
             }),
-            NSEventType::LeftMouseDragged
-            | NSEventType::RightMouseDragged
-            | NSEventType::OtherMouseDragged => {
+            NSEventType::LeftMouseDragged | NSEventType::RightMouseDragged | NSEventType::OtherMouseDragged => {
                 let pressed_button = match native_event.buttonNumber() {
                     0 => MouseButton::Left,
                     1 => MouseButton::Right,
@@ -323,10 +313,7 @@ impl PlatformInput {
 
 fn parse_keystroke(native_event: &NSEvent) -> Keystroke {
     use objc2_app_kit::*;
-    let mut characters = native_event
-        .charactersIgnoringModifiers()
-        .unwrap()
-        .to_string();
+    let mut characters = native_event.charactersIgnoringModifiers().unwrap().to_string();
     let mut key_char = None;
     let first_char = characters.chars().next().map(|ch| ch as c_uint);
     let modifiers = native_event.modifierFlags();
@@ -337,8 +324,7 @@ fn parse_keystroke(native_event: &NSEvent) -> Keystroke {
     let mut shift = modifiers.contains(NSEventModifierFlags::Shift);
     let command = modifiers.contains(NSEventModifierFlags::Command);
     let function = modifiers.contains(NSEventModifierFlags::Function)
-        && first_char
-            .is_none_or(|ch| !(NSUpArrowFunctionKey..=NSModeSwitchFunctionKey).contains(&ch));
+        && first_char.is_none_or(|ch| !(NSUpArrowFunctionKey..=NSModeSwitchFunctionKey).contains(&ch));
 
     #[allow(non_upper_case_globals)]
     let key = match first_char {
@@ -415,16 +401,14 @@ fn parse_keystroke(native_event: &NSEvent) -> Keystroke {
             // * Russian          7 | 7    | cmd-7 | cmd-&        (shift-7 is . but when cmd is down, should use cmd layout)
             // * German QWERTZ    ; | ö    | cmd-ö | cmd-Ö        (Gram's shift special case only applies to a-z)
             //
-            let mut chars_ignoring_modifiers =
-                chars_for_modified_key(native_event.keyCode(), NO_MOD);
+            let mut chars_ignoring_modifiers = chars_for_modified_key(native_event.keyCode(), NO_MOD);
             let mut chars_with_shift = chars_for_modified_key(native_event.keyCode(), SHIFT_MOD);
             let always_use_cmd_layout = always_use_command_layout();
 
             // Handle Dvorak+QWERTY / Russian / Armenian
             if command || always_use_cmd_layout {
                 let chars_with_cmd = chars_for_modified_key(native_event.keyCode(), CMD_MOD);
-                let chars_with_both =
-                    chars_for_modified_key(native_event.keyCode(), CMD_MOD | SHIFT_MOD);
+                let chars_with_both = chars_for_modified_key(native_event.keyCode(), CMD_MOD | SHIFT_MOD);
 
                 // We don't do this in the case that the shifted command key generates
                 // the same character as the unshifted command key (Norwegian, e.g.)
@@ -451,11 +435,7 @@ fn parse_keystroke(native_event: &NSEvent) -> Keystroke {
                 key_char = Some(chars_for_modified_key(native_event.keyCode(), mods));
             }
 
-            if shift
-                && chars_ignoring_modifiers
-                    .chars()
-                    .all(|c| c.is_ascii_lowercase())
-            {
+            if shift && chars_ignoring_modifiers.chars().all(|c| c.is_ascii_lowercase()) {
                 chars_ignoring_modifiers
             } else if shift {
                 shift = false;
@@ -516,8 +496,7 @@ fn chars_for_modified_key(code: CGKeyCode, modifiers: u32) -> String {
     let mut buffer: [u16; BUFFER_SIZE] = [0; BUFFER_SIZE];
     let mut buffer_size: usize = 0;
 
-    let Some(keyboard) = (unsafe { Retained::from_raw(TISCopyCurrentKeyboardLayoutInputSource()) })
-    else {
+    let Some(keyboard) = (unsafe { Retained::from_raw(TISCopyCurrentKeyboardLayoutInputSource()) }) else {
         return "".to_string();
     };
     let Some(layout_data) = (unsafe {

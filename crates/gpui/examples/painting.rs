@@ -1,7 +1,7 @@
 use gpui::{
-    Application, Background, Bounds, ColorSpace, Context, MouseDownEvent, Path, PathBuilder,
-    PathStyle, Pixels, Point, Render, StrokeOptions, Window, WindowOptions, canvas, div,
-    linear_color_stop, linear_gradient, point, prelude::*, px, quad, rgb, size,
+    Application, Background, Bounds, ColorSpace, Context, MouseDownEvent, Path, PathBuilder, PathStyle, Pixels, Point,
+    Render, StrokeOptions, Window, WindowOptions, canvas, div, linear_color_stop, linear_gradient, point, prelude::*,
+    px, quad, rgb, size,
 };
 
 struct PaintingViewer {
@@ -235,31 +235,11 @@ impl PaintingViewer {
         let center = point(px(96.), px(96.));
         let pie_center = point(px(775.), px(255.));
         let segments = [
-            (
-                point(px(871.), px(255.)),
-                point(px(747.), px(163.)),
-                rgb(0x1374e9),
-            ),
-            (
-                point(px(747.), px(163.)),
-                point(px(679.), px(263.)),
-                rgb(0xe13527),
-            ),
-            (
-                point(px(679.), px(263.)),
-                point(px(754.), px(349.)),
-                rgb(0x0751ce),
-            ),
-            (
-                point(px(754.), px(349.)),
-                point(px(854.), px(310.)),
-                rgb(0x209742),
-            ),
-            (
-                point(px(854.), px(310.)),
-                point(px(871.), px(255.)),
-                rgb(0xfbc10a),
-            ),
+            (point(px(871.), px(255.)), point(px(747.), px(163.)), rgb(0x1374e9)),
+            (point(px(747.), px(163.)), point(px(679.), px(263.)), rgb(0xe13527)),
+            (point(px(679.), px(263.)), point(px(754.), px(349.)), rgb(0x0751ce)),
+            (point(px(754.), px(349.)), point(px(854.), px(310.)), rgb(0x209742)),
+            (point(px(854.), px(310.)), point(px(871.), px(255.)), rgb(0xfbc10a)),
         ];
 
         for (start, end, color) in segments {
@@ -344,11 +324,9 @@ impl Render for PaintingViewer {
                         div()
                             .flex()
                             .gap_x_2()
-                            .child(button(
-                                if dashed { "Solid" } else { "Dashed" },
-                                cx,
-                                move |this, _| this.dashed = !dashed,
-                            ))
+                            .child(button(if dashed { "Solid" } else { "Dashed" }, cx, move |this, _| {
+                                this.dashed = !dashed
+                            }))
                             .child(button("Clear", cx, |this, cx| this.clear(cx))),
                     ),
             )

@@ -27,9 +27,7 @@ pub struct FakeSystemClock {
 #[cfg(any(test, feature = "test-support"))]
 impl FakeSystemClock {
     pub fn new() -> Self {
-        let state = FakeSystemClockState {
-            now: Instant::now(),
-        };
+        let state = FakeSystemClockState { now: Instant::now() };
 
         Self {
             state: parking_lot::Mutex::new(state),

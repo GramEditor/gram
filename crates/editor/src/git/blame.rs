@@ -8,8 +8,8 @@ use git::{
     commit::ParsedCommitMessage,
 };
 use gpui::{
-    AnyElement, App, AppContext as _, Context, Entity, Hsla, ScrollHandle, Subscription, Task,
-    TextStyle, WeakEntity, Window,
+    AnyElement, App, AppContext as _, Context, Entity, Hsla, ScrollHandle, Subscription, Task, TextStyle, WeakEntity,
+    Window,
 };
 use itertools::Itertools;
 use language::{Bias, BufferSnapshot, Edit};
@@ -100,12 +100,7 @@ pub trait BlameRenderer {
         _: &mut App,
     ) -> Option<AnyElement>;
 
-    fn render_inline_blame_entry(
-        &self,
-        _: &TextStyle,
-        _: BlameEntry,
-        _: &mut App,
-    ) -> Option<AnyElement>;
+    fn render_inline_blame_entry(&self, _: &TextStyle, _: BlameEntry, _: &mut App) -> Option<AnyElement>;
 
     fn render_blame_entry_popover(
         &self,
@@ -150,12 +145,7 @@ impl BlameRenderer for () {
         None
     }
 
-    fn render_inline_blame_entry(
-        &self,
-        _: &TextStyle,
-        _: BlameEntry,
-        _: &mut App,
-    ) -> Option<AnyElement> {
+    fn render_inline_blame_entry(&self, _: &TextStyle, _: BlameEntry, _: &mut App) -> Option<AnyElement> {
         None
     }
 
@@ -196,19 +186,17 @@ impl GitBlame {
         focused: bool,
         cx: &mut Context<Self>,
     ) -> Self {
-        let multi_buffer_subscription = cx.subscribe(
-            &multi_buffer,
-            |git_blame, multi_buffer, event, cx| match event {
-                multi_buffer::Event::DirtyChanged => {
-                    if !multi_buffer.read(cx).is_dirty(cx) {
-                        git_blame.generate(cx);
-                    }
+        let multi_buffer_subscription = cx.subscribe(&multi_buffer, |git_blame, multi_buffer, event, cx| match event {
+            multi_buffer::Event::DirtyChanged => {
+                if !multi_buffer.read(cx).is_dirty(cx) {
+                    git_blame.generate(cx);
                 }
-                multi_buffer::Event::ExcerptsAdded { .. }
-                | multi_buffer::Event::ExcerptsEdited { .. } => git_blame.regenerate_on_edit(cx),
-                _ => {}
-            },
-        );
+            }
+            multi_buffer::Event::ExcerptsAdded { .. } | multi_buffer::Event::ExcerptsEdited { .. } => {
+                git_blame.regenerate_on_edit(cx)
+            }
+            _ => {}
+        });
 
         let project_subscription = cx.subscribe(&project, {
             let multi_buffer = multi_buffer.downgrade();
@@ -234,16 +222,15 @@ impl GitBlame {
         });
 
         let git_store = project.read(cx).git_store().clone();
-        let git_store_subscription =
-            cx.subscribe(&git_store, move |this, _, event, cx| match event {
-                GitStoreEvent::RepositoryUpdated(_, _, _)
-                | GitStoreEvent::RepositoryAdded
-                | GitStoreEvent::RepositoryRemoved(_) => {
-                    log::debug!("Status of git repositories updated. Regenerating blame data...",);
-                    this.generate(cx);
-                }
-                _ => {}
-            });
+        let git_store_subscription = cx.subscribe(&git_store, move |this, _, event, cx| match event {
+            GitStoreEvent::RepositoryUpdated(_, _, _)
+            | GitStoreEvent::RepositoryAdded
+            | GitStoreEvent::RepositoryRemoved(_) => {
+                log::debug!("Status of git repositories updated. Regenerating blame data...",);
+                this.generate(cx);
+            }
+            _ => {}
+        });
 
         let mut this = Self {
             project,
@@ -254,11 +241,7 @@ impl GitBlame {
             changed_while_blurred: false,
             task: Task::ready(Ok(())),
             regenerate_on_edit_task: Task::ready(Ok(())),
-            _regenerate_subscriptions: vec![
-                multi_buffer_subscription,
-                project_subscription,
-                git_store_subscription,
-            ],
+            _regenerate_subscriptions: vec![multi_buffer_subscription, project_subscription, git_store_subscription],
         };
         this.generate(cx);
         this
@@ -277,16 +260,8 @@ impl GitBlame {
         !self.buffers.is_empty()
     }
 
-    pub fn details_for_entry(
-        &self,
-        buffer: BufferId,
-        entry: &BlameEntry,
-    ) -> Option<ParsedCommitMessage> {
-        self.buffers
-            .get(&buffer)?
-            .commit_details
-            .get(&entry.sha)
-            .cloned()
+    pub fn details_for_entry(&self, buffer: BufferId, entry: &BlameEntry) -> Option<ParsedCommitMessage> {
+        self.buffers.get(&buffer)?.commit_details.get(&entry.sha).cloned()
     }
 
     pub fn blame_for_rows<'a>(
@@ -372,18 +347,12 @@ impl GitBlame {
             .map(|edit| {
                 let old_point_range = blame_buffer.buffer_snapshot.offset_to_point(edit.old.start)
                     ..blame_buffer.buffer_snapshot.offset_to_point(edit.old.end);
-                let new_point_range = new_snapshot.offset_to_point(edit.new.start)
-                    ..new_snapshot.offset_to_point(edit.new.end);
+                let new_point_range =
+                    new_snapshot.offset_to_point(edit.new.start)..new_snapshot.offset_to_point(edit.new.end);
 
-                if old_point_range.start.column
-                    == blame_buffer
-                        .buffer_snapshot
-                        .line_len(old_point_range.start.row)
+                if old_point_range.start.column == blame_buffer.buffer_snapshot.line_len(old_point_range.start.row)
                     && (new_snapshot.chars_at(edit.new.start).next() == Some('\n')
-                        || blame_buffer
-                            .buffer_snapshot
-                            .line_len(old_point_range.end.row)
-                            == 0)
+                        || blame_buffer.buffer_snapshot.line_len(old_point_range.end.row) == 0)
                 {
                     Edit {
                         old: old_point_range.start.row + 1..old_point_range.end.row + 1,
@@ -444,9 +413,7 @@ impl GitBlame {
             }
 
             let old_end = cursor.end();
-            if row_edits
-                .peek()
-                .is_none_or(|next_edit| next_edit.old.start >= old_end)
+            if row_edits.peek().is_none_or(|next_edit| next_edit.old.start >= old_end)
                 && let Some(entry) = cursor.item()
             {
                 if old_end > edit.old.end {
@@ -526,16 +493,13 @@ impl GitBlame {
                                 .read(cx)
                                 .repository_and_path_for_buffer_id(buffer.read(cx).remote_id(), cx)
                                 .and_then(|(repo, _)| repo.read(cx).default_remote_url());
-                            let blame_buffer = project
-                                .update(cx, |project, cx| project.blame_buffer(&buffer, None, cx));
-                            Ok(async move {
-                                (id, snapshot, buffer_edits, blame_buffer.await, remote_url)
-                            })
+                            let blame_buffer =
+                                project.update(cx, |project, cx| project.blame_buffer(&buffer, None, cx));
+                            Ok(async move { (id, snapshot, buffer_edits, blame_buffer.await, remote_url) })
                         })
                         .collect::<Result<Vec<_>>>()
                 })??;
-                let provider_registry =
-                    cx.update(|cx| GitHostingProviderRegistry::default_global(cx))?;
+                let provider_registry = cx.update(|cx| GitHostingProviderRegistry::default_global(cx))?;
                 let (results, errors) = cx
                     .background_spawn({
                         async move {
@@ -545,38 +509,22 @@ impl GitBlame {
                             for (id, snapshot, buffer_edits, blame, remote_url) in blame {
                                 match blame {
                                     Ok(Some(Blame { entries, messages })) => {
-                                        let entries = build_blame_entry_sum_tree(
-                                            entries,
-                                            snapshot.max_point().row,
-                                        );
+                                        let entries = build_blame_entry_sum_tree(entries, snapshot.max_point().row);
                                         let commit_details = messages
                                             .into_iter()
                                             .map(|(oid, message)| {
-                                                let parsed_commit_message =
-                                                    ParsedCommitMessage::parse(
-                                                        oid.to_string(),
-                                                        message,
-                                                        remote_url.as_deref(),
-                                                        Some(provider_registry.clone()),
-                                                    );
+                                                let parsed_commit_message = ParsedCommitMessage::parse(
+                                                    oid.to_string(),
+                                                    message,
+                                                    remote_url.as_deref(),
+                                                    Some(provider_registry.clone()),
+                                                );
                                                 (oid, parsed_commit_message)
                                             })
                                             .collect();
-                                        res.push((
-                                            id,
-                                            snapshot,
-                                            buffer_edits,
-                                            Some(entries),
-                                            commit_details,
-                                        ));
+                                        res.push((id, snapshot, buffer_edits, Some(entries), commit_details));
                                     }
-                                    Ok(None) => res.push((
-                                        id,
-                                        snapshot,
-                                        buffer_edits,
-                                        None,
-                                        Default::default(),
-                                    )),
+                                    Ok(None) => res.push((id, snapshot, buffer_edits, None, Default::default())),
                                     Err(e) => errors.push(e),
                                 }
                             }
@@ -768,9 +716,7 @@ mod tests {
 
         let project = Project::test(fs, ["/my-repo".as_ref()], cx).await;
         let buffer = project
-            .update(cx, |project, cx| {
-                project.open_local_buffer("/my-repo/file.txt", cx)
-            })
+            .update(cx, |project, cx| project.open_local_buffer("/my-repo/file.txt", cx))
             .await
             .unwrap();
         let buffer = cx.new(|cx| MultiBuffer::singleton(buffer, cx));
@@ -782,8 +728,7 @@ mod tests {
             event,
             project::Event::Toast {
                 notification_id: "git-blame".into(),
-                message: "Failed to blame \"file.txt\": failed to get blame for \"file.txt\""
-                    .to_string()
+                message: "Failed to blame \"file.txt\": failed to get blame for \"file.txt\"".to_string()
             }
         );
 
@@ -848,9 +793,7 @@ mod tests {
         );
         let project = Project::test(fs, ["/my-repo".as_ref()], cx).await;
         let buffer = project
-            .update(cx, |project, cx| {
-                project.open_local_buffer("/my-repo/file.txt", cx)
-            })
+            .update(cx, |project, cx| project.open_local_buffer("/my-repo/file.txt", cx))
             .await
             .unwrap();
         let buffer_id = buffer.read_with(cx, |buffer, _| buffer.remote_id());
@@ -1021,13 +964,7 @@ mod tests {
 
         // Before we insert a newline at the end, sanity check:
         git_blame.update(cx, |blame, cx| {
-            assert_blame_rows(
-                blame,
-                buffer_id,
-                3..4,
-                vec![Some(blame_entry("1b1b1b", 0..4))],
-                cx,
-            );
+            assert_blame_rows(blame, buffer_id, 3..4, vec![Some(blame_entry("1b1b1b", 0..4))], cx);
         });
         // Insert a newline at the end
         buffer.update(cx, |buffer, cx| {
@@ -1046,13 +983,7 @@ mod tests {
 
         // Before we insert a newline at the start, sanity check:
         git_blame.update(cx, |blame, cx| {
-            assert_blame_rows(
-                blame,
-                buffer_id,
-                2..3,
-                vec![Some(blame_entry("1b1b1b", 0..4))],
-                cx,
-            );
+            assert_blame_rows(blame, buffer_id, 2..3, vec![Some(blame_entry("1b1b1b", 0..4))], cx);
         });
 
         // Usage example
@@ -1078,10 +1009,7 @@ mod tests {
             .map(|i| i.parse().expect("invalid `OPERATIONS` variable"))
             .unwrap_or(10);
         let max_edits_per_operation = env::var("MAX_EDITS_PER_OPERATION")
-            .map(|i| {
-                i.parse()
-                    .expect("invalid `MAX_EDITS_PER_OPERATION` variable")
-            })
+            .map(|i| i.parse().expect("invalid `MAX_EDITS_PER_OPERATION` variable"))
             .unwrap_or(5);
 
         init_test(cx);
@@ -1151,10 +1079,8 @@ mod tests {
                         log::info!("buffer text: {:?}", buffer.text());
                     });
 
-                    let blame_entries = gen_blame_entries(
-                        buffer.read_with(cx, |buffer, _| buffer.max_point().row),
-                        &mut rng,
-                    );
+                    let blame_entries =
+                        gen_blame_entries(buffer.read_with(cx, |buffer, _| buffer.max_point().row), &mut rng);
                     log::info!("regenerating blame entries: {:?}", blame_entries);
 
                     fs.set_blame_for_repo(

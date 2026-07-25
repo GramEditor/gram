@@ -182,17 +182,7 @@ impl UserSettingsContent {
 ///
 /// Default: VSCode
 #[derive(
-    Copy,
-    Clone,
-    Debug,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    MergeFrom,
-    PartialEq,
-    Eq,
-    Default,
-    strum::VariantArray,
+    Copy, Clone, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, Eq, Default, strum::VariantArray,
 )]
 pub enum BaseKeymapContent {
     #[default]
@@ -402,9 +392,7 @@ pub enum StatusStyle {
 }
 
 #[with_fallible_options]
-#[derive(
-    Copy, Clone, Default, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, Eq,
-)]
+#[derive(Copy, Clone, Default, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, Eq)]
 pub struct ScrollbarSettings {
     pub show: Option<ShowScrollbar>,
 }
@@ -674,9 +662,7 @@ pub enum ShowIndentGuides {
 }
 
 #[with_fallible_options]
-#[derive(
-    Copy, Clone, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, Eq, Default,
-)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, Eq, Default)]
 pub struct IndentGuidesSettingsContent {
     /// When to show the scrollbar in the outline panel.
     pub show: Option<ShowIndentGuides>,
@@ -764,9 +750,7 @@ pub struct WslConnection {
 }
 
 #[with_fallible_options]
-#[derive(
-    Clone, Debug, Default, Serialize, PartialEq, Eq, PartialOrd, Ord, Deserialize, JsonSchema,
-)]
+#[derive(Clone, Debug, Default, Serialize, PartialEq, Eq, PartialOrd, Ord, Deserialize, JsonSchema)]
 pub struct SshProject {
     pub paths: Vec<String>,
 }

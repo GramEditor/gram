@@ -69,24 +69,19 @@ pub fn switch_source_header(
                     )
                 })?
                 .await
-                .with_context(|| {
-                    format!("Switch source/header LSP request for path \"{source_file}\" failed")
-                })?
+                .with_context(|| format!("Switch source/header LSP request for path \"{source_file}\" failed"))?
         };
 
         if switch_source_header.0.is_empty() {
             return Ok(());
         }
 
-        let goto = switch_source_header
-            .0
-            .strip_prefix("file://")
-            .with_context(|| {
-                format!(
-                    "Parsing file url \"{}\" returned from switch source/header failed",
-                    switch_source_header.0
-                )
-            })?;
+        let goto = switch_source_header.0.strip_prefix("file://").with_context(|| {
+            format!(
+                "Parsing file url \"{}\" returned from switch source/header failed",
+                switch_source_header.0
+            )
+        })?;
 
         workspace
             .update_in(cx, |workspace, window, cx| {
@@ -106,9 +101,7 @@ pub fn switch_source_header(
                     cx,
                 )
             })
-            .with_context(|| {
-                format!("Switch source/header could not open \"{goto}\" in workspace")
-            })?
+            .with_context(|| format!("Switch source/header could not open \"{goto}\" in workspace"))?
             .await
             .map(|_| ())
     })

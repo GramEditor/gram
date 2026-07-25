@@ -3,9 +3,8 @@ use std::sync::Arc;
 use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla, WindowBackgroundAppearance, hsla};
 
 use crate::{
-    AccentColors, Appearance, DEFAULT_DARK_THEME, PlayerColors, StatusColors,
-    StatusColorsRefinement, SyntaxTheme, SystemColors, Theme, ThemeColors, ThemeColorsRefinement,
-    ThemeFamily, ThemeStyles, default_color_scales,
+    AccentColors, Appearance, DEFAULT_DARK_THEME, PlayerColors, StatusColors, StatusColorsRefinement, SyntaxTheme,
+    SystemColors, Theme, ThemeColors, ThemeColorsRefinement, ThemeFamily, ThemeStyles, default_color_scales,
 };
 
 /// The default theme family for Gram.
@@ -42,10 +41,7 @@ pub(crate) fn apply_status_color_defaults(status: &mut StatusColorsRefinement) {
     }
 }
 
-pub(crate) fn apply_theme_color_defaults(
-    theme_colors: &mut ThemeColorsRefinement,
-    player_colors: &PlayerColors,
-) {
+pub(crate) fn apply_theme_color_defaults(theme_colors: &mut ThemeColorsRefinement, player_colors: &PlayerColors) {
     if theme_colors.element_selection_background.is_none() {
         let mut selection = player_colors.local().selection;
         if selection.a == 1.0 {
@@ -159,12 +155,7 @@ pub(crate) fn gram_default_dark() -> Theme {
                 editor_subheader_background: bg,
                 editor_active_line_background: hsla(222.9 / 360., 13.5 / 100., 20.4 / 100., 1.0),
                 editor_highlighted_line_background: hsla(207.8 / 360., 81. / 100., 66. / 100., 0.1),
-                editor_debugger_active_line_background: hsla(
-                    207.8 / 360.,
-                    81. / 100.,
-                    66. / 100.,
-                    0.2,
-                ),
+                editor_debugger_active_line_background: hsla(207.8 / 360., 81. / 100., 66. / 100., 0.2),
                 editor_line_number: hsla(222.0 / 360., 11.5 / 100., 34.1 / 100., 1.0),
                 editor_active_line_number: hsla(216.0 / 360., 5.9 / 100., 49.6 / 100., 1.0),
                 editor_hover_line_number: hsla(216.0 / 360., 5.9 / 100., 56.7 / 100., 1.0),
@@ -173,12 +164,7 @@ pub(crate) fn gram_default_dark() -> Theme {
                 editor_active_wrap_guide: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
                 editor_indent_guide: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
                 editor_indent_guide_active: hsla(225. / 360., 13. / 100., 12. / 100., 1.),
-                editor_document_highlight_read_background: hsla(
-                    207.8 / 360.,
-                    81. / 100.,
-                    66. / 100.,
-                    0.2,
-                ),
+                editor_document_highlight_read_background: hsla(207.8 / 360., 81. / 100., 66. / 100., 0.2),
                 editor_document_highlight_write_background: gpui::red(),
                 editor_document_highlight_bracket_background: gpui::green(),
 
@@ -223,12 +209,7 @@ pub(crate) fn gram_default_dark() -> Theme {
                 pane_group_border: hsla(225. / 360., 13. / 100., 12. / 100., 1.),
                 scrollbar_thumb_background: gpui::transparent_black(),
                 scrollbar_thumb_hover_background: hover,
-                scrollbar_thumb_active_background: hsla(
-                    225.0 / 360.,
-                    11.8 / 100.,
-                    26.7 / 100.,
-                    1.0,
-                ),
+                scrollbar_thumb_active_background: hsla(225.0 / 360., 11.8 / 100., 26.7 / 100., 1.0),
                 scrollbar_thumb_border: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
                 scrollbar_track_background: gpui::transparent_black(),
                 scrollbar_track_border: hsla(228. / 360., 8. / 100., 25. / 100., 1.),

@@ -1,22 +1,16 @@
 use std::fmt::Display;
 
 use gpui::{
-    App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, InteractiveElement,
-    KeyContext, ModifiersChangedEvent, MouseButton, ParentElement, Render, Styled, Subscription,
-    WeakEntity, Window, actions, rems,
+    App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, InteractiveElement, KeyContext,
+    ModifiersChangedEvent, MouseButton, ParentElement, Render, Styled, Subscription, WeakEntity, Window, actions, rems,
 };
 use project::git_store::Repository;
-use ui::{
-    FluentBuilder, ToggleButtonGroup, ToggleButtonGroupStyle, ToggleButtonSimple, Tooltip,
-    prelude::*,
-};
+use ui::{FluentBuilder, ToggleButtonGroup, ToggleButtonGroupStyle, ToggleButtonSimple, Tooltip, prelude::*};
 use workspace::{ModalView, Workspace, pane};
 
 use crate::branch_picker::{self, BranchList, DeleteBranch, FilterRemotes};
 use crate::stash_picker::{self, DropStashItem, ShowStashItem, StashList};
-use crate::worktree_picker::{
-    self, WorktreeFromDefault, WorktreeFromDefaultOnWindow, WorktreeList,
-};
+use crate::worktree_picker::{self, WorktreeFromDefault, WorktreeFromDefaultOnWindow, WorktreeList};
 
 actions!(
     git_picker,
@@ -90,20 +84,10 @@ impl GitPicker {
         }
     }
 
-    fn ensure_branch_list(
-        &mut self,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Entity<BranchList> {
+    fn ensure_branch_list(&mut self, window: &mut Window, cx: &mut Context<Self>) -> Entity<BranchList> {
         if self.branch_list.is_none() {
             let branch_list = cx.new(|cx| {
-                branch_picker::create_embedded(
-                    self.workspace.clone(),
-                    self.repository.clone(),
-                    self.width,
-                    window,
-                    cx,
-                )
+                branch_picker::create_embedded(self.workspace.clone(), self.repository.clone(), self.width, window, cx)
             });
 
             let subscription = cx.subscribe(&branch_list, |this, _, _: &DismissEvent, cx| {
@@ -118,11 +102,7 @@ impl GitPicker {
         self.branch_list.clone().unwrap()
     }
 
-    fn ensure_worktree_list(
-        &mut self,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Entity<WorktreeList> {
+    fn ensure_worktree_list(&mut self, window: &mut Window, cx: &mut Context<Self>) -> Entity<WorktreeList> {
         if self.worktree_list.is_none() {
             let worktree_list = cx.new(|cx| {
                 worktree_picker::create_embedded(
@@ -146,20 +126,10 @@ impl GitPicker {
         self.worktree_list.clone().unwrap()
     }
 
-    fn ensure_stash_list(
-        &mut self,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Entity<StashList> {
+    fn ensure_stash_list(&mut self, window: &mut Window, cx: &mut Context<Self>) -> Entity<StashList> {
         if self.stash_list.is_none() {
             let stash_list = cx.new(|cx| {
-                stash_picker::create_embedded(
-                    self.repository.clone(),
-                    self.workspace.clone(),
-                    self.width,
-                    window,
-                    cx,
-                )
+                stash_picker::create_embedded(self.repository.clone(), self.workspace.clone(), self.width, window, cx)
             });
 
             let subscription = cx.subscribe(&stash_list, |this, _, _: &DismissEvent, cx| {
@@ -236,12 +206,7 @@ impl GitPicker {
                         }),
                     )
                     .tooltip(move |_, cx| {
-                        Tooltip::for_action_in(
-                            "Toggle Branch Picker",
-                            &ActivateBranchesTab,
-                            &branches_focus_handle,
-                            cx,
-                        )
+                        Tooltip::for_action_in("Toggle Branch Picker", &ActivateBranchesTab, &branches_focus_handle, cx)
                     }),
                     ToggleButtonSimple::new(
                         GitPickerTab::Worktrees.to_string(),
@@ -270,12 +235,7 @@ impl GitPicker {
                         }),
                     )
                     .tooltip(move |_, cx| {
-                        Tooltip::for_action_in(
-                            "Toggle Stash Picker",
-                            &ActivateStashTab,
-                            &stash_focus_handle,
-                            cx,
-                        )
+                        Tooltip::for_action_in("Toggle Stash Picker", &ActivateStashTab, &stash_focus_handle, cx)
                     }),
                 ],
             )
@@ -290,11 +250,7 @@ impl GitPicker {
         )
     }
 
-    fn render_active_picker(
-        &mut self,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> impl IntoElement {
+    fn render_active_picker(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         match self.tab {
             GitPickerTab::Branches => {
                 let branch_list = self.ensure_branch_list(window, cx);
@@ -311,12 +267,7 @@ impl GitPicker {
         }
     }
 
-    fn handle_modifiers_changed(
-        &mut self,
-        ev: &ModifiersChangedEvent,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn handle_modifiers_changed(&mut self, ev: &ModifiersChangedEvent, window: &mut Window, cx: &mut Context<Self>) {
         match self.tab {
             GitPickerTab::Branches => {
                 if let Some(branch_list) = &self.branch_list {
@@ -342,12 +293,7 @@ impl GitPicker {
         }
     }
 
-    fn handle_delete_branch(
-        &mut self,
-        _: &DeleteBranch,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn handle_delete_branch(&mut self, _: &DeleteBranch, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(branch_list) = &self.branch_list {
             branch_list.update(cx, |list, cx| {
                 list.handle_delete(&DeleteBranch, window, cx);
@@ -355,12 +301,7 @@ impl GitPicker {
         }
     }
 
-    fn handle_filter_remotes(
-        &mut self,
-        _: &FilterRemotes,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn handle_filter_remotes(&mut self, _: &FilterRemotes, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(branch_list) = &self.branch_list {
             branch_list.update(cx, |list, cx| {
                 list.handle_filter(&FilterRemotes, window, cx);
@@ -368,12 +309,7 @@ impl GitPicker {
         }
     }
 
-    fn handle_worktree_from_default(
-        &mut self,
-        _: &WorktreeFromDefault,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn handle_worktree_from_default(&mut self, _: &WorktreeFromDefault, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(worktree_list) = &self.worktree_list {
             worktree_list.update(cx, |list, cx| {
                 list.handle_new_worktree(false, window, cx);
@@ -394,12 +330,7 @@ impl GitPicker {
         }
     }
 
-    fn handle_drop_stash(
-        &mut self,
-        _: &DropStashItem,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn handle_drop_stash(&mut self, _: &DropStashItem, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(stash_list) = &self.stash_list {
             stash_list.update(cx, |list, cx| {
                 list.handle_drop_stash(&DropStashItem, window, cx);
@@ -407,12 +338,7 @@ impl GitPicker {
         }
     }
 
-    fn handle_show_stash(
-        &mut self,
-        _: &ShowStashItem,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn handle_show_stash(&mut self, _: &ShowStashItem, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(stash_list) = &self.stash_list {
             stash_list.update(cx, |list, cx| {
                 list.handle_show_stash(&ShowStashItem, window, cx);
@@ -474,11 +400,9 @@ impl Render for GitPicker {
             .on_action(cx.listener(|this, _: &pane::ActivateNextItem, window, cx| {
                 this.activate_next_tab(window, cx);
             }))
-            .on_action(
-                cx.listener(|this, _: &pane::ActivatePreviousItem, window, cx| {
-                    this.activate_previous_tab(window, cx);
-                }),
-            )
+            .on_action(cx.listener(|this, _: &pane::ActivatePreviousItem, window, cx| {
+                this.activate_previous_tab(window, cx);
+            }))
             .on_action(cx.listener(|this, _: &ActivateBranchesTab, window, cx| {
                 this.tab = GitPickerTab::Branches;
                 this.ensure_active_picker(window, cx);
@@ -542,12 +466,7 @@ pub fn open_stash(
     open_with_tab(workspace, GitPickerTab::Stash, window, cx);
 }
 
-fn open_with_tab(
-    workspace: &mut Workspace,
-    tab: GitPickerTab,
-    window: &mut Window,
-    cx: &mut Context<Workspace>,
-) {
+fn open_with_tab(workspace: &mut Workspace, tab: GitPickerTab, window: &mut Window, cx: &mut Context<Workspace>) {
     let workspace_handle = workspace.weak_handle();
     let repository = workspace.project().read(cx).active_repository(cx);
 
@@ -564,11 +483,9 @@ pub fn register(workspace: &mut Workspace) {
     workspace.register_action(|workspace, _: &app_actions::git::Switch, window, cx| {
         open_with_tab(workspace, GitPickerTab::Branches, window, cx);
     });
-    workspace.register_action(
-        |workspace, _: &app_actions::git::CheckoutBranch, window, cx| {
-            open_with_tab(workspace, GitPickerTab::Branches, window, cx);
-        },
-    );
+    workspace.register_action(|workspace, _: &app_actions::git::CheckoutBranch, window, cx| {
+        open_with_tab(workspace, GitPickerTab::Branches, window, cx);
+    });
     workspace.register_action(|workspace, _: &app_actions::git::Worktree, window, cx| {
         open_with_tab(workspace, GitPickerTab::Worktrees, window, cx);
     });

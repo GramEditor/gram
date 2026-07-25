@@ -123,17 +123,12 @@ impl ProjectEnvironment {
 
         let remote_client = self.remote_client.as_ref().and_then(|it| it.upgrade());
         match remote_client {
-            Some(remote_client) => remote_client.clone().read(cx).shell().map(|shell| {
-                self.remote_directory_environment(
-                    &Shell::Program(shell),
-                    abs_path,
-                    remote_client,
-                    cx,
-                )
-            }),
-            None if self.is_remote_project => {
-                Some(self.local_directory_environment(&Shell::System, abs_path, cx))
-            }
+            Some(remote_client) => remote_client
+                .clone()
+                .read(cx)
+                .shell()
+                .map(|shell| self.remote_directory_environment(&Shell::Program(shell), abs_path, remote_client, cx)),
+            None if self.is_remote_project => Some(self.local_directory_environment(&Shell::System, abs_path, cx)),
             None => Some({
                 let shell = TerminalSettings::get(
                     Some(settings::SettingsLocation {
@@ -158,31 +153,22 @@ impl ProjectEnvironment {
     ) -> Shared<Task<Option<HashMap<String, String>>>> {
         let remote_client = self.remote_client.as_ref().and_then(|it| it.upgrade());
         match remote_client {
-            Some(remote_client) => remote_client.clone().read(cx).shell().map(|shell| {
-                self.remote_directory_environment(
-                    &Shell::Program(shell),
-                    abs_path,
-                    remote_client,
-                    cx,
-                )
-            }),
-            None if self.is_remote_project => {
-                Some(self.local_directory_environment(&Shell::System, abs_path, cx))
-            }
+            Some(remote_client) => remote_client
+                .clone()
+                .read(cx)
+                .shell()
+                .map(|shell| self.remote_directory_environment(&Shell::Program(shell), abs_path, remote_client, cx)),
+            None if self.is_remote_project => Some(self.local_directory_environment(&Shell::System, abs_path, cx)),
             None => self
                 .worktree_store
-                .read_with(cx, |worktree_store, cx| {
-                    worktree_store.find_worktree(&abs_path, cx)
-                })
+                .read_with(cx, |worktree_store, cx| worktree_store.find_worktree(&abs_path, cx))
                 .ok()
                 .map(|worktree| {
                     let shell = terminal::terminal_settings::TerminalSettings::get(
-                        worktree
-                            .as_ref()
-                            .map(|(worktree, path)| settings::SettingsLocation {
-                                worktree_id: worktree.read(cx).id(),
-                                path: &path,
-                            }),
+                        worktree.as_ref().map(|(worktree, path)| settings::SettingsLocation {
+                            worktree_id: worktree.read(cx).id(),
+                            path: &path,
+                        }),
                         cx,
                     )
                     .shell
@@ -227,18 +213,13 @@ impl ProjectEnvironment {
                     {
                         Ok(shell_env) => Some(shell_env),
                         Err(e) => {
-                            log::error!(
-                                "Failed to load shell environment for directory {abs_path:?}: {e:#}"
-                            );
+                            log::error!("Failed to load shell environment for directory {abs_path:?}: {e:#}");
                             None
                         }
                     };
 
                     if let Some(shell_env) = shell_env.as_mut() {
-                        let path = shell_env
-                            .get("PATH")
-                            .map(|path| path.as_str())
-                            .unwrap_or_default();
+                        let path = shell_env.get("PATH").map(|path| path.as_str()).unwrap_or_default();
                         log::debug!(
                             "using project environment variables shell launched in {:?}. PATH={:?}",
                             abs_path,
@@ -269,15 +250,14 @@ impl ProjectEnvironment {
         self.remote_environments
             .entry((shell.clone(), abs_path.clone()))
             .or_insert_with(|| {
-                let response =
-                    remote_client
-                        .read(cx)
-                        .proto_client()
-                        .request(proto::GetDirectoryEnvironment {
-                            project_id: REMOTE_SERVER_PROJECT_ID,
-                            shell: Some(shell_to_proto(shell.clone())),
-                            directory: abs_path.to_string_lossy().to_string(),
-                        });
+                let response = remote_client
+                    .read(cx)
+                    .proto_client()
+                    .request(proto::GetDirectoryEnvironment {
+                        project_id: REMOTE_SERVER_PROJECT_ID,
+                        shell: Some(shell_to_proto(shell.clone())),
+                        directory: abs_path.to_string_lossy().to_string(),
+                    });
                 cx.background_spawn(async move {
                     let environment = response.await.log_err()?;
                     Some(environment.environment.into_iter().collect())
@@ -327,8 +307,7 @@ async fn load_directory_shell_environment(
     }
 
     let meta = smol::fs::metadata(&abs_path).await.with_context(|| {
-        tx.unbounded_send(format!("Failed to open {}", abs_path.display()))
-            .ok();
+        tx.unbounded_send(format!("Failed to open {}", abs_path.display())).ok();
         format!("stat {abs_path:?}")
     })?;
 
@@ -338,8 +317,7 @@ async fn load_directory_shell_environment(
         abs_path
             .parent()
             .with_context(|| {
-                tx.unbounded_send(format!("Failed to open {}", abs_path.display()))
-                    .ok();
+                tx.unbounded_send(format!("Failed to open {}", abs_path.display())).ok();
                 format!("getting parent of {abs_path:?}")
             })?
             .into()
@@ -349,8 +327,7 @@ async fn load_directory_shell_environment(
     let mut envs = util::shell_env::capture(shell.clone(), args, abs_path)
         .await
         .with_context(|| {
-            tx.unbounded_send("Failed to load environment variables".into())
-                .ok();
+            tx.unbounded_send("Failed to load environment variables".into()).ok();
             format!("capturing shell environment with {shell:?}")
         })?;
 
@@ -374,8 +351,7 @@ async fn load_directory_shell_environment(
         DirenvSettings::Direct => load_direnv_environment(&envs, &dir)
             .await
             .with_context(|| {
-                tx.unbounded_send("Failed to load direnv environment".into())
-                    .ok();
+                tx.unbounded_send("Failed to load direnv environment".into()).ok();
                 "load direnv environment"
             })
             .log_err(),

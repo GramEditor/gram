@@ -5,8 +5,8 @@ use buffer_diff::BufferDiff;
 use editor::{Editor, EditorEvent, MultiBuffer};
 use futures::{FutureExt, select_biased};
 use gpui::{
-    AnyElement, App, AppContext as _, AsyncApp, Context, Entity, EventEmitter, FocusHandle,
-    Focusable, IntoElement, Render, Task, Window,
+    AnyElement, App, AppContext as _, AsyncApp, Context, Entity, EventEmitter, FocusHandle, Focusable, IntoElement,
+    Render, Task, Window,
 };
 use language::{Buffer, LanguageRegistry};
 use project::Project;
@@ -57,16 +57,8 @@ impl FileDiffView {
             let buffer_diff = build_buffer_diff(&old_buffer, &new_buffer, languages, cx).await?;
 
             workspace.update_in(cx, |workspace, window, cx| {
-                let diff_view = cx.new(|cx| {
-                    FileDiffView::new(
-                        old_buffer,
-                        new_buffer,
-                        buffer_diff,
-                        project.clone(),
-                        window,
-                        cx,
-                    )
-                });
+                let diff_view =
+                    cx.new(|cx| FileDiffView::new(old_buffer, new_buffer, buffer_diff, project.clone(), window, cx));
 
                 let pane = workspace.active_pane();
                 pane.update(cx, |pane, cx| {
@@ -92,15 +84,11 @@ impl FileDiffView {
             multibuffer
         });
         let editor = cx.new(|cx| {
-            let mut editor =
-                Editor::for_multibuffer(multibuffer.clone(), Some(project.clone()), window, cx);
+            let mut editor = Editor::for_multibuffer(multibuffer.clone(), Some(project.clone()), window, cx);
             editor.start_temporary_diff_override();
             editor.disable_diagnostics(cx);
             editor.set_expand_all_diff_hunks(cx);
-            editor.set_render_diff_hunk_controls(
-                Arc::new(|_, _, _, _, _, _, _, _| gpui::Empty.into_any_element()),
-                cx,
-            );
+            editor.set_render_diff_hunk_controls(Arc::new(|_, _, _, _, _, _, _, _| gpui::Empty.into_any_element()), cx);
             editor
         });
 
@@ -126,10 +114,7 @@ impl FileDiffView {
             _recalculate_diff_task: cx.spawn(async move |this, cx| {
                 while buffer_changes_rx.recv().await.is_ok() {
                     loop {
-                        let mut timer = cx
-                            .background_executor()
-                            .timer(RECALCULATE_DIFF_DEBOUNCE)
-                            .fuse();
+                        let mut timer = cx.background_executor().timer(RECALCULATE_DIFF_DEBOUNCE).fuse();
                         let mut recv = pin!(buffer_changes_rx.recv().fuse());
                         select_biased! {
                             _ = timer => break,
@@ -139,10 +124,7 @@ impl FileDiffView {
 
                     log::trace!("start recalculating");
                     let (old_snapshot, new_snapshot) = this.update(cx, |this, cx| {
-                        (
-                            this.old_buffer.read(cx).snapshot(),
-                            this.new_buffer.read(cx).snapshot(),
-                        )
+                        (this.old_buffer.read(cx).snapshot(), this.new_buffer.read(cx).snapshot())
                     })?;
                     diff.update(cx, |diff, cx| {
                         diff.set_base_text(
@@ -186,11 +168,7 @@ async fn build_buffer_diff(
         .await;
 
     diff.update(cx, |diff, cx| {
-        diff.language_changed(
-            new_buffer_snapshot.language().cloned(),
-            Some(language_registry),
-            cx,
-        );
+        diff.language_changed(new_buffer_snapshot.language().cloned(), Some(language_registry), cx);
         diff.set_snapshot(update, &new_buffer_snapshot.text, cx)
     })?
     .await;
@@ -215,11 +193,7 @@ impl Item for FileDiffView {
 
     fn tab_content(&self, params: TabContentParams, _window: &Window, cx: &App) -> AnyElement {
         Label::new(self.tab_content_text(params.detail.unwrap_or_default(), cx))
-            .color(if params.selected {
-                Color::Default
-            } else {
-                Color::Muted
-            })
+            .color(if params.selected { Color::Default } else { Color::Muted })
             .into_any_element()
     }
 
@@ -228,14 +202,7 @@ impl Item for FileDiffView {
             buffer
                 .read(cx)
                 .file()
-                .and_then(|file| {
-                    Some(
-                        file.full_path(cx)
-                            .file_name()?
-                            .to_string_lossy()
-                            .to_string(),
-                    )
-                })
+                .and_then(|file| Some(file.full_path(cx).file_name()?.to_string_lossy().to_string()))
                 .unwrap_or_else(|| "untitled".into())
         };
         let old_filename = title_text(&self.old_buffer);
@@ -263,8 +230,7 @@ impl Item for FileDiffView {
     }
 
     fn deactivated(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        self.editor
-            .update(cx, |editor, cx| editor.deactivated(window, cx));
+        self.editor.update(cx, |editor, cx| editor.deactivated(window, cx));
     }
 
     fn act_as_type<'a>(
@@ -286,33 +252,18 @@ impl Item for FileDiffView {
         Some(Box::new(self.editor.clone()))
     }
 
-    fn for_each_project_item(
-        &self,
-        cx: &App,
-        f: &mut dyn FnMut(gpui::EntityId, &dyn project::ProjectItem),
-    ) {
+    fn for_each_project_item(&self, cx: &App, f: &mut dyn FnMut(gpui::EntityId, &dyn project::ProjectItem)) {
         self.editor.for_each_project_item(cx, f)
     }
 
-    fn set_nav_history(
-        &mut self,
-        nav_history: ItemNavHistory,
-        _: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn set_nav_history(&mut self, nav_history: ItemNavHistory, _: &mut Window, cx: &mut Context<Self>) {
         self.editor.update(cx, |editor, _| {
             editor.set_nav_history(Some(nav_history));
         });
     }
 
-    fn navigate(
-        &mut self,
-        data: Box<dyn Any>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> bool {
-        self.editor
-            .update(cx, |editor, cx| editor.navigate(data, window, cx))
+    fn navigate(&mut self, data: Box<dyn Any>, window: &mut Window, cx: &mut Context<Self>) -> bool {
+        self.editor.update(cx, |editor, cx| editor.navigate(data, window, cx))
     }
 
     fn breadcrumb_location(&self, _: &App) -> ToolbarItemLocation {
@@ -323,15 +274,9 @@ impl Item for FileDiffView {
         self.editor.breadcrumbs(theme, cx)
     }
 
-    fn added_to_workspace(
-        &mut self,
-        workspace: &mut Workspace,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        self.editor.update(cx, |editor, cx| {
-            editor.added_to_workspace(workspace, window, cx)
-        });
+    fn added_to_workspace(&mut self, workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Self>) {
+        self.editor
+            .update(cx, |editor, cx| editor.added_to_workspace(workspace, window, cx));
     }
 
     fn can_save(&self, cx: &App) -> bool {
@@ -394,8 +339,7 @@ mod tests {
 
         let project = Project::test(fs.clone(), [path!("/test").as_ref()], cx).await;
 
-        let (workspace, cx) =
-            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
 
         let diff_view = workspace
             .update_in(cx, |workspace, window, cx| {
@@ -497,17 +441,10 @@ mod tests {
         );
 
         diff_view.read_with(cx, |diff_view, cx| {
-            assert_eq!(
-                diff_view.tab_content_text(0, cx),
-                "old_file.txt ↔ new_file.txt"
-            );
+            assert_eq!(diff_view.tab_content_text(0, cx), "old_file.txt ↔ new_file.txt");
             assert_eq!(
                 diff_view.tab_tooltip_text(cx).unwrap(),
-                format!(
-                    "{} ↔ {}",
-                    path!("test/old_file.txt"),
-                    path!("test/new_file.txt")
-                )
+                format!("{} ↔ {}", path!("test/old_file.txt"), path!("test/new_file.txt"))
             );
         })
     }
@@ -528,8 +465,7 @@ mod tests {
 
         let project = Project::test(fs.clone(), ["/test".as_ref()], cx).await;
 
-        let (workspace, cx) =
-            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
 
         let diff_view = workspace
             .update_in(cx, |workspace, window, cx| {
@@ -568,10 +504,7 @@ mod tests {
         save_task.await.expect("Save should succeed");
 
         let saved_content = fs.load(path!("/test/new_file.txt").as_ref()).await.unwrap();
-        assert_eq!(
-            saved_content,
-            "modified new line 1\nline 2\nnew line 3\nline 4\n"
-        );
+        assert_eq!(saved_content, "modified new line 1\nline 2\nnew line 3\nline 4\n");
 
         diff_view.update_in(cx, |diff_view, _, cx| {
             let buffer = diff_view.new_buffer.read(cx);

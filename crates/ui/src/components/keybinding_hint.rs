@@ -86,11 +86,7 @@ impl KeybindingHint {
     /// );
     /// # }
     /// ```
-    pub fn with_prefix(
-        prefix: impl Into<SharedString>,
-        keybinding: KeyBinding,
-        background_color: Hsla,
-    ) -> Self {
+    pub fn with_prefix(prefix: impl Into<SharedString>, keybinding: KeyBinding, background_color: Hsla) -> Self {
         Self {
             prefix: Some(prefix.into()),
             suffix: None,
@@ -121,11 +117,7 @@ impl KeybindingHint {
     /// );
     /// # }
     /// ```
-    pub fn with_suffix(
-        keybinding: KeyBinding,
-        suffix: impl Into<SharedString>,
-        background_color: Hsla,
-    ) -> Self {
+    pub fn with_suffix(keybinding: KeyBinding, suffix: impl Into<SharedString>, background_color: Hsla) -> Self {
         Self {
             prefix: None,
             suffix: Some(suffix.into()),
@@ -216,9 +208,9 @@ impl RenderOnce for KeybindingHint {
         let colors = cx.theme().colors();
         let is_light = cx.theme().appearance() == Appearance::Light;
 
-        let border_color =
-            self.background_color
-                .blend(colors.text.alpha(if is_light { 0.08 } else { 0.16 }));
+        let border_color = self
+            .background_color
+            .blend(colors.text.alpha(if is_light { 0.08 } else { 0.16 }));
 
         let bg_color = self
             .background_color
@@ -284,17 +276,11 @@ impl Component for KeybindingHint {
                         vec![
                             single_example(
                                 "With Prefix",
-                                KeybindingHint::with_prefix(
-                                    "Go to Start:",
-                                    enter.clone(),
-                                    bg_color,
-                                )
-                                .into_any_element(),
+                                KeybindingHint::with_prefix("Go to Start:", enter.clone(), bg_color).into_any_element(),
                             ),
                             single_example(
                                 "With Suffix",
-                                KeybindingHint::with_suffix(enter.clone(), "Go to End", bg_color)
-                                    .into_any_element(),
+                                KeybindingHint::with_suffix(enter.clone(), "Go to End", bg_color).into_any_element(),
                             ),
                             single_example(
                                 "With Prefix and Suffix",

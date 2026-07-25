@@ -32,9 +32,8 @@
 //! your own custom layout algorithm or rendering a code editor.
 
 use crate::{
-    App, ArenaBox, AvailableSpace, Bounds, Context, DispatchNodeId, ELEMENT_ARENA, ElementId,
-    FocusHandle, InspectorElementId, LayoutId, Pixels, Point, Size, Style, Window,
-    util::FluentBuilder,
+    App, ArenaBox, AvailableSpace, Bounds, Context, DispatchNodeId, ELEMENT_ARENA, ElementId, FocusHandle,
+    InspectorElementId, LayoutId, Pixels, Point, Size, Style, Window, util::FluentBuilder,
 };
 use derive_more::{Deref, DerefMut};
 use std::{
@@ -221,12 +220,7 @@ impl<C: RenderOnce> Element for Component<C> {
         cx: &mut App,
     ) -> (LayoutId, Self::RequestLayoutState) {
         window.with_global_id(ElementId::Name(type_name::<C>().into()), |_, window| {
-            let mut element = self
-                .component
-                .take()
-                .unwrap()
-                .render(window, cx)
-                .into_any_element();
+            let mut element = self.component.take().unwrap().render(window, cx).into_any_element();
 
             let layout_id = element.request_layout(window, cx);
             (layout_id, element)
@@ -372,12 +366,9 @@ impl<E: Element> Drawable<E> {
                     inspector_id = None;
                 }
 
-                let (layout_id, request_layout) = self.element.request_layout(
-                    global_id.as_ref(),
-                    inspector_id.as_ref(),
-                    window,
-                    cx,
-                );
+                let (layout_id, request_layout) =
+                    self.element
+                        .request_layout(global_id.as_ref(), inspector_id.as_ref(), window, cx);
 
                 if global_id.is_some() {
                     window.element_id_stack.pop();
@@ -444,11 +435,7 @@ impl<E: Element> Drawable<E> {
         }
     }
 
-    pub(crate) fn paint(
-        &mut self,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> (E::RequestLayoutState, E::PrepaintState) {
+    pub(crate) fn paint(&mut self, window: &mut Window, cx: &mut App) -> (E::RequestLayoutState, E::PrepaintState) {
         match mem::take(&mut self.phase) {
             ElementDrawPhase::Prepaint {
                 node_id,
@@ -627,12 +614,7 @@ impl AnyElement {
 
     /// Prepaints this element at the given absolute origin.
     /// If any element in the subtree beneath this element is focused, its FocusHandle is returned.
-    pub fn prepaint_at(
-        &mut self,
-        origin: Point<Pixels>,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> Option<FocusHandle> {
+    pub fn prepaint_at(&mut self, origin: Point<Pixels>, window: &mut Window, cx: &mut App) -> Option<FocusHandle> {
         window.with_absolute_element_offset(origin, |window| self.prepaint(window, cx))
     }
 

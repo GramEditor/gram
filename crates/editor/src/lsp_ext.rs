@@ -123,20 +123,17 @@ pub fn lsp_tasks(
             for (server_id, buffers) in lsp_task_sources {
                 let mut new_lsp_tasks = Vec::new();
                 for buffer in buffers {
-                    let source_kind = match buffer.update(cx, |buffer, _| {
-                        buffer.language().map(|language| language.name())
-                    }) {
-                        Ok(Some(language_name)) => TaskSourceKind::Lsp {
-                            server: server_id,
-                            language_name: SharedString::from(language_name),
-                        },
-                        Ok(None) => continue,
-                        Err(_) => return Vec::new(),
-                    };
+                    let source_kind =
+                        match buffer.update(cx, |buffer, _| buffer.language().map(|language| language.name())) {
+                            Ok(Some(language_name)) => TaskSourceKind::Lsp {
+                                server: server_id,
+                                language_name: SharedString::from(language_name),
+                            },
+                            Ok(None) => continue,
+                            Err(_) => return Vec::new(),
+                        };
                     let id_base = source_kind.to_id_base();
-                    let lsp_buffer_context = lsp_task_context(&project, &buffer, cx)
-                        .await
-                        .unwrap_or_default();
+                    let lsp_buffer_context = lsp_task_context(&project, &buffer, cx).await.unwrap_or_default();
 
                     if let Ok(runnables_task) = project.update(cx, |project, cx| {
                         let buffer_id = buffer.read(cx).remote_id();
@@ -151,13 +148,10 @@ pub fn lsp_tasks(
                         )
                     }) && let Some(new_runnables) = runnables_task.await.log_err()
                     {
-                        new_lsp_tasks.extend(new_runnables.runnables.into_iter().filter_map(
-                            |(location, runnable)| {
-                                let resolved_task =
-                                    runnable.resolve_task(&id_base, &lsp_buffer_context)?;
-                                Some((location, resolved_task))
-                            },
-                        ));
+                        new_lsp_tasks.extend(new_runnables.runnables.into_iter().filter_map(|(location, runnable)| {
+                            let resolved_task = runnable.resolve_task(&id_base, &lsp_buffer_context)?;
+                            Some((location, resolved_task))
+                        }));
                     }
                     lsp_tasks
                         .entry(source_kind)

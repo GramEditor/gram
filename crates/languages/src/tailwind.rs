@@ -15,8 +15,7 @@ use std::{
 use util::{ResultExt, maybe};
 
 #[cfg(target_os = "windows")]
-const SERVER_PATH: &str =
-    "node_modules/@tailwindcss/language-server/bin/tailwindcss-language-server";
+const SERVER_PATH: &str = "node_modules/@tailwindcss/language-server/bin/tailwindcss-language-server";
 #[cfg(not(target_os = "windows"))]
 const SERVER_PATH: &str = "node_modules/.bin/tailwindcss-language-server";
 
@@ -29,8 +28,7 @@ pub struct TailwindLspAdapter {
 }
 
 impl TailwindLspAdapter {
-    const SERVER_NAME: LanguageServerName =
-        LanguageServerName::new_static("tailwindcss-language-server");
+    const SERVER_NAME: LanguageServerName = LanguageServerName::new_static("tailwindcss-language-server");
     const PACKAGE_NAME: &str = "@tailwindcss/language-server";
 
     pub fn new(node: NodeRuntime) -> Self {
@@ -47,9 +45,7 @@ impl LspInstaller for TailwindLspAdapter {
         _: bool,
         _: &mut AsyncApp,
     ) -> Result<String> {
-        self.node
-            .npm_package_latest_version(Self::PACKAGE_NAME)
-            .await
+        self.node.npm_package_latest_version(Self::PACKAGE_NAME).await
     }
 
     async fn check_if_user_installed(
@@ -77,10 +73,7 @@ impl LspInstaller for TailwindLspAdapter {
         let server_path = container_dir.join(SERVER_PATH);
 
         self.node
-            .npm_install_packages(
-                &container_dir,
-                &[(Self::PACKAGE_NAME, latest_version.as_str())],
-            )
+            .npm_install_packages(&container_dir, &[(Self::PACKAGE_NAME, latest_version.as_str())])
             .await?;
 
         Ok(LanguageServerBinary {
@@ -181,23 +174,11 @@ impl LspAdapter for TailwindLspAdapter {
             (LanguageName::new_static("HTML"), "html".to_string()),
             (LanguageName::new_static("Gleam"), "html".to_string()),
             (LanguageName::new_static("CSS"), "css".to_string()),
-            (
-                LanguageName::new_static("JavaScript"),
-                "javascript".to_string(),
-            ),
-            (
-                LanguageName::new_static("TypeScript"),
-                "typescript".to_string(),
-            ),
-            (
-                LanguageName::new_static("TSX"),
-                "typescriptreact".to_string(),
-            ),
+            (LanguageName::new_static("JavaScript"), "javascript".to_string()),
+            (LanguageName::new_static("TypeScript"), "typescript".to_string()),
+            (LanguageName::new_static("TSX"), "typescriptreact".to_string()),
             (LanguageName::new_static("Svelte"), "svelte".to_string()),
-            (
-                LanguageName::new_static("Elixir"),
-                "phoenix-heex".to_string(),
-            ),
+            (LanguageName::new_static("Elixir"), "phoenix-heex".to_string()),
             (LanguageName::new_static("HEEX"), "phoenix-heex".to_string()),
             (LanguageName::new_static("ERB"), "erb".to_string()),
             (LanguageName::new_static("HTML+ERB"), "erb".to_string()),
@@ -207,16 +188,10 @@ impl LspAdapter for TailwindLspAdapter {
     }
 }
 
-async fn get_cached_server_binary(
-    container_dir: PathBuf,
-    node: &NodeRuntime,
-) -> Option<LanguageServerBinary> {
+async fn get_cached_server_binary(container_dir: PathBuf, node: &NodeRuntime) -> Option<LanguageServerBinary> {
     maybe!(async {
         let server_path = container_dir.join(SERVER_PATH);
-        anyhow::ensure!(
-            server_path.exists(),
-            "missing executable in directory {server_path:?}"
-        );
+        anyhow::ensure!(server_path.exists(), "missing executable in directory {server_path:?}");
         Ok(LanguageServerBinary {
             path: node.binary_path().await?,
             env: None,

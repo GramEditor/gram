@@ -147,14 +147,8 @@ impl Render for MultibufferHint {
                     .child(
                         h_flex()
                             .gap_2()
-                            .child(
-                                Icon::new(IconName::Info)
-                                    .size(IconSize::XSmall)
-                                    .color(Color::Muted),
-                            )
-                            .child(Label::new(
-                                "Edit and save files directly in the results multibuffer!",
-                            )),
+                            .child(Icon::new(IconName::Info).size(IconSize::XSmall).color(Color::Muted))
+                            .child(Label::new("Edit and save files directly in the results multibuffer!")),
                     )
                     .child(
                         Button::new("open_docs", "Learn More")
@@ -162,9 +156,7 @@ impl Render for MultibufferHint {
                             .icon_size(IconSize::Small)
                             .icon_color(Color::Muted)
                             .icon_position(IconPosition::End)
-                            .on_click(move |_event, _, cx| {
-                                cx.open_url("gram://docs/multibuffers")
-                            }),
+                            .on_click(move |_event, _, cx| cx.open_url("gram://docs/multibuffers")),
                     ),
             )
             .child(
@@ -173,9 +165,7 @@ impl Render for MultibufferHint {
                     .icon_size(IconSize::Small)
                     .on_click(cx.listener(|this, _event, _, cx| {
                         this.dismiss(cx);
-                        cx.emit(ToolbarItemEvent::ChangeLocation(
-                            ToolbarItemLocation::Hidden,
-                        ))
+                        cx.emit(ToolbarItemEvent::ChangeLocation(ToolbarItemLocation::Hidden))
                     }))
                     .tooltip(Tooltip::text("Dismiss Hint")),
             )

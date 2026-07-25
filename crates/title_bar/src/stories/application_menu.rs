@@ -21,9 +21,6 @@ impl Render for ApplicationMenuStory {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         Story::container(cx)
             .child(Story::title_for::<ApplicationMenu>(cx))
-            .child(StorySection::new().child(StoryItem::new(
-                "Application Menu",
-                h_flex().child(self.menu.clone()),
-            )))
+            .child(StorySection::new().child(StoryItem::new("Application Menu", h_flex().child(self.menu.clone()))))
     }
 }

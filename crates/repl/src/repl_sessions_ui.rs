@@ -1,8 +1,5 @@
 use editor::Editor;
-use gpui::{
-    AnyElement, App, Entity, EventEmitter, FocusHandle, Focusable, Subscription, actions,
-    prelude::*,
-};
+use gpui::{AnyElement, App, Entity, EventEmitter, FocusHandle, Focusable, Subscription, actions, prelude::*};
 use project::ProjectItem as _;
 use ui::{ButtonLike, ElevationIndex, KeyBinding, prelude::*};
 use util::ResultExt as _;
@@ -35,111 +32,99 @@ actions!(
 );
 
 pub fn init(cx: &mut App) {
-    cx.observe_new(
-        |workspace: &mut Workspace, _window, _cx: &mut Context<Workspace>| {
-            workspace.register_action(|workspace, _: &Sessions, window, cx| {
-                let existing = workspace
-                    .active_pane()
-                    .read(cx)
-                    .items()
-                    .find_map(|item| item.downcast::<ReplSessionsPage>());
+    cx.observe_new(|workspace: &mut Workspace, _window, _cx: &mut Context<Workspace>| {
+        workspace.register_action(|workspace, _: &Sessions, window, cx| {
+            let existing = workspace
+                .active_pane()
+                .read(cx)
+                .items()
+                .find_map(|item| item.downcast::<ReplSessionsPage>());
 
-                if let Some(existing) = existing {
-                    workspace.activate_item(&existing, true, true, window, cx);
-                } else {
-                    let repl_sessions_page = ReplSessionsPage::new(window, cx);
-                    workspace.add_item_to_active_pane(
-                        Box::new(repl_sessions_page),
-                        None,
-                        true,
-                        window,
-                        cx,
-                    )
-                }
-            });
+            if let Some(existing) = existing {
+                workspace.activate_item(&existing, true, true, window, cx);
+            } else {
+                let repl_sessions_page = ReplSessionsPage::new(window, cx);
+                workspace.add_item_to_active_pane(Box::new(repl_sessions_page), None, true, window, cx)
+            }
+        });
 
-            workspace.register_action(|_workspace, _: &RefreshKernelspecs, _, cx| {
-                let store = ReplStore::global(cx);
-                store.update(cx, |store, cx| {
-                    store.refresh_kernelspecs(cx).detach();
-                });
+        workspace.register_action(|_workspace, _: &RefreshKernelspecs, _, cx| {
+            let store = ReplStore::global(cx);
+            store.update(cx, |store, cx| {
+                store.refresh_kernelspecs(cx).detach();
             });
-        },
-    )
+        });
+    })
     .detach();
 
-    cx.observe_new(
-        move |editor: &mut Editor, window, cx: &mut Context<Editor>| {
-            let Some(window) = window else {
-                return;
-            };
+    cx.observe_new(move |editor: &mut Editor, window, cx: &mut Context<Editor>| {
+        let Some(window) = window else {
+            return;
+        };
 
-            if !editor.use_modal_editing() || !editor.buffer().read(cx).is_singleton() {
+        if !editor.use_modal_editing() || !editor.buffer().read(cx).is_singleton() {
+            return;
+        }
+
+        cx.defer_in(window, |editor, window, cx| {
+            let workspace = Workspace::for_window(window, cx);
+            let project = workspace.map(|workspace| workspace.read(cx).project().clone());
+
+            let is_local_project = project
+                .as_ref()
+                .map(|project| project.read(cx).is_local())
+                .unwrap_or(false);
+
+            if !is_local_project {
                 return;
             }
 
-            cx.defer_in(window, |editor, window, cx| {
-                let workspace = Workspace::for_window(window, cx);
-                let project = workspace.map(|workspace| workspace.read(cx).project().clone());
+            let buffer = editor.buffer().read(cx).as_singleton();
 
-                let is_local_project = project
-                    .as_ref()
-                    .map(|project| project.read(cx).is_local())
-                    .unwrap_or(false);
+            let language = buffer.as_ref().and_then(|buffer| buffer.read(cx).language());
 
-                if !is_local_project {
-                    return;
-                }
+            let project_path = buffer.and_then(|buffer| buffer.read(cx).project_path(cx));
 
-                let buffer = editor.buffer().read(cx).as_singleton();
+            let editor_handle = cx.entity().downgrade();
 
-                let language = buffer
-                    .as_ref()
-                    .and_then(|buffer| buffer.read(cx).language());
+            if let Some(language) = language
+                && language.name() == "Python".into()
+                && let (Some(project_path), Some(project)) = (project_path, project)
+            {
+                let store = ReplStore::global(cx);
+                store.update(cx, |store, cx| {
+                    store
+                        .refresh_python_kernelspecs(project_path.worktree_id, &project, cx)
+                        .detach_and_log_err(cx);
+                });
+            }
 
-                let project_path = buffer.and_then(|buffer| buffer.read(cx).project_path(cx));
-
-                let editor_handle = cx.entity().downgrade();
-
-                if let Some(language) = language
-                    && language.name() == "Python".into()
-                    && let (Some(project_path), Some(project)) = (project_path, project)
-                {
-                    let store = ReplStore::global(cx);
-                    store.update(cx, |store, cx| {
-                        store
-                            .refresh_python_kernelspecs(project_path.worktree_id, &project, cx)
-                            .detach_and_log_err(cx);
-                    });
-                }
-
-                editor
-                    .register_action({
-                        let editor_handle = editor_handle.clone();
-                        move |_: &Run, window, cx| {
-                            if !JupyterSettings::enabled(cx) {
-                                return;
-                            }
-
-                            crate::run(editor_handle.clone(), true, window, cx).log_err();
+            editor
+                .register_action({
+                    let editor_handle = editor_handle.clone();
+                    move |_: &Run, window, cx| {
+                        if !JupyterSettings::enabled(cx) {
+                            return;
                         }
-                    })
-                    .detach();
 
-                editor
-                    .register_action({
-                        move |_: &RunInPlace, window, cx| {
-                            if !JupyterSettings::enabled(cx) {
-                                return;
-                            }
+                        crate::run(editor_handle.clone(), true, window, cx).log_err();
+                    }
+                })
+                .detach();
 
-                            crate::run(editor_handle.clone(), false, window, cx).log_err();
+            editor
+                .register_action({
+                    move |_: &RunInPlace, window, cx| {
+                        if !JupyterSettings::enabled(cx) {
+                            return;
                         }
-                    })
-                    .detach();
-            });
-        },
-    )
+
+                        crate::run(editor_handle.clone(), false, window, cx).log_err();
+                    }
+                })
+                .detach();
+        });
+    })
     .detach();
 }
 
@@ -155,9 +140,7 @@ impl ReplSessionsPage {
 
             let subscriptions = vec![
                 cx.on_focus_in(&focus_handle, window, |_this, _window, cx| cx.notify()),
-                cx.on_focus_out(&focus_handle, window, |_this, _event, _window, cx| {
-                    cx.notify()
-                }),
+                cx.on_focus_out(&focus_handle, window, |_this, _event, _window, cx| cx.notify()),
             ];
 
             Self {
@@ -198,10 +181,7 @@ impl Render for ReplSessionsPage {
 
         let (kernel_specifications, sessions) = store.update(cx, |store, _cx| {
             (
-                store
-                    .pure_jupyter_kernel_specifications()
-                    .cloned()
-                    .collect::<Vec<_>>(),
+                store.pure_jupyter_kernel_specifications().cloned().collect::<Vec<_>>(),
                 store.sessions().cloned().collect::<Vec<_>>(),
             )
         });
@@ -221,11 +201,7 @@ impl Render for ReplSessionsPage {
                             .size(ButtonSize::Large)
                             .layer(ElevationIndex::ModalSurface)
                             .child(Label::new("Install Kernels"))
-                            .on_click(move |_, _, cx| {
-                                cx.open_url(
-                                    "gram://docs/repl#language-specific-instructions",
-                                )
-                            }),
+                            .on_click(move |_, _, cx| cx.open_url("gram://docs/repl#language-specific-instructions")),
                     ),
                 );
         }

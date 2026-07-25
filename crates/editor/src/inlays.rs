@@ -138,12 +138,7 @@ impl InlineValueCache {
 
 impl Editor {
     /// Modify which hints are displayed in the editor.
-    pub fn splice_inlays(
-        &mut self,
-        to_remove: &[InlayId],
-        to_insert: Vec<Inlay>,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn splice_inlays(&mut self, to_remove: &[InlayId], to_insert: Vec<Inlay>, cx: &mut Context<Self>) {
         if let Some(inlay_hints) = &mut self.inlay_hints {
             for id_to_remove in to_remove {
                 inlay_hints.added_hints.remove(id_to_remove);
@@ -161,9 +156,8 @@ impl Editor {
         style: HighlightStyle,
         cx: &mut Context<Self>,
     ) {
-        self.display_map.update(cx, |map, _| {
-            map.highlight_inlays(TypeId::of::<T>(), highlights, style)
-        });
+        self.display_map
+            .update(cx, |map, _| map.highlight_inlays(TypeId::of::<T>(), highlights, style));
         cx.notify();
     }
 
@@ -183,10 +177,6 @@ impl Editor {
 
     #[cfg(any(test, feature = "test-support"))]
     pub fn all_inlays(&self, cx: &gpui::App) -> Vec<Inlay> {
-        self.display_map
-            .read(cx)
-            .current_inlays()
-            .cloned()
-            .collect()
+        self.display_map.read(cx).current_inlays().cloned().collect()
     }
 }

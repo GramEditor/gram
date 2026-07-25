@@ -21,30 +21,14 @@ pub struct ConflictSetSnapshot {
 }
 
 impl ConflictSetSnapshot {
-    pub fn conflicts_in_range(
-        &self,
-        range: Range<Anchor>,
-        buffer: &text::BufferSnapshot,
-    ) -> &[ConflictRegion] {
+    pub fn conflicts_in_range(&self, range: Range<Anchor>, buffer: &text::BufferSnapshot) -> &[ConflictRegion] {
         let start_ix = self
             .conflicts
-            .binary_search_by(|conflict| {
-                conflict
-                    .range
-                    .end
-                    .cmp(&range.start, buffer)
-                    .then(Ordering::Greater)
-            })
+            .binary_search_by(|conflict| conflict.range.end.cmp(&range.start, buffer).then(Ordering::Greater))
             .unwrap_err();
         let end_ix = start_ix
             + self.conflicts[start_ix..]
-                .binary_search_by(|conflict| {
-                    conflict
-                        .range
-                        .start
-                        .cmp(&range.end, buffer)
-                        .then(Ordering::Less)
-                })
+                .binary_search_by(|conflict| conflict.range.start.cmp(&range.end, buffer).then(Ordering::Less))
                 .unwrap_err();
         &self.conflicts[start_ix..end_ix]
     }
@@ -62,19 +46,15 @@ impl ConflictSetSnapshot {
             .zip(other.conflicts[common_prefix_len..].iter().rev())
             .take_while(|(old, new)| old == new)
             .count();
-        let old_conflicts =
-            &self.conflicts[common_prefix_len..(self.conflicts.len() - common_suffix_len)];
-        let new_conflicts =
-            &other.conflicts[common_prefix_len..(other.conflicts.len() - common_suffix_len)];
+        let old_conflicts = &self.conflicts[common_prefix_len..(self.conflicts.len() - common_suffix_len)];
+        let new_conflicts = &other.conflicts[common_prefix_len..(other.conflicts.len() - common_suffix_len)];
         let old_range = common_prefix_len..(common_prefix_len + old_conflicts.len());
         let new_range = common_prefix_len..(common_prefix_len + new_conflicts.len());
         let start = match (old_conflicts.first(), new_conflicts.first()) {
             (None, None) => None,
             (None, Some(conflict)) => Some(conflict.range.start),
             (Some(conflict), None) => Some(conflict.range.start),
-            (Some(first), Some(second)) => {
-                Some(*first.range.start.min(&second.range.start, buffer))
-            }
+            (Some(first), Some(second)) => Some(*first.range.start.min(&second.range.start, buffer)),
         };
         let end = match (old_conflicts.last(), new_conflicts.last()) {
             (None, None) => None,
@@ -101,12 +81,7 @@ pub struct ConflictRegion {
 }
 
 impl ConflictRegion {
-    pub fn resolve(
-        &self,
-        buffer: Entity<language::Buffer>,
-        ranges: &[Range<Anchor>],
-        cx: &mut App,
-    ) {
+    pub fn resolve(&self, buffer: Entity<language::Buffer>, ranges: &[Range<Anchor>], cx: &mut App) {
         let buffer_snapshot = buffer.read(cx).snapshot();
         let mut deletions = Vec::new();
         let empty = "";
@@ -161,12 +136,7 @@ impl ConflictSet {
         self.snapshot.clone()
     }
 
-    pub fn set_snapshot(
-        &mut self,
-        snapshot: ConflictSetSnapshot,
-        update: ConflictSetUpdate,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn set_snapshot(&mut self, snapshot: ConflictSetSnapshot, update: ConflictSetUpdate, cx: &mut Context<Self>) {
         self.snapshot = snapshot;
         cx.emit(update);
     }
@@ -200,16 +170,10 @@ impl ConflictSet {
                 if !branch_name.is_empty() {
                     ours_branch_name = Some(SharedString::new(branch_name));
                 }
-            } else if line.starts_with("||||||| ")
-                && conflict_start.is_some()
-                && ours_start.is_some()
-            {
+            } else if line.starts_with("||||||| ") && conflict_start.is_some() && ours_start.is_some() {
                 ours_end = Some(line_pos);
                 base_start = Some(line_end + 1);
-            } else if line.starts_with("=======")
-                && conflict_start.is_some()
-                && ours_start.is_some()
-            {
+            } else if line.starts_with("=======") && conflict_start.is_some() && ours_start.is_some() {
                 // Set ours_end if not already set (would be set if we have base markers)
                 if ours_end.is_none() {
                     ours_end = Some(line_pos);
@@ -231,12 +195,9 @@ impl ConflictSet {
                 let theirs_end = line_pos;
                 let conflict_end = (line_end + 1).min(buffer_len);
 
-                let range = buffer.anchor_after(conflict_start.unwrap())
-                    ..buffer.anchor_before(conflict_end);
-                let ours = buffer.anchor_after(ours_start.unwrap())
-                    ..buffer.anchor_before(ours_end.unwrap());
-                let theirs =
-                    buffer.anchor_after(theirs_start.unwrap())..buffer.anchor_before(theirs_end);
+                let range = buffer.anchor_after(conflict_start.unwrap())..buffer.anchor_before(conflict_end);
+                let ours = buffer.anchor_after(ours_start.unwrap())..buffer.anchor_before(ours_end.unwrap());
+                let theirs = buffer.anchor_after(theirs_start.unwrap())..buffer.anchor_before(theirs_end);
 
                 let base = base_start
                     .zip(base_end)
@@ -326,12 +287,8 @@ mod tests {
         assert!(first.base.is_none());
         assert_eq!(first.ours_branch_name.as_ref(), "HEAD");
         assert_eq!(first.theirs_branch_name.as_ref(), "branch-name");
-        let our_text = snapshot
-            .text_for_range(first.ours.clone())
-            .collect::<String>();
-        let their_text = snapshot
-            .text_for_range(first.theirs.clone())
-            .collect::<String>();
+        let our_text = snapshot.text_for_range(first.ours.clone()).collect::<String>();
+        let their_text = snapshot.text_for_range(first.theirs.clone()).collect::<String>();
         assert_eq!(our_text, "This is our version\n");
         assert_eq!(their_text, "This is their version\n");
 
@@ -339,12 +296,8 @@ mod tests {
         assert!(second.base.is_some());
         assert_eq!(second.ours_branch_name.as_ref(), "HEAD");
         assert_eq!(second.theirs_branch_name.as_ref(), "branch-name");
-        let our_text = snapshot
-            .text_for_range(second.ours.clone())
-            .collect::<String>();
-        let their_text = snapshot
-            .text_for_range(second.theirs.clone())
-            .collect::<String>();
+        let our_text = snapshot.text_for_range(second.ours.clone()).collect::<String>();
+        let their_text = snapshot.text_for_range(second.theirs.clone()).collect::<String>();
         let base_text = snapshot
             .text_for_range(second.base.as_ref().unwrap().clone())
             .collect::<String>();
@@ -409,13 +362,9 @@ mod tests {
         assert_eq!(conflict.theirs_branch_name.as_ref(), "branch-nested");
 
         // Check that the nested conflict was detected correctly
-        let our_text = snapshot
-            .text_for_range(conflict.ours.clone())
-            .collect::<String>();
+        let our_text = snapshot.text_for_range(conflict.ours.clone()).collect::<String>();
         assert_eq!(our_text, "This is a nested conflict marker\n");
-        let their_text = snapshot
-            .text_for_range(conflict.theirs.clone())
-            .collect::<String>();
+        let their_text = snapshot.text_for_range(conflict.theirs.clone()).collect::<String>();
         assert_eq!(their_text, "This is their version in a nested conflict\n");
     }
 
@@ -433,10 +382,7 @@ mod tests {
 
         let conflict_snapshot = ConflictSet::parse(&snapshot);
         assert_eq!(conflict_snapshot.conflicts.len(), 1);
-        assert_eq!(
-            conflict_snapshot.conflicts[0].ours_branch_name.as_ref(),
-            "ours"
-        );
+        assert_eq!(conflict_snapshot.conflicts[0].ours_branch_name.as_ref(), "ours");
         assert_eq!(
             conflict_snapshot.conflicts[0].theirs_branch_name.as_ref(),
             "Origin" // default branch name if there is none
@@ -483,38 +429,14 @@ mod tests {
 
         let conflict_snapshot = ConflictSet::parse(&snapshot);
         assert_eq!(conflict_snapshot.conflicts.len(), 4);
-        assert_eq!(
-            conflict_snapshot.conflicts[0].ours_branch_name.as_ref(),
-            "HEAD1"
-        );
-        assert_eq!(
-            conflict_snapshot.conflicts[0].theirs_branch_name.as_ref(),
-            "branch1"
-        );
-        assert_eq!(
-            conflict_snapshot.conflicts[1].ours_branch_name.as_ref(),
-            "HEAD2"
-        );
-        assert_eq!(
-            conflict_snapshot.conflicts[1].theirs_branch_name.as_ref(),
-            "branch2"
-        );
-        assert_eq!(
-            conflict_snapshot.conflicts[2].ours_branch_name.as_ref(),
-            "HEAD3"
-        );
-        assert_eq!(
-            conflict_snapshot.conflicts[2].theirs_branch_name.as_ref(),
-            "branch3"
-        );
-        assert_eq!(
-            conflict_snapshot.conflicts[3].ours_branch_name.as_ref(),
-            "HEAD4"
-        );
-        assert_eq!(
-            conflict_snapshot.conflicts[3].theirs_branch_name.as_ref(),
-            "branch4"
-        );
+        assert_eq!(conflict_snapshot.conflicts[0].ours_branch_name.as_ref(), "HEAD1");
+        assert_eq!(conflict_snapshot.conflicts[0].theirs_branch_name.as_ref(), "branch1");
+        assert_eq!(conflict_snapshot.conflicts[1].ours_branch_name.as_ref(), "HEAD2");
+        assert_eq!(conflict_snapshot.conflicts[1].theirs_branch_name.as_ref(), "branch2");
+        assert_eq!(conflict_snapshot.conflicts[2].ours_branch_name.as_ref(), "HEAD3");
+        assert_eq!(conflict_snapshot.conflicts[2].theirs_branch_name.as_ref(), "branch3");
+        assert_eq!(conflict_snapshot.conflicts[3].ours_branch_name.as_ref(), "HEAD4");
+        assert_eq!(conflict_snapshot.conflicts[3].theirs_branch_name.as_ref(), "branch4");
 
         let range = test_content.find("seven").unwrap()..test_content.find("eleven").unwrap();
         let range = buffer.anchor_before(range.start)..buffer.anchor_after(range.end);
@@ -530,8 +452,7 @@ mod tests {
             &conflict_snapshot.conflicts[0..=1]
         );
 
-        let range =
-            test_content.find("eight").unwrap() - 1..test_content.find(">>>>>>> branch3").unwrap();
+        let range = test_content.find("eight").unwrap() - 1..test_content.find(">>>>>>> branch3").unwrap();
         let range = buffer.anchor_before(range.start)..buffer.anchor_after(range.end);
         assert_eq!(
             conflict_snapshot.conflicts_in_range(range, &snapshot),
@@ -577,34 +498,28 @@ mod tests {
             )
         });
         let buffer = buffer.await.unwrap();
-        let conflict_set = git_store.update(cx, |git_store, cx| {
-            git_store.open_conflict_set(buffer.clone(), cx)
-        });
+        let conflict_set = git_store.update(cx, |git_store, cx| git_store.open_conflict_set(buffer.clone(), cx));
         let (events_tx, events_rx) = mpsc::channel::<ConflictSetUpdate>();
         let _conflict_set_subscription = cx.update(|cx| {
             cx.subscribe(&conflict_set, move |_, event, _| {
                 events_tx.send(event.clone()).ok();
             })
         });
-        let conflicts_snapshot =
-            conflict_set.read_with(cx, |conflict_set, _| conflict_set.snapshot());
+        let conflicts_snapshot = conflict_set.read_with(cx, |conflict_set, _| conflict_set.snapshot());
         assert!(conflicts_snapshot.conflicts.is_empty());
 
         buffer.update(cx, |buffer, cx| {
             buffer.edit(
-                [
-                    (4..4, "<<<<<<< HEAD\n"),
-                    (14..14, "=======\nTWO\n>>>>>>> branch\n"),
-                ],
+                [(4..4, "<<<<<<< HEAD\n"), (14..14, "=======\nTWO\n>>>>>>> branch\n")],
                 None,
                 cx,
             );
         });
 
         cx.run_until_parked();
-        events_rx.try_recv().expect_err(
-            "no conflicts should be registered as long as the file's status is unchanged",
-        );
+        events_rx
+            .try_recv()
+            .expect_err("no conflicts should be registered as long as the file's status is unchanged");
 
         fs.with_git_state(path!("/project/.git").as_ref(), true, |state| {
             state.unmerged_paths.insert(
@@ -626,9 +541,7 @@ mod tests {
         assert_eq!(update.old_range, 0..0);
         assert_eq!(update.new_range, 0..1);
 
-        let conflict = conflict_set.read_with(cx, |conflict_set, _| {
-            conflict_set.snapshot().conflicts[0].clone()
-        });
+        let conflict = conflict_set.read_with(cx, |conflict_set, _| conflict_set.snapshot().conflicts[0].clone());
         cx.update(|cx| {
             conflict.resolve(buffer.clone(), std::slice::from_ref(&conflict.theirs), cx);
         });
@@ -642,10 +555,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_conflict_updates_without_merge_head(
-        executor: BackgroundExecutor,
-        cx: &mut TestAppContext,
-    ) {
+    async fn test_conflict_updates_without_merge_head(executor: BackgroundExecutor, cx: &mut TestAppContext) {
         zlog::init_test();
         cx.update(|cx| {
             settings::init(cx);
@@ -695,15 +605,11 @@ mod tests {
         let buffer = buffer.await.unwrap();
 
         // Open the conflict set for a file that currently has conflicts.
-        let conflict_set = git_store.update(cx, |git_store, cx| {
-            git_store.open_conflict_set(buffer.clone(), cx)
-        });
+        let conflict_set = git_store.update(cx, |git_store, cx| git_store.open_conflict_set(buffer.clone(), cx));
 
         cx.run_until_parked();
         conflict_set.update(cx, |conflict_set, cx| {
-            let conflict_range = conflict_set.snapshot().conflicts[0]
-                .range
-                .to_point(buffer.read(cx));
+            let conflict_range = conflict_set.snapshot().conflicts[0].range.to_point(buffer.read(cx));
             assert_eq!(conflict_range, Point::new(1, 0)..Point::new(6, 0));
         });
 
@@ -733,9 +639,7 @@ mod tests {
 
         cx.run_until_parked();
         conflict_set.update(cx, |conflict_set, cx| {
-            let conflict_range = conflict_set.snapshot().conflicts[0]
-                .range
-                .to_point(buffer.read(cx));
+            let conflict_range = conflict_set.snapshot().conflicts[0].range.to_point(buffer.read(cx));
             assert_eq!(conflict_range, Point::new(1, 0)..Point::new(6, 0));
         });
     }

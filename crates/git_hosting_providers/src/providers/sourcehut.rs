@@ -3,10 +3,7 @@ use std::str::FromStr;
 use anyhow::{Result, bail};
 use url::Url;
 
-use git::{
-    BuildCommitPermalinkParams, BuildPermalinkParams, GitHostingProvider, ParsedGitRemote,
-    RemoteUrl,
-};
+use git::{BuildCommitPermalinkParams, BuildPermalinkParams, GitHostingProvider, ParsedGitRemote, RemoteUrl};
 
 use crate::get_host_from_git_remote_url;
 
@@ -89,36 +86,22 @@ impl GitHostingProvider for Sourcehut {
         })
     }
 
-    fn build_commit_permalink(
-        &self,
-        remote: &ParsedGitRemote,
-        params: BuildCommitPermalinkParams,
-    ) -> Url {
+    fn build_commit_permalink(&self, remote: &ParsedGitRemote, params: BuildCommitPermalinkParams) -> Url {
         let BuildCommitPermalinkParams { sha } = params;
         let ParsedGitRemote { owner, repo } = remote;
 
-        self.base_url()
-            .join(&format!("~{owner}/{repo}/commit/{sha}"))
-            .unwrap()
+        self.base_url().join(&format!("~{owner}/{repo}/commit/{sha}")).unwrap()
     }
 
     fn build_permalink(&self, remote: ParsedGitRemote, params: BuildPermalinkParams) -> Url {
         let ParsedGitRemote { owner, repo } = remote;
-        let BuildPermalinkParams {
-            sha,
-            path,
-            selection,
-        } = params;
+        let BuildPermalinkParams { sha, path, selection } = params;
 
         let mut permalink = self
             .base_url()
             .join(&format!("~{owner}/{repo}/tree/{sha}/item/{path}"))
             .unwrap();
-        permalink.set_fragment(
-            selection
-                .map(|selection| self.line_fragment(&selection))
-                .as_deref(),
-        );
+        permalink.set_fragment(selection.map(|selection| self.line_fragment(&selection)).as_deref());
         permalink
     }
 }

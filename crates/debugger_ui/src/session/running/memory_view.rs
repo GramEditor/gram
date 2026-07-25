@@ -9,18 +9,17 @@ use std::{
 
 use editor::{Editor, EditorElement, EditorStyle};
 use gpui::{
-    Action, Along, AppContext, Axis, DismissEvent, DragMoveEvent, Empty, Entity, FocusHandle,
-    Focusable, ListHorizontalSizingBehavior, MouseButton, Point, ScrollStrategy, ScrollWheelEvent,
-    Subscription, Task, TextStyle, UniformList, UniformListScrollHandle, WeakEntity, actions,
-    anchored, deferred, uniform_list,
+    Action, Along, AppContext, Axis, DismissEvent, DragMoveEvent, Empty, Entity, FocusHandle, Focusable,
+    ListHorizontalSizingBehavior, MouseButton, Point, ScrollStrategy, ScrollWheelEvent, Subscription, Task, TextStyle,
+    UniformList, UniformListScrollHandle, WeakEntity, actions, anchored, deferred, uniform_list,
 };
 use notifications::status_toast::{StatusToast, ToastIcon};
 use project::debugger::{MemoryCell, dap_command::DataBreakpointContext, session::Session};
 use settings::Settings;
 use theme::ThemeSettings;
 use ui::{
-    ContextMenu, Divider, DropdownMenu, FluentBuilder, IntoElement, PopoverMenuHandle, Render,
-    ScrollableHandle, StatefulInteractiveElement, Tooltip, WithScrollbar, prelude::*,
+    ContextMenu, Divider, DropdownMenu, FluentBuilder, IntoElement, PopoverMenuHandle, Render, ScrollableHandle,
+    StatefulInteractiveElement, Tooltip, WithScrollbar, prelude::*,
 };
 use workspace::Workspace;
 
@@ -207,14 +206,9 @@ impl MemoryView {
             view_state.row_count() as usize,
             move |range, _, cx| {
                 let mut line_buffer = Vec::with_capacity(view_state.line_width.width as usize);
-                let memory_start =
-                    (view_state.base_row + range.start as u64) * view_state.line_width.width as u64;
-                let memory_end = (view_state.base_row + range.end as u64)
-                    * view_state.line_width.width as u64
-                    - 1;
-                let mut memory = session.update(cx, |this, cx| {
-                    this.read_memory(memory_start..=memory_end, cx)
-                });
+                let memory_start = (view_state.base_row + range.start as u64) * view_state.line_width.width as u64;
+                let memory_end = (view_state.base_row + range.end as u64) * view_state.line_width.width as u64 - 1;
+                let mut memory = session.update(cx, |this, cx| this.read_memory(memory_start..=memory_end, cx));
                 let mut rows = Vec::with_capacity(range.end - range.start);
                 for ix in range {
                     line_buffer.extend((&mut memory).take(view_state.line_width.width as usize));
@@ -235,15 +229,11 @@ impl MemoryView {
             let mut view_state = this.view_state();
             let delta = evt.delta.pixel_delta(window.line_height());
             let current_offset = view_state.scroll_handle.offset();
-            view_state
-                .set_offset(current_offset.apply_along(Axis::Vertical, |offset| offset + delta.y));
+            view_state.set_offset(current_offset.apply_along(Axis::Vertical, |offset| offset + delta.y));
         }))
     }
     fn render_query_bar(&self, cx: &Context<Self>) -> impl IntoElement {
-        EditorElement::new(
-            &self.query_editor,
-            Self::editor_style(&self.query_editor, cx),
-        )
+        EditorElement::new(&self.query_editor, Self::editor_style(&self.query_editor, cx))
     }
     pub(super) fn go_to_memory_reference(
         &mut self,
@@ -258,9 +248,8 @@ impl MemoryView {
         };
         let access_size = evaluate_name
             .map(|typ| {
-                self.session.update(cx, |this, cx| {
-                    this.data_access_size(stack_frame_id, typ, cx)
-                })
+                self.session
+                    .update(cx, |this, cx| this.data_access_size(stack_frame_id, typ, cx))
             })
             .unwrap_or_else(|| Task::ready(None));
         cx.spawn(async move |this, cx| {
@@ -341,14 +330,14 @@ impl MemoryView {
                             match view_state.line_width.width.cmp(&width.width) {
                                 std::cmp::Ordering::Less => {
                                     // We're converting up.
-                                    let shift = width.width.trailing_zeros()
-                                        - view_state.line_width.width.trailing_zeros();
+                                    let shift =
+                                        width.width.trailing_zeros() - view_state.line_width.width.trailing_zeros();
                                     view_state.base_row >>= shift;
                                 }
                                 std::cmp::Ordering::Greater => {
                                     // We're converting down.
-                                    let shift = view_state.line_width.width.trailing_zeros()
-                                        - width.width.trailing_zeros();
+                                    let shift =
+                                        view_state.line_width.width.trailing_zeros() - width.width.trailing_zeros();
                                     view_state.base_row <<= shift;
                                 }
                                 _ => {}
@@ -357,10 +346,7 @@ impl MemoryView {
                         });
                     });
                 }
-                if let Some(ix) = WIDTHS
-                    .iter()
-                    .position(|width| width.width == selected_width.width)
-                {
+                if let Some(ix) = WIDTHS.iter().position(|width| width.width == selected_width.width) {
                     for _ in 0..=ix {
                         this.select_next(&Default::default(), window, cx);
                     }
@@ -373,27 +359,16 @@ impl MemoryView {
 
     fn page_down(&mut self, _: &menu::SelectLast, _: &mut Window, cx: &mut Context<Self>) {
         let mut view_state = self.view_state();
-        view_state.base_row = view_state
-            .base_row
-            .overflowing_add(view_state.row_count())
-            .0;
+        view_state.base_row = view_state.base_row.overflowing_add(view_state.row_count()).0;
         cx.notify();
     }
     fn page_up(&mut self, _: &menu::SelectFirst, _: &mut Window, cx: &mut Context<Self>) {
         let mut view_state = self.view_state();
-        view_state.base_row = view_state
-            .base_row
-            .overflowing_sub(view_state.row_count())
-            .0;
+        view_state.base_row = view_state.base_row.overflowing_sub(view_state.row_count()).0;
         cx.notify();
     }
 
-    fn change_query_bar_mode(
-        &mut self,
-        is_writing_memory: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn change_query_bar_mode(&mut self, is_writing_memory: bool, window: &mut Window, cx: &mut Context<Self>) {
         if is_writing_memory == self.is_writing_memory {
             return;
         }
@@ -413,15 +388,8 @@ impl MemoryView {
         }
     }
 
-    fn toggle_data_breakpoint(
-        &mut self,
-        _: &crate::ToggleDataBreakpoint,
-        _: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        let Some(SelectedMemoryRange::DragComplete(selection)) =
-            self.view_state().selection.clone()
-        else {
+    fn toggle_data_breakpoint(&mut self, _: &crate::ToggleDataBreakpoint, _: &mut Window, cx: &mut Context<Self>) {
+        let Some(SelectedMemoryRange::DragComplete(selection)) = self.view_state().selection.clone() else {
             return;
         };
         let range = selection.memory_range();
@@ -462,26 +430,23 @@ impl MemoryView {
             // Go into memory writing mode.
             if !self.is_writing_memory {
                 let should_return = self.session.update(cx, |session, cx| {
-                    if !session
-                        .capabilities()
-                        .supports_write_memory_request
-                        .unwrap_or_default()
-                    {
+                    if !session.capabilities().supports_write_memory_request.unwrap_or_default() {
                         let adapter_name = session.adapter();
                         // We cannot write memory with this adapter.
                         _ = self.workspace.update(cx, |this, cx| {
                             this.toggle_status_toast(
-                                StatusToast::new(format!(
-                                    "Debug Adapter `{adapter_name}` does not support writing to memory"
-                                ), cx, |this, cx| {
-                                    cx.spawn(async move |this, cx| {
-                                        cx.background_executor().timer(Duration::from_secs(2)).await;
-                                        _ = this.update(cx, |_, cx| {
-                                            cx.emit(DismissEvent)
-                                        });
-                                    }).detach();
-                                    this.icon(ToastIcon::new(IconName::XCircle).color(Color::Error))
-                                }),
+                                StatusToast::new(
+                                    format!("Debug Adapter `{adapter_name}` does not support writing to memory"),
+                                    cx,
+                                    |this, cx| {
+                                        cx.spawn(async move |this, cx| {
+                                            cx.background_executor().timer(Duration::from_secs(2)).await;
+                                            _ = this.update(cx, |_, cx| cx.emit(DismissEvent));
+                                        })
+                                        .detach();
+                                        this.icon(ToastIcon::new(IconName::XCircle).color(Color::Error))
+                                    },
+                                ),
                                 cx,
                             );
                         });
@@ -542,23 +507,20 @@ impl MemoryView {
     }
 
     fn jump_to_expression(&mut self, expr: String, cx: &mut Context<Self>) {
-        let Ok(selected_frame) = self
-            .stack_frame_list
-            .update(cx, |this, _| this.opened_stack_frame_id())
-        else {
+        let Ok(selected_frame) = self.stack_frame_list.update(cx, |this, _| this.opened_stack_frame_id()) else {
             return;
         };
         let expr = format!("?${{{expr}}}");
-        let reference = self.session.update(cx, |this, cx| {
-            this.memory_reference_of_expr(selected_frame, expr, cx)
-        });
+        let reference = self
+            .session
+            .update(cx, |this, cx| this.memory_reference_of_expr(selected_frame, expr, cx));
         cx.spawn(async move |this, cx| {
             if let Some((reference, typ)) = reference.await {
                 _ = this.update(cx, |this, cx| {
-                    let sizeof_expr = if typ.as_ref().is_some_and(|t| {
-                        t.chars()
-                            .all(|c| c.is_whitespace() || c.is_alphabetic() || c == '*')
-                    }) {
+                    let sizeof_expr = if typ
+                        .as_ref()
+                        .is_some_and(|t| t.chars().all(|c| c.is_whitespace() || c.is_alphabetic() || c == '*'))
+                    {
                         typ.as_deref()
                     } else {
                         None
@@ -576,20 +538,15 @@ impl MemoryView {
     }
 
     /// Jump to memory pointed to by selected memory range.
-    fn go_to_address(
-        &mut self,
-        _: &GoToSelectedAddress,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        let Some(SelectedMemoryRange::DragComplete(drag)) = self.view_state().selection.clone()
-        else {
+    fn go_to_address(&mut self, _: &GoToSelectedAddress, window: &mut Window, cx: &mut Context<Self>) {
+        let Some(SelectedMemoryRange::DragComplete(drag)) = self.view_state().selection.clone() else {
             return;
         };
         let range = drag.memory_range();
-        let Some(memory): Option<Vec<u8>> = self.session.update(cx, |this, cx| {
-            this.read_memory(range, cx).map(|cell| cell.0).collect()
-        }) else {
+        let Some(memory): Option<Vec<u8>> = self
+            .session
+            .update(cx, |this, cx| this.read_memory(range, cx).map(|cell| cell.0).collect())
+        else {
             return;
         };
         if memory.len() > 8 {
@@ -623,8 +580,7 @@ impl MemoryView {
                 && caps.supports_data_breakpoint_bytes.unwrap_or_default();
             let memory_unreadable = LazyCell::new(|| {
                 session.update(cx, |this, cx| {
-                    this.read_memory(range.clone(), cx)
-                        .any(|cell| cell.0.is_none())
+                    this.read_memory(range.clone(), cx).any(|cell| cell.0.is_none())
                 })
             });
 
@@ -645,19 +601,17 @@ impl MemoryView {
         });
 
         cx.focus_view(&context_menu, window);
-        let subscription = cx.subscribe_in(
-            &context_menu,
-            window,
-            |this, _, _: &DismissEvent, window, cx| {
-                if this.open_context_menu.as_ref().is_some_and(|context_menu| {
-                    context_menu.0.focus_handle(cx).contains_focused(window, cx)
-                }) {
-                    cx.focus_self(window);
-                }
-                this.open_context_menu.take();
-                cx.notify();
-            },
-        );
+        let subscription = cx.subscribe_in(&context_menu, window, |this, _, _: &DismissEvent, window, cx| {
+            if this
+                .open_context_menu
+                .as_ref()
+                .is_some_and(|context_menu| context_menu.0.focus_handle(cx).contains_focused(window, cx))
+            {
+                cx.focus_self(window);
+            }
+            this.open_context_menu.take();
+            cx.notify();
+        });
 
         self.open_context_menu = Some((context_menu, position, subscription));
     }
@@ -700,10 +654,7 @@ fn render_single_memory_view_line(
     let base_address = (view_state.base_row + ix) * view_state.line_width.width as u64;
 
     h_flex()
-        .id((
-            "memory-view-row-full",
-            ix * view_state.line_width.width as u64,
-        ))
+        .id(("memory-view-row-full", ix * view_state.line_width.width as u64))
         .size_full()
         .gap_x_2()
         .child(
@@ -720,10 +671,7 @@ fn render_single_memory_view_line(
         )
         .child(
             h_flex()
-                .id((
-                    "memory-view-row-raw-memory",
-                    ix * view_state.line_width.width as u64,
-                ))
+                .id(("memory-view-row-raw-memory", ix * view_state.line_width.width as u64))
                 .px_1()
                 .children(memory.iter().enumerate().map(|(cell_ix, cell)| {
                     let weak = weak.clone();
@@ -734,26 +682,21 @@ fn render_single_memory_view_line(
                             this.when(selection.contains(base_address + cell_ix as u64), |this| {
                                 let weak = weak.clone();
 
-                                this.bg(Color::Selected.color(cx).opacity(0.2)).when(
-                                    !selection.is_dragging(),
-                                    |this| {
+                                this.bg(Color::Selected.color(cx).opacity(0.2))
+                                    .when(!selection.is_dragging(), |this| {
                                         let selection = selection.drag().memory_range();
-                                        this.on_mouse_down(
-                                            MouseButton::Right,
-                                            move |click, window, cx| {
-                                                _ = weak.update(cx, |this, cx| {
-                                                    this.deploy_memory_context_menu(
-                                                        selection.clone(),
-                                                        click.position,
-                                                        window,
-                                                        cx,
-                                                    )
-                                                });
-                                                cx.stop_propagation();
-                                            },
-                                        )
-                                    },
-                                )
+                                        this.on_mouse_down(MouseButton::Right, move |click, window, cx| {
+                                            _ = weak.update(cx, |this, cx| {
+                                                this.deploy_memory_context_menu(
+                                                    selection.clone(),
+                                                    click.position,
+                                                    window,
+                                                    cx,
+                                                )
+                                            });
+                                            cx.stop_propagation();
+                                        })
+                                    })
                             })
                         })
                         .child(
@@ -787,21 +730,19 @@ fn render_single_memory_view_line(
                             let weak = weak.clone();
                             move |drag: &Drag, _, cx| {
                                 _ = weak.update(cx, |this, _| {
-                                    this.view_state().selection =
-                                        Some(SelectedMemoryRange::DragComplete(Drag {
-                                            start_address: drag.start_address,
-                                            end_address: base_address + cell_ix as u64,
-                                        }));
+                                    this.view_state().selection = Some(SelectedMemoryRange::DragComplete(Drag {
+                                        start_address: drag.start_address,
+                                        end_address: base_address + cell_ix as u64,
+                                    }));
                                 });
                             }
                         })
                         .drag_over(move |style, drag: &Drag, _, cx| {
                             _ = weak.update(cx, |this, _| {
-                                this.view_state().selection =
-                                    Some(SelectedMemoryRange::DragUnderway(Drag {
-                                        start_address: drag.start_address,
-                                        end_address: base_address + cell_ix as u64,
-                                    }));
+                                this.view_state().selection = Some(SelectedMemoryRange::DragUnderway(Drag {
+                                    start_address: drag.start_address,
+                                    end_address: base_address + cell_ix as u64,
+                                }));
                             });
 
                             style
@@ -810,10 +751,7 @@ fn render_single_memory_view_line(
         )
         .child(
             h_flex()
-                .id((
-                    "memory-view-row-ascii-memory",
-                    ix * view_state.line_width.width as u64,
-                ))
+                .id(("memory-view-row-ascii-memory", ix * view_state.line_width.width as u64))
                 .h_full()
                 .px_1()
                 .mr_4()
@@ -846,18 +784,11 @@ fn render_single_memory_view_line(
 }
 
 impl Render for MemoryView {
-    fn render(
-        &mut self,
-        window: &mut ui::Window,
-        cx: &mut ui::Context<Self>,
-    ) -> impl ui::IntoElement {
+    fn render(&mut self, window: &mut ui::Window, cx: &mut ui::Context<Self>) -> impl ui::IntoElement {
         let (icon, tooltip_text) = if self.is_writing_memory {
             (IconName::Pencil, "Edit memory at a selected address")
         } else {
-            (
-                IconName::LocationEdit,
-                "Change address of currently viewed memory",
-            )
+            (IconName::LocationEdit, "Change address of currently viewed memory")
         };
         v_flex()
             .id("Memory-view")
@@ -886,9 +817,7 @@ impl Render for MemoryView {
                             .mb_0p5()
                             .bg(cx.theme().colors().editor_background)
                             .when_else(
-                                self.query_editor
-                                    .focus_handle(cx)
-                                    .contains_focused(window, cx),
+                                self.query_editor.focus_handle(cx).contains_focused(window, cx),
                                 |this| this.border_color(cx.theme().colors().border_focused),
                                 |this| this.border_color(cx.theme().colors().border_transparent),
                             )
@@ -922,10 +851,7 @@ impl Render for MemoryView {
                     .custom_scrollbars(
                         ui::Scrollbars::new(ui::ScrollAxes::Both)
                             .tracked_scroll_handle(&self.view_state_handle)
-                            .with_track_along(
-                                ui::ScrollAxes::Both,
-                                cx.theme().colors().panel_background,
-                            )
+                            .with_track_along(ui::ScrollAxes::Both, cx.theme().colors().panel_background)
                             .tracked_entity(cx.entity_id()),
                         window,
                         cx,

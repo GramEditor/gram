@@ -129,10 +129,10 @@ pub fn format_output(action: &RemoteAction, output: RemoteCommandOutput) -> Succ
                 Some(SuccessStyle::Toast)
             } else if output.stderr.contains("\nremote: ") {
                 let pr_hints = [
-                    ("Create a pull request", "Create Pull Request"), // GitHub
-                    ("Create pull request", "Create Pull Request"),   // Bitbucket
+                    ("Create a pull request", "Create Pull Request"),   // GitHub
+                    ("Create pull request", "Create Pull Request"),     // Bitbucket
                     ("create a merge request", "Create Merge Request"), // GitLab
-                    ("View merge request", "View Merge Request"),     // GitLab
+                    ("View merge request", "View Merge Request"),       // GitLab
                 ];
                 pr_hints
                     .iter()
@@ -219,8 +219,8 @@ mod tests {
                 To example.com:test/test.git
                  * [new branch]      test -> test
                 "}
-            .to_string()
-            };
+            .to_string(),
+        };
 
         let msg = format_output(&action, output);
 

@@ -1,14 +1,12 @@
 use crate::{
-    self as gpui, AbsoluteLength, AlignContent, AlignItems, BorderStyle, CursorStyle,
-    DefiniteLength, Display, Fill, FlexDirection, FlexWrap, Font, FontFeatures, FontStyle,
-    FontWeight, GridPlacement, GridTemplate, Hsla, JustifyContent, Length, SharedString,
-    StrikethroughStyle, StyleRefinement, TemplateColumnMinSize, TextAlign, TextOverflow,
-    TextStyleRefinement, UnderlineStyle, WhiteSpace, px, relative, rems,
+    self as gpui, AbsoluteLength, AlignContent, AlignItems, BorderStyle, CursorStyle, DefiniteLength, Display, Fill,
+    FlexDirection, FlexWrap, Font, FontFeatures, FontStyle, FontWeight, GridPlacement, GridTemplate, Hsla,
+    JustifyContent, Length, SharedString, StrikethroughStyle, StyleRefinement, TemplateColumnMinSize, TextAlign,
+    TextOverflow, TextStyleRefinement, UnderlineStyle, WhiteSpace, px, relative, rems,
 };
 pub use gpui_macros::{
-    border_style_methods, box_shadow_style_methods, cursor_style_methods, margin_style_methods,
-    overflow_style_methods, padding_style_methods, position_style_methods,
-    visibility_style_methods,
+    border_style_methods, box_shadow_style_methods, cursor_style_methods, margin_style_methods, overflow_style_methods,
+    padding_style_methods, position_style_methods, visibility_style_methods,
 };
 const ELLIPSIS: SharedString = SharedString::new_static("…");
 

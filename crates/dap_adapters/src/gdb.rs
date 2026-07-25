@@ -51,10 +51,7 @@ impl DebugAdapter for GdbDebugAdapter {
                 }
 
                 if let Some(stop_on_entry) = gram_scenario.stop_on_entry {
-                    obj.insert(
-                        "stopAtBeginningOfMainSubprogram".into(),
-                        stop_on_entry.into(),
-                    );
+                    obj.insert("stopAtBeginningOfMainSubprogram".into(), stop_on_entry.into());
                 }
                 if let Some(cwd) = launch.cwd.as_ref() {
                     obj.insert("cwd".into(), cwd.to_string_lossy().into_owned().into());

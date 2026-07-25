@@ -171,9 +171,7 @@ impl Component for Divider {
     }
 
     fn description() -> Option<&'static str> {
-        Some(
-            "Visual separator used to create divisions between groups of content or sections in a layout.",
-        )
+        Some("Visual separator used to create divisions between groups of content or sections in a layout.")
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
@@ -187,27 +185,16 @@ impl Component for Divider {
                             single_example("Default", Divider::horizontal().into_any_element()),
                             single_example(
                                 "Border Color",
-                                Divider::horizontal()
-                                    .color(DividerColor::Border)
-                                    .into_any_element(),
+                                Divider::horizontal().color(DividerColor::Border).into_any_element(),
                             ),
-                            single_example(
-                                "Inset",
-                                Divider::horizontal().inset().into_any_element(),
-                            ),
-                            single_example(
-                                "Dashed",
-                                Divider::horizontal_dashed().into_any_element(),
-                            ),
+                            single_example("Inset", Divider::horizontal().inset().into_any_element()),
+                            single_example("Dashed", Divider::horizontal_dashed().into_any_element()),
                         ],
                     ),
                     example_group_with_title(
                         "Vertical Dividers",
                         vec![
-                            single_example(
-                                "Default",
-                                div().h_16().child(Divider::vertical()).into_any_element(),
-                            ),
+                            single_example("Default", div().h_16().child(Divider::vertical()).into_any_element()),
                             single_example(
                                 "Border Color",
                                 div()
@@ -217,17 +204,11 @@ impl Component for Divider {
                             ),
                             single_example(
                                 "Inset",
-                                div()
-                                    .h_16()
-                                    .child(Divider::vertical().inset())
-                                    .into_any_element(),
+                                div().h_16().child(Divider::vertical().inset()).into_any_element(),
                             ),
                             single_example(
                                 "Dashed",
-                                div()
-                                    .h_16()
-                                    .child(Divider::vertical_dashed())
-                                    .into_any_element(),
+                                div().h_16().child(Divider::vertical_dashed()).into_any_element(),
                             ),
                         ],
                     ),

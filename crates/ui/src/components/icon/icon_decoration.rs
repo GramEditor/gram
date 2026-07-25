@@ -141,9 +141,7 @@ impl RenderOnce for IconDecoration {
             .path(self.kind.bg().path())
             .text_color(self.knockout_color)
             .map(|this| match self.group_name {
-                Some(group_name) => this.group_hover(group_name, |style| {
-                    style.text_color(self.knockout_hover_color)
-                }),
+                Some(group_name) => this.group_hover(group_name, |style| style.text_color(self.knockout_hover_color)),
                 None => this.hover(|style| style.text_color(self.knockout_hover_color)),
             });
 

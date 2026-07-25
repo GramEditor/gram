@@ -52,8 +52,7 @@ mod conditional {
     }
 
     /// Function set on `App` to render the inspector UI.
-    pub type InspectorRenderer =
-        Box<dyn Fn(&mut Inspector, &mut Window, &mut Context<Inspector>) -> AnyElement>;
+    pub type InspectorRenderer = Box<dyn Fn(&mut Inspector, &mut Window, &mut Context<Inspector>) -> AnyElement>;
 
     /// Manages inspector state - which element is currently selected and whether the inspector is
     /// in picking mode.
@@ -98,11 +97,7 @@ mod conditional {
             }
         }
 
-        pub(crate) fn set_active_element_id(
-            &mut self,
-            id: InspectorElementId,
-            window: &mut Window,
-        ) -> bool {
+        pub(crate) fn set_active_element_id(&mut self, id: InspectorElementId, window: &mut Window) -> bool {
             let changed = Some(&id) != self.active_element_id();
             if changed {
                 self.active_element = Some(InspectedElement::new(id));
@@ -134,9 +129,7 @@ mod conditional {
             let result = f(&mut inspector_state, window);
 
             if let Some(inspector_state) = inspector_state {
-                active_element
-                    .states
-                    .insert(type_id, Box::new(inspector_state));
+                active_element.states.insert(type_id, Box::new(inspector_state));
             }
 
             result
@@ -153,25 +146,12 @@ mod conditional {
         }
 
         /// Renders elements for all registered inspector states of the active inspector element.
-        pub fn render_inspector_states(
-            &mut self,
-            window: &mut Window,
-            cx: &mut Context<Self>,
-        ) -> Vec<AnyElement> {
+        pub fn render_inspector_states(&mut self, window: &mut Window, cx: &mut Context<Self>) -> Vec<AnyElement> {
             let mut elements = Vec::new();
             if let Some(active_element) = self.active_element.take() {
                 for (type_id, state) in &active_element.states {
-                    if let Some(render_inspector) = cx
-                        .inspector_element_registry
-                        .renderers_by_type_id
-                        .remove(type_id)
-                    {
-                        let mut element = (render_inspector)(
-                            active_element.id.clone(),
-                            state.as_ref(),
-                            window,
-                            cx,
-                        );
+                    if let Some(render_inspector) = cx.inspector_element_registry.renderers_by_type_id.remove(type_id) {
+                        let mut element = (render_inspector)(active_element.id.clone(), state.as_ref(), window, cx);
                         elements.push(element);
                         cx.inspector_element_registry
                             .renderers_by_type_id
@@ -200,10 +180,8 @@ mod conditional {
 
     #[derive(Default)]
     pub(crate) struct InspectorElementRegistry {
-        renderers_by_type_id: FxHashMap<
-            TypeId,
-            Box<dyn Fn(InspectorElementId, &dyn Any, &mut Window, &mut App) -> AnyElement>,
-        >,
+        renderers_by_type_id:
+            FxHashMap<TypeId, Box<dyn Fn(InspectorElementId, &dyn Any, &mut Window, &mut App) -> AnyElement>>,
     }
 
     impl InspectorElementRegistry {
@@ -246,9 +224,7 @@ pub mod inspector_reflection {
         pub fn invoke(&self, value: T) -> T {
             let boxed = Box::new(value) as Box<dyn Any>;
             let result = (self.function)(boxed);
-            *result
-                .downcast::<T>()
-                .expect("Type mismatch in reflection invoke")
+            *result.downcast::<T>().expect("Type mismatch in reflection invoke")
         }
     }
 }

@@ -1,8 +1,7 @@
 use crate::{CharClassifier, CharKind, CharScopeContext, LanguageScope};
 use anyhow::{Context, anyhow};
 use imara_diff::{
-    Algorithm, BasicLineDiffPrinter, Diff, Hunk, InternedInput, Token, UnifiedDiffConfig,
-    sources::lines,
+    Algorithm, BasicLineDiffPrinter, Diff, Hunk, InternedInput, Token, UnifiedDiffConfig, sources::lines,
 };
 use std::{iter, ops::Range, sync::Arc};
 
@@ -101,58 +100,37 @@ impl Default for DiffOptions {
 
 /// Computes a diff between two strings, using a specific language scope's
 /// word characters for word-level diffing.
-pub fn text_diff_with_options(
-    old_text: &str,
-    new_text: &str,
-    options: DiffOptions,
-) -> Vec<(Range<usize>, Arc<str>)> {
+pub fn text_diff_with_options(old_text: &str, new_text: &str, options: DiffOptions) -> Vec<(Range<usize>, Arc<str>)> {
     let empty: Arc<str> = Arc::default();
     let mut edits = Vec::new();
     let mut hunk_input = InternedInput::default();
     let input = InternedInput::new(lines(old_text), lines(new_text));
-    diff_internal(
-        &input,
-        |old_byte_range, new_byte_range, old_rows, new_rows| {
-            if should_perform_word_diff_within_hunk(
-                &old_rows,
-                &old_byte_range,
-                &new_rows,
-                &new_byte_range,
-                &options,
-            ) {
-                let old_offset = old_byte_range.start;
-                let new_offset = new_byte_range.start;
-                hunk_input.clear();
-                hunk_input.update_before(tokenize(
-                    &old_text[old_byte_range],
-                    options.language_scope.clone(),
-                ));
-                hunk_input.update_after(tokenize(
-                    &new_text[new_byte_range],
-                    options.language_scope.clone(),
-                ));
-                diff_internal(&hunk_input, |old_byte_range, new_byte_range, _, _| {
-                    let old_byte_range =
-                        old_offset + old_byte_range.start..old_offset + old_byte_range.end;
-                    let new_byte_range =
-                        new_offset + new_byte_range.start..new_offset + new_byte_range.end;
-                    let replacement_text = if new_byte_range.is_empty() {
-                        empty.clone()
-                    } else {
-                        new_text[new_byte_range].into()
-                    };
-                    edits.push((old_byte_range, replacement_text));
-                });
-            } else {
+    diff_internal(&input, |old_byte_range, new_byte_range, old_rows, new_rows| {
+        if should_perform_word_diff_within_hunk(&old_rows, &old_byte_range, &new_rows, &new_byte_range, &options) {
+            let old_offset = old_byte_range.start;
+            let new_offset = new_byte_range.start;
+            hunk_input.clear();
+            hunk_input.update_before(tokenize(&old_text[old_byte_range], options.language_scope.clone()));
+            hunk_input.update_after(tokenize(&new_text[new_byte_range], options.language_scope.clone()));
+            diff_internal(&hunk_input, |old_byte_range, new_byte_range, _, _| {
+                let old_byte_range = old_offset + old_byte_range.start..old_offset + old_byte_range.end;
+                let new_byte_range = new_offset + new_byte_range.start..new_offset + new_byte_range.end;
                 let replacement_text = if new_byte_range.is_empty() {
                     empty.clone()
                 } else {
                     new_text[new_byte_range].into()
                 };
                 edits.push((old_byte_range, replacement_text));
-            }
-        },
-    );
+            });
+        } else {
+            let replacement_text = if new_byte_range.is_empty() {
+                empty.clone()
+            } else {
+                new_text[new_byte_range].into()
+            };
+            edits.push((old_byte_range, replacement_text));
+        }
+    });
     edits
 }
 
@@ -188,22 +166,13 @@ fn diff_internal(
     Diff::compute(Algorithm::Histogram, input)
         .hunks()
         .for_each(|hunk: Hunk| {
-            old_offset += token_len(
-                input,
-                &input.before[old_token_ix as usize..hunk.before.start as usize],
-            );
-            new_offset += token_len(
-                input,
-                &input.after[new_token_ix as usize..hunk.after.start as usize],
-            );
+            old_offset += token_len(input, &input.before[old_token_ix as usize..hunk.before.start as usize]);
+            new_offset += token_len(input, &input.after[new_token_ix as usize..hunk.after.start as usize]);
             let old_len = token_len(
                 input,
                 &input.before[hunk.before.start as usize..hunk.before.end as usize],
             );
-            let new_len = token_len(
-                input,
-                &input.after[hunk.after.start as usize..hunk.after.end as usize],
-            );
+            let new_len = token_len(input, &input.after[hunk.after.start as usize..hunk.after.end as usize]);
             let old_byte_range = old_offset..old_offset + old_len;
             let new_byte_range = new_offset..new_offset + new_len;
             old_token_ix = hunk.before.end;
@@ -215,8 +184,7 @@ fn diff_internal(
 }
 
 fn tokenize(text: &str, language_scope: Option<LanguageScope>) -> impl Iterator<Item = &str> {
-    let classifier =
-        CharClassifier::new(language_scope).scope_context(Some(CharScopeContext::Completion));
+    let classifier = CharClassifier::new(language_scope).scope_context(Some(CharScopeContext::Completion));
     let mut chars = text.char_indices();
     let mut prev = None;
     let mut start_ix = 0;
@@ -245,10 +213,7 @@ fn tokenize(text: &str, language_scope: Option<LanguageScope>) -> impl Iterator<
 }
 
 fn token_len(input: &InternedInput<&str>, tokens: &[Token]) -> usize {
-    tokens
-        .iter()
-        .map(|token| input.interner[*token].len())
-        .sum()
+    tokens.iter().map(|token| input.interner[*token].len()).sum()
 }
 
 #[cfg(test)]
@@ -296,10 +261,7 @@ mod tests {
 
         let old_text = "one\ntwo\nthree\n";
         let new_text = "one\ntwo\nAND\nTHEN\nthree\n";
-        assert_eq!(
-            text_diff(old_text, new_text),
-            [(8..8, "AND\nTHEN\n".into()),]
-        );
+        assert_eq!(text_diff(old_text, new_text), [(8..8, "AND\nTHEN\n".into()),]);
 
         let old_text = "one two\nthree four five\nsix seven eight nine\nten\n";
         let new_text = "one two\nthree FOUR five\nsix SEVEN eight nine\nten\nELEVEN\n";

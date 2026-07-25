@@ -1,7 +1,7 @@
 use crate::{
-    KeyDownEvent, MacWindowState, Modifiers, ModifiersChangedEvent, MouseButton, MouseDownEvent,
-    MouseMoveEvent, MouseUpEvent, Pixels, PlatformInput, PlatformInputHandler, Point, Size, point,
-    px, synthetic_drag, update_window_scale_factor,
+    KeyDownEvent, MacWindowState, Modifiers, ModifiersChangedEvent, MouseButton, MouseDownEvent, MouseMoveEvent,
+    MouseUpEvent, Pixels, PlatformInput, PlatformInputHandler, Point, Size, point, px, synthetic_drag,
+    update_window_scale_factor,
 };
 use objc2::{
     AnyThread, DefinedClass, MainThreadMarker, MainThreadOnly, define_class, msg_send,
@@ -10,8 +10,8 @@ use objc2::{
 };
 use objc2_app_kit::{NSEvent, NSTextInputClient, NSView, NSWindowStyleMask};
 use objc2_foundation::{
-    NSArray, NSAttributedString, NSAttributedStringKey, NSNotFound, NSObjectProtocol, NSPoint,
-    NSRange, NSRangePointer, NSRect, NSSize, NSString,
+    NSArray, NSAttributedString, NSAttributedStringKey, NSNotFound, NSObjectProtocol, NSPoint, NSRange, NSRangePointer,
+    NSRect, NSSize, NSString,
 };
 use objc2_quartz_core::{CALayer, CALayerDelegate};
 use std::{cell::RefCell, ops::Range, sync::Arc};
@@ -626,10 +626,7 @@ impl GPUIView {
                     lock.synthetic_drag_counter += 1;
                 }
 
-                PlatformInput::ModifiersChanged(ModifiersChangedEvent {
-                    modifiers,
-                    capslock,
-                }) => {
+                PlatformInput::ModifiersChanged(ModifiersChangedEvent { modifiers, capslock }) => {
                     // Only raise modifiers changed event when they have actually changed
                     if let Some(PlatformInput::ModifiersChanged(ModifiersChangedEvent {
                         modifiers: prev_modifiers,

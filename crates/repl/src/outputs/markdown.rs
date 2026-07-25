@@ -1,7 +1,5 @@
 use anyhow::Result;
-use gpui::{
-    App, ClipboardItem, Context, Entity, RetainAllImageCache, Task, Window, div, prelude::*,
-};
+use gpui::{App, ClipboardItem, Context, Entity, RetainAllImageCache, Task, Window, div, prelude::*};
 use language::Buffer;
 use markdown_preview::{
     markdown_elements::ParsedMarkdown,
@@ -62,8 +60,7 @@ impl OutputContent for MarkdownView {
     fn buffer_content(&mut self, _: &mut Window, cx: &mut App) -> Option<Entity<Buffer>> {
         let buffer = cx.new(|cx| {
             // TODO: Bring in the language registry so we can set the language to markdown
-            let mut buffer = Buffer::local(self.raw_text.clone(), cx)
-                .with_language(language::PLAIN_TEXT.clone(), cx);
+            let mut buffer = Buffer::local(self.raw_text.clone(), cx).with_language(language::PLAIN_TEXT.clone(), cx);
             buffer.set_capability(language::Capability::ReadOnly, cx);
             buffer
         });
@@ -77,12 +74,8 @@ impl Render for MarkdownView {
             return div().into_any_element();
         };
 
-        let mut markdown_render_context = markdown_preview::markdown_renderer::RenderContext::new(
-            None,
-            &self.mermaid_state,
-            window,
-            cx,
-        );
+        let mut markdown_render_context =
+            markdown_preview::markdown_renderer::RenderContext::new(None, &self.mermaid_state, window, cx);
 
         v_flex()
             .image_cache(self.image_cache.clone())

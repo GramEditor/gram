@@ -40,11 +40,7 @@ pub(crate) struct AttachModalDelegate {
 }
 
 impl AttachModalDelegate {
-    fn new(
-        workspace: WeakEntity<Workspace>,
-        intent: ModalIntent,
-        candidates: Arc<[Candidate]>,
-    ) -> Self {
+    fn new(workspace: WeakEntity<Workspace>, intent: ModalIntent, candidates: Arc<[Candidate]>) -> Self {
         Self {
             workspace,
             candidates,
@@ -98,12 +94,7 @@ impl AttachModal {
         cx: &mut Context<Self>,
     ) -> Self {
         let picker = cx.new(|cx| {
-            Picker::uniform_list(
-                AttachModalDelegate::new(workspace, intent, processes),
-                window,
-                cx,
-            )
-            .modal(modal)
+            Picker::uniform_list(AttachModalDelegate::new(workspace, intent, processes), window, cx).modal(modal)
         });
         Self {
             _subscription: cx.subscribe(&picker, |_, _, _, cx| {
@@ -145,12 +136,7 @@ impl PickerDelegate for AttachModalDelegate {
         self.selected_index
     }
 
-    fn set_selected_index(
-        &mut self,
-        ix: usize,
-        _window: &mut Window,
-        _: &mut Context<Picker<Self>>,
-    ) {
+    fn set_selected_index(&mut self, ix: usize, _window: &mut Window, _: &mut Context<Picker<Self>>) {
         self.selected_index = ix;
     }
 
@@ -165,10 +151,7 @@ impl PickerDelegate for AttachModalDelegate {
         cx: &mut Context<Picker<Self>>,
     ) -> gpui::Task<()> {
         cx.spawn(async move |this, cx| {
-            let Some(processes) = this
-                .read_with(cx, |this, _| this.delegate.candidates.clone())
-                .ok()
-            else {
+            let Some(processes) = this.read_with(cx, |this, _| this.delegate.candidates.clone()).ok() else {
                 return;
             };
 
@@ -179,13 +162,7 @@ impl PickerDelegate for AttachModalDelegate {
                     .map(|(id, candidate)| {
                         StringMatchCandidate::new(
                             id,
-                            format!(
-                                "{} {} {}",
-                                candidate.command.join(" "),
-                                candidate.pid,
-                                candidate.name
-                            )
-                            .as_str(),
+                            format!("{} {} {}", candidate.command.join(" "), candidate.pid, candidate.name).as_str(),
                         )
                     })
                     .collect::<Vec<_>>(),
@@ -206,8 +183,7 @@ impl PickerDelegate for AttachModalDelegate {
                 if delegate.matches.is_empty() {
                     delegate.selected_index = 0;
                 } else {
-                    delegate.selected_index =
-                        delegate.selected_index.min(delegate.matches.len() - 1);
+                    delegate.selected_index = delegate.selected_index.min(delegate.matches.len() - 1);
                 }
             })
             .ok();
@@ -215,22 +191,17 @@ impl PickerDelegate for AttachModalDelegate {
     }
 
     fn confirm(&mut self, _secondary: bool, window: &mut Window, cx: &mut Context<Picker<Self>>) {
-        let candidate = self
-            .matches
-            .get(self.selected_index())
-            .and_then(|current_match| {
-                let ix = current_match.candidate_id;
-                self.candidates.get(ix)
-            });
+        let candidate = self.matches.get(self.selected_index()).and_then(|current_match| {
+            let ix = current_match.candidate_id;
+            self.candidates.get(ix)
+        });
 
         match &mut self.intent {
             ModalIntent::ResolveProcessId(sender) => {
                 cx.emit(DismissEvent);
 
                 if let Some(sender) = sender.take() {
-                    sender
-                        .send(candidate.map(|candidate| candidate.pid as i32))
-                        .ok();
+                    sender.send(candidate.map(|candidate| candidate.pid as i32)).ok();
                 }
             }
             ModalIntent::AttachToProcess(definition) => {
@@ -257,9 +228,9 @@ impl PickerDelegate for AttachModalDelegate {
                     return;
                 };
 
-                let Some(adapter) = cx.read_global::<DapRegistry, _>(|registry, _| {
-                    registry.adapter(&definition.adapter)
-                }) else {
+                let Some(adapter) =
+                    cx.read_global::<DapRegistry, _>(|registry, _| registry.adapter(&definition.adapter))
+                else {
                     return;
                 };
 
@@ -271,14 +242,7 @@ impl PickerDelegate for AttachModalDelegate {
 
                     panel
                         .update_in(cx, |panel, window, cx| {
-                            panel.start_session(
-                                scenario,
-                                Default::default(),
-                                None,
-                                None,
-                                window,
-                                cx,
-                            );
+                            panel.start_session(scenario, Default::default(), None, None, window, cx);
                         })
                         .ok();
                     this.update(cx, |_, cx| {
@@ -329,12 +293,7 @@ impl PickerDelegate for AttachModalDelegate {
                             div()
                                 .id(format!("process-entry-{ix}-command"))
                                 .tooltip(Tooltip::text(
-                                    candidate
-                                        .command
-                                        .clone()
-                                        .into_iter()
-                                        .collect::<Vec<_>>()
-                                        .join(" "),
+                                    candidate.command.clone().into_iter().collect::<Vec<_>>().join(" "),
                                 ))
                                 .child(
                                     Label::new(format!(
@@ -368,9 +327,7 @@ fn get_processes_for_project(project: &Entity<Project>, cx: &mut App) -> Task<Ar
                     project_id: proto::REMOTE_SERVER_PROJECT_ID,
                 })
                 .await
-                .unwrap_or_else(|_| proto::GetProcessesResponse {
-                    processes: Vec::new(),
-                });
+                .unwrap_or_else(|_| proto::GetProcessesResponse { processes: Vec::new() });
 
             let mut processes: Vec<Candidate> = response
                 .processes

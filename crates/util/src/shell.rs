@@ -92,8 +92,7 @@ pub fn get_windows_bash() -> Option<String> {
     use std::path::PathBuf;
 
     fn find_bash_in_scoop() -> Option<PathBuf> {
-        let bash_exe =
-            PathBuf::from(std::env::var_os("USERPROFILE")?).join("scoop\\shims\\bash.exe");
+        let bash_exe = PathBuf::from(std::env::var_os("USERPROFILE")?).join("scoop\\shims\\bash.exe");
         bash_exe.exists().then_some(bash_exe)
     }
 
@@ -129,11 +128,7 @@ pub fn get_windows_system_shell() -> String {
         };
 
         #[cfg(target_pointer_width = "32")]
-        let env_var = if find_alternate {
-            "ProgramW6432"
-        } else {
-            "ProgramFiles"
-        };
+        let env_var = if find_alternate { "ProgramW6432" } else { "ProgramFiles" };
 
         let install_base_dir = PathBuf::from(std::env::var_os(env_var)?).join("PowerShell");
         install_base_dir
@@ -167,8 +162,7 @@ pub fn get_windows_system_shell() -> String {
     }
 
     fn find_pwsh_in_msix(find_preview: bool) -> Option<PathBuf> {
-        let msix_app_dir =
-            PathBuf::from(std::env::var_os("LOCALAPPDATA")?).join("Microsoft\\WindowsApps");
+        let msix_app_dir = PathBuf::from(std::env::var_os("LOCALAPPDATA")?).join("Microsoft\\WindowsApps");
         if !msix_app_dir.exists() {
             return None;
         }
@@ -198,8 +192,7 @@ pub fn get_windows_system_shell() -> String {
     }
 
     fn find_pwsh_in_scoop() -> Option<PathBuf> {
-        let pwsh_exe =
-            PathBuf::from(std::env::var_os("USERPROFILE")?).join("scoop\\shims\\pwsh.exe");
+        let pwsh_exe = PathBuf::from(std::env::var_os("USERPROFILE")?).join("scoop\\shims\\pwsh.exe");
         pwsh_exe.exists().then_some(pwsh_exe)
     }
 
@@ -441,9 +434,7 @@ impl ShellKind {
 
     pub fn prepend_command_prefix<'a>(&self, command: &'a str) -> Cow<'a, str> {
         match self.command_prefix() {
-            Some(prefix) if !command.starts_with(prefix) => {
-                Cow::Owned(format!("{prefix}{command}"))
-            }
+            Some(prefix) if !command.starts_with(prefix) => Cow::Owned(format!("{prefix}{command}")),
             _ => Cow::Borrowed(command),
         }
     }
@@ -503,10 +494,7 @@ impl ShellKind {
             if let Some(arg) = arg.strip_prefix(char) {
                 // we have a command that is prefixed
                 for quote in ['\'', '"'] {
-                    if let Some(arg) = arg
-                        .strip_prefix(quote)
-                        .and_then(|arg| arg.strip_suffix(quote))
-                    {
+                    if let Some(arg) = arg.strip_prefix(quote).and_then(|arg| arg.strip_suffix(quote)) {
                         // and the command itself is wrapped as a literal, that
                         // means the prefix exists to interpret a literal as a
                         // command. So strip the quotes, quote the command, and
@@ -629,10 +617,7 @@ mod tests {
             "\"'uname'\"".to_string()
         );
         assert_eq!(
-            shell_kind
-                .try_quote_prefix_aware("'uname'")
-                .unwrap()
-                .into_owned(),
+            shell_kind.try_quote_prefix_aware("'uname'").unwrap().into_owned(),
             "\"'uname'\"".to_string()
         );
         assert_eq!(
@@ -640,10 +625,7 @@ mod tests {
             "'^uname'".to_string()
         );
         assert_eq!(
-            shell_kind
-                .try_quote_prefix_aware("^uname")
-                .unwrap()
-                .into_owned(),
+            shell_kind.try_quote_prefix_aware("^uname").unwrap().into_owned(),
             "^uname".to_string()
         );
         assert_eq!(
@@ -651,10 +633,7 @@ mod tests {
             "'^'\"'uname\'\"".to_string()
         );
         assert_eq!(
-            shell_kind
-                .try_quote_prefix_aware("^'uname'")
-                .unwrap()
-                .into_owned(),
+            shell_kind.try_quote_prefix_aware("^'uname'").unwrap().into_owned(),
             "^'uname'".to_string()
         );
         assert_eq!(
@@ -662,10 +641,7 @@ mod tests {
             "\"'uname a'\"".to_string()
         );
         assert_eq!(
-            shell_kind
-                .try_quote_prefix_aware("'uname a'")
-                .unwrap()
-                .into_owned(),
+            shell_kind.try_quote_prefix_aware("'uname a'").unwrap().into_owned(),
             "\"'uname a'\"".to_string()
         );
         assert_eq!(
@@ -673,21 +649,12 @@ mod tests {
             "'^'\"'uname a'\"".to_string()
         );
         assert_eq!(
-            shell_kind
-                .try_quote_prefix_aware("^'uname a'")
-                .unwrap()
-                .into_owned(),
+            shell_kind.try_quote_prefix_aware("^'uname a'").unwrap().into_owned(),
             "^'uname a'".to_string()
         );
+        assert_eq!(shell_kind.try_quote("uname").unwrap().into_owned(), "uname".to_string());
         assert_eq!(
-            shell_kind.try_quote("uname").unwrap().into_owned(),
-            "uname".to_string()
-        );
-        assert_eq!(
-            shell_kind
-                .try_quote_prefix_aware("uname")
-                .unwrap()
-                .into_owned(),
+            shell_kind.try_quote_prefix_aware("uname").unwrap().into_owned(),
             "uname".to_string()
         );
     }

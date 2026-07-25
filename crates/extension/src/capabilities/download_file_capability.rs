@@ -72,11 +72,7 @@ mod tests {
             true
         );
         assert_eq!(
-            capability.allows(
-                &"https://fake-github.com/some-owner/some-repo"
-                    .parse()
-                    .unwrap()
-            ),
+            capability.allows(&"https://fake-github.com/some-owner/some-repo".parse().unwrap()),
             false
         );
 
@@ -89,11 +85,7 @@ mod tests {
             false
         );
         assert_eq!(
-            capability.allows(
-                &"https://github.com/specific-owner/some-repo"
-                    .parse()
-                    .unwrap()
-            ),
+            capability.allows(&"https://github.com/specific-owner/some-repo".parse().unwrap()),
             true
         );
 
@@ -102,19 +94,11 @@ mod tests {
             path: vec!["specific-owner".to_string(), "*".to_string()],
         };
         assert_eq!(
-            capability.allows(
-                &"https://github.com/some-owner/some-repo/extra"
-                    .parse()
-                    .unwrap()
-            ),
+            capability.allows(&"https://github.com/some-owner/some-repo/extra".parse().unwrap()),
             false
         );
         assert_eq!(
-            capability.allows(
-                &"https://github.com/specific-owner/some-repo/extra"
-                    .parse()
-                    .unwrap()
-            ),
+            capability.allows(&"https://github.com/specific-owner/some-repo/extra".parse().unwrap()),
             false
         );
     }

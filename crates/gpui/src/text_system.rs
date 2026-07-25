@@ -21,8 +21,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    Bounds, DevicePixels, Hsla, Pixels, PlatformTextSystem, Point, Result, SharedString, Size,
-    StrikethroughStyle, TextRenderingMode, UnderlineStyle, px,
+    Bounds, DevicePixels, Hsla, Pixels, PlatformTextSystem, Point, Result, SharedString, Size, StrikethroughStyle,
+    TextRenderingMode, UnderlineStyle, px,
 };
 use anyhow::{Context as _, anyhow};
 use collections::FxHashMap;
@@ -51,12 +51,11 @@ pub struct FontFamilyId(pub usize);
 
 pub(crate) const SUBPIXEL_VARIANTS_X: u8 = 4;
 
-pub(crate) const SUBPIXEL_VARIANTS_Y: u8 =
-    if cfg!(target_os = "windows") || cfg!(target_os = "linux") {
-        1
-    } else {
-        SUBPIXEL_VARIANTS_X
-    };
+pub(crate) const SUBPIXEL_VARIANTS_Y: u8 = if cfg!(target_os = "windows") || cfg!(target_os = "linux") {
+    1
+} else {
+    SUBPIXEL_VARIANTS_X
+};
 
 /// The GPUI text rendering sub system.
 pub struct TextSystem {
@@ -97,11 +96,7 @@ impl TextSystem {
     /// Get a list of all available font names from the operating system.
     pub fn all_font_names(&self) -> Vec<String> {
         let mut names = self.platform_text_system.all_font_names();
-        names.extend(
-            self.fallback_font_stack
-                .iter()
-                .map(|font| font.family.to_string()),
-        );
+        names.extend(self.fallback_font_stack.iter().map(|font| font.family.to_string()));
         names.push(".SystemUIFont".to_string());
         names.sort_unstable();
         names.dedup();
@@ -122,11 +117,7 @@ impl TextSystem {
             }
         }
 
-        let font_id = self
-            .font_ids_by_font
-            .read()
-            .get(font)
-            .map(clone_font_id_result);
+        let font_id = self.font_ids_by_font.read().get(font).map(clone_font_id_result);
         if let Some(font_id) = font_id {
             font_id
         } else {
@@ -183,19 +174,12 @@ impl TextSystem {
     }
 
     /// Get the typographic bounds for the given character, in the given font and size.
-    pub fn typographic_bounds(
-        &self,
-        font_id: FontId,
-        font_size: Pixels,
-        character: char,
-    ) -> Result<Bounds<Pixels>> {
+    pub fn typographic_bounds(&self, font_id: FontId, font_size: Pixels, character: char) -> Result<Bounds<Pixels>> {
         let glyph_id = self
             .platform_text_system
             .glyph_for_char(font_id, character)
             .with_context(|| format!("glyph not found for character '{character}'"))?;
-        let bounds = self
-            .platform_text_system
-            .typographic_bounds(font_id, glyph_id)?;
+        let bounds = self.platform_text_system.typographic_bounds(font_id, glyph_id)?;
         Ok(self.read_metrics(font_id, |metrics| {
             (bounds / metrics.units_per_em as f32 * font_size.0).map(px)
         }))
@@ -207,8 +191,7 @@ impl TextSystem {
             .platform_text_system
             .glyph_for_char(font_id, ch)
             .with_context(|| format!("glyph not found for character '{ch}'"))?;
-        let result = self.platform_text_system.advance(font_id, glyph_id)?
-            / self.units_per_em(font_id) as f32;
+        let result = self.platform_text_system.advance(font_id, glyph_id)? / self.units_per_em(font_id) as f32;
 
         Ok(result * font_size)
     }
@@ -270,12 +253,7 @@ impl TextSystem {
     }
 
     /// Get the recommended baseline offset for the given font and line height.
-    pub fn baseline_offset(
-        &self,
-        font_id: FontId,
-        font_size: Pixels,
-        line_height: Pixels,
-    ) -> Pixels {
+    pub fn baseline_offset(&self, font_id: FontId, font_size: Pixels, line_height: Pixels) -> Pixels {
         let ascent = self.ascent(font_id, font_size);
         let descent = self.descent(font_id, font_size);
         let padding_top = (line_height - ascent - descent) / 2.;
@@ -300,12 +278,10 @@ impl TextSystem {
     pub fn line_wrapper(self: &Arc<Self>, font: Font, font_size: Pixels) -> LineWrapperHandle {
         let lock = &mut self.wrapper_pool.lock();
         let font_id = self.resolve_font(&font);
-        let wrappers = lock
-            .entry(FontIdWithSize { font_id, font_size })
-            .or_default();
-        let wrapper = wrappers.pop().unwrap_or_else(|| {
-            LineWrapper::new(font_id, font_size, self.platform_text_system.clone())
-        });
+        let wrappers = lock.entry(FontIdWithSize { font_id, font_size }).or_default();
+        let wrapper = wrappers
+            .pop()
+            .unwrap_or_else(|| LineWrapper::new(font_id, font_size, self.platform_text_system.clone()));
 
         LineWrapperHandle {
             wrapper: Some(wrapper),
@@ -326,24 +302,15 @@ impl TextSystem {
         }
     }
 
-    pub(crate) fn rasterize_glyph(
-        &self,
-        params: &RenderGlyphParams,
-    ) -> Result<(Size<DevicePixels>, Vec<u8>)> {
+    pub(crate) fn rasterize_glyph(&self, params: &RenderGlyphParams) -> Result<(Size<DevicePixels>, Vec<u8>)> {
         let raster_bounds = self.raster_bounds(params)?;
-        self.platform_text_system
-            .rasterize_glyph(params, raster_bounds)
+        self.platform_text_system.rasterize_glyph(params, raster_bounds)
     }
 
     /// Returns the text rendering mode recommended by the platform for the given font and size.
     /// The return value will never be [`TextRenderingMode::PlatformDefault`].
-    pub(crate) fn recommended_rendering_mode(
-        &self,
-        font_id: FontId,
-        font_size: Pixels,
-    ) -> TextRenderingMode {
-        self.platform_text_system
-            .recommended_rendering_mode(font_id, font_size)
+    pub(crate) fn recommended_rendering_mode(&self, font_id: FontId, font_size: Pixels) -> TextRenderingMode {
+        self.platform_text_system.recommended_rendering_mode(font_id, font_size)
     }
 }
 
@@ -388,10 +355,7 @@ impl WindowTextSystem {
         runs: &[TextRun],
         force_width: Option<Pixels>,
     ) -> ShapedLine {
-        debug_assert!(
-            text.find('\n').is_none(),
-            "text argument should not contain newlines"
-        );
+        debug_assert!(text.find('\n').is_none(), "text argument should not contain newlines");
 
         let mut decoration_runs = SmallVec::<[DecorationRun; 32]>::new();
         for run in runs {
@@ -524,11 +488,7 @@ impl WindowTextSystem {
             && let Some(second_line) = split_lines.next()
         {
             let mut line_start = 0;
-            process_line(
-                SharedString::new(first_line),
-                line_start,
-                line_start + first_line.len(),
-            );
+            process_line(SharedString::new(first_line), line_start, line_start + first_line.len());
             line_start += first_line.len() + '\n'.len_utf8();
             process_line(
                 SharedString::new(second_line),
@@ -537,11 +497,7 @@ impl WindowTextSystem {
             );
             for line_text in split_lines {
                 line_start += line_text.len() + '\n'.len_utf8();
-                process_line(
-                    SharedString::new(line_text),
-                    line_start,
-                    line_start + line_text.len(),
-                );
+                process_line(SharedString::new(line_text), line_start, line_start + line_text.len());
             }
         } else {
             let end = text.len();
@@ -593,19 +549,13 @@ impl WindowTextSystem {
             {
                 font_run.len += run.len;
             } else {
-                font_runs.push(FontRun {
-                    len: run.len,
-                    font_id,
-                });
+                font_runs.push(FontRun { len: run.len, font_id });
             }
         }
 
-        let layout = self.line_layout_cache.layout_line(
-            &SharedString::new(text),
-            font_size,
-            &font_runs,
-            force_width,
-        );
+        let layout = self
+            .line_layout_cache
+            .layout_line(&SharedString::new(text), font_size, &font_runs, force_width);
 
         self.font_runs_pool.lock().push(font_runs);
 

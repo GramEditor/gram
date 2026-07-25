@@ -9,10 +9,7 @@ use serde::Deserialize;
 use url::Url;
 use urlencoding::encode;
 
-use git::{
-    BuildCommitPermalinkParams, BuildPermalinkParams, GitHostingProvider, ParsedGitRemote,
-    RemoteUrl,
-};
+use git::{BuildCommitPermalinkParams, BuildPermalinkParams, GitHostingProvider, ParsedGitRemote, RemoteUrl};
 
 use crate::get_host_from_git_remote_url;
 
@@ -75,9 +72,7 @@ impl Gitlab {
         };
         let project_path = format!("{}/{}", repo_owner, repo);
         let project_path_encoded = urlencoding::encode(&project_path);
-        let url = format!(
-            "https://{host}/api/v4/projects/{project_path_encoded}/repository/commits/{commit}"
-        );
+        let url = format!("https://{host}/api/v4/projects/{project_path_encoded}/repository/commits/{commit}");
 
         let request = Request::get(&url)
             .header("Content-Type", "application/json")
@@ -93,10 +88,7 @@ impl Gitlab {
 
         if response.status().is_client_error() {
             let text = String::from_utf8_lossy(body.as_slice());
-            bail!(
-                "status error {}, response: {text:?}",
-                response.status().as_u16()
-            );
+            bail!("status error {}, response: {text:?}", response.status().as_u16());
         }
 
         let body_str = std::str::from_utf8(&body)?;
@@ -121,16 +113,12 @@ impl Gitlab {
 
         if response.status().is_client_error() {
             let text = String::from_utf8_lossy(body.as_slice());
-            bail!(
-                "status error {}, response: {text:?}",
-                response.status().as_u16()
-            );
+            bail!("status error {}, response: {text:?}", response.status().as_u16());
         }
 
         let body_str = std::str::from_utf8(&body)?;
 
-        serde_json::from_str::<Option<AvatarInfo>>(body_str)
-            .context("failed to deserialize GitLab avatar info")
+        serde_json::from_str::<Option<AvatarInfo>>(body_str).context("failed to deserialize GitLab avatar info")
     }
 }
 
@@ -174,26 +162,16 @@ impl GitHostingProvider for Gitlab {
         })
     }
 
-    fn build_commit_permalink(
-        &self,
-        remote: &ParsedGitRemote,
-        params: BuildCommitPermalinkParams,
-    ) -> Url {
+    fn build_commit_permalink(&self, remote: &ParsedGitRemote, params: BuildCommitPermalinkParams) -> Url {
         let BuildCommitPermalinkParams { sha } = params;
         let ParsedGitRemote { owner, repo } = remote;
 
-        self.base_url()
-            .join(&format!("{owner}/{repo}/-/commit/{sha}"))
-            .unwrap()
+        self.base_url().join(&format!("{owner}/{repo}/-/commit/{sha}")).unwrap()
     }
 
     fn build_permalink(&self, remote: ParsedGitRemote, params: BuildPermalinkParams) -> Url {
         let ParsedGitRemote { owner, repo } = remote;
-        let BuildPermalinkParams {
-            sha,
-            path,
-            selection,
-        } = params;
+        let BuildPermalinkParams { sha, path, selection } = params;
 
         let mut permalink = self
             .base_url()
@@ -202,25 +180,14 @@ impl GitHostingProvider for Gitlab {
         if path.ends_with(".md") {
             permalink.set_query(Some("plain=1"));
         }
-        permalink.set_fragment(
-            selection
-                .map(|selection| self.line_fragment(&selection))
-                .as_deref(),
-        );
+        permalink.set_fragment(selection.map(|selection| self.line_fragment(&selection)).as_deref());
         permalink
     }
 
-    fn build_create_pull_request_url(
-        &self,
-        remote: &ParsedGitRemote,
-        source_branch: &str,
-    ) -> Option<Url> {
+    fn build_create_pull_request_url(&self, remote: &ParsedGitRemote, source_branch: &str) -> Option<Url> {
         let mut url = self
             .base_url()
-            .join(&format!(
-                "{}/{}/-/merge_requests/new",
-                remote.owner, remote.repo
-            ))
+            .join(&format!("{}/{}/-/merge_requests/new", remote.owner, remote.repo))
             .ok()?;
 
         let query = format!("merge_request%5Bsource_branch%5D={}", encode(source_branch));
@@ -417,8 +384,7 @@ mod tests {
 
     #[test]
     fn test_build_gitlab_self_hosted_permalink_from_ssh_url() {
-        let gitlab =
-            Gitlab::from_remote_url("git@gitlab.some-enterprise.com:GramEditor/gram.git").unwrap();
+        let gitlab = Gitlab::from_remote_url("git@gitlab.some-enterprise.com:GramEditor/gram.git").unwrap();
         let permalink = gitlab.build_permalink(
             ParsedGitRemote {
                 owner: "GramEditor".into(),
@@ -437,8 +403,7 @@ mod tests {
 
     #[test]
     fn test_build_gitlab_self_hosted_permalink_from_https_url() {
-        let gitlab =
-            Gitlab::from_remote_url("https://gitlab-instance.big-co.com/GramEditor/gram.git").unwrap();
+        let gitlab = Gitlab::from_remote_url("https://gitlab-instance.big-co.com/GramEditor/gram.git").unwrap();
         let permalink = gitlab.build_permalink(
             ParsedGitRemote {
                 owner: "GramEditor".into(),

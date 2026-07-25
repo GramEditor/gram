@@ -3,9 +3,9 @@ use app_actions::OpenOnboarding;
 use db::kvp::KEY_VALUE_STORE;
 use fs::Fs;
 use gpui::{
-    Action, AnyElement, App, AppContext, AsyncWindowContext, Context, Entity, EventEmitter,
-    FocusHandle, Focusable, Global, IntoElement, KeyContext, Render, ScrollHandle, SharedString,
-    Subscription, Task, WeakEntity, Window, actions,
+    Action, AnyElement, App, AppContext, AsyncWindowContext, Context, Entity, EventEmitter, FocusHandle, Focusable,
+    Global, IntoElement, KeyContext, Render, ScrollHandle, SharedString, Subscription, Task, WeakEntity, Window,
+    actions,
 };
 use notifications::status_toast::{StatusToast, ToastIcon};
 use schemars::JsonSchema;
@@ -14,8 +14,8 @@ use settings::{SettingsStore, VsCodeSettingsSource};
 use std::sync::Arc;
 use theme::Appearance;
 use ui::{
-    Divider, KeyBinding, ParentElement as _, StatefulInteractiveElement, Vector, VectorName,
-    WithScrollbar as _, prelude::*,
+    Divider, KeyBinding, ParentElement as _, StatefulInteractiveElement, Vector, VectorName, WithScrollbar as _,
+    prelude::*,
 };
 pub use workspace::welcome::ShowWelcome;
 use workspace::welcome::WelcomePage;
@@ -55,8 +55,7 @@ actions!(
 
 pub fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, _, _cx| {
-        workspace
-            .register_action(|_workspace, _: &ResetHints, _, cx| MultibufferHint::set_count(0, cx));
+        workspace.register_action(|_workspace, _: &ResetHints, _, cx| MultibufferHint::set_count(0, cx));
     })
     .detach();
 
@@ -74,13 +73,7 @@ pub fn init(cx: &mut App) {
                         workspace.activate_item(&existing, true, true, window, cx);
                     } else {
                         let settings_page = Onboarding::new(workspace, cx);
-                        workspace.add_item_to_active_pane(
-                            Box::new(settings_page),
-                            None,
-                            true,
-                            window,
-                            cx,
-                        )
+                        workspace.add_item_to_active_pane(Box::new(settings_page), None, true, window, cx)
                     }
                 })
                 .detach();
@@ -100,15 +93,8 @@ pub fn init(cx: &mut App) {
                     if let Some(existing) = existing {
                         workspace.activate_item(&existing, true, true, window, cx);
                     } else {
-                        let settings_page = cx
-                            .new(|cx| WelcomePage::new(workspace.weak_handle(), false, window, cx));
-                        workspace.add_item_to_active_pane(
-                            Box::new(settings_page),
-                            None,
-                            true,
-                            window,
-                            cx,
-                        )
+                        let settings_page = cx.new(|cx| WelcomePage::new(workspace.weak_handle(), false, window, cx));
+                        workspace.add_item_to_active_pane(Box::new(settings_page), None, true, window, cx)
                     }
                 })
                 .detach();
@@ -124,14 +110,8 @@ pub fn init(cx: &mut App) {
 
             window
                 .spawn(cx, async move |cx: &mut AsyncWindowContext| {
-                    handle_import_vscode_settings(
-                        workspace,
-                        VsCodeSettingsSource::VsCode,
-                        action.skip_prompt,
-                        fs,
-                        cx,
-                    )
-                    .await
+                    handle_import_vscode_settings(workspace, VsCodeSettingsSource::VsCode, action.skip_prompt, fs, cx)
+                        .await
                 })
                 .detach();
         });
@@ -145,25 +125,20 @@ pub fn init(cx: &mut App) {
 }
 
 pub fn show_onboarding_view(app_state: Arc<AppState>, cx: &mut App) -> Task<anyhow::Result<()>> {
-    open_new(
-        Default::default(),
-        app_state,
-        cx,
-        |workspace, window, cx| {
-            {
-                workspace.toggle_dock(DockPosition::Left, window, cx);
-                let onboarding_page = Onboarding::new(workspace, cx);
-                workspace.add_item_to_center(Box::new(onboarding_page.clone()), window, cx);
+    open_new(Default::default(), app_state, cx, |workspace, window, cx| {
+        {
+            workspace.toggle_dock(DockPosition::Left, window, cx);
+            let onboarding_page = Onboarding::new(workspace, cx);
+            workspace.add_item_to_center(Box::new(onboarding_page.clone()), window, cx);
 
-                window.focus(&onboarding_page.focus_handle(cx), cx);
+            window.focus(&onboarding_page.focus_handle(cx), cx);
 
-                cx.notify();
-            };
-            db::write_and_log(cx, || {
-                KEY_VALUE_STORE.write_kvp(FIRST_OPEN.to_string(), "false".to_string())
-            });
-        },
-    )
+            cx.notify();
+        };
+        db::write_and_log(cx, || {
+            KEY_VALUE_STORE.write_kvp(FIRST_OPEN.to_string(), "false".to_string())
+        });
+    })
 }
 
 struct Onboarding {
@@ -190,8 +165,7 @@ impl Onboarding {
                 workspace: workspace.weak_handle(),
                 focus_handle: cx.focus_handle(),
                 scroll_handle: ScrollHandle::new(),
-                _settings_subscription: cx
-                    .observe_global::<SettingsStore>(move |_, cx| cx.notify()),
+                _settings_subscription: cx.observe_global::<SettingsStore>(move |_, cx| cx.notify()),
             }
         })
     }
@@ -253,34 +227,22 @@ impl Render for Onboarding {
                                     .gap_4()
                                     .justify_between()
                                     .child(
-                                        h_flex()
-                                            .gap_4()
-                                            .child(Vector::square(image, rems(6.)))
-                                            .child(
-                                                v_flex()
-                                                    .child(
-                                                        Headline::new("Gram")
-                                                            .size(HeadlineSize::Large),
-                                                    )
-                                                    .child(
-                                                        Label::new(r#"What cannot be mended must be transcended."#)
-                                                            .size(LabelSize::Default)
-                                                            .color(Color::Muted)
-                                                            .italic(),
-                                                    ),
+                                        h_flex().gap_4().child(Vector::square(image, rems(6.))).child(
+                                            v_flex().child(Headline::new("Gram").size(HeadlineSize::Large)).child(
+                                                Label::new(r#"What cannot be mended must be transcended."#)
+                                                    .size(LabelSize::Default)
+                                                    .color(Color::Muted)
+                                                    .italic(),
                                             ),
+                                        ),
                                     )
                                     .child({
                                         Button::new("finish_setup", "Finish Setup")
                                             .style(ButtonStyle::Filled)
                                             .size(ButtonSize::Medium)
                                             .key_binding(
-                                                KeyBinding::for_action_in(
-                                                    &Finish,
-                                                    &self.focus_handle,
-                                                    cx,
-                                                )
-                                                .size(TextSize::Small.rems(cx)),
+                                                KeyBinding::for_action_in(&Finish, &self.focus_handle, cx)
+                                                    .size(TextSize::Small.rems(cx)),
                                             )
                                             .on_click(|_, window, cx| {
                                                 window.dispatch_action(Finish.boxed_clone(), cx);
@@ -340,15 +302,16 @@ impl Item for Onboarding {
 
 fn go_to_welcome_page(cx: &mut App) {
     with_active_or_new_workspace(cx, |workspace, window, cx| {
-        let Some((onboarding_id, onboarding_idx)) = workspace
-            .active_pane()
-            .read(cx)
-            .items()
-            .enumerate()
-            .find_map(|(idx, item)| {
-                let _ = item.downcast::<Onboarding>()?;
-                Some((item.item_id(), idx))
-            })
+        let Some((onboarding_id, onboarding_idx)) =
+            workspace
+                .active_pane()
+                .read(cx)
+                .items()
+                .enumerate()
+                .find_map(|(idx, item)| {
+                    let _ = item.downcast::<Onboarding>()?;
+                    Some((item.item_id(), idx))
+                })
         else {
             return;
         };
@@ -363,9 +326,7 @@ fn go_to_welcome_page(cx: &mut App) {
             if let Some(idx) = idx {
                 pane.activate_item(idx, true, true, window, cx);
             } else {
-                let item = Box::new(
-                    cx.new(|cx| WelcomePage::new(workspace.weak_handle(), false, window, cx)),
-                );
+                let item = Box::new(cx.new(|cx| WelcomePage::new(workspace.weak_handle(), false, window, cx)));
                 pane.add_item(item, true, true, Some(onboarding_idx), window, cx);
             }
 
@@ -383,20 +344,19 @@ pub async fn handle_import_vscode_settings(
 ) {
     use util::truncate_and_remove_front;
 
-    let vscode_settings =
-        match settings::VsCodeSettings::load_user_settings(source, fs.clone()).await {
-            Ok(vscode_settings) => vscode_settings,
-            Err(err) => {
-                zlog::error!("{err:?}");
-                let _ = cx.prompt(
-                    gpui::PromptLevel::Info,
-                    &format!("Could not find or load a {source} settings file"),
-                    None,
-                    &["Ok"],
-                );
-                return;
-            }
-        };
+    let vscode_settings = match settings::VsCodeSettings::load_user_settings(source, fs.clone()).await {
+        Ok(vscode_settings) => vscode_settings,
+        Err(err) => {
+            zlog::error!("{err:?}");
+            let _ = cx.prompt(
+                gpui::PromptLevel::Info,
+                &format!("Could not find or load a {source} settings file"),
+                None,
+                &["Ok"],
+            );
+            return;
+        }
+    };
 
     if !skip_prompt {
         let prompt = cx.prompt(
@@ -419,9 +379,7 @@ pub async fn handle_import_vscode_settings(
     let Ok(result_channel) = cx.update(|_, cx| {
         let source = vscode_settings.source;
         let path = vscode_settings.path.clone();
-        let result_channel = cx
-            .global::<SettingsStore>()
-            .import_vscode_settings(fs, vscode_settings);
+        let result_channel = cx.global::<SettingsStore>().import_vscode_settings(fs, vscode_settings);
         zlog::info!("Imported {source} settings from {}", path.display());
         result_channel
     }) else {
@@ -451,17 +409,13 @@ pub async fn handle_import_vscode_settings(
                 workspace.toggle_status_toast(confirmation_toast, cx);
             }
             Err(_) => {
-                let error_toast = StatusToast::new(
-                    "Failed to import settings. See log for details",
-                    cx,
-                    |this, _| {
-                        this.icon(ToastIcon::new(IconName::Close).color(Color::Error))
-                            .action("Open Log", |window, cx| {
-                                window.dispatch_action(workspace::OpenLog.boxed_clone(), cx)
-                            })
-                            .dismiss_button(true)
-                    },
-                );
+                let error_toast = StatusToast::new("Failed to import settings. See log for details", cx, |this, _| {
+                    this.icon(ToastIcon::new(IconName::Close).color(Color::Error))
+                        .action("Open Log", |window, cx| {
+                            window.dispatch_action(workspace::OpenLog.boxed_clone(), cx)
+                        })
+                        .dismiss_button(true)
+                });
                 workspace.toggle_status_toast(error_toast, cx);
             }
         })
@@ -514,9 +468,7 @@ impl workspace::SerializableItem for Onboarding {
         cx: &mut App,
     ) -> gpui::Task<gpui::Result<Entity<Self>>> {
         window.spawn(cx, async move |cx| {
-            if let Some(_) =
-                persistence::ONBOARDING_PAGES.get_onboarding_page(item_id, workspace_id)?
-            {
+            if let Some(_) = persistence::ONBOARDING_PAGES.get_onboarding_page(item_id, workspace_id)? {
                 workspace.update(cx, |workspace, cx| Onboarding::new(workspace, cx))
             } else {
                 Err(anyhow::anyhow!("No onboarding page to deserialize"))

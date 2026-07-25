@@ -93,8 +93,7 @@ impl RenderOnce for LoadingLabel {
             move |mut label, animation_ix, delta| {
                 match animation_ix {
                     0 => {
-                        let byte_end =
-                            text.floor_char_boundary((delta * text.len() as f32).ceil() as usize);
+                        let byte_end = text.floor_char_boundary((delta * text.len() as f32).ceil() as usize);
                         let visible_text = SharedString::new(&text[0..byte_end]);
                         label.set_text(visible_text);
                     }

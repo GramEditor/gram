@@ -38,18 +38,11 @@ pub(crate) fn sockaddr_un<P: AsRef<Path>>(path: P) -> Result<(SOCKADDR_UN, usize
         ));
     }
     if bytes.len() >= addr.sun_path.len() {
-        return Err(Error::new(
-            ErrorKind::InvalidInput,
-            "path must be shorter than SUN_LEN",
-        ));
+        return Err(Error::new(ErrorKind::InvalidInput, "path must be shorter than SUN_LEN"));
     }
 
     unsafe {
-        std::ptr::copy_nonoverlapping(
-            bytes.as_ptr(),
-            addr.sun_path.as_mut_ptr().cast(),
-            bytes.len(),
-        );
+        std::ptr::copy_nonoverlapping(bytes.as_ptr(), addr.sun_path.as_mut_ptr().cast(), bytes.len());
     }
 
     let mut len = sun_path_offset(&addr) + bytes.len();

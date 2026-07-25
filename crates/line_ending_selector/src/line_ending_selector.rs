@@ -56,15 +56,9 @@ impl LineEndingSelector {
         })
     }
 
-    fn new(
-        buffer: Entity<Buffer>,
-        project: Entity<Project>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    fn new(buffer: Entity<Buffer>, project: Entity<Project>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let line_ending = buffer.read(cx).line_ending();
-        let delegate =
-            LineEndingSelectorDelegate::new(cx.entity().downgrade(), buffer, project, line_ending);
+        let delegate = LineEndingSelectorDelegate::new(cx.entity().downgrade(), buffer, project, line_ending);
         let picker = cx.new(|cx| Picker::nonsearchable_uniform_list(delegate, window, cx));
         Self { picker }
     }
@@ -149,12 +143,7 @@ impl PickerDelegate for LineEndingSelectorDelegate {
         self.selected_index
     }
 
-    fn set_selected_index(
-        &mut self,
-        ix: usize,
-        _window: &mut Window,
-        _: &mut Context<Picker<Self>>,
-    ) {
+    fn set_selected_index(&mut self, ix: usize, _window: &mut Window, _: &mut Context<Picker<Self>>) {
         self.selected_index = ix;
     }
 

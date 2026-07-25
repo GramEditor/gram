@@ -128,11 +128,7 @@ impl DebugRequest {
                             .as_ref()
                             .map(|cwd| cwd.to_string_lossy().into_owned()),
                         args: launch_request.args.clone(),
-                        env: launch_request
-                            .env
-                            .iter()
-                            .map(|(k, v)| (k.clone(), v.clone()))
-                            .collect(),
+                        env: launch_request.env.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
                     },
                 )),
             },
@@ -163,11 +159,11 @@ impl DebugRequest {
                 env: env.into_iter().collect(),
             })),
 
-            proto::debug_request::Request::DebugAttachRequest(proto::DebugAttachRequest {
-                process_id,
-            }) => Ok(DebugRequest::Attach(AttachRequest {
-                process_id: Some(process_id),
-            })),
+            proto::debug_request::Request::DebugAttachRequest(proto::DebugAttachRequest { process_id }) => {
+                Ok(DebugRequest::Attach(AttachRequest {
+                    process_id: Some(process_id),
+                }))
+            }
         }
     }
 }
@@ -215,8 +211,7 @@ impl<'de> Deserialize<'de> for BuildTaskDefinition {
             return Ok(BuildTaskDefinition::ByName(name));
         }
 
-        let helper: TemplateHelper =
-            serde_json::from_value(value).map_err(serde::de::Error::custom)?;
+        let helper: TemplateHelper = serde_json::from_value(value).map_err(serde::de::Error::custom)?;
 
         let mut template_value = helper.rest;
         if let serde_json::Value::Object(ref mut map) = template_value {
@@ -227,8 +222,7 @@ impl<'de> Deserialize<'de> for BuildTaskDefinition {
             );
         }
 
-        let task_template: TaskTemplate =
-            serde_json::from_value(template_value).map_err(serde::de::Error::custom)?;
+        let task_template: TaskTemplate = serde_json::from_value(template_value).map_err(serde::de::Error::custom)?;
 
         Ok(BuildTaskDefinition::Template {
             task_template,
@@ -483,10 +477,7 @@ mod tests {
 
         let deserialized: DebugScenario = serde_json::from_str(json).unwrap();
 
-        assert_eq!(
-            json!({ "request": "attach", "process_id": 1234 }),
-            deserialized.config
-        );
+        assert_eq!(json!({ "request": "attach", "process_id": 1234 }), deserialized.config);
         assert_eq!("CodeLLDB", deserialized.adapter.as_ref());
         assert_eq!("Attach to process", deserialized.label.as_ref());
     }

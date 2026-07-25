@@ -3,30 +3,26 @@ mod repl_menu;
 
 use app_actions::outline::ToggleOutline;
 use editor::actions::{
-    AddSelectionAbove, AddSelectionBelow, CodeActionSource, DuplicateLineDown, GoToDiagnostic,
-    GoToHunk, GoToPreviousDiagnostic, GoToPreviousHunk, MoveLineDown, MoveLineUp, SelectAll,
-    SelectLargerSyntaxNode, SelectNext, SelectSmallerSyntaxNode, ToggleCodeActions,
-    ToggleDiagnostics, ToggleGoToLine, ToggleInlineDiagnostics,
+    AddSelectionAbove, AddSelectionBelow, CodeActionSource, DuplicateLineDown, GoToDiagnostic, GoToHunk,
+    GoToPreviousDiagnostic, GoToPreviousHunk, MoveLineDown, MoveLineUp, SelectAll, SelectLargerSyntaxNode, SelectNext,
+    SelectSmallerSyntaxNode, ToggleCodeActions, ToggleDiagnostics, ToggleGoToLine, ToggleInlineDiagnostics,
 };
 use editor::code_context_menus::{CodeContextMenu, ContextMenuOrigin};
 use editor::{Editor, EditorSettings};
 use gpui::{
-    Action, AnchoredPositionMode, ClickEvent, Context, Corner, ElementId, Entity, EventEmitter,
-    FocusHandle, Focusable, InteractiveElement, ParentElement, Render, Styled, Subscription,
-    WeakEntity, Window, anchored, deferred, point,
+    Action, AnchoredPositionMode, ClickEvent, Context, Corner, ElementId, Entity, EventEmitter, FocusHandle, Focusable,
+    InteractiveElement, ParentElement, Render, Styled, Subscription, WeakEntity, Window, anchored, deferred, point,
 };
 use project::project_settings::DiagnosticSeverity;
 use search::{BufferSearchBar, buffer_search};
 use settings::{Settings, SettingsStore};
 use ui::{
-    ButtonStyle, ContextMenu, ContextMenuEntry, DocumentationSide, IconButton, IconName, IconSize,
-    PopoverMenu, PopoverMenuHandle, Tooltip, prelude::*,
+    ButtonStyle, ContextMenu, ContextMenuEntry, DocumentationSide, IconButton, IconName, IconSize, PopoverMenu,
+    PopoverMenuHandle, Tooltip, prelude::*,
 };
 use vim_mode_setting::{HelixModeSetting, VimModeSetting};
 use workspace::item::ItemBufferKind;
-use workspace::{
-    ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView, Workspace, item::ItemHandle,
-};
+use workspace::{ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView, Workspace, item::ItemHandle};
 
 const MAX_CODE_ACTION_MENU_LINES: u32 = 16;
 
@@ -41,11 +37,7 @@ pub struct QuickActionBar {
 }
 
 impl QuickActionBar {
-    pub fn new(
-        buffer_search_bar: Entity<BufferSearchBar>,
-        workspace: &Workspace,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn new(buffer_search_bar: Entity<BufferSearchBar>, workspace: &Workspace, cx: &mut Context<Self>) -> Self {
         let mut this = Self {
             _inlay_hints_enabled_subscription: None,
             active_item: None,
@@ -62,18 +54,14 @@ impl QuickActionBar {
     }
 
     fn active_editor(&self) -> Option<Entity<Editor>> {
-        self.active_item
-            .as_ref()
-            .and_then(|item| item.downcast::<Editor>())
+        self.active_item.as_ref().and_then(|item| item.downcast::<Editor>())
     }
 
     fn apply_settings(&mut self, cx: &mut Context<Self>) {
         let new_show = EditorSettings::get_global(cx).toolbar.quick_actions;
         if new_show != self.show {
             self.show = new_show;
-            cx.emit(ToolbarItemEvent::ChangeLocation(
-                self.get_toolbar_item_location(),
-            ));
+            cx.emit(ToolbarItemEvent::ChangeLocation(self.get_toolbar_item_location()));
         }
     }
 
@@ -157,20 +145,14 @@ impl Render for QuickActionBar {
                         .toggle_state(is_deployed)
                         .when(!is_deployed, |this| {
                             this.when(has_available_code_actions, |this| {
+                                this.tooltip(Tooltip::for_action_title("Code Actions", &ToggleCodeActions::default()))
+                            })
+                            .when(!has_available_code_actions, |this| {
                                 this.tooltip(Tooltip::for_action_title(
-                                    "Code Actions",
+                                    "No Code Actions Available",
                                     &ToggleCodeActions::default(),
                                 ))
                             })
-                            .when(
-                                !has_available_code_actions,
-                                |this| {
-                                    this.tooltip(Tooltip::for_action_title(
-                                        "No Code Actions Available",
-                                        &ToggleCodeActions::default(),
-                                    ))
-                                },
-                            )
                         })
                         .on_click({
                             let focus = focus;
@@ -198,12 +180,7 @@ impl Render for QuickActionBar {
         });
 
         let editor_selections_dropdown = selection_menu_enabled.then(|| {
-            let has_diff_hunks = editor
-                .read(cx)
-                .buffer()
-                .read(cx)
-                .snapshot(cx)
-                .has_diff_hunks();
+            let has_diff_hunks = editor.read(cx).buffer().read(cx).snapshot(cx).has_diff_hunks();
             let _has_selection = editor.update(cx, |editor, cx| {
                 editor.has_non_empty_selection(&editor.display_snapshot(cx))
             });
@@ -225,42 +202,20 @@ impl Render for QuickActionBar {
                     let menu = ContextMenu::build(window, cx, move |menu, _, _| {
                         menu.context(focus.clone())
                             .action("Select All", Box::new(SelectAll))
-                            .action(
-                                "Select Next Occurrence",
-                                Box::new(SelectNext {
-                                    replace_newest: false,
-                                }),
-                            )
+                            .action("Select Next Occurrence", Box::new(SelectNext { replace_newest: false }))
                             .action("Expand Selection", Box::new(SelectLargerSyntaxNode))
                             .action("Shrink Selection", Box::new(SelectSmallerSyntaxNode))
-                            .action(
-                                "Add Cursor Above",
-                                Box::new(AddSelectionAbove {
-                                    skip_soft_wrap: true,
-                                }),
-                            )
-                            .action(
-                                "Add Cursor Below",
-                                Box::new(AddSelectionBelow {
-                                    skip_soft_wrap: true,
-                                }),
-                            )
+                            .action("Add Cursor Above", Box::new(AddSelectionAbove { skip_soft_wrap: true }))
+                            .action("Add Cursor Below", Box::new(AddSelectionBelow { skip_soft_wrap: true }))
                             .separator()
                             .action("Go to Symbol", Box::new(ToggleOutline))
                             .action("Go to Line/Column", Box::new(ToggleGoToLine))
                             .separator()
                             .action("Next Problem", Box::new(GoToDiagnostic::default()))
-                            .action(
-                                "Previous Problem",
-                                Box::new(GoToPreviousDiagnostic::default()),
-                            )
+                            .action("Previous Problem", Box::new(GoToPreviousDiagnostic::default()))
                             .separator()
                             .action_disabled_when(!has_diff_hunks, "Next Hunk", Box::new(GoToHunk))
-                            .action_disabled_when(
-                                !has_diff_hunks,
-                                "Previous Hunk",
-                                Box::new(GoToPreviousHunk),
-                            )
+                            .action_disabled_when(!has_diff_hunks, "Previous Hunk", Box::new(GoToPreviousHunk))
                             .separator()
                             .action("Move Line Up", Box::new(MoveLineUp))
                             .action("Move Line Down", Box::new(MoveLineDown))
@@ -605,9 +560,7 @@ impl RenderOnce for QuickActionBarButton {
             .icon_size(IconSize::Small)
             .style(ButtonStyle::Subtle)
             .toggle_state(self.toggled)
-            .tooltip(move |_window, cx| {
-                Tooltip::for_action_in(tooltip.clone(), &*action, &self.focus_handle, cx)
-            })
+            .tooltip(move |_window, cx| Tooltip::for_action_in(tooltip.clone(), &*action, &self.focus_handle, cx))
             .on_click(move |event, window, cx| (self.on_click)(event, window, cx))
     }
 }
@@ -624,30 +577,21 @@ impl ToolbarItemView for QuickActionBar {
             self._inlay_hints_enabled_subscription.take();
 
             if let Some(editor) = active_item.downcast::<Editor>() {
-                let (mut inlay_hints_enabled, mut supports_inlay_hints) =
-                    editor.update(cx, |editor, cx| {
-                        (
-                            editor.inlay_hints_enabled(),
-                            editor.supports_inlay_hints(cx),
-                        )
+                let (mut inlay_hints_enabled, mut supports_inlay_hints) = editor.update(cx, |editor, cx| {
+                    (editor.inlay_hints_enabled(), editor.supports_inlay_hints(cx))
+                });
+                self._inlay_hints_enabled_subscription = Some(cx.observe(&editor, move |_, editor, cx| {
+                    let (new_inlay_hints_enabled, new_supports_inlay_hints) = editor.update(cx, |editor, cx| {
+                        (editor.inlay_hints_enabled(), editor.supports_inlay_hints(cx))
                     });
-                self._inlay_hints_enabled_subscription =
-                    Some(cx.observe(&editor, move |_, editor, cx| {
-                        let (new_inlay_hints_enabled, new_supports_inlay_hints) =
-                            editor.update(cx, |editor, cx| {
-                                (
-                                    editor.inlay_hints_enabled(),
-                                    editor.supports_inlay_hints(cx),
-                                )
-                            });
-                        let should_notify = inlay_hints_enabled != new_inlay_hints_enabled
-                            || supports_inlay_hints != new_supports_inlay_hints;
-                        inlay_hints_enabled = new_inlay_hints_enabled;
-                        supports_inlay_hints = new_supports_inlay_hints;
-                        if should_notify {
-                            cx.notify()
-                        }
-                    }));
+                    let should_notify = inlay_hints_enabled != new_inlay_hints_enabled
+                        || supports_inlay_hints != new_supports_inlay_hints;
+                    inlay_hints_enabled = new_inlay_hints_enabled;
+                    supports_inlay_hints = new_supports_inlay_hints;
+                    if should_notify {
+                        cx.notify()
+                    }
+                }));
             }
         }
         self.get_toolbar_item_location()

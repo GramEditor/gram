@@ -42,16 +42,11 @@ impl Parse for Args {
             };
 
             match (&meta, ident.as_str()) {
-                (Meta::NameValue(meta), "retries") => {
-                    max_retries = parse_usize_from_expr(&meta.value)?
-                }
-                (Meta::NameValue(meta), "iterations") => {
-                    max_iterations = parse_usize_from_expr(&meta.value)?
-                }
+                (Meta::NameValue(meta), "retries") => max_retries = parse_usize_from_expr(&meta.value)?,
+                (Meta::NameValue(meta), "iterations") => max_iterations = parse_usize_from_expr(&meta.value)?,
                 (Meta::NameValue(meta), "on_failure") => {
                     let Expr::Lit(ExprLit {
-                        lit: Lit::Str(name),
-                        ..
+                        lit: Lit::Str(name), ..
                     }) = &meta.value
                     else {
                         return Err(syn::Error::new(
@@ -70,9 +65,7 @@ impl Parse for Args {
                     };
                     on_failure_fn_name = quote!(Some(#path));
                 }
-                (Meta::NameValue(meta), "seed") => {
-                    seeds = vec![parse_usize_from_expr(&meta.value)? as u64]
-                }
+                (Meta::NameValue(meta), "seed") => seeds = vec![parse_usize_from_expr(&meta.value)? as u64],
                 (Meta::List(list), "seeds") => seeds = parse_u64_array(list)?,
                 (Meta::Path(_), _) => {
                     return Err(syn::Error::new(meta.span(), "invalid path argument"));
@@ -103,13 +96,7 @@ pub fn test(args: TokenStream, function: TokenStream) -> TokenStream {
     let inner_fn_name = format_ident!("__{}", inner_fn.sig.ident);
     let outer_fn_name = mem::replace(&mut inner_fn.sig.ident, inner_fn_name.clone());
 
-    let result = generate_test_function(
-        args,
-        inner_fn,
-        inner_fn_attributes,
-        inner_fn_name,
-        outer_fn_name,
-    );
+    let result = generate_test_function(args, inner_fn, inner_fn_attributes, inner_fn_name, outer_fn_name);
     match result {
         Ok(tokens) => tokens,
         Err(tokens) => tokens,
@@ -145,9 +132,9 @@ fn generate_test_function(
                             continue;
                         }
                         Some("BackgroundExecutor") => {
-                            inner_fn_args.extend(quote!(gpui::BackgroundExecutor::new(
-                                std::sync::Arc::new(dispatcher.clone()),
-                            ),));
+                            inner_fn_args.extend(quote!(gpui::BackgroundExecutor::new(std::sync::Arc::new(
+                                dispatcher.clone()
+                            ),),));
                             continue;
                         }
                         _ => {}
@@ -156,9 +143,7 @@ fn generate_test_function(
                     && let Type::Path(ty) = &*ty.elem
                 {
                     let last_segment = ty.path.segments.last();
-                    if let Some("TestAppContext") =
-                        last_segment.map(|s| s.ident.to_string()).as_deref()
-                    {
+                    if let Some("TestAppContext") = last_segment.map(|s| s.ident.to_string()).as_deref() {
                         let cx_varname = format_ident!("cx_{}", ix);
                         cx_vars.extend(quote!(
                             let mut #cx_varname = gpui::TestAppContext::build(
@@ -232,11 +217,11 @@ fn generate_test_function(
                             ));
                             inner_fn_args.extend(quote!(&mut #cx_varname_lock,));
                             cx_teardowns.extend(quote!(
-                                    drop(#cx_varname_lock);
-                                    dispatcher.run_until_parked();
-                                    #cx_varname.update(|cx| { cx.background_executor().forbid_parking(); cx.quit(); });
-                                    dispatcher.run_until_parked();
-                                ));
+                                drop(#cx_varname_lock);
+                                dispatcher.run_until_parked();
+                                #cx_varname.update(|cx| { cx.background_executor().forbid_parking(); cx.quit(); });
+                                dispatcher.run_until_parked();
+                            ));
                             continue;
                         }
                         Some("TestAppContext") => {
@@ -289,10 +274,7 @@ fn generate_test_function(
 }
 
 fn parse_usize_from_expr(expr: &Expr) -> Result<usize, syn::Error> {
-    let Expr::Lit(ExprLit {
-        lit: Lit::Int(int), ..
-    }) = expr
-    else {
+    let Expr::Lit(ExprLit { lit: Lit::Int(int), .. }) = expr else {
         return Err(syn::Error::new(expr.span(), "expected an integer"));
     };
     int.base10_parse()
@@ -305,10 +287,7 @@ fn parse_u64_array(meta_list: &MetaList) -> Result<Vec<u64>, syn::Error> {
     let parser = |input: ParseStream| {
         let exprs = Punctuated::<Expr, Token![,]>::parse_terminated(input)?;
         for expr in exprs {
-            if let Expr::Lit(ExprLit {
-                lit: Lit::Int(int), ..
-            }) = expr
-            {
+            if let Expr::Lit(ExprLit { lit: Lit::Int(int), .. }) = expr {
                 let value: usize = int.base10_parse()?;
                 result.push(value as u64);
             } else {

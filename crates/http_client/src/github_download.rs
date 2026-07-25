@@ -18,13 +18,12 @@ impl GithubBinaryMetadata {
         let metadata_content = async_fs::read_to_string(metadata_path)
             .await
             .with_context(|| format!("reading metadata file at {metadata_path:?}"))?;
-        serde_json::from_str(&metadata_content)
-            .with_context(|| format!("parsing metadata file at {metadata_path:?}"))
+        serde_json::from_str(&metadata_content).with_context(|| format!("parsing metadata file at {metadata_path:?}"))
     }
 
     pub async fn write_to_file(&self, metadata_path: &Path) -> Result<()> {
-        let metadata_content = serde_json::to_string(self)
-            .with_context(|| format!("serializing metadata for {metadata_path:?}"))?;
+        let metadata_content =
+            serde_json::to_string(self).with_context(|| format!("serializing metadata for {metadata_path:?}"))?;
         async_fs::write(metadata_path, metadata_content.as_bytes())
             .await
             .with_context(|| format!("writing metadata file at {metadata_path:?}"))?;
@@ -47,8 +46,8 @@ pub async fn download_server_binary(
     let body = response.body_mut();
     match digest {
         Some(expected_sha_256) => {
-            let temp_asset_file = tempfile::NamedTempFile::new()
-                .with_context(|| format!("creating a temporary file for {url}"))?;
+            let temp_asset_file =
+                tempfile::NamedTempFile::new().with_context(|| format!("creating a temporary file for {url}"))?;
             let (temp_asset_file, _temp_guard) = temp_asset_file.into_parts();
             let mut writer = HashingWriter {
                 writer: async_fs::File::from(temp_asset_file),
@@ -56,9 +55,7 @@ pub async fn download_server_binary(
             };
             futures::io::copy(&mut BufReader::new(body), &mut writer)
                 .await
-                .with_context(|| {
-                    format!("saving archive contents into the temporary file for {url}",)
-                })?;
+                .with_context(|| format!("saving archive contents into the temporary file for {url}",))?;
             let asset_sha_256 = format!("{:x}", writer.hasher.finalize());
 
             anyhow::ensure!(
@@ -72,15 +69,11 @@ pub async fn download_server_binary(
                 .with_context(|| format!("seeking temporary file {destination_path:?}",))?;
             stream_file_archive(&mut writer.writer, url, destination_path, asset_kind)
                 .await
-                .with_context(|| {
-                    format!("extracting downloaded asset for {url} into {destination_path:?}",)
-                })?;
+                .with_context(|| format!("extracting downloaded asset for {url} into {destination_path:?}",))?;
         }
         None => stream_response_archive(body, url, destination_path, asset_kind)
             .await
-            .with_context(|| {
-                format!("extracting response for asset {url} into {destination_path:?}",)
-            })?,
+            .with_context(|| format!("extracting response for asset {url} into {destination_path:?}",))?,
     }
     Ok(())
 }
@@ -122,11 +115,7 @@ async fn stream_file_archive(
     Ok(())
 }
 
-async fn extract_tar_gz(
-    destination_path: &Path,
-    url: &str,
-    from: impl AsyncRead + Unpin,
-) -> Result<(), anyhow::Error> {
+async fn extract_tar_gz(destination_path: &Path, url: &str, from: impl AsyncRead + Unpin) -> Result<(), anyhow::Error> {
     let decompressed_bytes = GzipDecoder::new(BufReader::new(from));
     let archive = async_tar::Archive::new(decompressed_bytes);
     archive
@@ -136,17 +125,11 @@ async fn extract_tar_gz(
     Ok(())
 }
 
-async fn extract_gz(
-    destination_path: &Path,
-    url: &str,
-    from: impl AsyncRead + Unpin,
-) -> Result<(), anyhow::Error> {
+async fn extract_gz(destination_path: &Path, url: &str, from: impl AsyncRead + Unpin) -> Result<(), anyhow::Error> {
     let mut decompressed_bytes = GzipDecoder::new(BufReader::new(from));
     let mut file = async_fs::File::create(&destination_path)
         .await
-        .with_context(|| {
-            format!("creating a file {destination_path:?} for a download from {url}")
-        })?;
+        .with_context(|| format!("creating a file {destination_path:?} for a download from {url}"))?;
     futures::io::copy(&mut decompressed_bytes, &mut file)
         .await
         .with_context(|| format!("extracting {url} to {destination_path:?}"))?;
@@ -173,10 +156,7 @@ impl<W: AsyncWrite + Unpin> AsyncWrite for HashingWriter<W> {
         }
     }
 
-    fn poll_flush(
-        mut self: Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
-    ) -> Poll<Result<(), std::io::Error>> {
+    fn poll_flush(mut self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Result<(), std::io::Error>> {
         Pin::new(&mut self.writer).poll_flush(cx)
     }
 

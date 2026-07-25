@@ -33,12 +33,7 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
 }
 
 impl Vim {
-    pub(crate) fn normal_before(
-        &mut self,
-        action: &NormalBefore,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub(crate) fn normal_before(&mut self, action: &NormalBefore, window: &mut Window, cx: &mut Context<Self>) {
         if self.active_operator().is_some() {
             self.operator_stack.clear();
             self.sync_vim_settings(window, cx);
@@ -76,12 +71,7 @@ impl Vim {
         self.repeat(true, window, cx)
     }
 
-    fn temporary_normal(
-        &mut self,
-        _: &TemporaryNormal,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn temporary_normal(&mut self, _: &TemporaryNormal, window: &mut Window, cx: &mut Context<Self>) {
         self.switch_mode(Mode::Normal, true, window, cx);
         self.temp_mode = true;
     }
@@ -172,13 +162,9 @@ mod test {
         cx.simulate_shared_keystrokes("2 o k k escape").await;
         cx.shared_state().await.assert_eq("hello\nkk\nkˇk\n");
         cx.simulate_shared_keystrokes(".").await;
-        cx.shared_state()
-            .await
-            .assert_eq("hello\nkk\nkk\nkk\nkˇk\n");
+        cx.shared_state().await.assert_eq("hello\nkk\nkk\nkk\nkˇk\n");
         cx.simulate_shared_keystrokes("1 .").await;
-        cx.shared_state()
-            .await
-            .assert_eq("hello\nkk\nkk\nkk\nkk\nkˇk\n");
+        cx.shared_state().await.assert_eq("hello\nkk\nkk\nkk\nkk\nkˇk\n");
     }
 
     #[gpui::test]
@@ -189,8 +175,7 @@ mod test {
         cx.simulate_shared_keystrokes("y y i ctrl-r \"").await;
         cx.shared_state().await.assert_eq("hehello\nˇllo\n");
 
-        cx.simulate_shared_keystrokes("ctrl-r x ctrl-r escape")
-            .await;
+        cx.simulate_shared_keystrokes("ctrl-r x ctrl-r escape").await;
         cx.shared_state().await.assert_eq("hehello\nˇllo\n");
     }
 

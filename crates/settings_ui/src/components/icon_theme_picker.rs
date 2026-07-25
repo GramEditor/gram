@@ -76,12 +76,7 @@ impl PickerDelegate for IconThemePickerDelegate {
         "Search icon theme…".into()
     }
 
-    fn update_matches(
-        &mut self,
-        query: String,
-        _window: &mut Window,
-        cx: &mut Context<IconThemePicker>,
-    ) -> Task<()> {
+    fn update_matches(&mut self, query: String, _window: &mut Window, cx: &mut Context<IconThemePicker>) -> Task<()> {
         let icon_themes = self.icon_themes.clone();
         let current_theme = self.current_theme.clone();
 
@@ -135,12 +130,7 @@ impl PickerDelegate for IconThemePickerDelegate {
         Task::ready(())
     }
 
-    fn confirm(
-        &mut self,
-        _secondary: bool,
-        _window: &mut Window,
-        cx: &mut Context<IconThemePicker>,
-    ) {
+    fn confirm(&mut self, _secondary: bool, _window: &mut Window, cx: &mut Context<IconThemePicker>) {
         if let Some(theme_match) = self.filtered_themes.get(self.selected_index) {
             let theme = theme_match.string.clone();
             (self.on_theme_changed)(theme.into(), cx);

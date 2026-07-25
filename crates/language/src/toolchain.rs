@@ -53,9 +53,7 @@ impl ToolchainScope {
 
     pub fn description(&self) -> &'static str {
         match self {
-            ToolchainScope::Subproject(_, _) => {
-                "Available only in the subproject you're currently in."
-            }
+            ToolchainScope::Subproject(_, _) => "Available only in the subproject you're currently in.",
             ToolchainScope::Project => "Available in all locations in your current project.",
             ToolchainScope::Global => "Available in all of your projects on this machine.",
         }
@@ -182,8 +180,6 @@ impl ToolchainList {
         let first_equal_or_greater = self
             .groups
             .partition_point(|(group_lower_bound, _)| group_lower_bound <= &index);
-        self.groups
-            .get(first_equal_or_greater.checked_sub(1)?)
-            .cloned()
+        self.groups.get(first_equal_or_greater.checked_sub(1)?).cloned()
     }
 }

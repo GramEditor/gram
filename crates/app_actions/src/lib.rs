@@ -398,9 +398,7 @@ pub enum Spawn {
 
 impl Spawn {
     pub fn modal() -> Self {
-        Self::ViaModal {
-            reveal_target: None,
-        }
+        Self::ViaModal { reveal_target: None }
     }
 }
 

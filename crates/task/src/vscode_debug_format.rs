@@ -2,9 +2,7 @@ use collections::HashMap;
 use serde::Deserialize;
 use util::ResultExt as _;
 
-use crate::{
-    DebugScenario, DebugTaskFile, EnvVariableReplacer, TcpArgumentsTemplate, VariableName,
-};
+use crate::{DebugScenario, DebugTaskFile, EnvVariableReplacer, TcpArgumentsTemplate, VariableName};
 
 // TODO support preLaunchTask linkage with other tasks
 #[derive(Clone, Debug, Deserialize, PartialEq)]
@@ -59,20 +57,11 @@ impl TryFrom<VsCodeDebugTaskFile> for DebugTaskFile {
 
     fn try_from(file: VsCodeDebugTaskFile) -> Result<Self, Self::Error> {
         let replacer = EnvVariableReplacer::new(HashMap::from_iter([
-            (
-                "workspaceFolder".to_owned(),
-                VariableName::WorktreeRoot.to_string(),
-            ),
-            (
-                "relativeFile".to_owned(),
-                VariableName::RelativeFile.to_string(),
-            ),
+            ("workspaceFolder".to_owned(), VariableName::WorktreeRoot.to_string()),
+            ("relativeFile".to_owned(), VariableName::RelativeFile.to_string()),
             ("file".to_owned(), VariableName::File.to_string()),
         ]))
-        .with_commands([(
-            "pickMyProcess".to_owned(),
-            VariableName::PickProcessId.to_string(),
-        )]);
+        .with_commands([("pickMyProcess".to_owned(), VariableName::PickProcessId.to_string())]);
         let templates = file
             .configurations
             .into_iter()
@@ -84,8 +73,8 @@ impl TryFrom<VsCodeDebugTaskFile> for DebugTaskFile {
 
 fn task_type_to_adapter_name(task_type: &str) -> String {
     match task_type {
-        "pwa-node" | "node" | "node-terminal" | "chrome" | "pwa-chrome" | "edge" | "pwa-edge"
-        | "msedge" | "pwa-msedge" => "JavaScript",
+        "pwa-node" | "node" | "node-terminal" | "chrome" | "pwa-chrome" | "edge" | "pwa-edge" | "msedge"
+        | "pwa-msedge" => "JavaScript",
         "go" => "Delve",
         "php" => "Xdebug",
         "cppdbg" | "lldb" => "CodeLLDB",
@@ -127,8 +116,7 @@ mod tests {
                 ]
             }
         "#;
-        let parsed: VsCodeDebugTaskFile =
-            serde_json_lenient::from_str(raw).expect("deserializing launch.json");
+        let parsed: VsCodeDebugTaskFile = serde_json_lenient::from_str(raw).expect("deserializing launch.json");
         let gram = DebugTaskFile::try_from(parsed).expect("converting to Gram debug templates");
         pretty_assertions::assert_eq!(
             gram,
@@ -172,8 +160,7 @@ mod tests {
                 ]
             }
         "#;
-        let parsed: VsCodeDebugTaskFile =
-            serde_json_lenient::from_str(raw).expect("deserializing launch.json");
+        let parsed: VsCodeDebugTaskFile = serde_json_lenient::from_str(raw).expect("deserializing launch.json");
         let gram = DebugTaskFile::try_from(parsed).expect("converting to Gram debug templates");
 
         let expected_placeholder = format!("${{{}}}", VariableName::PickProcessId);

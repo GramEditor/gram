@@ -24,14 +24,9 @@ impl SyntaxTheme {
     }
 
     #[cfg(any(test, feature = "test-support"))]
-    pub fn new_test_styles(
-        colors: impl IntoIterator<Item = (&'static str, HighlightStyle)>,
-    ) -> Self {
+    pub fn new_test_styles(colors: impl IntoIterator<Item = (&'static str, HighlightStyle)>) -> Self {
         Self {
-            highlights: colors
-                .into_iter()
-                .map(|(key, style)| (key.to_owned(), style))
-                .collect(),
+            highlights: colors.into_iter().map(|(key, style)| (key.to_owned(), style)).collect(),
         }
     }
 
@@ -65,16 +60,12 @@ impl SyntaxTheme {
                 .find(|(existing_name, _)| existing_name == &name)
             {
                 existing_highlight.color = highlight.color.or(existing_highlight.color);
-                existing_highlight.font_weight =
-                    highlight.font_weight.or(existing_highlight.font_weight);
-                existing_highlight.font_style =
-                    highlight.font_style.or(existing_highlight.font_style);
-                existing_highlight.background_color = highlight
-                    .background_color
-                    .or(existing_highlight.background_color);
+                existing_highlight.font_weight = highlight.font_weight.or(existing_highlight.font_weight);
+                existing_highlight.font_style = highlight.font_style.or(existing_highlight.font_style);
+                existing_highlight.background_color =
+                    highlight.background_color.or(existing_highlight.background_color);
                 existing_highlight.underline = highlight.underline.or(existing_highlight.underline);
-                existing_highlight.strikethrough =
-                    highlight.strikethrough.or(existing_highlight.strikethrough);
+                existing_highlight.strikethrough = highlight.strikethrough.or(existing_highlight.strikethrough);
                 existing_highlight.fade_out = highlight.fade_out.or(existing_highlight.fade_out);
             } else {
                 merged_highlights.push((name, highlight));
@@ -125,18 +116,12 @@ mod tests {
 
         // Merging empty user-defined styles keeps all the base styles.
         let syntax_theme = SyntaxTheme::merge(
-            Arc::new(SyntaxTheme::new_test([
-                ("foo", gpui::blue()),
-                ("foo.bar", gpui::red()),
-            ])),
+            Arc::new(SyntaxTheme::new_test([("foo", gpui::blue()), ("foo.bar", gpui::red())])),
             Vec::new(),
         );
         assert_eq!(
             syntax_theme,
-            Arc::new(SyntaxTheme::new_test([
-                ("foo", gpui::blue()),
-                ("foo.bar", gpui::red())
-            ]))
+            Arc::new(SyntaxTheme::new_test([("foo", gpui::blue()), ("foo.bar", gpui::red())]))
         );
 
         let syntax_theme = SyntaxTheme::merge(

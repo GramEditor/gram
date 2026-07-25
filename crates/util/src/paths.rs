@@ -67,9 +67,7 @@ pub trait PathExt {
             WTF8::validate(bytes)
                 .then(|| {
                     // Safety: bytes are valid WTF-8 sequence.
-                    Self::from(Path::new(unsafe {
-                        OsStr::from_encoded_bytes_unchecked(bytes)
-                    }))
+                    Self::from(Path::new(unsafe { OsStr::from_encoded_bytes_unchecked(bytes) }))
                 })
                 .with_context(|| format!("Invalid WTF-8 sequence: {bytes:?}"))
         }
@@ -165,10 +163,7 @@ impl<T: AsRef<Path>> PathExt for T {
     }
 
     fn try_shell_safe(&self, shell_kind: ShellKind) -> anyhow::Result<String> {
-        let path_str = self
-            .as_ref()
-            .to_str()
-            .with_context(|| "Path contains invalid UTF-8")?;
+        let path_str = self.as_ref().to_str().with_context(|| "Path contains invalid UTF-8")?;
         shell_kind
             .try_quote(path_str)
             .as_deref()
@@ -191,11 +186,8 @@ pub fn strip_path_suffix<'a>(base: &'a Path, suffix: &Path) -> Option<&'a Path> 
             .last()
             .is_none_or(|last_byte| std::path::is_separator(*last_byte as char))
         {
-            let os_str = unsafe {
-                OsStr::from_encoded_bytes_unchecked(
-                    &remainder[0..remainder.len().saturating_sub(1)],
-                )
-            };
+            let os_str =
+                unsafe { OsStr::from_encoded_bytes_unchecked(&remainder[0..remainder.len().saturating_sub(1)]) };
             return Some(Path::new(os_str));
         }
     }
@@ -394,17 +386,10 @@ impl PathStyle {
             return (None, path_like);
         };
         let filename_start = pos + self.primary_separator().len();
-        (
-            Some(&path_like[..filename_start]),
-            &path_like[filename_start..],
-        )
+        (Some(&path_like[..filename_start]), &path_like[filename_start..])
     }
 
-    pub fn strip_prefix<'a>(
-        &self,
-        child: &'a Path,
-        parent: &'a Path,
-    ) -> Option<std::borrow::Cow<'a, RelPath>> {
+    pub fn strip_prefix<'a>(&self, child: &'a Path, parent: &'a Path) -> Option<std::borrow::Cow<'a, RelPath>> {
         let parent = parent.to_str()?;
         if parent.is_empty() {
             return RelPath::new(child, *self).ok();
@@ -416,11 +401,7 @@ impl PathStyle {
             .unwrap_or(parent);
         let child = child.to_str()?;
         let stripped = child.strip_prefix(parent)?;
-        if let Some(relative) = self
-            .separators()
-            .iter()
-            .find_map(|sep| stripped.strip_prefix(sep))
-        {
+        if let Some(relative) = self.separators().iter().find_map(|sep| stripped.strip_prefix(sep)) {
             RelPath::new(relative.as_ref(), *self).ok()
         } else if stripped.is_empty() {
             Some(Cow::Borrowed(RelPath::empty()))
@@ -464,10 +445,7 @@ pub fn is_absolute(path_like: &str, path_style: PathStyle) -> bool {
     path_like.starts_with('/')
         || path_style == PathStyle::Windows
             && (path_like.starts_with('\\')
-                || path_like
-                    .chars()
-                    .next()
-                    .is_some_and(|c| c.is_ascii_alphabetic())
+                || path_like.chars().next().is_some_and(|c| c.is_ascii_alphabetic())
                     && path_like[1..]
                         .strip_prefix(':')
                         .is_some_and(|path| path.starts_with('/') || path.starts_with('\\')))
@@ -681,8 +659,7 @@ impl PathWithPosition {
     pub fn parse_str(s: &str) -> Self {
         let trimmed = s.trim();
         let path = Path::new(trimmed);
-        let Some(maybe_file_name_with_row_col) = path.file_name().unwrap_or_default().to_str()
-        else {
+        let Some(maybe_file_name_with_row_col) = path.file_name().unwrap_or_default().to_str() else {
             return Self {
                 path: Path::new(s).to_path_buf(),
                 row: None,
@@ -700,8 +677,7 @@ impl PathWithPosition {
         // Let's avoid repeated init cost on this. It is subject to thread contention, but
         // so far this code isn't called from multiple hot paths. Getting contention here
         // in the future seems unlikely.
-        static SUFFIX_RE: LazyLock<Regex> =
-            LazyLock::new(|| Regex::new(ROW_COL_CAPTURE_REGEX).unwrap());
+        static SUFFIX_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(ROW_COL_CAPTURE_REGEX).unwrap());
         match SUFFIX_RE
             .captures(maybe_file_name_with_row_col)
             .map(|caps| caps.extract())
@@ -724,21 +700,18 @@ impl PathWithPosition {
                 // but in reality there could be `foo/bar.py:22:in` inputs which we want to match too.
                 // The regex mentioned is not very extendable with "digit or random string" checks, so do this here instead.
                 let delimiter = ':';
-                let mut path_parts = s
-                    .rsplitn(3, delimiter)
-                    .collect::<Vec<_>>()
-                    .into_iter()
-                    .rev()
-                    .fuse();
-                let mut path_string = path_parts.next().expect("rsplitn should have the rest of the string as its last parameter that we reversed").to_owned();
+                let mut path_parts = s.rsplitn(3, delimiter).collect::<Vec<_>>().into_iter().rev().fuse();
+                let mut path_string = path_parts
+                    .next()
+                    .expect("rsplitn should have the rest of the string as its last parameter that we reversed")
+                    .to_owned();
                 let mut row = None;
                 let mut column = None;
                 if let Some(maybe_row) = path_parts.next() {
                     if let Ok(parsed_row) = maybe_row.parse::<u32>() {
                         row = Some(parsed_row);
-                        if let Some(parsed_column) = path_parts
-                            .next()
-                            .and_then(|maybe_col| maybe_col.parse::<u32>().ok())
+                        if let Some(parsed_column) =
+                            path_parts.next().and_then(|maybe_col| maybe_col.parse::<u32>().ok())
                         {
                             column = Some(parsed_column);
                         }
@@ -761,10 +734,7 @@ impl PathWithPosition {
         }
     }
 
-    pub fn map_path<E>(
-        self,
-        mapping: impl FnOnce(PathBuf) -> Result<PathBuf, E>,
-    ) -> Result<PathWithPosition, E> {
+    pub fn map_path<E>(self, mapping: impl FnOnce(PathBuf) -> Result<PathBuf, E>) -> Result<PathWithPosition, E> {
         Ok(PathWithPosition {
             path: mapping(self.path)?,
             row: self.row,
@@ -844,9 +814,11 @@ impl PathMatcher {
     }
 
     pub fn is_match<P: AsRef<RelPath>>(&self, other: P) -> bool {
-        if self.sources.iter().any(|(_, source, _)| {
-            other.as_ref().starts_with(source) || other.as_ref().ends_with(source)
-        }) {
+        if self
+            .sources
+            .iter()
+            .any(|(_, source, _)| other.as_ref().starts_with(source) || other.as_ref().ends_with(source))
+        {
             return true;
         }
         let other_path = other.as_ref().display(self.path_style);
@@ -904,10 +876,7 @@ impl Default for PathMatcher {
 ///
 /// The function advances both iterators past their respective numeric sequences,
 /// regardless of the comparison result.
-fn compare_numeric_segments<I>(
-    a_iter: &mut std::iter::Peekable<I>,
-    b_iter: &mut std::iter::Peekable<I>,
-) -> Ordering
+fn compare_numeric_segments<I>(a_iter: &mut std::iter::Peekable<I>, b_iter: &mut std::iter::Peekable<I>) -> Ordering
 where
     I: Iterator<Item = char>,
 {
@@ -998,10 +967,7 @@ pub fn natural_sort(a: &str, b: &str) -> Ordering {
                         ordering => return ordering,
                     }
                 } else {
-                    match a_char
-                        .to_ascii_lowercase()
-                        .cmp(&b_char.to_ascii_lowercase())
-                    {
+                    match a_char.to_ascii_lowercase().cmp(&b_char.to_ascii_lowercase()) {
                         Ordering::Equal => {
                             a_iter.next();
                             b_iter.next();
@@ -1049,10 +1015,7 @@ fn stem_and_extension(filename: &str) -> (Option<&str>, Option<&str>) {
     }
 }
 
-pub fn compare_rel_paths(
-    (path_a, a_is_file): (&RelPath, bool),
-    (path_b, b_is_file): (&RelPath, bool),
-) -> Ordering {
+pub fn compare_rel_paths((path_a, a_is_file): (&RelPath, bool), (path_b, b_is_file): (&RelPath, bool)) -> Ordering {
     let mut components_a = path_a.components();
     let mut components_b = path_b.components();
     loop {
@@ -1062,14 +1025,10 @@ pub fn compare_rel_paths(
                 let b_is_file = b_is_file && components_b.rest().is_empty();
 
                 let ordering = a_is_file.cmp(&b_is_file).then_with(|| {
-                    let (a_stem, a_extension) = a_is_file
-                        .then(|| stem_and_extension(component_a))
-                        .unwrap_or_default();
+                    let (a_stem, a_extension) = a_is_file.then(|| stem_and_extension(component_a)).unwrap_or_default();
                     let path_string_a = if a_is_file { a_stem } else { Some(component_a) };
 
-                    let (b_stem, b_extension) = b_is_file
-                        .then(|| stem_and_extension(component_b))
-                        .unwrap_or_default();
+                    let (b_stem, b_extension) = b_is_file.then(|| stem_and_extension(component_b)).unwrap_or_default();
                     let path_string_b = if b_is_file { b_stem } else { Some(component_b) };
 
                     let compare_components = match (path_string_a, path_string_b) {
@@ -1119,22 +1078,10 @@ pub fn compare_rel_paths_mixed(
                 let a_leaf_file = a_is_file && components_a.rest().is_empty();
                 let b_leaf_file = b_is_file && components_b.rest().is_empty();
 
-                let (a_stem, a_ext) = a_leaf_file
-                    .then(|| stem_and_extension(component_a))
-                    .unwrap_or_default();
-                let (b_stem, b_ext) = b_leaf_file
-                    .then(|| stem_and_extension(component_b))
-                    .unwrap_or_default();
-                let a_key = if a_leaf_file {
-                    a_stem
-                } else {
-                    Some(component_a)
-                };
-                let b_key = if b_leaf_file {
-                    b_stem
-                } else {
-                    Some(component_b)
-                };
+                let (a_stem, a_ext) = a_leaf_file.then(|| stem_and_extension(component_a)).unwrap_or_default();
+                let (b_stem, b_ext) = b_leaf_file.then(|| stem_and_extension(component_b)).unwrap_or_default();
+                let a_key = if a_leaf_file { a_stem } else { Some(component_a) };
+                let b_key = if b_leaf_file { b_stem } else { Some(component_b) };
 
                 let ordering = match (a_key, b_key) {
                     (Some(a), Some(b)) => natural_sort_no_tiebreak(a, b)
@@ -1193,22 +1140,10 @@ pub fn compare_rel_paths_files_first(
                 let a_leaf_file = a_is_file && components_a.rest().is_empty();
                 let b_leaf_file = b_is_file && components_b.rest().is_empty();
 
-                let (a_stem, a_ext) = a_leaf_file
-                    .then(|| stem_and_extension(component_a))
-                    .unwrap_or_default();
-                let (b_stem, b_ext) = b_leaf_file
-                    .then(|| stem_and_extension(component_b))
-                    .unwrap_or_default();
-                let a_key = if a_leaf_file {
-                    a_stem
-                } else {
-                    Some(component_a)
-                };
-                let b_key = if b_leaf_file {
-                    b_stem
-                } else {
-                    Some(component_b)
-                };
+                let (a_stem, a_ext) = a_leaf_file.then(|| stem_and_extension(component_a)).unwrap_or_default();
+                let (b_stem, b_ext) = b_leaf_file.then(|| stem_and_extension(component_b)).unwrap_or_default();
+                let a_key = if a_leaf_file { a_stem } else { Some(component_a) };
+                let b_key = if b_leaf_file { b_stem } else { Some(component_b) };
 
                 let ordering = match (a_key, b_key) {
                     (Some(a), Some(b)) => {
@@ -1251,10 +1186,7 @@ pub fn compare_rel_paths_files_first(
     }
 }
 
-pub fn compare_paths(
-    (path_a, a_is_file): (&Path, bool),
-    (path_b, b_is_file): (&Path, bool),
-) -> Ordering {
+pub fn compare_paths((path_a, a_is_file): (&Path, bool), (path_b, b_is_file): (&Path, bool)) -> Ordering {
     let mut components_a = path_a.components().peekable();
     let mut components_b = path_b.components().peekable();
 
@@ -1485,16 +1417,11 @@ mod tests {
 
         entries.sort_by(|&a, &b| compare_paths(a, b));
 
-        let ordered: Vec<&str> = entries
-            .iter()
-            .map(|(path, _)| path.to_str().unwrap())
-            .collect();
+        let ordered: Vec<&str> = entries.iter().map(|(path, _)| path.to_str().unwrap()).collect();
 
         assert_eq!(
             ordered,
-            vec![
-                ".config", "Dir1", "dir01", "dir2", "Dir02", "dir10", "Dir10"
-            ]
+            vec![".config", "Dir1", "dir01", "dir2", "Dir02", "dir10", "Dir10"]
         );
     }
 
@@ -2065,12 +1992,9 @@ mod tests {
 
     #[perf]
     fn test_path_compact() {
-        let path: PathBuf = [
-            home_dir().to_string_lossy().into_owned(),
-            "some_file.txt".to_string(),
-        ]
-        .iter()
-        .collect();
+        let path: PathBuf = [home_dir().to_string_lossy().into_owned(), "some_file.txt".to_string()]
+            .iter()
+            .collect();
         if cfg!(any(target_os = "linux", target_os = "freebsd")) || cfg!(target_os = "macos") {
             assert_eq!(path.compact().to_str(), Some("~/some_file.txt"));
         } else {
@@ -2142,17 +2066,11 @@ mod tests {
     fn test_sanitized_path() {
         let path = Path::new("C:\\Users\\someone\\test_file.rs");
         let sanitized_path = SanitizedPath::new(path);
-        assert_eq!(
-            sanitized_path.to_string(),
-            "C:\\Users\\someone\\test_file.rs"
-        );
+        assert_eq!(sanitized_path.to_string(), "C:\\Users\\someone\\test_file.rs");
 
         let path = Path::new("\\\\?\\C:\\Users\\someone\\test_file.rs");
         let sanitized_path = SanitizedPath::new(path);
-        assert_eq!(
-            sanitized_path.to_string(),
-            "C:\\Users\\someone\\test_file.rs"
-        );
+        assert_eq!(sanitized_path.to_string(), "C:\\Users\\someone\\test_file.rs");
     }
 
     #[perf]
@@ -2305,14 +2223,8 @@ mod tests {
         assert_eq!(compare("dir/sub/a", true, "dir/a", true), Ordering::Less);
 
         // Case sensitivity in paths
-        assert_eq!(
-            compare("Dir/file", true, "dir/file", true),
-            Ordering::Greater
-        );
-        assert_eq!(
-            compare("dir/File", true, "dir/file", true),
-            Ordering::Greater
-        );
+        assert_eq!(compare("Dir/file", true, "dir/file", true), Ordering::Greater);
+        assert_eq!(compare("dir/File", true, "dir/file", true), Ordering::Greater);
         assert_eq!(compare("dir/file", true, "Dir/File", true), Ordering::Less);
 
         // Hidden files and special names
@@ -2321,18 +2233,9 @@ mod tests {
         assert_eq!(compare(".config", false, ".data", false), Ordering::Less);
 
         // Mixed numeric paths
-        assert_eq!(
-            compare("dir1/file", true, "dir2/file", true),
-            Ordering::Less
-        );
-        assert_eq!(
-            compare("dir2/file", true, "dir10/file", true),
-            Ordering::Less
-        );
-        assert_eq!(
-            compare("dir02/file", true, "dir2/file", true),
-            Ordering::Greater
-        );
+        assert_eq!(compare("dir1/file", true, "dir2/file", true), Ordering::Less);
+        assert_eq!(compare("dir2/file", true, "dir10/file", true), Ordering::Less);
+        assert_eq!(compare("dir02/file", true, "dir2/file", true), Ordering::Greater);
 
         // Root paths
         assert_eq!(compare("/a", true, "/b", true), Ordering::Less);
@@ -2344,21 +2247,11 @@ mod tests {
             Ordering::Greater
         );
         assert_eq!(
-            compare(
-                "project/tests/test_1.rs",
-                true,
-                "project/tests/test_2.rs",
-                true
-            ),
+            compare("project/tests/test_1.rs", true, "project/tests/test_2.rs", true),
             Ordering::Less
         );
         assert_eq!(
-            compare(
-                "project/v1.0.0/README.md",
-                true,
-                "project/v1.10.0/README.md",
-                true
-            ),
+            compare("project/v1.0.0/README.md", true, "project/v1.10.0/README.md", true),
             Ordering::Less
         );
     }
@@ -2555,33 +2448,13 @@ mod tests {
     #[test]
     fn test_strip_prefix() {
         let expected = [
-            (
-                PathStyle::Posix,
-                "/a/b/c",
-                "/a/b",
-                Some(rel_path("c").into_arc()),
-            ),
-            (
-                PathStyle::Posix,
-                "/a/b/c",
-                "/a/b/",
-                Some(rel_path("c").into_arc()),
-            ),
-            (
-                PathStyle::Posix,
-                "/a/b/c",
-                "/",
-                Some(rel_path("a/b/c").into_arc()),
-            ),
+            (PathStyle::Posix, "/a/b/c", "/a/b", Some(rel_path("c").into_arc())),
+            (PathStyle::Posix, "/a/b/c", "/a/b/", Some(rel_path("c").into_arc())),
+            (PathStyle::Posix, "/a/b/c", "/", Some(rel_path("a/b/c").into_arc())),
             (PathStyle::Posix, "/a/b/c", "", None),
             (PathStyle::Posix, "/a/b//c", "/a/b/", None),
             (PathStyle::Posix, "/a/bc", "/a/b", None),
-            (
-                PathStyle::Posix,
-                "/a/b/c",
-                "/a/b/c",
-                Some(rel_path("").into_arc()),
-            ),
+            (PathStyle::Posix, "/a/b/c", "/a/b/c", Some(rel_path("").into_arc())),
             (
                 PathStyle::Windows,
                 "C:\\a\\b\\c",

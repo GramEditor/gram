@@ -1,8 +1,5 @@
 use editor::Editor;
-use gpui::{
-    Context, Entity, IntoElement, ParentElement, Render, Styled, Subscription, WeakEntity, Window,
-    div,
-};
+use gpui::{Context, Entity, IntoElement, ParentElement, Render, Styled, Subscription, WeakEntity, Window, div};
 use language::LanguageName;
 use settings::Settings as _;
 use ui::{Button, ButtonCommon, Clickable, FluentBuilder, Tooltip};
@@ -58,9 +55,7 @@ impl Render for ActiveBufferLanguage {
                     .label_size(icon_size.label_size())
                     .on_click(cx.listener(|this, _, window, cx| {
                         if let Some(workspace) = this.workspace.upgrade() {
-                            workspace.update(cx, |workspace, cx| {
-                                LanguageSelector::toggle(workspace, window, cx)
-                            });
+                            workspace.update(cx, |workspace, cx| LanguageSelector::toggle(workspace, window, cx));
                         }
                     }))
                     .tooltip(|_window, cx| Tooltip::for_action("Select Language", &Toggle, cx)),
@@ -77,8 +72,7 @@ impl StatusItemView for ActiveBufferLanguage {
         cx: &mut Context<Self>,
     ) {
         if let Some(editor) = active_pane_item.and_then(|item| item.downcast::<Editor>()) {
-            self._observe_active_editor =
-                Some(cx.observe_in(&editor, window, Self::update_language));
+            self._observe_active_editor = Some(cx.observe_in(&editor, window, Self::update_language));
             self.update_language(editor, window, cx);
         } else {
             self.active_language = None;

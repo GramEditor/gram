@@ -1,8 +1,6 @@
 use crate::prelude::*;
 use crate::v_flex;
-use gpui::{
-    AnyElement, App, Element, IntoElement, ParentElement, Pixels, RenderOnce, Styled, Window, div,
-};
+use gpui::{AnyElement, App, Element, IntoElement, ParentElement, Pixels, RenderOnce, Styled, Window, div};
 use smallvec::SmallVec;
 
 /// Y height added beyond the size of the contents.

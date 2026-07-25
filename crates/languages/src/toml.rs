@@ -54,9 +54,7 @@ impl LspInstaller for TomlLspAdapter {
         pre_release: bool,
         _cx: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        let release =
-            latest_github_release("tamasfe/taplo", true, pre_release, delegate.http_client())
-                .await?;
+        let release = latest_github_release("tamasfe/taplo", true, pre_release, delegate.http_client()).await?;
 
         let arch = match std::env::consts::ARCH {
             "aarch64" => "aarch64",
@@ -124,11 +122,7 @@ impl LspInstaller for TomlLspAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        match find_cached_server_binary(&container_dir, Some("taplo-"), async |path| {
-            Some(path.clone())
-        })
-        .await
-        {
+        match find_cached_server_binary(&container_dir, Some("taplo-"), async |path| Some(path.clone())).await {
             Some(path) => Some(LanguageServerBinary {
                 path,
                 arguments: vec!["lsp".into(), "stdio".into()],

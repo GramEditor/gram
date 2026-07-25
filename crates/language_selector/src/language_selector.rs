@@ -7,8 +7,8 @@ use file_finder::file_finder_settings::FileFinderSettings;
 use file_icons::FileIcons;
 use fuzzy::{StringMatch, StringMatchCandidate, match_strings};
 use gpui::{
-    App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, ParentElement,
-    Render, Styled, WeakEntity, Window, actions,
+    App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, ParentElement, Render, Styled,
+    WeakEntity, Window, actions,
 };
 use language::{Buffer, LanguageMatcher, LanguageName, LanguageRegistry};
 use picker::{Picker, PickerDelegate};
@@ -36,21 +36,13 @@ pub struct LanguageSelector {
 }
 
 impl LanguageSelector {
-    fn register(
-        workspace: &mut Workspace,
-        _window: Option<&mut Window>,
-        _: &mut Context<Workspace>,
-    ) {
+    fn register(workspace: &mut Workspace, _window: Option<&mut Window>, _: &mut Context<Workspace>) {
         workspace.register_action(move |workspace, _: &Toggle, window, cx| {
             Self::toggle(workspace, window, cx);
         });
     }
 
-    fn toggle(
-        workspace: &mut Workspace,
-        window: &mut Window,
-        cx: &mut Context<Workspace>,
-    ) -> Option<()> {
+    fn toggle(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>) -> Option<()> {
         let registry = workspace.app_state().languages.clone();
         let (_, buffer, _) = workspace
             .active_item(cx)?
@@ -72,12 +64,7 @@ impl LanguageSelector {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let delegate = LanguageSelectorDelegate::new(
-            cx.entity().downgrade(),
-            buffer,
-            project,
-            language_registry,
-        );
+        let delegate = LanguageSelectorDelegate::new(cx.entity().downgrade(), buffer, project, language_registry);
 
         let picker = cx.new(|cx| Picker::uniform_list(delegate, window, cx));
         Self { picker }
@@ -149,8 +136,8 @@ impl LanguageSelectorDelegate {
         let buffer_language = self.buffer.read(cx).language();
         let need_icon = FileFinderSettings::get_global(cx).file_icons;
 
-        if let Some(buffer_language) = buffer_language
-            .filter(|buffer_language| buffer_language.name().as_ref() == mat.string.as_str())
+        if let Some(buffer_language) =
+            buffer_language.filter(|buffer_language| buffer_language.name().as_ref() == mat.string.as_str())
         {
             label.push_str(" (current)");
             let icon = need_icon
@@ -163,9 +150,7 @@ impl LanguageSelectorDelegate {
                     let language_name = LanguageName::new(mat.string.as_str());
                     self.language_registry
                         .available_language_for_name(language_name.as_ref())
-                        .and_then(|available_language| {
-                            self.language_icon(available_language.matcher(), cx)
-                        })
+                        .and_then(|available_language| self.language_icon(available_language.matcher(), cx))
                 })
                 .flatten();
             (label, icon)
@@ -222,21 +207,11 @@ impl PickerDelegate for LanguageSelectorDelegate {
         self.selected_index
     }
 
-    fn set_selected_index(
-        &mut self,
-        ix: usize,
-        _window: &mut Window,
-        _: &mut Context<Picker<Self>>,
-    ) {
+    fn set_selected_index(&mut self, ix: usize, _window: &mut Window, _: &mut Context<Picker<Self>>) {
         self.selected_index = ix;
     }
 
-    fn update_matches(
-        &mut self,
-        query: String,
-        window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) -> gpui::Task<()> {
+    fn update_matches(&mut self, query: String, window: &mut Window, cx: &mut Context<Picker<Self>>) -> gpui::Task<()> {
         let background = cx.background_executor().clone();
         let candidates = self.candidates.clone();
         cx.spawn_in(window, async move |this, cx| {
@@ -252,24 +227,13 @@ impl PickerDelegate for LanguageSelectorDelegate {
                     })
                     .collect()
             } else {
-                match_strings(
-                    &candidates,
-                    &query,
-                    false,
-                    true,
-                    100,
-                    &Default::default(),
-                    background,
-                )
-                .await
+                match_strings(&candidates, &query, false, true, 100, &Default::default(), background).await
             };
 
             this.update(cx, |this, cx| {
                 let delegate = &mut this.delegate;
                 delegate.matches = matches;
-                delegate.selected_index = delegate
-                    .selected_index
-                    .min(delegate.matches.len().saturating_sub(1));
+                delegate.selected_index = delegate.selected_index.min(delegate.matches.len().saturating_sub(1));
                 cx.notify();
             })
             .log_err();

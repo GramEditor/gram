@@ -54,13 +54,7 @@ impl LspInstaller for OpenTofuLspAdapter {
         pre_release: bool,
         _cx: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        let release = latest_github_release(
-            "opentofu/tofu-ls",
-            true,
-            pre_release,
-            delegate.http_client(),
-        )
-        .await?;
+        let release = latest_github_release("opentofu/tofu-ls", true, pre_release, delegate.http_client()).await?;
 
         let arch = match std::env::consts::ARCH {
             "aarch64" => "arm64",

@@ -6,8 +6,8 @@ use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{
-    Attribute, Expr, FnArg, Ident, Item, ItemTrait, Lit, Meta, Path, ReturnType, TraitItem, Type,
-    parse_macro_input, parse_quote,
+    Attribute, Expr, FnArg, Ident, Item, ItemTrait, Lit, Meta, Path, ReturnType, TraitItem, Type, parse_macro_input,
+    parse_quote,
     visit_mut::{self, VisitMut},
 };
 
@@ -94,10 +94,7 @@ fn generate_reflected_trait(trait_item: ItemTrait) -> TokenStream {
     // Generate wrapper functions for each method
     // These wrappers use type erasure to allow runtime invocation
     let wrapper_functions = method_infos.iter().map(|(method_name, _doc, cfg_attrs)| {
-        let wrapper_name = Ident::new(
-            &format!("__wrapper_{}", method_name),
-            method_name.span(),
-        );
+        let wrapper_name = Ident::new(&format!("__wrapper_{}", method_name), method_name.span());
         quote! {
             #(#cfg_attrs)*
             fn #wrapper_name<T: #trait_name + 'static>(value: Box<dyn std::any::Any>) -> Box<dyn std::any::Any> {

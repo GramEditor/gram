@@ -108,11 +108,7 @@ impl RenderOnce for Banner {
             .child(div().min_w_0().children(self.children));
 
         if let Some(action_slot) = self.action_slot {
-            banner = banner
-                .pl_2()
-                .pr_1()
-                .child(icon_and_child)
-                .child(action_slot);
+            banner = banner.pl_2().pr_1().child(icon_and_child).child(action_slot);
         } else {
             banner = banner.px_2().child(icon_and_child);
         }
@@ -173,10 +169,6 @@ impl Component for Banner {
             ),
         ];
 
-        Some(
-            example_group(severity_examples)
-                .vertical()
-                .into_any_element(),
-        )
+        Some(example_group(severity_examples).vertical().into_any_element())
     }
 }

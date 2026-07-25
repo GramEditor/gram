@@ -1,8 +1,8 @@
 use anyhow::{Context as _, Result};
 use dap_types::{OutputEventCategory, OutputEventGroup, ScopePresentationHint, Source};
 use proto::{
-    self, DapChecksum, DapChecksumAlgorithm, DapEvaluateContext, DapModule, DapScope,
-    DapScopePresentationHint, DapSource, DapSourcePresentationHint, DapStackFrame, DapVariable,
+    self, DapChecksum, DapChecksumAlgorithm, DapEvaluateContext, DapModule, DapScope, DapScopePresentationHint,
+    DapSource, DapSourcePresentationHint, DapStackFrame, DapVariable,
 };
 
 pub trait ProtoConversion {
@@ -25,10 +25,7 @@ where
     }
 
     fn from_proto(payload: Self::ProtoType) -> Self {
-        payload
-            .into_iter()
-            .map(|item| T::from_proto(item))
-            .collect()
+        payload.into_iter().map(|item| T::from_proto(item)).collect()
     }
 }
 
@@ -39,10 +36,7 @@ impl ProtoConversion for dap_types::Scope {
     fn to_proto(&self) -> Self::ProtoType {
         Self::ProtoType {
             name: self.name.clone(),
-            presentation_hint: self
-                .presentation_hint
-                .as_ref()
-                .map(|hint| hint.to_proto().into()),
+            presentation_hint: self.presentation_hint.as_ref().map(|hint| hint.to_proto().into()),
             variables_reference: self.variables_reference,
             named_variables: self.named_variables,
             indexed_variables: self.indexed_variables,
@@ -143,9 +137,7 @@ impl ProtoConversion for dap_types::SourcePresentationHint {
         match self {
             dap_types::SourcePresentationHint::Normal => DapSourcePresentationHint::SourceNormal,
             dap_types::SourcePresentationHint::Emphasize => DapSourcePresentationHint::Emphasize,
-            dap_types::SourcePresentationHint::Deemphasize => {
-                DapSourcePresentationHint::Deemphasize
-            }
+            dap_types::SourcePresentationHint::Deemphasize => DapSourcePresentationHint::Deemphasize,
             dap_types::SourcePresentationHint::Unknown => DapSourcePresentationHint::SourceUnknown,
         }
     }
@@ -154,9 +146,7 @@ impl ProtoConversion for dap_types::SourcePresentationHint {
         match payload {
             DapSourcePresentationHint::SourceNormal => dap_types::SourcePresentationHint::Normal,
             DapSourcePresentationHint::Emphasize => dap_types::SourcePresentationHint::Emphasize,
-            DapSourcePresentationHint::Deemphasize => {
-                dap_types::SourcePresentationHint::Deemphasize
-            }
+            DapSourcePresentationHint::Deemphasize => dap_types::SourcePresentationHint::Deemphasize,
             DapSourcePresentationHint::SourceUnknown => dap_types::SourcePresentationHint::Unknown,
         }
     }
@@ -216,17 +206,9 @@ impl ProtoConversion for dap_types::Source {
             source_reference: self.source_reference,
             presentation_hint: self.presentation_hint.map(|hint| hint.to_proto().into()),
             origin: self.origin.clone(),
-            sources: self
-                .sources
-                .clone()
-                .map(|src| src.to_proto())
-                .unwrap_or_default(),
+            sources: self.sources.clone().map(|src| src.to_proto()).unwrap_or_default(),
             adapter_data: Default::default(), // TODO Debugger Collab
-            checksums: self
-                .checksums
-                .clone()
-                .map(|c| c.to_proto())
-                .unwrap_or_default(),
+            checksums: self.checksums.clone().map(|c| c.to_proto()).unwrap_or_default(),
         }
     }
 
@@ -386,10 +368,7 @@ impl ProtoConversion for dap_types::OutputEvent {
 
     fn to_proto(&self) -> Self::ProtoType {
         proto::DapOutputEvent {
-            category: self
-                .category
-                .as_ref()
-                .map(|category| category.to_proto().into()),
+            category: self.category.as_ref().map(|category| category.to_proto().into()),
             output: self.output.clone(),
             variables_reference: self.variables_reference,
             source: self.source.as_ref().map(|source| source.to_proto()),
@@ -427,9 +406,7 @@ impl ProtoConversion for dap_types::OutputEventGroup {
     fn to_proto(&self) -> Self::ProtoType {
         match self {
             dap_types::OutputEventGroup::Start => proto::DapOutputEventGroup::Start,
-            dap_types::OutputEventGroup::StartCollapsed => {
-                proto::DapOutputEventGroup::StartCollapsed
-            }
+            dap_types::OutputEventGroup::StartCollapsed => proto::DapOutputEventGroup::StartCollapsed,
             dap_types::OutputEventGroup::End => proto::DapOutputEventGroup::End,
         }
     }
@@ -452,11 +429,7 @@ impl ProtoConversion for dap_types::CompletionItem {
             label: self.label.clone(),
             text: self.text.clone(),
             detail: self.detail.clone(),
-            typ: self
-                .type_
-                .as_ref()
-                .map(ProtoConversion::to_proto)
-                .map(|typ| typ.into()),
+            typ: self.type_.as_ref().map(ProtoConversion::to_proto).map(|typ| typ.into()),
             start: self.start,
             length: self.length,
             selection_start: self.selection_start,
@@ -488,32 +461,24 @@ impl ProtoConversion for dap_types::EvaluateArgumentsContext {
 
     fn to_proto(&self) -> Self::ProtoType {
         match self {
-            dap_types::EvaluateArgumentsContext::Variables => {
-                proto::DapEvaluateContext::EvaluateVariables
-            }
+            dap_types::EvaluateArgumentsContext::Variables => proto::DapEvaluateContext::EvaluateVariables,
             dap_types::EvaluateArgumentsContext::Watch => proto::DapEvaluateContext::Watch,
             dap_types::EvaluateArgumentsContext::Hover => proto::DapEvaluateContext::Hover,
             dap_types::EvaluateArgumentsContext::Repl => proto::DapEvaluateContext::Repl,
             dap_types::EvaluateArgumentsContext::Clipboard => proto::DapEvaluateContext::Clipboard,
-            dap_types::EvaluateArgumentsContext::Unknown => {
-                proto::DapEvaluateContext::EvaluateUnknown
-            }
+            dap_types::EvaluateArgumentsContext::Unknown => proto::DapEvaluateContext::EvaluateUnknown,
             _ => proto::DapEvaluateContext::EvaluateUnknown,
         }
     }
 
     fn from_proto(payload: Self::ProtoType) -> Self {
         match payload {
-            proto::DapEvaluateContext::EvaluateVariables => {
-                dap_types::EvaluateArgumentsContext::Variables
-            }
+            proto::DapEvaluateContext::EvaluateVariables => dap_types::EvaluateArgumentsContext::Variables,
             proto::DapEvaluateContext::Watch => dap_types::EvaluateArgumentsContext::Watch,
             proto::DapEvaluateContext::Hover => dap_types::EvaluateArgumentsContext::Hover,
             proto::DapEvaluateContext::Repl => dap_types::EvaluateArgumentsContext::Repl,
             proto::DapEvaluateContext::Clipboard => dap_types::EvaluateArgumentsContext::Clipboard,
-            proto::DapEvaluateContext::EvaluateUnknown => {
-                dap_types::EvaluateArgumentsContext::Unknown
-            }
+            proto::DapEvaluateContext::EvaluateUnknown => dap_types::EvaluateArgumentsContext::Unknown,
         }
     }
 }

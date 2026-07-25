@@ -56,12 +56,9 @@ impl Global for GlobalMigrationNotification {}
 impl MigrationBanner {
     pub fn new(_: &Workspace, cx: &mut Context<Self>) -> Self {
         if let Some(notifier) = MigrationNotification::try_global(cx) {
-            cx.subscribe(
-                &notifier,
-                move |migrator_banner, _, event: &MigrationEvent, cx| {
-                    migrator_banner.handle_notification(event, cx);
-                },
-            )
+            cx.subscribe(&notifier, move |migrator_banner, _, event: &MigrationEvent, cx| {
+                migrator_banner.handle_notification(event, cx);
+            })
             .detach();
         }
         Self {
@@ -81,9 +78,7 @@ impl MigrationBanner {
                     self.migration_type = Some(*migration_type);
                     self.show(cx);
                 } else {
-                    cx.emit(ToolbarItemEvent::ChangeLocation(
-                        ToolbarItemLocation::Hidden,
-                    ));
+                    cx.emit(ToolbarItemEvent::ChangeLocation(ToolbarItemLocation::Hidden));
                     self.reset(cx);
                 };
             }
@@ -119,9 +114,7 @@ impl MigrationBanner {
 
         self.markdown = Some(cx.new(|cx| Markdown::new(migration_text.into(), None, None, cx)));
 
-        cx.emit(ToolbarItemEvent::ChangeLocation(
-            ToolbarItemLocation::Secondary,
-        ));
+        cx.emit(ToolbarItemEvent::ChangeLocation(ToolbarItemLocation::Secondary));
         cx.notify();
     }
 
@@ -221,9 +214,7 @@ impl Render for MigrationBanner {
                                                 ..Default::default()
                                             },
                                             inline_code: TextStyleRefinement {
-                                                background_color: Some(
-                                                    cx.theme().colors().background,
-                                                ),
+                                                background_color: Some(cx.theme().colors().background),
                                                 ..Default::default()
                                             },
                                             ..Default::default()
@@ -235,22 +226,20 @@ impl Render for MigrationBanner {
                     ),
             )
             .child(
-                Button::new("backup-and-migrate", "Backup and Update").on_click(
-                    move |_, window, cx| {
-                        let fs = <dyn Fs>::global(cx);
-                        match migration_type {
-                            Some(MigrationType::Keymap) => {
-                                cx.background_spawn(write_keymap_migration(fs.clone()))
-                                    .detach_and_notify_err(window, cx);
-                            }
-                            Some(MigrationType::Settings) => {
-                                cx.background_spawn(write_settings_migration(fs.clone()))
-                                    .detach_and_notify_err(window, cx);
-                            }
-                            None => unreachable!(),
+                Button::new("backup-and-migrate", "Backup and Update").on_click(move |_, window, cx| {
+                    let fs = <dyn Fs>::global(cx);
+                    match migration_type {
+                        Some(MigrationType::Keymap) => {
+                            cx.background_spawn(write_keymap_migration(fs.clone()))
+                                .detach_and_notify_err(window, cx);
                         }
-                    },
-                ),
+                        Some(MigrationType::Settings) => {
+                            cx.background_spawn(write_settings_migration(fs.clone()))
+                                .detach_and_notify_err(window, cx);
+                        }
+                        None => unreachable!(),
+                    }
+                }),
             )
             .into_any_element()
     }

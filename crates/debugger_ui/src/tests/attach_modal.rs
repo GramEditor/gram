@@ -68,10 +68,7 @@ async fn test_direct_attach_to_process(executor: BackgroundExecutor, cx: &mut Te
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
-async fn test_show_attach_modal_and_select_process(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_show_attach_modal_and_select_process(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let fs = FakeFs::new(executor.clone());
@@ -88,16 +85,15 @@ async fn test_show_attach_modal_and_select_process(
     let workspace = init_test_workspace(&project, cx).await;
     let cx = &mut VisualTestContext::from_window(*workspace, cx);
     // Set up handlers for sessions spawned via modal.
-    let _initialize_subscription =
-        project::debugger::test::intercept_debug_sessions(cx, |client| {
-            client.on_request::<dap::requests::Attach, _>(move |_, args| {
-                let raw = &args.raw;
-                assert_eq!(raw["request"], "attach");
-                assert_eq!(raw["process_id"], 1);
+    let _initialize_subscription = project::debugger::test::intercept_debug_sessions(cx, |client| {
+        client.on_request::<dap::requests::Attach, _>(move |_, args| {
+            let raw = &args.raw;
+            assert_eq!(raw["request"], "attach");
+            assert_eq!(raw["process_id"], 1);
 
-                Ok(())
-            });
+            Ok(())
         });
+    });
     let attach_modal = workspace
         .update(cx, |workspace, window, cx| {
             let workspace_handle = cx.weak_entity();
@@ -195,19 +191,15 @@ async fn test_attach_with_pick_pid_variable(executor: BackgroundExecutor, cx: &m
     let workspace = init_test_workspace(&project, cx).await;
     let cx = &mut VisualTestContext::from_window(*workspace, cx);
 
-    let _initialize_subscription =
-        project::debugger::test::intercept_debug_sessions(cx, |client| {
-            client.on_request::<dap::requests::Attach, _>(move |_, args| {
-                let raw = &args.raw;
-                assert_eq!(raw["request"], "attach");
-                assert_eq!(
-                    raw["process_id"], "42",
-                    "verify process id has been replaced"
-                );
+    let _initialize_subscription = project::debugger::test::intercept_debug_sessions(cx, |client| {
+        client.on_request::<dap::requests::Attach, _>(move |_, args| {
+            let raw = &args.raw;
+            assert_eq!(raw["request"], "attach");
+            assert_eq!(raw["process_id"], "42", "verify process id has been replaced");
 
-                Ok(())
-            });
+            Ok(())
         });
+    });
 
     let pick_pid_placeholder = task::VariableName::PickProcessId.template_value();
     workspace
@@ -235,9 +227,7 @@ async fn test_attach_with_pick_pid_variable(executor: BackgroundExecutor, cx: &m
     cx.run_until_parked();
 
     let attach_modal = workspace
-        .update(cx, |workspace, _window, cx| {
-            workspace.active_modal::<AttachModal>(cx)
-        })
+        .update(cx, |workspace, _window, cx| workspace.active_modal::<AttachModal>(cx))
         .unwrap();
 
     assert!(

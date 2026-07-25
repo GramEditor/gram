@@ -4,12 +4,11 @@ use fs::Fs;
 use gpui::{Action, App, IntoElement};
 use settings::{BaseKeymap, Settings, update_settings_file};
 use theme::{
-    Appearance, SystemAppearance, ThemeAppearanceMode, ThemeName, ThemeRegistry, ThemeSelection,
-    ThemeSettings,
+    Appearance, SystemAppearance, ThemeAppearanceMode, ThemeName, ThemeRegistry, ThemeSelection, ThemeSettings,
 };
 use ui::{
-    Divider, ParentElement as _, StatefulInteractiveElement, SwitchField, TintColor,
-    ToggleButtonGroup, ToggleButtonGroupSize, ToggleButtonSimple, ToggleButtonWithIcon, prelude::*,
+    Divider, ParentElement as _, StatefulInteractiveElement, SwitchField, TintColor, ToggleButtonGroup,
+    ToggleButtonGroupSize, ToggleButtonSimple, ToggleButtonWithIcon, prelude::*,
 };
 use vim_mode_setting::{HelixModeSetting, VimModeSetting};
 
@@ -39,12 +38,10 @@ fn render_theme_section(tab_index: &mut isize, cx: &mut App) -> impl IntoElement
     let theme_selection = ThemeSettings::get_global(cx).theme.clone();
     let system_appearance = theme::SystemAppearance::global(cx);
 
-    let theme_mode = theme_selection
-        .mode()
-        .unwrap_or_else(|| match *system_appearance {
-            Appearance::Light => ThemeAppearanceMode::Light,
-            Appearance::Dark => ThemeAppearanceMode::Dark,
-        });
+    let theme_mode = theme_selection.mode().unwrap_or_else(|| match *system_appearance {
+        Appearance::Light => ThemeAppearanceMode::Light,
+        Appearance::Dark => ThemeAppearanceMode::Dark,
+    });
 
     return v_flex()
         .gap_2()
@@ -63,12 +60,9 @@ fn render_theme_section(tab_index: &mut isize, cx: &mut App) -> impl IntoElement
                             SharedString::new_static("Dark"),
                             SharedString::new_static("System"),
                         ];
-                        ToggleButtonSimple::new(
-                            MODE_NAMES[mode as usize].clone(),
-                            move |_, _, cx| {
-                                write_mode_change(mode, cx);
-                            },
-                        )
+                        ToggleButtonSimple::new(MODE_NAMES[mode as usize].clone(), move |_, _, cx| {
+                            write_mode_change(mode, cx);
+                        })
                     }),
                 )
                 .size(ToggleButtonGroupSize::Medium)
@@ -94,12 +88,10 @@ fn render_theme_section(tab_index: &mut isize, cx: &mut App) -> impl IntoElement
         let theme_registry = ThemeRegistry::global(cx);
 
         let theme_seed = 0xBEEF as f32;
-        let theme_mode = theme_selection
-            .mode()
-            .unwrap_or_else(|| match *system_appearance {
-                Appearance::Light => ThemeAppearanceMode::Light,
-                Appearance::Dark => ThemeAppearanceMode::Dark,
-            });
+        let theme_mode = theme_selection.mode().unwrap_or_else(|| match *system_appearance {
+            Appearance::Light => ThemeAppearanceMode::Light,
+            Appearance::Dark => ThemeAppearanceMode::Dark,
+        });
         let appearance = match theme_mode {
             ThemeAppearanceMode::Light => Appearance::Light,
             ThemeAppearanceMode::Dark => Appearance::Dark,
@@ -161,13 +153,11 @@ fn render_theme_section(tab_index: &mut isize, cx: &mut App) -> impl IntoElement
                                     theme_registry.get(DARK_THEMES[index]).unwrap(),
                                 );
                                 this.child(
-                                    ThemePreviewTile::new(light, theme_seed)
-                                        .style(ThemePreviewStyle::SideBySide(dark)),
+                                    ThemePreviewTile::new(light, theme_seed).style(ThemePreviewStyle::SideBySide(dark)),
                                 )
                             } else {
                                 this.child(
-                                    ThemePreviewTile::new(theme.clone(), theme_seed)
-                                        .style(ThemePreviewStyle::Bordered),
+                                    ThemePreviewTile::new(theme.clone(), theme_seed).style(ThemePreviewStyle::Bordered),
                                 )
                             }
                         }),
@@ -187,11 +177,7 @@ fn render_theme_section(tab_index: &mut isize, cx: &mut App) -> impl IntoElement
         });
     }
 
-    fn write_theme_change(
-        theme: impl Into<Arc<str>>,
-        theme_mode: ThemeAppearanceMode,
-        cx: &mut App,
-    ) {
+    fn write_theme_change(theme: impl Into<Arc<str>>, theme_mode: ThemeAppearanceMode, cx: &mut App) {
         let fs = <dyn Fs>::global(cx);
         let theme = theme.into();
         update_settings_file(fs, cx, move |settings, cx| match theme_mode {
@@ -205,18 +191,12 @@ fn render_theme_section(tab_index: &mut isize, cx: &mut App) -> impl IntoElement
                     dark: ThemeName(dark_theme.into()),
                 });
             }
-            ThemeAppearanceMode::Light => theme::set_theme(
-                settings,
-                theme,
-                Appearance::Light,
-                *SystemAppearance::global(cx),
-            ),
-            ThemeAppearanceMode::Dark => theme::set_theme(
-                settings,
-                theme,
-                Appearance::Dark,
-                *SystemAppearance::global(cx),
-            ),
+            ThemeAppearanceMode::Light => {
+                theme::set_theme(settings, theme, Appearance::Light, *SystemAppearance::global(cx))
+            }
+            ThemeAppearanceMode::Dark => {
+                theme::set_theme(settings, theme, Appearance::Dark, *SystemAppearance::global(cx))
+            }
         });
     }
 }
@@ -266,9 +246,7 @@ fn render_base_keymap_section(tab_index: &mut isize, cx: &mut App) -> impl IntoE
                 ToggleButtonWithIcon::new("", IconName::Blank, |_, _, _cx| {}),
             ],
         )
-        .when_some(base_keymap, |this, base_keymap| {
-            this.selected_index(base_keymap)
-        })
+        .when_some(base_keymap, |this, base_keymap| this.selected_index(base_keymap))
         .full_width()
         .tab_index(tab_index)
         .size(ui::ToggleButtonGroupSize::Medium)

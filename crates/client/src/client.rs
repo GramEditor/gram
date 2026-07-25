@@ -171,14 +171,8 @@ impl Default for ClientState {
 }
 
 pub enum Subscription {
-    Entity {
-        client: Weak<Client>,
-        id: (TypeId, u64),
-    },
-    Message {
-        client: Weak<Client>,
-        id: TypeId,
-    },
+    Entity { client: Weak<Client>, id: (TypeId, u64) },
+    Message { client: Weak<Client>, id: TypeId },
 }
 
 impl Drop for Subscription {
@@ -213,8 +207,7 @@ impl<T: 'static> PendingEntitySubscription<T> {
         self.consumed = true;
         let mut handlers = self.client.handler_set.lock();
         let id = (TypeId::of::<T>(), self.remote_id);
-        let Some(EntityMessageSubscriber::Pending(messages)) =
-            handlers.entities_by_type_and_remote_id.remove(&id)
+        let Some(EntityMessageSubscriber::Pending(messages)) = handlers.entities_by_type_and_remote_id.remove(&id)
         else {
             unreachable!()
         };
@@ -292,10 +285,7 @@ impl Client {
         self.state.read().status.1.clone()
     }
 
-    pub fn subscribe_to_entity<T>(
-        self: &Arc<Self>,
-        remote_id: u64,
-    ) -> Result<PendingEntitySubscription<T>>
+    pub fn subscribe_to_entity<T>(self: &Arc<Self>, remote_id: u64) -> Result<PendingEntitySubscription<T>>
     where
         T: 'static,
     {
@@ -319,26 +309,16 @@ impl Client {
         })
     }
 
-    fn add_message_handler_impl<M, E, H, F>(
-        self: &Arc<Self>,
-        entity: WeakEntity<E>,
-        handler: H,
-    ) -> Subscription
+    fn add_message_handler_impl<M, E, H, F>(self: &Arc<Self>, entity: WeakEntity<E>, handler: H) -> Subscription
     where
         M: EnvelopedMessage,
         E: 'static,
-        H: 'static
-            + Sync
-            + Fn(Entity<E>, TypedEnvelope<M>, AnyProtoClient, AsyncApp) -> F
-            + Send
-            + Sync,
+        H: 'static + Sync + Fn(Entity<E>, TypedEnvelope<M>, AnyProtoClient, AsyncApp) -> F + Send + Sync,
         F: 'static + Future<Output = Result<()>>,
     {
         let message_type_id = TypeId::of::<M>();
         let mut state = self.handler_set.lock();
-        state
-            .entities_by_message_type
-            .insert(message_type_id, entity.into());
+        state.entities_by_message_type.insert(message_type_id, entity.into());
 
         let prev_handler = state.message_handlers.insert(
             message_type_id,
@@ -364,11 +344,7 @@ impl Client {
         }
     }
 
-    pub fn add_request_handler<M, E, H, F>(
-        self: &Arc<Self>,
-        entity: WeakEntity<E>,
-        handler: H,
-    ) -> Subscription
+    pub fn add_request_handler<M, E, H, F>(self: &Arc<Self>, entity: WeakEntity<E>, handler: H) -> Subscription
     where
         M: RequestMessage,
         E: 'static,
@@ -410,12 +386,8 @@ impl Client {
         self.peer.send(self.connection_id()?, message)
     }
 
-    pub fn request<T: RequestMessage>(
-        &self,
-        request: T,
-    ) -> impl Future<Output = Result<T::Response>> + use<T> {
-        self.request_envelope(request)
-            .map_ok(|envelope| envelope.payload)
+    pub fn request<T: RequestMessage>(&self, request: T) -> impl Future<Output = Result<T::Response>> + use<T> {
+        self.request_envelope(request).map_ok(|envelope| envelope.payload)
     }
 
     pub fn request_stream<T: RequestMessage>(
@@ -423,21 +395,13 @@ impl Client {
         request: T,
     ) -> impl Future<Output = Result<impl Stream<Item = Result<T::Response>>>> {
         let client_id = self.id.load(Ordering::SeqCst);
-        log::debug!(
-            "rpc request start. client_id:{}. name:{}",
-            client_id,
-            T::NAME
-        );
+        log::debug!("rpc request start. client_id:{}. name:{}", client_id, T::NAME);
         let response = self
             .connection_id()
             .map(|conn_id| self.peer.request_stream(conn_id, request));
         async move {
             let response = response?.await;
-            log::debug!(
-                "rpc request finish. client_id:{}. name:{}",
-                client_id,
-                T::NAME
-            );
+            log::debug!("rpc request finish. client_id:{}. name:{}", client_id, T::NAME);
             response
         }
     }
@@ -447,21 +411,13 @@ impl Client {
         request: T,
     ) -> impl Future<Output = Result<TypedEnvelope<T::Response>>> + use<T> {
         let client_id = self.id();
-        log::debug!(
-            "rpc request start. client_id:{}. name:{}",
-            client_id,
-            T::NAME
-        );
+        log::debug!("rpc request start. client_id:{}. name:{}", client_id, T::NAME);
         let response = self
             .connection_id()
             .map(|conn_id| self.peer.request_envelope(conn_id, request));
         async move {
             let response = response?.await;
-            log::debug!(
-                "rpc request finish. client_id:{}. name:{}",
-                client_id,
-                T::NAME
-            );
+            log::debug!("rpc request finish. client_id:{}. name:{}", client_id, T::NAME);
             response
         }
     }
@@ -472,21 +428,13 @@ impl Client {
         request_type: &'static str,
     ) -> impl Future<Output = Result<proto::Envelope>> + use<> {
         let client_id = self.id();
-        log::debug!(
-            "rpc request start. client_id:{}. name:{}",
-            client_id,
-            request_type
-        );
+        log::debug!("rpc request start. client_id:{}. name:{}", client_id, request_type);
         let response = self
             .connection_id()
             .map(|conn_id| self.peer.request_dynamic(conn_id, envelope, request_type));
         async move {
             let response = response?.await;
-            log::debug!(
-                "rpc request finish. client_id:{}. name:{}",
-                client_id,
-                request_type
-            );
+            log::debug!("rpc request finish. client_id:{}. name:{}", client_id, request_type);
             Ok(response?.0)
         }
     }
@@ -497,12 +445,9 @@ impl Client {
         let type_name = message.payload_type_name();
         let original_sender_id = message.original_sender_id();
 
-        if let Some(future) = ProtoMessageHandlerSet::handle_message(
-            &self.handler_set,
-            message,
-            self.clone().into(),
-            cx.clone(),
-        ) {
+        if let Some(future) =
+            ProtoMessageHandlerSet::handle_message(&self.handler_set, message, self.clone().into(), cx.clone())
+        {
             let client_id = self.id();
             log::debug!(
                 "rpc message received. client_id:{}, sender_id:{:?}, type:{}",
@@ -544,11 +489,7 @@ impl ProtoClient for Client {
     }
 
     fn send_response(&self, envelope: proto::Envelope, message_type: &'static str) -> Result<()> {
-        log::debug!(
-            "rpc respond. client_id:{}, name:{}",
-            self.id(),
-            message_type
-        );
+        log::debug!("rpc respond. client_id:{}, name:{}", self.id(), message_type);
         let connection_id = self.connection_id()?;
         self.peer.send_dynamic(connection_id, envelope)
     }

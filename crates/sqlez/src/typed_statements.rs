@@ -24,10 +24,7 @@ impl Connection {
     /// Note: If there are multiple statements that depend upon each other
     /// (such as those which make schema changes), preparation will fail.
     /// Use a true migration instead.
-    pub fn exec_bound<'a, B: Bind>(
-        &'a self,
-        query: &str,
-    ) -> Result<impl 'a + FnMut(B) -> Result<()>> {
+    pub fn exec_bound<'a, B: Bind>(&'a self, query: &str) -> Result<impl 'a + FnMut(B) -> Result<()>> {
         let mut statement = Statement::prepare(self, query)?;
         Ok(move |bindings| statement.with_bindings(&bindings)?.exec())
     }
@@ -37,10 +34,7 @@ impl Connection {
     /// Note: If there are multiple statements that depend upon each other
     /// (such as those which make schema changes), preparation will fail.
     /// Use a true migration instead.
-    pub fn select<'a, C: Column>(
-        &'a self,
-        query: &str,
-    ) -> Result<impl 'a + FnMut() -> Result<Vec<C>>> {
+    pub fn select<'a, C: Column>(&'a self, query: &str) -> Result<impl 'a + FnMut() -> Result<Vec<C>>> {
         let mut statement = Statement::prepare(self, query)?;
         Ok(move || statement.rows::<C>())
     }
@@ -50,10 +44,7 @@ impl Connection {
     /// Note: If there are multiple statements that depend upon each other
     /// (such as those which make schema changes), preparation will fail.
     /// Use a true migration instead.
-    pub fn select_bound<'a, B: Bind, C: Column>(
-        &'a self,
-        query: &str,
-    ) -> Result<impl 'a + FnMut(B) -> Result<Vec<C>>> {
+    pub fn select_bound<'a, B: Bind, C: Column>(&'a self, query: &str) -> Result<impl 'a + FnMut(B) -> Result<Vec<C>>> {
         let mut statement = Statement::prepare(self, query)?;
         Ok(move |bindings| statement.with_bindings(&bindings)?.rows::<C>())
     }
@@ -65,10 +56,7 @@ impl Connection {
     /// Note: If there are multiple statements that depend upon each other
     /// (such as those which make schema changes), preparation will fail.
     /// Use a true migration instead.
-    pub fn select_row<'a, C: Column>(
-        &'a self,
-        query: &str,
-    ) -> Result<impl 'a + FnMut() -> Result<Option<C>>> {
+    pub fn select_row<'a, C: Column>(&'a self, query: &str) -> Result<impl 'a + FnMut() -> Result<Option<C>>> {
         let mut statement = Statement::prepare(self, query)?;
         Ok(move || statement.maybe_row::<C>())
     }

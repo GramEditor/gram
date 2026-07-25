@@ -109,9 +109,7 @@ impl futures::AsyncRead for AsyncBody {
             Inner::Empty => Poll::Ready(Ok(0)),
             // Blocking call is over an in-memory buffer
             Inner::Bytes(cursor) => Poll::Ready(cursor.read(buf)),
-            Inner::AsyncReader(async_reader) => {
-                AsyncRead::poll_read(async_reader.as_mut(), cx, buf)
-            }
+            Inner::AsyncReader(async_reader) => AsyncRead::poll_read(async_reader.as_mut(), cx, buf),
         }
     }
 }

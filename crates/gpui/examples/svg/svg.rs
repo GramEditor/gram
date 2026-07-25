@@ -3,8 +3,8 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use gpui::{
-    App, Application, AssetSource, Bounds, Context, SharedString, Window, WindowBounds,
-    WindowOptions, div, prelude::*, px, rgb, size, svg,
+    App, Application, AssetSource, Bounds, Context, SharedString, Window, WindowBounds, WindowOptions, div, prelude::*,
+    px, rgb, size, svg,
 };
 
 struct Assets {
@@ -46,24 +46,9 @@ impl Render for SvgExample {
             .items_center()
             .gap_8()
             .bg(rgb(0xffffff))
-            .child(
-                svg()
-                    .path("svg/dragon.svg")
-                    .size_8()
-                    .text_color(rgb(0xff0000)),
-            )
-            .child(
-                svg()
-                    .path("svg/dragon.svg")
-                    .size_8()
-                    .text_color(rgb(0x00ff00)),
-            )
-            .child(
-                svg()
-                    .path("svg/dragon.svg")
-                    .size_8()
-                    .text_color(rgb(0x0000ff)),
-            )
+            .child(svg().path("svg/dragon.svg").size_8().text_color(rgb(0xff0000)))
+            .child(svg().path("svg/dragon.svg").size_8().text_color(rgb(0x00ff00)))
+            .child(svg().path("svg/dragon.svg").size_8().text_color(rgb(0x0000ff)))
     }
 }
 

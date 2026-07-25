@@ -1,8 +1,8 @@
 use editor::Editor;
 use gpui::{Focusable, div};
 use ui::{
-    ActiveTheme as _, App, FluentBuilder as _, InteractiveElement as _, IntoElement,
-    ParentElement as _, RenderOnce, Styled as _, Window,
+    ActiveTheme as _, App, FluentBuilder as _, InteractiveElement as _, IntoElement, ParentElement as _, RenderOnce,
+    Styled as _, Window,
 };
 
 #[derive(IntoElement)]

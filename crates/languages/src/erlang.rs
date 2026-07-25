@@ -117,7 +117,7 @@ impl LspInstaller for ElpAdapter {
         })
     }
 
-    #[cfg(target_os = "windows")]   
+    #[cfg(target_os = "windows")]
     async fn fetch_latest_server_version(
         &self,
         delegate: &dyn LspAdapterDelegate,
@@ -126,8 +126,8 @@ impl LspInstaller for ElpAdapter {
     ) -> Result<GitHubLspBinaryVersion> {
         return Err(anyhow!("ELP is not supported on Windows"));
     }
-    
-    #[cfg(not(target_os = "windows"))]    
+
+    #[cfg(not(target_os = "windows"))]
     async fn fetch_latest_server_version(
         &self,
         delegate: &dyn LspAdapterDelegate,
@@ -191,8 +191,8 @@ impl LspInstaller for ElpAdapter {
         } = version;
 
         let destination_path = container_dir.join(format!("elp-{version_name}"));
-        let server_path = Self::server_path(&destination_path)
-            .ok_or_else(|| anyhow!("Could not determine server path"))?;
+        let server_path =
+            Self::server_path(&destination_path).ok_or_else(|| anyhow!("Could not determine server path"))?;
 
         let binary = LanguageServerBinary {
             path: server_path.clone(),
@@ -225,11 +225,7 @@ impl LspInstaller for ElpAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        match find_cached_server_binary(&container_dir, Some("elp-"), async |path| {
-            Self::server_path(path)
-        })
-        .await
-        {
+        match find_cached_server_binary(&container_dir, Some("elp-"), async |path| Self::server_path(path)).await {
             Some(path) => Some(LanguageServerBinary {
                 path,
                 arguments: vec!["server".into()],

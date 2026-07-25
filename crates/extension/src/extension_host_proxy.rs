@@ -74,9 +74,7 @@ impl ExtensionHostProxy {
     }
 
     pub fn register_debug_adapter_proxy(&self, proxy: impl ExtensionDebugAdapterProviderProxy) {
-        self.debug_adapter_provider_proxy
-            .write()
-            .replace(Arc::new(proxy));
+        self.debug_adapter_provider_proxy.write().replace(Arc::new(proxy));
     }
 }
 
@@ -91,20 +89,11 @@ pub trait ExtensionThemeProxy: Send + Sync + 'static {
 
     fn reload_current_theme(&self, cx: &mut App);
 
-    fn list_icon_theme_names(
-        &self,
-        icon_theme_path: PathBuf,
-        fs: Arc<dyn Fs>,
-    ) -> Task<Result<Vec<String>>>;
+    fn list_icon_theme_names(&self, icon_theme_path: PathBuf, fs: Arc<dyn Fs>) -> Task<Result<Vec<String>>>;
 
     fn remove_icon_themes(&self, icon_themes: Vec<SharedString>);
 
-    fn load_icon_theme(
-        &self,
-        icon_theme_path: PathBuf,
-        icons_root_dir: PathBuf,
-        fs: Arc<dyn Fs>,
-    ) -> Task<Result<()>>;
+    fn load_icon_theme(&self, icon_theme_path: PathBuf, icons_root_dir: PathBuf, fs: Arc<dyn Fs>) -> Task<Result<()>>;
 
     fn reload_current_icon_theme(&self, cx: &mut App);
 }
@@ -150,11 +139,7 @@ impl ExtensionThemeProxy for ExtensionHostProxy {
         proxy.reload_current_theme(cx)
     }
 
-    fn list_icon_theme_names(
-        &self,
-        icon_theme_path: PathBuf,
-        fs: Arc<dyn Fs>,
-    ) -> Task<Result<Vec<String>>> {
+    fn list_icon_theme_names(&self, icon_theme_path: PathBuf, fs: Arc<dyn Fs>) -> Task<Result<Vec<String>>> {
         let Some(proxy) = self.theme_proxy.read().clone() else {
             return Task::ready(Ok(Vec::new()));
         };
@@ -170,12 +155,7 @@ impl ExtensionThemeProxy for ExtensionHostProxy {
         proxy.remove_icon_themes(icon_themes)
     }
 
-    fn load_icon_theme(
-        &self,
-        icon_theme_path: PathBuf,
-        icons_root_dir: PathBuf,
-        fs: Arc<dyn Fs>,
-    ) -> Task<Result<()>> {
+    fn load_icon_theme(&self, icon_theme_path: PathBuf, icons_root_dir: PathBuf, fs: Arc<dyn Fs>) -> Task<Result<()>> {
         let Some(proxy) = self.theme_proxy.read().clone() else {
             return Task::ready(Ok(()));
         };
@@ -216,11 +196,7 @@ pub trait ExtensionLanguageProxy: Send + Sync + 'static {
         load: Arc<dyn Fn() -> Result<LoadedLanguage> + Send + Sync + 'static>,
     );
 
-    fn remove_languages(
-        &self,
-        languages_to_remove: &[LanguageName],
-        grammars_to_remove: &[Arc<str>],
-    );
+    fn remove_languages(&self, languages_to_remove: &[LanguageName], grammars_to_remove: &[Arc<str>]);
 }
 
 impl ExtensionLanguageProxy for ExtensionHostProxy {
@@ -239,11 +215,7 @@ impl ExtensionLanguageProxy for ExtensionHostProxy {
         proxy.register_language(language, grammar, matcher, hidden, load)
     }
 
-    fn remove_languages(
-        &self,
-        languages_to_remove: &[LanguageName],
-        grammars_to_remove: &[Arc<str>],
-    ) {
+    fn remove_languages(&self, languages_to_remove: &[LanguageName], grammars_to_remove: &[Arc<str>]) {
         let Some(proxy) = self.language_proxy.read().clone() else {
             return;
         };
@@ -267,11 +239,7 @@ pub trait ExtensionLanguageServerProxy: Send + Sync + 'static {
         cx: &mut App,
     ) -> Task<Result<()>>;
 
-    fn update_language_server_status(
-        &self,
-        language_server_id: LanguageServerName,
-        status: BinaryStatus,
-    );
+    fn update_language_server_status(&self, language_server_id: LanguageServerName, status: BinaryStatus);
 }
 
 impl ExtensionLanguageServerProxy for ExtensionHostProxy {
@@ -301,11 +269,7 @@ impl ExtensionLanguageServerProxy for ExtensionHostProxy {
         proxy.remove_language_server(language, language_server_id, cx)
     }
 
-    fn update_language_server_status(
-        &self,
-        language_server_id: LanguageServerName,
-        status: BinaryStatus,
-    ) {
+    fn update_language_server_status(&self, language_server_id: LanguageServerName, status: BinaryStatus) {
         let Some(proxy) = self.language_server_proxy.read().clone() else {
             return;
         };
@@ -329,24 +293,14 @@ impl ExtensionSnippetProxy for ExtensionHostProxy {
 }
 
 pub trait ExtensionDebugAdapterProviderProxy: Send + Sync + 'static {
-    fn register_debug_adapter(
-        &self,
-        extension: Arc<dyn Extension>,
-        debug_adapter_name: Arc<str>,
-        schema_path: &Path,
-    );
+    fn register_debug_adapter(&self, extension: Arc<dyn Extension>, debug_adapter_name: Arc<str>, schema_path: &Path);
     fn register_debug_locator(&self, extension: Arc<dyn Extension>, locator_name: Arc<str>);
     fn unregister_debug_adapter(&self, debug_adapter_name: Arc<str>);
     fn unregister_debug_locator(&self, locator_name: Arc<str>);
 }
 
 impl ExtensionDebugAdapterProviderProxy for ExtensionHostProxy {
-    fn register_debug_adapter(
-        &self,
-        extension: Arc<dyn Extension>,
-        debug_adapter_name: Arc<str>,
-        schema_path: &Path,
-    ) {
+    fn register_debug_adapter(&self, extension: Arc<dyn Extension>, debug_adapter_name: Arc<str>, schema_path: &Path) {
         let Some(proxy) = self.debug_adapter_provider_proxy.read().clone() else {
             return;
         };

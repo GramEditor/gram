@@ -4,9 +4,7 @@ use base64::{Engine as _, engine::general_purpose};
 use dap::{DapLocator, DebugRequest, adapters::DebugAdapterName};
 use gpui::SharedString;
 use serde_json;
-use task::{
-    BuildTaskDefinition, DebugScenario, LaunchRequest, ShellBuilder, SpawnInTerminal, TaskTemplate,
-};
+use task::{BuildTaskDefinition, DebugScenario, LaunchRequest, ShellBuilder, SpawnInTerminal, TaskTemplate};
 
 const ODIN_SCRIPT: &str = include_str!("odin/lldb.py");
 
@@ -24,10 +22,8 @@ impl DapLocator for OdinLocator {
         resolved_label: &str,
         adapter: &DebugAdapterName,
     ) -> Option<DebugScenario> {
-        let is_run =
-            build_config.command == "odin" && build_config.args.first() == Some(&"run".into());
-        let is_test =
-            build_config.command == "odin" && build_config.args.first() == Some(&"test".into());
+        let is_run = build_config.command == "odin" && build_config.args.first() == Some(&"run".into());
+        let is_test = build_config.command == "odin" && build_config.args.first() == Some(&"test".into());
         if !is_run && !is_test {
             return None;
         }
@@ -78,10 +74,7 @@ impl DapLocator for OdinLocator {
             encoded_script
         );
 
-        config_map.insert(
-            "preRunCommands".to_string(),
-            serde_json::json!(vec![exec_command]),
-        );
+        config_map.insert("preRunCommands".to_string(), serde_json::json!(vec![exec_command]));
 
         let config = serde_json::Value::Object(config_map);
 
@@ -98,10 +91,7 @@ impl DapLocator for OdinLocator {
     }
 
     async fn run(&self, build_config: SpawnInTerminal) -> Result<DebugRequest> {
-        let cwd = build_config
-            .cwd
-            .clone()
-            .context("Couldn't get cwd from debug config")?;
+        let cwd = build_config.cwd.clone().context("Couldn't get cwd from debug config")?;
 
         let builder = ShellBuilder::new(&build_config.shell, cfg!(windows)).non_interactive();
         let (program, args) = builder.build(Some("odin".into()), &build_config.args);

@@ -1,7 +1,6 @@
 use crate::{ItemHandle, Pane, StatusBarSettings};
 use gpui::{
-    AnyView, App, Context, Decorations, Entity, IntoElement, ParentElement, Render, Styled,
-    Subscription, Window,
+    AnyView, App, Context, Decorations, Entity, IntoElement, ParentElement, Render, Styled, Subscription, Window,
 };
 use settings::{Settings, StatusBarPosition};
 use std::any::TypeId;
@@ -21,12 +20,7 @@ pub trait StatusItemView: Render {
 
 trait StatusItemViewHandle: Send {
     fn to_any(&self) -> AnyView;
-    fn set_active_pane_item(
-        &self,
-        active_pane_item: Option<&dyn ItemHandle>,
-        window: &mut Window,
-        cx: &mut App,
-    );
+    fn set_active_pane_item(&self, active_pane_item: Option<&dyn ItemHandle>, window: &mut Window, cx: &mut App);
     fn item_type(&self) -> TypeId;
 }
 
@@ -172,12 +166,8 @@ impl StatusBar {
         cx.notify();
     }
 
-    pub fn add_right_item<T>(
-        &mut self,
-        item: Entity<T>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) where
+    pub fn add_right_item<T>(&mut self, item: Entity<T>, window: &mut Window, cx: &mut Context<Self>)
+    where
         T: 'static + StatusItemView,
     {
         let active_pane_item = self.active_pane.read(cx).active_item();
@@ -187,12 +177,7 @@ impl StatusBar {
         cx.notify();
     }
 
-    pub fn set_active_pane(
-        &mut self,
-        active_pane: &Entity<Pane>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn set_active_pane(&mut self, active_pane: &Entity<Pane>, window: &mut Window, cx: &mut Context<Self>) {
         self.active_pane = active_pane.clone();
         self._observe_active_pane = cx.observe_in(active_pane, window, |this, _, window, cx| {
             this.update_active_pane_item(window, cx)
@@ -213,15 +198,8 @@ impl<T: StatusItemView> StatusItemViewHandle for Entity<T> {
         self.clone().into()
     }
 
-    fn set_active_pane_item(
-        &self,
-        active_pane_item: Option<&dyn ItemHandle>,
-        window: &mut Window,
-        cx: &mut App,
-    ) {
-        self.update(cx, |this, cx| {
-            this.set_active_pane_item(active_pane_item, window, cx)
-        });
+    fn set_active_pane_item(&self, active_pane_item: Option<&dyn ItemHandle>, window: &mut Window, cx: &mut App) {
+        self.update(cx, |this, cx| this.set_active_pane_item(active_pane_item, window, cx));
     }
 
     fn item_type(&self) -> TypeId {

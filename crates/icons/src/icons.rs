@@ -3,9 +3,7 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use strum::{EnumIter, EnumString, IntoStaticStr};
 
-#[derive(
-    Debug, PartialEq, Eq, Copy, Clone, EnumIter, EnumString, IntoStaticStr, Serialize, Deserialize,
-)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, EnumIter, EnumString, IntoStaticStr, Serialize, Deserialize)]
 #[strum(serialize_all = "snake_case")]
 pub enum IconName {
     ArrowCircle,

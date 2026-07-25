@@ -1,6 +1,6 @@
 use crate::{
-    Clickable, Color, DynamicSpacing, Headline, HeadlineSize, Icon, IconButton, IconButtonShape,
-    IconName, Label, LabelCommon, LabelSize, h_flex, v_flex,
+    Clickable, Color, DynamicSpacing, Headline, HeadlineSize, Icon, IconButton, IconButtonShape, IconName, Label,
+    LabelCommon, LabelSize, h_flex, v_flex,
 };
 use gpui::{prelude::FluentBuilder, *};
 use smallvec::SmallVec;
@@ -78,13 +78,9 @@ impl RenderOnce for Modal {
                     .flex_1()
                     .gap(DynamicSpacing::Base08.rems(cx))
                     .when(self.footer.is_some(), |this| this.pb_4())
-                    .when_some(
-                        self.container_scroll_handler,
-                        |this, container_scroll_handle| {
-                            this.overflow_y_scroll()
-                                .track_scroll(&container_scroll_handle)
-                        },
-                    )
+                    .when_some(self.container_scroll_handler, |this, container_scroll_handle| {
+                        this.overflow_y_scroll().track_scroll(&container_scroll_handle)
+                    })
                     .children(self.children),
             )
             .children(self.footer)
@@ -437,11 +433,9 @@ impl RenderOnce for SectionHeader {
                     .w_full()
                     .gap(DynamicSpacing::Base04.rems(cx))
                     .child(
-                        div().flex_1().child(
-                            Label::new(self.label.clone())
-                                .size(LabelSize::Small)
-                                .into_element(),
-                        ),
+                        div()
+                            .flex_1()
+                            .child(Label::new(self.label.clone()).size(LabelSize::Small).into_element()),
                     )
                     .child(h_flex().children(self.end_slot)),
             )

@@ -11,9 +11,8 @@ use gpui::{App, Modifiers, SharedString};
 use itertools::{Either, Itertools};
 
 pub use settings::{
-    CompletionSettingsContent, FormatOnSave, Formatter, FormatterList, InlayHintKind,
-    LanguageSettingsContent, LspInsertMode, RewrapBehavior, ShowWhitespaceSetting, SoftWrap,
-    WordsCompletionMode,
+    CompletionSettingsContent, FormatOnSave, Formatter, FormatterList, InlayHintKind, LanguageSettingsContent,
+    LspInsertMode, RewrapBehavior, ShowWhitespaceSetting, SoftWrap, WordsCompletionMode,
 };
 use settings::{RegisterSetting, Settings, SettingsLocation, SettingsStore};
 use std::{borrow::Cow, num::NonZeroU32, sync::Arc};
@@ -32,10 +31,7 @@ pub fn language_settings<'a>(
 }
 
 /// Returns the settings for all languages from the provided file.
-pub fn all_language_settings<'a>(
-    file: Option<&'a Arc<dyn File>>,
-    cx: &'a App,
-) -> &'a AllLanguageSettings {
+pub fn all_language_settings<'a>(file: Option<&'a Arc<dyn File>>, cx: &'a App) -> &'a AllLanguageSettings {
     let location = file.map(|f| SettingsLocation {
         worktree_id: f.worktree_id(cx),
         path: f.path().as_ref(),
@@ -259,15 +255,13 @@ impl LanguageSettings {
         configured_language_servers: &[String],
         available_language_servers: &[LanguageServerName],
     ) -> Vec<LanguageServerName> {
-        let (disabled_language_servers, enabled_language_servers): (
-            Vec<LanguageServerName>,
-            Vec<LanguageServerName>,
-        ) = configured_language_servers.iter().partition_map(
-            |language_server| match language_server.strip_prefix('!') {
-                Some(disabled) => Either::Left(LanguageServerName(disabled.to_string().into())),
-                None => Either::Right(LanguageServerName(language_server.clone().into())),
-            },
-        );
+        let (disabled_language_servers, enabled_language_servers): (Vec<LanguageServerName>, Vec<LanguageServerName>) =
+            configured_language_servers.iter().partition_map(|language_server| {
+                match language_server.strip_prefix('!') {
+                    Some(disabled) => Either::Left(LanguageServerName(disabled.to_string().into())),
+                    None => Either::Right(LanguageServerName(language_server.clone().into())),
+                }
+            });
 
         let rest = available_language_servers
             .iter()
@@ -395,10 +389,7 @@ fn merge_with_editorconfig(settings: &mut LanguageSettings, cfg: &EditorconfigPr
             TabWidth::Value(u) => NonZeroU32::new(u as u32),
         }),
     });
-    let hard_tabs = cfg
-        .get::<IndentStyle>()
-        .map(|v| v.eq(&IndentStyle::Tabs))
-        .ok();
+    let hard_tabs = cfg.get::<IndentStyle>().map(|v| v.eq(&IndentStyle::Tabs)).ok();
     let ensure_final_newline_on_save = cfg
         .get::<FinalNewline>()
         .map(|v| match v {
@@ -423,10 +414,7 @@ fn merge_with_editorconfig(settings: &mut LanguageSettings, cfg: &EditorconfigPr
         &mut settings.remove_trailing_whitespace_on_save,
         remove_trailing_whitespace_on_save,
     );
-    merge(
-        &mut settings.ensure_final_newline_on_save,
-        ensure_final_newline_on_save,
-    );
+    merge(&mut settings.ensure_final_newline_on_save, ensure_final_newline_on_save);
 }
 
 impl settings::Settings for AllLanguageSettings {
@@ -456,9 +444,7 @@ impl settings::Settings for AllLanguageSettings {
                     background_coloring: indent_guides.background_coloring.unwrap(),
                 },
                 format_on_save: settings.format_on_save.unwrap(),
-                remove_trailing_whitespace_on_save: settings
-                    .remove_trailing_whitespace_on_save
-                    .unwrap(),
+                remove_trailing_whitespace_on_save: settings.remove_trailing_whitespace_on_save.unwrap(),
                 ensure_final_newline_on_save: settings.ensure_final_newline_on_save.unwrap(),
                 formatter: settings.formatter.unwrap(),
                 prettier: PrettierSettings {
@@ -493,9 +479,7 @@ impl settings::Settings for AllLanguageSettings {
                 use_on_type_format: settings.use_on_type_format.unwrap(),
                 auto_indent: settings.auto_indent.unwrap(),
                 auto_indent_on_paste: settings.auto_indent_on_paste.unwrap(),
-                always_treat_brackets_as_autoclosed: settings
-                    .always_treat_brackets_as_autoclosed
-                    .unwrap(),
+                always_treat_brackets_as_autoclosed: settings.always_treat_brackets_as_autoclosed.unwrap(),
                 code_actions_on_format: settings.code_actions_on_format.unwrap(),
                 linked_edits: settings.linked_edits.unwrap(),
                 tasks: LanguageTaskSettings {
@@ -539,10 +523,7 @@ impl settings::Settings for AllLanguageSettings {
                 builder.add(Glob::new(pattern).unwrap());
             }
 
-            file_types.insert(
-                language.clone(),
-                (builder.build().unwrap(), patterns.0.clone()),
-            );
+            file_types.insert(language.clone(), (builder.build().unwrap(), patterns.0.clone()));
         }
 
         Self {
@@ -573,13 +554,8 @@ mod tests {
                 .collect::<Vec<_>>()
         }
 
-        let available_language_servers = language_server_names(&[
-            "typescript-language-server",
-            "biome",
-            "deno",
-            "eslint",
-            "tailwind",
-        ]);
+        let available_language_servers =
+            language_server_names(&["typescript-language-server", "biome", "deno", "eslint", "tailwind"]);
 
         // A value of just `["..."]` is the same as taking all of the available language servers.
         assert_eq!(
@@ -600,13 +576,7 @@ mod tests {
                 ],
                 &available_language_servers
             ),
-            language_server_names(&[
-                "biome",
-                "typescript-language-server",
-                "eslint",
-                "tailwind",
-                "deno",
-            ])
+            language_server_names(&["biome", "typescript-language-server", "eslint", "tailwind", "deno",])
         );
 
         // Negating an available language server removes it from the list.

@@ -6,20 +6,14 @@ use crate::{ContextMenu, Label, right_click_menu};
 
 actions!(stories, [PrintCurrentDate, PrintBestFood]);
 
-fn build_menu(
-    window: &mut Window,
-    cx: &mut App,
-    header: impl Into<SharedString>,
-) -> Entity<ContextMenu> {
+fn build_menu(window: &mut Window, cx: &mut App, header: impl Into<SharedString>) -> Entity<ContextMenu> {
     ContextMenu::build(window, cx, |menu, _, _| {
         menu.header(header)
             .separator()
             .action("Print current time", Box::new(PrintCurrentDate))
-            .entry(
-                "Print best food",
-                Some(Box::new(PrintBestFood)),
-                |window, cx| window.dispatch_action(Box::new(PrintBestFood), cx),
-            )
+            .entry("Print best food", Some(Box::new(PrintBestFood)), |window, cx| {
+                window.dispatch_action(Box::new(PrintBestFood), cx)
+            })
     })
 }
 

@@ -40,31 +40,15 @@ impl Vim {
                     s.move_with(|map, selection| {
                         let anchor = map.display_point_to_anchor(selection.head(), Bias::Left);
                         selection_starts.insert(selection.id, anchor);
-                        motion.expand_selection(
-                            map,
-                            selection,
-                            times,
-                            &text_layout_details,
-                            forced_motion,
-                        );
+                        motion.expand_selection(map, selection, times, &text_layout_details, forced_motion);
                     });
                 });
                 match mode {
-                    ConvertTarget::LowerCase => {
-                        editor.convert_to_lower_case(&Default::default(), window, cx)
-                    }
-                    ConvertTarget::UpperCase => {
-                        editor.convert_to_upper_case(&Default::default(), window, cx)
-                    }
-                    ConvertTarget::OppositeCase => {
-                        editor.convert_to_opposite_case(&Default::default(), window, cx)
-                    }
-                    ConvertTarget::Rot13 => {
-                        editor.convert_to_rot13(&Default::default(), window, cx)
-                    }
-                    ConvertTarget::Rot47 => {
-                        editor.convert_to_rot47(&Default::default(), window, cx)
-                    }
+                    ConvertTarget::LowerCase => editor.convert_to_lower_case(&Default::default(), window, cx),
+                    ConvertTarget::UpperCase => editor.convert_to_upper_case(&Default::default(), window, cx),
+                    ConvertTarget::OppositeCase => editor.convert_to_opposite_case(&Default::default(), window, cx),
+                    ConvertTarget::Rot13 => editor.convert_to_rot13(&Default::default(), window, cx),
+                    ConvertTarget::Rot47 => editor.convert_to_rot47(&Default::default(), window, cx),
                 }
                 editor.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
                     s.move_with(|map, selection| {
@@ -94,28 +78,16 @@ impl Vim {
                 editor.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
                     s.move_with(|map, selection| {
                         object.expand_selection(map, selection, around, times);
-                        original_positions.insert(
-                            selection.id,
-                            map.display_point_to_anchor(selection.start, Bias::Left),
-                        );
+                        original_positions
+                            .insert(selection.id, map.display_point_to_anchor(selection.start, Bias::Left));
                     });
                 });
                 match mode {
-                    ConvertTarget::LowerCase => {
-                        editor.convert_to_lower_case(&Default::default(), window, cx)
-                    }
-                    ConvertTarget::UpperCase => {
-                        editor.convert_to_upper_case(&Default::default(), window, cx)
-                    }
-                    ConvertTarget::OppositeCase => {
-                        editor.convert_to_opposite_case(&Default::default(), window, cx)
-                    }
-                    ConvertTarget::Rot13 => {
-                        editor.convert_to_rot13(&Default::default(), window, cx)
-                    }
-                    ConvertTarget::Rot47 => {
-                        editor.convert_to_rot47(&Default::default(), window, cx)
-                    }
+                    ConvertTarget::LowerCase => editor.convert_to_lower_case(&Default::default(), window, cx),
+                    ConvertTarget::UpperCase => editor.convert_to_upper_case(&Default::default(), window, cx),
+                    ConvertTarget::OppositeCase => editor.convert_to_opposite_case(&Default::default(), window, cx),
+                    ConvertTarget::Rot13 => editor.convert_to_rot13(&Default::default(), window, cx),
+                    ConvertTarget::Rot47 => editor.convert_to_rot47(&Default::default(), window, cx),
                 }
                 editor.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
                     s.move_with(|map, selection| {
@@ -138,30 +110,15 @@ impl Vim {
         })
     }
 
-    pub fn convert_to_upper_case(
-        &mut self,
-        _: &ConvertToUpperCase,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn convert_to_upper_case(&mut self, _: &ConvertToUpperCase, window: &mut Window, cx: &mut Context<Self>) {
         self.manipulate_text(window, cx, |c| c.to_uppercase().collect::<Vec<char>>())
     }
 
-    pub fn convert_to_lower_case(
-        &mut self,
-        _: &ConvertToLowerCase,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn convert_to_lower_case(&mut self, _: &ConvertToLowerCase, window: &mut Window, cx: &mut Context<Self>) {
         self.manipulate_text(window, cx, |c| c.to_lowercase().collect::<Vec<char>>())
     }
 
-    pub fn convert_to_rot13(
-        &mut self,
-        _: &ConvertToRot13,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn convert_to_rot13(&mut self, _: &ConvertToRot13, window: &mut Window, cx: &mut Context<Self>) {
         self.manipulate_text(window, cx, |c| {
             vec![match c {
                 'A'..='M' | 'a'..='m' => ((c as u8) + 13) as char,
@@ -171,12 +128,7 @@ impl Vim {
         })
     }
 
-    pub fn convert_to_rot47(
-        &mut self,
-        _: &ConvertToRot47,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn convert_to_rot47(&mut self, _: &ConvertToRot47, window: &mut Window, cx: &mut Context<Self>) {
         self.manipulate_text(window, cx, |c| {
             let code_point = c as u32;
             if code_point >= 33 && code_point <= 126 {
@@ -232,9 +184,7 @@ impl Vim {
                         }
                         ranges.push(start..end);
 
-                        if end.column == snapshot.line_len(MultiBufferRow(end.row))
-                            && end.column > 0
-                        {
+                        if end.column == snapshot.line_len(MultiBufferRow(end.row)) && end.column > 0 {
                             end = snapshot.clip_point(end - Point::new(0, 1), Bias::Left);
                         }
                         cursor_positions.push(end..end)
@@ -251,9 +201,7 @@ impl Vim {
                         .collect::<String>();
                     editor.edit([(range, text)], cx)
                 }
-                editor.change_selections(Default::default(), window, cx, |s| {
-                    s.select_ranges(cursor_positions)
-                })
+                editor.change_selections(Default::default(), window, cx, |s| s.select_ranges(cursor_positions))
             });
         });
         if self.mode != Mode::HelixNormal {

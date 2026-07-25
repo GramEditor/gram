@@ -7,8 +7,8 @@ use futures::StreamExt;
 use gpui::{App, AsyncApp, Task};
 use http_client::github::{GitHubLspBinaryVersion, latest_github_release};
 use language::{
-    ContextProvider, LanguageName, LanguageRegistry, LocalFile as _, LspAdapter,
-    LspAdapterDelegate, LspInstaller, Toolchain,
+    ContextProvider, LanguageName, LanguageRegistry, LocalFile as _, LspAdapter, LspAdapterDelegate, LspInstaller,
+    Toolchain,
 };
 use lsp::{LanguageServerBinary, LanguageServerName, Uri};
 use node_runtime::{NodeRuntime, VersionStrategy};
@@ -29,23 +29,18 @@ use std::{
 };
 use task::{TaskTemplate, TaskTemplates, VariableName};
 use util::{
-    ResultExt, archive::extract_zip, fs::remove_matching, maybe, merge_json_value_into,
-    paths::PathStyle, rel_path::RelPath,
+    ResultExt, archive::extract_zip, fs::remove_matching, maybe, merge_json_value_into, paths::PathStyle,
+    rel_path::RelPath,
 };
 
 use crate::PackageJsonData;
 
-const SERVER_PATH: &str =
-    "node_modules/vscode-langservers-extracted/bin/vscode-json-language-server";
+const SERVER_PATH: &str = "node_modules/vscode-langservers-extracted/bin/vscode-json-language-server";
 
 pub(crate) struct JsonTaskProvider;
 
 impl ContextProvider for JsonTaskProvider {
-    fn associated_tasks(
-        &self,
-        file: Option<Arc<dyn language::File>>,
-        cx: &App,
-    ) -> gpui::Task<Option<TaskTemplates>> {
+    fn associated_tasks(&self, file: Option<Arc<dyn language::File>>, cx: &App) -> gpui::Task<Option<TaskTemplates>> {
         let Some(file) = project::File::from_dyn(file.as_ref()).cloned() else {
             return Task::ready(None);
         };
@@ -65,10 +60,8 @@ impl ContextProvider for JsonTaskProvider {
             let path = cx.update(|cx| file.abs_path(cx)).ok()?.as_path().into();
 
             let task_templates = if is_package_json {
-                let package_json = serde_json_lenient::from_str::<
-                    HashMap<String, serde_json_lenient::Value>,
-                >(&contents.text)
-                .ok()?;
+                let package_json =
+                    serde_json_lenient::from_str::<HashMap<String, serde_json_lenient::Value>>(&contents.text).ok()?;
                 let package_json = PackageJsonData::new(path, package_json);
                 let command = package_json.package_manager.unwrap_or("npm").to_owned();
                 package_json
@@ -84,10 +77,7 @@ impl ContextProvider for JsonTaskProvider {
                     .chain([TaskTemplate {
                         label: "package script $GRAM_CUSTOM_script".to_owned(),
                         command: command.clone(),
-                        args: vec![
-                            "run".into(),
-                            VariableName::Custom("script".into()).template_value(),
-                        ],
+                        args: vec!["run".into(), VariableName::Custom("script".into()).template_value()],
                         cwd: Some(VariableName::Dirname.template_value()),
                         tags: vec!["package-script".into()],
                         ..TaskTemplate::default()
@@ -152,9 +142,7 @@ impl LspInstaller for JsonLspAdapter {
         _: bool,
         _: &mut AsyncApp,
     ) -> Result<String> {
-        self.node
-            .npm_package_latest_version(Self::PACKAGE_NAME)
-            .await
+        self.node.npm_package_latest_version(Self::PACKAGE_NAME).await
     }
 
     async fn check_if_user_installed(
@@ -163,9 +151,7 @@ impl LspInstaller for JsonLspAdapter {
         _: Option<Toolchain>,
         _: &AsyncApp,
     ) -> Option<LanguageServerBinary> {
-        let path = delegate
-            .which("vscode-json-language-server".as_ref())
-            .await?;
+        let path = delegate.which("vscode-json-language-server".as_ref()).await?;
         let env = delegate.shell_env().await;
 
         Some(LanguageServerBinary {
@@ -213,10 +199,7 @@ impl LspInstaller for JsonLspAdapter {
         let server_path = container_dir.join(SERVER_PATH);
 
         self.node
-            .npm_install_packages(
-                &container_dir,
-                &[(Self::PACKAGE_NAME, latest_version.as_str())],
-            )
+            .npm_install_packages(&container_dir, &[(Self::PACKAGE_NAME, latest_version.as_str())])
             .await?;
 
         Ok(LanguageServerBinary {
@@ -257,11 +240,9 @@ impl LspAdapter for JsonLspAdapter {
         requested_uri: Option<Uri>,
         cx: &mut AsyncApp,
     ) -> Result<Value> {
-        let requested_path = requested_uri.as_ref().and_then(|uri| {
-            (uri.scheme() == "file")
-                .then(|| uri.to_file_path().ok())
-                .flatten()
-        });
+        let requested_path = requested_uri
+            .as_ref()
+            .and_then(|uri| (uri.scheme() == "file").then(|| uri.to_file_path().ok()).flatten());
         let path_in_worktree = requested_path
             .as_ref()
             .and_then(|abs_path| {
@@ -274,11 +255,7 @@ impl LspAdapter for JsonLspAdapter {
             path: path_in_worktree.as_ref(),
         };
         let mut config = cx.update(|cx| {
-            let schemas = json_schema_store::all_schema_file_associations(
-                &self.languages,
-                Some(settings),
-                cx,
-            );
+            let schemas = json_schema_store::all_schema_file_associations(&self.languages, Some(settings), cx);
 
             // This can be viewed via `dev: open language server logs` -> `json-language-server` ->
             // `Server Info`
@@ -295,8 +272,7 @@ impl LspAdapter for JsonLspAdapter {
             })
         })?;
         let project_options = cx.update(|cx| {
-            language_server_settings(delegate.as_ref(), &self.name(), cx)
-                .and_then(|s| s.settings.clone())
+            language_server_settings(delegate.as_ref(), &self.name(), cx).and_then(|s| s.settings.clone())
         })?;
 
         if let Some(override_options) = project_options {
@@ -320,16 +296,10 @@ impl LspAdapter for JsonLspAdapter {
     }
 }
 
-async fn get_cached_server_binary(
-    container_dir: PathBuf,
-    node: &NodeRuntime,
-) -> Option<LanguageServerBinary> {
+async fn get_cached_server_binary(container_dir: PathBuf, node: &NodeRuntime) -> Option<LanguageServerBinary> {
     maybe!(async {
         let server_path = container_dir.join(SERVER_PATH);
-        anyhow::ensure!(
-            server_path.exists(),
-            "missing executable in directory {server_path:?}"
-        );
+        anyhow::ensure!(server_path.exists(), "missing executable in directory {server_path:?}");
         Ok(LanguageServerBinary {
             path: node.binary_path().await?,
             env: None,
@@ -343,8 +313,7 @@ async fn get_cached_server_binary(
 pub struct NodeVersionAdapter;
 
 impl NodeVersionAdapter {
-    const SERVER_NAME: LanguageServerName =
-        LanguageServerName::new_static("package-version-server");
+    const SERVER_NAME: LanguageServerName = LanguageServerName::new_static("package-version-server");
 }
 
 impl LspInstaller for NodeVersionAdapter {
@@ -369,11 +338,7 @@ impl LspInstaller for NodeVersionAdapter {
             "windows" => "pc-windows-msvc",
             other => bail!("Running on unsupported os: {other}"),
         };
-        let suffix = if consts::OS == "windows" {
-            ".zip"
-        } else {
-            ".tar.gz"
-        };
+        let suffix = if consts::OS == "windows" { ".zip" } else { ".tar.gz" };
         let asset_name = format!("{}-{}-{os}{suffix}", Self::SERVER_NAME, consts::ARCH);
         let asset = release
             .assets
@@ -414,8 +379,7 @@ impl LspInstaller for NodeVersionAdapter {
             version.name,
             std::env::consts::EXE_SUFFIX
         ));
-        let destination_container_path =
-            container_dir.join(format!("{}-{}-tmp", Self::SERVER_NAME, version.name));
+        let destination_container_path = container_dir.join(format!("{}-{}-tmp", Self::SERVER_NAME, version.name));
         if fs::metadata(&destination_path).await.is_err() {
             let mut response = delegate
                 .http_client()
@@ -431,11 +395,7 @@ impl LspInstaller for NodeVersionAdapter {
             }
 
             fs::copy(
-                destination_container_path.join(format!(
-                    "{}{}",
-                    Self::SERVER_NAME,
-                    std::env::consts::EXE_SUFFIX
-                )),
+                destination_container_path.join(format!("{}{}", Self::SERVER_NAME, std::env::consts::EXE_SUFFIX)),
                 &destination_path,
             )
             .await?;

@@ -79,8 +79,7 @@ impl LspInstaller for ZigLspAdapter {
     ) -> Result<ZlsBinaryVersion> {
         // Note that in github releases and on zlstools.org the tar.gz asset is not shown
         // but is available at https://builds.zigtools.org/zls-{os}-{arch}-{version}.tar.gz
-        let release =
-            latest_github_release("zigtools/zls", true, false, delegate.http_client()).await?;
+        let release = latest_github_release("zigtools/zls", true, false, delegate.http_client()).await?;
 
         let arch = match std::env::consts::ARCH {
             "aarch64" => "aarch64",
@@ -95,13 +94,7 @@ impl LspInstaller for ZigLspAdapter {
             _ => unreachable!(),
         };
 
-        let asset_name = format!(
-            "zls-{}-{}-{}.{}",
-            arch,
-            Self::OS_NAME,
-            release.tag_name,
-            extension
-        );
+        let asset_name = format!("zls-{}-{}-{}.{}", arch, Self::OS_NAME, release.tag_name, extension);
         let download_url = format!("https://builds.zigtools.org/{}", asset_name);
 
         Ok(ZlsBinaryVersion {

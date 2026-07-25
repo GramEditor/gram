@@ -3,9 +3,9 @@ use std::{
     time::{Duration, Instant},
 };
 
+use app_actions::toast;
 use gpui::{AnyView, DismissEvent, Entity, EntityId, FocusHandle, ManagedView, Subscription, Task};
 use ui::{animation::DefaultAnimations, prelude::*};
-use app_actions::toast;
 
 use crate::Workspace;
 
@@ -51,17 +51,10 @@ pub struct ToastAction {
 }
 
 impl ToastAction {
-    pub fn new(
-        label: SharedString,
-        on_click: Option<Rc<dyn Fn(&mut Window, &mut App) + 'static>>,
-    ) -> Self {
+    pub fn new(label: SharedString, on_click: Option<Rc<dyn Fn(&mut Window, &mut App) + 'static>>) -> Self {
         let id = ElementId::Name(label.clone());
 
-        Self {
-            id,
-            label,
-            on_click,
-        }
+        Self { id, label, on_click }
     }
 }
 
@@ -169,8 +162,7 @@ impl ToastLayer {
         let Some(duration_remaining) = self.duration_remaining.as_mut() else {
             return;
         };
-        *duration_remaining =
-            duration_remaining.saturating_sub(dismiss_timer.instant_started.elapsed());
+        *duration_remaining = duration_remaining.saturating_sub(dismiss_timer.instant_started.elapsed());
         if *duration_remaining < MINIMUM_RESUME_DURATION {
             *duration_remaining = MINIMUM_RESUME_DURATION;
         }

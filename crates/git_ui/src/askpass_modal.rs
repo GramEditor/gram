@@ -3,10 +3,9 @@ use editor::Editor;
 use futures::channel::oneshot;
 use gpui::{AppContext, DismissEvent, Entity, EventEmitter, Focusable, Styled};
 use ui::{
-    ActiveTheme, AnyElement, App, Button, Clickable, Color, Context, DynamicSpacing, Headline,
-    HeadlineSize, Icon, IconName, IconSize, InteractiveElement, IntoElement, Label, LabelCommon,
-    LabelSize, ParentElement, Render, SharedString, StyledExt, StyledTypography, Window, div,
-    h_flex, v_flex,
+    ActiveTheme, AnyElement, App, Button, Clickable, Color, Context, DynamicSpacing, Headline, HeadlineSize, Icon,
+    IconName, IconSize, InteractiveElement, IntoElement, Label, LabelCommon, LabelSize, ParentElement, Render,
+    SharedString, StyledExt, StyledTypography, Window, div, h_flex, v_flex,
 };
 use util::maybe;
 use workspace::ModalView;
@@ -75,8 +74,7 @@ impl AskPassModal {
 
     fn render_hint(&mut self, cx: &mut Context<Self>) -> Option<AnyElement> {
         let color = cx.theme().status().info_background;
-        if (self.prompt.contains("Password") || self.prompt.contains("Username"))
-            && self.prompt.contains("github.com")
+        if (self.prompt.contains("Password") || self.prompt.contains("Username")) && self.prompt.contains("github.com")
         {
             return Some(
             div()
@@ -122,11 +120,15 @@ impl Render for AskPassModal {
                     .w_full()
                     .gap_1p5()
                     .child(Icon::new(IconName::GitBranch).size(IconSize::XSmall))
-                    .child(h_flex().gap_1().overflow_x_hidden().child(
-                        div().max_w_96().overflow_x_hidden().text_ellipsis().child(
-                            Headline::new(self.operation.clone()).size(HeadlineSize::XSmall),
+                    .child(
+                        h_flex().gap_1().overflow_x_hidden().child(
+                            div()
+                                .max_w_96()
+                                .overflow_x_hidden()
+                                .text_ellipsis()
+                                .child(Headline::new(self.operation.clone()).size(HeadlineSize::XSmall)),
                         ),
-                    )),
+                    ),
             )
             .child(
                 div()

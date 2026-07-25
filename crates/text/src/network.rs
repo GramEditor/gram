@@ -73,9 +73,6 @@ impl<T: Clone, R: rand::Rng> Network<T, R> {
     pub fn receive(&mut self, receiver: ReplicaId) -> Vec<T> {
         let inbox = self.inboxes.get_mut(&receiver).unwrap();
         let count = self.rng.random_range(0..inbox.len() + 1);
-        inbox
-            .drain(0..count)
-            .map(|envelope| envelope.message)
-            .collect()
+        inbox.drain(0..count).map(|envelope| envelope.message).collect()
     }
 }

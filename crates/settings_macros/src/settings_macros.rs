@@ -1,9 +1,7 @@
 use proc_macro::TokenStream;
 
 use quote::quote;
-use syn::{
-    Data, DeriveInput, Field, Fields, ItemEnum, ItemStruct, Type, parse_macro_input, parse_quote,
-};
+use syn::{Data, DeriveInput, Field, Fields, ItemEnum, ItemStruct, Type, parse_macro_input, parse_quote};
 
 /// Derives the `MergeFrom` trait for a struct.
 ///
@@ -127,9 +125,7 @@ pub fn with_fallible_options(_args: TokenStream, input: TokenStream) -> TokenStr
     fn add_if_option(field: &mut Field) {
         match &field.ty {
             Type::Path(syn::TypePath { qself: None, path })
-                if path.leading_colon.is_none()
-                    && path.segments.len() == 1
-                    && path.segments[0].ident == "Option" => {}
+                if path.leading_colon.is_none() && path.segments.len() == 1 && path.segments[0].ident == "Option" => {}
             _ => return,
         }
         let attr = parse_quote!(

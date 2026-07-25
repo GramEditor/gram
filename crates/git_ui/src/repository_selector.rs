@@ -28,12 +28,7 @@ pub struct RepositorySelector {
 }
 
 impl RepositorySelector {
-    pub fn new(
-        project_handle: Entity<Project>,
-        width: Rems,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn new(project_handle: Entity<Project>, width: Rems, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let git_store = project_handle.read(cx).git_store().clone();
         let repository_entries = git_store.update(cx, |git_store, _cx| {
             let mut repos: Vec<_> = git_store.repositories().values().cloned().collect();
@@ -44,12 +39,9 @@ impl RepositorySelector {
         });
         let filtered_repositories = repository_entries.clone();
 
-        let widest_item_ix = repository_entries.iter().position_max_by(|a, b| {
-            a.read(cx)
-                .display_name()
-                .len()
-                .cmp(&b.read(cx).display_name().len())
-        });
+        let widest_item_ix = repository_entries
+            .iter()
+            .position_max_by(|a, b| a.read(cx).display_name().len().cmp(&b.read(cx).display_name().len()));
 
         let delegate = RepositorySelectorDelegate {
             repository_selector: cx.entity().downgrade(),
@@ -144,12 +136,7 @@ impl PickerDelegate for RepositorySelectorDelegate {
         self.selected_index
     }
 
-    fn set_selected_index(
-        &mut self,
-        ix: usize,
-        _window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) {
+    fn set_selected_index(&mut self, ix: usize, _window: &mut Window, cx: &mut Context<Picker<Self>>) {
         self.selected_index = ix.min(self.filtered_repositories.len().saturating_sub(1));
         cx.notify();
     }
@@ -162,12 +149,7 @@ impl PickerDelegate for RepositorySelectorDelegate {
         PickerEditorPosition::End
     }
 
-    fn update_matches(
-        &mut self,
-        query: String,
-        window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) -> Task<()> {
+    fn update_matches(&mut self, query: String, window: &mut Window, cx: &mut Context<Picker<Self>>) -> Task<()> {
         let all_repositories = self.repository_entries.clone();
 
         let repo_names: Vec<(Entity<Repository>, String)> = all_repositories
@@ -206,9 +188,7 @@ impl PickerDelegate for RepositorySelectorDelegate {
         let Some(selected_repo) = self.filtered_repositories.get(self.selected_index) else {
             return;
         };
-        selected_repo.update(cx, |selected_repo, cx| {
-            selected_repo.set_as_active_repository(cx)
-        });
+        selected_repo.update(cx, |selected_repo, cx| selected_repo.set_as_active_repository(cx));
         self.dismissed(window, cx);
     }
 

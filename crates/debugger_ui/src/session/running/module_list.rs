@@ -1,8 +1,8 @@
 use anyhow::anyhow;
 use dap::Module;
 use gpui::{
-    AnyElement, Entity, FocusHandle, Focusable, ScrollStrategy, Subscription, Task,
-    UniformListScrollHandle, WeakEntity, uniform_list,
+    AnyElement, Entity, FocusHandle, Focusable, ScrollStrategy, Subscription, Task, UniformListScrollHandle,
+    WeakEntity, uniform_list,
 };
 use project::{
     ProjectItem as _, ProjectPath,
@@ -24,11 +24,7 @@ pub struct ModuleList {
 }
 
 impl ModuleList {
-    pub fn new(
-        session: Entity<Session>,
-        workspace: WeakEntity<Workspace>,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn new(session: Entity<Session>, workspace: WeakEntity<Workspace>, cx: &mut Context<Self>) -> Self {
         let focus_handle = cx.focus_handle();
 
         let _subscription = cx.subscribe(&session, |this, _, event, cx| match event {
@@ -57,9 +53,7 @@ impl ModuleList {
     fn schedule_rebuild(&mut self, cx: &mut Context<Self>) {
         self._rebuild_task = Some(cx.spawn(async move |this, cx| {
             this.update(cx, |this, cx| {
-                let modules = this
-                    .session
-                    .update(cx, |session, cx| session.modules(cx).to_owned());
+                let modules = this.session.update(cx, |session, cx| session.modules(cx).to_owned());
                 this.entries = modules;
                 cx.notify();
             })
@@ -72,9 +66,9 @@ impl ModuleList {
             let (worktree, relative_path) = this
                 .update(cx, |this, cx| {
                     this.workspace.update(cx, |workspace, cx| {
-                        workspace.project().update(cx, |this, cx| {
-                            this.find_or_create_worktree(&path, false, cx)
-                        })
+                        workspace
+                            .project()
+                            .update(cx, |this, cx| this.find_or_create_worktree(&path, false, cx))
                     })
                 })??
                 .await?;
@@ -98,18 +92,11 @@ impl ModuleList {
 
             this.update_in(cx, |this, window, cx| {
                 this.workspace.update(cx, |workspace, cx| {
-                    let project_path = buffer.read(cx).project_path(cx).ok_or_else(|| {
-                        anyhow!("Could not select a stack frame for unnamed buffer")
-                    })?;
-                    anyhow::Ok(workspace.open_path_preview(
-                        project_path,
-                        None,
-                        false,
-                        true,
-                        true,
-                        window,
-                        cx,
-                    ))
+                    let project_path = buffer
+                        .read(cx)
+                        .project_path(cx)
+                        .ok_or_else(|| anyhow!("Could not select a stack frame for unnamed buffer"))?;
+                    anyhow::Ok(workspace.open_path_preview(project_path, None, false, true, true, window, cx))
                 })
             })???
             .await?;
@@ -132,10 +119,7 @@ impl ModuleList {
             })
             .when(module.path.is_some(), |this| {
                 this.on_click({
-                    let path = module
-                        .path
-                        .as_deref()
-                        .map(|path| Arc::<Path>::from(Path::new(path)));
+                    let path = module.path.as_deref().map(|path| Arc::<Path>::from(Path::new(path)));
                     cx.listener(move |this, _, window, cx| {
                         this.selected_ix = Some(ix);
                         if let Some(path) = path.as_ref() {
@@ -162,8 +146,7 @@ impl ModuleList {
 
     #[cfg(test)]
     pub(crate) fn modules(&self, cx: &mut Context<Self>) -> Vec<dap::Module> {
-        self.session
-            .update(cx, |session, cx| session.modules(cx).to_vec())
+        self.session.update(cx, |session, cx| session.modules(cx).to_vec())
     }
 
     fn confirm(&mut self, _: &menu::Confirm, window: &mut Window, cx: &mut Context<Self>) {
@@ -181,8 +164,7 @@ impl ModuleList {
     fn select_ix(&mut self, ix: Option<usize>, cx: &mut Context<Self>) {
         self.selected_ix = ix;
         if let Some(ix) = ix {
-            self.scroll_handle
-                .scroll_to_item(ix, ScrollStrategy::Center);
+            self.scroll_handle.scroll_to_item(ix, ScrollStrategy::Center);
         }
         cx.notify();
     }
@@ -202,12 +184,7 @@ impl ModuleList {
         self.select_ix(ix, cx);
     }
 
-    fn select_previous(
-        &mut self,
-        _: &menu::SelectPrevious,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn select_previous(&mut self, _: &menu::SelectPrevious, _window: &mut Window, cx: &mut Context<Self>) {
         let ix = match self.selected_ix {
             _ if self.entries.is_empty() => None,
             None => Some(self.entries.len() - 1),
@@ -222,17 +199,8 @@ impl ModuleList {
         self.select_ix(ix, cx);
     }
 
-    fn select_first(
-        &mut self,
-        _: &menu::SelectFirst,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        let ix = if !self.entries.is_empty() {
-            Some(0)
-        } else {
-            None
-        };
+    fn select_first(&mut self, _: &menu::SelectFirst, _window: &mut Window, cx: &mut Context<Self>) {
+        let ix = if !self.entries.is_empty() { Some(0) } else { None };
         self.select_ix(ix, cx);
     }
 
@@ -249,9 +217,7 @@ impl ModuleList {
         uniform_list(
             "module-list",
             self.entries.len(),
-            cx.processor(|this, range: Range<usize>, _window, cx| {
-                range.map(|ix| this.render_entry(ix, cx)).collect()
-            }),
+            cx.processor(|this, range: Range<usize>, _window, cx| range.map(|ix| this.render_entry(ix, cx)).collect()),
         )
         .track_scroll(&self.scroll_handle)
         .size_full()

@@ -28,26 +28,19 @@ pub fn format_localized_timestamp(
 }
 
 /// Formats a timestamp, which respects the user's date and time preferences/custom format.
-pub fn format_local_timestamp(
-    timestamp: OffsetDateTime,
-    reference: OffsetDateTime,
-    format: TimestampFormat,
-) -> String {
+pub fn format_local_timestamp(timestamp: OffsetDateTime, reference: OffsetDateTime, format: TimestampFormat) -> String {
     match format {
         TimestampFormat::Absolute => format_absolute_timestamp(timestamp, reference, false),
         TimestampFormat::EnhancedAbsolute => format_absolute_timestamp(timestamp, reference, true),
         TimestampFormat::MediumAbsolute => format_absolute_timestamp_medium(timestamp, reference),
-        TimestampFormat::Relative => format_relative_time(timestamp, reference)
-            .unwrap_or_else(|| format_relative_date(timestamp, reference)),
+        TimestampFormat::Relative => {
+            format_relative_time(timestamp, reference).unwrap_or_else(|| format_relative_date(timestamp, reference))
+        }
     }
 }
 
 /// Formats the date component of a timestamp
-pub fn format_date(
-    timestamp: OffsetDateTime,
-    reference: OffsetDateTime,
-    enhanced_formatting: bool,
-) -> String {
+pub fn format_date(timestamp: OffsetDateTime, reference: OffsetDateTime, enhanced_formatting: bool) -> String {
     format_absolute_date(timestamp, reference, enhanced_formatting)
 }
 
@@ -57,11 +50,7 @@ pub fn format_time(timestamp: OffsetDateTime) -> String {
 }
 
 /// Formats the date component of a timestamp in medium style
-pub fn format_date_medium(
-    timestamp: OffsetDateTime,
-    reference: OffsetDateTime,
-    enhanced_formatting: bool,
-) -> String {
+pub fn format_date_medium(timestamp: OffsetDateTime, reference: OffsetDateTime, enhanced_formatting: bool) -> String {
     format_absolute_date_medium(timestamp, reference, enhanced_formatting)
 }
 
@@ -90,13 +79,9 @@ fn format_absolute_date(
     {
         // todo(linux) respect user's date/time preferences
         // todo(windows) respect user's date/time preferences
-        let current_locale = CURRENT_LOCALE
-            .get_or_init(|| sys_locale::get_locale().unwrap_or_else(|| String::from("en-US")));
-        format_timestamp_naive_date(
-            timestamp,
-            reference,
-            is_12_hour_time_by_locale(current_locale.as_str()),
-        )
+        let current_locale =
+            CURRENT_LOCALE.get_or_init(|| sys_locale::get_locale().unwrap_or_else(|| String::from("en-US")));
+        format_timestamp_naive_date(timestamp, reference, is_12_hour_time_by_locale(current_locale.as_str()))
     }
 }
 
@@ -109,12 +94,9 @@ fn format_absolute_time(timestamp: OffsetDateTime) -> String {
     {
         // todo(linux) respect user's date/time preferences
         // todo(windows) respect user's date/time preferences
-        let current_locale = CURRENT_LOCALE
-            .get_or_init(|| sys_locale::get_locale().unwrap_or_else(|| String::from("en-US")));
-        format_timestamp_naive_time(
-            timestamp,
-            is_12_hour_time_by_locale(current_locale.as_str()),
-        )
+        let current_locale =
+            CURRENT_LOCALE.get_or_init(|| sys_locale::get_locale().unwrap_or_else(|| String::from("en-US")));
+        format_timestamp_naive_time(timestamp, is_12_hour_time_by_locale(current_locale.as_str()))
     }
 }
 
@@ -180,13 +162,10 @@ fn format_absolute_date_medium(
     {
         // todo(linux) respect user's date/time preferences
         // todo(windows) respect user's date/time preferences
-        let current_locale = CURRENT_LOCALE
-            .get_or_init(|| sys_locale::get_locale().unwrap_or_else(|| String::from("en-US")));
+        let current_locale =
+            CURRENT_LOCALE.get_or_init(|| sys_locale::get_locale().unwrap_or_else(|| String::from("en-US")));
         if !enhanced_formatting {
-            return format_timestamp_naive_date_medium(
-                timestamp,
-                is_12_hour_time_by_locale(current_locale.as_str()),
-            );
+            return format_timestamp_naive_date_medium(timestamp, is_12_hour_time_by_locale(current_locale.as_str()));
         }
 
         let timestamp_date = timestamp.date();
@@ -196,18 +175,12 @@ fn format_absolute_date_medium(
         } else if reference_date.previous_day() == Some(timestamp_date) {
             "Yesterday".to_string()
         } else {
-            format_timestamp_naive_date_medium(
-                timestamp,
-                is_12_hour_time_by_locale(current_locale.as_str()),
-            )
+            format_timestamp_naive_date_medium(timestamp, is_12_hour_time_by_locale(current_locale.as_str()))
         }
     }
 }
 
-fn format_absolute_timestamp_medium(
-    timestamp: OffsetDateTime,
-    reference: OffsetDateTime,
-) -> String {
+fn format_absolute_timestamp_medium(timestamp: OffsetDateTime, reference: OffsetDateTime) -> String {
     #[cfg(target_os = "macos")]
     {
         format_absolute_date_medium(timestamp, reference, false)
@@ -308,11 +281,7 @@ fn format_timestamp_naive_time(timestamp_local: OffsetDateTime, is_12_hour_time:
     let timestamp_local_minute = timestamp_local.minute();
 
     let (hour, meridiem) = if is_12_hour_time {
-        let meridiem = if timestamp_local_hour >= 12 {
-            "PM"
-        } else {
-            "AM"
-        };
+        let meridiem = if timestamp_local_hour >= 12 { "PM" } else { "AM" };
 
         let hour_12 = match timestamp_local_hour {
             0 => 12,                              // Midnight
@@ -363,10 +332,7 @@ fn format_timestamp_naive_date(
 }
 
 #[cfg(not(target_os = "macos"))]
-fn format_timestamp_naive_date_medium(
-    timestamp_local: OffsetDateTime,
-    is_12_hour_time: bool,
-) -> String {
+fn format_timestamp_naive_date_medium(timestamp_local: OffsetDateTime, is_12_hour_time: bool) -> String {
     let timestamp_local_date = timestamp_local.date();
 
     match is_12_hour_time {
@@ -422,8 +388,8 @@ static CURRENT_LOCALE: std::sync::OnceLock<String> = std::sync::OnceLock::new();
 
 #[cfg(not(target_os = "macos"))]
 fn format_timestamp_fallback(timestamp: OffsetDateTime, reference: OffsetDateTime) -> String {
-    let current_locale = CURRENT_LOCALE
-        .get_or_init(|| sys_locale::get_locale().unwrap_or_else(|| String::from("en-US")));
+    let current_locale =
+        CURRENT_LOCALE.get_or_init(|| sys_locale::get_locale().unwrap_or_else(|| String::from("en-US")));
 
     let is_12_hour_time = is_12_hour_time_by_locale(current_locale.as_str());
     format_timestamp_naive(timestamp, reference, is_12_hour_time)
@@ -433,8 +399,7 @@ fn format_timestamp_fallback(timestamp: OffsetDateTime, reference: OffsetDateTim
 #[cfg(not(target_os = "macos"))]
 fn is_12_hour_time_by_locale(locale: &str) -> bool {
     [
-        "es-MX", "es-CO", "es-SV", "es-NI",
-        "es-HN", // Mexico, Colombia, El Salvador, Nicaragua, Honduras
+        "es-MX", "es-CO", "es-SV", "es-NI", "es-HN", // Mexico, Colombia, El Salvador, Nicaragua, Honduras
         "en-US", "en-CA", "en-AU", "en-NZ", // U.S, Canada, Australia, New Zealand
         "ar-SA", "ar-EG", "ar-JO", // Saudi Arabia, Egypt, Jordan
         "en-IN", "hi-IN", // India, Hindu
@@ -465,16 +430,12 @@ mod macos {
         MEDIUM_DATE_FORMATTER.with(|fmt| format_with_date_formatter(timestamp, Some(&fmt)))
     }
 
-    fn format_with_date_formatter(
-        timestamp: &time::OffsetDateTime,
-        fmt: Option<&CFDateFormatter>,
-    ) -> String {
+    fn format_with_date_formatter(timestamp: &time::OffsetDateTime, fmt: Option<&CFDateFormatter>) -> String {
         const UNIX_TO_CF_ABSOLUTE_TIME_OFFSET: i64 = 978307200;
         // Convert timestamp to macOS absolute time
         let timestamp_macos = timestamp.unix_timestamp() - UNIX_TO_CF_ABSOLUTE_TIME_OFFSET;
         let cf_absolute_time = timestamp_macos as CFAbsoluteTime;
-        let s =
-            unsafe { CFDateFormatter::new_string_with_absolute_time(None, fmt, cf_absolute_time) };
+        let s = unsafe { CFDateFormatter::new_string_with_absolute_time(None, fmt, cf_absolute_time) };
         s.and_then(|r| r.downcast::<CFString>().ok())
             .map(|s| s.to_string())
             .unwrap()
@@ -523,10 +484,7 @@ mod tests {
 
         // Test with previous day (yesterday)
         let timestamp_yesterday = create_offset_datetime(1990, 4, 11, 9, 30, 0);
-        assert_eq!(
-            format_date(timestamp_yesterday, reference, true),
-            "Yesterday"
-        );
+        assert_eq!(format_date(timestamp_yesterday, reference, true), "Yesterday");
 
         // Test with other date
         let timestamp_other = create_offset_datetime(1990, 4, 10, 9, 30, 0);
@@ -588,17 +546,11 @@ mod tests {
 
         // Test with same date (today)
         let timestamp_today = create_offset_datetime(1990, 4, 12, 9, 30, 0);
-        assert_eq!(
-            format_absolute_date(timestamp_today, reference, true),
-            "Today"
-        );
+        assert_eq!(format_absolute_date(timestamp_today, reference, true), "Today");
 
         // Test with previous day (yesterday)
         let timestamp_yesterday = create_offset_datetime(1990, 4, 11, 9, 30, 0);
-        assert_eq!(
-            format_absolute_date(timestamp_yesterday, reference, true),
-            "Yesterday"
-        );
+        assert_eq!(format_absolute_date(timestamp_yesterday, reference, true), "Yesterday");
 
         // Test with other date
         let timestamp_other = create_offset_datetime(1990, 4, 10, 9, 30, 0);
@@ -643,10 +595,7 @@ mod tests {
         let reference = create_offset_datetime(1990, 4, 12, 16, 45, 0);
         let timestamp = create_offset_datetime(1990, 4, 12, 15, 30, 0);
 
-        assert_eq!(
-            format_timestamp_naive(timestamp, reference, false),
-            "Today at 15:30"
-        );
+        assert_eq!(format_timestamp_naive(timestamp, reference, false), "Today at 15:30");
     }
 
     #[test]
@@ -654,10 +603,7 @@ mod tests {
         let reference = create_offset_datetime(1990, 4, 12, 16, 45, 0);
         let timestamp = create_offset_datetime(1990, 4, 12, 15, 30, 0);
 
-        assert_eq!(
-            format_timestamp_naive(timestamp, reference, true),
-            "Today at 3:30 PM"
-        );
+        assert_eq!(format_timestamp_naive(timestamp, reference, true), "Today at 3:30 PM");
     }
 
     #[test]
@@ -720,10 +666,7 @@ mod tests {
         let reference = create_offset_datetime(1990, 4, 12, 10, 30, 0);
         let timestamp = create_offset_datetime(1990, 4, 10, 20, 20, 0);
 
-        assert_eq!(
-            format_timestamp_naive(timestamp, reference, true),
-            "04/10/1990 8:20 PM"
-        );
+        assert_eq!(format_timestamp_naive(timestamp, reference, true), "04/10/1990 8:20 PM");
     }
 
     #[test]
@@ -746,10 +689,7 @@ mod tests {
             current_timestamp
         };
 
-        assert_eq!(
-            format_relative_time(reference, reference),
-            Some("Just now".to_string())
-        );
+        assert_eq!(format_relative_time(reference, reference), Some("Just now".to_string()));
 
         assert_eq!(
             format_relative_time(next_minute(), reference),
@@ -779,9 +719,7 @@ mod tests {
                 let date = current_timestamp.date().previous_day().unwrap();
                 current_timestamp.replace_date(date)
             } else {
-                current_timestamp
-                    .replace_hour(current_timestamp.hour() - 1)
-                    .unwrap()
+                current_timestamp.replace_hour(current_timestamp.hour() - 1).unwrap()
             };
             current_timestamp
         };
@@ -812,21 +750,12 @@ mod tests {
             current_timestamp
         };
 
-        assert_eq!(
-            format_relative_date(reference, reference),
-            "Today".to_string()
-        );
+        assert_eq!(format_relative_date(reference, reference), "Today".to_string());
 
-        assert_eq!(
-            format_relative_date(next_day(), reference),
-            "Yesterday".to_string()
-        );
+        assert_eq!(format_relative_date(next_day(), reference), "Yesterday".to_string());
 
         for i in 2..=6 {
-            assert_eq!(
-                format_relative_date(next_day(), reference),
-                format!("{} days ago", i)
-            );
+            assert_eq!(format_relative_date(next_day(), reference), format!("{} days ago", i));
         }
 
         assert_eq!(format_relative_date(next_day(), reference), "1 week ago");
@@ -845,16 +774,10 @@ mod tests {
             current_timestamp
         };
 
-        assert_eq!(
-            format_relative_date(next_week(), reference),
-            "1 week ago".to_string()
-        );
+        assert_eq!(format_relative_date(next_week(), reference), "1 week ago".to_string());
 
         for i in 2..=4 {
-            assert_eq!(
-                format_relative_date(next_week(), reference),
-                format!("{} weeks ago", i)
-            );
+            assert_eq!(format_relative_date(next_week(), reference), format!("{} weeks ago", i));
         }
 
         assert_eq!(format_relative_date(next_week(), reference), "1 month ago");
@@ -880,10 +803,7 @@ mod tests {
             current_timestamp
         };
 
-        assert_eq!(
-            format_relative_date(next_month(), reference),
-            "4 weeks ago".to_string()
-        );
+        assert_eq!(format_relative_date(next_month(), reference), "4 weeks ago".to_string());
 
         for i in 2..=11 {
             assert_eq!(
@@ -941,16 +861,8 @@ mod tests {
         UtcOffset::from_hms(0, 0, 0).expect("Valid timezone offset")
     }
 
-    fn create_offset_datetime(
-        year: i32,
-        month: u8,
-        day: u8,
-        hour: u8,
-        minute: u8,
-        second: u8,
-    ) -> OffsetDateTime {
-        let date = time::Date::from_calendar_date(year, time::Month::try_from(month).unwrap(), day)
-            .unwrap();
+    fn create_offset_datetime(year: i32, month: u8, day: u8, hour: u8, minute: u8, second: u8) -> OffsetDateTime {
+        let date = time::Date::from_calendar_date(year, time::Month::try_from(month).unwrap(), day).unwrap();
         let time = time::Time::from_hms(hour, minute, second).unwrap();
         let date = date.with_time(time).assume_utc(); // Assume UTC for simplicity
         date.to_offset(test_timezone())

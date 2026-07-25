@@ -55,11 +55,7 @@ impl ExtensionLanguageProxy for LanguageServerRegistryProxy {
             .register_language(language, grammar, matcher, hidden, None, load);
     }
 
-    fn remove_languages(
-        &self,
-        languages_to_remove: &[LanguageName],
-        grammars_to_remove: &[Arc<str>],
-    ) {
+    fn remove_languages(&self, languages_to_remove: &[LanguageName], grammars_to_remove: &[Arc<str>]) {
         self.language_registry
             .remove_languages(languages_to_remove, grammars_to_remove);
     }

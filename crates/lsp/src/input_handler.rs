@@ -12,10 +12,7 @@ use log::warn;
 use parking_lot::Mutex;
 use smol::io::BufReader;
 
-use crate::{
-    AnyResponse, CONTENT_LEN_HEADER, IoHandler, IoKind, NotificationOrRequest, RequestId,
-    ResponseHandler,
-};
+use crate::{AnyResponse, CONTENT_LEN_HEADER, IoHandler, IoKind, NotificationOrRequest, RequestId, ResponseHandler};
 
 const HEADER_DELIMITER: &[u8; 4] = b"\r\n\r\n";
 /// Handler for stdout of language server.
@@ -99,15 +96,9 @@ impl LspStdoutHandler {
 
             if let Ok(msg) = serde_json::from_slice::<NotificationOrRequest>(&buffer) {
                 notifications_sender.unbounded_send(msg)?;
-            } else if let Ok(AnyResponse {
-                id, error, result, ..
-            }) = serde_json::from_slice(&buffer)
-            {
+            } else if let Ok(AnyResponse { id, error, result, .. }) = serde_json::from_slice(&buffer) {
                 let mut response_handlers = response_handlers.lock();
-                if let Some(handler) = response_handlers
-                    .as_mut()
-                    .and_then(|handlers| handlers.remove(&id))
-                {
+                if let Some(handler) = response_handlers.as_mut().and_then(|handlers| handlers.remove(&id)) {
                     drop(response_handlers);
                     if let Some(error) = error {
                         handler(Err(error));
@@ -118,10 +109,7 @@ impl LspStdoutHandler {
                     }
                 }
             } else {
-                warn!(
-                    "failed to deserialize LSP message:\n{}",
-                    std::str::from_utf8(&buffer)?
-                );
+                warn!("failed to deserialize LSP message:\n{}", std::str::from_utf8(&buffer)?);
             }
         }
     }
@@ -139,7 +127,9 @@ mod tests {
         assert_eq!(buf, b"Content-Length: 123\r\n\r\n");
 
         let mut buf = Vec::new();
-        let mut reader = smol::io::BufReader::new(b"Content-Type: application/vscode-jsonrpc\r\nContent-Length: 1235\r\n\r\n{\"somecontent\":123}" as &[u8]);
+        let mut reader = smol::io::BufReader::new(
+            b"Content-Type: application/vscode-jsonrpc\r\nContent-Length: 1235\r\n\r\n{\"somecontent\":123}" as &[u8],
+        );
         read_headers(&mut reader, &mut buf).await.unwrap();
         assert_eq!(
             buf,
@@ -147,7 +137,10 @@ mod tests {
         );
 
         let mut buf = Vec::new();
-        let mut reader = smol::io::BufReader::new(b"Content-Length: 1235\r\nContent-Type: application/vscode-jsonrpc\r\n\r\n{\"somecontent\":true}" as &[u8]);
+        let mut reader = smol::io::BufReader::new(
+            b"Content-Length: 1235\r\nContent-Type: application/vscode-jsonrpc\r\n\r\n{\"somecontent\":true}"
+                as &[u8],
+        );
         read_headers(&mut reader, &mut buf).await.unwrap();
         assert_eq!(
             buf,

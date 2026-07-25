@@ -47,17 +47,8 @@ pub fn run(command: Commands) -> anyhow::Result<()> {
             stdin_socket,
             stdout_socket,
             stderr_socket,
-        } => execute_run(
-            log_file,
-            pid_file,
-            stdin_socket,
-            stdout_socket,
-            stderr_socket,
-        ),
-        Commands::Proxy {
-            identifier,
-            reconnect,
-        } => execute_proxy(identifier, reconnect)
+        } => execute_run(log_file, pid_file, stdin_socket, stdout_socket, stderr_socket),
+        Commands::Proxy { identifier, reconnect } => execute_proxy(identifier, reconnect)
             .inspect_err(|err| {
                 if let ExecuteProxyError::ServerNotRunning(err) = err {
                     std::process::exit(err.to_exit_code());
@@ -68,9 +59,7 @@ pub fn run(command: Commands) -> anyhow::Result<()> {
             let release_channel = *RELEASE_CHANNEL;
             let fallback = match release_channel {
                 ReleaseChannel::Stable => env!("CARGO_PKG_VERSION"),
-                ReleaseChannel::Dev => {
-                    option_env!("GRAM_COMMIT_SHA").unwrap_or(release_channel.dev_name())
-                }
+                ReleaseChannel::Dev => option_env!("GRAM_COMMIT_SHA").unwrap_or(release_channel.dev_name()),
             };
             let version_name = match option_env!("GRAM_COMMIT_NAME") {
                 Some(commit_name) => format!("{commit_name} "),

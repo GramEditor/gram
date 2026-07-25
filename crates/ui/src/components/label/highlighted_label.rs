@@ -100,11 +100,7 @@ impl LabelCommon for HighlightedLabel {
     }
 }
 
-pub fn highlight_ranges(
-    text: &str,
-    indices: &[usize],
-    style: HighlightStyle,
-) -> Vec<(Range<usize>, HighlightStyle)> {
+pub fn highlight_ranges(text: &str, indices: &[usize], style: HighlightStyle) -> Vec<(Range<usize>, HighlightStyle)> {
     let mut highlight_indices = indices.iter().copied().peekable();
     let mut highlights: Vec<(Range<usize>, HighlightStyle)> = Vec::new();
 
@@ -229,14 +225,17 @@ impl Component for HighlightedLabel {
                             ),
                             single_example(
                                 "Truncate",
-                                HighlightedLabel::new("This is a very long text that should be truncated with highlights", vec![0, 1, 2, 3, 4, 5])
-                                    .truncate()
-                                    .into_any_element(),
+                                HighlightedLabel::new(
+                                    "This is a very long text that should be truncated with highlights",
+                                    vec![0, 1, 2, 3, 4, 5],
+                                )
+                                .truncate()
+                                .into_any_element(),
                             ),
                         ],
                     ),
                 ])
-                .into_any_element()
+                .into_any_element(),
         )
     }
 }

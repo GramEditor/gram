@@ -50,9 +50,7 @@ impl WgpuContext {
             adapter.get_info().backend
         );
 
-        let dual_source_blending_available = adapter
-            .features()
-            .contains(wgpu::Features::DUAL_SOURCE_BLENDING);
+        let dual_source_blending_available = adapter.features().contains(wgpu::Features::DUAL_SOURCE_BLENDING);
 
         let mut required_features = wgpu::Features::empty();
         if dual_source_blending_available {
@@ -87,10 +85,7 @@ impl WgpuContext {
         })
     }
 
-    async fn select_adapter(
-        instance: &wgpu::Instance,
-        device_id_filter: Option<u32>,
-    ) -> anyhow::Result<wgpu::Adapter> {
+    async fn select_adapter(instance: &wgpu::Instance, device_id_filter: Option<u32>) -> anyhow::Result<wgpu::Adapter> {
         if let Some(device_id) = device_id_filter {
             let adapters: Vec<_> = instance.enumerate_adapters(wgpu::Backends::all()).await;
 
@@ -103,11 +98,7 @@ impl WgpuContext {
             for adapter in adapters.into_iter() {
                 let info = adapter.get_info();
                 if info.device == device_id {
-                    log::info!(
-                        "Found GPU matching GRAM_DEVICE_ID={:#06x}: {}",
-                        device_id,
-                        info.name
-                    );
+                    log::info!("Found GPU matching GRAM_DEVICE_ID={:#06x}: {}", device_id, info.name);
                     return Ok(adapter);
                 } else {
                     non_matching_adapter_infos.push(info);

@@ -40,21 +40,13 @@ pub mod windows {
     }
 
     impl AsyncRead for UnixStream {
-        fn poll_read(
-            mut self: Pin<&mut Self>,
-            cx: &mut Context<'_>,
-            buf: &mut [u8],
-        ) -> Poll<Result<usize>> {
+        fn poll_read(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut [u8]) -> Poll<Result<usize>> {
             Pin::new(&mut self.0).poll_read(cx, buf)
         }
     }
 
     impl AsyncWrite for UnixStream {
-        fn poll_write(
-            mut self: Pin<&mut Self>,
-            cx: &mut Context<'_>,
-            buf: &[u8],
-        ) -> Poll<Result<usize>> {
+        fn poll_write(mut self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8]) -> Poll<Result<usize>> {
             Pin::new(&mut self.0).poll_write(cx, buf)
         }
 

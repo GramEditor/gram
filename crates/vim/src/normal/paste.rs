@@ -1,7 +1,4 @@
-use editor::{
-    DisplayPoint, MultiBufferOffset, RowExt, SelectionEffects, display_map::ToDisplayPoint,
-    movement,
-};
+use editor::{DisplayPoint, MultiBufferOffset, RowExt, SelectionEffects, display_map::ToDisplayPoint, movement};
 use gpui::{Action, Context, Window};
 use language::{Bias, SelectionGoal};
 use schemars::JsonSchema;
@@ -52,8 +49,8 @@ impl Vim {
                 else {
                     return;
                 };
-                let clipboard_selections = clipboard_selections
-                    .filter(|sel| sel.len() > 1 && vim.mode != Mode::VisualLine);
+                let clipboard_selections =
+                    clipboard_selections.filter(|sel| sel.len() > 1 && vim.mode != Mode::VisualLine);
 
                 if !action.preserve_clipboard && vim.mode.is_visual() {
                     vim.copy_selections_content(editor, MotionKind::for_mode(vim.mode), window, cx);
@@ -68,8 +65,7 @@ impl Vim {
                 let mut selections_to_process = Vec::new();
                 let mut i = 0;
                 while i < current_selections.len() {
-                    selections_to_process
-                        .push((current_selections[i].start..current_selections[i].end, true));
+                    selections_to_process.push((current_selections[i].start..current_selections[i].end, true));
                     i += 1;
                 }
                 if let Some(clipboard_selections) = clipboard_selections.as_ref() {
@@ -80,20 +76,16 @@ impl Vim {
                         .unwrap();
                     let mut row = current_selections.last().unwrap().end.row().next_row();
                     while i < clipboard_selections.len() {
-                        let cursor =
-                            display_map.clip_point(DisplayPoint::new(row, left), Bias::Left);
+                        let cursor = display_map.clip_point(DisplayPoint::new(row, left), Bias::Left);
                         selections_to_process.push((cursor..cursor, false));
                         i += 1;
                         row.0 += 1;
                     }
                 }
 
-                let first_selection_indent_column =
-                    clipboard_selections.as_ref().and_then(|selections| {
-                        selections
-                            .first()
-                            .map(|selection| selection.first_line_indent)
-                    });
+                let first_selection_indent_column = clipboard_selections
+                    .as_ref()
+                    .and_then(|selections| selections.first().map(|selection| selection.first_line_indent));
                 let before = action.before || vim.mode == Mode::VisualLine;
 
                 let mut edits = Vec::new();
@@ -120,8 +112,7 @@ impl Vim {
 
                     if line_mode && !before {
                         if selection.is_empty() {
-                            to_insert =
-                                "\n".to_owned() + &to_insert[..to_insert.len() - "\n".len()];
+                            to_insert = "\n".to_owned() + &to_insert[..to_insert.len() - "\n".len()];
                         } else {
                             to_insert = "\n".to_owned() + &to_insert;
                         }
@@ -136,12 +127,11 @@ impl Vim {
                         // the line. In this situation we'll want to move one
                         // position to the left, ensuring we don't join the last
                         // line of the selection with the line directly below.
-                        let end_point =
-                            if vim.mode == Mode::VisualLine && selection.end.column() == 0 {
-                                movement::left(&display_map, selection.end)
-                            } else {
-                                selection.end
-                            };
+                        let end_point = if vim.mode == Mode::VisualLine && selection.end.column() == 0 {
+                            movement::left(&display_map, selection.end)
+                        } else {
+                            selection.end
+                        };
 
                         selection.start..end_point
                     } else if line_mode {
@@ -160,12 +150,10 @@ impl Vim {
                         point..point
                     };
 
-                    let point_range = display_range.start.to_point(&display_map)
-                        ..display_range.end.to_point(&display_map);
+                    let point_range =
+                        display_range.start.to_point(&display_map)..display_range.end.to_point(&display_map);
                     let anchor = if is_multiline || vim.mode == Mode::VisualLine {
-                        display_map
-                            .buffer_snapshot()
-                            .anchor_before(point_range.start)
+                        display_map.buffer_snapshot().anchor_before(point_range.start)
                     } else {
                         display_map.buffer_snapshot().anchor_after(point_range.end)
                     };
@@ -177,10 +165,7 @@ impl Vim {
                     original_indent_columns.push(original_indent_column);
                 }
 
-                let cursor_offset = editor
-                    .selections
-                    .last::<MultiBufferOffset>(&display_map)
-                    .head();
+                let cursor_offset = editor.selections.last::<MultiBufferOffset>(&display_map).head();
                 if editor
                     .buffer()
                     .read(cx)
@@ -204,14 +189,8 @@ impl Vim {
                             let mut cursor = anchor.to_display_point(map);
                             if *line_mode {
                                 if !before {
-                                    cursor = movement::down(
-                                        map,
-                                        cursor,
-                                        SelectionGoal::None,
-                                        false,
-                                        &text_layout_details,
-                                    )
-                                    .0;
+                                    cursor =
+                                        movement::down(map, cursor, SelectionGoal::None, false, &text_layout_details).0;
                                 }
                                 cursor = movement::indented_line_beginning(map, cursor, true, true);
                             } else if !is_multiline && !vim.temp_mode {
@@ -288,13 +267,7 @@ impl Vim {
                 editor.set_clip_at_line_ends(false, cx);
                 editor.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
                     s.move_with(|map, selection| {
-                        motion.expand_selection(
-                            map,
-                            selection,
-                            times,
-                            &text_layout_details,
-                            forced_motion,
-                        );
+                        motion.expand_selection(map, selection, times, &text_layout_details, forced_motion);
                     });
                 });
 
@@ -450,8 +423,7 @@ mod test {
 
         cx.update_global(|store: &mut SettingsStore, cx| {
             store.update_user_settings(cx, |s| {
-                s.vim.get_or_insert_default().use_system_clipboard =
-                    Some(UseSystemClipboard::OnYank)
+                s.vim.get_or_insert_default().use_system_clipboard = Some(UseSystemClipboard::OnYank)
             });
         });
 

@@ -14,8 +14,8 @@ use crate::Session;
 use super::RunningKernel;
 use anyhow::Result;
 use jupyter_websocket_client::{
-    JupyterWebSocket, JupyterWebSocketReader, JupyterWebSocketWriter, KernelLaunchRequest,
-    KernelSpecsResponse, RemoteServer,
+    JupyterWebSocket, JupyterWebSocketReader, JupyterWebSocketWriter, KernelLaunchRequest, KernelSpecsResponse,
+    RemoteServer,
 };
 use std::{fmt::Debug, sync::Arc};
 
@@ -179,11 +179,9 @@ impl RemoteRunningKernel {
                 protocol_mode: Default::default(),
             };
 
-            let (mut w, mut r): (JupyterWebSocketWriter, JupyterWebSocketReader) =
-                kernel_socket.split();
+            let (mut w, mut r): (JupyterWebSocketWriter, JupyterWebSocketReader) = kernel_socket.split();
 
-            let (request_tx, mut request_rx) =
-                futures::channel::mpsc::channel::<JupyterMessage>(100);
+            let (request_tx, mut request_rx) = futures::channel::mpsc::channel::<JupyterMessage>(100);
 
             let routing_task = cx.background_spawn({
                 async move {
@@ -271,9 +269,7 @@ impl RunningKernel for RemoteRunningKernel {
     }
 
     fn force_shutdown(&mut self, window: &mut Window, cx: &mut App) -> Task<anyhow::Result<()>> {
-        let url = self
-            .remote_server
-            .api_url(&format!("/kernels/{}", self.kernel_id));
+        let url = self.remote_server.api_url(&format!("/kernels/{}", self.kernel_id));
         let token = self.remote_server.token.clone();
         let http_client = self.http_client.clone();
 

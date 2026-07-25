@@ -5,8 +5,8 @@ use std::{os::windows::ffi::OsStringExt, path::PathBuf};
 use windows::{
     Win32::{
         Foundation::{
-            CLASS_E_CLASSNOTAVAILABLE, E_FAIL, E_INVALIDARG, E_NOTIMPL, ERROR_INSUFFICIENT_BUFFER,
-            GetLastError, HINSTANCE, MAX_PATH,
+            CLASS_E_CLASSNOTAVAILABLE, E_FAIL, E_INVALIDARG, E_NOTIMPL, ERROR_INSUFFICIENT_BUFFER, GetLastError,
+            HINSTANCE, MAX_PATH,
         },
         Globalization::u_strlen,
         System::{
@@ -15,8 +15,8 @@ use windows::{
             SystemServices::DLL_PROCESS_ATTACH,
         },
         UI::Shell::{
-            ECF_DEFAULT, ECS_ENABLED, IEnumExplorerCommand, IExplorerCommand,
-            IExplorerCommand_Impl, IShellItemArray, SHStrDupW, SIGDN_FILESYSPATH,
+            ECF_DEFAULT, ECS_ENABLED, IEnumExplorerCommand, IExplorerCommand, IExplorerCommand_Impl, IShellItemArray,
+            SHStrDupW, SIGDN_FILESYSPATH,
         },
     },
     core::{BOOL, GUID, HRESULT, HSTRING, Interface, Ref, Result, implement},
@@ -25,11 +25,7 @@ use windows::{
 static mut DLL_INSTANCE: HINSTANCE = HINSTANCE(std::ptr::null_mut());
 
 #[unsafe(no_mangle)]
-extern "system" fn DllMain(
-    hinstdll: HINSTANCE,
-    fdwreason: u32,
-    _lpvreserved: *mut core::ffi::c_void,
-) -> bool {
+extern "system" fn DllMain(hinstdll: HINSTANCE, fdwreason: u32, _lpvreserved: *mut core::ffi::c_void) -> bool {
     if fdwreason == DLL_PROCESS_ATTACH {
         unsafe { DLL_INSTANCE = hinstdll };
     }
@@ -43,8 +39,7 @@ struct ExplorerCommandInjector;
 #[allow(non_snake_case)]
 impl IExplorerCommand_Impl for ExplorerCommandInjector_Impl {
     fn GetTitle(&self, _: Ref<IShellItemArray>) -> Result<windows_core::PWSTR> {
-        let command_description =
-            retrieve_command_description().unwrap_or(HSTRING::from("Open with Gram"));
+        let command_description = retrieve_command_description().unwrap_or(HSTRING::from("Open with Gram"));
         unsafe { SHStrDupW(&command_description) }
     }
 

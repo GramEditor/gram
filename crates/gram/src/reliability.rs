@@ -46,11 +46,7 @@ fn monitor_hangs(cx: &App) {
                             }
 
                             if is_full {
-                                save_hang_trace(
-                                    main_thread_id,
-                                    &background_executor,
-                                    hang_time.unwrap(),
-                                );
+                                save_hang_trace(main_thread_id, &background_executor, hang_time.unwrap());
                             }
                         }
                     }
@@ -77,10 +73,7 @@ fn save_hang_trace(
         })
         .collect::<Vec<_>>();
 
-    let trace_path = paths::hang_traces_dir().join(&format!(
-        "hang-{}.miniprof",
-        hang_time.format("%Y-%m-%d_%H-%M-%S")
-    ));
+    let trace_path = paths::hang_traces_dir().join(&format!("hang-{}.miniprof", hang_time.format("%Y-%m-%d_%H-%M-%S")));
 
     let Some(timings) = serde_json::to_string(&thread_timings)
         .context("hang timings serialization")
@@ -93,8 +86,5 @@ fn save_hang_trace(
         .context("hang trace file writing")
         .log_err();
 
-    info!(
-        "hang detected, trace file saved at: {}",
-        trace_path.display()
-    );
+    info!("hang detected, trace file saved at: {}", trace_path.display());
 }

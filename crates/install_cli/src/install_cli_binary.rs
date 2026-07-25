@@ -29,11 +29,7 @@ async fn install_script(cx: &AsyncApp) -> Result<PathBuf> {
     // If the symlink is not there or is outdated, first try replacing it
     // without escalating.
     smol::fs::remove_file(link_path).await.log_err();
-    if smol::fs::unix::symlink(&cli_path, link_path)
-        .await
-        .log_err()
-        .is_some()
-    {
+    if smol::fs::unix::symlink(&cli_path, link_path).await.log_err().is_some() {
         return Ok(link_path.into());
     }
 
@@ -75,9 +71,7 @@ pub fn install_cli_binary(window: &mut Window, cx: &mut Context<Workspace>) {
             cx.background_spawn(prompt).detach();
             return Ok(());
         }
-        let path = install_script(cx.deref())
-            .await
-            .context("error creating CLI symlink")?;
+        let path = install_script(cx.deref()).await.context("error creating CLI symlink")?;
 
         workspace.update_in(cx, |workspace, _, cx| {
             struct InstalledGramCli;

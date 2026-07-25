@@ -49,12 +49,8 @@ impl<T: Operation> OperationQueue<T> {
     pub fn insert(&mut self, mut ops: Vec<T>) {
         ops.sort_by_key(|op| op.lamport_timestamp());
         ops.dedup_by_key(|op| op.lamport_timestamp());
-        self.0.edit(
-            ops.into_iter()
-                .map(|op| Edit::Insert(OperationItem(op)))
-                .collect(),
-            (),
-        );
+        self.0
+            .edit(ops.into_iter().map(|op| Edit::Insert(OperationItem(op))).collect(), ());
     }
 
     pub fn drain(&mut self) -> Self {
@@ -138,10 +134,7 @@ mod tests {
         let mut queue = OperationQueue::new();
         assert_eq!(queue.len(), 0);
 
-        queue.insert(vec![
-            TestOperation(clock.tick()),
-            TestOperation(clock.tick()),
-        ]);
+        queue.insert(vec![TestOperation(clock.tick()), TestOperation(clock.tick())]);
         assert_eq!(queue.len(), 2);
 
         queue.insert(vec![TestOperation(clock.tick())]);

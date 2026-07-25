@@ -91,10 +91,7 @@ pub fn truncate_and_remove_front(s: &str, max_chars: usize) -> String {
         return s.to_string();
     }
     let suffix_char_length = max_chars.saturating_sub(1);
-    let truncation_ix = s
-        .char_indices()
-        .map(|(i, _)| i)
-        .nth_back(suffix_char_length);
+    let truncation_ix = s.char_indices().map(|(i, _)| i).nth_back(suffix_char_length);
     match truncation_ix {
         Some(index) if index > 0 => "…".to_string() + &s[index..],
         _ => s.to_string(),
@@ -166,10 +163,7 @@ fn test_truncate_lines_to_byte_limit() {
 
     // Test with non-ASCII characters
     let text_utf8 = "Line 1\nLíne 2\nLine 3";
-    assert_eq!(
-        truncate_lines_to_byte_limit(text_utf8, 15),
-        "Line 1\nLíne 2\n"
-    );
+    assert_eq!(truncate_lines_to_byte_limit(text_utf8, 15), "Line 1\nLíne 2\n");
 }
 
 pub fn post_inc<T: From<u8> + AddAssign<T> + Copy>(value: &mut T) -> T {
@@ -302,8 +296,7 @@ fn load_shell_from_passwd() -> Result<()> {
 
 /// Returns a shell escaped path for the current executable
 pub fn get_shell_safe_binary_path(shell_kind: shell::ShellKind) -> anyhow::Result<String> {
-    let mut binary_path =
-        std::env::current_exe().context("Failed to determine current executable path.")?;
+    let mut binary_path = std::env::current_exe().context("Failed to determine current executable path.")?;
     if cfg!(target_os = "linux")
         && !binary_path.is_file()
         && let Some(truncated) = binary_path
@@ -324,8 +317,7 @@ pub fn get_shell_safe_binary_path(shell_kind: shell::ShellKind) -> anyhow::Resul
 /// Returns a path for the gram cli executable, this function
 /// should be called from the executable, not gram-cli.
 pub fn get_gram_cli_path() -> Result<PathBuf> {
-    let binary_path =
-        std::env::current_exe().context("Failed to determine current executable path.")?;
+    let binary_path = std::env::current_exe().context("Failed to determine current executable path.")?;
     let parent = binary_path
         .parent()
         .context("Failed to determine parent directory of executable path.")?;
@@ -346,19 +338,8 @@ pub fn get_gram_cli_path() -> Result<PathBuf> {
 
     possible_locations
         .iter()
-        .find_map(|p| {
-            parent
-                .join(p)
-                .canonicalize()
-                .ok()
-                .filter(|p| p != &binary_path)
-        })
-        .with_context(|| {
-            format!(
-                "could not find gram-cli from any of: {}",
-                possible_locations.join(", ")
-            )
-        })
+        .find_map(|p| parent.join(p).canonicalize().ok().filter(|p| p != &binary_path))
+        .with_context(|| format!("could not find gram-cli from any of: {}", possible_locations.join(", ")))
 }
 
 #[cfg(unix)]
@@ -418,9 +399,7 @@ pub async fn load_login_shell_environment() -> Result<()> {
 /// of the terminal.
 ///
 /// For more details: <https://registerspill.thorstenball.com/p/how-to-lose-control-of-your-shell>
-pub fn set_pre_exec_to_start_new_session(
-    command: &mut std::process::Command,
-) -> &mut std::process::Command {
+pub fn set_pre_exec_to_start_new_session(command: &mut std::process::Command) -> &mut std::process::Command {
     // safety: code in pre_exec should be signal safe.
     // https://man7.org/linux/man-pages/man7/signal-safety.7.html
     #[cfg(not(target_os = "windows"))]
@@ -436,10 +415,7 @@ pub fn set_pre_exec_to_start_new_session(
     command
 }
 
-pub fn merge_json_lenient_value_into(
-    source: serde_json_lenient::Value,
-    target: &mut serde_json_lenient::Value,
-) {
+pub fn merge_json_lenient_value_into(source: serde_json_lenient::Value, target: &mut serde_json_lenient::Value) {
     match (source, target) {
         (serde_json_lenient::Value::Object(source), serde_json_lenient::Value::Object(target)) => {
             for (key, value) in source {
@@ -848,9 +824,7 @@ mod rng {
                 // two-byte greek letters
                 20..=32 => char::from_u32(self.rng.random_range(('α' as u32)..('ω' as u32 + 1))),
                 // // three-byte characters
-                33..=45 => ['✋', '✅', '❌', '❎', '⭐']
-                    .choose(&mut self.rng)
-                    .copied(),
+                33..=45 => ['✋', '✅', '❌', '❎', '⭐'].choose(&mut self.rng).copied(),
                 // // four-byte characters
                 46..=58 => ['🍐', '🏀', '🍗', '🎉'].choose(&mut self.rng).copied(),
                 // ascii letters
@@ -1021,9 +995,7 @@ pub fn default<D: Default>() -> D {
     Default::default()
 }
 
-pub use self::shell::{
-    get_default_system_shell, get_default_system_shell_preferring_bash, get_system_shell,
-};
+pub use self::shell::{get_default_system_shell, get_default_system_shell_preferring_bash, get_system_shell};
 
 #[derive(Debug)]
 pub enum ConnectionResult<O> {
@@ -1294,10 +1266,7 @@ Line 3"#
             vec![5, 6, 4, 7, 3, 0, 2, 1]
         );
         // None before / after
-        assert_eq!(
-            wrapped_usize_outward_from(3, 0, 0, 8).collect::<Vec<usize>>(),
-            vec![3]
-        );
+        assert_eq!(wrapped_usize_outward_from(3, 0, 0, 8).collect::<Vec<usize>>(), vec![3]);
         // Starting point already wrapped
         assert_eq!(
             wrapped_usize_outward_from(15, 2, 2, 10).collect::<Vec<usize>>(),

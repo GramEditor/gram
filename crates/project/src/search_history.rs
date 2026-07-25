@@ -100,10 +100,8 @@ mod tests {
     #[test]
     fn test_add() {
         const MAX_HISTORY_LEN: usize = 20;
-        let mut search_history = SearchHistory::new(
-            Some(MAX_HISTORY_LEN),
-            QueryInsertionBehavior::ReplacePreviousIfContains,
-        );
+        let mut search_history =
+            SearchHistory::new(Some(MAX_HISTORY_LEN), QueryInsertionBehavior::ReplacePreviousIfContains);
         let mut cursor = SearchHistoryCursor::default();
 
         assert_eq!(
@@ -121,11 +119,7 @@ mod tests {
 
         // check if duplicates are not added
         search_history.add(&mut cursor, "rust".to_string());
-        assert_eq!(
-            search_history.history.len(),
-            1,
-            "Should not add a duplicate"
-        );
+        assert_eq!(search_history.history.len(), 1, "Should not add a duplicate");
         assert_eq!(search_history.current(&cursor), Some("rust"));
 
         // check if new string containing the previous string replaces it

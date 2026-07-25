@@ -43,11 +43,7 @@ impl AlacModifiers {
     }
 }
 
-pub fn to_esc_str(
-    keystroke: &Keystroke,
-    mode: &TermMode,
-    option_as_meta: bool,
-) -> Option<Cow<'static, str>> {
+pub fn to_esc_str(keystroke: &Keystroke, mode: &TermMode, option_as_meta: bool) -> Option<Cow<'static, str>> {
     let modifiers = AlacModifiers::new(keystroke);
 
     // Manual Bindings including modifiers
@@ -67,12 +63,8 @@ pub fn to_esc_str(
         ("space", AlacModifiers::Ctrl) => Some("\x00"),
         ("home", AlacModifiers::Shift) if mode.contains(TermMode::ALT_SCREEN) => Some("\x1b[1;2H"),
         ("end", AlacModifiers::Shift) if mode.contains(TermMode::ALT_SCREEN) => Some("\x1b[1;2F"),
-        ("pageup", AlacModifiers::Shift) if mode.contains(TermMode::ALT_SCREEN) => {
-            Some("\x1b[5;2~")
-        }
-        ("pagedown", AlacModifiers::Shift) if mode.contains(TermMode::ALT_SCREEN) => {
-            Some("\x1b[6;2~")
-        }
+        ("pageup", AlacModifiers::Shift) if mode.contains(TermMode::ALT_SCREEN) => Some("\x1b[5;2~"),
+        ("pagedown", AlacModifiers::Shift) if mode.contains(TermMode::ALT_SCREEN) => Some("\x1b[6;2~"),
         ("home", AlacModifiers::None) if mode.contains(TermMode::APP_CURSOR) => Some("\x1bOH"),
         ("home", AlacModifiers::None) if !mode.contains(TermMode::APP_CURSOR) => Some("\x1b[H"),
         ("end", AlacModifiers::None) if mode.contains(TermMode::APP_CURSOR) => Some("\x1bOF"),
@@ -112,65 +104,65 @@ pub fn to_esc_str(
         ("f20", AlacModifiers::None) => Some("\x1b[34~"),
         // NumpadEnter, Action::Esc("\n".into());
         //Mappings for caret notation keys
-        ("a", AlacModifiers::Ctrl) => Some("\x01"), //1
+        ("a", AlacModifiers::Ctrl) => Some("\x01"),      //1
         ("A", AlacModifiers::CtrlShift) => Some("\x01"), //1
-        ("b", AlacModifiers::Ctrl) => Some("\x02"), //2
+        ("b", AlacModifiers::Ctrl) => Some("\x02"),      //2
         ("B", AlacModifiers::CtrlShift) => Some("\x02"), //2
-        ("c", AlacModifiers::Ctrl) => Some("\x03"), //3
+        ("c", AlacModifiers::Ctrl) => Some("\x03"),      //3
         ("C", AlacModifiers::CtrlShift) => Some("\x03"), //3
-        ("d", AlacModifiers::Ctrl) => Some("\x04"), //4
+        ("d", AlacModifiers::Ctrl) => Some("\x04"),      //4
         ("D", AlacModifiers::CtrlShift) => Some("\x04"), //4
-        ("e", AlacModifiers::Ctrl) => Some("\x05"), //5
+        ("e", AlacModifiers::Ctrl) => Some("\x05"),      //5
         ("E", AlacModifiers::CtrlShift) => Some("\x05"), //5
-        ("f", AlacModifiers::Ctrl) => Some("\x06"), //6
+        ("f", AlacModifiers::Ctrl) => Some("\x06"),      //6
         ("F", AlacModifiers::CtrlShift) => Some("\x06"), //6
-        ("g", AlacModifiers::Ctrl) => Some("\x07"), //7
+        ("g", AlacModifiers::Ctrl) => Some("\x07"),      //7
         ("G", AlacModifiers::CtrlShift) => Some("\x07"), //7
-        ("h", AlacModifiers::Ctrl) => Some("\x08"), //8
+        ("h", AlacModifiers::Ctrl) => Some("\x08"),      //8
         ("H", AlacModifiers::CtrlShift) => Some("\x08"), //8
-        ("i", AlacModifiers::Ctrl) => Some("\x09"), //9
+        ("i", AlacModifiers::Ctrl) => Some("\x09"),      //9
         ("I", AlacModifiers::CtrlShift) => Some("\x09"), //9
-        ("j", AlacModifiers::Ctrl) => Some("\x0a"), //10
+        ("j", AlacModifiers::Ctrl) => Some("\x0a"),      //10
         ("J", AlacModifiers::CtrlShift) => Some("\x0a"), //10
-        ("k", AlacModifiers::Ctrl) => Some("\x0b"), //11
+        ("k", AlacModifiers::Ctrl) => Some("\x0b"),      //11
         ("K", AlacModifiers::CtrlShift) => Some("\x0b"), //11
-        ("l", AlacModifiers::Ctrl) => Some("\x0c"), //12
+        ("l", AlacModifiers::Ctrl) => Some("\x0c"),      //12
         ("L", AlacModifiers::CtrlShift) => Some("\x0c"), //12
-        ("m", AlacModifiers::Ctrl) => Some("\x0d"), //13
+        ("m", AlacModifiers::Ctrl) => Some("\x0d"),      //13
         ("M", AlacModifiers::CtrlShift) => Some("\x0d"), //13
-        ("n", AlacModifiers::Ctrl) => Some("\x0e"), //14
+        ("n", AlacModifiers::Ctrl) => Some("\x0e"),      //14
         ("N", AlacModifiers::CtrlShift) => Some("\x0e"), //14
-        ("o", AlacModifiers::Ctrl) => Some("\x0f"), //15
+        ("o", AlacModifiers::Ctrl) => Some("\x0f"),      //15
         ("O", AlacModifiers::CtrlShift) => Some("\x0f"), //15
-        ("p", AlacModifiers::Ctrl) => Some("\x10"), //16
+        ("p", AlacModifiers::Ctrl) => Some("\x10"),      //16
         ("P", AlacModifiers::CtrlShift) => Some("\x10"), //16
-        ("q", AlacModifiers::Ctrl) => Some("\x11"), //17
+        ("q", AlacModifiers::Ctrl) => Some("\x11"),      //17
         ("Q", AlacModifiers::CtrlShift) => Some("\x11"), //17
-        ("r", AlacModifiers::Ctrl) => Some("\x12"), //18
+        ("r", AlacModifiers::Ctrl) => Some("\x12"),      //18
         ("R", AlacModifiers::CtrlShift) => Some("\x12"), //18
-        ("s", AlacModifiers::Ctrl) => Some("\x13"), //19
+        ("s", AlacModifiers::Ctrl) => Some("\x13"),      //19
         ("S", AlacModifiers::CtrlShift) => Some("\x13"), //19
-        ("t", AlacModifiers::Ctrl) => Some("\x14"), //20
+        ("t", AlacModifiers::Ctrl) => Some("\x14"),      //20
         ("T", AlacModifiers::CtrlShift) => Some("\x14"), //20
-        ("u", AlacModifiers::Ctrl) => Some("\x15"), //21
+        ("u", AlacModifiers::Ctrl) => Some("\x15"),      //21
         ("U", AlacModifiers::CtrlShift) => Some("\x15"), //21
-        ("v", AlacModifiers::Ctrl) => Some("\x16"), //22
+        ("v", AlacModifiers::Ctrl) => Some("\x16"),      //22
         ("V", AlacModifiers::CtrlShift) => Some("\x16"), //22
-        ("w", AlacModifiers::Ctrl) => Some("\x17"), //23
+        ("w", AlacModifiers::Ctrl) => Some("\x17"),      //23
         ("W", AlacModifiers::CtrlShift) => Some("\x17"), //23
-        ("x", AlacModifiers::Ctrl) => Some("\x18"), //24
+        ("x", AlacModifiers::Ctrl) => Some("\x18"),      //24
         ("X", AlacModifiers::CtrlShift) => Some("\x18"), //24
-        ("y", AlacModifiers::Ctrl) => Some("\x19"), //25
+        ("y", AlacModifiers::Ctrl) => Some("\x19"),      //25
         ("Y", AlacModifiers::CtrlShift) => Some("\x19"), //25
-        ("z", AlacModifiers::Ctrl) => Some("\x1a"), //26
+        ("z", AlacModifiers::Ctrl) => Some("\x1a"),      //26
         ("Z", AlacModifiers::CtrlShift) => Some("\x1a"), //26
-        ("@", AlacModifiers::Ctrl) => Some("\x00"), //0
-        ("[", AlacModifiers::Ctrl) => Some("\x1b"), //27
-        ("\\", AlacModifiers::Ctrl) => Some("\x1c"), //28
-        ("]", AlacModifiers::Ctrl) => Some("\x1d"), //29
-        ("^", AlacModifiers::Ctrl) => Some("\x1e"), //30
-        ("_", AlacModifiers::Ctrl) => Some("\x1f"), //31
-        ("?", AlacModifiers::Ctrl) => Some("\x7f"), //127
+        ("@", AlacModifiers::Ctrl) => Some("\x00"),      //0
+        ("[", AlacModifiers::Ctrl) => Some("\x1b"),      //27
+        ("\\", AlacModifiers::Ctrl) => Some("\x1c"),     //28
+        ("]", AlacModifiers::Ctrl) => Some("\x1d"),      //29
+        ("^", AlacModifiers::Ctrl) => Some("\x1e"),      //30
+        ("_", AlacModifiers::Ctrl) => Some("\x1f"),      //31
+        ("?", AlacModifiers::Ctrl) => Some("\x7f"),      //127
         _ => None,
     };
     if let Some(esc_str) = manual_esc_str {
@@ -220,8 +212,7 @@ pub fn to_esc_str(
 
     if !cfg!(target_os = "macos") || option_as_meta {
         let is_alt_lowercase_ascii = modifiers == AlacModifiers::Alt && keystroke.key.is_ascii();
-        let is_alt_uppercase_ascii =
-            keystroke.modifiers.alt && keystroke.modifiers.shift && keystroke.key.is_ascii();
+        let is_alt_uppercase_ascii = keystroke.modifiers.alt && keystroke.modifiers.shift && keystroke.key.is_ascii();
         if is_alt_lowercase_ascii || is_alt_uppercase_ascii {
             let key = if is_alt_uppercase_ascii {
                 &keystroke.key.to_ascii_uppercase()
@@ -282,22 +273,13 @@ mod test {
         assert_eq!(to_esc_str(&shift_end, &none, false), None);
 
         let alt_screen = TermMode::ALT_SCREEN;
-        assert_eq!(
-            to_esc_str(&shift_pageup, &alt_screen, false),
-            Some("\x1b[5;2~".into())
-        );
+        assert_eq!(to_esc_str(&shift_pageup, &alt_screen, false), Some("\x1b[5;2~".into()));
         assert_eq!(
             to_esc_str(&shift_pagedown, &alt_screen, false),
             Some("\x1b[6;2~".into())
         );
-        assert_eq!(
-            to_esc_str(&shift_home, &alt_screen, false),
-            Some("\x1b[1;2H".into())
-        );
-        assert_eq!(
-            to_esc_str(&shift_end, &alt_screen, false),
-            Some("\x1b[1;2F".into())
-        );
+        assert_eq!(to_esc_str(&shift_home, &alt_screen, false), Some("\x1b[1;2H".into()));
+        assert_eq!(to_esc_str(&shift_end, &alt_screen, false), Some("\x1b[1;2F".into()));
 
         let pageup = Keystroke::parse("pageup").unwrap();
         let pagedown = Keystroke::parse("pagedown").unwrap();
@@ -341,10 +323,7 @@ mod test {
 
         assert_eq!(to_esc_str(&up, &app_cursor, false), Some("\x1bOA".into()));
         assert_eq!(to_esc_str(&down, &app_cursor, false), Some("\x1bOB".into()));
-        assert_eq!(
-            to_esc_str(&right, &app_cursor, false),
-            Some("\x1bOC".into())
-        );
+        assert_eq!(to_esc_str(&right, &app_cursor, false), Some("\x1bOC".into()));
         assert_eq!(to_esc_str(&left, &app_cursor, false), Some("\x1bOD".into()));
     }
 
@@ -361,11 +340,7 @@ mod test {
                     &mode,
                     false
                 ),
-                to_esc_str(
-                    &Keystroke::parse(&format!("ctrl-{}", upper)).unwrap(),
-                    &mode,
-                    false
-                ),
+                to_esc_str(&Keystroke::parse(&format!("ctrl-{}", upper)).unwrap(), &mode, false),
                 "On letter: {}/{}",
                 lower,
                 upper
@@ -389,9 +364,8 @@ mod test {
         }
 
         let gpui_keys = [
-            "up", "down", "right", "left", "f1", "f2", "f3", "f4", "F5", "f6", "f7", "f8", "f9",
-            "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17", "f18", "f19", "f20", "insert",
-            "pageup", "pagedown", "end", "home",
+            "up", "down", "right", "left", "f1", "f2", "f3", "f4", "F5", "f6", "f7", "f8", "f9", "f10", "f11", "f12",
+            "f13", "f14", "f15", "f16", "f17", "f18", "f19", "f20", "insert", "pageup", "pagedown", "end", "home",
         ];
 
         for key in gpui_keys {
@@ -417,10 +391,7 @@ mod test {
         assert_eq!(to_esc_str(&shift_enter, &mode, false), Some("\x0a".into()));
 
         // Regular enter should still send carriage return
-        assert_eq!(
-            to_esc_str(&regular_enter, &mode, false),
-            Some("\x0d".into())
-        );
+        assert_eq!(to_esc_str(&regular_enter, &mode, false), Some("\x0d".into()));
     }
 
     #[test]
@@ -442,9 +413,6 @@ mod test {
         assert_eq!(5, modifier_code(&Keystroke::parse("ctrl-a").unwrap()));
         assert_eq!(6, modifier_code(&Keystroke::parse("shift-ctrl-a").unwrap()));
         assert_eq!(7, modifier_code(&Keystroke::parse("alt-ctrl-a").unwrap()));
-        assert_eq!(
-            8,
-            modifier_code(&Keystroke::parse("shift-ctrl-alt-a").unwrap())
-        );
+        assert_eq!(8, modifier_code(&Keystroke::parse("shift-ctrl-alt-a").unwrap()));
     }
 }

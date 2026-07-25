@@ -72,11 +72,7 @@ impl Avatar {
 
 impl RenderOnce for Avatar {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let border_width = if self.border_color.is_some() {
-            px(2.)
-        } else {
-            px(0.)
-        };
+        let border_width = if self.border_color.is_some() { px(2.) } else { px(0.) };
 
         let image_size = self.size.unwrap_or_else(|| rems(1.).into());
         let container_size = image_size.to_pixels(window.rem_size()) + border_width * 2.;
@@ -96,11 +92,7 @@ impl RenderOnce for Avatar {
                         h_flex()
                             .size_full()
                             .justify_center()
-                            .child(
-                                Icon::new(IconName::Person)
-                                    .color(Color::Muted)
-                                    .size(IconSize::Small),
-                            )
+                            .child(Icon::new(IconName::Person).color(Color::Muted).size(IconSize::Small))
                             .into_any_element()
                     }),
             )

@@ -3,10 +3,7 @@ use std::{cmp::Ordering, ops::Range};
 
 /// Construct a string and a list of offsets within that string using a single
 /// string containing embedded position markers.
-pub fn marked_text_offsets_by(
-    marked_text: &str,
-    markers: Vec<char>,
-) -> (String, HashMap<char, Vec<usize>>) {
+pub fn marked_text_offsets_by(marked_text: &str, markers: Vec<char>) -> (String, HashMap<char, Vec<usize>>) {
     let mut extracted_markers: HashMap<char, Vec<usize>> = Default::default();
     let mut unmarked_text = String::new();
 
@@ -110,10 +107,7 @@ pub fn marked_text_ranges_by(
 /// it easier to test cases with trailing spaces, which tend to get trimmed from the
 /// source code.
 #[track_caller]
-pub fn marked_text_ranges(
-    marked_text: &str,
-    ranges_are_directed: bool,
-) -> (String, Vec<Range<usize>>) {
+pub fn marked_text_ranges(marked_text: &str, ranges_are_directed: bool) -> (String, Vec<Range<usize>>) {
     let mut unmarked_text = String::with_capacity(marked_text.len());
     let mut ranges = Vec::new();
     let mut prev_marked_ix = 0;
@@ -192,11 +186,7 @@ pub fn marked_text_offsets(marked_text: &str) -> (String, Vec<usize>) {
     )
 }
 
-pub fn generate_marked_text(
-    unmarked_text: &str,
-    ranges: &[Range<usize>],
-    indicate_cursors: bool,
-) -> String {
+pub fn generate_marked_text(unmarked_text: &str, ranges: &[Range<usize>], indicate_cursors: bool) -> String {
     let mut marked_text = unmarked_text.to_string();
     for range in ranges.iter().rev() {
         if indicate_cursors {

@@ -50,11 +50,7 @@ impl ToggleState {
 
 impl From<bool> for ToggleState {
     fn from(selected: bool) -> Self {
-        if selected {
-            Self::Selected
-        } else {
-            Self::Unselected
-        }
+        if selected { Self::Selected } else { Self::Unselected }
     }
 }
 

@@ -55,10 +55,7 @@ pub fn syntax_overrides(this: &settings::ThemeStyleContent) -> Vec<(String, High
             (
                 key.clone(),
                 HighlightStyle {
-                    color: style
-                        .color
-                        .as_ref()
-                        .and_then(|color| try_parse_color(color).ok()),
+                    color: style.color.as_ref().and_then(|color| try_parse_color(color).ok()),
                     background_color: style
                         .background_color
                         .as_ref()
@@ -74,10 +71,7 @@ pub fn syntax_overrides(this: &settings::ThemeStyleContent) -> Vec<(String, High
 
 pub fn status_colors_refinement(colors: &settings::StatusColorsContent) -> StatusColorsRefinement {
     StatusColorsRefinement {
-        conflict: colors
-            .conflict
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        conflict: colors.conflict.as_ref().and_then(|color| try_parse_color(color).ok()),
         conflict_background: colors
             .conflict_background
             .as_ref()
@@ -86,10 +80,7 @@ pub fn status_colors_refinement(colors: &settings::StatusColorsContent) -> Statu
             .conflict_border
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        created: colors
-            .created
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        created: colors.created.as_ref().and_then(|color| try_parse_color(color).ok()),
         created_background: colors
             .created_background
             .as_ref()
@@ -98,10 +89,7 @@ pub fn status_colors_refinement(colors: &settings::StatusColorsContent) -> Statu
             .created_border
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        deleted: colors
-            .deleted
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        deleted: colors.deleted.as_ref().and_then(|color| try_parse_color(color).ok()),
         deleted_background: colors
             .deleted_background
             .as_ref()
@@ -110,10 +98,7 @@ pub fn status_colors_refinement(colors: &settings::StatusColorsContent) -> Statu
             .deleted_border
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        error: colors
-            .error
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        error: colors.error.as_ref().and_then(|color| try_parse_color(color).ok()),
         error_background: colors
             .error_background
             .as_ref()
@@ -122,10 +107,7 @@ pub fn status_colors_refinement(colors: &settings::StatusColorsContent) -> Statu
             .error_border
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        hidden: colors
-            .hidden
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        hidden: colors.hidden.as_ref().and_then(|color| try_parse_color(color).ok()),
         hidden_background: colors
             .hidden_background
             .as_ref()
@@ -134,10 +116,7 @@ pub fn status_colors_refinement(colors: &settings::StatusColorsContent) -> Statu
             .hidden_border
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        hint: colors
-            .hint
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        hint: colors.hint.as_ref().and_then(|color| try_parse_color(color).ok()),
         hint_background: colors
             .hint_background
             .as_ref()
@@ -146,10 +125,7 @@ pub fn status_colors_refinement(colors: &settings::StatusColorsContent) -> Statu
             .hint_border
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        ignored: colors
-            .ignored
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        ignored: colors.ignored.as_ref().and_then(|color| try_parse_color(color).ok()),
         ignored_background: colors
             .ignored_background
             .as_ref()
@@ -158,10 +134,7 @@ pub fn status_colors_refinement(colors: &settings::StatusColorsContent) -> Statu
             .ignored_border
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        info: colors
-            .info
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        info: colors.info.as_ref().and_then(|color| try_parse_color(color).ok()),
         info_background: colors
             .info_background
             .as_ref()
@@ -170,10 +143,7 @@ pub fn status_colors_refinement(colors: &settings::StatusColorsContent) -> Statu
             .info_border
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        modified: colors
-            .modified
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        modified: colors.modified.as_ref().and_then(|color| try_parse_color(color).ok()),
         modified_background: colors
             .modified_background
             .as_ref()
@@ -182,10 +152,7 @@ pub fn status_colors_refinement(colors: &settings::StatusColorsContent) -> Statu
             .modified_border
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        predictive: colors
-            .predictive
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        predictive: colors.predictive.as_ref().and_then(|color| try_parse_color(color).ok()),
         predictive_background: colors
             .predictive_background
             .as_ref()
@@ -194,10 +161,7 @@ pub fn status_colors_refinement(colors: &settings::StatusColorsContent) -> Statu
             .predictive_border
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        renamed: colors
-            .renamed
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        renamed: colors.renamed.as_ref().and_then(|color| try_parse_color(color).ok()),
         renamed_background: colors
             .renamed_background
             .as_ref()
@@ -206,10 +170,7 @@ pub fn status_colors_refinement(colors: &settings::StatusColorsContent) -> Statu
             .renamed_border
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        success: colors
-            .success
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        success: colors.success.as_ref().and_then(|color| try_parse_color(color).ok()),
         success_background: colors
             .success_background
             .as_ref()
@@ -230,10 +191,7 @@ pub fn status_colors_refinement(colors: &settings::StatusColorsContent) -> Statu
             .unreachable_border
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        warning: colors
-            .warning
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        warning: colors.warning.as_ref().and_then(|color| try_parse_color(color).ok()),
         warning_background: colors
             .warning_background
             .as_ref()
@@ -249,10 +207,7 @@ pub fn theme_colors_refinement(
     this: &settings::ThemeColorsContent,
     status_colors: &StatusColorsRefinement,
 ) -> ThemeColorsRefinement {
-    let border = this
-        .border
-        .as_ref()
-        .and_then(|color| try_parse_color(color).ok());
+    let border = this.border.as_ref().and_then(|color| try_parse_color(color).ok());
     let editor_document_highlight_read_background = this
         .editor_document_highlight_read_background
         .as_ref()
@@ -326,10 +281,7 @@ pub fn theme_colors_refinement(
             .surface_background
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        background: this
-            .background
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        background: this.background.as_ref().and_then(|color| try_parse_color(color).ok()),
         element_background: this
             .element_background
             .as_ref()
@@ -379,14 +331,8 @@ pub fn theme_colors_refinement(
             .ghost_element_disabled
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        text: this
-            .text
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
-        text_muted: this
-            .text_muted
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        text: this.text.as_ref().and_then(|color| try_parse_color(color).ok()),
+        text_muted: this.text_muted.as_ref().and_then(|color| try_parse_color(color).ok()),
         text_placeholder: this
             .text_placeholder
             .as_ref()
@@ -395,18 +341,9 @@ pub fn theme_colors_refinement(
             .text_disabled
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        text_accent: this
-            .text_accent
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
-        icon: this
-            .icon
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
-        icon_muted: this
-            .icon_muted
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        text_accent: this.text_accent.as_ref().and_then(|color| try_parse_color(color).ok()),
+        icon: this.icon.as_ref().and_then(|color| try_parse_color(color).ok()),
+        icon_muted: this.icon_muted.as_ref().and_then(|color| try_parse_color(color).ok()),
         icon_disabled: this
             .icon_disabled
             .as_ref()
@@ -415,10 +352,7 @@ pub fn theme_colors_refinement(
             .icon_placeholder
             .as_ref()
             .and_then(|color| try_parse_color(color).ok()),
-        icon_accent: this
-            .icon_accent
-            .as_ref()
-            .and_then(|color| try_parse_color(color).ok()),
+        icon_accent: this.icon_accent.as_ref().and_then(|color| try_parse_color(color).ok()),
         debugger_accent: this
             .debugger_accent
             .as_ref()

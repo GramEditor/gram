@@ -5,17 +5,16 @@ use windows::Win32::{
     Foundation::HMODULE,
     Graphics::{
         Direct3D::{
-            D3D_DRIVER_TYPE_UNKNOWN, D3D_FEATURE_LEVEL, D3D_FEATURE_LEVEL_10_1,
-            D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_11_1,
+            D3D_DRIVER_TYPE_UNKNOWN, D3D_FEATURE_LEVEL, D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_11_0,
+            D3D_FEATURE_LEVEL_11_1,
         },
         Direct3D11::{
-            D3D11_CREATE_DEVICE_BGRA_SUPPORT, D3D11_CREATE_DEVICE_DEBUG,
-            D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS,
-            D3D11_SDK_VERSION, D3D11CreateDevice, ID3D11Device, ID3D11DeviceContext,
+            D3D11_CREATE_DEVICE_BGRA_SUPPORT, D3D11_CREATE_DEVICE_DEBUG, D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS,
+            D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS, D3D11_SDK_VERSION, D3D11CreateDevice, ID3D11Device,
+            ID3D11DeviceContext,
         },
         Dxgi::{
-            CreateDXGIFactory2, DXGI_CREATE_FACTORY_DEBUG, DXGI_CREATE_FACTORY_FLAGS,
-            IDXGIAdapter1, IDXGIFactory6,
+            CreateDXGIFactory2, DXGI_CREATE_FACTORY_DEBUG, DXGI_CREATE_FACTORY_FLAGS, IDXGIAdapter1, IDXGIFactory6,
         },
     },
 };
@@ -46,10 +45,8 @@ pub(crate) struct DirectXDevices {
 impl DirectXDevices {
     pub(crate) fn new() -> Result<Self> {
         let debug_layer_available = check_debug_layer_available();
-        let dxgi_factory =
-            get_dxgi_factory(debug_layer_available).context("Creating DXGI factory")?;
-        let adapter =
-            get_adapter(&dxgi_factory, debug_layer_available).context("Getting DXGI adapter")?;
+        let dxgi_factory = get_dxgi_factory(debug_layer_available).context("Creating DXGI factory")?;
+        let adapter = get_adapter(&dxgi_factory, debug_layer_available).context("Getting DXGI adapter")?;
         let (device, device_context) = {
             let mut context: Option<ID3D11DeviceContext> = None;
             let mut feature_level = D3D_FEATURE_LEVEL::default();
@@ -106,9 +103,7 @@ fn get_dxgi_factory(debug_layer_available: bool) -> Result<IDXGIFactory6> {
         DXGI_CREATE_FACTORY_DEBUG
     } else {
         #[cfg(debug_assertions)]
-        log::warn!(
-            "Failed to get DXGI debug interface. DirectX debugging features will be disabled."
-        );
+        log::warn!("Failed to get DXGI debug interface. DirectX debugging features will be disabled.");
         DXGI_CREATE_FACTORY_FLAGS::default()
     };
     unsafe { Ok(CreateDXGIFactory2(factory_flag)?) }
@@ -157,11 +152,7 @@ fn get_device(
             HMODULE::default(),
             device_flags,
             // 4x MSAA is required for Direct3D Feature Level 10.1 or better
-            Some(&[
-                D3D_FEATURE_LEVEL_11_1,
-                D3D_FEATURE_LEVEL_11_0,
-                D3D_FEATURE_LEVEL_10_1,
-            ]),
+            Some(&[D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1]),
             D3D11_SDK_VERSION,
             Some(&mut device),
             feature_level,

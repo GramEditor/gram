@@ -9,9 +9,7 @@ use async_trait::async_trait;
 use collections::HashMap;
 use dap::{
     StartDebuggingRequestArgumentsRequest,
-    adapters::{
-        DapDelegate, DebugAdapter, DebugAdapterBinary, DebugAdapterName, DebugTaskDefinition,
-    },
+    adapters::{DapDelegate, DebugAdapter, DebugAdapterBinary, DebugAdapterName, DebugTaskDefinition},
 };
 use extension::{Extension, WorktreeDelegate};
 use gpui::AsyncApp;
@@ -31,13 +29,10 @@ impl ExtensionDapAdapter {
         schema_path: &Path,
     ) -> Result<Self> {
         let schema = std::fs::read_to_string(&schema_path).with_context(|| {
-            format!(
-                "Failed to read debug adapter schema for {debug_adapter_name} (from path: `{schema_path:?}`)"
-            )
+            format!("Failed to read debug adapter schema for {debug_adapter_name} (from path: `{schema_path:?}`)")
         })?;
-        let schema = serde_json::Value::from_str(&schema).with_context(|| {
-            format!("Debug adapter schema for {debug_adapter_name} is not a valid JSON")
-        })?;
+        let schema = serde_json::Value::from_str(&schema)
+            .with_context(|| format!("Debug adapter schema for {debug_adapter_name} is not a valid JSON"))?;
         Ok(Self {
             extension,
             debug_adapter_name,
@@ -110,10 +105,7 @@ impl DebugAdapter for ExtensionDapAdapter {
         self.extension.dap_config_to_scenario(scenario).await
     }
 
-    async fn request_kind(
-        &self,
-        config: &serde_json::Value,
-    ) -> Result<StartDebuggingRequestArgumentsRequest> {
+    async fn request_kind(&self, config: &serde_json::Value) -> Result<StartDebuggingRequestArgumentsRequest> {
         self.extension
             .dap_request_kind(self.debug_adapter_name.clone(), config.clone())
             .await

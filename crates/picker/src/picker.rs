@@ -9,21 +9,18 @@ use editor::{
     scroll::Autoscroll,
 };
 use gpui::{
-    Action, AnyElement, App, Bounds, ClickEvent, Context, DismissEvent, Entity, EventEmitter,
-    FocusHandle, Focusable, Length, ListSizingBehavior, ListState, MouseButton, MouseUpEvent,
-    Pixels, Render, ScrollStrategy, Task, UniformListScrollHandle, Window, actions, canvas, div,
-    list, prelude::*, uniform_list,
+    Action, AnyElement, App, Bounds, ClickEvent, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable,
+    Length, ListSizingBehavior, ListState, MouseButton, MouseUpEvent, Pixels, Render, ScrollStrategy, Task,
+    UniformListScrollHandle, Window, actions, canvas, div, list, prelude::*, uniform_list,
 };
 use head::Head;
 use schemars::JsonSchema;
 use serde::Deserialize;
-use std::{
-    cell::Cell, cell::RefCell, collections::HashMap, ops::Range, rc::Rc, sync::Arc, time::Duration,
-};
+use std::{cell::Cell, cell::RefCell, collections::HashMap, ops::Range, rc::Rc, sync::Arc, time::Duration};
 use theme::ThemeSettings;
 use ui::{
-    Color, Divider, DocumentationAside, DocumentationSide, Label, ListItem, ListItemSpacing,
-    ScrollAxes, Scrollbars, WithScrollbar, prelude::*, utils::WithRemSize, v_flex,
+    Color, Divider, DocumentationAside, DocumentationSide, Label, ListItem, ListItemSpacing, ScrollAxes, Scrollbars,
+    WithScrollbar, prelude::*, utils::WithRemSize, v_flex,
 };
 use workspace::{ModalView, item::Settings};
 
@@ -97,12 +94,7 @@ pub trait PickerDelegate: Sized + 'static {
     fn separators_after_indices(&self) -> Vec<usize> {
         Vec::new()
     }
-    fn set_selected_index(
-        &mut self,
-        ix: usize,
-        window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    );
+    fn set_selected_index(&mut self, ix: usize, window: &mut Window, cx: &mut Context<Picker<Self>>);
 
     /// Called before the picker handles `SelectPrevious` or `SelectNext`. Return `Some(query)` to
     /// set a new query and prevent the default selection behavior.
@@ -115,12 +107,7 @@ pub trait PickerDelegate: Sized + 'static {
     ) -> Option<String> {
         None
     }
-    fn can_select(
-        &mut self,
-        _ix: usize,
-        _window: &mut Window,
-        _cx: &mut Context<Picker<Self>>,
-    ) -> bool {
+    fn can_select(&mut self, _ix: usize, _window: &mut Window, _cx: &mut Context<Picker<Self>>) -> bool {
         true
     }
 
@@ -137,12 +124,7 @@ pub trait PickerDelegate: Sized + 'static {
     fn no_matches_text(&self, _window: &mut Window, _cx: &mut App) -> Option<SharedString> {
         Some("No matches".into())
     }
-    fn update_matches(
-        &mut self,
-        query: String,
-        window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) -> Task<()>;
+    fn update_matches(&mut self, query: String, window: &mut Window, cx: &mut Context<Picker<Self>>) -> Task<()>;
 
     // Delegates that support this method (e.g. the CommandPalette) can chose to block on any background
     // work for up to `duration` to try and get a result synchronously.
@@ -159,23 +141,13 @@ pub trait PickerDelegate: Sized + 'static {
     }
 
     /// Override if you want to have <enter> update the query instead of confirming.
-    fn confirm_update_query(
-        &mut self,
-        _window: &mut Window,
-        _cx: &mut Context<Picker<Self>>,
-    ) -> Option<String> {
+    fn confirm_update_query(&mut self, _window: &mut Window, _cx: &mut Context<Picker<Self>>) -> Option<String> {
         None
     }
     fn confirm(&mut self, secondary: bool, window: &mut Window, cx: &mut Context<Picker<Self>>);
     /// Instead of interacting with currently selected entry, treats editor input literally,
     /// performing some kind of action on it.
-    fn confirm_input(
-        &mut self,
-        _secondary: bool,
-        _window: &mut Window,
-        _: &mut Context<Picker<Self>>,
-    ) {
-    }
+    fn confirm_input(&mut self, _secondary: bool, _window: &mut Window, _: &mut Context<Picker<Self>>) {}
     fn dismissed(&mut self, window: &mut Window, cx: &mut Context<Picker<Self>>);
     fn should_dismiss(&self) -> bool {
         true
@@ -196,17 +168,11 @@ pub trait PickerDelegate: Sized + 'static {
         PickerEditorPosition::default()
     }
 
-    fn render_editor(
-        &self,
-        editor: &Entity<Editor>,
-        _window: &mut Window,
-        _cx: &mut Context<Picker<Self>>,
-    ) -> Div {
+    fn render_editor(&self, editor: &Entity<Editor>, _window: &mut Window, _cx: &mut Context<Picker<Self>>) -> Div {
         v_flex()
-            .when(
-                self.editor_position() == PickerEditorPosition::End,
-                |this| this.child(Divider::horizontal()),
-            )
+            .when(self.editor_position() == PickerEditorPosition::End, |this| {
+                this.child(Divider::horizontal())
+            })
             .child(
                 h_flex()
                     .overflow_hidden()
@@ -215,10 +181,9 @@ pub trait PickerDelegate: Sized + 'static {
                     .px_2p5()
                     .child(editor.clone()),
             )
-            .when(
-                self.editor_position() == PickerEditorPosition::Start,
-                |this| this.child(Divider::horizontal()),
-            )
+            .when(self.editor_position() == PickerEditorPosition::Start, |this| {
+                this.child(Divider::horizontal())
+            })
     }
 
     fn render_match(
@@ -229,27 +194,15 @@ pub trait PickerDelegate: Sized + 'static {
         cx: &mut Context<Picker<Self>>,
     ) -> Option<Self::ListItem>;
 
-    fn render_header(
-        &self,
-        _window: &mut Window,
-        _: &mut Context<Picker<Self>>,
-    ) -> Option<AnyElement> {
+    fn render_header(&self, _window: &mut Window, _: &mut Context<Picker<Self>>) -> Option<AnyElement> {
         None
     }
 
-    fn render_footer(
-        &self,
-        _window: &mut Window,
-        _: &mut Context<Picker<Self>>,
-    ) -> Option<AnyElement> {
+    fn render_footer(&self, _window: &mut Window, _: &mut Context<Picker<Self>>) -> Option<AnyElement> {
         None
     }
 
-    fn documentation_aside(
-        &self,
-        _window: &mut Window,
-        _cx: &mut Context<Picker<Self>>,
-    ) -> Option<DocumentationAside> {
+    fn documentation_aside(&self, _window: &mut Window, _cx: &mut Context<Picker<Self>>) -> Option<DocumentationAside> {
         None
     }
 
@@ -293,11 +246,7 @@ impl<D: PickerDelegate> Picker<D> {
 
     /// A picker, which displays its matches using `gpui::uniform_list`, all matches should have the same height.
     /// If `PickerDelegate::render_match` can return items with different heights, use `Picker::list`.
-    pub fn nonsearchable_uniform_list(
-        delegate: D,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn nonsearchable_uniform_list(delegate: D, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let head = Head::empty(Self::on_empty_head_blur, window, cx);
 
         Self::new(delegate, ContainerKind::UniformList, head, window, cx)
@@ -326,13 +275,7 @@ impl<D: PickerDelegate> Picker<D> {
         Self::new(delegate, ContainerKind::List, head, window, cx)
     }
 
-    fn new(
-        delegate: D,
-        container: ContainerKind,
-        head: Head,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    fn new(delegate: D, container: ContainerKind, head: Head, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let element_container = Self::create_element_container(container);
         let mut this = Self {
             delegate,
@@ -357,12 +300,8 @@ impl<D: PickerDelegate> Picker<D> {
 
     fn create_element_container(container: ContainerKind) -> ElementContainer {
         match container {
-            ContainerKind::UniformList => {
-                ElementContainer::UniformList(UniformListScrollHandle::new())
-            }
-            ContainerKind::List => {
-                ElementContainer::List(ListState::new(0, gpui::ListAlignment::Top, px(1000.)))
-            }
+            ContainerKind::UniformList => ElementContainer::UniformList(UniformListScrollHandle::new()),
+            ContainerKind::List => ElementContainer::List(ListState::new(0, gpui::ListAlignment::Top, px(1000.))),
         }
     }
 
@@ -472,17 +411,9 @@ impl<D: PickerDelegate> Picker<D> {
         }
     }
 
-    pub fn select_next(
-        &mut self,
-        _: &menu::SelectNext,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn select_next(&mut self, _: &menu::SelectNext, window: &mut Window, cx: &mut Context<Self>) {
         let query = self.query(cx);
-        if let Some(query) = self
-            .delegate
-            .select_history(Direction::Down, &query, window, cx)
-        {
+        if let Some(query) = self.delegate.select_history(Direction::Down, &query, window, cx) {
             self.set_query(query, window, cx);
             return;
         }
@@ -499,17 +430,9 @@ impl<D: PickerDelegate> Picker<D> {
         self.select_previous(&Default::default(), window, cx);
     }
 
-    fn select_previous(
-        &mut self,
-        _: &menu::SelectPrevious,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn select_previous(&mut self, _: &menu::SelectPrevious, window: &mut Window, cx: &mut Context<Self>) {
         let query = self.query(cx);
-        if let Some(query) = self
-            .delegate
-            .select_history(Direction::Up, &query, window, cx)
-        {
+        if let Some(query) = self.delegate.select_history(Direction::Up, &query, window, cx) {
             self.set_query(query, window, cx);
             return;
         }
@@ -526,12 +449,7 @@ impl<D: PickerDelegate> Picker<D> {
         self.select_next(&Default::default(), window, cx);
     }
 
-    pub fn select_first(
-        &mut self,
-        _: &menu::SelectFirst,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn select_first(&mut self, _: &menu::SelectFirst, window: &mut Window, cx: &mut Context<Self>) {
         let count = self.delegate.match_count();
         if count > 0 {
             self.set_selected_index(0, Some(Direction::Down), true, window, cx);
@@ -564,12 +482,9 @@ impl<D: PickerDelegate> Picker<D> {
 
     fn confirm(&mut self, _: &menu::Confirm, window: &mut Window, cx: &mut Context<Self>) {
         if self.pending_update_matches.is_some()
-            && !self.delegate.finalize_update_matches(
-                self.query(cx),
-                Duration::from_millis(16),
-                window,
-                cx,
-            )
+            && !self
+                .delegate
+                .finalize_update_matches(self.query(cx), Duration::from_millis(16), window, cx)
         {
             self.confirm_on_update = Some(false)
         } else {
@@ -578,19 +493,11 @@ impl<D: PickerDelegate> Picker<D> {
         }
     }
 
-    fn secondary_confirm(
-        &mut self,
-        _: &menu::SecondaryConfirm,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn secondary_confirm(&mut self, _: &menu::SecondaryConfirm, window: &mut Window, cx: &mut Context<Self>) {
         if self.pending_update_matches.is_some()
-            && !self.delegate.finalize_update_matches(
-                self.query(cx),
-                Duration::from_millis(16),
-                window,
-                cx,
-            )
+            && !self
+                .delegate
+                .finalize_update_matches(self.query(cx), Duration::from_millis(16), window, cx)
         {
             self.confirm_on_update = Some(true)
         } else {
@@ -602,29 +509,17 @@ impl<D: PickerDelegate> Picker<D> {
         self.delegate.confirm_input(input.secondary, window, cx);
     }
 
-    fn confirm_completion(
-        &mut self,
-        _: &ConfirmCompletion,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn confirm_completion(&mut self, _: &ConfirmCompletion, window: &mut Window, cx: &mut Context<Self>) {
         if self.delegate.confirm_immediately() {
             self.do_confirm(false, window, cx);
-        } else if let Some(new_query) = self.delegate.confirm_completion(self.query(cx), window, cx)
-        {
+        } else if let Some(new_query) = self.delegate.confirm_completion(self.query(cx), window, cx) {
             self.set_query(new_query, window, cx);
         } else {
             cx.propagate()
         }
     }
 
-    fn handle_click(
-        &mut self,
-        ix: usize,
-        secondary: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn handle_click(&mut self, ix: usize, secondary: bool, window: &mut Window, cx: &mut Context<Self>) {
         cx.stop_propagation();
         window.prevent_default();
         self.set_selected_index(ix, None, false, window, cx);
@@ -746,12 +641,9 @@ impl<D: PickerDelegate> Picker<D> {
             editor.update(cx, |editor, cx| {
                 editor.set_text(query, window, cx);
                 let editor_offset = editor.buffer().read(cx).len(cx);
-                editor.change_selections(
-                    SelectionEffects::scroll(Autoscroll::Next),
-                    window,
-                    cx,
-                    |s| s.select_ranges(Some(editor_offset..editor_offset)),
-                );
+                editor.change_selections(SelectionEffects::scroll(Autoscroll::Next), window, cx, |s| {
+                    s.select_ranges(Some(editor_offset..editor_offset))
+                });
             });
         }
     }
@@ -759,18 +651,11 @@ impl<D: PickerDelegate> Picker<D> {
     fn scroll_to_item_index(&mut self, ix: usize) {
         match &mut self.element_container {
             ElementContainer::List(state) => state.scroll_to_reveal_item(ix),
-            ElementContainer::UniformList(scroll_handle) => {
-                scroll_handle.scroll_to_item(ix, ScrollStrategy::Nearest)
-            }
+            ElementContainer::UniformList(scroll_handle) => scroll_handle.scroll_to_item(ix, ScrollStrategy::Nearest),
         }
     }
 
-    fn render_element(
-        &self,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-        ix: usize,
-    ) -> impl IntoElement + use<D> {
+    fn render_element(&self, window: &mut Window, cx: &mut Context<Self>, ix: usize) -> impl IntoElement + use<D> {
         let item_bounds = self.item_bounds.clone();
 
         div()
@@ -803,21 +688,16 @@ impl<D: PickerDelegate> Picker<D> {
                     this.handle_click(ix, event.modifiers.platform, window, cx)
                 }),
             )
-            .children(self.delegate.render_match(
-                ix,
-                ix == self.delegate.selected_index(),
-                window,
-                cx,
-            ))
-            .when(
-                self.delegate.separators_after_indices().contains(&ix),
-                |picker| {
-                    picker
-                        .border_color(cx.theme().colors().border_variant)
-                        .border_b_1()
-                        .py(px(-1.0))
-                },
+            .children(
+                self.delegate
+                    .render_match(ix, ix == self.delegate.selected_index(), window, cx),
             )
+            .when(self.delegate.separators_after_indices().contains(&ix), |picker| {
+                picker
+                    .border_color(cx.theme().colors().border_variant)
+                    .border_b_1()
+                    .py(px(-1.0))
+            })
     }
 
     fn render_element_container(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -832,9 +712,7 @@ impl<D: PickerDelegate> Picker<D> {
                 "candidates",
                 self.delegate.match_count(),
                 cx.processor(move |picker, visible_range: Range<usize>, window, cx| {
-                    visible_range
-                        .map(|ix| picker.render_element(window, cx, ix))
-                        .collect()
+                    visible_range.map(|ix| picker.render_element(window, cx, ix)).collect()
                 }),
             )
             .with_sizing_behavior(sizing_behavior)
@@ -847,9 +725,7 @@ impl<D: PickerDelegate> Picker<D> {
             .into_any_element(),
             ElementContainer::List(state) => list(
                 state.clone(),
-                cx.processor(|this, ix, window, cx| {
-                    this.render_element(window, cx, ix).into_any_element()
-                }),
+                cx.processor(|this, ix, window, cx| this.render_element(window, cx, ix).into_any_element()),
             )
             .with_sizing_behavior(sizing_behavior)
             .flex_grow()
@@ -862,9 +738,7 @@ impl<D: PickerDelegate> Picker<D> {
     pub fn logical_scroll_top_index(&self) -> usize {
         match &self.element_container {
             ElementContainer::List(state) => state.logical_scroll_top().item_ix,
-            ElementContainer::UniformList(scroll_handle) => {
-                scroll_handle.logical_scroll_top_index()
-            }
+            ElementContainer::UniformList(scroll_handle) => scroll_handle.logical_scroll_top_index(),
         }
     }
 }
@@ -937,8 +811,7 @@ impl<D: PickerDelegate> Render for Picker<D> {
                         .children(self.delegate.render_header(window, cx))
                         .child(self.render_element_container(cx))
                         .when(self.show_scrollbar, |this| {
-                            let base_scrollbar_config =
-                                Scrollbars::new(ScrollAxes::Vertical).width_sm();
+                            let base_scrollbar_config = Scrollbars::new(ScrollAxes::Vertical).width_sm();
 
                             this.map(|this| match &self.element_container {
                                 ElementContainer::List(state) => this.custom_scrollbars(
@@ -999,8 +872,7 @@ impl<D: PickerDelegate> Render for Picker<D> {
         if is_wide_window {
             let aside_index = self.delegate.documentation_aside_index();
             let picker_bounds = self.picker_bounds.get();
-            let item_bounds =
-                aside_index.and_then(|ix| self.item_bounds.borrow().get(&ix).copied());
+            let item_bounds = aside_index.and_then(|ix| self.item_bounds.borrow().get(&ix).copied());
 
             let item_position = match (picker_bounds, item_bounds) {
                 (Some(picker_bounds), Some(item_bounds)) => {
@@ -1019,12 +891,8 @@ impl<D: PickerDelegate> Render for Picker<D> {
                     this.child(
                         h_flex()
                             .absolute()
-                            .when(aside.side == DocumentationSide::Left, |el| {
-                                el.right_full().mr_1()
-                            })
-                            .when(aside.side == DocumentationSide::Right, |el| {
-                                el.left_full().ml_1()
-                            })
+                            .when(aside.side == DocumentationSide::Left, |el| el.right_full().mr_1())
+                            .when(aside.side == DocumentationSide::Right, |el| el.left_full().ml_1())
                             .top(top)
                             .h(height)
                             .child(render_aside(aside, cx)),

@@ -1,9 +1,9 @@
 use crate::{
     dispatch_get_main_queue,
     dispatch_sys::{
-        _dispatch_source_type_data_add, dispatch_resume, dispatch_set_context,
-        dispatch_source_cancel, dispatch_source_create, dispatch_source_merge_data,
-        dispatch_source_set_event_handler_f, dispatch_source_t, dispatch_suspend,
+        _dispatch_source_type_data_add, dispatch_resume, dispatch_set_context, dispatch_source_cancel,
+        dispatch_source_create, dispatch_source_merge_data, dispatch_source_set_event_handler_f, dispatch_source_t,
+        dispatch_suspend,
     },
 };
 use anyhow::Result;
@@ -38,25 +38,12 @@ impl DisplayLink {
         }
 
         unsafe {
-            let frame_requests = dispatch_source_create(
-                &_dispatch_source_type_data_add,
-                0,
-                0,
-                dispatch_get_main_queue(),
-            );
-            dispatch_set_context(
-                crate::dispatch_sys::dispatch_object_t {
-                    _ds: frame_requests,
-                },
-                data,
-            );
+            let frame_requests =
+                dispatch_source_create(&_dispatch_source_type_data_add, 0, 0, dispatch_get_main_queue());
+            dispatch_set_context(crate::dispatch_sys::dispatch_object_t { _ds: frame_requests }, data);
             dispatch_source_set_event_handler_f(frame_requests, Some(callback));
 
-            let display_link = sys::DisplayLink::new(
-                display_id,
-                display_link_callback,
-                frame_requests as *mut c_void,
-            )?;
+            let display_link = sys::DisplayLink::new(display_id, display_link_callback, frame_requests as *mut c_void)?;
 
             Ok(Self {
                 display_link: Some(display_link),
@@ -130,10 +117,7 @@ mod sys {
 
     impl Debug for DisplayLink {
         fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
-            formatter
-                .debug_tuple("DisplayLink")
-                .field(&self.as_ptr())
-                .finish()
+            formatter.debug_tuple("DisplayLink").field(&self.as_ptr()).finish()
         }
     }
 
@@ -160,10 +144,8 @@ mod sys {
     pub const kCVTimeStampRateScalarValid: CVTimeStampFlags = 1 << 4;
     pub const kCVTimeStampTopField: CVTimeStampFlags = 1 << 16;
     pub const kCVTimeStampBottomField: CVTimeStampFlags = 1 << 17;
-    pub const kCVTimeStampVideoHostTimeValid: CVTimeStampFlags =
-        kCVTimeStampVideoTimeValid | kCVTimeStampHostTimeValid;
-    pub const kCVTimeStampIsInterlaced: CVTimeStampFlags =
-        kCVTimeStampTopField | kCVTimeStampBottomField;
+    pub const kCVTimeStampVideoHostTimeValid: CVTimeStampFlags = kCVTimeStampVideoTimeValid | kCVTimeStampHostTimeValid;
+    pub const kCVTimeStampIsInterlaced: CVTimeStampFlags = kCVTimeStampTopField | kCVTimeStampBottomField;
 
     #[repr(C)]
     #[derive(Clone, Copy, Default)]
@@ -213,13 +195,8 @@ mod sys {
     #[link(name = "CoreVideo", kind = "framework")]
     #[allow(improper_ctypes, unknown_lints, clippy::duplicated_attributes)]
     unsafe extern "C" {
-        pub fn CVDisplayLinkCreateWithActiveCGDisplays(
-            display_link_out: *mut *mut CVDisplayLink,
-        ) -> i32;
-        pub fn CVDisplayLinkSetCurrentCGDisplay(
-            display_link: &mut DisplayLinkRef,
-            display_id: u32,
-        ) -> i32;
+        pub fn CVDisplayLinkCreateWithActiveCGDisplays(display_link_out: *mut *mut CVDisplayLink) -> i32;
+        pub fn CVDisplayLinkSetCurrentCGDisplay(display_link: &mut DisplayLinkRef, display_id: u32) -> i32;
         pub fn CVDisplayLinkSetOutputCallback(
             display_link: &mut DisplayLinkRef,
             callback: CVDisplayLinkOutputCallback,
@@ -250,11 +227,7 @@ mod sys {
                 anyhow::ensure!(code == 0, "could not set output callback, code: {}", code);
 
                 let code = CVDisplayLinkSetCurrentCGDisplay(&mut display_link, display_id);
-                anyhow::ensure!(
-                    code == 0,
-                    "could not assign display to display link, code: {}",
-                    code
-                );
+                anyhow::ensure!(code == 0, "could not assign display to display link, code: {}", code);
 
                 Ok(display_link)
             }

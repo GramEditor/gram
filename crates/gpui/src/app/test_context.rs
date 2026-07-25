@@ -1,17 +1,14 @@
 use crate::{
-    Action, AnyView, AnyWindowHandle, App, AppCell, AppContext, AsyncApp, AvailableSpace,
-    BackgroundExecutor, BorrowAppContext, Bounds, Capslock, ClipboardItem, DrawPhase, Drawable,
-    Element, Empty, EventEmitter, ForegroundExecutor, Global, InputEvent, Keystroke, Modifiers,
-    ModifiersChangedEvent, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels,
-    Platform, Point, Render, Result, Size, Task, TestDispatcher, TestPlatform, TestWindow,
-    TextSystem, VisualContext, Window, WindowBounds, WindowHandle, WindowOptions,
+    Action, AnyView, AnyWindowHandle, App, AppCell, AppContext, AsyncApp, AvailableSpace, BackgroundExecutor,
+    BorrowAppContext, Bounds, Capslock, ClipboardItem, DrawPhase, Drawable, Element, Empty, EventEmitter,
+    ForegroundExecutor, Global, InputEvent, Keystroke, Modifiers, ModifiersChangedEvent, MouseButton, MouseDownEvent,
+    MouseMoveEvent, MouseUpEvent, Pixels, Platform, Point, Render, Result, Size, Task, TestDispatcher, TestPlatform,
+    TestWindow, TextSystem, VisualContext, Window, WindowBounds, WindowHandle, WindowOptions,
 };
 use anyhow::{anyhow, bail};
 use futures::{Stream, StreamExt, channel::oneshot};
 use rand::{SeedableRng, rngs::StdRng};
-use std::{
-    cell::RefCell, future::Future, ops::Deref, path::PathBuf, rc::Rc, sync::Arc, time::Duration,
-};
+use std::{cell::RefCell, future::Future, ops::Deref, path::PathBuf, rc::Rc, sync::Arc, time::Duration};
 
 /// A TestAppContext is provided to tests created with `#[gpui::test]`, it provides
 /// an implementation of `Context` with additional methods that are useful in tests.
@@ -34,10 +31,7 @@ pub struct TestAppContext {
 impl AppContext for TestAppContext {
     type Result<T> = T;
 
-    fn new<T: 'static>(
-        &mut self,
-        build_entity: impl FnOnce(&mut Context<T>) -> T,
-    ) -> Self::Result<Entity<T>> {
+    fn new<T: 'static>(&mut self, build_entity: impl FnOnce(&mut Context<T>) -> T) -> Self::Result<Entity<T>> {
         let mut app = self.app.borrow_mut();
         app.new(build_entity)
     }
@@ -72,11 +66,7 @@ impl AppContext for TestAppContext {
         panic!("Cannot use as_mut with a test app context. Try calling update() first")
     }
 
-    fn read_entity<T, R>(
-        &self,
-        handle: &Entity<T>,
-        read: impl FnOnce(&T, &App) -> R,
-    ) -> Self::Result<R>
+    fn read_entity<T, R>(&self, handle: &Entity<T>, read: impl FnOnce(&T, &App) -> R) -> Self::Result<R>
     where
         T: 'static,
     {
@@ -92,11 +82,7 @@ impl AppContext for TestAppContext {
         lock.update_window(window, f)
     }
 
-    fn read_window<T, R>(
-        &self,
-        window: &WindowHandle<T>,
-        read: impl FnOnce(Entity<T>, &App) -> R,
-    ) -> Result<R>
+    fn read_window<T, R>(&self, window: &WindowHandle<T>, read: impl FnOnce(Entity<T>, &App) -> R) -> Result<R>
     where
         T: 'static,
     {
@@ -254,10 +240,7 @@ impl TestAppContext {
     /// Adds a new window, and returns its root view and a `VisualTestContext` which can be used
     /// as a `Window` and `App` for the rest of the test. Typically you would shadow this context with
     /// the returned one. `let (view, cx) = cx.add_window_view(...);`
-    pub fn add_window_view<F, V>(
-        &mut self,
-        build_root_view: F,
-    ) -> (Entity<V>, &mut VisualTestContext)
+    pub fn add_window_view<F, V>(&mut self, build_root_view: F) -> (Entity<V>, &mut VisualTestContext)
     where
         F: FnOnce(&mut Window, &mut Context<V>) -> V,
         V: 'static + Render,
@@ -406,9 +389,7 @@ impl TestAppContext {
         A: Action,
     {
         window
-            .update(self, |_, window, cx| {
-                window.dispatch_action(action.boxed_clone(), cx)
-            })
+            .update(self, |_, window, cx| window.dispatch_action(action.boxed_clone(), cx))
             .unwrap();
 
         self.background_executor.run_until_parked()
@@ -419,11 +400,7 @@ impl TestAppContext {
     /// in Gram, this will run backspace on the current editor through the command palette.
     /// This will also run the background executor until it's parked.
     pub fn simulate_keystrokes(&mut self, window: AnyWindowHandle, keystrokes: &str) {
-        for keystroke in keystrokes
-            .split(' ')
-            .map(Keystroke::parse)
-            .map(Result::unwrap)
-        {
+        for keystroke in keystrokes.split(' ').map(Keystroke::parse).map(Result::unwrap) {
             self.dispatch_keystroke(window, keystroke);
         }
 
@@ -444,10 +421,8 @@ impl TestAppContext {
 
     /// dispatches a single Keystroke (see also `simulate_keystrokes` and `simulate_input`)
     pub fn dispatch_keystroke(&mut self, window: AnyWindowHandle, keystroke: Keystroke) {
-        self.update_window(window, |_, window, cx| {
-            window.dispatch_keystroke(keystroke, cx)
-        })
-        .unwrap();
+        self.update_window(window, |_, window, cx| window.dispatch_keystroke(keystroke, cx))
+            .unwrap();
     }
 
     /// Returns the `TestWindow` backing the given handle.
@@ -466,10 +441,7 @@ impl TestAppContext {
     }
 
     /// Returns a stream of notifications whenever the Entity is updated.
-    pub fn notifications<T: 'static>(
-        &mut self,
-        entity: &Entity<T>,
-    ) -> impl Stream<Item = ()> + use<T> {
+    pub fn notifications<T: 'static>(&mut self, entity: &Entity<T>) -> impl Stream<Item = ()> + use<T> {
         let (tx, rx) = futures::channel::mpsc::unbounded();
         self.update(|cx| {
             cx.observe(entity, {
@@ -479,8 +451,7 @@ impl TestAppContext {
                 }
             })
             .detach();
-            cx.observe_release(entity, move |_, _| tx.close_channel())
-                .detach()
+            cx.observe_release(entity, move |_, _| tx.close_channel()).detach()
         });
         rx
     }
@@ -567,11 +538,7 @@ impl<T: 'static> Entity<T> {
 
 impl<V: 'static> Entity<V> {
     /// Returns a future that resolves when the view is next updated.
-    pub fn next_notification(
-        &self,
-        advance_clock_by: Duration,
-        cx: &TestAppContext,
-    ) -> impl Future<Output = ()> {
+    pub fn next_notification(&self, advance_clock_by: Duration, cx: &TestAppContext) -> impl Future<Output = ()> {
         use postage::prelude::{Sink as _, Stream as _};
 
         let (mut tx, mut rx) = postage::mpsc::channel(1);
@@ -638,10 +605,7 @@ impl<V> Entity<V> {
                         let cx = cx.borrow();
                         let cx = &*cx;
                         if predicate(
-                            handle
-                                .upgrade()
-                                .expect("view dropped with pending condition")
-                                .read(cx),
+                            handle.upgrade().expect("view dropped with pending condition").read(cx),
                             cx,
                         ) {
                             break;
@@ -649,9 +613,7 @@ impl<V> Entity<V> {
                     }
 
                     cx.borrow().background_executor().start_waiting();
-                    rx.recv()
-                        .await
-                        .expect("view dropped with pending condition");
+                    rx.recv().await.expect("view dropped with pending condition");
                     cx.borrow().background_executor().finish_waiting();
                 }
             })
@@ -688,10 +650,7 @@ impl VisualTestContext {
     /// TestAppContext with this, as this is typically more useful.
     /// `let cx = VisualTestContext::from_window(window, cx);`
     pub fn from_window(window: AnyWindowHandle, cx: &TestAppContext) -> Self {
-        Self {
-            cx: cx.clone(),
-            window,
-        }
+        Self { cx: cx.clone(), window }
     }
 
     /// Wait until there are no more pending tasks.
@@ -745,12 +704,7 @@ impl VisualTestContext {
     }
 
     /// Simulate a mouse down event to the given point
-    pub fn simulate_mouse_down(
-        &mut self,
-        position: Point<Pixels>,
-        button: MouseButton,
-        modifiers: Modifiers,
-    ) {
+    pub fn simulate_mouse_down(&mut self, position: Point<Pixels>, button: MouseButton, modifiers: Modifiers) {
         self.simulate_event(MouseDownEvent {
             position,
             modifiers,
@@ -761,12 +715,7 @@ impl VisualTestContext {
     }
 
     /// Simulate a mouse up event to the given point
-    pub fn simulate_mouse_up(
-        &mut self,
-        position: Point<Pixels>,
-        button: MouseButton,
-        modifiers: Modifiers,
-    ) {
+    pub fn simulate_mouse_up(&mut self, position: Point<Pixels>, button: MouseButton, modifiers: Modifiers) {
         self.simulate_event(MouseUpEvent {
             position,
             modifiers,
@@ -847,8 +796,7 @@ impl VisualTestContext {
     /// Simulate an event from the platform, e.g. a ScrollWheelEvent
     /// Make sure you've called [VisualTestContext::draw] first!
     pub fn simulate_event<E: InputEvent>(&mut self, event: E) {
-        self.test_window(self.window)
-            .simulate_input(event.to_platform_input());
+        self.test_window(self.window).simulate_input(event.to_platform_input());
         self.background_executor.run_until_parked();
     }
 
@@ -909,10 +857,7 @@ impl VisualTestContext {
 impl AppContext for VisualTestContext {
     type Result<T> = <TestAppContext as AppContext>::Result<T>;
 
-    fn new<T: 'static>(
-        &mut self,
-        build_entity: impl FnOnce(&mut Context<T>) -> T,
-    ) -> Self::Result<Entity<T>> {
+    fn new<T: 'static>(&mut self, build_entity: impl FnOnce(&mut Context<T>) -> T) -> Self::Result<Entity<T>> {
         self.cx.new(build_entity)
     }
 
@@ -946,11 +891,7 @@ impl AppContext for VisualTestContext {
         self.cx.as_mut(handle)
     }
 
-    fn read_entity<T, R>(
-        &self,
-        handle: &Entity<T>,
-        read: impl FnOnce(&T, &App) -> R,
-    ) -> Self::Result<R>
+    fn read_entity<T, R>(&self, handle: &Entity<T>, read: impl FnOnce(&T, &App) -> R) -> Self::Result<R>
     where
         T: 'static,
     {
@@ -964,11 +905,7 @@ impl AppContext for VisualTestContext {
         self.cx.update_window(window, f)
     }
 
-    fn read_window<T, R>(
-        &self,
-        window: &WindowHandle<T>,
-        read: impl FnOnce(Entity<T>, &App) -> R,
-    ) -> Result<R>
+    fn read_window<T, R>(&self, window: &WindowHandle<T>, read: impl FnOnce(Entity<T>, &App) -> R) -> Result<R>
     where
         T: 'static,
     {
@@ -1001,9 +938,7 @@ impl VisualContext for VisualTestContext {
         build_entity: impl FnOnce(&mut Window, &mut Context<T>) -> T,
     ) -> Self::Result<Entity<T>> {
         self.window
-            .update(&mut self.cx, |_, window, cx| {
-                cx.new(|cx| build_entity(window, cx))
-            })
+            .update(&mut self.cx, |_, window, cx| cx.new(|cx| build_entity(window, cx)))
             .unwrap()
     }
 
@@ -1027,9 +962,7 @@ impl VisualContext for VisualTestContext {
         V: 'static + Render,
     {
         self.window
-            .update(&mut self.cx, |_, window, cx| {
-                window.replace_root(cx, build_view)
-            })
+            .update(&mut self.cx, |_, window, cx| window.replace_root(cx, build_view))
             .unwrap()
     }
 

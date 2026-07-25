@@ -5,15 +5,12 @@ use collections::HashMap;
 use serde::{Deserialize, Serialize};
 use settings::StatusBarPosition;
 pub use settings::{
-    AutosaveSetting, BottomDockLayout, EncodingDisplayOptions, InactiveOpacity,
-    PaneSplitDirectionHorizontal, PaneSplitDirectionVertical, RegisterSetting,
-    RestoreOnStartupBehavior, Settings,
+    AutosaveSetting, BottomDockLayout, EncodingDisplayOptions, InactiveOpacity, PaneSplitDirectionHorizontal,
+    PaneSplitDirectionVertical, RegisterSetting, RestoreOnStartupBehavior, Settings,
 };
 use ui::rems_from_px;
 
-#[derive(
-    Copy, Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, strum::VariantNames,
-)]
+#[derive(Copy, Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, strum::VariantNames)]
 #[serde(rename_all = "snake_case")]
 pub enum StatusBarIconSize {
     #[default]
@@ -95,20 +92,8 @@ impl Settings for WorkspaceSettings {
         let workspace = &content.workspace;
         Self {
             active_pane_modifiers: ActivePanelModifiers {
-                border_size: Some(
-                    workspace
-                        .active_pane_modifiers
-                        .unwrap()
-                        .border_size
-                        .unwrap(),
-                ),
-                inactive_opacity: Some(
-                    workspace
-                        .active_pane_modifiers
-                        .unwrap()
-                        .inactive_opacity
-                        .unwrap(),
-                ),
+                border_size: Some(workspace.active_pane_modifiers.unwrap().border_size.unwrap()),
+                inactive_opacity: Some(workspace.active_pane_modifiers.unwrap().inactive_opacity.unwrap()),
             },
             bottom_dock_layout: workspace.bottom_dock_layout.unwrap(),
             pane_split_direction_horizontal: workspace.pane_split_direction_horizontal.unwrap(),

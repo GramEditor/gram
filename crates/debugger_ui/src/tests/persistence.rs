@@ -14,10 +14,7 @@ use workspace::{Panel, dock::DockPosition};
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
-async fn test_invert_axis_on_panel_position_change(
-    executor: BackgroundExecutor,
-    cx: &mut TestAppContext,
-) {
+async fn test_invert_axis_on_panel_position_change(executor: BackgroundExecutor, cx: &mut TestAppContext) {
     init_test(cx);
 
     let fs = FakeFs::new(executor.clone());
@@ -38,9 +35,7 @@ async fn test_invert_axis_on_panel_position_change(
     let client = session.update(cx, |session, _| session.adapter_client().unwrap());
 
     // Setup thread response
-    client.on_request::<dap::requests::Threads, _>(move |_, _| {
-        Ok(dap::ThreadsResponse { threads: vec![] })
-    });
+    client.on_request::<dap::requests::Threads, _>(move |_, _| Ok(dap::ThreadsResponse { threads: vec![] }));
 
     cx.run_until_parked();
 

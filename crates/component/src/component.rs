@@ -69,10 +69,7 @@ pub struct ComponentRegistry {
 
 impl ComponentRegistry {
     pub fn previews(&self) -> Vec<&ComponentMetadata> {
-        self.components
-            .values()
-            .filter(|c| c.preview.is_some())
-            .collect()
+        self.components.values().filter(|c| c.preview.is_some()).collect()
     }
 
     pub fn sorted_previews(&self) -> Vec<ComponentMetadata> {
@@ -86,8 +83,7 @@ impl ComponentRegistry {
     }
 
     pub fn sorted_components(&self) -> Vec<ComponentMetadata> {
-        let mut components: Vec<ComponentMetadata> =
-            self.components().into_iter().cloned().collect();
+        let mut components: Vec<ComponentMetadata> = self.components().into_iter().cloned().collect();
         components.sort_by_key(|a| a.name());
         components
     }

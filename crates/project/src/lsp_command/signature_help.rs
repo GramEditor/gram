@@ -45,8 +45,7 @@ impl SignatureHelp {
             let label = SharedString::from(signature.label.clone());
             let active_parameter = signature
                 .active_parameter
-                .unwrap_or_else(|| help.active_parameter.unwrap_or(0))
-                as usize;
+                .unwrap_or_else(|| help.active_parameter.unwrap_or(0)) as usize;
             let mut highlights = Vec::new();
             let mut parameter_infos = Vec::new();
 
@@ -58,18 +57,13 @@ impl SignatureHelp {
                                 let offset1 = offset1 as usize;
                                 let offset2 = offset2 as usize;
                                 if offset1 < offset2 {
-                                    let mut indices = label.char_indices().scan(
-                                        0,
-                                        |utf16_offset_acc, (offset, c)| {
-                                            let utf16_offset = *utf16_offset_acc;
-                                            *utf16_offset_acc += c.len_utf16();
-                                            Some((utf16_offset, offset))
-                                        },
-                                    );
-                                    let (_, offset1) = indices
-                                        .find(|(utf16_offset, _)| *utf16_offset == offset1)?;
-                                    let (_, offset2) = indices
-                                        .find(|(utf16_offset, _)| *utf16_offset == offset2)?;
+                                    let mut indices = label.char_indices().scan(0, |utf16_offset_acc, (offset, c)| {
+                                        let utf16_offset = *utf16_offset_acc;
+                                        *utf16_offset_acc += c.len_utf16();
+                                        Some((utf16_offset, offset))
+                                    });
+                                    let (_, offset1) = indices.find(|(utf16_offset, _)| *utf16_offset == offset1)?;
+                                    let (_, offset2) = indices.find(|(utf16_offset, _)| *utf16_offset == offset2)?;
                                     Some(offset1..offset2)
                                 } else {
                                     log::warn!(
@@ -139,21 +133,12 @@ fn documentation_to_markdown(
     cx: &mut App,
 ) -> Entity<Markdown> {
     match documentation {
-        lsp::Documentation::String(string) => {
-            cx.new(|cx| Markdown::new_text(SharedString::from(string), cx))
-        }
+        lsp::Documentation::String(string) => cx.new(|cx| Markdown::new_text(SharedString::from(string), cx)),
         lsp::Documentation::MarkupContent(markup) => match markup.kind {
-            lsp::MarkupKind::PlainText => {
-                cx.new(|cx| Markdown::new_text(SharedString::from(&markup.value), cx))
+            lsp::MarkupKind::PlainText => cx.new(|cx| Markdown::new_text(SharedString::from(&markup.value), cx)),
+            lsp::MarkupKind::Markdown => {
+                cx.new(|cx| Markdown::new(SharedString::from(&markup.value), language_registry, None, cx))
             }
-            lsp::MarkupKind::Markdown => cx.new(|cx| {
-                Markdown::new(
-                    SharedString::from(&markup.value),
-                    language_registry,
-                    None,
-                    cx,
-                )
-            }),
         },
     }
 }
@@ -172,16 +157,12 @@ pub fn lsp_to_proto_signature(lsp_help: lsp::SignatureHelp) -> proto::SignatureH
                     .into_iter()
                     .map(|parameter_info| proto::ParameterInformation {
                         label: Some(match parameter_info.label {
-                            lsp::ParameterLabel::Simple(label) => {
-                                proto::parameter_information::Label::Simple(label)
-                            }
+                            lsp::ParameterLabel::Simple(label) => proto::parameter_information::Label::Simple(label),
                             lsp::ParameterLabel::LabelOffsets(offsets) => {
-                                proto::parameter_information::Label::LabelOffsets(
-                                    proto::LabelOffsets {
-                                        start: offsets[0],
-                                        end: offsets[1],
-                                    },
-                                )
+                                proto::parameter_information::Label::LabelOffsets(proto::LabelOffsets {
+                                    start: offsets[0],
+                                    end: offsets[1],
+                                })
                             }
                         }),
                         documentation: parameter_info.documentation.map(lsp_to_proto_documentation),
@@ -228,15 +209,10 @@ pub fn proto_to_lsp_signature(proto_help: proto::SignatureHelp) -> lsp::Signatur
                                         lsp::ParameterLabel::Simple(string)
                                     }
                                     proto::parameter_information::Label::LabelOffsets(offsets) => {
-                                        lsp::ParameterLabel::LabelOffsets([
-                                            offsets.start,
-                                            offsets.end,
-                                        ])
+                                        lsp::ParameterLabel::LabelOffsets([offsets.start, offsets.end])
                                     }
                                 },
-                                documentation: parameter_info
-                                    .documentation
-                                    .and_then(proto_to_lsp_documentation),
+                                documentation: parameter_info.documentation.and_then(proto_to_lsp_documentation),
                             })
                         })
                         .collect(),
@@ -253,19 +229,17 @@ fn proto_to_lsp_documentation(documentation: proto::Documentation) -> Option<lsp
     {
         Some(match documentation.content? {
             documentation::Content::Value(string) => lsp::Documentation::String(string),
-            documentation::Content::MarkupContent(markup) => {
-                lsp::Documentation::MarkupContent(if markup.is_markdown {
-                    lsp::MarkupContent {
-                        kind: lsp::MarkupKind::Markdown,
-                        value: markup.value,
-                    }
-                } else {
-                    lsp::MarkupContent {
-                        kind: lsp::MarkupKind::PlainText,
-                        value: markup.value,
-                    }
-                })
-            }
+            documentation::Content::MarkupContent(markup) => lsp::Documentation::MarkupContent(if markup.is_markdown {
+                lsp::MarkupContent {
+                    kind: lsp::MarkupKind::Markdown,
+                    value: markup.value,
+                }
+            } else {
+                lsp::MarkupContent {
+                    kind: lsp::MarkupKind::PlainText,
+                    value: markup.value,
+                }
+            }),
         })
     }
 }
@@ -289,9 +263,7 @@ mod tests {
         let signature_help = lsp::SignatureHelp {
             signatures: vec![lsp::SignatureInformation {
                 label: "fn test(foo: u8, bar: &str)".to_string(),
-                documentation: Some(Documentation::String(
-                    "This is a test documentation".to_string(),
-                )),
+                documentation: Some(Documentation::String("This is a test documentation".to_string())),
                 parameters: Some(vec![
                     lsp::ParameterInformation {
                         label: lsp::ParameterLabel::Simple("foo: u8".to_string()),
@@ -707,9 +679,7 @@ mod tests {
         let signature_help = lsp::SignatureHelp {
             signatures: vec![lsp::SignatureInformation {
                 label: "fn test(foo: u8, bar: &str)".to_string(),
-                documentation: Some(Documentation::String(
-                    "This is a test documentation".to_string(),
-                )),
+                documentation: Some(Documentation::String("This is a test documentation".to_string())),
                 parameters: Some(vec![
                     lsp::ParameterInformation {
                         label: lsp::ParameterLabel::Simple("foo: u8".to_string()),
@@ -725,8 +695,7 @@ mod tests {
             active_signature: Some(0),
             active_parameter: Some(0),
         };
-        let maybe_signature_help =
-            cx.update(|cx| SignatureHelp::new(signature_help, None, None, cx));
+        let maybe_signature_help = cx.update(|cx| SignatureHelp::new(signature_help, None, None, cx));
         assert!(maybe_signature_help.is_some());
 
         let signature_help = maybe_signature_help.unwrap();

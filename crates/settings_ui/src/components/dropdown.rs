@@ -2,9 +2,7 @@ use std::rc::Rc;
 
 use gpui::{App, ElementId, IntoElement, RenderOnce};
 use heck::ToTitleCase as _;
-use ui::{
-    ButtonSize, ContextMenu, DropdownMenu, DropdownStyle, FluentBuilder as _, IconPosition, px,
-};
+use ui::{ButtonSize, ContextMenu, DropdownMenu, DropdownStyle, FluentBuilder as _, IconPosition, px};
 
 #[derive(IntoElement)]
 pub struct EnumVariantDropdown<T>
@@ -58,11 +56,7 @@ where
     T: strum::VariantArray + strum::VariantNames + Copy + PartialEq + Send + Sync + 'static,
 {
     fn render(self, window: &mut ui::Window, cx: &mut ui::App) -> impl gpui::IntoElement {
-        let current_value_label = self.labels[self
-            .variants
-            .iter()
-            .position(|v| *v == self.current_value)
-            .unwrap()];
+        let current_value_label = self.labels[self.variants.iter().position(|v| *v == self.current_value).unwrap()];
 
         let context_menu = window.use_keyed_state(current_value_label, cx, |window, cx| {
             ContextMenu::new(window, cx, move |mut menu, _, _| {
@@ -99,10 +93,7 @@ where
         .when_some(self.tab_index, |elem, tab_index| elem.tab_index(tab_index))
         .trigger_size(ButtonSize::Medium)
         .style(DropdownStyle::Outlined)
-        .offset(gpui::Point {
-            x: px(0.0),
-            y: px(2.0),
-        })
+        .offset(gpui::Point { x: px(0.0), y: px(2.0) })
         .into_any_element()
     }
 }

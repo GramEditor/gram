@@ -71,9 +71,7 @@ impl<'de> serde::Deserialize<'de> for FontFeatures {
             {
                 let mut feature_list = Vec::new();
 
-                while let Some((key, value)) =
-                    access.next_entry::<String, Option<FeatureValue>>()?
-                {
+                while let Some((key, value)) = access.next_entry::<String, Option<FeatureValue>>()? {
                     if !is_valid_feature_tag(&key) {
                         log::error!("Incorrect font feature tag: {}", key);
                         continue;
@@ -91,11 +89,7 @@ impl<'de> serde::Deserialize<'de> for FontFeatures {
                                 if value.is_u64() {
                                     feature_list.push((key, value.as_u64().unwrap() as u32));
                                 } else {
-                                    log::error!(
-                                        "Incorrect font feature value {} for feature tag {}",
-                                        value,
-                                        key
-                                    );
+                                    log::error!("Incorrect font feature value {} for feature tag {}", value, key);
                                     continue;
                                 }
                             }

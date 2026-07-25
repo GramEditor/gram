@@ -34,10 +34,7 @@ pub fn is_invisible(c: char) -> bool {
     if c <= '\u{1f}' {
         c != '\t' && c != '\n' && c != '\r'
     } else if c >= '\u{7f}' {
-        c <= '\u{9f}'
-            || (c.is_whitespace() && c != IDEOGRAPHIC_SPACE)
-            || contains(c, FORMAT)
-            || contains(c, OTHER)
+        c <= '\u{9f}' || (c.is_whitespace() && c != IDEOGRAPHIC_SPACE) || contains(c, FORMAT) || contains(c, OTHER)
     } else {
         false
     }
@@ -65,8 +62,8 @@ const FIXED_WIDTH_SPACE: &str = "\u{2007}";
 const IDEOGRAPHIC_SPACE: char = '\u{3000}';
 
 const C0_SYMBOLS: &[&str] = &[
-    "␀", "␁", "␂", "␃", "␄", "␅", "␆", "␇", "␈", "␉", "␊", "␋", "␌", "␍", "␎", "␏", "␐", "␑", "␒",
-    "␓", "␔", "␕", "␖", "␗", "␘", "␙", "␚", "␛", "␜", "␝", "␞", "␟",
+    "␀", "␁", "␂", "␃", "␄", "␅", "␆", "␇", "␈", "␉", "␊", "␋", "␌", "␍", "␎", "␏", "␐", "␑", "␒", "␓", "␔", "␕", "␖",
+    "␗", "␘", "␙", "␚", "␛", "␜", "␝", "␞", "␟",
 ];
 const DEL: &str = "␡";
 

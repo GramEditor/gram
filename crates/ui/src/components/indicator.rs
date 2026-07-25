@@ -71,16 +71,8 @@ impl RenderOnce for Indicator {
             IndicatorKind::Icon(icon) => {
                 container.child(icon.map(|icon| icon.size(IconSize::Indicator).color(self.color)))
             }
-            IndicatorKind::Dot => container
-                .w_1p5()
-                .h_1p5()
-                .rounded_full()
-                .bg(self.color.color(cx)),
-            IndicatorKind::Bar => container
-                .w_full()
-                .h_1p5()
-                .rounded_t_sm()
-                .bg(self.color.color(cx)),
+            IndicatorKind::Dot => container.w_1p5().h_1p5().rounded_full().bg(self.color.color(cx)),
+            IndicatorKind::Bar => container.w_full().h_1p5().rounded_t_sm().bg(self.color.color(cx)),
         }
     }
 }
@@ -91,9 +83,7 @@ impl Component for Indicator {
     }
 
     fn description() -> Option<&'static str> {
-        Some(
-            "Visual indicators used to represent status, notifications, or draw attention to specific elements.",
-        )
+        Some("Visual indicators used to represent status, notifications, or draw attention to specific elements.")
     }
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
@@ -105,18 +95,9 @@ impl Component for Indicator {
                         "Dot Indicators",
                         vec![
                             single_example("Default", Indicator::dot().into_any_element()),
-                            single_example(
-                                "Success",
-                                Indicator::dot().color(Color::Success).into_any_element(),
-                            ),
-                            single_example(
-                                "Warning",
-                                Indicator::dot().color(Color::Warning).into_any_element(),
-                            ),
-                            single_example(
-                                "Error",
-                                Indicator::dot().color(Color::Error).into_any_element(),
-                            ),
+                            single_example("Success", Indicator::dot().color(Color::Success).into_any_element()),
+                            single_example("Warning", Indicator::dot().color(Color::Warning).into_any_element()),
+                            single_example("Error", Indicator::dot().color(Color::Error).into_any_element()),
                             single_example(
                                 "With Border",
                                 Indicator::dot()
@@ -130,18 +111,9 @@ impl Component for Indicator {
                         "Bar Indicators",
                         vec![
                             single_example("Default", Indicator::bar().into_any_element()),
-                            single_example(
-                                "Success",
-                                Indicator::bar().color(Color::Success).into_any_element(),
-                            ),
-                            single_example(
-                                "Warning",
-                                Indicator::bar().color(Color::Warning).into_any_element(),
-                            ),
-                            single_example(
-                                "Error",
-                                Indicator::bar().color(Color::Error).into_any_element(),
-                            ),
+                            single_example("Success", Indicator::bar().color(Color::Success).into_any_element()),
+                            single_example("Warning", Indicator::bar().color(Color::Warning).into_any_element()),
+                            single_example("Error", Indicator::bar().color(Color::Error).into_any_element()),
                         ],
                     ),
                     example_group_with_title(

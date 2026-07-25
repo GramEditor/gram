@@ -13,9 +13,7 @@ use std::{
     sync::Arc,
 };
 use task::{Shell, ShellBuilder, ShellKind, SpawnInTerminal};
-use terminal::{
-    TaskState, TaskStatus, Terminal, TerminalBuilder, terminal_settings::TerminalSettings,
-};
+use terminal::{TaskState, TaskStatus, Terminal, TerminalBuilder, terminal_settings::TerminalSettings};
 use util::{command::new_std_command, get_default_system_shell, maybe, rel_path::RelPath};
 
 use crate::{Project, ProjectPath};
@@ -84,18 +82,14 @@ impl Project {
         });
         let remote_client = self.remote_client.clone();
         let shell = match &remote_client {
-            Some(remote_client) => remote_client
-                .read(cx)
-                .shell()
-                .unwrap_or_else(get_default_system_shell),
+            Some(remote_client) => remote_client.read(cx).shell().unwrap_or_else(get_default_system_shell),
             None => settings.shell.program(),
         };
         let is_windows = self.path_style(cx).is_windows();
         let shell_kind = ShellKind::new(&shell, is_windows);
 
         // Prepare a task for resolving the environment
-        let env_task =
-            self.resolve_directory_environment(&shell, path.clone(), remote_client.clone(), cx);
+        let env_task = self.resolve_directory_environment(&shell, path.clone(), remote_client.clone(), cx);
 
         let project_path_contexts = self
             .active_entry()
@@ -123,10 +117,7 @@ impl Project {
                     let Some(toolchain) = toolchain.await else {
                         continue;
                     };
-                    let language = lang_registry
-                        .language_for_name(&toolchain.language_name.0)
-                        .await
-                        .ok();
+                    let language = lang_registry.language_for_name(&toolchain.language_name.0).await.ok();
                     let lister = language?.toolchain_lister()?;
                     return cx
                         .update(|cx| lister.activation_script(&toolchain, shell_kind, cx))
@@ -143,10 +134,7 @@ impl Project {
                         if let Some(command) = &spawn_task.command {
                             let command = shell_kind.prepend_command_prefix(command);
                             let command = shell_kind.try_quote_prefix_aware(&command);
-                            let args = spawn_task
-                                .args
-                                .iter()
-                                .filter_map(|arg| shell_kind.try_quote(&arg));
+                            let args = spawn_task.args.iter().filter_map(|arg| shell_kind.try_quote(&arg));
 
                             command.into_iter().chain(args).join(" ")
                         } else {
@@ -161,30 +149,17 @@ impl Project {
                             Some(remote_client) => match activation_script.clone() {
                                 activation_script if !activation_script.is_empty() => {
                                     let separator = shell_kind.sequential_commands_separator();
-                                    let activation_script =
-                                        activation_script.join(&format!("{separator} "));
+                                    let activation_script = activation_script.join(&format!("{separator} "));
                                     let to_run = format_to_run();
 
                                     let arg = format!("{activation_script}{separator} {to_run}");
                                     let args = shell_kind.args_for_shell(false, arg);
-                                    let shell = remote_client
-                                        .read(cx)
-                                        .shell()
-                                        .unwrap_or_else(get_default_system_shell);
+                                    let shell = remote_client.read(cx).shell().unwrap_or_else(get_default_system_shell);
 
-                                    create_remote_shell(
-                                        Some((&shell, &args)),
-                                        env,
-                                        path,
-                                        remote_client,
-                                        cx,
-                                    )?
+                                    create_remote_shell(Some((&shell, &args)), env, path, remote_client, cx)?
                                 }
                                 _ => create_remote_shell(
-                                    spawn_task
-                                        .command
-                                        .as_ref()
-                                        .map(|command| (command, &spawn_task.args)),
+                                    spawn_task.command.as_ref().map(|command| (command, &spawn_task.args)),
                                     env,
                                     path,
                                     remote_client,
@@ -194,12 +169,10 @@ impl Project {
                             None => match activation_script.clone() {
                                 activation_script if !activation_script.is_empty() => {
                                     let separator = shell_kind.sequential_commands_separator();
-                                    let activation_script =
-                                        activation_script.join(&format!("{separator} "));
+                                    let activation_script = activation_script.join(&format!("{separator} "));
                                     let to_run = format_to_run();
 
-                                    let mut arg =
-                                        format!("{activation_script}{separator} {to_run}");
+                                    let mut arg = format!("{activation_script}{separator} {to_run}");
                                     if shell_kind == ShellKind::Cmd {
                                         // We need to put the entire command in quotes since otherwise CMD tries to execute them
                                         // as separate commands rather than chaining one after another.
@@ -253,18 +226,13 @@ impl Project {
             project.update(cx, move |this, cx| {
                 let terminal_handle = cx.new(|cx| builder.subscribe(cx));
 
-                this.terminals
-                    .local_handles
-                    .push(terminal_handle.downgrade());
+                this.terminals.local_handles.push(terminal_handle.downgrade());
 
                 let id = terminal_handle.entity_id();
                 cx.observe_release(&terminal_handle, move |project, _terminal, cx| {
                     let handles = &mut project.terminals.local_handles;
 
-                    if let Some(index) = handles
-                        .iter()
-                        .position(|terminal| terminal.entity_id() == id)
-                    {
+                    if let Some(index) = handles.iter().position(|terminal| terminal.entity_id() == id) {
                         handles.remove(index);
                         cx.notify();
                     }
@@ -315,18 +283,14 @@ impl Project {
             .collect::<Vec<_>>();
         let remote_client = self.remote_client.clone();
         let shell = match &remote_client {
-            Some(remote_client) => remote_client
-                .read(cx)
-                .shell()
-                .unwrap_or_else(get_default_system_shell),
+            Some(remote_client) => remote_client.read(cx).shell().unwrap_or_else(get_default_system_shell),
             None => settings.shell.program(),
         };
 
         let is_windows = self.path_style(cx).is_windows();
 
         // Prepare a task for resolving the environment
-        let env_task =
-            self.resolve_directory_environment(&shell, path.clone(), remote_client.clone(), cx);
+        let env_task = self.resolve_directory_environment(&shell, path.clone(), remote_client.clone(), cx);
 
         let lang_registry = self.languages.clone();
         cx.spawn(async move |project, cx| {
@@ -339,10 +303,7 @@ impl Project {
                     let Some(toolchain) = toolchain.await else {
                         continue;
                     };
-                    let language = lang_registry
-                        .language_for_name(&toolchain.language_name.0)
-                        .await
-                        .ok();
+                    let language = lang_registry.language_for_name(&toolchain.language_name.0).await.ok();
                     let lister = language?.toolchain_lister()?;
                     return cx
                         .update(|cx| lister.activation_script(&toolchain, shell_kind, cx))
@@ -357,9 +318,7 @@ impl Project {
                 .update(cx, move |_, cx| {
                     let (shell, env) = {
                         match remote_client {
-                            Some(remote_client) => {
-                                create_remote_shell(None, env, path, remote_client, cx)?
-                            }
+                            Some(remote_client) => create_remote_shell(None, env, path, remote_client, cx)?,
                             None => (settings.shell, env),
                         }
                     };
@@ -384,18 +343,13 @@ impl Project {
             project.update(cx, move |this, cx| {
                 let terminal_handle = cx.new(|cx| builder.subscribe(cx));
 
-                this.terminals
-                    .local_handles
-                    .push(terminal_handle.downgrade());
+                this.terminals.local_handles.push(terminal_handle.downgrade());
 
                 let id = terminal_handle.entity_id();
                 cx.observe_release(&terminal_handle, move |project, _terminal, cx| {
                     let handles = &mut project.terminals.local_handles;
 
-                    if let Some(index) = handles
-                        .iter()
-                        .position(|terminal| terminal.entity_id() == id)
-                    {
+                    if let Some(index) = handles.iter().position(|terminal| terminal.entity_id() == id) {
                         handles.remove(index);
                         cx.notify();
                     }
@@ -418,11 +372,7 @@ impl Project {
         if terminal.read(cx).task().is_some() {
             return self.create_terminal_shell(cwd, cx);
         }
-        let local_path = if self.is_via_remote_server() {
-            None
-        } else {
-            cwd
-        };
+        let local_path = if self.is_via_remote_server() { None } else { cwd };
 
         let builder = terminal.read(cx).clone_builder(cx, local_path);
         cx.spawn(async |project, cx| {
@@ -430,19 +380,13 @@ impl Project {
             project.update(cx, |project, cx| {
                 let terminal_handle = cx.new(|cx| terminal.subscribe(cx));
 
-                project
-                    .terminals
-                    .local_handles
-                    .push(terminal_handle.downgrade());
+                project.terminals.local_handles.push(terminal_handle.downgrade());
 
                 let id = terminal_handle.entity_id();
                 cx.observe_release(&terminal_handle, move |project, _terminal, cx| {
                     let handles = &mut project.terminals.local_handles;
 
-                    if let Some(index) = handles
-                        .iter()
-                        .position(|terminal| terminal.entity_id() == id)
-                    {
+                    if let Some(index) = handles.iter().position(|terminal| terminal.entity_id() == id) {
                         handles.remove(index);
                         cx.notify();
                     }
@@ -454,11 +398,7 @@ impl Project {
         })
     }
 
-    pub fn terminal_settings<'a>(
-        &'a self,
-        path: &'a Option<PathBuf>,
-        cx: &'a App,
-    ) -> &'a TerminalSettings {
+    pub fn terminal_settings<'a>(&'a self, path: &'a Option<PathBuf>, cx: &'a App) -> &'a TerminalSettings {
         let mut settings_location = None;
         if let Some(path) = path.as_ref()
             && let Some((worktree, _)) = self.find_worktree(path, cx)
@@ -471,11 +411,7 @@ impl Project {
         TerminalSettings::get(settings_location, cx)
     }
 
-    pub fn exec_in_shell(
-        &self,
-        command: String,
-        cx: &mut Context<Self>,
-    ) -> Task<Result<smol::process::Command>> {
+    pub fn exec_in_shell(&self, command: String, cx: &mut Context<Self>) -> Task<Result<smol::process::Command>> {
         let path = self.first_project_directory(cx);
         let remote_client = self.remote_client.clone();
         let settings = self.terminal_settings(&path, cx).clone();
@@ -502,13 +438,10 @@ impl Project {
             project.update(cx, move |_, cx| {
                 match remote_client {
                     Some(remote_client) => {
-                        let command_template = remote_client.read(cx).build_command(
-                            Some(command),
-                            &args,
-                            &env,
-                            None,
-                            None,
-                        )?;
+                        let command_template =
+                            remote_client
+                                .read(cx)
+                                .build_command(Some(command), &args, &env, None, None)?;
                         let mut command = new_std_command(command_template.program);
                         command.args(command_template.args);
                         command.envs(command_template.env);
@@ -545,16 +478,12 @@ impl Project {
     ) -> Shared<Task<Option<HashMap<String, String>>>> {
         if let Some(path) = &path {
             let shell = Shell::Program(shell.to_string());
-            self.environment
-                .update(cx, |project_env, cx| match &remote_client {
-                    Some(remote_client) => project_env.remote_directory_environment(
-                        &shell,
-                        path.clone(),
-                        remote_client.clone(),
-                        cx,
-                    ),
-                    None => project_env.local_directory_environment(&shell, path.clone(), cx),
-                })
+            self.environment.update(cx, |project_env, cx| match &remote_client {
+                Some(remote_client) => {
+                    project_env.remote_directory_environment(&shell, path.clone(), remote_client.clone(), cx)
+                }
+                None => project_env.local_directory_environment(&shell, path.clone(), cx),
+            })
         } else {
             Task::ready(None).shared()
         }

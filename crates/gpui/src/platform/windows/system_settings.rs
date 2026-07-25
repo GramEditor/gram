@@ -7,8 +7,8 @@ use ::util::ResultExt;
 use windows::Win32::UI::{
     Shell::{ABM_GETSTATE, ABM_GETTASKBARPOS, ABS_AUTOHIDE, APPBARDATA, SHAppBarMessage},
     WindowsAndMessaging::{
-        SPI_GETWHEELSCROLLCHARS, SPI_GETWHEELSCROLLLINES, SPI_SETWORKAREA,
-        SYSTEM_PARAMETERS_INFO_ACTION, SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS, SystemParametersInfoW,
+        SPI_GETWHEELSCROLLCHARS, SPI_GETWHEELSCROLLLINES, SPI_SETWORKAREA, SYSTEM_PARAMETERS_INFO_ACTION,
+        SYSTEM_PARAMETERS_INFO_UPDATE_FLAGS, SystemParametersInfoW,
     },
 };
 
@@ -140,9 +140,7 @@ impl AutoHideTaskbarPosition {
             // This case indicates that taskbar is not on the current monitor.
             return Ok(None);
         }
-        if taskbar_bounds.bottom() == display_bounds.bottom()
-            && taskbar_bounds.right() == display_bounds.right()
-        {
+        if taskbar_bounds.bottom() == display_bounds.bottom() && taskbar_bounds.right() == display_bounds.right() {
             if taskbar_bounds.size.height < display_bounds.size.height
                 && taskbar_bounds.size.width == display_bounds.size.width
             {
@@ -160,9 +158,7 @@ impl AutoHideTaskbarPosition {
             );
             return Ok(None);
         }
-        if taskbar_bounds.top() == display_bounds.top()
-            && taskbar_bounds.left() == display_bounds.left()
-        {
+        if taskbar_bounds.top() == display_bounds.top() && taskbar_bounds.left() == display_bounds.left() {
             if taskbar_bounds.size.height < display_bounds.size.height
                 && taskbar_bounds.size.width == display_bounds.size.width
             {

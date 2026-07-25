@@ -1,6 +1,6 @@
 use gpui::{
-    App, Application, Bounds, Context, Div, ElementId, FocusHandle, KeyBinding, SharedString,
-    Stateful, Window, WindowBounds, WindowOptions, actions, div, prelude::*, px, size,
+    App, Application, Bounds, Context, Div, ElementId, FocusHandle, KeyBinding, SharedString, Stateful, Window,
+    WindowBounds, WindowOptions, actions, div, prelude::*, px, size,
 };
 
 actions!(example, [Tab, TabPrev]);
@@ -77,34 +77,25 @@ impl Render for Example {
             .bg(gpui::white())
             .text_color(gpui::black())
             .child(self.message.clone())
-            .children(
-                self.items
-                    .clone()
-                    .into_iter()
-                    .enumerate()
-                    .map(|(ix, item_handle)| {
-                        div()
-                            .id(("item", ix))
-                            .track_focus(&item_handle)
-                            .h_10()
-                            .w_full()
-                            .flex()
-                            .justify_center()
-                            .items_center()
-                            .border_1()
-                            .border_color(gpui::black())
-                            .when(
-                                item_handle.tab_stop && item_handle.is_focused(window),
-                                tab_stop_style,
-                            )
-                            .map(|this| match item_handle.tab_stop {
-                                true => this
-                                    .hover(|this| this.bg(gpui::black().opacity(0.1)))
-                                    .child(format!("tab_index: {}", item_handle.tab_index)),
-                                false => this.opacity(0.4).child("tab_stop: false"),
-                            })
-                    }),
-            )
+            .children(self.items.clone().into_iter().enumerate().map(|(ix, item_handle)| {
+                div()
+                    .id(("item", ix))
+                    .track_focus(&item_handle)
+                    .h_10()
+                    .w_full()
+                    .flex()
+                    .justify_center()
+                    .items_center()
+                    .border_1()
+                    .border_color(gpui::black())
+                    .when(item_handle.tab_stop && item_handle.is_focused(window), tab_stop_style)
+                    .map(|this| match item_handle.tab_stop {
+                        true => this
+                            .hover(|this| this.bg(gpui::black().opacity(0.1)))
+                            .child(format!("tab_index: {}", item_handle.tab_index)),
+                        false => this.opacity(0.4).child("tab_stop: false"),
+                    })
+            }))
             .child(
                 div()
                     .flex()

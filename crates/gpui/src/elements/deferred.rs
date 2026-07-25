@@ -1,6 +1,5 @@
 use crate::{
-    AnyElement, App, Bounds, Element, GlobalElementId, InspectorElementId, IntoElement, LayoutId,
-    Pixels, Window,
+    AnyElement, App, Bounds, Element, GlobalElementId, InspectorElementId, IntoElement, LayoutId, Pixels, Window,
 };
 
 /// Builds a `Deferred` element, which delays the layout and paint of its child.

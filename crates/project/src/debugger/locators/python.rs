@@ -74,10 +74,7 @@ impl DapLocator for PythonLocator {
                 config_obj.insert("module".to_string(), module.clone().into());
             }
             if let Some(program) = program_position {
-                config_obj.insert(
-                    "program".to_string(),
-                    build_config.args[program].clone().into(),
-                );
+                config_obj.insert("program".to_string(), build_config.args[program].clone().into());
             }
         }
 

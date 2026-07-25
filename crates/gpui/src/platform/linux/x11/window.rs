@@ -3,11 +3,10 @@ use x11rb::connection::RequestConnection;
 
 use crate::platform::wgpu::{WgpuContext, WgpuRenderer, WgpuSurfaceConfig};
 use crate::{
-    AnyWindowHandle, Bounds, Decorations, DevicePixels, ForegroundExecutor, GpuSpecs, Modifiers,
-    Pixels, PlatformAtlas, PlatformDisplay, PlatformInput, PlatformInputHandler, PlatformWindow,
-    Point, PromptButton, PromptLevel, RequestFrameOptions, ResizeEdge, ScaledPixels, Scene, Size,
-    Tiling, WindowAppearance, WindowBackgroundAppearance, WindowBounds, WindowControlArea,
-    WindowDecorations, WindowKind, WindowParams, X11ClientStatePtr, px,
+    AnyWindowHandle, Bounds, Decorations, DevicePixels, ForegroundExecutor, GpuSpecs, Modifiers, Pixels, PlatformAtlas,
+    PlatformDisplay, PlatformInput, PlatformInputHandler, PlatformWindow, Point, PromptButton, PromptLevel,
+    RequestFrameOptions, ResizeEdge, ScaledPixels, Scene, Size, Tiling, WindowAppearance, WindowBackgroundAppearance,
+    WindowBounds, WindowControlArea, WindowDecorations, WindowKind, WindowParams, X11ClientStatePtr, px,
 };
 
 use raw_window_handle as rwh;
@@ -26,9 +25,7 @@ use x11rb::{
     xcb_ffi::XCBConnection,
 };
 
-use std::{
-    cell::RefCell, ffi::c_void, fmt::Display, num::NonZeroU32, ptr::NonNull, rc::Rc, sync::Arc,
-};
+use std::{cell::RefCell, ffi::c_void, fmt::Display, num::NonZeroU32, ptr::NonNull, rc::Rc, sync::Arc};
 
 use super::{X11Display, XINPUT_ALL_DEVICE_GROUPS, XINPUT_ALL_DEVICES};
 
@@ -82,10 +79,7 @@ x11rb::atom_manager! {
     }
 }
 
-fn query_render_extent(
-    xcb: &Rc<XCBConnection>,
-    x_window: xproto::Window,
-) -> anyhow::Result<Size<DevicePixels>> {
+fn query_render_extent(xcb: &Rc<XCBConnection>, x_window: xproto::Window) -> anyhow::Result<Size<DevicePixels>> {
     let reply = get_reply(|| "X11 GetGeometry failed.", xcb.get_geometry(x_window))?;
     Ok(Size {
         width: DevicePixels(reply.width as i32),
@@ -198,12 +192,7 @@ fn find_visuals(xcb: &XCBConnection, screen_index: usize) -> VisualSet {
                 visual_type.blue_mask,
             );
 
-            if (
-                visual_type.red_mask,
-                visual_type.green_mask,
-                visual_type.blue_mask,
-            ) != (0xFF0000, 0xFF00, 0xFF)
-            {
+            if (visual_type.red_mask, visual_type.green_mask, visual_type.blue_mask) != (0xFF0000, 0xFF00, 0xFF) {
                 continue;
             }
             let color_mask = visual_type.red_mask | visual_type.green_mask | visual_type.blue_mask;
@@ -374,9 +363,7 @@ pub(crate) fn handle_connection_error(err: ConnectionError) -> anyhow::Error {
         ConnectionError::FdPassingFailed => {
             panic!("X11 connection: File descriptor passing failed")
         }
-        ConnectionError::ParseError(parse_error) => {
-            anyhow!(parse_error).context("Parse error in X11 response")
-        }
+        ConnectionError::ParseError(parse_error) => anyhow!(parse_error).context("Parse error in X11 response"),
         ConnectionError::InsufficientMemory => panic!("X11 connection: Insufficient memory"),
         ConnectionError::IoError(err) => anyhow!(err).context("X11 connection: IOError"),
         _ => anyhow!(err),
@@ -399,9 +386,7 @@ impl X11WindowState {
         appearance: WindowAppearance,
         parent_window: Option<xproto::Window>,
     ) -> anyhow::Result<Self> {
-        let x_screen_index = params
-            .display_id
-            .map_or(x_main_screen_index, |did| did.0 as usize);
+        let x_screen_index = params.display_id.map_or(x_main_screen_index, |did| did.0 as usize);
 
         let visual_set = find_visuals(xcb, x_screen_index);
 
@@ -498,12 +483,7 @@ impl X11WindowState {
                 let min_size = (size.width.0 as i32, size.height.0 as i32);
                 size_hints.min_size = Some(min_size);
                 check_reply(
-                    || {
-                        format!(
-                            "X11 change of WM_SIZE_HINTS failed. min_size: {:?}",
-                            min_size
-                        )
-                    },
+                    || format!("X11 change of WM_SIZE_HINTS failed. min_size: {:?}", min_size),
                     size_hints.set_normal_hints(xcb, x_window),
                 )?;
             }
@@ -592,10 +572,7 @@ impl X11WindowState {
                 ),
             )?;
 
-            get_reply(
-                || "X11 sync protocol initialize failed.",
-                sync::initialize(xcb, 3, 1),
-            )?;
+            get_reply(|| "X11 sync protocol initialize failed.", sync::initialize(xcb, 3, 1))?;
             let sync_request_counter = xcb.generate_id()?;
             check_reply(
                 || "X11 sync CreateCounter failed.",
@@ -636,9 +613,7 @@ impl X11WindowState {
                     x_window,
                     &[xinput::EventMask {
                         deviceid: XINPUT_ALL_DEVICES,
-                        mask: vec![
-                            xinput::XIEventMask::HIERARCHY | xinput::XIEventMask::DEVICE_CHANGED,
-                        ],
+                        mask: vec![xinput::XIEventMask::HIERARCHY | xinput::XIEventMask::DEVICE_CHANGED],
                     }],
                 ),
             )?;
@@ -647,9 +622,7 @@ impl X11WindowState {
 
             let renderer = {
                 let raw_window = RawWindow {
-                    connection: as_raw_xcb_connection::AsRawXcbConnection::as_raw_xcb_connection(
-                        xcb,
-                    ) as *mut _,
+                    connection: as_raw_xcb_connection::AsRawXcbConnection::as_raw_xcb_connection(xcb) as *mut _,
                     screen_id: x_screen_index,
                     window_id: x_window,
                     visual_id: visual.id,
@@ -829,10 +802,7 @@ impl X11Window {
         Ok(())
     }
 
-    fn get_root_position(
-        &self,
-        position: Point<Pixels>,
-    ) -> anyhow::Result<TranslateCoordinatesReply> {
+    fn get_root_position(&self, position: Point<Pixels>) -> anyhow::Result<TranslateCoordinatesReply> {
         let state = self.0.state.borrow();
         get_reply(
             || "X11 TranslateCoordinates failed.",
@@ -906,10 +876,7 @@ impl X11WindowStatePtr {
         Ok(())
     }
 
-    fn set_edge_constraints(
-        &self,
-        mut state: std::cell::RefMut<X11WindowState>,
-    ) -> anyhow::Result<()> {
+    fn set_edge_constraints(&self, mut state: std::cell::RefMut<X11WindowState>) -> anyhow::Result<()> {
         let reply = get_reply(
             || "X11 GetProperty for _GTK_EDGE_CONSTRAINTS failed.",
             self.xcb.get_property(
@@ -935,10 +902,7 @@ impl X11WindowStatePtr {
         Ok(())
     }
 
-    fn set_wm_properties(
-        &self,
-        mut state: std::cell::RefMut<X11WindowState>,
-    ) -> anyhow::Result<()> {
+    fn set_wm_properties(&self, mut state: std::cell::RefMut<X11WindowState>) -> anyhow::Result<()> {
         let reply = get_reply(
             || "X11 GetProperty for _NET_WM_STATE failed.",
             self.xcb.get_property(
@@ -1079,8 +1043,7 @@ impl X11WindowStatePtr {
             let mut state = self.state.borrow_mut();
             let bounds = bounds.map(|f| px(f as f32 / state.scale_factor));
 
-            is_resize = bounds.size.width != state.bounds.size.width
-                || bounds.size.height != state.bounds.size.height;
+            is_resize = bounds.size.width != state.bounds.size.width || bounds.size.height != state.bounds.size.height;
 
             // If it's a resize event (only width/height changed), we ignore `bounds.origin`
             // because it contains wrong values.
@@ -1199,17 +1162,10 @@ impl PlatformWindow for X11Window {
         let height = size.height.0 as u32;
 
         check_reply(
-            || {
-                format!(
-                    "X11 ConfigureWindow failed. width: {}, height: {}",
-                    width, height
-                )
-            },
+            || format!("X11 ConfigureWindow failed. width: {}, height: {}", width, height),
             self.0.xcb.configure_window(
                 self.0.x_window,
-                &xproto::ConfigureWindowAux::new()
-                    .width(width)
-                    .height(height),
+                &xproto::ConfigureWindowAux::new().width(width).height(height),
             ),
         )
         .log_err();
@@ -1229,14 +1185,11 @@ impl PlatformWindow for X11Window {
     }
 
     fn mouse_position(&self) -> Point<Pixels> {
-        get_reply(
-            || "X11 QueryPointer failed.",
-            self.0.xcb.query_pointer(self.0.x_window),
-        )
-        .log_err()
-        .map_or(Point::new(Pixels::ZERO, Pixels::ZERO), |reply| {
-            Point::new((reply.root_x as u32).into(), (reply.root_y as u32).into())
-        })
+        get_reply(|| "X11 QueryPointer failed.", self.0.xcb.query_pointer(self.0.x_window))
+            .log_err()
+            .map_or(Point::new(Pixels::ZERO, Pixels::ZERO), |reply| {
+                Point::new((reply.root_x as u32).into(), (reply.root_y as u32).into())
+            })
     }
 
     fn modifiers(&self) -> Modifiers {
@@ -1362,10 +1315,7 @@ impl PlatformWindow for X11Window {
     }
 
     fn map_window(&mut self) -> anyhow::Result<()> {
-        check_reply(
-            || "X11 MapWindow failed.",
-            self.0.xcb.map_window(self.0.x_window),
-        )?;
+        check_reply(|| "X11 MapWindow failed.", self.0.xcb.map_window(self.0.x_window))?;
         Ok(())
     }
 
@@ -1473,8 +1423,7 @@ impl PlatformWindow for X11Window {
         self.0.callbacks.borrow_mut().close = Some(callback);
     }
 
-    fn on_hit_test_window_control(&self, _callback: Box<dyn FnMut() -> Option<WindowControlArea>>) {
-    }
+    fn on_hit_test_window_control(&self, _callback: Box<dyn FnMut() -> Option<WindowControlArea>>) {}
 
     fn on_appearance_changed(&self, callback: Box<dyn FnMut()>) {
         self.0.callbacks.borrow_mut().appearance_changed = Some(callback);
@@ -1579,16 +1528,8 @@ impl PlatformWindow for X11Window {
 
             [left, right, top, bottom]
         } else {
-            let (left, right) = if state.maximized_horizontal {
-                (0, 0)
-            } else {
-                (dp, dp)
-            };
-            let (top, bottom) = if state.maximized_vertical {
-                (0, 0)
-            } else {
-                (dp, dp)
-            };
+            let (left, right) = if state.maximized_horizontal { (0, 0) } else { (dp, dp) };
+            let (top, bottom) = if state.maximized_vertical { (0, 0) } else { (dp, dp) };
             [left, right, top, bottom]
         };
 
@@ -1614,12 +1555,8 @@ impl PlatformWindow for X11Window {
     fn request_decorations(&self, mut decorations: crate::WindowDecorations) {
         let mut state = self.0.state.borrow_mut();
 
-        if matches!(decorations, crate::WindowDecorations::Client)
-            && !state.client_side_decorations_supported
-        {
-            log::info!(
-                "x11: no compositor present, falling back to server-side window decorations"
-            );
+        if matches!(decorations, crate::WindowDecorations::Client) && !state.client_side_decorations_supported {
+            log::info!("x11: no compositor present, falling back to server-side window decorations");
             decorations = crate::WindowDecorations::Server;
         }
 

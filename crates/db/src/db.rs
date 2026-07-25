@@ -154,8 +154,7 @@ pub fn write_and_log<F>(cx: &App, db_write: impl FnOnce() -> F + Send + 'static)
 where
     F: Future<Output = anyhow::Result<()>> + Send,
 {
-    cx.background_spawn(async move { db_write().await.log_err() })
-        .detach()
+    cx.background_spawn(async move { db_write().await.log_err() }).detach()
 }
 
 #[cfg(test)]
@@ -182,15 +181,8 @@ mod tests {
             ];
         }
 
-        let tempdir = tempfile::Builder::new()
-            .prefix("DbTests")
-            .tempdir()
-            .unwrap();
-        let _bad_db = open_db::<BadDB>(
-            tempdir.path(),
-            release_channel::ReleaseChannel::Dev.dev_name(),
-        )
-        .await;
+        let tempdir = tempfile::Builder::new().prefix("DbTests").tempdir().unwrap();
+        let _bad_db = open_db::<BadDB>(tempdir.path(), release_channel::ReleaseChannel::Dev.dev_name()).await;
     }
 
     /// Test that DB exists but corrupted (causing recreate)
@@ -212,24 +204,14 @@ mod tests {
             const MIGRATIONS: &[&str] = &[sql!(CREATE TABLE test2(value);)];
         }
 
-        let tempdir = tempfile::Builder::new()
-            .prefix("DbTests")
-            .tempdir()
-            .unwrap();
+        let tempdir = tempfile::Builder::new().prefix("DbTests").tempdir().unwrap();
         {
-            let corrupt_db = open_db::<CorruptedDB>(
-                tempdir.path(),
-                release_channel::ReleaseChannel::Dev.dev_name(),
-            )
-            .await;
+            let corrupt_db =
+                open_db::<CorruptedDB>(tempdir.path(), release_channel::ReleaseChannel::Dev.dev_name()).await;
             assert!(corrupt_db.persistent());
         }
 
-        let good_db = open_db::<GoodDB>(
-            tempdir.path(),
-            release_channel::ReleaseChannel::Dev.dev_name(),
-        )
-        .await;
+        let good_db = open_db::<GoodDB>(tempdir.path(), release_channel::ReleaseChannel::Dev.dev_name()).await;
         assert!(
             good_db.select_row::<usize>("SELECT * FROM test2").unwrap()()
                 .unwrap()
@@ -257,17 +239,11 @@ mod tests {
             const MIGRATIONS: &[&str] = &[sql!(CREATE TABLE test2(value);)]; // But different migration
         }
 
-        let tempdir = tempfile::Builder::new()
-            .prefix("DbTests")
-            .tempdir()
-            .unwrap();
+        let tempdir = tempfile::Builder::new().prefix("DbTests").tempdir().unwrap();
         {
             // Setup the bad database
-            let corrupt_db = open_db::<CorruptedDB>(
-                tempdir.path(),
-                release_channel::ReleaseChannel::Dev.dev_name(),
-            )
-            .await;
+            let corrupt_db =
+                open_db::<CorruptedDB>(tempdir.path(), release_channel::ReleaseChannel::Dev.dev_name()).await;
             assert!(corrupt_db.persistent());
         }
 

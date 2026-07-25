@@ -2,12 +2,11 @@ use editor::Editor;
 use extension_host::{ExtensionOperation, ExtensionStore};
 use futures::StreamExt;
 use gpui::{
-    App, Context, CursorStyle, Entity, EventEmitter, InteractiveElement as _, ParentElement as _,
-    Render, SharedString, StatefulInteractiveElement, Styled, Window, actions,
+    App, Context, CursorStyle, Entity, EventEmitter, InteractiveElement as _, ParentElement as _, Render, SharedString,
+    StatefulInteractiveElement, Styled, Window, actions,
 };
 use language::{
-    BinaryStatus, LanguageRegistry, LanguageServerId, LanguageServerName,
-    LanguageServerStatusUpdate, ServerHealth,
+    BinaryStatus, LanguageRegistry, LanguageServerId, LanguageServerName, LanguageServerStatusUpdate, ServerHealth,
 };
 use project::{
     LanguageServerProgress, LspStoreEvent, ProgressToken, Project, ProjectEnvironmentEvent,
@@ -22,10 +21,7 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use ui::{
-    ButtonLike, CommonAnimationExt, ContextMenu, PopoverMenu, PopoverMenuHandle, Tooltip,
-    prelude::*,
-};
+use ui::{ButtonLike, CommonAnimationExt, ContextMenu, PopoverMenu, PopoverMenuHandle, Tooltip, prelude::*};
 use util::truncate_and_trailoff;
 use workspace::{
     StatusBarSettings, StatusItemView, Workspace,
@@ -71,8 +67,7 @@ struct PendingWork<'a> {
 struct Content {
     icon: Option<gpui::AnyElement>,
     message: String,
-    on_click:
-        Option<Arc<dyn Fn(&mut ActivityIndicator, &mut Window, &mut Context<ActivityIndicator>)>>,
+    on_click: Option<Arc<dyn Fn(&mut ActivityIndicator, &mut Window, &mut Context<ActivityIndicator>)>>,
     tooltip_message: Option<String>,
 }
 
@@ -122,97 +117,69 @@ impl ActivityIndicator {
             })
             .detach();
 
-            cx.subscribe(
-                &project.read(cx).lsp_store(),
-                |activity_indicator, _, event, cx| {
-                    if let LspStoreEvent::LanguageServerUpdate { name, message, .. } = event {
-                        if let proto::update_language_server::Variant::StatusUpdate(status_update) =
-                            message
-                        {
-                            let Some(name) = name.clone() else {
-                                return;
-                            };
-                            let status = match &status_update.status {
-                                Some(Status::Binary(binary_status)) => {
-                                    match ServerBinaryStatus::try_from(*binary_status) {
-                                        Ok(binary_status) => {
-                                            let binary_status = match binary_status {
-                                                ServerBinaryStatus::None => BinaryStatus::None,
-                                                ServerBinaryStatus::CheckingForUpdate => {
-                                                    BinaryStatus::CheckingForUpdate
-                                                }
-                                                ServerBinaryStatus::Downloading => {
-                                                    BinaryStatus::Downloading
-                                                }
-                                                ServerBinaryStatus::Starting => {
-                                                    BinaryStatus::Starting
-                                                }
-                                                ServerBinaryStatus::Stopping => {
-                                                    BinaryStatus::Stopping
-                                                }
-                                                ServerBinaryStatus::Stopped => {
-                                                    BinaryStatus::Stopped
-                                                }
-                                                ServerBinaryStatus::Failed => {
-                                                    let Some(error) = status_update.message.clone()
-                                                    else {
-                                                        return;
-                                                    };
-                                                    BinaryStatus::Failed { error }
-                                                }
+            cx.subscribe(&project.read(cx).lsp_store(), |activity_indicator, _, event, cx| {
+                if let LspStoreEvent::LanguageServerUpdate { name, message, .. } = event {
+                    if let proto::update_language_server::Variant::StatusUpdate(status_update) = message {
+                        let Some(name) = name.clone() else {
+                            return;
+                        };
+                        let status = match &status_update.status {
+                            Some(Status::Binary(binary_status)) => match ServerBinaryStatus::try_from(*binary_status) {
+                                Ok(binary_status) => {
+                                    let binary_status = match binary_status {
+                                        ServerBinaryStatus::None => BinaryStatus::None,
+                                        ServerBinaryStatus::CheckingForUpdate => BinaryStatus::CheckingForUpdate,
+                                        ServerBinaryStatus::Downloading => BinaryStatus::Downloading,
+                                        ServerBinaryStatus::Starting => BinaryStatus::Starting,
+                                        ServerBinaryStatus::Stopping => BinaryStatus::Stopping,
+                                        ServerBinaryStatus::Stopped => BinaryStatus::Stopped,
+                                        ServerBinaryStatus::Failed => {
+                                            let Some(error) = status_update.message.clone() else {
+                                                return;
                                             };
-                                            LanguageServerStatusUpdate::Binary(binary_status)
+                                            BinaryStatus::Failed { error }
                                         }
-                                        Err(err) => {
-                                            log::error!("Unknown binary status: {err}");
-                                            return;
-                                        }
+                                    };
+                                    LanguageServerStatusUpdate::Binary(binary_status)
+                                }
+                                Err(err) => {
+                                    log::error!("Unknown binary status: {err}");
+                                    return;
+                                }
+                            },
+                            Some(Status::Health(health_status)) => {
+                                match proto::ServerHealth::try_from(*health_status) {
+                                    Ok(health) => {
+                                        let health = match health {
+                                            proto::ServerHealth::Ok => ServerHealth::Ok,
+                                            proto::ServerHealth::Warning => ServerHealth::Warning,
+                                            proto::ServerHealth::Error => ServerHealth::Error,
+                                        };
+                                        LanguageServerStatusUpdate::Health(
+                                            health,
+                                            status_update.message.clone().map(SharedString::from),
+                                        )
+                                    }
+                                    Err(err) => {
+                                        log::error!("Unknown server health: {err}");
+                                        return;
                                     }
                                 }
-                                Some(Status::Health(health_status)) => {
-                                    match proto::ServerHealth::try_from(*health_status) {
-                                        Ok(health) => {
-                                            let health = match health {
-                                                proto::ServerHealth::Ok => ServerHealth::Ok,
-                                                proto::ServerHealth::Warning => {
-                                                    ServerHealth::Warning
-                                                }
-                                                proto::ServerHealth::Error => ServerHealth::Error,
-                                            };
-                                            LanguageServerStatusUpdate::Health(
-                                                health,
-                                                status_update
-                                                    .message
-                                                    .clone()
-                                                    .map(SharedString::from),
-                                            )
-                                        }
-                                        Err(err) => {
-                                            log::error!("Unknown server health: {err}");
-                                            return;
-                                        }
-                                    }
-                                }
-                                None => return,
-                            };
+                            }
+                            None => return,
+                        };
 
-                            activity_indicator.statuses.retain(|s| s.name != name);
-                            activity_indicator
-                                .statuses
-                                .push(ServerStatus { name, status });
-                        }
-                        cx.notify()
+                        activity_indicator.statuses.retain(|s| s.name != name);
+                        activity_indicator.statuses.push(ServerStatus { name, status });
                     }
-                },
-            )
+                    cx.notify()
+                }
+            })
             .detach();
 
-            cx.subscribe(
-                &project.read(cx).environment().clone(),
-                |_, _, event, cx| match event {
-                    ProjectEnvironmentEvent::ErrorsUpdated => cx.notify(),
-                },
-            )
+            cx.subscribe(&project.read(cx).environment().clone(), |_, _, event, cx| match event {
+                ProjectEnvironmentEvent::ErrorsUpdated => cx.notify(),
+            })
             .detach();
 
             cx.subscribe(
@@ -234,12 +201,8 @@ impl ActivityIndicator {
         });
 
         cx.subscribe_in(&this, window, move |_, _, event, window, cx| match event {
-            Event::ShowStatus {
-                server_name,
-                status,
-            } => {
-                let create_buffer =
-                    project.update(cx, |project, cx| project.create_buffer(false, cx));
+            Event::ShowStatus { server_name, status } => {
+                let create_buffer = project.update(cx, |project, cx| project.create_buffer(false, cx));
                 let status = status.clone();
                 let server_name = server_name.clone();
                 cx.spawn_in(window, async move |workspace, cx| {
@@ -278,9 +241,7 @@ impl ActivityIndicator {
     fn show_error_message(&mut self, _: &ShowErrorMessage, _: &mut Window, cx: &mut Context<Self>) {
         let mut status_message_shown = false;
         self.statuses.retain(|status| match &status.status {
-            LanguageServerStatusUpdate::Binary(BinaryStatus::Failed { error })
-                if !status_message_shown =>
-            {
+            LanguageServerStatusUpdate::Binary(BinaryStatus::Failed { error }) if !status_message_shown => {
                 cx.emit(Event::ShowStatus {
                     server_name: status.name.clone(),
                     status: SharedString::from(error),
@@ -288,28 +249,26 @@ impl ActivityIndicator {
                 status_message_shown = true;
                 false
             }
-            LanguageServerStatusUpdate::Health(
-                ServerHealth::Error | ServerHealth::Warning,
-                status_string,
-            ) if !status_message_shown => match status_string {
-                Some(error) => {
-                    cx.emit(Event::ShowStatus {
-                        server_name: status.name.clone(),
-                        status: error.clone(),
-                    });
-                    status_message_shown = true;
-                    false
+            LanguageServerStatusUpdate::Health(ServerHealth::Error | ServerHealth::Warning, status_string)
+                if !status_message_shown =>
+            {
+                match status_string {
+                    Some(error) => {
+                        cx.emit(Event::ShowStatus {
+                            server_name: status.name.clone(),
+                            status: error.clone(),
+                        });
+                        status_message_shown = true;
+                        false
+                    }
+                    None => false,
                 }
-                None => false,
-            },
+            }
             _ => true,
         });
     }
 
-    fn pending_language_server_work<'a>(
-        &self,
-        cx: &'a App,
-    ) -> impl Iterator<Item = PendingWork<'a>> {
+    fn pending_language_server_work<'a>(&self, cx: &'a App) -> impl Iterator<Item = PendingWork<'a>> {
         self.project
             .read(cx)
             .language_server_statuses(cx)
@@ -467,9 +426,7 @@ impl ActivityIndicator {
         let mut servers_to_clear_statuses = HashSet::<LanguageServerName>::default();
         for status in &self.statuses {
             match &status.status {
-                LanguageServerStatusUpdate::Binary(
-                    BinaryStatus::Starting | BinaryStatus::Stopping,
-                ) => {}
+                LanguageServerStatusUpdate::Binary(BinaryStatus::Starting | BinaryStatus::Stopping) => {}
                 LanguageServerStatusUpdate::Binary(BinaryStatus::Stopped) => {
                     servers_to_clear_statuses.insert(status.name.clone());
                 }
@@ -511,20 +468,19 @@ impl ActivityIndicator {
                 ),
                 message: format!(
                     "Downloading {}...",
-                    downloading.iter().map(|name| name.as_ref()).fold(
-                        String::new(),
-                        |mut acc, s| {
+                    downloading
+                        .iter()
+                        .map(|name| name.as_ref())
+                        .fold(String::new(), |mut acc, s| {
                             if !acc.is_empty() {
                                 acc.push_str(", ");
                             }
                             acc.push_str(s);
                             acc
-                        }
-                    )
+                        })
                 ),
                 on_click: Some(Arc::new(move |this, _window, _cx| {
-                    this.statuses
-                        .retain(|status| !downloading.contains(&status.name));
+                    this.statuses.retain(|status| !downloading.contains(&status.name));
                 })),
                 tooltip_message: None,
             });
@@ -539,16 +495,16 @@ impl ActivityIndicator {
                 ),
                 message: format!(
                     "Checking for updates to {}...",
-                    checking_for_update.iter().map(|name| name.as_ref()).fold(
-                        String::new(),
-                        |mut acc, s| {
+                    checking_for_update
+                        .iter()
+                        .map(|name| name.as_ref())
+                        .fold(String::new(), |mut acc, s| {
                             if !acc.is_empty() {
                                 acc.push_str(", ");
                             }
                             acc.push_str(s);
                             acc
-                        }
-                    ),
+                        }),
                 ),
                 on_click: Some(Arc::new(move |this, _window, _cx| {
                     this.statuses
@@ -620,10 +576,8 @@ impl ActivityIndicator {
                 .collect::<Vec<_>>()
                 .join(" ");
             let mut altered_message = single_line_message != message;
-            let truncated_message = truncate_and_trailoff(
-                &single_line_message,
-                MAX_MESSAGE_LEN.saturating_sub(health_str.len()),
-            );
+            let truncated_message =
+                truncate_and_trailoff(&single_line_message, MAX_MESSAGE_LEN.saturating_sub(health_str.len()));
             altered_message |= truncated_message != single_line_message;
             let final_message = format!("{health_str}{truncated_message}");
 
@@ -645,19 +599,15 @@ impl ActivityIndicator {
                     if altered_message {
                         activity_indicator.show_error_message(&ShowErrorMessage, window, cx)
                     } else {
-                        activity_indicator
-                            .statuses
-                            .retain(|status| status.name != server_name);
+                        activity_indicator.statuses.retain(|status| status.name != server_name);
                         cx.notify();
                     }
                 })),
             });
         }
 
-        if let Some(extension_store) =
-            ExtensionStore::try_global(cx).map(|extension_store| extension_store.read(cx))
-            && let Some((extension_id, operation)) =
-                extension_store.outstanding_operations().iter().next()
+        if let Some(extension_store) = ExtensionStore::try_global(cx).map(|extension_store| extension_store.read(cx))
+            && let Some((extension_id, operation)) = extension_store.outstanding_operations().iter().next()
         {
             let (message, icon, rotate) = match operation {
                 ExtensionOperation::Install => (
@@ -722,25 +672,16 @@ impl Render for ActivityIndicator {
                                 if truncate_content {
                                     button
                                         .child(
-                                            Label::new(truncate_and_trailoff(
-                                                &content.message,
-                                                MAX_MESSAGE_LEN,
-                                            ))
-                                            .size(icon_size.label_size()),
+                                            Label::new(truncate_and_trailoff(&content.message, MAX_MESSAGE_LEN))
+                                                .size(icon_size.label_size()),
                                         )
                                         .tooltip(Tooltip::text(content.message))
                                 } else {
                                     button
-                                        .child(
-                                            Label::new(content.message)
-                                                .size(icon_size.label_size()),
-                                        )
-                                        .when_some(
-                                            content.tooltip_message,
-                                            |this, tooltip_message| {
-                                                this.tooltip(Tooltip::text(tooltip_message))
-                                            },
-                                        )
+                                        .child(Label::new(content.message).size(icon_size.label_size()))
+                                        .when_some(content.tooltip_message, |this, tooltip_message| {
+                                            this.tooltip(Tooltip::text(tooltip_message))
+                                        })
                                 }
                             })
                             .when_some(content.on_click, |this, handler| {
@@ -759,11 +700,7 @@ impl Render for ActivityIndicator {
                         for work in strong_this.read(cx).pending_language_server_work(cx) {
                             has_work = true;
                             let activity_indicator = activity_indicator.clone();
-                            let mut title = work
-                                .progress
-                                .title
-                                .clone()
-                                .unwrap_or(work.progress_token.to_string());
+                            let mut title = work.progress.title.clone().unwrap_or(work.progress_token.to_string());
 
                             if work.progress.is_cancellable {
                                 let language_server_id = work.language_server_id;
@@ -782,16 +719,13 @@ impl Render for ActivityIndicator {
                                         let token = token.clone();
                                         activity_indicator
                                             .update(cx, |activity_indicator, cx| {
-                                                activity_indicator.project.update(
-                                                    cx,
-                                                    |project, cx| {
-                                                        project.cancel_language_server_work(
-                                                            language_server_id,
-                                                            Some(token),
-                                                            cx,
-                                                        );
-                                                    },
-                                                );
+                                                activity_indicator.project.update(cx, |project, cx| {
+                                                    project.cancel_language_server_work(
+                                                        language_server_id,
+                                                        Some(token),
+                                                        cx,
+                                                    );
+                                                });
                                                 activity_indicator.context_menu_handle.hide(cx);
                                                 cx.notify();
                                             })
@@ -816,11 +750,5 @@ impl Render for ActivityIndicator {
 }
 
 impl StatusItemView for ActivityIndicator {
-    fn set_active_pane_item(
-        &mut self,
-        _: Option<&dyn ItemHandle>,
-        _window: &mut Window,
-        _: &mut Context<Self>,
-    ) {
-    }
+    fn set_active_pane_item(&mut self, _: Option<&dyn ItemHandle>, _window: &mut Window, _: &mut Context<Self>) {}
 }

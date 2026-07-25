@@ -120,13 +120,7 @@ pub fn mouse_button_report(
 ) -> Option<Vec<u8>> {
     let button = AlacMouseButton::from_button(button);
     if !button.is_other() && mode.intersects(TermMode::MOUSE_MODE) {
-        mouse_report(
-            point,
-            button,
-            pressed,
-            modifiers,
-            MouseFormat::from_mode(mode),
-        )
+        mouse_report(point, button, pressed, modifiers, MouseFormat::from_mode(mode))
     } else {
         None
     }
@@ -152,19 +146,11 @@ pub fn mouse_moved_report(
     }
 }
 
-pub fn grid_point(
-    pos: Point<Pixels>,
-    cur_size: TerminalBounds,
-    display_offset: usize,
-) -> AlacPoint {
+pub fn grid_point(pos: Point<Pixels>, cur_size: TerminalBounds, display_offset: usize) -> AlacPoint {
     grid_point_and_side(pos, cur_size, display_offset).0
 }
 
-pub fn grid_point_and_side(
-    pos: Point<Pixels>,
-    cur_size: TerminalBounds,
-    display_offset: usize,
-) -> (AlacPoint, Side) {
+pub fn grid_point_and_side(pos: Point<Pixels>, cur_size: TerminalBounds, display_offset: usize) -> (AlacPoint, Side) {
     let mut col = GridCol((pos.x / cur_size.cell_width) as usize);
     let cell_x = cmp::max(px(0.), pos.x) % cur_size.cell_width;
     let half_cell_width = cur_size.cell_width / 2.0;
@@ -187,10 +173,7 @@ pub fn grid_point_and_side(
         side = Side::Left;
     }
 
-    (
-        AlacPoint::new(GridLine(line - display_offset as i32), col),
-        side,
-    )
+    (AlacPoint::new(GridLine(line - display_offset as i32), col), side)
 }
 
 ///Generate the bytes to send to the terminal, from the cell location, a mouse event, and the terminal mode
@@ -217,9 +200,7 @@ fn mouse_report(
     }
 
     match format {
-        MouseFormat::Sgr => {
-            Some(sgr_mouse_report(point, button as u8 + mods, pressed).into_bytes())
-        }
+        MouseFormat::Sgr => Some(sgr_mouse_report(point, button as u8 + mods, pressed).into_bytes()),
         MouseFormat::Normal(utf8) => {
             if pressed {
                 normal_mouse_report(point, button as u8 + mods, utf8)
@@ -265,13 +246,7 @@ fn normal_mouse_report(point: AlacPoint, button: u8, utf8: bool) -> Option<Vec<u
 fn sgr_mouse_report(point: AlacPoint, button: u8, pressed: bool) -> String {
     let c = if pressed { 'M' } else { 'm' };
 
-    let msg = format!(
-        "\x1b[<{};{};{}{}",
-        button,
-        point.column + 1,
-        point.line + 1,
-        c
-    );
+    let msg = format!("\x1b[<{};{};{}{}", button, point.column + 1, point.line + 1, c);
 
     msg
 }

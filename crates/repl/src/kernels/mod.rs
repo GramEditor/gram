@@ -250,10 +250,7 @@ impl Kernel {
     pub fn is_shutting_down(&self) -> bool {
         match self {
             Kernel::Restarting | Kernel::ShuttingDown => true,
-            Kernel::RunningKernel(_)
-            | Kernel::StartingKernel(_)
-            | Kernel::ErroredLaunch(_)
-            | Kernel::Shutdown => false,
+            Kernel::RunningKernel(_) | Kernel::StartingKernel(_) | Kernel::ErroredLaunch(_) | Kernel::Shutdown => false,
         }
     }
 }

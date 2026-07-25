@@ -2,8 +2,8 @@ use std::{fs, path::PathBuf};
 
 use anyhow::Result;
 use gpui::{
-    App, Application, AssetSource, Bounds, BoxShadow, ClickEvent, Context, SharedString, Task,
-    Window, WindowBounds, WindowOptions, div, hsla, img, point, prelude::*, px, rgb, size, svg,
+    App, Application, AssetSource, Bounds, BoxShadow, ClickEvent, Context, SharedString, Task, Window, WindowBounds,
+    WindowOptions, div, hsla, img, point, prelude::*, px, rgb, size, svg,
 };
 
 struct Assets {
@@ -141,13 +141,10 @@ impl Render for HelloWorld {
                                     .size_8(),
                             )
                             .child(
-                                div()
-                                    .flex()
-                                    .children(["🎊", "✈️", "🎉", "🎈", "🎁", "🎂"].map(|emoji| {
-                                        div()
-                                            .child(emoji.to_string())
-                                            .hover(|style| style.opacity(0.5))
-                                    })),
+                                div().flex().children(
+                                    ["🎊", "✈️", "🎉", "🎈", "🎁", "🎂"]
+                                        .map(|emoji| div().child(emoji.to_string()).hover(|style| style.opacity(0.5))),
+                                ),
                             )
                             .child(img("image/black-cat-typing.gif").size_12()),
                     ),

@@ -1,8 +1,5 @@
 use crate::prelude::*;
-use gpui::{
-    AnyElement, App, IntoElement, ParentElement, Rems, RenderOnce, SharedString, Styled, Window,
-    div, rems,
-};
+use gpui::{AnyElement, App, IntoElement, ParentElement, Rems, RenderOnce, SharedString, Styled, Window, div, rems};
 use settings::Settings;
 use theme::{ActiveTheme, ThemeSettings};
 
@@ -272,10 +269,7 @@ impl Component for Headline {
                             .size(HeadlineSize::Large)
                             .into_any_element(),
                     ),
-                    single_example(
-                        "Medium (Default)",
-                        Headline::new("Medium Headline").into_any_element(),
-                    ),
+                    single_example("Medium (Default)", Headline::new("Medium Headline").into_any_element()),
                     single_example(
                         "Small",
                         Headline::new("Small Headline")

@@ -127,15 +127,13 @@ pub fn init(cx: &mut App) {
                     debug_panel.rerun_last_session(workspace, window, cx);
                 })
             })
-            .register_action(
-                |workspace: &mut Workspace, _: &ShutdownDebugAdapters, _window, cx| {
-                    workspace.project().update(cx, |project, cx| {
-                        project.dap_store().update(cx, |store, cx| {
-                            store.shutdown_sessions(cx).detach();
-                        })
+            .register_action(|workspace: &mut Workspace, _: &ShutdownDebugAdapters, _window, cx| {
+                workspace.project().update(cx, |project, cx| {
+                    project.dap_store().update(cx, |store, cx| {
+                        store.shutdown_sessions(cx).detach();
                     })
-                },
-            )
+                })
+            })
             .register_action_renderer(|div, workspace, _, cx| {
                 let Some(debug_panel) = workspace.panel::<DebugPanel>(cx) else {
                     return div;
@@ -161,9 +159,7 @@ pub fn init(cx: &mut App) {
                 div.when(status == Some(ThreadStatus::Running), |div| {
                     let active_item = active_item.clone();
                     div.on_action(move |_: &Pause, _, cx| {
-                        active_item
-                            .update(cx, |item, cx| item.pause_thread(cx))
-                            .ok();
+                        active_item.update(cx, |item, cx| item.pause_thread(cx)).ok();
                     })
                 })
                 .when(status == Some(ThreadStatus::Stopped), |div| {
@@ -194,67 +190,49 @@ pub fn init(cx: &mut App) {
                     .on_action({
                         let active_item = active_item.clone();
                         move |_: &Continue, _, cx| {
-                            active_item
-                                .update(cx, |item, cx| item.continue_thread(cx))
-                                .ok();
+                            active_item.update(cx, |item, cx| item.continue_thread(cx)).ok();
                         }
                     })
-                    .on_action(cx.listener(
-                        |workspace, _: &ShowStackTrace, window, cx| {
-                            let Some(debug_panel) = workspace.panel::<DebugPanel>(cx) else {
+                    .on_action(cx.listener(|workspace, _: &ShowStackTrace, window, cx| {
+                        let Some(debug_panel) = workspace.panel::<DebugPanel>(cx) else {
+                            return;
+                        };
+
+                        if let Some(existing) = workspace.item_of_type::<StackTraceView>(cx) {
+                            let is_active = workspace
+                                .active_item(cx)
+                                .is_some_and(|item| item.item_id() == existing.item_id());
+                            workspace.activate_item(&existing, true, !is_active, window, cx);
+                        } else {
+                            let Some(active_session) = debug_panel.read(cx).active_session() else {
                                 return;
                             };
 
-                            if let Some(existing) = workspace.item_of_type::<StackTraceView>(cx) {
-                                let is_active = workspace
-                                    .active_item(cx)
-                                    .is_some_and(|item| item.item_id() == existing.item_id());
-                                workspace.activate_item(&existing, true, !is_active, window, cx);
-                            } else {
-                                let Some(active_session) = debug_panel.read(cx).active_session()
-                                else {
-                                    return;
-                                };
+                            let project = workspace.project();
 
-                                let project = workspace.project();
+                            let stack_trace_view = active_session
+                                .update(cx, |session, cx| session.stack_trace_view(project, window, cx).clone());
 
-                                let stack_trace_view = active_session.update(cx, |session, cx| {
-                                    session.stack_trace_view(project, window, cx).clone()
-                                });
-
-                                workspace.add_item_to_active_pane(
-                                    Box::new(stack_trace_view),
-                                    None,
-                                    true,
-                                    window,
-                                    cx,
-                                );
-                            }
-                        },
-                    ))
+                            workspace.add_item_to_active_pane(Box::new(stack_trace_view), None, true, window, cx);
+                        }
+                    }))
                 })
                 .when(supports_detach, |div| {
                     let active_item = active_item.clone();
                     div.on_action(move |_: &Detach, _, cx| {
-                        active_item
-                            .update(cx, |item, cx| item.detach_client(cx))
-                            .ok();
+                        active_item.update(cx, |item, cx| item.detach_client(cx)).ok();
                     })
                 })
                 .on_action({
                     let active_item = active_item.clone();
                     move |_: &Restart, _, cx| {
-                        active_item
-                            .update(cx, |item, cx| item.restart_session(cx))
-                            .ok();
+                        active_item.update(cx, |item, cx| item.restart_session(cx)).ok();
                     }
                 })
                 .on_action({
                     let active_item = active_item.clone();
                     move |_: &RerunSession, window, cx| {
-                        active_item
-                            .update(cx, |item, cx| item.rerun_session(window, cx))
-                            .ok();
+                        active_item.update(cx, |item, cx| item.rerun_session(window, cx)).ok();
                     }
                 })
                 .on_action({
@@ -273,9 +251,7 @@ pub fn init(cx: &mut App) {
                 })
                 .on_action(move |_: &ToggleUserFrames, _, cx| {
                     if let Some((thread_status, stack_frame_list)) = active_item
-                        .read_with(cx, |item, cx| {
-                            (item.thread_status(cx), item.stack_frame_list().clone())
-                        })
+                        .read_with(cx, |item, cx| (item.thread_status(cx), item.stack_frame_list().clone()))
                         .ok()
                     {
                         stack_frame_list.update(cx, |stack_frame_list, cx| {
@@ -297,18 +273,11 @@ pub fn init(cx: &mut App) {
                     let Some(debug_panel) = workspace.read(cx).panel::<DebugPanel>(cx) else {
                         return;
                     };
-                    let Some(active_session) =
-                        debug_panel.update(cx, |panel, _| panel.active_session())
-                    else {
+                    let Some(active_session) = debug_panel.update(cx, |panel, _| panel.active_session()) else {
                         return;
                     };
 
-                    let session = active_session
-                        .read(cx)
-                        .running_state
-                        .read(cx)
-                        .session()
-                        .read(cx);
+                    let session = active_session.read(cx).running_state.read(cx).session().read(cx);
 
                     if session.is_terminated() {
                         return;
@@ -329,22 +298,15 @@ pub fn init(cx: &mut App) {
                                 maybe!({
                                     let (buffer, position, _) = editor
                                         .update(cx, |editor, cx| {
-                                            let cursor_point: language::Point = editor
-                                                .selections
-                                                .newest(&editor.display_snapshot(cx))
-                                                .head();
+                                            let cursor_point: language::Point =
+                                                editor.selections.newest(&editor.display_snapshot(cx)).head();
 
-                                            editor
-                                                .buffer()
-                                                .read(cx)
-                                                .point_to_buffer_point(cursor_point, cx)
+                                            editor.buffer().read(cx).point_to_buffer_point(cursor_point, cx)
                                         })
                                         .ok()??;
 
                                     let path =
-                                debugger::breakpoint_store::BreakpointStore::abs_path_from_buffer(
-                                    &buffer, cx,
-                                )?;
+                                        debugger::breakpoint_store::BreakpointStore::abs_path_from_buffer(&buffer, cx)?;
 
                                     let source_breakpoint = SourceBreakpoint {
                                         row: position.row,
@@ -359,11 +321,7 @@ pub fn init(cx: &mut App) {
                                         session.running_state().update(cx, |state, cx| {
                                             if let Some(thread_id) = state.selected_thread_id() {
                                                 state.session().update(cx, |session, cx| {
-                                                    session.run_to_position(
-                                                        source_breakpoint,
-                                                        thread_id,
-                                                        cx,
-                                                    );
+                                                    session.run_to_position(source_breakpoint, thread_id, cx);
                                                 })
                                             }
                                         });
@@ -383,16 +341,9 @@ pub fn init(cx: &mut App) {
                                     .update(cx, |editor, cx| {
                                         let range = editor
                                             .selections
-                                            .newest::<MultiBufferOffsetUtf16>(
-                                                &editor.display_snapshot(cx),
-                                            )
+                                            .newest::<MultiBufferOffsetUtf16>(&editor.display_snapshot(cx))
                                             .range();
-                                        editor.text_for_range(
-                                            range.start.0.0..range.end.0.0,
-                                            &mut None,
-                                            window,
-                                            cx,
-                                        )
+                                        editor.text_for_range(range.start.0.0..range.end.0.0, &mut None, window, cx)
                                     })
                                     .ok()??;
 
@@ -401,9 +352,7 @@ pub fn init(cx: &mut App) {
                                         let stack_id = state.selected_stack_frame_id(cx);
 
                                         state.session().update(cx, |session, cx| {
-                                            session
-                                                .evaluate(text, None, stack_id, None, cx)
-                                                .detach();
+                                            session.evaluate(text, None, stack_id, None, cx).detach();
                                         });
                                     });
                                 });
@@ -434,13 +383,8 @@ fn spawn_task_or_modal(
                 reveal_target: Some(reveal_target),
             });
             let name = task_name.clone();
-            tasks_ui::spawn_tasks_filtered(
-                move |(_, task)| task.label.eq(&name),
-                overrides,
-                window,
-                cx,
-            )
-            .detach_and_log_err(cx)
+            tasks_ui::spawn_tasks_filtered(move |(_, task)| task.label.eq(&name), overrides, window, cx)
+                .detach_and_log_err(cx)
         }
         Spawn::ByTag {
             task_tag,
@@ -450,13 +394,8 @@ fn spawn_task_or_modal(
                 reveal_target: Some(reveal_target),
             });
             let tag = task_tag.clone();
-            tasks_ui::spawn_tasks_filtered(
-                move |(_, task)| task.tags.contains(&tag),
-                overrides,
-                window,
-                cx,
-            )
-            .detach_and_log_err(cx)
+            tasks_ui::spawn_tasks_filtered(move |(_, task)| task.tags.contains(&tag), overrides, window, cx)
+                .detach_and_log_err(cx)
         }
         Spawn::ViaModal { reveal_target } => {
             NewProcessModal::show(workspace, window, NewProcessMode::Task, *reveal_target, cx);

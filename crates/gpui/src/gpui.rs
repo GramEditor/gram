@@ -124,10 +124,7 @@ pub trait AppContext {
         clippy::wrong_self_convention,
         reason = "`App::new` is an ubiquitous function for creating entities"
     )]
-    fn new<T: 'static>(
-        &mut self,
-        build_entity: impl FnOnce(&mut Context<T>) -> T,
-    ) -> Self::Result<Entity<T>>;
+    fn new<T: 'static>(&mut self, build_entity: impl FnOnce(&mut Context<T>) -> T) -> Self::Result<Entity<T>>;
 
     /// Reserve a slot for a entity to be inserted later.
     /// The returned [Reservation] allows you to obtain the [EntityId] for the future entity.
@@ -157,11 +154,7 @@ pub trait AppContext {
         T: 'static;
 
     /// Read a entity from the app context.
-    fn read_entity<T, R>(
-        &self,
-        handle: &Entity<T>,
-        read: impl FnOnce(&T, &App) -> R,
-    ) -> Self::Result<R>
+    fn read_entity<T, R>(&self, handle: &Entity<T>, read: impl FnOnce(&T, &App) -> R) -> Self::Result<R>
     where
         T: 'static;
 
@@ -171,11 +164,7 @@ pub trait AppContext {
         F: FnOnce(AnyView, &mut Window, &mut App) -> T;
 
     /// Read a window off of the application context.
-    fn read_window<T, R>(
-        &self,
-        window: &WindowHandle<T>,
-        read: impl FnOnce(Entity<T>, &App) -> R,
-    ) -> Result<R>
+    fn read_window<T, R>(&self, window: &WindowHandle<T>, read: impl FnOnce(Entity<T>, &App) -> R) -> Result<R>
     where
         T: 'static;
 

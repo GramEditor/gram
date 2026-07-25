@@ -19,8 +19,7 @@ pub struct ExtensionEvents;
 impl ExtensionEvents {
     /// Returns the global [`ExtensionEvents`].
     pub fn try_global(cx: &App) -> Option<Entity<Self>> {
-        cx.try_global::<GlobalExtensionEvents>()
-            .map(|g| g.0.clone())
+        cx.try_global::<GlobalExtensionEvents>().map(|g| g.0.clone())
     }
 
     fn new(_cx: &mut Context<Self>) -> Self {

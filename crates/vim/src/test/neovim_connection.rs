@@ -16,9 +16,7 @@ use gpui::Keystroke;
 use language::Point;
 
 #[cfg(feature = "neovim")]
-use nvim_rs::{
-    Handler, Neovim, UiAttachOptions, Value, create::tokio::new_child_cmd, error::LoopError,
-};
+use nvim_rs::{Handler, Neovim, UiAttachOptions, Value, create::tokio::new_child_cmd, error::LoopError};
 #[cfg(feature = "neovim")]
 use parking_lot::ReentrantMutex;
 use serde::{Deserialize, Serialize};
@@ -130,27 +128,15 @@ impl NeovimConnection {
             || keystroke.key.len() > 1;
         let start = if special { "<" } else { "" };
         let shift = if keystroke.modifiers.shift { "S-" } else { "" };
-        let ctrl = if keystroke.modifiers.control {
-            "C-"
-        } else {
-            ""
-        };
+        let ctrl = if keystroke.modifiers.control { "C-" } else { "" };
         let alt = if keystroke.modifiers.alt { "M-" } else { "" };
-        let cmd = if keystroke.modifiers.platform {
-            "D-"
-        } else {
-            ""
-        };
+        let cmd = if keystroke.modifiers.platform { "D-" } else { "" };
         let end = if special { ">" } else { "" };
 
         let key = format!("{start}{shift}{ctrl}{alt}{cmd}{}{end}", keystroke.key);
 
-        self.data
-            .push_back(NeovimData::Key(keystroke_text.to_string()));
-        self.nvim
-            .input(&key)
-            .await
-            .expect("Could not input keystroke");
+        self.data.push_back(NeovimData::Key(keystroke_text.to_string()));
+        self.nvim.input(&key).await.expect("Could not input keystroke");
     }
 
     #[cfg(not(feature = "neovim"))]
@@ -169,15 +155,8 @@ impl NeovimConnection {
     pub async fn set_state(&mut self, marked_text: &str) {
         let (text, selections) = parse_state(marked_text);
 
-        let nvim_buffer = self
-            .nvim
-            .get_current_buf()
-            .await
-            .expect("Could not get neovim buffer");
-        let lines = text
-            .split('\n')
-            .map(|line| line.to_string())
-            .collect::<Vec<_>>();
+        let nvim_buffer = self.nvim.get_current_buf().await.expect("Could not get neovim buffer");
+        let lines = text.split('\n').map(|line| line.to_string()).collect::<Vec<_>>();
 
         nvim_buffer
             .set_lines(0, -1, false, lines)
@@ -193,11 +172,7 @@ impl NeovimConnection {
             .await
             .expect("Could not send escape to nvim");
 
-        let nvim_window = self
-            .nvim
-            .get_current_win()
-            .await
-            .expect("Could not get neovim window");
+        let nvim_window = self.nvim.get_current_win().await.expect("Could not get neovim window");
 
         if selections.len() != 1 {
             panic!("must have one selection");
@@ -211,10 +186,7 @@ impl NeovimConnection {
             .expect("Could not set nvim cursor position");
 
         if !selection.is_empty() {
-            self.nvim
-                .input("v")
-                .await
-                .expect("could not enter visual mode");
+            self.nvim.input("v").await.expect("could not enter visual mode");
 
             let cursor = selection.end;
             nvim_window
@@ -332,21 +304,12 @@ impl NeovimConnection {
 
     #[cfg(feature = "neovim")]
     async fn read_position(&mut self, cmd: &str) -> u32 {
-        self.nvim
-            .command_output(cmd)
-            .await
-            .unwrap()
-            .parse::<u32>()
-            .unwrap()
+        self.nvim.command_output(cmd).await.unwrap().parse::<u32>().unwrap()
     }
 
     #[cfg(feature = "neovim")]
     pub async fn state(&mut self) -> (Mode, String) {
-        let nvim_buffer = self
-            .nvim
-            .get_current_buf()
-            .await
-            .expect("Could not get neovim buffer");
+        let nvim_buffer = self.nvim.get_current_buf().await.expect("Could not get neovim buffer");
         let text = nvim_buffer
             .get_lines(0, -1, false)
             .await
@@ -425,8 +388,7 @@ impl NeovimConnection {
             }
             Mode::Visual | Mode::VisualLine | Mode::VisualBlock => {
                 if (selection_row, selection_col) > (cursor_row, cursor_col) {
-                    let selection_line_length =
-                        self.read_position("echo strlen(getline(line('v')))").await;
+                    let selection_line_length = self.read_position("echo strlen(getline(line('v')))").await;
                     if selection_line_length > selection_col {
                         selection_col += 1;
                     } else if selection_row < total_rows {
@@ -434,8 +396,7 @@ impl NeovimConnection {
                         selection_row += 1;
                     }
                 } else {
-                    let cursor_line_length =
-                        self.read_position("echo strlen(getline(line('.')))").await;
+                    let cursor_line_length = self.read_position("echo strlen(getline(line('.')))").await;
                     if cursor_line_length > cursor_col {
                         cursor_col += 1;
                     } else if cursor_row < total_rows {
@@ -443,12 +404,11 @@ impl NeovimConnection {
                         cursor_row += 1;
                     }
                 }
-                selections.push(
-                    Point::new(selection_row, selection_col)..Point::new(cursor_row, cursor_col),
-                )
+                selections.push(Point::new(selection_row, selection_col)..Point::new(cursor_row, cursor_col))
             }
-            Mode::Insert | Mode::Normal | Mode::Replace => selections
-                .push(Point::new(selection_row, selection_col)..Point::new(cursor_row, cursor_col)),
+            Mode::Insert | Mode::Normal | Mode::Replace => {
+                selections.push(Point::new(selection_row, selection_col)..Point::new(cursor_row, cursor_col))
+            }
             Mode::HelixNormal | Mode::HelixSelect => unreachable!(),
         }
 
@@ -484,15 +444,13 @@ impl NeovimConnection {
     #[cfg(not(feature = "neovim"))]
     fn read_test_data(test_case_id: &str) -> VecDeque<NeovimData> {
         let path = Self::test_data_path(test_case_id);
-        let json = std::fs::read_to_string(path).expect(
-            "Could not read test data. Is it generated? Try running test with '--features neovim'",
-        );
+        let json = std::fs::read_to_string(path)
+            .expect("Could not read test data. Is it generated? Try running test with '--features neovim'");
 
         let mut result = VecDeque::new();
         for line in json.lines() {
             result.push_back(
-                serde_json::from_str(line)
-                    .expect("invalid test data. regenerate it with '--features neovim'"),
+                serde_json::from_str(line).expect("invalid test data. regenerate it with '--features neovim'"),
             );
         }
         result
@@ -506,8 +464,7 @@ impl NeovimConnection {
             serde_json::to_writer(&mut json, entry).unwrap();
             json.push(b'\n');
         }
-        std::fs::create_dir_all(path.parent().unwrap())
-            .expect("could not create test data directory");
+        std::fs::create_dir_all(path.parent().unwrap()).expect("could not create test data directory");
         std::fs::write(path, json).expect("could not write out test data");
     }
 }
@@ -553,13 +510,7 @@ impl Handler for NvimHandler {
         unimplemented!();
     }
 
-    async fn handle_notify(
-        &self,
-        _event_name: String,
-        _arguments: Vec<Value>,
-        _neovim: Neovim<Self::Writer>,
-    ) {
-    }
+    async fn handle_notify(&self, _event_name: String, _arguments: Vec<Value>, _neovim: Neovim<Self::Writer>) {}
 }
 
 #[cfg(feature = "neovim")]

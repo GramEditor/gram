@@ -15,12 +15,7 @@ pub struct HelixPaste {
 }
 
 impl Vim {
-    pub fn helix_paste(
-        &mut self,
-        action: &HelixPaste,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn helix_paste(&mut self, action: &HelixPaste, window: &mut Window, cx: &mut Context<Self>) {
         self.record_current_action(cx);
         self.store_visual_marks(window, cx);
         let count = Vim::take_count(cx).unwrap_or(1);
@@ -36,11 +31,7 @@ impl Vim {
                 let Some((text, clipboard_selections)) = Vim::update_globals(cx, |globals, cx| {
                     globals.read_register(selected_register, Some(editor), cx)
                 })
-                .and_then(|reg| {
-                    (!reg.text.is_empty())
-                        .then_some(reg.text)
-                        .zip(reg.clipboard_selections)
-                }) else {
+                .and_then(|reg| (!reg.text.is_empty()).then_some(reg.text).zip(reg.clipboard_selections)) else {
                     return;
                 };
 
@@ -87,10 +78,7 @@ impl Vim {
                             movement::line_beginning(&display_map, sel.start, false)
                         } else {
                             if sel.start == sel.end {
-                                movement::right(
-                                    &display_map,
-                                    movement::line_end(&display_map, sel.end, false),
-                                )
+                                movement::right(&display_map, movement::line_end(&display_map, sel.end, false))
                             } else {
                                 sel.end
                             }

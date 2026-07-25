@@ -32,11 +32,7 @@ pub struct FsWatcher {
 }
 
 impl FsWatcher {
-    pub fn new(
-        tx: Sender<()>,
-        pending_path_events: Arc<Mutex<Vec<PathEvent>>>,
-        poll_interval: Duration,
-    ) -> Self {
+    pub fn new(tx: Sender<()>, pending_path_events: Arc<Mutex<Vec<PathEvent>>>, poll_interval: Duration) -> Self {
         Self {
             tx,
             pending_path_events,
@@ -219,9 +215,7 @@ impl Watcher for FsWatcher {
                 .next_back()
                 && path.starts_with(watched_path.as_ref())
             {
-                log::trace!(
-                    "path to watch is covered by existing registration: {path:?}, {watched_path:?}"
-                );
+                log::trace!("path to watch is covered by existing registration: {path:?}, {watched_path:?}");
                 return Ok(());
             }
         }
@@ -309,9 +303,7 @@ impl Watcher for FsWatcher {
 
         match registration {
             Ok(Ok(registration_id)) => {
-                self.registrations
-                    .lock()
-                    .insert(registration_path, registration_id);
+                self.registrations.lock().insert(registration_path, registration_id);
 
                 Ok(())
             }
@@ -350,10 +342,7 @@ impl PollFsWatcher {
 
         let watcher = notify::PollWatcher::new(
             move |event: Result<notify::Event, notify::Error>| {
-                let Some(event) = event
-                    .ok()
-                    .filter(|event| !matches!(event.kind, EventKind::Access(_)))
-                else {
+                let Some(event) = event.ok().filter(|event| !matches!(event.kind, EventKind::Access(_))) else {
                     return;
                 };
 
@@ -435,9 +424,7 @@ fn push_path_events(
         tx.try_send(()).ok();
     }
     coalesce_pending_rescans(&mut pending_paths, &mut path_events);
-    util::extend_sorted(&mut *pending_paths, path_events, usize::MAX, |a, b| {
-        a.path.cmp(&b.path)
-    });
+    util::extend_sorted(&mut *pending_paths, path_events, usize::MAX, |a, b| a.path.cmp(&b.path));
 }
 
 fn coalesce_pending_rescans(pending_paths: &mut Vec<PathEvent>, path_events: &mut Vec<PathEvent>) {
@@ -475,15 +462,12 @@ fn coalesce_pending_rescans(pending_paths: &mut Vec<PathEvent>, path_events: &mu
     if !deduped_rescans.is_empty() {
         pending_paths.retain(|pending| {
             !deduped_rescans.iter().any(|rescan_path| {
-                pending.path == *rescan_path
-                    || is_covered_rescan(pending.kind, &pending.path, rescan_path)
+                pending.path == *rescan_path || is_covered_rescan(pending.kind, &pending.path, rescan_path)
             })
         });
     }
 
-    path_events.retain(|event| {
-        event.kind != Some(PathEventKind::Rescan) || deduped_rescans.contains(&event.path)
-    });
+    path_events.retain(|event| event.kind != Some(PathEventKind::Rescan) || deduped_rescans.contains(&event.path));
 }
 
 fn is_covered_rescan(kind: Option<PathEventKind>, path: &Path, ancestor: &Path) -> bool {
@@ -567,10 +551,7 @@ impl GlobalWatcher {
             state.path_registrations.remove(&registration_state.path);
 
             drop(state);
-            self.watcher
-                .lock()
-                .unwatch(&registration_state.path)
-                .log_err();
+            self.watcher.lock().unwatch(&registration_state.path).log_err();
         }
     }
 }
@@ -681,11 +662,7 @@ fn handle_event(event: Result<notify::Event, notify::Error>) {
     global::<()>(move |watcher| {
         let callbacks = {
             let state = watcher.state.lock();
-            state
-                .watchers
-                .values()
-                .map(|r| r.callback.clone())
-                .collect::<Vec<_>>()
+            state.watchers.values().map(|r| r.callback.clone()).collect::<Vec<_>>()
         };
         for callback in callbacks {
             callback(&event);

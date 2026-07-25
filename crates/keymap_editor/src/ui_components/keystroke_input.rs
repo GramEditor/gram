@@ -3,8 +3,8 @@ use gpui::{
     KeybindingKeystroke, Keystroke, Modifiers, ModifiersChangedEvent, Subscription, Task, actions,
 };
 use ui::{
-    ActiveTheme as _, Color, IconButton, IconButtonShape, IconName, IconSize, Label, LabelSize,
-    ParentElement as _, Render, Styled as _, Tooltip, Window, prelude::*,
+    ActiveTheme as _, Color, IconButton, IconButtonShape, IconName, IconSize, Label, LabelSize, ParentElement as _,
+    Render, Styled as _, Tooltip, Window, prelude::*,
 };
 
 actions!(
@@ -21,8 +21,7 @@ actions!(
 
 const KEY_CONTEXT_VALUE: &str = "KeystrokeInput";
 
-const CLOSE_KEYSTROKE_CAPTURE_END_TIMEOUT: std::time::Duration =
-    std::time::Duration::from_millis(300);
+const CLOSE_KEYSTROKE_CAPTURE_END_TIMEOUT: std::time::Duration = std::time::Duration::from_millis(300);
 
 enum CloseKeystrokeResult {
     Partial,
@@ -114,12 +113,7 @@ impl KeystrokeInput {
         {
             return placeholders;
         }
-        if !self.search
-            && self
-                .keystrokes
-                .last()
-                .is_some_and(|last| last.key().is_empty())
-        {
+        if !self.search && self.keystrokes.last().is_some_and(|last| last.key().is_empty()) {
             return &self.keystrokes[..self.keystrokes.len() - 1];
         }
         &self.keystrokes
@@ -153,10 +147,7 @@ impl KeystrokeInput {
                 Some(KEY_CONTEXT_VALUE),
             ))
         } else {
-            window.highest_precedence_binding_for_action_in_context(
-                &StopRecording,
-                Self::key_context(),
-            )
+            window.highest_precedence_binding_for_action_in_context(&StopRecording, Self::key_context())
         }
     }
 
@@ -239,18 +230,11 @@ impl KeystrokeInput {
         CloseKeystrokeResult::None
     }
 
-    fn on_modifiers_changed(
-        &mut self,
-        event: &ModifiersChangedEvent,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn on_modifiers_changed(&mut self, event: &ModifiersChangedEvent, window: &mut Window, cx: &mut Context<Self>) {
         cx.stop_propagation();
         let keystrokes_len = self.keystrokes.len();
 
-        if self.previous_modifiers.modified()
-            && event.modifiers.is_subset_of(&self.previous_modifiers)
-        {
+        if self.previous_modifiers.modified() && event.modifiers.is_subset_of(&self.previous_modifiers) {
             self.previous_modifiers &= event.modifiers;
             return;
         }
@@ -287,12 +271,7 @@ impl KeystrokeInput {
         }
     }
 
-    fn handle_keystroke(
-        &mut self,
-        keystroke: &Keystroke,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn handle_keystroke(&mut self, keystroke: &Keystroke, window: &mut Window, cx: &mut Context<Self>) {
         cx.stop_propagation();
 
         let close_keystroke_result = self.handle_possible_close_keystroke(keystroke, window, cx);
@@ -301,11 +280,7 @@ impl KeystrokeInput {
             return;
         }
 
-        let keystroke = KeybindingKeystroke::new_with_mapper(
-            keystroke.clone(),
-            false,
-            cx.keyboard_mapper().as_ref(),
-        );
+        let keystroke = KeybindingKeystroke::new_with_mapper(keystroke.clone(), false, cx.keyboard_mapper().as_ref());
         if let Some(last) = self.keystrokes.last()
             && last.key().is_empty()
             && (!self.search || self.previous_modifiers.modified())
@@ -350,12 +325,7 @@ impl KeystrokeInput {
         }
     }
 
-    fn on_inner_focus_out(
-        &mut self,
-        _event: gpui::FocusOutEvent,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn on_inner_focus_out(&mut self, _event: gpui::FocusOutEvent, _window: &mut Window, cx: &mut Context<Self>) {
         self.intercept_subscription.take();
         cx.notify();
     }
@@ -364,11 +334,7 @@ impl KeystrokeInput {
         let keystrokes = if let Some(placeholders) = self.placeholder_keystrokes.as_ref()
             && self.keystrokes.is_empty()
         {
-            if is_recording {
-                &[]
-            } else {
-                placeholders.as_slice()
-            }
+            if is_recording { &[] } else { placeholders.as_slice() }
         } else {
             &self.keystrokes
         };
@@ -383,12 +349,7 @@ impl KeystrokeInput {
         })
     }
 
-    pub fn start_recording(
-        &mut self,
-        _: &StartRecording,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn start_recording(&mut self, _: &StartRecording, window: &mut Window, cx: &mut Context<Self>) {
         window.focus(&self.inner_focus_handle, cx);
         self.clear_keystrokes(&ClearKeystrokes, window, cx);
         self.previous_modifiers = window.modifiers();
@@ -399,12 +360,7 @@ impl KeystrokeInput {
         cx.stop_propagation();
     }
 
-    pub fn stop_recording(
-        &mut self,
-        _: &StopRecording,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn stop_recording(&mut self, _: &StopRecording, window: &mut Window, cx: &mut Context<Self>) {
         if !self.is_recording(window) {
             return;
         }
@@ -423,12 +379,7 @@ impl KeystrokeInput {
         cx.notify();
     }
 
-    pub fn clear_keystrokes(
-        &mut self,
-        _: &ClearKeystrokes,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn clear_keystrokes(&mut self, _: &ClearKeystrokes, _window: &mut Window, cx: &mut Context<Self>) {
         self.keystrokes.clear();
         self.keystrokes_changed(cx);
         self.end_close_keystrokes_capture();
@@ -471,9 +422,7 @@ impl Render for KeystrokeInput {
 
         let width = rems(4.);
 
-        let recording_bg_color = colors
-            .editor_background
-            .blend(colors.text_accent.opacity(0.1));
+        let recording_bg_color = colors.editor_background.blend(colors.text_accent.opacity(0.1));
 
         let recording_pulse = |color: Color| {
             Icon::new(IconName::Circle)
@@ -497,9 +446,7 @@ impl Render for KeystrokeInput {
             .gap_0p5()
             .border_1()
             .border_color(colors.border)
-            .bg(colors
-                .editor_background
-                .blend(colors.text_accent.opacity(0.1)))
+            .bg(colors.editor_background.blend(colors.text_accent.opacity(0.1)))
             .rounded_sm()
             .child(recording_pulse(Color::Error))
             .child(
@@ -515,9 +462,7 @@ impl Render for KeystrokeInput {
             .gap_0p5()
             .border_1()
             .border_color(colors.border)
-            .bg(colors
-                .editor_background
-                .blend(colors.text_accent.opacity(0.1)))
+            .bg(colors.editor_background.blend(colors.text_accent.opacity(0.1)))
             .rounded_sm()
             .child(recording_pulse(Color::Accent))
             .child(
@@ -717,8 +662,8 @@ mod tests {
                 keystroke_input.to_string()
             };
 
-            let mut keystroke = Keystroke::parse(&keystroke_str)
-                .unwrap_or_else(|_| panic!("Invalid keystroke: {}", keystroke_input));
+            let mut keystroke =
+                Keystroke::parse(&keystroke_str).unwrap_or_else(|_| panic!("Invalid keystroke: {}", keystroke_input));
 
             // Remove the dummy key if we added it for modifier-only keystrokes
             if keystroke_input.ends_with('-') && keystroke_str.ends_with("_") {
@@ -804,22 +749,18 @@ mod tests {
                 })
                 .collect();
 
-            let expected_keystrokes = expected_keystrokes
-                .unwrap_or_else(|e: anyhow::Error| panic!("Invalid expected keystroke: {}", e));
+            let expected_keystrokes =
+                expected_keystrokes.unwrap_or_else(|e: anyhow::Error| panic!("Invalid expected keystroke: {}", e));
 
             assert_eq!(
                 actual.len(),
                 expected_keystrokes.len(),
                 "Keystroke count mismatch. Expected: {:?}, Actual: {:?}",
-                expected_keystrokes
-                    .iter()
-                    .map(|k| k.unparse())
-                    .collect::<Vec<_>>(),
+                expected_keystrokes.iter().map(|k| k.unparse()).collect::<Vec<_>>(),
                 actual.iter().map(|k| k.unparse()).collect::<Vec<_>>()
             );
 
-            for (i, (actual, expected)) in actual.iter().zip(expected_keystrokes.iter()).enumerate()
-            {
+            for (i, (actual, expected)) in actual.iter().zip(expected_keystrokes.iter()).enumerate() {
                 assert_eq!(
                     actual.unparse(),
                     expected.unparse(),
@@ -907,13 +848,11 @@ mod tests {
         }
 
         pub async fn wait_for_close_keystroke_capture_end(&mut self) -> &mut Self {
-            let task = self.input.update_in(&mut self.cx, |input, _, _| {
-                input.clear_close_keystrokes_timer.take()
-            });
+            let task = self
+                .input
+                .update_in(&mut self.cx, |input, _, _| input.clear_close_keystrokes_timer.take());
             let task = task.expect("No close keystroke capture end timer task");
-            self.cx
-                .executor()
-                .advance_clock(CLOSE_KEYSTROKE_CAPTURE_END_TIMEOUT);
+            self.cx.executor().advance_clock(CLOSE_KEYSTROKE_CAPTURE_END_TIMEOUT);
             task.await;
             self
         }
@@ -1083,9 +1022,7 @@ mod tests {
         fn finish(this: Entity<Self>, cx: &VisualTestContext) {
             let (received_keystrokes_updated, initial_keystrokes_str, updated_keystrokes_str) =
                 this.read_with(cx, |this, cx| {
-                    let updated_keystrokes = this
-                        .input
-                        .read_with(cx, |input, _| input.keystrokes.clone());
+                    let updated_keystrokes = this.input.read_with(cx, |input, _| input.keystrokes.clone());
                     let initial_keystrokes_str = keystrokes_str(&this.initial_keystrokes);
                     let updated_keystrokes_str = keystrokes_str(&updated_keystrokes);
                     (
@@ -1121,8 +1058,7 @@ mod tests {
 
         let fs = FakeFs::new(cx.executor());
         let project = Project::test(fs, [], cx).await;
-        let workspace =
-            cx.add_window(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let workspace = cx.add_window(|window, cx| Workspace::test_new(project.clone(), window, cx));
         let cx = VisualTestContext::from_window(*workspace, cx);
         KeystrokeInputTestHelper::new(cx)
     }

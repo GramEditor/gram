@@ -7,14 +7,10 @@ use std::{
 
 use editor::{Editor, actions::MoveDown, actions::MoveUp};
 use gpui::{
-    ClickEvent, Entity, FocusHandle, Focusable, FontWeight, Modifiers, TextAlign,
-    TextStyleRefinement, WeakEntity,
+    ClickEvent, Entity, FocusHandle, Focusable, FontWeight, Modifiers, TextAlign, TextStyleRefinement, WeakEntity,
 };
 
-use settings::{
-    CenteredPaddingSettings, CodeFade, Decoration, DelayMs, FontSize, InactiveOpacity,
-    MinimumContrast,
-};
+use settings::{CenteredPaddingSettings, CodeFade, Decoration, DelayMs, FontSize, InactiveOpacity, MinimumContrast};
 use ui::prelude::*;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
@@ -277,16 +273,9 @@ impl<T: NumberFieldType> NumberField<T> {
                 let mode = window.use_state(cx, |_, _| NumberFieldMode::default());
                 let focus_handle = window.use_state(cx, |_, cx| cx.focus_handle());
                 let edit_editor = window.use_state(cx, |_, _| None);
-                let on_change_state: Entity<Option<OnChangeCallback<T>>> =
-                    window.use_state(cx, |_, _| None);
+                let on_change_state: Entity<Option<OnChangeCallback<T>>> = window.use_state(cx, |_, _| None);
                 let last_synced_value: Entity<Option<T>> = window.use_state(cx, |_, _| None);
-                (
-                    mode,
-                    focus_handle,
-                    edit_editor,
-                    on_change_state,
-                    last_synced_value,
-                )
+                (mode, focus_handle, edit_editor, on_change_state, last_synced_value)
             });
 
         Self {
@@ -344,10 +333,7 @@ impl<T: NumberFieldType> NumberField<T> {
         self
     }
 
-    pub fn on_reset(
-        mut self,
-        on_reset: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
-    ) -> Self {
+    pub fn on_reset(mut self, on_reset: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static) -> Self {
         self.on_reset = Some(Box::new(on_reset));
         self
     }
@@ -444,11 +430,7 @@ impl<T: NumberFieldType> RenderOnce for NumberField<T> {
                 if !is_edit_mode {
                     return;
                 }
-                let Some(editor) = edit_editor
-                    .read(cx)
-                    .as_ref()
-                    .and_then(|weak| weak.upgrade())
-                else {
+                let Some(editor) = edit_editor.read(cx).as_ref().and_then(|weak| weak.upgrade()) else {
                     return;
                 };
                 editor.update(cx, |editor, cx| {
@@ -503,11 +485,7 @@ impl<T: NumberFieldType> RenderOnce for NumberField<T> {
                             move |click: &ClickEvent, window: &mut Window, cx: &mut App| {
                                 let current_value = get_current_value(cx);
                                 let step = get_step(click.modifiers());
-                                let new_value = change_value(
-                                    current_value,
-                                    step,
-                                    ValueChangeDirection::Decrement,
-                                );
+                                let new_value = change_value(current_value, step, ValueChangeDirection::Decrement);
 
                                 update_editor_text(new_value, window, cx);
                                 on_change(&new_value, window, cx);
@@ -536,9 +514,7 @@ impl<T: NumberFieldType> RenderOnce for NumberField<T> {
                                     .px_1()
                                     .flex_1()
                                     .justify_center()
-                                    .child(
-                                        Label::new((self.format)(&self.value)).color(Color::Muted),
-                                    )
+                                    .child(Label::new((self.format)(&self.value)).color(Color::Muted))
                                     .into_any_element(),
                                 NumberFieldMode::Edit => {
                                     let expected_text = format!("{}", self.value);
@@ -568,26 +544,18 @@ impl<T: NumberFieldType> RenderOnce for NumberField<T> {
                                                     let on_change = self.on_change.clone();
                                                     let editor_handle = cx.entity().downgrade();
                                                     move |_, window, cx| {
-                                                        let Some(editor) = editor_handle.upgrade()
-                                                        else {
+                                                        let Some(editor) = editor_handle.upgrade() else {
                                                             return;
                                                         };
                                                         editor.update(cx, |editor, cx| {
-                                                            if let Ok(current_value) =
-                                                                editor.text(cx).parse::<T>()
-                                                            {
-                                                                let step =
-                                                                    get_step(window.modifiers());
+                                                            if let Ok(current_value) = editor.text(cx).parse::<T>() {
+                                                                let step = get_step(window.modifiers());
                                                                 let new_value = change_value(
                                                                     current_value,
                                                                     step,
                                                                     ValueChangeDirection::Increment,
                                                                 );
-                                                                editor.set_text(
-                                                                    format!("{}", new_value),
-                                                                    window,
-                                                                    cx,
-                                                                );
+                                                                editor.set_text(format!("{}", new_value), window, cx);
                                                                 on_change(&new_value, window, cx);
                                                             }
                                                         });
@@ -600,26 +568,18 @@ impl<T: NumberFieldType> RenderOnce for NumberField<T> {
                                                     let on_change = self.on_change.clone();
                                                     let editor_handle = cx.entity().downgrade();
                                                     move |_, window, cx| {
-                                                        let Some(editor) = editor_handle.upgrade()
-                                                        else {
+                                                        let Some(editor) = editor_handle.upgrade() else {
                                                             return;
                                                         };
                                                         editor.update(cx, |editor, cx| {
-                                                            if let Ok(current_value) =
-                                                                editor.text(cx).parse::<T>()
-                                                            {
-                                                                let step =
-                                                                    get_step(window.modifiers());
+                                                            if let Ok(current_value) = editor.text(cx).parse::<T>() {
+                                                                let step = get_step(window.modifiers());
                                                                 let new_value = change_value(
                                                                     current_value,
                                                                     step,
                                                                     ValueChangeDirection::Decrement,
                                                                 );
-                                                                editor.set_text(
-                                                                    format!("{}", new_value),
-                                                                    window,
-                                                                    cx,
-                                                                );
+                                                                editor.set_text(format!("{}", new_value), window, cx);
                                                                 on_change(&new_value, window, cx);
                                                             }
                                                         });
@@ -630,15 +590,11 @@ impl<T: NumberFieldType> RenderOnce for NumberField<T> {
                                             cx.on_focus_out(&editor.focus_handle(cx), window, {
                                                 let on_change_state = self.on_change_state.clone();
                                                 move |this, _, window, cx| {
-                                                    if let Ok(parsed_value) =
-                                                        this.text(cx).parse::<T>()
-                                                    {
+                                                    if let Ok(parsed_value) = this.text(cx).parse::<T>() {
                                                         let new_value = clamp_value(parsed_value);
-                                                        let on_change =
-                                                            on_change_state.read(cx).clone();
+                                                        let on_change = on_change_state.read(cx).clone();
 
-                                                        if let Some(on_change) = on_change.as_ref()
-                                                        {
+                                                        if let Some(on_change) = on_change.as_ref() {
                                                             on_change(&new_value, window, cx);
                                                         }
                                                     };
@@ -658,9 +614,8 @@ impl<T: NumberFieldType> RenderOnce for NumberField<T> {
                                         let last_synced = *self.last_synced_value.read(cx);
 
                                         // Detect if the value changed externally (e.g., reset button)
-                                        let value_changed_externally = last_synced
-                                            .map(|last| last != self.value)
-                                            .unwrap_or(true);
+                                        let value_changed_externally =
+                                            last_synced.map(|last| last != self.value).unwrap_or(true);
 
                                         let should_sync = if value_changed_externally {
                                             true
@@ -677,8 +632,7 @@ impl<T: NumberFieldType> RenderOnce for NumberField<T> {
                                             });
                                         }
 
-                                        self.last_synced_value
-                                            .update(cx, |state, _| *state = Some(self.value));
+                                        self.last_synced_value.update(cx, |state, _| *state = Some(self.value));
                                     }
 
                                     let focus_handle = if self.tab_index.is_some() {
@@ -692,8 +646,7 @@ impl<T: NumberFieldType> RenderOnce for NumberField<T> {
                                         .h_full()
                                         .track_focus(&focus_handle)
                                         .when(is_focused, |this| {
-                                            this.border_1()
-                                                .border_color(cx.theme().colors().border_focused)
+                                            this.border_1().border_color(cx.theme().colors().border_focused)
                                         })
                                         .child(editor)
                                         .on_action::<menu::Confirm>({
@@ -714,11 +667,7 @@ impl<T: NumberFieldType> RenderOnce for NumberField<T> {
                             move |click: &ClickEvent, window: &mut Window, cx: &mut App| {
                                 let current_value = get_current_value(cx);
                                 let step = get_step(click.modifiers());
-                                let new_value = change_value(
-                                    current_value,
-                                    step,
-                                    ValueChangeDirection::Increment,
-                                );
+                                let new_value = change_value(current_value, step, ValueChangeDirection::Increment);
 
                                 update_editor_text(new_value, window, cx);
                                 on_change(&new_value, window, cx);

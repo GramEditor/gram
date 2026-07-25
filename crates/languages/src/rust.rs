@@ -138,11 +138,7 @@ impl RustLspAdapter {
         async fn from_ldd_version() -> Option<LibcType> {
             use util::command::new_smol_command;
 
-            let ldd_output = new_smol_command("ldd")
-                .arg("--version")
-                .output()
-                .await
-                .ok()?;
+            let ldd_output = new_smol_command("ldd").arg("--version").output().await.ok()?;
             let ldd_version = String::from_utf8_lossy(&ldd_output.stdout);
 
             if ldd_version.contains("GNU libc") || ldd_version.contains("GLIBC") {
@@ -224,14 +220,7 @@ impl ManifestProvider for CargoManifestProvider {
         SharedString::new_static("Cargo.toml").into()
     }
 
-    fn search(
-        &self,
-        ManifestQuery {
-            path,
-            depth,
-            delegate,
-        }: ManifestQuery,
-    ) -> Option<Arc<RelPath>> {
+    fn search(&self, ManifestQuery { path, depth, delegate }: ManifestQuery) -> Option<Arc<RelPath>> {
         let mut outermost_cargo_toml = None;
         for path in path.ancestors().take(depth) {
             let p = path.join(RelPath::unix("Cargo.toml").unwrap());
@@ -283,8 +272,7 @@ impl LspAdapter for RustLspAdapter {
     }
 
     fn diagnostic_message_to_markdown(&self, message: &str) -> Option<String> {
-        static REGEX: LazyLock<Regex> =
-            LazyLock::new(|| Regex::new(r"(?m)\n *").expect("Failed to create REGEX"));
+        static REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?m)\n *").expect("Failed to create REGEX"));
         Some(REGEX.replace_all(message, "\n\n").to_string())
     }
 
@@ -311,10 +299,7 @@ impl LspAdapter for RustLspAdapter {
                 .filter_text
                 .as_deref()
                 .and_then(|filter| text.find(filter).map(|ix| ix..ix + filter.len()))
-                .or_else(|| {
-                    text.find(&completion.label)
-                        .map(|ix| ix..ix + completion.label.len())
-                })
+                .or_else(|| text.find(&completion.label).map(|ix| ix..ix + completion.label.len()))
                 .unwrap_or_else(filter_range);
 
             CodeLabel::new(text, filter_range, runs)
@@ -325,26 +310,20 @@ impl LspAdapter for RustLspAdapter {
                 let text = format!("{name}: {signature}");
                 let prefix = "struct S { ";
                 let source = Rope::from_iter([prefix, &text, " }"]);
-                let runs =
-                    language.highlight_text(&source, prefix.len()..prefix.len() + text.len());
+                let runs = language.highlight_text(&source, prefix.len()..prefix.len() + text.len());
                 mk_label(text, &|| 0..completion.label.len(), runs)
             }
-            (
-                Some(signature),
-                Some(lsp::CompletionItemKind::CONSTANT | lsp::CompletionItemKind::VARIABLE),
-            ) if completion.insert_text_format != Some(lsp::InsertTextFormat::SNIPPET) => {
+            (Some(signature), Some(lsp::CompletionItemKind::CONSTANT | lsp::CompletionItemKind::VARIABLE))
+                if completion.insert_text_format != Some(lsp::InsertTextFormat::SNIPPET) =>
+            {
                 let name = &completion.label;
                 let text = format!("{name}: {signature}",);
                 let prefix = "let ";
                 let source = Rope::from_iter([prefix, &text, " = ();"]);
-                let runs =
-                    language.highlight_text(&source, prefix.len()..prefix.len() + text.len());
+                let runs = language.highlight_text(&source, prefix.len()..prefix.len() + text.len());
                 mk_label(text, &|| 0..completion.label.len(), runs)
             }
-            (
-                function_signature,
-                Some(lsp::CompletionItemKind::FUNCTION | lsp::CompletionItemKind::METHOD),
-            ) => {
+            (function_signature, Some(lsp::CompletionItemKind::FUNCTION | lsp::CompletionItemKind::METHOD)) => {
                 const FUNCTION_PREFIXES: [&str; 6] = [
                     "async fn",
                     "async unsafe fn",
@@ -353,11 +332,9 @@ impl LspAdapter for RustLspAdapter {
                     "unsafe fn",
                     "fn",
                 ];
-                let fn_prefixed = FUNCTION_PREFIXES.iter().find_map(|&prefix| {
-                    function_signature?
-                        .strip_prefix(prefix)
-                        .map(|suffix| (prefix, suffix))
-                });
+                let fn_prefixed = FUNCTION_PREFIXES
+                    .iter()
+                    .find_map(|&prefix| function_signature?.strip_prefix(prefix).map(|suffix| (prefix, suffix)));
                 let label = if let Some(label) = completion
                     .label
                     .strip_suffix("(…)")
@@ -400,11 +377,7 @@ impl LspAdapter for RustLspAdapter {
                 } else if detail_left.is_none() {
                     return None;
                 } else {
-                    mk_label(
-                        completion.label.clone(),
-                        &|| 0..completion.label.len(),
-                        vec![],
-                    )
+                    mk_label(completion.label.clone(), &|| 0..completion.label.len(), vec![])
                 }
             }
             (_, kind) => {
@@ -413,10 +386,7 @@ impl LspAdapter for RustLspAdapter {
 
                 if completion.insert_text_format == Some(lsp::InsertTextFormat::SNIPPET)
                     && let Some(
-                        lsp::CompletionTextEdit::InsertAndReplace(lsp::InsertReplaceEdit {
-                            new_text,
-                            ..
-                        })
+                        lsp::CompletionTextEdit::InsertAndReplace(lsp::InsertReplaceEdit { new_text, .. })
                         | lsp::CompletionTextEdit::Edit(lsp::TextEdit { new_text, .. }),
                     ) = completion.text_edit.as_ref()
                     && let Ok(mut snippet) = snippet::Snippet::parse(new_text)
@@ -471,24 +441,16 @@ impl LspAdapter for RustLspAdapter {
                         | lsp::CompletionItemKind::ENUM => Some("type"),
                         lsp::CompletionItemKind::ENUM_MEMBER => Some("variant"),
                         lsp::CompletionItemKind::KEYWORD => Some("keyword"),
-                        lsp::CompletionItemKind::VALUE | lsp::CompletionItemKind::CONSTANT => {
-                            Some("constant")
-                        }
+                        lsp::CompletionItemKind::VALUE | lsp::CompletionItemKind::CONSTANT => Some("constant"),
                         _ => None,
                     });
 
                     label = completion.label.clone();
 
                     if let Some(highlight_name) = highlight_name {
-                        let highlight_id =
-                            language.grammar()?.highlight_id_for_name(highlight_name)?;
-                        runs.push((
-                            0..label.rfind('(').unwrap_or(completion.label.len()),
-                            highlight_id,
-                        ));
-                    } else if detail_left.is_none()
-                        && kind != Some(lsp::CompletionItemKind::SNIPPET)
-                    {
+                        let highlight_id = language.grammar()?.highlight_id_for_name(highlight_name)?;
+                        runs.push((0..label.rfind('(').unwrap_or(completion.label.len()), highlight_id));
+                    } else if detail_left.is_none() && kind != Some(lsp::CompletionItemKind::SNIPPET) {
                         return None;
                     }
                 }
@@ -563,12 +525,7 @@ impl LspAdapter for RustLspAdapter {
         Some(converted_schema)
     }
 
-    async fn label_for_symbol(
-        &self,
-        name: &str,
-        kind: lsp::SymbolKind,
-        language: &Arc<Language>,
-    ) -> Option<CodeLabel> {
+    async fn label_for_symbol(&self, name: &str, kind: lsp::SymbolKind, language: &Arc<Language>) -> Option<CodeLabel> {
         let (prefix, suffix) = match kind {
             lsp::SymbolKind::METHOD | lsp::SymbolKind::FUNCTION => ("fn ", "();"),
             lsp::SymbolKind::STRUCT => ("struct ", ";"),
@@ -601,11 +558,7 @@ impl LspAdapter for RustLspAdapter {
         ))
     }
 
-    fn prepare_initialize_params(
-        &self,
-        mut original: InitializeParams,
-        cx: &App,
-    ) -> Result<InitializeParams> {
+    fn prepare_initialize_params(&self, mut original: InitializeParams, cx: &App) -> Result<InitializeParams> {
         let enable_lsp_tasks = ProjectSettings::get_global(cx)
             .lsp
             .get(&SERVER_NAME)
@@ -670,13 +623,8 @@ impl LspInstaller for RustLspAdapter {
         pre_release: bool,
         _: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        let release = latest_github_release(
-            "rust-lang/rust-analyzer",
-            true,
-            pre_release,
-            delegate.http_client(),
-        )
-        .await?;
+        let release =
+            latest_github_release("rust-lang/rust-analyzer", true, pre_release, delegate.http_client()).await?;
         let asset_name = Self::build_asset_name().await;
         let asset = release
             .assets
@@ -746,16 +694,13 @@ impl LspInstaller for RustLspAdapter {
 
 pub(crate) struct RustContextProvider;
 
-const RUST_PACKAGE_TASK_VARIABLE: VariableName =
-    VariableName::Custom(Cow::Borrowed("RUST_PACKAGE"));
+const RUST_PACKAGE_TASK_VARIABLE: VariableName = VariableName::Custom(Cow::Borrowed("RUST_PACKAGE"));
 
 /// The bin name corresponding to the current file in Cargo.toml
-const RUST_BIN_NAME_TASK_VARIABLE: VariableName =
-    VariableName::Custom(Cow::Borrowed("RUST_BIN_NAME"));
+const RUST_BIN_NAME_TASK_VARIABLE: VariableName = VariableName::Custom(Cow::Borrowed("RUST_BIN_NAME"));
 
 /// The bin kind (bin/example) corresponding to the current file in Cargo.toml
-const RUST_BIN_KIND_TASK_VARIABLE: VariableName =
-    VariableName::Custom(Cow::Borrowed("RUST_BIN_KIND"));
+const RUST_BIN_KIND_TASK_VARIABLE: VariableName = VariableName::Custom(Cow::Borrowed("RUST_BIN_KIND"));
 
 /// The flag to list required features for executing a bin, if any
 const RUST_BIN_REQUIRED_FEATURES_FLAG_TASK_VARIABLE: VariableName =
@@ -765,17 +710,13 @@ const RUST_BIN_REQUIRED_FEATURES_FLAG_TASK_VARIABLE: VariableName =
 const RUST_BIN_REQUIRED_FEATURES_TASK_VARIABLE: VariableName =
     VariableName::Custom(Cow::Borrowed("RUST_BIN_REQUIRED_FEATURES"));
 
-const RUST_TEST_FRAGMENT_TASK_VARIABLE: VariableName =
-    VariableName::Custom(Cow::Borrowed("RUST_TEST_FRAGMENT"));
+const RUST_TEST_FRAGMENT_TASK_VARIABLE: VariableName = VariableName::Custom(Cow::Borrowed("RUST_TEST_FRAGMENT"));
 
-const RUST_DOC_TEST_NAME_TASK_VARIABLE: VariableName =
-    VariableName::Custom(Cow::Borrowed("RUST_DOC_TEST_NAME"));
+const RUST_DOC_TEST_NAME_TASK_VARIABLE: VariableName = VariableName::Custom(Cow::Borrowed("RUST_DOC_TEST_NAME"));
 
-const RUST_TEST_NAME_TASK_VARIABLE: VariableName =
-    VariableName::Custom(Cow::Borrowed("RUST_TEST_NAME"));
+const RUST_TEST_NAME_TASK_VARIABLE: VariableName = VariableName::Custom(Cow::Borrowed("RUST_TEST_NAME"));
 
-const RUST_MANIFEST_DIRNAME_TASK_VARIABLE: VariableName =
-    VariableName::Custom(Cow::Borrowed("RUST_MANIFEST_DIRNAME"));
+const RUST_MANIFEST_DIRNAME_TASK_VARIABLE: VariableName = VariableName::Custom(Cow::Borrowed("RUST_MANIFEST_DIRNAME"));
 
 impl ContextProvider for RustContextProvider {
     fn build_context(
@@ -795,42 +736,32 @@ impl ContextProvider for RustContextProvider {
 
         let mut variables = TaskVariables::default();
 
-        if let (Some(path), Some(stem)) = (&local_abs_path, task_variables.get(&VariableName::Stem))
-        {
+        if let (Some(path), Some(stem)) = (&local_abs_path, task_variables.get(&VariableName::Stem)) {
             let fragment = test_fragment(&variables, path, stem);
             variables.insert(RUST_TEST_FRAGMENT_TASK_VARIABLE, fragment);
         };
-        if let Some(test_name) =
-            task_variables.get(&VariableName::Custom(Cow::Borrowed("_test_name")))
-        {
+        if let Some(test_name) = task_variables.get(&VariableName::Custom(Cow::Borrowed("_test_name"))) {
             variables.insert(RUST_TEST_NAME_TASK_VARIABLE, test_name.into());
         }
-        if let Some(doc_test_name) =
-            task_variables.get(&VariableName::Custom(Cow::Borrowed("_doc_test_name")))
-        {
+        if let Some(doc_test_name) = task_variables.get(&VariableName::Custom(Cow::Borrowed("_doc_test_name"))) {
             variables.insert(RUST_DOC_TEST_NAME_TASK_VARIABLE, doc_test_name.into());
         }
         cx.background_spawn(async move {
             if let Some(path) = local_abs_path
                 .as_deref()
                 .and_then(|local_abs_path| local_abs_path.parent())
-                && let Some(package_name) =
-                    human_readable_package_name(path, project_env.as_ref()).await
+                && let Some(package_name) = human_readable_package_name(path, project_env.as_ref()).await
             {
                 variables.insert(RUST_PACKAGE_TASK_VARIABLE.clone(), package_name);
             }
             if let Some(path) = local_abs_path.as_ref()
-                && let Some((target, manifest_path)) =
-                    target_info_from_abs_path(path, project_env.as_ref()).await
+                && let Some((target, manifest_path)) = target_info_from_abs_path(path, project_env.as_ref()).await
             {
                 if let Some(target) = target {
                     variables.extend(TaskVariables::from_iter([
                         (RUST_PACKAGE_TASK_VARIABLE.clone(), target.package_name),
                         (RUST_BIN_NAME_TASK_VARIABLE.clone(), target.target_name),
-                        (
-                            RUST_BIN_KIND_TASK_VARIABLE.clone(),
-                            target.target_kind.to_string(),
-                        ),
+                        (RUST_BIN_KIND_TASK_VARIABLE.clone(), target.target_kind.to_string()),
                     ]));
                     if target.required_features.is_empty() {
                         variables.insert(RUST_BIN_REQUIRED_FEATURES_FLAG_TASK_VARIABLE, "".into());
@@ -855,25 +786,13 @@ impl ContextProvider for RustContextProvider {
         })
     }
 
-    fn associated_tasks(
-        &self,
-        file: Option<Arc<dyn language::File>>,
-        cx: &App,
-    ) -> Task<Option<TaskTemplates>> {
+    fn associated_tasks(&self, file: Option<Arc<dyn language::File>>, cx: &App) -> Task<Option<TaskTemplates>> {
         const DEFAULT_RUN_NAME_STR: &str = "RUST_DEFAULT_PACKAGE_RUN";
         const CUSTOM_TARGET_DIR: &str = "RUST_TARGET_DIR";
 
         let language_sets = language_settings(Some("Rust".into()), file.as_ref(), cx);
-        let package_to_run = language_sets
-            .tasks
-            .variables
-            .get(DEFAULT_RUN_NAME_STR)
-            .cloned();
-        let custom_target_dir = language_sets
-            .tasks
-            .variables
-            .get(CUSTOM_TARGET_DIR)
-            .cloned();
+        let package_to_run = language_sets.tasks.variables.get(DEFAULT_RUN_NAME_STR).cloned();
+        let custom_target_dir = language_sets.tasks.variables.get(CUSTOM_TARGET_DIR).cloned();
         let run_task_args = if let Some(package_to_run) = package_to_run {
             vec!["run".into(), "-p".into(), package_to_run]
         } else {
@@ -881,16 +800,9 @@ impl ContextProvider for RustContextProvider {
         };
         let mut task_templates = vec![
             TaskTemplate {
-                label: format!(
-                    "Check (package: {})",
-                    RUST_PACKAGE_TASK_VARIABLE.template_value(),
-                ),
+                label: format!("Check (package: {})", RUST_PACKAGE_TASK_VARIABLE.template_value(),),
                 command: "cargo".into(),
-                args: vec![
-                    "check".into(),
-                    "-p".into(),
-                    RUST_PACKAGE_TASK_VARIABLE.template_value(),
-                ],
+                args: vec!["check".into(), "-p".into(), RUST_PACKAGE_TASK_VARIABLE.template_value()],
                 cwd: Some("$GRAM_DIRNAME".to_owned()),
                 ..TaskTemplate::default()
             },
@@ -982,16 +894,9 @@ impl ContextProvider for RustContextProvider {
                 ..TaskTemplate::default()
             },
             TaskTemplate {
-                label: format!(
-                    "Test (package: {})",
-                    RUST_PACKAGE_TASK_VARIABLE.template_value()
-                ),
+                label: format!("Test (package: {})", RUST_PACKAGE_TASK_VARIABLE.template_value()),
                 command: "cargo".into(),
-                args: vec![
-                    "test".into(),
-                    "-p".into(),
-                    RUST_PACKAGE_TASK_VARIABLE.template_value(),
-                ],
+                args: vec!["test".into(), "-p".into(), RUST_PACKAGE_TASK_VARIABLE.template_value()],
                 cwd: Some(RUST_MANIFEST_DIRNAME_TASK_VARIABLE.template_value()),
                 ..TaskTemplate::default()
             },
@@ -1016,10 +921,9 @@ impl ContextProvider for RustContextProvider {
                 .into_iter()
                 .map(|mut task_template| {
                     let mut args = task_template.args.split_off(1);
-                    task_template.args.append(&mut vec![
-                        "--target-dir".to_string(),
-                        custom_target_dir.clone(),
-                    ]);
+                    task_template
+                        .args
+                        .append(&mut vec!["--target-dir".to_string(), custom_target_dir.clone()]);
                     task_template.args.append(&mut args);
 
                     task_template
@@ -1114,10 +1018,7 @@ async fn target_info_from_abs_path(
     target_info_from_metadata(metadata, abs_path)
 }
 
-fn target_info_from_metadata(
-    metadata: CargoMetadata,
-    abs_path: &Path,
-) -> Option<(Option<TargetInfo>, Arc<Path>)> {
+fn target_info_from_metadata(metadata: CargoMetadata, abs_path: &Path) -> Option<(Option<TargetInfo>, Arc<Path>)> {
     let mut manifest_path = None;
     for package in metadata.packages {
         let Some(manifest_dir_path) = package.manifest_path.parent() else {
@@ -1317,8 +1218,7 @@ mod tests {
                 },
                 // code span starting right after a newline
                 lsp::Diagnostic {
-                    message: "cannot borrow `self.d` as mutable\n`self` is a `&` reference"
-                        .to_string(),
+                    message: "cannot borrow `self.d` as mutable\n`self` is a `&` reference".to_string(),
                     ..Default::default()
                 },
             ],
@@ -1530,9 +1430,7 @@ mod tests {
                         filter_text: Some("as_deref_mut".to_string()),
                         label_details: Some(CompletionItemLabelDetails {
                             detail: None,
-                            description: Some(
-                                "pub fn as_deref_mut(&mut self) -> IterMut<'_, T>".to_string()
-                            ),
+                            description: Some("pub fn as_deref_mut(&mut self) -> IterMut<'_, T>".to_string()),
                         }),
                         ..Default::default()
                     },
@@ -1711,10 +1609,7 @@ mod tests {
                 &language,
             )
             .await;
-        assert!(
-            ref_completion.is_some(),
-            "ref postfix completion should have a label"
-        );
+        assert!(ref_completion.is_some(), "ref postfix completion should have a label");
         let ref_label = ref_completion.unwrap();
         let filter_text = &ref_label.text[ref_label.filter_range.clone()];
         assert!(
@@ -1868,10 +1763,7 @@ mod tests {
             // dedent the line after the field expression
             let ix = buffer.len() - 2;
             buffer.edit([(ix..ix, ";\ne")], Some(AutoindentMode::EachLine), cx);
-            assert_eq!(
-                buffer.text(),
-                "fn a() {\n  b\n    .c\n    \n    .d;\n  e\n}"
-            );
+            assert_eq!(buffer.text(), "fn a() {\n  b\n    .c\n    \n    .d;\n  e\n}");
 
             // indent inside a struct within a call
             buffer.set_text("const a: B = c(D {});", cx);
@@ -1887,10 +1779,7 @@ mod tests {
             // keep that indent after an empty line
             let ix = buffer.len() - 8;
             buffer.edit([(ix..ix, "\n")], Some(AutoindentMode::EachLine), cx);
-            assert_eq!(
-                buffer.text(),
-                "const a: B = c(D {\n  e: f(\n    \n    \n  )\n});"
-            );
+            assert_eq!(buffer.text(), "const a: B = c(D {\n  e: f(\n    \n    \n  )\n});");
 
             buffer
         });
@@ -1899,10 +1788,7 @@ mod tests {
     #[test]
     fn test_package_name_from_pkgid() {
         for (input, expected) in [
-            (
-                "path+file:///absolute/path/to/project/gram/crates/gram#0.131.0",
-                "gram",
-            ),
+            ("path+file:///absolute/path/to/project/gram/crates/gram#0.131.0", "gram"),
             (
                 "path+file:///absolute/path/to/project/custom-package#my-custom-package@0.1.0",
                 "my-custom-package",
@@ -1997,11 +1883,7 @@ mod tests {
     #[test]
     fn test_rust_test_fragment() {
         #[track_caller]
-        fn check(
-            variables: impl IntoIterator<Item = (VariableName, &'static str)>,
-            path: &str,
-            expected: &str,
-        ) {
+        fn check(variables: impl IntoIterator<Item = (VariableName, &'static str)>, path: &str, expected: &str) {
             let path = Path::new(path);
             let found = test_fragment(
                 &TaskVariables::from_iter(variables.into_iter().map(|(k, v)| (k, v.to_owned()))),
@@ -2061,10 +1943,7 @@ mod tests {
 
         let converted = RustLspAdapter::convert_rust_analyzer_schema(&raw_schema);
 
-        assert_eq!(
-            converted.get("type").and_then(|v| v.as_str()),
-            Some("object")
-        );
+        assert_eq!(converted.get("type").and_then(|v| v.as_str()), Some("object"));
 
         let properties = converted
             .pointer("/properties")
@@ -2087,17 +1966,9 @@ mod tests {
         assert!(assist_props.contains_key("emitMustUse"));
         assert!(assist_props.contains_key("expressionFillDefault"));
 
-        let emit_must_use = assist_props
-            .get("emitMustUse")
-            .expect("should have emitMustUse");
-        assert_eq!(
-            emit_must_use.get("type").and_then(|v| v.as_str()),
-            Some("boolean")
-        );
-        assert_eq!(
-            emit_must_use.get("default").and_then(|v| v.as_bool()),
-            Some(false)
-        );
+        let emit_must_use = assist_props.get("emitMustUse").expect("should have emitMustUse");
+        assert_eq!(emit_must_use.get("type").and_then(|v| v.as_str()), Some("boolean"));
+        assert_eq!(emit_must_use.get("default").and_then(|v| v.as_bool()), Some(false));
 
         let cache_priming_props = properties
             .get("cachePriming")

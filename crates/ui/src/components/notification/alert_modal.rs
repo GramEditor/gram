@@ -50,23 +50,13 @@ impl RenderOnce for AlertModal {
                     .children(self.children),
             )
             .child(
-                h_flex()
-                    .h(rems(1.75))
-                    .items_center()
-                    .child(div().flex_1())
-                    .child(
-                        h_flex()
-                            .items_center()
-                            .gap_1()
-                            .child(
-                                Button::new(self.dismiss_label.clone(), self.dismiss_label.clone())
-                                    .color(Color::Muted),
-                            )
-                            .child(Button::new(
-                                self.primary_action.clone(),
-                                self.primary_action,
-                            )),
-                    ),
+                h_flex().h(rems(1.75)).items_center().child(div().flex_1()).child(
+                    h_flex()
+                        .items_center()
+                        .gap_1()
+                        .child(Button::new(self.dismiss_label.clone(), self.dismiss_label.clone()).color(Color::Muted))
+                        .child(Button::new(self.primary_action.clone(), self.primary_action)),
+                ),
             )
     }
 }

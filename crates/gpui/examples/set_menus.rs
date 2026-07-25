@@ -1,6 +1,6 @@
 use gpui::{
-    App, Application, Context, Global, Menu, MenuItem, SharedString, SystemMenuType, Window,
-    WindowOptions, actions, div, prelude::*, rgb,
+    App, Application, Context, Global, Menu, MenuItem, SharedString, SystemMenuType, Window, WindowOptions, actions,
+    div, prelude::*, rgb,
 };
 
 struct SetMenus;
@@ -81,10 +81,8 @@ fn set_app_menus(cx: &mut App) {
         items: vec![
             MenuItem::os_submenu("Services", SystemMenuType::Services),
             MenuItem::separator(),
-            MenuItem::action(ViewMode::List, ToggleCheck)
-                .checked(app_state.view_mode == ViewMode::List),
-            MenuItem::action(ViewMode::Grid, ToggleCheck)
-                .checked(app_state.view_mode == ViewMode::Grid),
+            MenuItem::action(ViewMode::List, ToggleCheck).checked(app_state.view_mode == ViewMode::List),
+            MenuItem::action(ViewMode::Grid, ToggleCheck).checked(app_state.view_mode == ViewMode::Grid),
             MenuItem::separator(),
             MenuItem::action("Quit", Quit),
         ],

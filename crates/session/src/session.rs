@@ -27,11 +27,7 @@ impl Session {
             .ok()
             .flatten()
             .and_then(|json| serde_json::from_str::<Vec<u64>>(&json).ok())
-            .map(|vec| {
-                vec.into_iter()
-                    .map(WindowId::from)
-                    .collect::<Vec<WindowId>>()
-            });
+            .map(|vec| vec.into_iter().map(WindowId::from).collect::<Vec<WindowId>>());
 
         Self {
             session_id,
@@ -74,9 +70,7 @@ impl AppSession {
                     current_window_stack = windows;
                 }
 
-                cx.background_executor()
-                    .timer(Duration::from_millis(500))
-                    .await;
+                cx.background_executor().timer(Duration::from_millis(500)).await;
             }
         });
 

@@ -1,8 +1,8 @@
 use crate::{
-    AnyWindowHandle, AtlasKey, AtlasTextureId, AtlasTile, Bounds, DispatchEventResult, GpuSpecs,
-    Pixels, PlatformAtlas, PlatformDisplay, PlatformInput, PlatformInputHandler, PlatformWindow,
-    Point, PromptButton, RequestFrameOptions, Size, TestPlatform, TileId, WindowAppearance,
-    WindowBackgroundAppearance, WindowBounds, WindowControlArea, WindowParams,
+    AnyWindowHandle, AtlasKey, AtlasTextureId, AtlasTile, Bounds, DispatchEventResult, GpuSpecs, Pixels, PlatformAtlas,
+    PlatformDisplay, PlatformInput, PlatformInputHandler, PlatformWindow, Point, PromptButton, RequestFrameOptions,
+    Size, TestPlatform, TileId, WindowAppearance, WindowBackgroundAppearance, WindowBounds, WindowControlArea,
+    WindowParams,
 };
 use collections::HashMap;
 use parking_lot::Mutex;
@@ -35,17 +35,13 @@ pub(crate) struct TestWindowState {
 pub(crate) struct TestWindow(pub(crate) Rc<Mutex<TestWindowState>>);
 
 impl HasWindowHandle for TestWindow {
-    fn window_handle(
-        &self,
-    ) -> Result<raw_window_handle::WindowHandle<'_>, raw_window_handle::HandleError> {
+    fn window_handle(&self) -> Result<raw_window_handle::WindowHandle<'_>, raw_window_handle::HandleError> {
         unimplemented!("Test Windows are not backed by a real platform window")
     }
 }
 
 impl HasDisplayHandle for TestWindow {
-    fn display_handle(
-        &self,
-    ) -> Result<raw_window_handle::DisplayHandle<'_>, raw_window_handle::HandleError> {
+    fn display_handle(&self) -> Result<raw_window_handle::DisplayHandle<'_>, raw_window_handle::HandleError> {
         unimplemented!("Test Windows are not backed by a real platform window")
     }
 }
@@ -324,9 +320,7 @@ impl PlatformAtlas for TestAtlas {
     fn get_or_insert_with<'a>(
         &self,
         key: &crate::AtlasKey,
-        build: &mut dyn FnMut() -> anyhow::Result<
-            Option<(Size<crate::DevicePixels>, std::borrow::Cow<'a, [u8]>)>,
-        >,
+        build: &mut dyn FnMut() -> anyhow::Result<Option<(Size<crate::DevicePixels>, std::borrow::Cow<'a, [u8]>)>>,
     ) -> anyhow::Result<Option<crate::AtlasTile>> {
         let mut state = self.0.lock();
         if let Some(tile) = state.tiles.get(key) {

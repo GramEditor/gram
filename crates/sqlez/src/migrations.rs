@@ -44,28 +44,23 @@ impl Connection {
                     migration TEXT
                 )"})?()?;
 
-            let completed_migrations =
-                self.select_bound::<&str, (String, usize, String)>(indoc! {"
+            let completed_migrations = self.select_bound::<&str, (String, usize, String)>(indoc! {"
                     SELECT domain, step, migration FROM migrations
                     WHERE domain = ?
                     ORDER BY step
                     "})?(domain)?;
 
-            let mut store_completed_migration = self
-                .exec_bound("INSERT INTO migrations (domain, step, migration) VALUES (?, ?, ?)")?;
+            let mut store_completed_migration =
+                self.exec_bound("INSERT INTO migrations (domain, step, migration) VALUES (?, ?, ?)")?;
 
             let mut did_migrate = false;
             for (index, migration) in migrations.iter().enumerate() {
-                let migration =
-                    sqlformat::format(migration, &sqlformat::QueryParams::None, Default::default());
+                let migration = sqlformat::format(migration, &sqlformat::QueryParams::None, Default::default());
                 if let Some((_, _, completed_migration)) = completed_migrations.get(index) {
                     // Reformat completed migrations with the current `sqlformat` version, so that past migrations stored
                     // conform to the new formatting rules.
-                    let completed_migration = sqlformat::format(
-                        completed_migration,
-                        &sqlformat::QueryParams::None,
-                        Default::default(),
-                    );
+                    let completed_migration =
+                        sqlformat::format(completed_migration, &sqlformat::QueryParams::None, Default::default());
                     if completed_migration == migration {
                         // Migration already run. Continue
                         continue;
@@ -116,10 +111,7 @@ impl Connection {
         )?()?;
 
         if !foreign_key_info.is_empty() {
-            log::info!(
-                "Found {} foreign key relationships to check",
-                foreign_key_info.len()
-            );
+            log::info!("Found {} foreign key relationships to check", foreign_key_info.len());
         }
 
         for (child_table, child_key, parent_table, parent_key) in foreign_key_info {
@@ -252,22 +244,14 @@ mod test {
         .unwrap();
 
         assert_eq!(
-            connection
-                .select_row::<usize>("SELECT * FROM test_table")
-                .unwrap()()
-            .unwrap(),
+            connection.select_row::<usize>("SELECT * FROM test_table").unwrap()().unwrap(),
             Some(1)
         );
 
         // Run the migration verifying that the row got dropped
-        connection
-            .migrate("test", &["DELETE FROM test_table"])
-            .unwrap();
+        connection.migrate("test", &["DELETE FROM test_table"]).unwrap();
         assert_eq!(
-            connection
-                .select_row::<usize>("SELECT * FROM test_table")
-                .unwrap()()
-            .unwrap(),
+            connection.select_row::<usize>("SELECT * FROM test_table").unwrap()().unwrap(),
             None
         );
 
@@ -278,14 +262,9 @@ mod test {
         .unwrap();
 
         // Run the same migration again and verify that the table was left unchanged
-        connection
-            .migrate("test", &["DELETE FROM test_table"])
-            .unwrap();
+        connection.migrate("test", &["DELETE FROM test_table"]).unwrap();
         assert_eq!(
-            connection
-                .select_row::<usize>("SELECT * FROM test_table")
-                .unwrap()()
-            .unwrap(),
+            connection.select_row::<usize>("SELECT * FROM test_table").unwrap()().unwrap(),
             Some(2)
         );
     }
@@ -298,10 +277,7 @@ mod test {
         connection
             .migrate(
                 "test migration",
-                &[
-                    "CREATE TABLE test (col INTEGER)",
-                    "INSERT INTO test (col) VALUES (1)",
-                ],
+                &["CREATE TABLE test (col INTEGER)", "INSERT INTO test (col) VALUES (1)"],
             )
             .unwrap();
 

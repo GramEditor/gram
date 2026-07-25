@@ -12,15 +12,13 @@ use url::Url;
 use urlencoding::encode;
 
 use git::{
-    BuildCommitPermalinkParams, BuildPermalinkParams, GitHostingProvider, ParsedGitRemote,
-    PullRequest, RemoteUrl,
+    BuildCommitPermalinkParams, BuildPermalinkParams, GitHostingProvider, ParsedGitRemote, PullRequest, RemoteUrl,
 };
 
 use crate::get_host_from_git_remote_url;
 
 fn pull_request_number_regex() -> &'static Regex {
-    static PULL_REQUEST_NUMBER_REGEX: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"\(#(\d+)\)$").unwrap());
+    static PULL_REQUEST_NUMBER_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\(#(\d+)\)$").unwrap());
     &PULL_REQUEST_NUMBER_REGEX
 }
 
@@ -129,10 +127,7 @@ impl Github {
 
         if response.status().is_client_error() {
             let text = String::from_utf8_lossy(body.as_slice());
-            bail!(
-                "status error {}, response: {text:?}",
-                response.status().as_u16()
-            );
+            bail!("status error {}, response: {text:?}", response.status().as_u16());
         }
 
         let body_str = std::str::from_utf8(&body)?;
@@ -189,26 +184,16 @@ impl GitHostingProvider for Github {
         })
     }
 
-    fn build_commit_permalink(
-        &self,
-        remote: &ParsedGitRemote,
-        params: BuildCommitPermalinkParams,
-    ) -> Url {
+    fn build_commit_permalink(&self, remote: &ParsedGitRemote, params: BuildCommitPermalinkParams) -> Url {
         let BuildCommitPermalinkParams { sha } = params;
         let ParsedGitRemote { owner, repo } = remote;
 
-        self.base_url()
-            .join(&format!("{owner}/{repo}/commit/{sha}"))
-            .unwrap()
+        self.base_url().join(&format!("{owner}/{repo}/commit/{sha}")).unwrap()
     }
 
     fn build_permalink(&self, remote: ParsedGitRemote, params: BuildPermalinkParams) -> Url {
         let ParsedGitRemote { owner, repo } = remote;
-        let BuildPermalinkParams {
-            sha,
-            path,
-            selection,
-        } = params;
+        let BuildPermalinkParams { sha, path, selection } = params;
 
         let mut permalink = self
             .base_url()
@@ -217,19 +202,11 @@ impl GitHostingProvider for Github {
         if path.ends_with(".md") {
             permalink.set_query(Some("plain=1"));
         }
-        permalink.set_fragment(
-            selection
-                .map(|selection| self.line_fragment(&selection))
-                .as_deref(),
-        );
+        permalink.set_fragment(selection.map(|selection| self.line_fragment(&selection)).as_deref());
         permalink
     }
 
-    fn build_create_pull_request_url(
-        &self,
-        remote: &ParsedGitRemote,
-        source_branch: &str,
-    ) -> Option<Url> {
+    fn build_create_pull_request_url(&self, remote: &ParsedGitRemote, source_branch: &str) -> Option<Url> {
         let ParsedGitRemote { owner, repo } = remote;
         let encoded_source = encode(source_branch);
 
@@ -282,9 +259,7 @@ mod tests {
     #[test]
     fn test_remote_url_with_root_slash() {
         let remote_url = "git@github.com:/GramEditor/gram";
-        let parsed_remote = Github::public_instance()
-            .parse_remote_url(remote_url)
-            .unwrap();
+        let parsed_remote = Github::public_instance().parse_remote_url(remote_url).unwrap();
 
         assert_eq!(
             parsed_remote,
@@ -309,10 +284,7 @@ mod tests {
 
         assert!(!github.supports_avatars());
         assert_eq!(github.name, "GitHub Self-Hosted".to_string());
-        assert_eq!(
-            github.base_url,
-            Url::parse("https://github.my-enterprise.com").unwrap()
-        );
+        assert_eq!(github.base_url, Url::parse("https://github.my-enterprise.com").unwrap());
     }
 
     #[test]
@@ -322,10 +294,7 @@ mod tests {
 
         assert!(!github.supports_avatars());
         assert_eq!(github.name, "GitHub Self-Hosted".to_string());
-        assert_eq!(
-            github.base_url,
-            Url::parse("https://github.my-enterprise.com").unwrap()
-        );
+        assert_eq!(github.base_url, Url::parse("https://github.my-enterprise.com").unwrap());
     }
 
     #[test]
@@ -440,7 +409,8 @@ mod tests {
             ),
         );
 
-        let expected_url = "https://github.com/GramEditor/gram/blob/b2efec9824c45fcc90c9a7eb107a50d1772a60aa/crates/zed/src/main.rs";
+        let expected_url =
+            "https://github.com/GramEditor/gram/blob/b2efec9824c45fcc90c9a7eb107a50d1772a60aa/crates/zed/src/main.rs";
         assert_eq!(permalink.to_string(), expected_url.to_string())
     }
 
@@ -523,11 +493,7 @@ mod tests {
         };
 
         assert_eq!(
-            github
-                .extract_pull_request(&remote, message)
-                .unwrap()
-                .url
-                .as_str(),
+            github.extract_pull_request(&remote, message).unwrap().url.as_str(),
             "https://github.com/GramEditor/gram/pull/10687"
         );
 

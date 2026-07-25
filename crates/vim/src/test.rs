@@ -93,10 +93,7 @@ async fn test_toggle_through_settings(cx: &mut gpui::TestAppContext) {
 async fn test_cancel_selection(cx: &mut gpui::TestAppContext) {
     let mut cx = VimTestContext::new(cx, true).await;
 
-    cx.set_state(
-        indoc! {"The quick brown fox juˇmps over the lazy dog"},
-        Mode::Normal,
-    );
+    cx.set_state(indoc! {"The quick brown fox juˇmps over the lazy dog"}, Mode::Normal);
     // jumps
     cx.simulate_keystrokes("v l l");
     cx.assert_editor_state("The quick brown fox ju«mpsˇ» over the lazy dog");
@@ -245,14 +242,10 @@ async fn test_escape_command_palette(cx: &mut gpui::TestAppContext) {
     cx.set_state("aˇbc\n", Mode::Normal);
     cx.simulate_keystrokes("i cmd-shift-p");
 
-    assert!(
-        cx.workspace(|workspace, _, cx| workspace.active_modal::<CommandPalette>(cx).is_some())
-    );
+    assert!(cx.workspace(|workspace, _, cx| workspace.active_modal::<CommandPalette>(cx).is_some()));
     cx.simulate_keystrokes("escape");
     cx.run_until_parked();
-    assert!(
-        !cx.workspace(|workspace, _, cx| workspace.active_modal::<CommandPalette>(cx).is_some())
-    );
+    assert!(!cx.workspace(|workspace, _, cx| workspace.active_modal::<CommandPalette>(cx).is_some()));
     cx.assert_state("aˇbc\n", Mode::Insert);
 }
 
@@ -645,9 +638,7 @@ async fn test_folds(cx: &mut gpui::TestAppContext) {
 
     // yank the fold
     cx.simulate_shared_keystrokes("down y y").await;
-    cx.shared_clipboard()
-        .await
-        .assert_eq("  barp()\n  bazp()\n");
+    cx.shared_clipboard().await.assert_eq("  barp()\n  bazp()\n");
 
     // re-open
     cx.simulate_shared_keystrokes("z o").await;
@@ -880,13 +871,7 @@ async fn test_select_all_issue_2170(cx: &mut gpui::TestAppContext) {
 async fn test_jk(cx: &mut gpui::TestAppContext) {
     let mut cx = NeovimBackedTestContext::new(cx).await;
 
-    cx.update(|_, cx| {
-        cx.bind_keys([KeyBinding::new(
-            "j k",
-            NormalBefore,
-            Some("vim_mode == insert"),
-        )])
-    });
+    cx.update(|_, cx| cx.bind_keys([KeyBinding::new("j k", NormalBefore, Some("vim_mode == insert"))]));
     cx.neovim.exec("imap jk <esc>").await;
 
     cx.set_shared_state("ˇhello").await;
@@ -897,10 +882,7 @@ async fn test_jk(cx: &mut gpui::TestAppContext) {
 fn assert_pending_input(cx: &mut VimTestContext, expected: &str) {
     cx.update_editor(|editor, window, cx| {
         let snapshot = editor.snapshot(window, cx);
-        let highlights = editor
-            .text_highlights::<editor::PendingInput>(cx)
-            .unwrap()
-            .1;
+        let highlights = editor.text_highlights::<editor::PendingInput>(cx).unwrap().1;
         let (_, ranges) = marked_text_ranges(expected, false);
 
         assert_eq!(
@@ -921,13 +903,7 @@ fn assert_pending_input(cx: &mut VimTestContext, expected: &str) {
 async fn test_jk_multi(cx: &mut gpui::TestAppContext) {
     let mut cx = VimTestContext::new(cx, true).await;
 
-    cx.update(|_, cx| {
-        cx.bind_keys([KeyBinding::new(
-            "j k l",
-            NormalBefore,
-            Some("vim_mode == insert"),
-        )])
-    });
+    cx.update(|_, cx| cx.bind_keys([KeyBinding::new("j k l", NormalBefore, Some("vim_mode == insert"))]));
 
     cx.set_state("ˇone ˇone ˇone", Mode::Normal);
     cx.simulate_keystrokes("i j");
@@ -946,13 +922,7 @@ async fn test_jk_multi(cx: &mut gpui::TestAppContext) {
 async fn test_jk_delay(cx: &mut gpui::TestAppContext) {
     let mut cx = VimTestContext::new(cx, true).await;
 
-    cx.update(|_, cx| {
-        cx.bind_keys([KeyBinding::new(
-            "j k",
-            NormalBefore,
-            Some("vim_mode == insert"),
-        )])
-    });
+    cx.update(|_, cx| cx.bind_keys([KeyBinding::new("j k", NormalBefore, Some("vim_mode == insert"))]));
 
     cx.set_state("ˇhello", Mode::Normal);
     cx.simulate_keystrokes("i j");
@@ -961,10 +931,7 @@ async fn test_jk_delay(cx: &mut gpui::TestAppContext) {
     cx.assert_state("ˇjhello", Mode::Insert);
     cx.update_editor(|editor, window, cx| {
         let snapshot = editor.snapshot(window, cx);
-        let highlights = editor
-            .text_highlights::<editor::PendingInput>(cx)
-            .unwrap()
-            .1;
+        let highlights = editor.text_highlights::<editor::PendingInput>(cx).unwrap().1;
 
         assert_eq!(
             highlights
@@ -1004,9 +971,7 @@ async fn test_comma_w(cx: &mut gpui::TestAppContext) {
     cx.update(|_, cx| {
         cx.bind_keys([KeyBinding::new(
             ", w",
-            motion::Down {
-                display_lines: false,
-            },
+            motion::Down { display_lines: false },
             Some("vim_mode == normal"),
         )])
     });
@@ -1014,15 +979,11 @@ async fn test_comma_w(cx: &mut gpui::TestAppContext) {
 
     cx.set_shared_state("ˇhello hello\nhello hello").await;
     cx.simulate_shared_keystrokes("f o ; , w").await;
-    cx.shared_state()
-        .await
-        .assert_eq("hello hello\nhello hellˇo");
+    cx.shared_state().await.assert_eq("hello hello\nhello hellˇo");
 
     cx.set_shared_state("ˇhello hello\nhello hello").await;
     cx.simulate_shared_keystrokes("f o ; , i").await;
-    cx.shared_state()
-        .await
-        .assert_eq("hellˇo hello\nhello hello");
+    cx.shared_state().await.assert_eq("hellˇo hello\nhello hello");
 }
 
 #[perf]
@@ -1032,11 +993,7 @@ async fn test_completion_menu_scroll_aside(cx: &mut TestAppContext) {
     cx.update(|_, cx| {
         SettingsStore::update_global(cx, |store, cx| {
             store.update_user_settings(cx, |settings| {
-                settings
-                    .project
-                    .all_languages
-                    .defaults
-                    .show_completions_on_input = Some(true);
+                settings.project.all_languages.defaults.show_completions_on_input = Some(true);
             });
         });
     });
@@ -1126,25 +1083,25 @@ async fn test_rename(cx: &mut gpui::TestAppContext) {
     cx.set_state("const beˇfore = 2; console.log(before)", Mode::Normal);
     let def_range = cx.lsp_range("const «beforeˇ» = 2; console.log(before)");
     let tgt_range = cx.lsp_range("const before = 2; console.log(«beforeˇ»)");
-    let mut prepare_request = cx.set_request_handler::<lsp::request::PrepareRenameRequest, _, _>(
-        move |_, _, _| async move { Ok(Some(lsp::PrepareRenameResponse::Range(def_range))) },
-    );
-    let mut rename_request =
-        cx.set_request_handler::<lsp::request::Rename, _, _>(move |url, params, _| async move {
-            Ok(Some(lsp::WorkspaceEdit {
-                changes: Some(
-                    [(
-                        url.clone(),
-                        vec![
-                            lsp::TextEdit::new(def_range, params.new_name.clone()),
-                            lsp::TextEdit::new(tgt_range, params.new_name),
-                        ],
-                    )]
-                    .into(),
-                ),
-                ..Default::default()
-            }))
+    let mut prepare_request =
+        cx.set_request_handler::<lsp::request::PrepareRenameRequest, _, _>(move |_, _, _| async move {
+            Ok(Some(lsp::PrepareRenameResponse::Range(def_range)))
         });
+    let mut rename_request = cx.set_request_handler::<lsp::request::Rename, _, _>(move |url, params, _| async move {
+        Ok(Some(lsp::WorkspaceEdit {
+            changes: Some(
+                [(
+                    url.clone(),
+                    vec![
+                        lsp::TextEdit::new(def_range, params.new_name.clone()),
+                        lsp::TextEdit::new(tgt_range, params.new_name),
+                    ],
+                )]
+                .into(),
+            ),
+            ..Default::default()
+        }))
+    });
 
     cx.simulate_keystrokes("c d");
     prepare_request.next().await.unwrap();
@@ -1160,12 +1117,12 @@ async fn test_go_to_definition(cx: &mut gpui::TestAppContext) {
 
     cx.set_state("const before = 2; console.log(beforˇe)", Mode::Normal);
     let def_range = cx.lsp_range("const «beforeˇ» = 2; console.log(before)");
-    let mut go_to_request =
-        cx.set_request_handler::<lsp::request::GotoDefinition, _, _>(move |url, _, _| async move {
-            Ok(Some(lsp::GotoDefinitionResponse::Scalar(
-                lsp::Location::new(url.clone(), def_range),
-            )))
-        });
+    let mut go_to_request = cx.set_request_handler::<lsp::request::GotoDefinition, _, _>(move |url, _, _| async move {
+        Ok(Some(lsp::GotoDefinitionResponse::Scalar(lsp::Location::new(
+            url.clone(),
+            def_range,
+        ))))
+    });
 
     cx.simulate_keystrokes("g d");
     go_to_request.next().await.unwrap();
@@ -1355,18 +1312,12 @@ async fn test_lowercase_marks(cx: &mut TestAppContext) {
 
     cx.set_shared_state("line one\nline ˇtwo\nline three").await;
     cx.simulate_shared_keystrokes("m a l ' a").await;
-    cx.shared_state()
-        .await
-        .assert_eq("line one\nˇline two\nline three");
+    cx.shared_state().await.assert_eq("line one\nˇline two\nline three");
     cx.simulate_shared_keystrokes("` a").await;
-    cx.shared_state()
-        .await
-        .assert_eq("line one\nline ˇtwo\nline three");
+    cx.shared_state().await.assert_eq("line one\nline ˇtwo\nline three");
 
     cx.simulate_shared_keystrokes("^ d ` a").await;
-    cx.shared_state()
-        .await
-        .assert_eq("line one\nˇtwo\nline three");
+    cx.shared_state().await.assert_eq("line one\nˇtwo\nline three");
 }
 
 #[perf]
@@ -1503,12 +1454,9 @@ async fn test_dw_eol(cx: &mut gpui::TestAppContext) {
     let mut cx = NeovimBackedTestContext::new(cx).await;
 
     cx.set_shared_wrap(12).await;
-    cx.set_shared_state("twelve ˇchar twelve char\ntwelve char")
-        .await;
+    cx.set_shared_state("twelve ˇchar twelve char\ntwelve char").await;
     cx.simulate_shared_keystrokes("d w").await;
-    cx.shared_state()
-        .await
-        .assert_eq("twelve ˇtwelve char\ntwelve char");
+    cx.shared_state().await.assert_eq("twelve ˇtwelve char\ntwelve char");
 }
 
 #[perf]
@@ -1595,13 +1543,10 @@ async fn test_toggle_comments(cx: &mut gpui::TestAppContext) {
 async fn test_find_multibyte(cx: &mut gpui::TestAppContext) {
     let mut cx = NeovimBackedTestContext::new(cx).await;
 
-    cx.set_shared_state(r#"<label for="guests">ˇPočet hostů</label>"#)
-        .await;
+    cx.set_shared_state(r#"<label for="guests">ˇPočet hostů</label>"#).await;
 
     cx.simulate_shared_keystrokes("c t < o escape").await;
-    cx.shared_state()
-        .await
-        .assert_eq(r#"<label for="guests">ˇo</label>"#);
+    cx.shared_state().await.assert_eq(r#"<label for="guests">ˇo</label>"#);
 }
 
 #[perf]
@@ -1611,11 +1556,7 @@ async fn test_sneak(cx: &mut gpui::TestAppContext) {
 
     cx.update(|_window, cx| {
         cx.bind_keys([
-            KeyBinding::new(
-                "s",
-                PushSneak { first_char: None },
-                Some("vim_mode == normal"),
-            ),
+            KeyBinding::new("s", PushSneak { first_char: None }, Some("vim_mode == normal")),
             KeyBinding::new(
                 "shift-s",
                 PushSneakBackward { first_char: None },
@@ -1873,9 +1814,7 @@ async fn test_sentence_backwards(cx: &mut gpui::TestAppContext) {
 
     cx.set_shared_state("one\n\ntwo\nthree\nˇ\nfour").await;
     cx.simulate_shared_keystrokes("(").await;
-    cx.shared_state()
-        .await
-        .assert_eq("one\n\nˇtwo\nthree\n\nfour");
+    cx.shared_state().await.assert_eq("one\n\nˇtwo\nthree\n\nfour");
 
     cx.set_shared_state("hello.\n\n\nworˇld.").await;
     cx.simulate_shared_keystrokes("(").await;
@@ -2252,9 +2191,7 @@ async fn test_delete_unmatched_brace(cx: &mut gpui::TestAppContext) {
          ˇ}
         "
     });
-    cx.shared_clipboard()
-        .await
-        .assert_eq("  oth(wow)\n  oth(wow)\n");
+    cx.shared_clipboard().await.assert_eq("  oth(wow)\n  oth(wow)\n");
 }
 
 #[perf]
@@ -2287,9 +2224,7 @@ async fn test_paragraph_multi_delete(cx: &mut gpui::TestAppContext) {
     });
 
     cx.simulate_shared_keystrokes("d a p").await;
-    cx.shared_clipboard()
-        .await
-        .assert_eq("all it lacks\nis a\n\n");
+    cx.shared_clipboard().await.assert_eq("all it lacks\nis a\n\n");
 
     //reset to initial state
     cx.simulate_shared_keystrokes("2 u").await;
@@ -2438,10 +2373,7 @@ async fn test_clipping_on_mode_change(cx: &mut gpui::TestAppContext) {
 
     let mut pixel_position = cx.update_editor(|editor, window, cx| {
         let snapshot = editor.snapshot(window, cx);
-        let current_head = editor
-            .selections
-            .newest_display(&snapshot.display_snapshot)
-            .end;
+        let current_head = editor.selections.newest_display(&snapshot.display_snapshot).end;
         editor.last_bounds().unwrap().origin
             + editor
                 .display_to_pixel_point(current_head, &snapshot, window, cx)

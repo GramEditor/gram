@@ -91,9 +91,7 @@ where
     #[track_caller]
     pub fn detach_and_log_err(self, cx: &App) {
         let location = core::panic::Location::caller();
-        cx.foreground_executor()
-            .spawn(self.log_tracked_err(*location))
-            .detach();
+        cx.foreground_executor().spawn(self.log_tracked_err(*location)).detach();
     }
 }
 
@@ -123,12 +121,7 @@ impl TaskLabel {
     /// Construct a new task label.
     pub fn new() -> Self {
         static NEXT_TASK_LABEL: AtomicUsize = AtomicUsize::new(1);
-        Self(
-            NEXT_TASK_LABEL
-                .fetch_add(1, Ordering::SeqCst)
-                .try_into()
-                .unwrap(),
-        )
+        Self(NEXT_TASK_LABEL.fetch_add(1, Ordering::SeqCst).try_into().unwrap())
     }
 }
 
@@ -209,11 +202,7 @@ impl BackgroundExecutor {
     /// Enqueues the given future to be run to completion on a background thread.
     /// The given label can be used to control the priority of the task in tests.
     #[track_caller]
-    pub fn spawn_labeled<R>(
-        &self,
-        label: TaskLabel,
-        future: impl Future<Output = R> + Send + 'static,
-    ) -> Task<R>
+    pub fn spawn_labeled<R>(&self, label: TaskLabel, future: impl Future<Output = R> + Send + 'static) -> Task<R>
     where
         R: Send + 'static,
     {
@@ -221,19 +210,13 @@ impl BackgroundExecutor {
     }
 
     #[track_caller]
-    fn spawn_internal<R: Send + 'static>(
-        &self,
-        future: AnyFuture<R>,
-        label: Option<TaskLabel>,
-    ) -> Task<R> {
+    fn spawn_internal<R: Send + 'static>(&self, future: AnyFuture<R>, label: Option<TaskLabel>) -> Task<R> {
         let dispatcher = self.dispatcher.clone();
         let location = core::panic::Location::caller();
-        let (runnable, task) = async_task::Builder::new()
-            .metadata(RunnableMeta { location })
-            .spawn(
-                move |_| future,
-                move |runnable| dispatcher.dispatch(RunnableVariant::Meta(runnable), label),
-            );
+        let (runnable, task) = async_task::Builder::new().metadata(RunnableMeta { location }).spawn(
+            move |_| future,
+            move |runnable| dispatcher.dispatch(RunnableVariant::Meta(runnable), label),
+        );
         runnable.schedule();
         Task(TaskState::Spawned(task))
     }
@@ -285,12 +268,9 @@ impl BackgroundExecutor {
             match future.as_mut().poll(&mut cx) {
                 Poll::Ready(result) => return Ok(result),
                 Poll::Pending => {
-                    let timeout =
-                        deadline.map(|deadline| deadline.saturating_duration_since(Instant::now()));
+                    let timeout = deadline.map(|deadline| deadline.saturating_duration_since(Instant::now()));
                     if let Some(timeout) = timeout {
-                        if !parker.park_timeout(timeout)
-                            && deadline.is_some_and(|deadline| deadline < Instant::now())
-                        {
+                        if !parker.park_timeout(timeout) && deadline.is_some_and(|deadline| deadline < Instant::now()) {
                             return Err(future);
                         }
                     } else {
@@ -369,15 +349,12 @@ impl BackgroundExecutor {
                             let mut backtrace_message = String::new();
                             let mut waiting_message = String::new();
                             if let Some(backtrace) = dispatcher.waiting_backtrace() {
-                                backtrace_message =
-                                    format!("\nbacktrace of waiting future:\n{:?}", backtrace);
+                                backtrace_message = format!("\nbacktrace of waiting future:\n{:?}", backtrace);
                             }
                             if let Some(waiting_hint) = dispatcher.waiting_hint() {
                                 waiting_message = format!("\n  waiting on: {}\n", waiting_hint);
                             }
-                            panic!(
-                                "parked with nothing left to run{waiting_message}{backtrace_message}",
-                            )
+                            panic!("parked with nothing left to run{waiting_message}{backtrace_message}",)
                         }
                         dispatcher.push_unparker(unparker.clone());
                         parker.park_timeout(Duration::from_millis(1));
@@ -433,12 +410,13 @@ impl BackgroundExecutor {
             return Task::ready(());
         }
         let location = core::panic::Location::caller();
-        let (runnable, task) = async_task::Builder::new()
-            .metadata(RunnableMeta { location })
-            .spawn(move |_| async move {}, {
-                let dispatcher = self.dispatcher.clone();
-                move |runnable| dispatcher.dispatch_after(duration, RunnableVariant::Meta(runnable))
-            });
+        let (runnable, task) =
+            async_task::Builder::new()
+                .metadata(RunnableMeta { location })
+                .spawn(move |_| async move {}, {
+                    let dispatcher = self.dispatcher.clone();
+                    move |runnable| dispatcher.dispatch_after(duration, RunnableVariant::Meta(runnable))
+                });
         runnable.schedule();
         Task(TaskState::Spawned(task))
     }
@@ -591,8 +569,7 @@ where
         std::thread_local! {
             static ID: ThreadId = thread::current().id();
         }
-        ID.try_with(|id| *id)
-            .unwrap_or_else(|_| thread::current().id())
+        ID.try_with(|id| *id).unwrap_or_else(|_| thread::current().id())
     }
 
     struct Checked<F> {

@@ -50,9 +50,7 @@ impl Chip {
 
 impl RenderOnce for Chip {
     fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
-        let bg_color = self
-            .bg_color
-            .unwrap_or(cx.theme().colors().element_background);
+        let bg_color = self.bg_color.unwrap_or(cx.theme().colors().element_background);
 
         h_flex()
             .min_w_0()
@@ -82,9 +80,7 @@ impl Component for Chip {
             single_example("Default", Chip::new("Chip Example").into_any_element()),
             single_example(
                 "Customized Label Color",
-                Chip::new("Chip Example")
-                    .label_color(Color::Accent)
-                    .into_any_element(),
+                Chip::new("Chip Example").label_color(Color::Accent).into_any_element(),
             ),
             single_example(
                 "Customized Label Size",

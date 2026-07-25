@@ -29,7 +29,9 @@ pub type ExtensionWorktree = Arc<dyn WorktreeDelegate>;
 pub fn linker(executor: &BackgroundExecutor) -> &'static Linker<WasmState> {
     static LINKER: OnceLock<Linker<WasmState>> = OnceLock::new();
     LINKER.get_or_init(|| {
-        super::new_linker(executor, |linker| Extension::add_to_linker::<_, WasmState>(linker, |s| s))
+        super::new_linker(executor, |linker| {
+            Extension::add_to_linker::<_, WasmState>(linker, |s| s)
+        })
     })
 }
 
@@ -47,18 +49,12 @@ impl From<DownloadedFileType> for latest::DownloadedFileType {
 impl From<LanguageServerInstallationStatus> for latest::LanguageServerInstallationStatus {
     fn from(value: LanguageServerInstallationStatus) -> Self {
         match value {
-            LanguageServerInstallationStatus::None => {
-                latest::LanguageServerInstallationStatus::None
-            }
-            LanguageServerInstallationStatus::Downloading => {
-                latest::LanguageServerInstallationStatus::Downloading
-            }
+            LanguageServerInstallationStatus::None => latest::LanguageServerInstallationStatus::None,
+            LanguageServerInstallationStatus::Downloading => latest::LanguageServerInstallationStatus::Downloading,
             LanguageServerInstallationStatus::CheckingForUpdate => {
                 latest::LanguageServerInstallationStatus::CheckingForUpdate
             }
-            LanguageServerInstallationStatus::Failed(error) => {
-                latest::LanguageServerInstallationStatus::Failed(error)
-            }
+            LanguageServerInstallationStatus::Failed(error) => latest::LanguageServerInstallationStatus::Failed(error),
         }
     }
 }
@@ -82,10 +78,7 @@ impl HostWorktree for WasmState {
         latest::HostWorktree::read_text_file(self, delegate, path).await
     }
 
-    async fn shell_env(
-        &mut self,
-        delegate: Resource<Arc<dyn WorktreeDelegate>>,
-    ) -> wasmtime::Result<EnvVars> {
+    async fn shell_env(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<EnvVars> {
         latest::HostWorktree::shell_env(self, delegate).await
     }
 
@@ -108,10 +101,7 @@ impl ExtensionImports for WasmState {
         latest::nodejs::Host::node_binary_path(self).await
     }
 
-    async fn npm_package_latest_version(
-        &mut self,
-        package_name: String,
-    ) -> wasmtime::Result<Result<String, String>> {
+    async fn npm_package_latest_version(&mut self, package_name: String) -> wasmtime::Result<Result<String, String>> {
         latest::nodejs::Host::npm_package_latest_version(self, package_name).await
     }
 
@@ -147,12 +137,7 @@ impl ExtensionImports for WasmState {
         server_name: String,
         status: LanguageServerInstallationStatus,
     ) -> wasmtime::Result<()> {
-        latest::ExtensionImports::set_language_server_installation_status(
-            self,
-            server_name,
-            status.into(),
-        )
-        .await
+        latest::ExtensionImports::set_language_server_installation_status(self, server_name, status.into()).await
     }
 
     async fn download_file(

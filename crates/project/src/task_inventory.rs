@@ -21,8 +21,7 @@ use lsp::{LanguageServerId, LanguageServerName};
 use paths::{debug_task_file_name, task_file_name};
 use settings::{InvalidSettingsError, parse_json_with_comments};
 use task::{
-    DebugScenario, ResolvedTask, TaskContext, TaskId, TaskTemplate, TaskTemplates, TaskVariables,
-    VariableName,
+    DebugScenario, ResolvedTask, TaskContext, TaskId, TaskTemplate, TaskTemplates, TaskVariables, VariableName,
 };
 use text::{BufferId, Point, ToPoint};
 use util::{NumericPrefixWithSuffix, ResultExt as _, post_inc, rel_path::RelPath};
@@ -80,26 +79,18 @@ struct InventoryFor<T> {
 }
 
 impl<T: InventoryContents> InventoryFor<T> {
-    fn worktree_scenarios(
-        &self,
-        worktree: WorktreeId,
-    ) -> impl '_ + Iterator<Item = (TaskSourceKind, T)> {
+    fn worktree_scenarios(&self, worktree: WorktreeId) -> impl '_ + Iterator<Item = (TaskSourceKind, T)> {
         self.worktree
             .get(&worktree)
             .into_iter()
             .flatten()
-            .flat_map(|(directory, templates)| {
-                templates.iter().map(move |template| (directory, template))
-            })
+            .flat_map(|(directory, templates)| templates.iter().map(move |template| (directory, template)))
             .map(move |(directory, template)| {
                 (
                     TaskSourceKind::Worktree {
                         id: worktree,
                         directory_in_worktree: directory.clone(),
-                        id_base: Cow::Owned(format!(
-                            "local worktree {} from directory {directory:?}",
-                            T::LABEL
-                        )),
+                        id_base: Cow::Owned(format!("local worktree {} from directory {directory:?}", T::LABEL)),
                     },
                     template.clone(),
                 )
@@ -175,11 +166,7 @@ impl TaskContexts {
         self.active_item_context
             .as_ref()
             .map(|(_, _, context)| context)
-            .or_else(|| {
-                self.active_worktree_context
-                    .as_ref()
-                    .map(|(_, context)| context)
-            })
+            .or_else(|| self.active_worktree_context.as_ref().map(|(_, context)| context))
     }
 
     pub fn location(&self) -> Option<&Location> {
@@ -223,10 +210,7 @@ impl TaskSourceKind {
                 format!("{id_base}_{id}_{}", directory_in_worktree.as_unix_str())
             }
             Self::Language { name } => format!("language_{name}"),
-            Self::Lsp {
-                server,
-                language_name,
-            } => format!("lsp_{language_name}_{server}"),
+            Self::Lsp { server, language_name } => format!("lsp_{language_name}_{server}"),
         }
     }
 }
@@ -248,8 +232,7 @@ impl Inventory {
         worktree_id: Option<WorktreeId>,
         active_buffer: Option<WeakEntity<Buffer>>,
     ) {
-        self.last_scheduled_scenarios
-            .retain(|(s, _)| s.label != scenario.label);
+        self.last_scheduled_scenarios.retain(|(s, _)| s.label != scenario.label);
         self.last_scheduled_scenarios.push_front((
             scenario,
             DebugScenarioContext {
@@ -303,9 +286,7 @@ impl Inventory {
                 .debuggers
                 .first()
                 .map(SharedString::from)
-                .or_else(|| {
-                    language.and_then(|l| l.config().debuggers.first().map(SharedString::from))
-                });
+                .or_else(|| language.and_then(|l| l.config().debuggers.first().map(SharedString::from)));
             adapter.map(|adapter| (adapter, DapRegistry::global(cx).locators()))
         });
         cx.background_spawn(async move {
@@ -314,8 +295,7 @@ impl Inventory {
                     lsp_tasks
                         .into_iter()
                         .chain(current_resolved_tasks.into_iter().filter(|(kind, _)| {
-                            add_current_language_tasks
-                                || !matches!(kind, TaskSourceKind::Language { .. })
+                            add_current_language_tasks || !matches!(kind, TaskSourceKind::Language { .. })
                         }))
                 {
                     let adapter = adapter.clone().into();
@@ -417,10 +397,7 @@ impl Inventory {
         &self,
         task_contexts: Arc<TaskContexts>,
         cx: &mut Context<Self>,
-    ) -> Task<(
-        Vec<(TaskSourceKind, ResolvedTask)>,
-        Vec<(TaskSourceKind, ResolvedTask)>,
-    )> {
+    ) -> Task<(Vec<(TaskSourceKind, ResolvedTask)>, Vec<(TaskSourceKind, ResolvedTask)>)> {
         let worktree = task_contexts.worktree();
         let location = task_contexts.location();
         let language = location.and_then(|location| location.buffer.read(cx).language());
@@ -506,10 +483,10 @@ impl Inventory {
                     let id_base = kind.to_id_base();
                     if let TaskSourceKind::Worktree { id, .. } = &kind {
                         None.or_else(|| {
-                            let (_, _, item_context) =
-                                task_contexts.active_item_context.as_ref().filter(
-                                    |(worktree_id, _, _)| Some(id) == worktree_id.as_ref(),
-                                )?;
+                            let (_, _, item_context) = task_contexts
+                                .active_item_context
+                                .as_ref()
+                                .filter(|(worktree_id, _, _)| Some(id) == worktree_id.as_ref())?;
                             task.resolve_task(&id_base, item_context)
                         })
                         .or_else(|| {
@@ -533,13 +510,11 @@ impl Inventory {
                         })
                     } else {
                         None.or_else(|| {
-                            let (_, _, item_context) =
-                                task_contexts.active_item_context.as_ref()?;
+                            let (_, _, item_context) = task_contexts.active_item_context.as_ref()?;
                             task.resolve_task(&id_base, item_context)
                         })
                         .or_else(|| {
-                            let (_, worktree_context) =
-                                task_contexts.active_worktree_context.as_ref()?;
+                            let (_, worktree_context) = task_contexts.active_worktree_context.as_ref()?;
                             task.resolve_task(&id_base, worktree_context)
                         })
                     }
@@ -568,10 +543,7 @@ impl Inventory {
 
     /// Returns the last scheduled task by task_id if provided.
     /// Otherwise, returns the last scheduled task.
-    pub fn last_scheduled_task(
-        &self,
-        task_id: Option<&TaskId>,
-    ) -> Option<(TaskSourceKind, ResolvedTask)> {
+    pub fn last_scheduled_task(&self, task_id: Option<&TaskId>) -> Option<(TaskSourceKind, ResolvedTask)> {
         if let Some(task_id) = task_id {
             self.last_scheduled_tasks
                 .iter()
@@ -583,13 +555,8 @@ impl Inventory {
     }
 
     /// Registers task "usage" as being scheduled – to be used for LRU sorting when listing all tasks.
-    pub fn task_scheduled(
-        &mut self,
-        task_source_kind: TaskSourceKind,
-        resolved_task: ResolvedTask,
-    ) {
-        self.last_scheduled_tasks
-            .push_back((task_source_kind, resolved_task));
+    pub fn task_scheduled(&mut self, task_source_kind: TaskSourceKind, resolved_task: ResolvedTask) {
+        self.last_scheduled_tasks.push_back((task_source_kind, resolved_task));
         if self.last_scheduled_tasks.len() > 5_000 {
             self.last_scheduled_tasks.pop_front();
         }
@@ -601,15 +568,11 @@ impl Inventory {
         self.last_scheduled_tasks.retain(|(_, task)| &task.id != id);
     }
 
-    fn global_templates_from_settings(
-        &self,
-    ) -> impl '_ + Iterator<Item = (TaskSourceKind, TaskTemplate)> {
+    fn global_templates_from_settings(&self) -> impl '_ + Iterator<Item = (TaskSourceKind, TaskTemplate)> {
         self.templates_from_settings.global_scenarios()
     }
 
-    fn global_debug_scenarios_from_settings(
-        &self,
-    ) -> impl '_ + Iterator<Item = (TaskSourceKind, DebugScenario)> {
+    fn global_debug_scenarios_from_settings(&self) -> impl '_ + Iterator<Item = (TaskSourceKind, DebugScenario)> {
         self.scenarios_from_settings.global_scenarios()
     }
 
@@ -636,9 +599,7 @@ impl Inventory {
         location: TaskSettingsLocation<'_>,
         raw_tasks_json: Option<&str>,
     ) -> Result<(), InvalidSettingsError> {
-        let raw_tasks = match parse_json_with_comments::<Vec<serde_json::Value>>(
-            raw_tasks_json.unwrap_or("[]"),
-        ) {
+        let raw_tasks = match parse_json_with_comments::<Vec<serde_json::Value>>(raw_tasks_json.unwrap_or("[]")) {
             Ok(tasks) => tasks,
             Err(e) => {
                 return Err(InvalidSettingsError::Tasks {
@@ -652,9 +613,9 @@ impl Inventory {
                 });
             }
         };
-        let new_templates = raw_tasks.into_iter().filter_map(|raw_template| {
-            serde_json::from_value::<TaskTemplate>(raw_template).log_err()
-        });
+        let new_templates = raw_tasks
+            .into_iter()
+            .filter_map(|raw_template| serde_json::from_value::<TaskTemplate>(raw_template).log_err());
 
         let parsed_templates = &mut self.templates_from_settings;
         match location {
@@ -674,9 +635,7 @@ impl Inventory {
             TaskSettingsLocation::Worktree(location) => {
                 let new_templates = new_templates.collect::<Vec<_>>();
                 if new_templates.is_empty() {
-                    if let Some(worktree_tasks) =
-                        parsed_templates.worktree.get_mut(&location.worktree_id)
-                    {
+                    if let Some(worktree_tasks) = parsed_templates.worktree.get_mut(&location.worktree_id) {
                         worktree_tasks.remove(location.path);
                     }
                 } else {
@@ -693,8 +652,7 @@ impl Inventory {
                         ..
                     } = kind
                     {
-                        *id != location.worktree_id
-                            || directory_in_worktree.as_ref() != location.path
+                        *id != location.worktree_id || directory_in_worktree.as_ref() != location.path
                     } else {
                         true
                     }
@@ -714,18 +672,15 @@ impl Inventory {
         location: TaskSettingsLocation<'_>,
         raw_tasks_json: Option<&str>,
     ) -> Result<(), InvalidSettingsError> {
-        let raw_tasks = match parse_json_with_comments::<Vec<serde_json::Value>>(
-            raw_tasks_json.unwrap_or("[]"),
-        ) {
+        let raw_tasks = match parse_json_with_comments::<Vec<serde_json::Value>>(raw_tasks_json.unwrap_or("[]")) {
             Ok(tasks) => tasks,
             Err(e) => {
                 return Err(InvalidSettingsError::Debug {
                     path: match location {
                         TaskSettingsLocation::Global(path) => path.to_owned(),
-                        TaskSettingsLocation::Worktree(settings_location) => settings_location
-                            .path
-                            .as_std_path()
-                            .join(debug_task_file_name()),
+                        TaskSettingsLocation::Worktree(settings_location) => {
+                            settings_location.path.as_std_path().join(debug_task_file_name())
+                        }
                     },
                     message: format!("Failed to parse tasks file content as a JSON array: {e}"),
                 });
@@ -734,9 +689,7 @@ impl Inventory {
 
         let new_templates = raw_tasks
             .into_iter()
-            .filter_map(|raw_template| {
-                serde_json::from_value::<DebugScenario>(raw_template).log_err()
-            })
+            .filter_map(|raw_template| serde_json::from_value::<DebugScenario>(raw_template).log_err())
             .collect::<Vec<_>>();
 
         let parsed_scenarios = &mut self.scenarios_from_settings;
@@ -764,9 +717,7 @@ impl Inventory {
                     .collect::<HashSet<_>>();
 
                 if new_templates.is_empty() {
-                    if let Some(worktree_tasks) =
-                        parsed_scenarios.worktree.get_mut(&location.worktree_id)
-                    {
+                    if let Some(worktree_tasks) = parsed_scenarios.worktree.get_mut(&location.worktree_id) {
                         worktree_tasks.remove(location.path);
                     }
                 } else {
@@ -852,9 +803,7 @@ mod test_inventory {
         worktree: Option<WorktreeId>,
         cx: &mut TestAppContext,
     ) -> Task<Vec<String>> {
-        let new_tasks = inventory.update(cx, |inventory, cx| {
-            inventory.list_tasks(None, None, worktree, cx)
-        });
+        let new_tasks = inventory.update(cx, |inventory, cx| inventory.list_tasks(None, None, worktree, cx));
         cx.background_spawn(async move {
             new_tasks
                 .await
@@ -870,9 +819,7 @@ mod test_inventory {
         task_name: &str,
         cx: &mut TestAppContext,
     ) -> Task<()> {
-        let tasks = inventory.update(cx, |inventory, cx| {
-            inventory.list_tasks(None, None, None, cx)
-        });
+        let tasks = inventory.update(cx, |inventory, cx| inventory.list_tasks(None, None, None, cx));
 
         let task_name = task_name.to_owned();
         let inventory = inventory.clone();
@@ -889,9 +836,7 @@ mod test_inventory {
                     inventory.task_scheduled(
                         task_source_kind.clone(),
                         task.resolve_task(&id_base, &TaskContext::default())
-                            .unwrap_or_else(|| {
-                                panic!("Failed to resolve task with name {task_name}")
-                            }),
+                            .unwrap_or_else(|| panic!("Failed to resolve task with name {task_name}")),
                     )
                 })
                 .unwrap();
@@ -922,9 +867,7 @@ mod test_inventory {
                     inventory.task_scheduled(
                         task_source_kind.clone(),
                         task.resolve_task(&id_base, &TaskContext::default())
-                            .unwrap_or_else(|| {
-                                panic!("Failed to resolve task with name {task_name}")
-                            }),
+                            .unwrap_or_else(|| panic!("Failed to resolve task with name {task_name}")),
                     );
                 })
                 .unwrap();
@@ -938,9 +881,7 @@ mod test_inventory {
     ) -> Vec<(TaskSourceKind, String)> {
         let task_context = &TaskContext::default();
         inventory
-            .update(cx, |inventory, cx| {
-                inventory.list_tasks(None, None, worktree, cx)
-            })
+            .update(cx, |inventory, cx| inventory.list_tasks(None, None, worktree, cx))
             .await
             .into_iter()
             .filter_map(|(source_kind, task)| {
@@ -978,11 +919,7 @@ impl ContextProvider for BasicContextProvider {
         let buffer_snapshot = buffer.snapshot();
         let symbols = buffer_snapshot.symbols_containing(location.range.start, None);
         let symbol = symbols.last().map(|symbol| {
-            let range = symbol
-                .name_ranges
-                .last()
-                .cloned()
-                .unwrap_or(0..symbol.text.len());
+            let range = symbol.name_ranges.last().cloned().unwrap_or(0..symbol.text.len());
             symbol.text[range].to_string()
         });
 
@@ -990,9 +927,7 @@ impl ContextProvider for BasicContextProvider {
         let Point { row, column } = location.range.start.to_point(&buffer_snapshot);
         let row = row + 1;
         let column = column + 1;
-        let selected_text = buffer
-            .chars_for_range(location.range.clone())
-            .collect::<String>();
+        let selected_text = buffer.chars_for_range(location.range.clone()).collect::<String>();
 
         let mut task_variables = TaskVariables::from_iter([
             (VariableName::Row, row.to_string()),
@@ -1008,11 +943,7 @@ impl ContextProvider for BasicContextProvider {
         let worktree = buffer
             .file()
             .map(|file| file.worktree_id(cx))
-            .and_then(|worktree_id| {
-                self.worktree_store
-                    .read(cx)
-                    .worktree_for_id(worktree_id, cx)
-            });
+            .and_then(|worktree_id| self.worktree_store.read(cx).worktree_for_id(worktree_id, cx));
 
         if let Some(worktree) = worktree {
             let worktree = worktree.read(cx);
@@ -1068,9 +999,7 @@ pub struct ContextProviderWithTasks {
 
 impl ContextProviderWithTasks {
     pub fn new(definitions: TaskTemplates) -> Self {
-        Self {
-            templates: definitions,
-        }
+        Self { templates: definitions }
     }
 }
 
@@ -1127,10 +1056,7 @@ mod tests {
                 )
                 .unwrap();
         });
-        assert_eq!(
-            task_template_names(&inventory, None, cx).await,
-            &expected_initial_state,
-        );
+        assert_eq!(task_template_names(&inventory, None, cx).await, &expected_initial_state,);
         assert_eq!(
             resolved_task_names(&inventory, None, cx).await,
             &expected_initial_state,
@@ -1138,10 +1064,7 @@ mod tests {
         );
 
         register_task_used(&inventory, "2_task", cx).await;
-        assert_eq!(
-            task_template_names(&inventory, None, cx).await,
-            &expected_initial_state,
-        );
+        assert_eq!(task_template_names(&inventory, None, cx).await, &expected_initial_state,);
         assert_eq!(
             resolved_task_names(&inventory, None, cx).await,
             vec![
@@ -1156,10 +1079,7 @@ mod tests {
         register_task_used(&inventory, "1_task", cx).await;
         register_task_used(&inventory, "1_task", cx).await;
         register_task_used(&inventory, "3_task", cx).await;
-        assert_eq!(
-            task_template_names(&inventory, None, cx).await,
-            &expected_initial_state,
-        );
+        assert_eq!(task_template_names(&inventory, None, cx).await, &expected_initial_state,);
         assert_eq!(
             resolved_task_names(&inventory, None, cx).await,
             vec![
@@ -1238,10 +1158,7 @@ mod tests {
             "2_task".to_string(),
             "3_task".to_string(),
         ];
-        assert_eq!(
-            task_template_names(&inventory, None, cx).await,
-            &expected_updated_state,
-        );
+        assert_eq!(task_template_names(&inventory, None, cx).await, &expected_updated_state,);
         assert_eq!(
             resolved_task_names(&inventory, None, cx).await,
             vec![
@@ -1257,10 +1174,7 @@ mod tests {
         );
 
         register_task_used(&inventory, "11_hello", cx).await;
-        assert_eq!(
-            task_template_names(&inventory, None, cx).await,
-            &expected_updated_state,
-        );
+        assert_eq!(task_template_names(&inventory, None, cx).await, &expected_updated_state,);
         assert_eq!(
             resolved_task_names(&inventory, None, cx).await,
             vec![
@@ -1458,9 +1372,7 @@ mod tests {
                 .update_file_based_tasks(
                     TaskSettingsLocation::Global(tasks_file()),
                     Some(&mock_tasks_from_names(
-                        worktree_independent_tasks
-                            .iter()
-                            .map(|(_, name)| name.as_str()),
+                        worktree_independent_tasks.iter().map(|(_, name)| name.as_str()),
                     )),
                 )
                 .unwrap();
@@ -1547,8 +1459,7 @@ mod tests {
     ) -> Task<Vec<String>> {
         let tasks = inventory.update(cx, |inventory, cx| {
             let mut task_contexts = TaskContexts::default();
-            task_contexts.active_worktree_context =
-                worktree.map(|worktree| (worktree, TaskContext::default()));
+            task_contexts.active_worktree_context = worktree.map(|worktree| (worktree, TaskContext::default()));
 
             inventory.used_and_current_resolved_tasks(Arc::new(task_contexts), cx)
         });
@@ -1586,8 +1497,7 @@ mod tests {
         let (used, current) = inventory
             .update(cx, |inventory, cx| {
                 let mut task_contexts = TaskContexts::default();
-                task_contexts.active_worktree_context =
-                    worktree.map(|worktree| (worktree, TaskContext::default()));
+                task_contexts.active_worktree_context = worktree.map(|worktree| (worktree, TaskContext::default()));
 
                 inventory.used_and_current_resolved_tasks(Arc::new(task_contexts), cx)
             })

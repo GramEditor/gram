@@ -18,20 +18,20 @@ use util::rel_path::RelPath;
 use worktree::WorktreeId;
 
 use crate::common::{
-    BottomResizeDrag, DEFAULT_RESULTS_HEIGHT, DragPreview, MAX_PREVIEW_HEIGHT, MIN_PANEL_HEIGHT,
-    ResizeDrag, SEARCH_DEBOUNCE_MS, SearchDrag, SearchMatch,
+    BottomResizeDrag, DEFAULT_RESULTS_HEIGHT, DragPreview, MAX_PREVIEW_HEIGHT, MIN_PANEL_HEIGHT, ResizeDrag,
+    SEARCH_DEBOUNCE_MS, SearchDrag, SearchMatch,
 };
 use crate::{
-    SearchOption, SearchOptions, SelectNextMatch, SelectPreviousMatch, ToggleCaseSensitive,
-    ToggleIncludeIgnored, ToggleRegex, ToggleWholeWord,
+    SearchOption, SearchOptions, SelectNextMatch, SelectPreviousMatch, ToggleCaseSensitive, ToggleIncludeIgnored,
+    ToggleRegex, ToggleWholeWord,
 };
 pub use app_actions::docs_search::Toggle;
 use editor::EditorSettings;
 use editor::{Editor, EditorEvent, EditorMode, RowHighlightOptions};
 use gpui::{
-    Action, App, AsyncApp, Context, DismissEvent, DragMoveEvent, Entity, EventEmitter, FocusHandle,
-    Focusable, Global, HighlightStyle, KeyContext, ParentElement, Render, Styled, StyledText,
-    Subscription, Task, Window, actions, px, relative,
+    Action, App, AsyncApp, Context, DismissEvent, DragMoveEvent, Entity, EventEmitter, FocusHandle, Focusable, Global,
+    HighlightStyle, KeyContext, ParentElement, Render, Styled, StyledText, Subscription, Task, Window, actions, px,
+    relative,
 };
 use language::Buffer;
 use language::language_settings::SoftWrap;
@@ -57,9 +57,7 @@ struct DocFile {
 
 impl DocFile {
     fn new(path: String) -> Arc<Self> {
-        let rel_path = RelPath::new(Path::new(&path), PathStyle::Posix)
-            .unwrap()
-            .into_owned();
+        let rel_path = RelPath::new(Path::new(&path), PathStyle::Posix).unwrap().into_owned();
         Arc::new(Self {
             path: Arc::from(rel_path.as_ref()),
         })
@@ -166,16 +164,10 @@ impl Focusable for DocsSearch {
 }
 
 impl DocsSearch {
-    fn register(
-        workspace: &mut Workspace,
-        _window: Option<&mut Window>,
-        _: &mut Context<Workspace>,
-    ) {
+    fn register(workspace: &mut Workspace, _window: Option<&mut Window>, _: &mut Context<Workspace>) {
         workspace.register_action(|workspace, _: &Toggle, window, cx| {
             let project = workspace.project().clone();
-            workspace.toggle_modal(window, cx, |window, cx| {
-                DocsSearch::new(project, window, cx)
-            });
+            workspace.toggle_modal(window, cx, |window, cx| DocsSearch::new(project, window, cx));
         });
     }
 
@@ -189,8 +181,7 @@ impl DocsSearch {
 
         let focus_handle = cx.focus_handle();
 
-        let delegate =
-            DocsSearchDelegate::new(project, preview_editor.clone(), get_recent_query(cx), cx);
+        let delegate = DocsSearchDelegate::new(project, preview_editor.clone(), get_recent_query(cx), cx);
         let picker = cx.new(|cx| {
             Picker::uniform_list(delegate, window, cx)
                 .modal(false)
@@ -206,33 +197,27 @@ impl DocsSearch {
                     cx.emit(DismissEvent);
                 }
             }),
-            cx.subscribe_in(
-                &preview_editor,
-                window,
-                |this, _, event: &EditorEvent, window, cx| {
-                    if let EditorEvent::Edited { .. } = event {
-                        this._autosave_task = Some(cx.spawn_in(window, async move |this, cx| {
-                            cx.background_executor()
-                                .timer(Duration::from_millis(500))
-                                .await;
+            cx.subscribe_in(&preview_editor, window, |this, _, event: &EditorEvent, window, cx| {
+                if let EditorEvent::Edited { .. } = event {
+                    this._autosave_task = Some(cx.spawn_in(window, async move |this, cx| {
+                        cx.background_executor().timer(Duration::from_millis(500)).await;
 
-                            this.update_in(cx, |this, _window, cx| {
-                                let delegate = &this.picker.read(cx).delegate;
-                                if let Some(m) = delegate.matches.get(delegate.selected_index) {
-                                    let buffer = m.buffer.clone();
-                                    let project = delegate.project.clone();
-                                    let mut buffers = HashSet::default();
-                                    buffers.insert(buffer);
-                                    project
-                                        .update(cx, |p, cx| p.save_buffers(buffers, cx))
-                                        .detach_and_log_err(cx);
-                                }
-                            })
-                            .log_err();
-                        }));
-                    }
-                },
-            ),
+                        this.update_in(cx, |this, _window, cx| {
+                            let delegate = &this.picker.read(cx).delegate;
+                            if let Some(m) = delegate.matches.get(delegate.selected_index) {
+                                let buffer = m.buffer.clone();
+                                let project = delegate.project.clone();
+                                let mut buffers = HashSet::default();
+                                buffers.insert(buffer);
+                                project
+                                    .update(cx, |p, cx| p.save_buffers(buffers, cx))
+                                    .detach_and_log_err(cx);
+                            }
+                        })
+                        .log_err();
+                    }));
+                }
+            }),
         ];
 
         Self {
@@ -254,12 +239,7 @@ impl Render for DocsSearch {
 
         let delegate = &self.picker.read(cx).delegate;
         let match_count = delegate.matches.len();
-        let file_count = delegate
-            .matches
-            .iter()
-            .map(|m| &m.path)
-            .collect::<HashSet<_>>()
-            .len();
+        let file_count = delegate.matches.iter().map(|m| &m.path).collect::<HashSet<_>>().len();
         let search_in_progress = delegate.search_in_progress;
         let selected_index = delegate.selected_index;
 
@@ -279,28 +259,19 @@ impl Render for DocsSearch {
             }))
             .on_action(cx.listener(|this, _: &ToggleCaseSensitive, window, cx| {
                 this.picker.update(cx, |picker, cx| {
-                    picker
-                        .delegate
-                        .search_options
-                        .toggle(SearchOptions::CASE_SENSITIVE);
+                    picker.delegate.search_options.toggle(SearchOptions::CASE_SENSITIVE);
                     picker.refresh(window, cx);
                 });
             }))
             .on_action(cx.listener(|this, _: &ToggleWholeWord, window, cx| {
                 this.picker.update(cx, |picker, cx| {
-                    picker
-                        .delegate
-                        .search_options
-                        .toggle(SearchOptions::WHOLE_WORD);
+                    picker.delegate.search_options.toggle(SearchOptions::WHOLE_WORD);
                     picker.refresh(window, cx);
                 });
             }))
             .on_action(cx.listener(|this, _: &ToggleIncludeIgnored, window, cx| {
                 this.picker.update(cx, |picker, cx| {
-                    picker
-                        .delegate
-                        .search_options
-                        .toggle(SearchOptions::INCLUDE_IGNORED);
+                    picker.delegate.search_options.toggle(SearchOptions::INCLUDE_IGNORED);
                     picker.refresh(window, cx);
                 });
             }))
@@ -349,13 +320,11 @@ impl Render for DocsSearch {
                 },
                 |_, _, _, cx| cx.new(|_| DragPreview),
             )
-            .on_drag_move::<SearchDrag>(cx.listener(
-                |this, event: &DragMoveEvent<SearchDrag>, _window, cx| {
-                    let drag = event.drag(cx);
-                    this.offset = drag.offset_start + (event.event.position - drag.mouse_start);
-                    cx.notify();
-                },
-            ))
+            .on_drag_move::<SearchDrag>(cx.listener(|this, event: &DragMoveEvent<SearchDrag>, _window, cx| {
+                let drag = event.drag(cx);
+                this.offset = drag.offset_start + (event.event.position - drag.mouse_start);
+                cx.notify();
+            }))
             .child(
                 h_flex()
                     .px_4()
@@ -370,22 +339,16 @@ impl Render for DocsSearch {
                             .child(Label::new("Search Documentation").size(LabelSize::Default))
                             .when(search_in_progress, |this| {
                                 this.child(
-                                    Label::new(format!(
-                                        "Searching... {} matches in {} files",
-                                        match_count, file_count
-                                    ))
-                                    .color(Color::Muted)
-                                    .size(LabelSize::Small),
+                                    Label::new(format!("Searching... {} matches in {} files", match_count, file_count))
+                                        .color(Color::Muted)
+                                        .size(LabelSize::Small),
                                 )
                             })
                             .when(!search_in_progress && has_matches, |this| {
                                 this.child(
-                                    Label::new(format!(
-                                        "{} matches in {} files",
-                                        match_count, file_count
-                                    ))
-                                    .color(Color::Muted)
-                                    .size(LabelSize::Small),
+                                    Label::new(format!("{} matches in {} files", match_count, file_count))
+                                        .color(Color::Muted)
+                                        .size(LabelSize::Small),
                                 )
                             }),
                     )
@@ -406,8 +369,7 @@ impl Render for DocsSearch {
                                         )
                                     })
                                     .on_click(|_, window, cx| {
-                                        window
-                                            .dispatch_action(SelectPreviousMatch.boxed_clone(), cx);
+                                        window.dispatch_action(SelectPreviousMatch.boxed_clone(), cx);
                                     })
                             })
                             .child({
@@ -415,12 +377,7 @@ impl Render for DocsSearch {
                                 IconButton::new("select-next-match", IconName::ChevronRight)
                                     .size(ButtonSize::Compact)
                                     .tooltip(move |_window, cx| {
-                                        Tooltip::for_action_in(
-                                            "Next Match",
-                                            &SelectNextMatch,
-                                            &focus_handle,
-                                            cx,
-                                        )
+                                        Tooltip::for_action_in("Next Match", &SelectNextMatch, &focus_handle, cx)
                                     })
                                     .on_click(|_, window, cx| {
                                         window.dispatch_action(SelectNextMatch.boxed_clone(), cx);
@@ -447,10 +404,7 @@ impl Render for DocsSearch {
 
                 let preview_header = selected_match.map(|m| {
                     let path = &m.path.path;
-                    let file_name = path
-                        .file_name()
-                        .map(|name| name.to_string())
-                        .unwrap_or_default();
+                    let file_name = path.file_name().map(|name| name.to_string()).unwrap_or_default();
                     let directory = path
                         .parent()
                         .map(|path| path.as_std_path().to_string_lossy().to_string())
@@ -468,11 +422,7 @@ impl Render for DocsSearch {
                             h_flex()
                                 .gap_2()
                                 .child(Label::new(file_name).size(LabelSize::Small))
-                                .child(
-                                    Label::new(directory)
-                                        .size(LabelSize::Small)
-                                        .color(Color::Muted),
-                                ),
+                                .child(Label::new(directory).size(LabelSize::Small).color(Color::Muted)),
                         )
                 });
 
@@ -492,23 +442,20 @@ impl Render for DocsSearch {
                         },
                         |_, _, _, cx| cx.new(|_| DragPreview),
                     )
-                    .on_drag_move::<ResizeDrag>(cx.listener(
-                        |this, event: &DragMoveEvent<ResizeDrag>, _window, cx| {
-                            let drag = event.drag(cx);
-                            let delta = event.event.position.y - drag.mouse_start_y;
-                            let total_height =
-                                drag.results_height_start + drag.preview_height_start;
+                    .on_drag_move::<ResizeDrag>(cx.listener(|this, event: &DragMoveEvent<ResizeDrag>, _window, cx| {
+                        let drag = event.drag(cx);
+                        let delta = event.event.position.y - drag.mouse_start_y;
+                        let total_height = drag.results_height_start + drag.preview_height_start;
 
-                            let new_results = (drag.results_height_start + delta)
-                                .max(px(MIN_PANEL_HEIGHT))
-                                .min(total_height - px(MIN_PANEL_HEIGHT));
-                            let new_preview = total_height - new_results;
+                        let new_results = (drag.results_height_start + delta)
+                            .max(px(MIN_PANEL_HEIGHT))
+                            .min(total_height - px(MIN_PANEL_HEIGHT));
+                        let new_preview = total_height - new_results;
 
-                            this.results_height = new_results;
-                            this.preview_height = new_preview;
-                            cx.notify();
-                        },
-                    ));
+                        this.results_height = new_results;
+                        this.preview_height = new_preview;
+                        cx.notify();
+                    }));
 
                 // Bottom resize handle for preview
                 let bottom_resize_handle = div()
@@ -568,12 +515,7 @@ pub struct DocsSearchDelegate {
 }
 
 impl DocsSearchDelegate {
-    fn new(
-        project: Entity<Project>,
-        preview_editor: Entity<Editor>,
-        initial_query: Option<String>,
-        cx: &App,
-    ) -> Self {
+    fn new(project: Entity<Project>, preview_editor: Entity<Editor>, initial_query: Option<String>, cx: &App) -> Self {
         Self {
             project,
             preview_editor,
@@ -641,8 +583,7 @@ impl DocsSearchDelegate {
                 );
 
                 // Highlight the match itself
-                let highlight_range =
-                    editor::Anchor::range_in_buffer(excerpt_id, anchor_range.clone());
+                let highlight_range = editor::Anchor::range_in_buffer(excerpt_id, anchor_range.clone());
 
                 editor.highlight_background::<SearchMatchHighlight>(
                     &[highlight_range],
@@ -659,11 +600,7 @@ impl DocsSearchDelegate {
         });
     }
 
-    fn build_search_query(
-        &mut self,
-        query: &str,
-        cx: &mut Context<Picker<Self>>,
-    ) -> Option<SearchQuery> {
+    fn build_search_query(&mut self, query: &str, cx: &mut Context<Picker<Self>>) -> Option<SearchQuery> {
         if query.is_empty() {
             self.panels_with_errors.remove(&InputPanel::Query);
             return None;
@@ -788,12 +725,7 @@ impl PickerDelegate for DocsSearchDelegate {
         "Search documentation...".into()
     }
 
-    fn render_editor(
-        &self,
-        editor: &Entity<Editor>,
-        window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) -> Div {
+    fn render_editor(&self, editor: &Entity<Editor>, window: &mut Window, cx: &mut Context<Picker<Self>>) -> Div {
         let search_options = self.search_options;
         let focus_handle = editor.focus_handle(cx);
 
@@ -829,13 +761,11 @@ impl PickerDelegate for DocsSearchDelegate {
                             .border_1()
                             .rounded_md()
                             .px_1()
-                            .border_color(
-                                if self.panels_with_errors.contains_key(&InputPanel::Query) {
-                                    Color::Error.color(cx)
-                                } else {
-                                    gpui::transparent_black()
-                                },
-                            )
+                            .border_color(if self.panels_with_errors.contains_key(&InputPanel::Query) {
+                                Color::Error.color(cx)
+                            } else {
+                                gpui::transparent_black()
+                            })
                             .child(editor.clone()),
                     )
                     .child({
@@ -856,39 +786,27 @@ impl PickerDelegate for DocsSearchDelegate {
                             })
                             .child({
                                 let focus_handle = focus_handle.clone();
-                                IconButton::new(
-                                    "case-sensitive",
-                                    SearchOption::CaseSensitive.icon(),
-                                )
-                                .size(ButtonSize::Compact)
-                                .toggle_state(
-                                    search_options.contains(SearchOptions::CASE_SENSITIVE),
-                                )
-                                .tooltip(move |_window, cx| {
-                                    Tooltip::for_action_in(
-                                        SearchOption::CaseSensitive.label(),
-                                        &ToggleCaseSensitive,
-                                        &focus_handle,
-                                        cx,
-                                    )
-                                })
-                                .on_click(cx.listener(
-                                    |picker, _, window, cx| {
-                                        picker
-                                            .delegate
-                                            .search_options
-                                            .toggle(SearchOptions::CASE_SENSITIVE);
+                                IconButton::new("case-sensitive", SearchOption::CaseSensitive.icon())
+                                    .size(ButtonSize::Compact)
+                                    .toggle_state(search_options.contains(SearchOptions::CASE_SENSITIVE))
+                                    .tooltip(move |_window, cx| {
+                                        Tooltip::for_action_in(
+                                            SearchOption::CaseSensitive.label(),
+                                            &ToggleCaseSensitive,
+                                            &focus_handle,
+                                            cx,
+                                        )
+                                    })
+                                    .on_click(cx.listener(|picker, _, window, cx| {
+                                        picker.delegate.search_options.toggle(SearchOptions::CASE_SENSITIVE);
                                         picker.refresh(window, cx);
-                                    },
-                                ))
+                                    }))
                             })
                             .child({
                                 let focus_handle = focus_handle.clone();
                                 IconButton::new("whole-word", SearchOption::WholeWord.icon())
                                     .size(ButtonSize::Compact)
-                                    .toggle_state(
-                                        search_options.contains(SearchOptions::WHOLE_WORD),
-                                    )
+                                    .toggle_state(search_options.contains(SearchOptions::WHOLE_WORD))
                                     .tooltip(move |_window, cx| {
                                         Tooltip::for_action_in(
                                             SearchOption::WholeWord.label(),
@@ -898,10 +816,7 @@ impl PickerDelegate for DocsSearchDelegate {
                                         )
                                     })
                                     .on_click(cx.listener(|picker, _, window, cx| {
-                                        picker
-                                            .delegate
-                                            .search_options
-                                            .toggle(SearchOptions::WHOLE_WORD);
+                                        picker.delegate.search_options.toggle(SearchOptions::WHOLE_WORD);
                                         picker.refresh(window, cx);
                                     }))
                             })
@@ -924,10 +839,9 @@ impl PickerDelegate for DocsSearchDelegate {
                             )
                     }),
             )
-            .when(
-                self.editor_position() == PickerEditorPosition::Start,
-                |this| this.child(Divider::horizontal()),
-            )
+            .when(self.editor_position() == PickerEditorPosition::Start, |this| {
+                this.child(Divider::horizontal())
+            })
     }
 
     fn match_count(&self) -> usize {
@@ -938,29 +852,18 @@ impl PickerDelegate for DocsSearchDelegate {
         self.selected_index
     }
 
-    fn set_selected_index(
-        &mut self,
-        ix: usize,
-        window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) {
+    fn set_selected_index(&mut self, ix: usize, window: &mut Window, cx: &mut Context<Picker<Self>>) {
         self.selected_index = ix;
         self.last_selection_change_time = Some(std::time::Instant::now());
         self.update_preview(window, cx);
     }
 
-    fn update_matches(
-        &mut self,
-        query: String,
-        window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) -> Task<()> {
+    fn update_matches(&mut self, query: String, window: &mut Window, cx: &mut Context<Picker<Self>>) -> Task<()> {
         if !query.is_empty() {
             save_recent_query(&query, cx);
         }
 
-        self.cancel_flag
-            .store(true, std::sync::atomic::Ordering::SeqCst);
+        self.cancel_flag.store(true, std::sync::atomic::Ordering::SeqCst);
         self.cancel_flag = Arc::new(std::sync::atomic::AtomicBool::new(false));
 
         let cancel_flag = self.cancel_flag.clone();
@@ -1023,9 +926,7 @@ impl PickerDelegate for DocsSearchDelegate {
                         continue;
                     };
 
-                    let snapshot = cx
-                        .read_entity(&buffer, |buffer, _cx| buffer.snapshot())
-                        .ok();
+                    let snapshot = cx.read_entity(&buffer, |buffer, _cx| buffer.snapshot()).ok();
                     let Some(snapshot) = snapshot else {
                         continue;
                     };
@@ -1090,9 +991,7 @@ impl PickerDelegate for DocsSearchDelegate {
                 for result in results {
                     match result {
                         SearchResult::Buffer { buffer, ranges } => {
-                            if let Ok(matches) =
-                                DocsSearchDelegate::process_search_result(&buffer, &ranges, cx)
-                            {
+                            if let Ok(matches) = DocsSearchDelegate::process_search_result(&buffer, &ranges, cx) {
                                 batch_matches.extend(matches);
                             }
                         }
@@ -1107,15 +1006,11 @@ impl PickerDelegate for DocsSearchDelegate {
                         let delegate = &mut picker.delegate;
                         delegate.matches.extend(batch_matches);
 
-                        if delegate.selected_index >= delegate.matches.len()
-                            && !delegate.matches.is_empty()
-                        {
+                        if delegate.selected_index >= delegate.matches.len() && !delegate.matches.is_empty() {
                             delegate.selected_index = 0;
                         }
 
-                        if delegate.matches.len() == delegate.selected_index + 1
-                            || delegate.selected_index == 0
-                        {
+                        if delegate.matches.len() == delegate.selected_index + 1 || delegate.selected_index == 0 {
                             delegate.update_preview(window, cx);
                         }
 
@@ -1164,12 +1059,7 @@ impl PickerDelegate for DocsSearchDelegate {
             return;
         };
 
-        let path = selected_match
-            .path
-            .path
-            .clone()
-            .display(PathStyle::local())
-            .to_string();
+        let path = selected_match.path.path.clone().display(PathStyle::local()).to_string();
 
         window.dispatch_action(Box::new(app_actions::OpenDocsAt { path }), cx);
 
@@ -1232,9 +1122,7 @@ impl PickerDelegate for DocsSearchDelegate {
 
                 for chunk in snapshot.chunks(range, true) {
                     let chunk_len = chunk.text.len();
-                    let syntax_style = chunk
-                        .syntax_highlight_id
-                        .and_then(|id| id.style(&syntax_theme));
+                    let syntax_style = chunk.syntax_highlight_id.and_then(|id| id.style(&syntax_theme));
 
                     let style = if is_match {
                         let mut style = syntax_style.unwrap_or_default();
@@ -1275,8 +1163,7 @@ impl PickerDelegate for DocsSearchDelegate {
                                 .text_ellipsis()
                                 .whitespace_nowrap()
                                 .child(
-                                    StyledText::new(line_text_string)
-                                        .with_default_highlights(&text_style, highlights),
+                                    StyledText::new(line_text_string).with_default_highlights(&text_style, highlights),
                                 ),
                         )
                         .child(

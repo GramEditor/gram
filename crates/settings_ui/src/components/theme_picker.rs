@@ -25,10 +25,7 @@ impl ThemePickerDelegate {
         let theme_registry = ThemeRegistry::global(cx);
 
         let themes = theme_registry.list_names();
-        let selected_index = themes
-            .iter()
-            .position(|theme| *theme == current_theme)
-            .unwrap_or(0);
+        let selected_index = themes.iter().position(|theme| *theme == current_theme).unwrap_or(0);
 
         let filtered_themes = themes
             .iter()
@@ -71,12 +68,7 @@ impl PickerDelegate for ThemePickerDelegate {
         "Search theme…".into()
     }
 
-    fn update_matches(
-        &mut self,
-        query: String,
-        _window: &mut Window,
-        cx: &mut Context<ThemePicker>,
-    ) -> Task<()> {
+    fn update_matches(&mut self, query: String, _window: &mut Window, cx: &mut Context<ThemePicker>) -> Task<()> {
         let themes = self.themes.clone();
         let current_theme = self.current_theme.clone();
 
@@ -112,10 +104,7 @@ impl PickerDelegate for ThemePickerDelegate {
         };
 
         let selected_index = if query.is_empty() {
-            themes
-                .iter()
-                .position(|theme| *theme == current_theme)
-                .unwrap_or(0)
+            themes.iter().position(|theme| *theme == current_theme).unwrap_or(0)
         } else {
             matches
                 .iter()

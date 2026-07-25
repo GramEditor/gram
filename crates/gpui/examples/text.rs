@@ -4,9 +4,9 @@ use std::{
 };
 
 use gpui::{
-    AbsoluteLength, App, Application, Context, DefiniteLength, ElementId, Global, Hsla, Menu,
-    SharedString, TextStyle, TitlebarOptions, Window, WindowBounds, WindowOptions, bounds,
-    colors::DefaultColors, div, point, prelude::*, px, relative, rgb, size,
+    AbsoluteLength, App, Application, Context, DefiniteLength, ElementId, Global, Hsla, Menu, SharedString, TextStyle,
+    TitlebarOptions, Window, WindowBounds, WindowOptions, bounds, colors::DefaultColors, div, point, prelude::*, px,
+    relative, rgb, size,
 };
 use std::iter;
 
@@ -190,15 +190,14 @@ impl RenderOnce for CharacterGrid {
         }
 
         let characters = vec![
-            "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "A", "B", "C", "D", "E", "F", "G",
-            "H", "I", "J", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y",
-            "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "p", "q",
-            "r", "s", "t", "u", "v", "w", "x", "y", "z", "ẞ", "ſ", "ß", "ð", "Þ", "þ", "α", "β",
-            "Γ", "γ", "Δ", "δ", "η", "θ", "ι", "κ", "Λ", "λ", "μ", "ν", "ξ", "π", "τ", "υ", "φ",
-            "χ", "ψ", "∂", "а", "в", "Ж", "ж", "З", "з", "К", "к", "л", "м", "Н", "н", "Р", "р",
-            "У", "у", "ф", "ч", "ь", "ы", "Э", "э", "Я", "я", "ij", "öẋ", ".,", "⣝⣑", "~", "*",
-            "_", "^", "`", "'", "(", "{", "«", "#", "&", "@", "$", "¢", "%", "|", "?", "¶", "µ",
-            "❮", "<=", "!=", "==", "--", "++", "=>", "->", "🏀", "🎊", "😍", "❤️", "👍", "👎",
+            "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K",
+            "L", "M", "N", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g",
+            "h", "i", "j", "k", "l", "m", "n", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "ẞ", "ſ", "ß",
+            "ð", "Þ", "þ", "α", "β", "Γ", "γ", "Δ", "δ", "η", "θ", "ι", "κ", "Λ", "λ", "μ", "ν", "ξ", "π", "τ", "υ",
+            "φ", "χ", "ψ", "∂", "а", "в", "Ж", "ж", "З", "з", "К", "к", "л", "м", "Н", "н", "Р", "р", "У", "у", "ф",
+            "ч", "ь", "ы", "Э", "э", "Я", "я", "ij", "öẋ", ".,", "⣝⣑", "~", "*", "_", "^", "`", "'", "(", "{", "«",
+            "#", "&", "@", "$", "¢", "%", "|", "?", "¶", "µ", "❮", "<=", "!=", "==", "--", "++", "=>", "->", "🏀",
+            "🎊", "😍", "❤️", "👍", "👎",
         ];
 
         let columns = 11;
@@ -223,9 +222,7 @@ impl RenderOnce for CharacterGrid {
                         .child(characters[i])
                 }))
                 .when(end_idx - start_idx < columns, |d| {
-                    d.children(
-                        iter::repeat_with(|| div().flex_1()).take(columns - (end_idx - start_idx)),
-                    )
+                    d.children(iter::repeat_with(|| div().flex_1()).take(columns - (end_idx - start_idx)))
                 })
         });
 

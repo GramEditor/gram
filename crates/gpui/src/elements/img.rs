@@ -1,8 +1,8 @@
 use crate::{
-    AnyElement, AnyImageCache, App, Asset, AssetLogger, Bounds, DefiniteLength, Element, ElementId,
-    Entity, GlobalElementId, Hitbox, Image, ImageCache, InspectorElementId, InteractiveElement,
-    Interactivity, IntoElement, LayoutId, Length, ObjectFit, Pixels, RenderImage, Resource,
-    SharedString, SharedUri, StyleRefinement, Styled, Task, Window, px,
+    AnyElement, AnyImageCache, App, Asset, AssetLogger, Bounds, DefiniteLength, Element, ElementId, Entity,
+    GlobalElementId, Hitbox, Image, ImageCache, InspectorElementId, InteractiveElement, Interactivity, IntoElement,
+    LayoutId, Length, ObjectFit, Pixels, RenderImage, Resource, SharedString, SharedUri, StyleRefinement, Styled, Task,
+    Window, px,
 };
 use anyhow::{Context as _, Result};
 
@@ -210,8 +210,8 @@ impl Img {
     pub fn extensions() -> &'static [&'static str] {
         // This is the list in [image::ImageFormat::from_extension] + `svg`
         &[
-            "avif", "jpg", "jpeg", "png", "gif", "webp", "tif", "tiff", "tga", "dds", "bmp", "ico",
-            "hdr", "exr", "pbm", "pam", "ppm", "pgm", "ff", "farbfeld", "qoi", "svg",
+            "avif", "jpg", "jpeg", "png", "gif", "webp", "tif", "tiff", "tga", "dds", "bmp", "ico", "hdr", "exr",
+            "pbm", "pam", "ppm", "pgm", "ff", "farbfeld", "qoi", "svg",
         ]
     }
 
@@ -295,117 +295,106 @@ impl Element for Img {
 
             let frame_index = state.as_ref().map(|state| state.frame_index).unwrap_or(0);
 
-            let layout_id = self.interactivity.request_layout(
-                global_id,
-                inspector_id,
-                window,
-                cx,
-                |mut style, window, cx| {
-                    let mut replacement_id = None;
+            let layout_id =
+                self.interactivity
+                    .request_layout(global_id, inspector_id, window, cx, |mut style, window, cx| {
+                        let mut replacement_id = None;
 
-                    match self.source.use_data(
-                        self.image_cache
-                            .clone()
-                            .or_else(|| window.image_cache_stack.last().cloned()),
-                        window,
-                        cx,
-                    ) {
-                        Some(Ok(data)) => {
-                            if let Some(state) = &mut state {
-                                let frame_count = data.frame_count();
-                                if frame_count > 1 {
-                                    let current_time = Instant::now();
-                                    if let Some(last_frame_time) = state.last_frame_time {
-                                        let elapsed = current_time - last_frame_time;
-                                        let frame_duration =
-                                            Duration::from(data.delay(state.frame_index));
+                        match self.source.use_data(
+                            self.image_cache
+                                .clone()
+                                .or_else(|| window.image_cache_stack.last().cloned()),
+                            window,
+                            cx,
+                        ) {
+                            Some(Ok(data)) => {
+                                if let Some(state) = &mut state {
+                                    let frame_count = data.frame_count();
+                                    if frame_count > 1 {
+                                        let current_time = Instant::now();
+                                        if let Some(last_frame_time) = state.last_frame_time {
+                                            let elapsed = current_time - last_frame_time;
+                                            let frame_duration = Duration::from(data.delay(state.frame_index));
 
-                                        if elapsed >= frame_duration {
-                                            state.frame_index =
-                                                (state.frame_index + 1) % frame_count;
-                                            state.last_frame_time =
-                                                Some(current_time - (elapsed - frame_duration));
+                                            if elapsed >= frame_duration {
+                                                state.frame_index = (state.frame_index + 1) % frame_count;
+                                                state.last_frame_time = Some(current_time - (elapsed - frame_duration));
+                                            }
+                                        } else {
+                                            state.last_frame_time = Some(current_time);
+                                        }
+                                    }
+                                    state.started_loading = None;
+                                }
+
+                                let image_size = data.render_size(frame_index);
+                                style.aspect_ratio = Some(image_size.width / image_size.height);
+
+                                if let Length::Auto = style.size.width {
+                                    style.size.width = match style.size.height {
+                                        Length::Definite(DefiniteLength::Absolute(abs_length)) => {
+                                            let height_px = abs_length.to_pixels(window.rem_size());
+                                            Length::Definite(
+                                                px(image_size.width.0 * height_px.0 / image_size.height.0).into(),
+                                            )
+                                        }
+                                        _ => Length::Definite(image_size.width.into()),
+                                    };
+                                }
+
+                                if let Length::Auto = style.size.height {
+                                    style.size.height = match style.size.width {
+                                        Length::Definite(DefiniteLength::Absolute(abs_length)) => {
+                                            let width_px = abs_length.to_pixels(window.rem_size());
+                                            Length::Definite(
+                                                px(image_size.height.0 * width_px.0 / image_size.width.0).into(),
+                                            )
+                                        }
+                                        _ => Length::Definite(image_size.height.into()),
+                                    };
+                                }
+
+                                if global_id.is_some() && data.frame_count() > 1 {
+                                    window.request_animation_frame();
+                                }
+                            }
+                            Some(_err) => {
+                                if let Some(fallback) = self.style.fallback.as_ref() {
+                                    let mut element = fallback();
+                                    replacement_id = Some(element.request_layout(window, cx));
+                                    layout_state.replacement = Some(element);
+                                }
+                                if let Some(state) = &mut state {
+                                    state.started_loading = None;
+                                }
+                            }
+                            None => {
+                                if let Some(state) = &mut state {
+                                    if let Some((started_loading, _)) = state.started_loading {
+                                        if started_loading.elapsed() > LOADING_DELAY
+                                            && let Some(loading) = self.style.loading.as_ref()
+                                        {
+                                            let mut element = loading();
+                                            replacement_id = Some(element.request_layout(window, cx));
+                                            layout_state.replacement = Some(element);
                                         }
                                     } else {
-                                        state.last_frame_time = Some(current_time);
+                                        let current_view = window.current_view();
+                                        let task = window.spawn(cx, async move |cx| {
+                                            cx.background_executor().timer(LOADING_DELAY).await;
+                                            cx.update(move |_, cx| {
+                                                cx.notify(current_view);
+                                            })
+                                            .ok();
+                                        });
+                                        state.started_loading = Some((Instant::now(), task));
                                     }
                                 }
-                                state.started_loading = None;
-                            }
-
-                            let image_size = data.render_size(frame_index);
-                            style.aspect_ratio = Some(image_size.width / image_size.height);
-
-                            if let Length::Auto = style.size.width {
-                                style.size.width = match style.size.height {
-                                    Length::Definite(DefiniteLength::Absolute(abs_length)) => {
-                                        let height_px = abs_length.to_pixels(window.rem_size());
-                                        Length::Definite(
-                                            px(image_size.width.0 * height_px.0
-                                                / image_size.height.0)
-                                            .into(),
-                                        )
-                                    }
-                                    _ => Length::Definite(image_size.width.into()),
-                                };
-                            }
-
-                            if let Length::Auto = style.size.height {
-                                style.size.height = match style.size.width {
-                                    Length::Definite(DefiniteLength::Absolute(abs_length)) => {
-                                        let width_px = abs_length.to_pixels(window.rem_size());
-                                        Length::Definite(
-                                            px(image_size.height.0 * width_px.0
-                                                / image_size.width.0)
-                                            .into(),
-                                        )
-                                    }
-                                    _ => Length::Definite(image_size.height.into()),
-                                };
-                            }
-
-                            if global_id.is_some() && data.frame_count() > 1 {
-                                window.request_animation_frame();
                             }
                         }
-                        Some(_err) => {
-                            if let Some(fallback) = self.style.fallback.as_ref() {
-                                let mut element = fallback();
-                                replacement_id = Some(element.request_layout(window, cx));
-                                layout_state.replacement = Some(element);
-                            }
-                            if let Some(state) = &mut state {
-                                state.started_loading = None;
-                            }
-                        }
-                        None => {
-                            if let Some(state) = &mut state {
-                                if let Some((started_loading, _)) = state.started_loading {
-                                    if started_loading.elapsed() > LOADING_DELAY
-                                        && let Some(loading) = self.style.loading.as_ref()
-                                    {
-                                        let mut element = loading();
-                                        replacement_id = Some(element.request_layout(window, cx));
-                                        layout_state.replacement = Some(element);
-                                    }
-                                } else {
-                                    let current_view = window.current_view();
-                                    let task = window.spawn(cx, async move |cx| {
-                                        cx.background_executor().timer(LOADING_DELAY).await;
-                                        cx.update(move |_, cx| {
-                                            cx.notify(current_view);
-                                        })
-                                        .ok();
-                                    });
-                                    state.started_loading = Some((Instant::now(), task));
-                                }
-                            }
-                        }
-                    }
 
-                    window.request_layout(style, replacement_id, cx)
-                },
-            );
+                        window.request_layout(style, replacement_id, cx)
+                    });
 
             layout_state.frame_index = frame_index;
 
@@ -572,10 +561,7 @@ impl Asset for ImageDecoder {
     type Source = Arc<Image>;
     type Output = Result<Arc<RenderImage>, ImageCacheError>;
 
-    fn load(
-        source: Self::Source,
-        cx: &mut App,
-    ) -> impl Future<Output = Self::Output> + Send + 'static {
+    fn load(source: Self::Source, cx: &mut App) -> impl Future<Output = Self::Output> + Send + 'static {
         let renderer = cx.svg_renderer();
         async move { source.to_image_data(renderer).map_err(Into::into) }
     }
@@ -589,10 +575,7 @@ impl Asset for ImageAssetLoader {
     type Source = Resource;
     type Output = Result<Arc<RenderImage>, ImageCacheError>;
 
-    fn load(
-        source: Self::Source,
-        cx: &mut App,
-    ) -> impl Future<Output = Self::Output> + Send + 'static {
+    fn load(source: Self::Source, cx: &mut App) -> impl Future<Output = Self::Output> + Send + 'static {
         let client = cx.http_client();
         // TODO: Can we make SVGs always rescale?
         // let scale_factor = cx.scale_factor();
@@ -692,8 +675,7 @@ impl Asset for ImageAssetLoader {
                         }
                     }
                     _ => {
-                        let mut data =
-                            image::load_from_memory_with_format(&bytes, format)?.into_rgba8();
+                        let mut data = image::load_from_memory_with_format(&bytes, format)?.into_rgba8();
 
                         // Convert from RGBA to BGRA.
                         for pixel in data.chunks_exact_mut(4) {
@@ -706,9 +688,7 @@ impl Asset for ImageAssetLoader {
 
                 Ok(Arc::new(RenderImage::new(data)))
             } else {
-                svg_renderer
-                    .render_single_frame(&bytes, 1.0, true)
-                    .map_err(Into::into)
+                svg_renderer.render_single_frame(&bytes, 1.0, true).map_err(Into::into)
             }
         }
     }

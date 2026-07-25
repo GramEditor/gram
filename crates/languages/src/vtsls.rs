@@ -2,9 +2,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use collections::HashMap;
 use gpui::AsyncApp;
-use language::{
-    LanguageName, LspAdapter, LspAdapterDelegate, LspInstaller, PromptResponseContext, Toolchain,
-};
+use language::{LanguageName, LspAdapter, LspAdapterDelegate, LspInstaller, PromptResponseContext, Toolchain};
 use lsp::{CodeActionKind, LanguageServerBinary, LanguageServerName, Uri};
 use node_runtime::{NodeRuntime, VersionStrategy};
 use project::{Fs, lsp_store::language_server_settings};
@@ -46,9 +44,7 @@ impl VtslsLspAdapter {
     }
 
     async fn tsdk_path(&self, adapter: &Arc<dyn LspAdapterDelegate>) -> Option<&'static str> {
-        let yarn_sdk = adapter
-            .worktree_root_path()
-            .join(Self::TYPESCRIPT_YARN_TSDK_PATH);
+        let yarn_sdk = adapter.worktree_root_path().join(Self::TYPESCRIPT_YARN_TSDK_PATH);
 
         let tsdk_path = if self.fs.is_dir(&yarn_sdk).await {
             Self::TYPESCRIPT_YARN_TSDK_PATH
@@ -56,11 +52,7 @@ impl VtslsLspAdapter {
             Self::TYPESCRIPT_TSDK_PATH
         };
 
-        if self
-            .fs
-            .is_dir(&adapter.worktree_root_path().join(tsdk_path))
-            .await
-        {
+        if self.fs.is_dir(&adapter.worktree_root_path().join(tsdk_path)).await {
             Some(tsdk_path)
         } else {
             None
@@ -100,10 +92,7 @@ impl LspInstaller for VtslsLspAdapter {
     ) -> Result<TypeScriptVersions> {
         Ok(TypeScriptVersions {
             typescript_version: self.node.npm_package_latest_version("typescript").await?,
-            server_version: self
-                .node
-                .npm_package_latest_version("@vtsls/language-server")
-                .await?,
+            server_version: self.node.npm_package_latest_version("@vtsls/language-server").await?,
         })
     }
 
@@ -288,8 +277,7 @@ impl LspAdapter for VtslsLspAdapter {
         });
 
         let override_options = cx.update(|cx| {
-            language_server_settings(delegate.as_ref(), &SERVER_NAME, cx)
-                .and_then(|s| s.settings.clone())
+            language_server_settings(delegate.as_ref(), &SERVER_NAME, cx).and_then(|s| s.settings.clone())
         })?;
 
         if let Some(override_options) = override_options {
@@ -313,8 +301,7 @@ impl LspAdapter for VtslsLspAdapter {
 
     fn process_prompt_response(&self, context: &PromptResponseContext, cx: &mut AsyncApp) {
         let selected_title = context.selected_action.title.as_str();
-        let is_preference_response =
-            selected_title == ACTION_ALWAYS || selected_title == ACTION_NEVER;
+        let is_preference_response = selected_title == ACTION_ALWAYS || selected_title == ACTION_NEVER;
         if !is_preference_response {
             return;
         }
@@ -341,12 +328,7 @@ impl LspAdapter for VtslsLspAdapter {
 
             let _ = cx.update(|cx| {
                 update_settings_file(self.fs.clone(), cx, move |content, _| {
-                    let lsp_settings = content
-                        .project
-                        .lsp
-                        .0
-                        .entry(VTSLS_SERVER_NAME.into())
-                        .or_default();
+                    let lsp_settings = content.project.lsp.0.entry(VTSLS_SERVER_NAME.into()).or_default();
 
                     if let Some(existing) = &mut lsp_settings.settings {
                         merge_json_value_into(settings, existing);
@@ -359,10 +341,7 @@ impl LspAdapter for VtslsLspAdapter {
     }
 }
 
-async fn get_cached_ts_server_binary(
-    container_dir: PathBuf,
-    node: &NodeRuntime,
-) -> Option<LanguageServerBinary> {
+async fn get_cached_ts_server_binary(container_dir: PathBuf, node: &NodeRuntime) -> Option<LanguageServerBinary> {
     maybe!(async {
         let server_path = container_dir.join(VtslsLspAdapter::SERVER_PATH);
         anyhow::ensure!(

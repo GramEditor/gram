@@ -80,10 +80,7 @@ impl DapLocator for CargoLocator {
                     .iter()
                     .position(|arg| arg == "--")
                     .unwrap_or(task_template.args.len());
-                if !task_template.args[..delimiter]
-                    .iter()
-                    .any(|arg| arg == "--no-run")
-                {
+                if !task_template.args[..delimiter].iter().any(|arg| arg == "--no-run") {
                     task_template.args.insert(delimiter, "--no-run".to_owned());
                 }
             }
@@ -140,10 +137,7 @@ impl DapLocator for CargoLocator {
         let status = child.status().await?;
         anyhow::ensure!(status.success(), "Cargo command failed");
 
-        let is_test = build_config
-            .args
-            .first()
-            .is_some_and(|arg| arg == "test" || arg == "t");
+        let is_test = build_config.args.first().is_some_and(|arg| arg == "test" || arg == "t");
 
         let is_ignored = build_config.args.contains(&"--include-ignored".to_owned());
 
@@ -158,22 +152,11 @@ impl DapLocator for CargoLocator {
                     .and_then(Value::as_bool)
                     .unwrap_or(false);
 
-                if is_test {
-                    is_test_binary
-                } else {
-                    !is_test_binary
-                }
+                if is_test { is_test_binary } else { !is_test_binary }
             })
-            .filter_map(|json: Value| {
-                json.get("executable")
-                    .and_then(Value::as_str)
-                    .map(String::from)
-            })
+            .filter_map(|json: Value| json.get("executable").and_then(Value::as_str).map(String::from))
             .collect::<Vec<_>>();
-        anyhow::ensure!(
-            !executables.is_empty(),
-            "Couldn't get executable in cargo locator"
-        );
+        anyhow::ensure!(!executables.is_empty(), "Couldn't get executable in cargo locator");
 
         let mut test_name = None;
         if is_test {

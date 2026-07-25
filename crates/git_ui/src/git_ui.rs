@@ -3,8 +3,8 @@ use commit_modal::CommitModal;
 use editor::{Editor, actions::DiffClipboardWithSelectionData};
 use project::ProjectPath;
 use ui::{
-    Headline, HeadlineSize, Icon, IconName, IconSize, IntoElement, ParentElement, Render, Styled,
-    StyledExt, div, h_flex, rems, v_flex,
+    Headline, HeadlineSize, Icon, IconName, IconSize, IntoElement, ParentElement, Render, Styled, StyledExt, div,
+    h_flex, rems, v_flex,
 };
 
 mod blame_ui;
@@ -15,9 +15,7 @@ use git::{
     repository::{Branch, Upstream, UpstreamTracking, UpstreamTrackingStatus},
     status::{FileStatus, StatusCode, UnmergedStatus, UnmergedStatusCode},
 };
-use gpui::{
-    App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, SharedString, Window,
-};
+use gpui::{App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, SharedString, Window};
 use menu::{Cancel, Confirm};
 use project::git_store::Repository;
 use project_diff::ProjectDiff;
@@ -66,15 +64,13 @@ pub fn init(cx: &mut App) {
         if project.is_read_only(cx) {
             return;
         }
-        workspace.register_action(
-            |workspace, _: &app_actions::git::CreatePullRequest, window, cx| {
-                if let Some(panel) = workspace.panel::<git_panel::GitPanel>(cx) {
-                    panel.update(cx, |panel, cx| {
-                        panel.create_pull_request(window, cx);
-                    });
-                }
-            },
-        );
+        workspace.register_action(|workspace, _: &app_actions::git::CreatePullRequest, window, cx| {
+            if let Some(panel) = workspace.panel::<git_panel::GitPanel>(cx) {
+                panel.update(cx, |panel, cx| {
+                    panel.create_pull_request(window, cx);
+                });
+            }
+        });
         workspace.register_action(|workspace, _: &git::Fetch, window, cx| {
             let Some(panel) = workspace.panel::<git_panel::GitPanel>(cx) else {
                 return;
@@ -192,9 +188,7 @@ pub fn init(cx: &mut App) {
                 return;
             };
 
-            workspace.toggle_modal(window, cx, |window, cx| {
-                GitCloneModal::show(panel, window, cx)
-            });
+            workspace.toggle_modal(window, cx, |window, cx| GitCloneModal::show(panel, window, cx));
         });
         workspace.register_action(|workspace, _: &git::OpenModifiedFiles, window, cx| {
             open_modified_files(workspace, window, cx);
@@ -202,13 +196,11 @@ pub fn init(cx: &mut App) {
         workspace.register_action(|workspace, _: &git::RenameBranch, window, cx| {
             rename_current_branch(workspace, window, cx);
         });
-        workspace.register_action(
-            |workspace, action: &DiffClipboardWithSelectionData, window, cx| {
-                if let Some(task) = TextDiffView::open(action, workspace, window, cx) {
-                    task.detach();
-                };
-            },
-        );
+        workspace.register_action(|workspace, action: &DiffClipboardWithSelectionData, window, cx| {
+            if let Some(task) = TextDiffView::open(action, workspace, window, cx) {
+                task.detach();
+            };
+        });
         workspace.register_action(|workspace, _: &git::FileHistory, window, cx| {
             let Some(active_item) = workspace.active_item(cx) else {
                 return;
@@ -248,11 +240,7 @@ pub fn init(cx: &mut App) {
     .detach();
 }
 
-fn open_modified_files(
-    workspace: &mut Workspace,
-    window: &mut Window,
-    cx: &mut Context<Workspace>,
-) {
+fn open_modified_files(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>) {
     let Some(panel) = workspace.panel::<git_panel::GitPanel>(cx) else {
         return;
     };
@@ -287,12 +275,7 @@ struct RenameBranchModal {
 }
 
 impl RenameBranchModal {
-    fn new(
-        current_branch: String,
-        repo: Entity<Repository>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    fn new(current_branch: String, repo: Entity<Repository>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let editor = cx.new(|cx| {
             let mut editor = Editor::single_line(window, cx);
             editor.set_text(current_branch.clone(), window, cx);
@@ -320,9 +303,7 @@ impl RenameBranchModal {
         let current_branch = self.current_branch.to_string();
         cx.spawn(async move |_, cx| {
             match repo
-                .update(cx, |repo, _| {
-                    repo.rename_branch(current_branch, new_name.clone())
-                })?
+                .update(cx, |repo, _| repo.rename_branch(current_branch, new_name.clone()))?
                 .await
             {
                 Ok(Ok(_)) => Ok(()),
@@ -360,19 +341,14 @@ impl Render for RenameBranchModal {
                     .gap_1p5()
                     .child(Icon::new(IconName::GitBranch).size(IconSize::XSmall))
                     .child(
-                        Headline::new(format!("Rename Branch ({})", self.current_branch))
-                            .size(HeadlineSize::XSmall),
+                        Headline::new(format!("Rename Branch ({})", self.current_branch)).size(HeadlineSize::XSmall),
                     ),
             )
             .child(div().px_3().pb_3().w_full().child(self.editor.clone()))
     }
 }
 
-fn rename_current_branch(
-    workspace: &mut Workspace,
-    window: &mut Window,
-    cx: &mut Context<Workspace>,
-) {
+fn rename_current_branch(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>) {
     let Some(panel) = workspace.panel::<git_panel::GitPanel>(cx) else {
         return;
     };
@@ -409,29 +385,15 @@ fn render_remote_button(
             tracking: UpstreamTracking::Tracked(UpstreamTrackingStatus { ahead, behind }),
             ..
         }) => match (*ahead, *behind) {
-            (0, 0) if show_fetch_button => {
-                Some(remote_button::render_fetch_button(keybinding_target, id))
-            }
+            (0, 0) if show_fetch_button => Some(remote_button::render_fetch_button(keybinding_target, id)),
             (0, 0) => None,
-            (ahead, 0) => Some(remote_button::render_push_button(
-                keybinding_target,
-                id,
-                ahead,
-            )),
-            (ahead, behind) => Some(remote_button::render_pull_button(
-                keybinding_target,
-                id,
-                ahead,
-                behind,
-            )),
+            (ahead, 0) => Some(remote_button::render_push_button(keybinding_target, id, ahead)),
+            (ahead, behind) => Some(remote_button::render_pull_button(keybinding_target, id, ahead, behind)),
         },
         Some(Upstream {
             tracking: UpstreamTracking::Gone,
             ..
-        }) => Some(remote_button::render_republish_button(
-            keybinding_target,
-            id,
-        )),
+        }) => Some(remote_button::render_republish_button(keybinding_target, id)),
         None => Some(remote_button::render_publish_button(keybinding_target, id)),
     }
 }
@@ -439,15 +401,12 @@ fn render_remote_button(
 mod remote_button {
     use gpui::{Action, AnyView, ClickEvent, Corner, FocusHandle};
     use ui::{
-        App, ButtonCommon, Clickable, ContextMenu, ElementId, FluentBuilder, Icon, IconName,
-        IconSize, IntoElement, Label, LabelCommon, LabelSize, LineHeightStyle, ParentElement,
-        PopoverMenu, SharedString, SplitButton, Styled, Tooltip, Window, div, h_flex, rems,
+        App, ButtonCommon, Clickable, ContextMenu, ElementId, FluentBuilder, Icon, IconName, IconSize, IntoElement,
+        Label, LabelCommon, LabelSize, LineHeightStyle, ParentElement, PopoverMenu, SharedString, SplitButton, Styled,
+        Tooltip, Window, div, h_flex, rems,
     };
 
-    pub fn render_fetch_button(
-        keybinding_target: Option<FocusHandle>,
-        id: SharedString,
-    ) -> SplitButton {
+    pub fn render_fetch_button(keybinding_target: Option<FocusHandle>, id: SharedString) -> SplitButton {
         split_button(
             id,
             "Fetch",
@@ -470,11 +429,7 @@ mod remote_button {
         )
     }
 
-    pub fn render_push_button(
-        keybinding_target: Option<FocusHandle>,
-        id: SharedString,
-        ahead: u32,
-    ) -> SplitButton {
+    pub fn render_push_button(keybinding_target: Option<FocusHandle>, id: SharedString, ahead: u32) -> SplitButton {
         split_button(
             id,
             "Push",
@@ -513,22 +468,11 @@ mod remote_button {
             move |_, window, cx| {
                 window.dispatch_action(Box::new(git::Pull), cx);
             },
-            move |_window, cx| {
-                git_action_tooltip(
-                    "Pull",
-                    &git::Pull,
-                    "git pull",
-                    keybinding_target.clone(),
-                    cx,
-                )
-            },
+            move |_window, cx| git_action_tooltip("Pull", &git::Pull, "git pull", keybinding_target.clone(), cx),
         )
     }
 
-    pub fn render_publish_button(
-        keybinding_target: Option<FocusHandle>,
-        id: SharedString,
-    ) -> SplitButton {
+    pub fn render_publish_button(keybinding_target: Option<FocusHandle>, id: SharedString) -> SplitButton {
         split_button(
             id,
             "Publish",
@@ -551,10 +495,7 @@ mod remote_button {
         )
     }
 
-    pub fn render_republish_button(
-        keybinding_target: Option<FocusHandle>,
-        id: SharedString,
-    ) -> SplitButton {
+    pub fn render_republish_button(keybinding_target: Option<FocusHandle>, id: SharedString) -> SplitButton {
         split_button(
             id,
             "Republish",
@@ -594,10 +535,7 @@ mod remote_button {
         }
     }
 
-    fn render_git_action_menu(
-        id: impl Into<ElementId>,
-        keybinding_target: Option<FocusHandle>,
-    ) -> impl IntoElement {
+    fn render_git_action_menu(id: impl Into<ElementId>, keybinding_target: Option<FocusHandle>) -> impl IntoElement {
         PopoverMenu::new(id.into())
             .trigger(
                 ui::ButtonLike::new_rounded_right("split-button-right")
@@ -655,39 +593,29 @@ mod remote_button {
 
         let should_render_counts = left_icon.is_none() && (ahead_count > 0 || behind_count > 0);
 
-        let left = ui::ButtonLike::new_rounded_left(ElementId::Name(
-            format!("split-button-left-{}", id).into(),
-        ))
-        .layer(ui::ElevationIndex::ModalSurface)
-        .size(ui::ButtonSize::Compact)
-        .when(should_render_counts, |this| {
-            this.child(
-                h_flex()
-                    .ml_neg_0p5()
-                    .when(behind_count > 0, |this| {
-                        this.child(Icon::new(IconName::ArrowDown).size(IconSize::XSmall))
-                            .child(count(behind_count))
-                    })
-                    .when(ahead_count > 0, |this| {
-                        this.child(Icon::new(IconName::ArrowUp).size(IconSize::XSmall))
-                            .child(count(ahead_count))
-                    }),
-            )
-        })
-        .when_some(left_icon, |this, left_icon| {
-            this.child(
-                h_flex()
-                    .ml_neg_0p5()
-                    .child(Icon::new(left_icon).size(IconSize::XSmall)),
-            )
-        })
-        .child(
-            div()
-                .child(Label::new(left_label).size(LabelSize::Small))
-                .mr_0p5(),
-        )
-        .on_click(left_on_click)
-        .tooltip(tooltip);
+        let left = ui::ButtonLike::new_rounded_left(ElementId::Name(format!("split-button-left-{}", id).into()))
+            .layer(ui::ElevationIndex::ModalSurface)
+            .size(ui::ButtonSize::Compact)
+            .when(should_render_counts, |this| {
+                this.child(
+                    h_flex()
+                        .ml_neg_0p5()
+                        .when(behind_count > 0, |this| {
+                            this.child(Icon::new(IconName::ArrowDown).size(IconSize::XSmall))
+                                .child(count(behind_count))
+                        })
+                        .when(ahead_count > 0, |this| {
+                            this.child(Icon::new(IconName::ArrowUp).size(IconSize::XSmall))
+                                .child(count(ahead_count))
+                        }),
+                )
+            })
+            .when_some(left_icon, |this, left_icon| {
+                this.child(h_flex().ml_neg_0p5().child(Icon::new(left_icon).size(IconSize::XSmall)))
+            })
+            .child(div().child(Label::new(left_label).size(LabelSize::Small)).mr_0p5())
+            .on_click(left_on_click)
+            .tooltip(tooltip);
 
         let right = render_git_action_menu(
             ElementId::Name(format!("split-button-right-{}", id).into()),
@@ -716,25 +644,13 @@ impl RenderOnce for GitStatusIcon {
         let status = self.status;
 
         let (icon_name, color) = if status.is_conflicted() {
-            (
-                IconName::Warning,
-                cx.theme().colors().version_control_conflict,
-            )
+            (IconName::Warning, cx.theme().colors().version_control_conflict)
         } else if status.is_deleted() {
-            (
-                IconName::SquareMinus,
-                cx.theme().colors().version_control_deleted,
-            )
+            (IconName::SquareMinus, cx.theme().colors().version_control_deleted)
         } else if status.is_modified() {
-            (
-                IconName::SquareDot,
-                cx.theme().colors().version_control_modified,
-            )
+            (IconName::SquareDot, cx.theme().colors().version_control_modified)
         } else {
-            (
-                IconName::SquarePlus,
-                cx.theme().colors().version_control_added,
-            )
+            (IconName::SquarePlus, cx.theme().colors().version_control_added)
         };
 
         Icon::new(icon_name).color(Color::Custom(color))
@@ -771,10 +687,7 @@ impl Component for GitStatusIcon {
                     single_example("Modified", GitStatusIcon::new(modified).into_any_element()),
                     single_example("Added", GitStatusIcon::new(added).into_any_element()),
                     single_example("Deleted", GitStatusIcon::new(deleted).into_any_element()),
-                    single_example(
-                        "Conflicted",
-                        GitStatusIcon::new(conflict).into_any_element(),
-                    ),
+                    single_example("Conflicted", GitStatusIcon::new(conflict).into_any_element()),
                 ])])
                 .into_any_element(),
         )

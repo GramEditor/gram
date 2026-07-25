@@ -38,13 +38,13 @@ impl ShellBuilder {
 
     /// Returns the label to show in the terminal tab
     pub fn command_label(&self, command_to_use_in_label: &str, args: &Vec<String>) -> String {
-        let combined_command =
-            args.iter()
-                .fold(command_to_use_in_label.to_string(), |mut command, arg| {
-                    command.push(' ');
-                    command.push_str(&self.kind.to_shell_variable(arg));
-                    command
-                });
+        let combined_command = args
+            .iter()
+            .fold(command_to_use_in_label.to_string(), |mut command, arg| {
+                command.push(' ');
+                command.push_str(&self.kind.to_shell_variable(arg));
+                command
+            });
 
         if combined_command.trim().is_empty() {
             self.program.clone()
@@ -80,11 +80,7 @@ impl ShellBuilder {
     }
 
     /// Returns the program and arguments to run this task in a shell.
-    pub fn build(
-        mut self,
-        task_command: Option<String>,
-        task_args: &[String],
-    ) -> (String, Vec<String>) {
+    pub fn build(mut self, task_command: Option<String>, task_args: &[String]) -> (String, Vec<String>) {
         if let Some(task_command) = task_command {
             let mut combined_command = task_args.iter().fold(task_command, |mut command, arg| {
                 command.push(' ');

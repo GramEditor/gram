@@ -7,8 +7,8 @@ use collections::HashMap;
 use futures::FutureExt;
 use futures::future::Shared;
 use gpui::{
-    AnyElement, App, Entity, EventEmitter, FocusHandle, Focusable, ListScrollEvent, ListState,
-    Point, Task, actions, list, prelude::*,
+    AnyElement, App, Entity, EventEmitter, FocusHandle, Focusable, ListScrollEvent, ListState, Point, Task, actions,
+    list, prelude::*,
 };
 use language::{Language, LanguageRegistry};
 use project::{Project, ProjectEntryId, ProjectPath};
@@ -84,21 +84,12 @@ impl NotebookEditor {
         let language_name = notebook_item.read(cx).language_name();
 
         let notebook_language = notebook_item.read(cx).notebook_language();
-        let notebook_language = cx
-            .spawn_in(window, async move |_, _| notebook_language.await)
-            .shared();
+        let notebook_language = cx.spawn_in(window, async move |_, _| notebook_language.await).shared();
 
         let mut cell_order = vec![]; // Vec<CellId>
         let mut cell_map = HashMap::default(); // HashMap<CellId, Cell>
 
-        for (index, cell) in notebook_item
-            .read(cx)
-            .notebook
-            .clone()
-            .cells
-            .iter()
-            .enumerate()
-        {
+        for (index, cell) in notebook_item.read(cx).notebook.clone().cells.iter().enumerate() {
             let cell_id = cell.id();
             cell_order.push(cell_id.clone());
             cell_map.insert(
@@ -196,31 +187,17 @@ impl NotebookEditor {
         }
     }
 
-    pub fn select_next(
-        &mut self,
-        _: &menu::SelectNext,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn select_next(&mut self, _: &menu::SelectNext, window: &mut Window, cx: &mut Context<Self>) {
         let count = self.cell_count();
         if count > 0 {
             let index = self.selected_index();
-            let ix = if index == count - 1 {
-                count - 1
-            } else {
-                index + 1
-            };
+            let ix = if index == count - 1 { count - 1 } else { index + 1 };
             self.set_selected_index(ix, true, window, cx);
             cx.notify();
         }
     }
 
-    pub fn select_previous(
-        &mut self,
-        _: &menu::SelectPrevious,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn select_previous(&mut self, _: &menu::SelectPrevious, window: &mut Window, cx: &mut Context<Self>) {
         let count = self.cell_count();
         if count > 0 {
             let index = self.selected_index();
@@ -230,12 +207,7 @@ impl NotebookEditor {
         }
     }
 
-    pub fn select_first(
-        &mut self,
-        _: &menu::SelectFirst,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn select_first(&mut self, _: &menu::SelectFirst, window: &mut Window, cx: &mut Context<Self>) {
         let count = self.cell_count();
         if count > 0 {
             self.set_selected_index(0, true, window, cx);
@@ -243,12 +215,7 @@ impl NotebookEditor {
         }
     }
 
-    pub fn select_last(
-        &mut self,
-        _: &menu::SelectLast,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn select_last(&mut self, _: &menu::SelectLast, window: &mut Window, cx: &mut Context<Self>) {
         let count = self.cell_count();
         if count > 0 {
             self.set_selected_index(count - 1, true, window, cx);
@@ -283,11 +250,7 @@ impl NotebookEditor {
         IconButton::new(id, icon).width(px(CONTROL_SIZE))
     }
 
-    fn render_notebook_controls(
-        &self,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> impl IntoElement {
+    fn render_notebook_controls(&self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let has_outputs = self.has_outputs(window, cx);
 
         v_flex()
@@ -304,95 +267,57 @@ impl NotebookEditor {
                     .child(
                         Self::button_group(window, cx)
                             .child(
-                                Self::render_notebook_control(
-                                    "run-all-cells",
-                                    IconName::PlayFilled,
-                                    window,
-                                    cx,
-                                )
-                                .tooltip(move |window, cx| {
-                                    Tooltip::for_action("Execute all cells", &RunAll, cx)
-                                })
-                                .on_click(|_, window, cx| {
-                                    window.dispatch_action(Box::new(RunAll), cx);
-                                }),
+                                Self::render_notebook_control("run-all-cells", IconName::PlayFilled, window, cx)
+                                    .tooltip(move |window, cx| Tooltip::for_action("Execute all cells", &RunAll, cx))
+                                    .on_click(|_, window, cx| {
+                                        window.dispatch_action(Box::new(RunAll), cx);
+                                    }),
                             )
                             .child(
-                                Self::render_notebook_control(
-                                    "clear-all-outputs",
-                                    IconName::ListX,
-                                    window,
-                                    cx,
-                                )
-                                .disabled(!has_outputs)
-                                .tooltip(move |window, cx| {
-                                    Tooltip::for_action("Clear all outputs", &ClearOutputs, cx)
-                                })
-                                .on_click(|_, window, cx| {
-                                    window.dispatch_action(Box::new(ClearOutputs), cx);
-                                }),
+                                Self::render_notebook_control("clear-all-outputs", IconName::ListX, window, cx)
+                                    .disabled(!has_outputs)
+                                    .tooltip(move |window, cx| {
+                                        Tooltip::for_action("Clear all outputs", &ClearOutputs, cx)
+                                    })
+                                    .on_click(|_, window, cx| {
+                                        window.dispatch_action(Box::new(ClearOutputs), cx);
+                                    }),
                             ),
                     )
                     .child(
                         Self::button_group(window, cx)
                             .child(
-                                Self::render_notebook_control(
-                                    "move-cell-up",
-                                    IconName::ArrowUp,
-                                    window,
-                                    cx,
-                                )
-                                .tooltip(move |window, cx| {
-                                    Tooltip::for_action("Move cell up", &MoveCellUp, cx)
-                                })
-                                .on_click(|_, window, cx| {
-                                    window.dispatch_action(Box::new(MoveCellUp), cx);
-                                }),
+                                Self::render_notebook_control("move-cell-up", IconName::ArrowUp, window, cx)
+                                    .tooltip(move |window, cx| Tooltip::for_action("Move cell up", &MoveCellUp, cx))
+                                    .on_click(|_, window, cx| {
+                                        window.dispatch_action(Box::new(MoveCellUp), cx);
+                                    }),
                             )
                             .child(
-                                Self::render_notebook_control(
-                                    "move-cell-down",
-                                    IconName::ArrowDown,
-                                    window,
-                                    cx,
-                                )
-                                .tooltip(move |window, cx| {
-                                    Tooltip::for_action("Move cell down", &MoveCellDown, cx)
-                                })
-                                .on_click(|_, window, cx| {
-                                    window.dispatch_action(Box::new(MoveCellDown), cx);
-                                }),
+                                Self::render_notebook_control("move-cell-down", IconName::ArrowDown, window, cx)
+                                    .tooltip(move |window, cx| Tooltip::for_action("Move cell down", &MoveCellDown, cx))
+                                    .on_click(|_, window, cx| {
+                                        window.dispatch_action(Box::new(MoveCellDown), cx);
+                                    }),
                             ),
                     )
                     .child(
                         Self::button_group(window, cx)
                             .child(
-                                Self::render_notebook_control(
-                                    "new-markdown-cell",
-                                    IconName::Plus,
-                                    window,
-                                    cx,
-                                )
-                                .tooltip(move |window, cx| {
-                                    Tooltip::for_action("Add markdown block", &AddMarkdownBlock, cx)
-                                })
-                                .on_click(|_, window, cx| {
-                                    window.dispatch_action(Box::new(AddMarkdownBlock), cx);
-                                }),
+                                Self::render_notebook_control("new-markdown-cell", IconName::Plus, window, cx)
+                                    .tooltip(move |window, cx| {
+                                        Tooltip::for_action("Add markdown block", &AddMarkdownBlock, cx)
+                                    })
+                                    .on_click(|_, window, cx| {
+                                        window.dispatch_action(Box::new(AddMarkdownBlock), cx);
+                                    }),
                             )
                             .child(
-                                Self::render_notebook_control(
-                                    "new-code-cell",
-                                    IconName::Code,
-                                    window,
-                                    cx,
-                                )
-                                .tooltip(move |window, cx| {
-                                    Tooltip::for_action("Add code block", &AddCodeBlock, cx)
-                                })
-                                .on_click(|_, window, cx| {
-                                    window.dispatch_action(Box::new(AddCodeBlock), cx);
-                                }),
+                                Self::render_notebook_control("new-code-cell", IconName::Code, window, cx)
+                                    .tooltip(move |window, cx| Tooltip::for_action("Add code block", &AddCodeBlock, cx))
+                                    .on_click(|_, window, cx| {
+                                        window.dispatch_action(Box::new(AddCodeBlock), cx);
+                                    }),
                             ),
                     ),
             )
@@ -406,10 +331,7 @@ impl NotebookEditor {
                         window,
                         cx,
                     ))
-                    .child(
-                        Self::button_group(window, cx)
-                            .child(IconButton::new("repl", IconName::ReplNeutral)),
-                    ),
+                    .child(Self::button_group(window, cx).child(IconButton::new("repl", IconName::ReplNeutral))),
             )
     }
 
@@ -421,13 +343,7 @@ impl NotebookEditor {
         }
     }
 
-    fn render_cell(
-        &self,
-        index: usize,
-        cell: &Cell,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> impl IntoElement {
+    fn render_cell(&self, index: usize, cell: &Cell, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let cell_position = self.cell_position(index);
 
         let is_selected = index == self.selected_cell_index;
@@ -435,22 +351,19 @@ impl NotebookEditor {
         match cell {
             Cell::Code(cell) => {
                 cell.update(cx, |cell, _cx| {
-                    cell.set_selected(is_selected)
-                        .set_cell_position(cell_position);
+                    cell.set_selected(is_selected).set_cell_position(cell_position);
                 });
                 cell.clone().into_any_element()
             }
             Cell::Markdown(cell) => {
                 cell.update(cx, |cell, _cx| {
-                    cell.set_selected(is_selected)
-                        .set_cell_position(cell_position);
+                    cell.set_selected(is_selected).set_cell_position(cell_position);
                 });
                 cell.clone().into_any_element()
             }
             Cell::Raw(cell) => {
                 cell.update(cx, |cell, _cx| {
-                    cell.set_selected(is_selected)
-                        .set_cell_position(cell_position);
+                    cell.set_selected(is_selected).set_cell_position(cell_position);
                 });
                 cell.clone().into_any_element()
             }
@@ -463,23 +376,13 @@ impl Render for NotebookEditor {
         div()
             .key_context("notebook")
             .track_focus(&self.focus_handle)
-            .on_action(cx.listener(|this, &OpenNotebook, window, cx| {
-                this.open_notebook(&OpenNotebook, window, cx)
-            }))
-            .on_action(
-                cx.listener(|this, &ClearOutputs, window, cx| this.clear_outputs(window, cx)),
-            )
+            .on_action(cx.listener(|this, &OpenNotebook, window, cx| this.open_notebook(&OpenNotebook, window, cx)))
+            .on_action(cx.listener(|this, &ClearOutputs, window, cx| this.clear_outputs(window, cx)))
             .on_action(cx.listener(|this, &RunAll, window, cx| this.run_cells(window, cx)))
             .on_action(cx.listener(|this, &MoveCellUp, window, cx| this.move_cell_up(window, cx)))
-            .on_action(
-                cx.listener(|this, &MoveCellDown, window, cx| this.move_cell_down(window, cx)),
-            )
-            .on_action(cx.listener(|this, &AddMarkdownBlock, window, cx| {
-                this.add_markdown_block(window, cx)
-            }))
-            .on_action(
-                cx.listener(|this, &AddCodeBlock, window, cx| this.add_code_block(window, cx)),
-            )
+            .on_action(cx.listener(|this, &MoveCellDown, window, cx| this.move_cell_down(window, cx)))
+            .on_action(cx.listener(|this, &AddMarkdownBlock, window, cx| this.add_markdown_block(window, cx)))
+            .on_action(cx.listener(|this, &AddCodeBlock, window, cx| this.add_code_block(window, cx)))
             .on_action(cx.listener(Self::select_next))
             .on_action(cx.listener(Self::select_previous))
             .on_action(cx.listener(Self::select_first))
@@ -503,9 +406,7 @@ impl Render for NotebookEditor {
                             this.cell_order
                                 .get(ix)
                                 .and_then(|cell_id| this.cell_map.get(cell_id))
-                                .map(|cell| {
-                                    this.render_cell(ix, cell, window, cx).into_any_element()
-                                })
+                                .map(|cell| this.render_cell(ix, cell, window, cx).into_any_element())
                                 .unwrap_or_else(|| div().into_any())
                         }),
                     ))
@@ -554,9 +455,7 @@ impl project::ProjectItem for NotebookItem {
                 let notebook = nbformat::parse_notebook(&file_content);
 
                 let notebook = match notebook {
-                    Ok(nbformat::Notebook::V3(notebook)) => {
-                        nbformat::upgrade_v3_notebook(notebook)?
-                    }
+                    Ok(nbformat::Notebook::V3(notebook)) => nbformat::upgrade_v3_notebook(notebook)?,
                     Ok(nbformat::Notebook::V4(notebook)) => notebook,
                     // 4.1 - 4.4 are converted to 4.5
                     Ok(nbformat::Notebook::Legacy(legacy_notebook)) => {
@@ -704,11 +603,7 @@ impl Item for NotebookEditor {
         workspace::item::ItemBufferKind::Singleton
     }
 
-    fn for_each_project_item(
-        &self,
-        cx: &App,
-        f: &mut dyn FnMut(gpui::EntityId, &dyn project::ProjectItem),
-    ) {
+    fn for_each_project_item(&self, cx: &App, f: &mut dyn FnMut(gpui::EntityId, &dyn project::ProjectItem)) {
         f(self.notebook_item.entity_id(), self.notebook_item.read(cx))
     }
 
@@ -748,12 +643,7 @@ impl Item for NotebookEditor {
         None
     }
 
-    fn set_nav_history(
-        &mut self,
-        _: workspace::ItemNavHistory,
-        _window: &mut Window,
-        _: &mut Context<Self>,
-    ) {
+    fn set_nav_history(&mut self, _: workspace::ItemNavHistory, _window: &mut Window, _: &mut Context<Self>) {
         // TODO
     }
 
@@ -783,12 +673,7 @@ impl Item for NotebookEditor {
         unimplemented!("save_as() must be implemented if can_save() returns true")
     }
     // TODO
-    fn reload(
-        &mut self,
-        _project: Entity<Project>,
-        _window: &mut Window,
-        _cx: &mut Context<Self>,
-    ) -> Task<Result<()>> {
+    fn reload(&mut self, _project: Entity<Project>, _window: &mut Window, _cx: &mut Context<Self>) -> Task<Result<()>> {
         unimplemented!("reload() must be implemented if can_save() returns true")
     }
 

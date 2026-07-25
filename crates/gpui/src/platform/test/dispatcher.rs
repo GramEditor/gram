@@ -132,11 +132,7 @@ impl TestDispatcher {
         let foreground_len: usize = if background_only {
             0
         } else {
-            state
-                .foreground
-                .values()
-                .map(|runnables| runnables.len())
-                .sum()
+            state.foreground.values().map(|runnables| runnables.len()).sum()
         };
         let background_len = state.background.len();
 
@@ -151,10 +147,9 @@ impl TestDispatcher {
             main_thread = false;
             runnable = state.deprioritized_background.swap_remove(ix);
         } else {
-            main_thread = state.random.random_ratio(
-                foreground_len as u32,
-                (foreground_len + background_len) as u32,
-            );
+            main_thread = state
+                .random
+                .random_ratio(foreground_len as u32, (foreground_len + background_len) as u32);
             if main_thread {
                 let state = &mut *state;
                 runnable = state
@@ -187,10 +182,7 @@ impl TestDispatcher {
     }
 
     pub fn deprioritize(&self, task_label: TaskLabel) {
-        self.state
-            .lock()
-            .deprioritized_task_labels
-            .insert(task_label);
+        self.state.lock().deprioritized_task_labels.insert(task_label);
     }
 
     pub fn run_until_parked(&self) {

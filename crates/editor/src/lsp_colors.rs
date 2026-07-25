@@ -13,8 +13,8 @@ use ui::{App, Context, Window};
 use util::post_inc;
 
 use crate::{
-    DisplayPoint, Editor, EditorSettings, EditorSnapshot, FETCH_COLORS_DEBOUNCE_TIMEOUT,
-    InlaySplice, RangeToAnchorExt, editor_settings::DocumentColorsRenderMode, inlays::Inlay,
+    DisplayPoint, Editor, EditorSettings, EditorSnapshot, FETCH_COLORS_DEBOUNCE_TIMEOUT, InlaySplice, RangeToAnchorExt,
+    editor_settings::DocumentColorsRenderMode, inlays::Inlay,
 };
 
 #[derive(Debug)]
@@ -38,10 +38,7 @@ impl LspColorData {
         }
     }
 
-    pub fn render_mode_updated(
-        &mut self,
-        new_render_mode: DocumentColorsRenderMode,
-    ) -> Option<InlaySplice> {
+    pub fn render_mode_updated(&mut self, new_render_mode: DocumentColorsRenderMode) -> Option<InlaySplice> {
         if self.render_mode == new_render_mode {
             return None;
         }
@@ -50,7 +47,9 @@ impl LspColorData {
             DocumentColorsRenderMode::Inlay => Some(InlaySplice {
                 to_remove: Vec::new(),
                 to_insert: self
-                    .buffer_colors.values().flat_map(|buffer_colors| buffer_colors.colors.iter())
+                    .buffer_colors
+                    .values()
+                    .flat_map(|buffer_colors| buffer_colors.colors.iter())
                     .map(|(range, color, id)| {
                         Inlay::color(
                             id.id(),
@@ -74,17 +73,15 @@ impl LspColorData {
                     .collect(),
                 to_insert: Vec::new(),
             }),
-            DocumentColorsRenderMode::Border | DocumentColorsRenderMode::Background => {
-                Some(InlaySplice {
-                    to_remove: self
-                        .buffer_colors
-                        .iter_mut()
-                        .flat_map(|(_, buffer_colors)| buffer_colors.inlay_colors.drain())
-                        .map(|(id, _)| id)
-                        .collect(),
-                    to_insert: Vec::new(),
-                })
-            }
+            DocumentColorsRenderMode::Border | DocumentColorsRenderMode::Background => Some(InlaySplice {
+                to_remove: self
+                    .buffer_colors
+                    .iter_mut()
+                    .flat_map(|(_, buffer_colors)| buffer_colors.inlay_colors.drain())
+                    .map(|(id, _)| id)
+                    .collect(),
+                to_insert: Vec::new(),
+            }),
         }
     }
 
@@ -102,11 +99,7 @@ impl LspColorData {
             return false;
         }
 
-        buffer_colors.inlay_colors = colors
-            .iter()
-            .enumerate()
-            .map(|(i, (_, _, id))| (*id, i))
-            .collect();
+        buffer_colors.inlay_colors = colors.iter().enumerate().map(|(i, (_, _, id))| (*id, i)).collect();
         buffer_colors.colors = colors;
         true
     }
@@ -116,24 +109,25 @@ impl LspColorData {
         snapshot: &EditorSnapshot,
     ) -> (DocumentColorsRenderMode, Vec<(Range<DisplayPoint>, Hsla)>) {
         let render_mode = self.render_mode;
-        let highlights = if render_mode == DocumentColorsRenderMode::None
-            || render_mode == DocumentColorsRenderMode::Inlay
-        {
-            Vec::new()
-        } else {
-            self.buffer_colors.values().flat_map(|buffer_colors| &buffer_colors.colors)
-                .map(|(range, color, _)| {
-                    let display_range = range.clone().to_display_points(snapshot);
-                    let color = Hsla::from(Rgba {
-                        r: color.color.red,
-                        g: color.color.green,
-                        b: color.color.blue,
-                        a: color.color.alpha,
-                    });
-                    (display_range, color)
-                })
-                .collect()
-        };
+        let highlights =
+            if render_mode == DocumentColorsRenderMode::None || render_mode == DocumentColorsRenderMode::Inlay {
+                Vec::new()
+            } else {
+                self.buffer_colors
+                    .values()
+                    .flat_map(|buffer_colors| &buffer_colors.colors)
+                    .map(|(range, color, _)| {
+                        let display_range = range.clone().to_display_points(snapshot);
+                        let color = Hsla::from(Rgba {
+                            r: color.color.red,
+                            g: color.color.green,
+                            b: color.color.blue,
+                            a: color.color.alpha,
+                        });
+                        (display_range, color)
+                    })
+                    .collect()
+            };
         (render_mode, highlights)
     }
 }
@@ -176,9 +170,10 @@ impl Editor {
                 .into_iter()
                 .filter_map(|buffer| {
                     let buffer_id = buffer.read(cx).remote_id();
-                    let known_cache_version = self.colors.as_ref().and_then(|colors| {
-                        Some(colors.buffer_colors.get(&buffer_id)?.cache_version_used)
-                    });
+                    let known_cache_version = self
+                        .colors
+                        .as_ref()
+                        .and_then(|colors| Some(colors.buffer_colors.get(&buffer_id)?.cache_version_used));
                     let colors_task = lsp_store.document_colors(known_cache_version, buffer, cx)?;
                     Some(async move { (buffer_id, colors_task.await) })
                 })
@@ -191,9 +186,7 @@ impl Editor {
         }
 
         self.refresh_colors_task = cx.spawn(async move |editor, cx| {
-            cx.background_executor()
-                .timer(FETCH_COLORS_DEBOUNCE_TIMEOUT)
-                .await;
+            cx.background_executor().timer(FETCH_COLORS_DEBOUNCE_TIMEOUT).await;
 
             let all_colors = join_all(all_colors_task).await;
             if all_colors.is_empty() {
@@ -204,16 +197,9 @@ impl Editor {
                 let editor_excerpts = multi_buffer_snapshot.excerpts().fold(
                     HashMap::default(),
                     |mut acc, (excerpt_id, buffer_snapshot, excerpt_range)| {
-                        let excerpt_data = acc
-                            .entry(buffer_snapshot.remote_id())
-                            .or_insert_with(Vec::new);
-                        let excerpt_point_range =
-                            excerpt_range.context.to_point_utf16(buffer_snapshot);
-                        excerpt_data.push((
-                            excerpt_id,
-                            buffer_snapshot.clone(),
-                            excerpt_point_range,
-                        ));
+                        let excerpt_data = acc.entry(buffer_snapshot.remote_id()).or_insert_with(Vec::new);
+                        let excerpt_point_range = excerpt_range.context.to_point_utf16(buffer_snapshot);
+                        excerpt_data.push((excerpt_id, buffer_snapshot.clone(), excerpt_point_range));
                         acc
                     },
                 );
@@ -230,10 +216,9 @@ impl Editor {
                 match colors {
                     Ok(colors) => {
                         if colors.colors.is_empty() {
-                            let new_entry =
-                                new_editor_colors.entry(buffer_id).or_insert_with(|| {
-                                    (Vec::<(Range<Anchor>, DocumentColor)>::new(), None)
-                                });
+                            let new_entry = new_editor_colors
+                                .entry(buffer_id)
+                                .or_insert_with(|| (Vec::<(Range<Anchor>, DocumentColor)>::new(), None));
                             new_entry.0.clear();
                             new_entry.1 = colors.cache_version;
                         } else {
@@ -242,41 +227,32 @@ impl Editor {
                                 let color_end = point_from_lsp(color.lsp_range.end);
 
                                 for (excerpt_id, buffer_snapshot, excerpt_range) in excerpts {
-                                    if !excerpt_range.contains(&color_start.0)
-                                        || !excerpt_range.contains(&color_end.0)
+                                    if !excerpt_range.contains(&color_start.0) || !excerpt_range.contains(&color_end.0)
                                     {
                                         continue;
                                     }
-                                    let start = buffer_snapshot.anchor_before(
-                                        buffer_snapshot.clip_point_utf16(color_start, Bias::Left),
-                                    );
-                                    let end = buffer_snapshot.anchor_after(
-                                        buffer_snapshot.clip_point_utf16(color_end, Bias::Right),
-                                    );
-                                    let Some(range) = multi_buffer_snapshot
-                                        .anchor_range_in_excerpt(*excerpt_id, start..end)
+                                    let start = buffer_snapshot
+                                        .anchor_before(buffer_snapshot.clip_point_utf16(color_start, Bias::Left));
+                                    let end = buffer_snapshot
+                                        .anchor_after(buffer_snapshot.clip_point_utf16(color_end, Bias::Right));
+                                    let Some(range) =
+                                        multi_buffer_snapshot.anchor_range_in_excerpt(*excerpt_id, start..end)
                                     else {
                                         continue;
                                     };
 
-                                    let new_entry =
-                                        new_editor_colors.entry(buffer_id).or_insert_with(|| {
-                                            (Vec::<(Range<Anchor>, DocumentColor)>::new(), None)
-                                        });
+                                    let new_entry = new_editor_colors
+                                        .entry(buffer_id)
+                                        .or_insert_with(|| (Vec::<(Range<Anchor>, DocumentColor)>::new(), None));
                                     new_entry.1 = colors.cache_version;
                                     let new_buffer_colors = &mut new_entry.0;
 
-                                    let (Ok(i) | Err(i)) =
-                                        new_buffer_colors.binary_search_by(|(probe, _)| {
-                                            probe
-                                                .start
-                                                .cmp(&range.start, &multi_buffer_snapshot)
-                                                .then_with(|| {
-                                                    probe
-                                                        .end
-                                                        .cmp(&range.end, &multi_buffer_snapshot)
-                                                })
-                                        });
+                                    let (Ok(i) | Err(i)) = new_buffer_colors.binary_search_by(|(probe, _)| {
+                                        probe
+                                            .start
+                                            .cmp(&range.start, &multi_buffer_snapshot)
+                                            .then_with(|| probe.end.cmp(&range.end, &multi_buffer_snapshot))
+                                    });
                                     new_buffer_colors.insert(i, (range, color));
                                     break;
                                 }
@@ -295,8 +271,7 @@ impl Editor {
                     };
                     let mut updated = false;
                     for (buffer_id, (new_buffer_colors, new_cache_version)) in new_editor_colors {
-                        let mut new_buffer_color_inlays =
-                            Vec::with_capacity(new_buffer_colors.len());
+                        let mut new_buffer_color_inlays = Vec::with_capacity(new_buffer_colors.len());
                         let mut existing_buffer_colors = colors
                             .buffer_colors
                             .entry(buffer_id)
@@ -319,9 +294,7 @@ impl Editor {
                                             .start
                                             .cmp(&new_range.start, &multi_buffer_snapshot)
                                             .then_with(|| {
-                                                existing_range
-                                                    .end
-                                                    .cmp(&new_range.end, &multi_buffer_snapshot)
+                                                existing_range.end.cmp(&new_range.end, &multi_buffer_snapshot)
                                             }) {
                                             cmp::Ordering::Less => {
                                                 colors_splice.to_remove.push(*existing_inlay_id);
@@ -336,9 +309,7 @@ impl Editor {
                                                         *existing_inlay_id,
                                                     ));
                                                 } else {
-                                                    colors_splice
-                                                        .to_remove
-                                                        .push(*existing_inlay_id);
+                                                    colors_splice.to_remove.push(*existing_inlay_id);
 
                                                     let inlay = Inlay::color(
                                                         post_inc(&mut editor.next_color_inlay_id),
@@ -347,8 +318,7 @@ impl Editor {
                                                     );
                                                     let inlay_id = inlay.id;
                                                     colors_splice.to_insert.push(inlay);
-                                                    new_buffer_color_inlays
-                                                        .push((new_range, new_color, inlay_id));
+                                                    new_buffer_color_inlays.push((new_range, new_color, inlay_id));
                                                 }
                                                 existing_buffer_colors.next();
                                                 break;
@@ -361,8 +331,7 @@ impl Editor {
                                                 );
                                                 let inlay_id = inlay.id;
                                                 colors_splice.to_insert.push(inlay);
-                                                new_buffer_color_inlays
-                                                    .push((new_range, new_color, inlay_id));
+                                                new_buffer_color_inlays.push((new_range, new_color, inlay_id));
                                                 break;
                                             }
                                         }
@@ -375,8 +344,7 @@ impl Editor {
                                         );
                                         let inlay_id = inlay.id;
                                         colors_splice.to_insert.push(inlay);
-                                        new_buffer_color_inlays
-                                            .push((new_range, new_color, inlay_id));
+                                        new_buffer_color_inlays.push((new_range, new_color, inlay_id));
                                         break;
                                     }
                                 }
@@ -388,16 +356,10 @@ impl Editor {
                                 .to_remove
                                 .extend(existing_buffer_colors.map(|(_, _, id)| *id));
                         }
-                        updated |= colors.set_colors(
-                            buffer_id,
-                            new_buffer_color_inlays,
-                            new_cache_version,
-                        );
+                        updated |= colors.set_colors(buffer_id, new_buffer_color_inlays, new_cache_version);
                     }
 
-                    if colors.render_mode == DocumentColorsRenderMode::Inlay
-                        && !colors_splice.is_empty()
-                    {
+                    if colors.render_mode == DocumentColorsRenderMode::Inlay && !colors_splice.is_empty() {
                         editor.splice_inlays(&colors_splice.to_remove, colors_splice.to_insert, cx);
                         updated = true;
                     }

@@ -30,8 +30,7 @@ use fs::Fs;
 use gpui::BorrowAppContext;
 use gpui::Global;
 use gpui::{
-    App, AssetSource, HighlightStyle, Hsla, Refineable, SharedString, WindowAppearance,
-    WindowBackgroundAppearance,
+    App, AssetSource, HighlightStyle, Hsla, Refineable, SharedString, WindowAppearance, WindowBackgroundAppearance,
 };
 use serde::Deserialize;
 use uuid::Uuid;
@@ -47,8 +46,7 @@ pub use crate::schema::*;
 pub use crate::settings::*;
 pub use crate::styles::*;
 pub use ::settings::{
-    FontStyleContent, HighlightStyleContent, StatusColorsContent, ThemeColorsContent,
-    ThemeStyleContent,
+    FontStyleContent, HighlightStyleContent, StatusColorsContent, ThemeColorsContent, ThemeStyleContent,
 };
 
 /// The appearance of the theme.
@@ -226,8 +224,7 @@ impl ThemeFamily {
             AppearanceContent::Light => ThemeColors::light(),
             AppearanceContent::Dark => ThemeColors::dark(),
         };
-        let mut theme_colors_refinement =
-            theme_colors_refinement(&theme.style.colors, &status_colors_refinement);
+        let mut theme_colors_refinement = theme_colors_refinement(&theme.style.colors, &status_colors_refinement);
         apply_theme_color_defaults(&mut theme_colors_refinement, &refined_player_colors);
         refined_theme_colors.refine(&theme_colors_refinement);
 
@@ -245,10 +242,7 @@ impl ThemeFamily {
                 (
                     syntax_token.clone(),
                     HighlightStyle {
-                        color: highlight
-                            .color
-                            .as_ref()
-                            .and_then(|color| try_parse_color(color).ok()),
+                        color: highlight.color.as_ref().and_then(|color| try_parse_color(color).ok()),
                         background_color: highlight
                             .background_color
                             .as_ref()
@@ -401,12 +395,7 @@ pub async fn read_user_theme(theme_path: &Path, fs: Arc<dyn Fs>) -> Result<Theme
     let theme_family: ThemeFamilyContent = serde_json_lenient::from_slice(&bytes)?;
 
     for theme in &theme_family.themes {
-        if theme
-            .style
-            .colors
-            .deprecated_scrollbar_thumb_background
-            .is_some()
-        {
+        if theme.style.colors.deprecated_scrollbar_thumb_background.is_some() {
             log::warn!(
                 r#"Theme "{theme_name}" is using a deprecated style property: scrollbar_thumb.background. Use `scrollbar.thumb.background` instead."#,
                 theme_name = theme.name
@@ -418,10 +407,7 @@ pub async fn read_user_theme(theme_path: &Path, fs: Arc<dyn Fs>) -> Result<Theme
 }
 
 /// Asynchronously reads the icon theme from the specified path.
-pub async fn read_icon_theme(
-    icon_theme_path: &Path,
-    fs: Arc<dyn Fs>,
-) -> Result<IconThemeFamilyContent> {
+pub async fn read_icon_theme(icon_theme_path: &Path, fs: Arc<dyn Fs>) -> Result<IconThemeFamilyContent> {
     let bytes = fs.load_bytes(icon_theme_path).await?;
     let icon_theme_family: IconThemeFamilyContent = serde_json_lenient::from_slice(&bytes)?;
 

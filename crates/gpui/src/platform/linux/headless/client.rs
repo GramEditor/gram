@@ -7,8 +7,7 @@ use util::ResultExt;
 use crate::platform::linux::LinuxClient;
 use crate::platform::{LinuxCommon, PlatformWindow};
 use crate::{
-    AnyWindowHandle, CursorStyle, DisplayId, LinuxKeyboardLayout, PlatformDisplay,
-    PlatformKeyboardLayout, WindowParams,
+    AnyWindowHandle, CursorStyle, DisplayId, LinuxKeyboardLayout, PlatformDisplay, PlatformKeyboardLayout, WindowParams,
 };
 
 pub struct HeadlessClientState {
@@ -84,11 +83,7 @@ impl LinuxClient for HeadlessClient {
         None
     }
 
-    fn open_window(
-        &self,
-        _handle: AnyWindowHandle,
-        _params: WindowParams,
-    ) -> anyhow::Result<Box<dyn PlatformWindow>> {
+    fn open_window(&self, _handle: AnyWindowHandle, _params: WindowParams) -> anyhow::Result<Box<dyn PlatformWindow>> {
         anyhow::bail!("neither DISPLAY nor WAYLAND_DISPLAY is set. You can run in headless mode");
     }
 
@@ -115,12 +110,7 @@ impl LinuxClient for HeadlessClient {
     }
 
     fn run(&self) {
-        let mut event_loop = self
-            .0
-            .borrow_mut()
-            .event_loop
-            .take()
-            .expect("App is already running");
+        let mut event_loop = self.0.borrow_mut().event_loop.take().expect("App is already running");
 
         event_loop.run(None, &mut self.clone(), |_| {}).log_err();
     }

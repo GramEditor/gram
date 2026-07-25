@@ -8,9 +8,7 @@ use settings::{RegisterSetting, Settings};
 /// Base key bindings scheme. Base keymaps can be overridden with user keymaps.
 ///
 /// Default: VSCode
-#[derive(
-    Copy, Clone, Debug, Serialize, Deserialize, JsonSchema, PartialEq, Eq, Default, RegisterSetting,
-)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, JsonSchema, PartialEq, Eq, Default, RegisterSetting)]
 pub enum BaseKeymap {
     VSCode,
     JetBrains,

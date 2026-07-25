@@ -9,9 +9,7 @@ use language::Language;
 use project::{Fs, Project, WorktreeId};
 use settings::{Settings, SettingsStore};
 
-use crate::kernels::{
-    list_remote_kernelspecs, local_kernel_specifications, python_env_kernel_specifications,
-};
+use crate::kernels::{list_remote_kernelspecs, local_kernel_specifications, python_env_kernel_specifications};
 use crate::{JupyterSettings, KernelSpecification, Session};
 
 struct GlobalReplStore(Entity<ReplStore>);
@@ -123,9 +121,7 @@ impl ReplStore {
     ) -> Task<Result<()>> {
         let kernel_specifications = python_env_kernel_specifications(project, worktree_id, cx);
         cx.spawn(async move |this, cx| {
-            let kernel_specifications = kernel_specifications
-                .await
-                .context("getting python kernelspecs")?;
+            let kernel_specifications = kernel_specifications.await.context("getting python kernelspecs")?;
 
             this.update(cx, |this, cx| {
                 this.kernel_specifications_for_worktree
@@ -139,10 +135,7 @@ impl ReplStore {
         &self,
         cx: &mut Context<Self>,
     ) -> Option<Task<Result<Vec<KernelSpecification>>>> {
-        match (
-            std::env::var("JUPYTER_SERVER"),
-            std::env::var("JUPYTER_TOKEN"),
-        ) {
+        match (std::env::var("JUPYTER_SERVER"), std::env::var("JUPYTER_TOKEN")) {
             (Ok(server), Ok(token)) => {
                 let remote_server = RemoteServer {
                     base_url: server,
@@ -201,8 +194,7 @@ impl ReplStore {
         kernelspec: KernelSpecification,
         _cx: &mut Context<Self>,
     ) {
-        self.selected_kernel_for_worktree
-            .insert(worktree_id, kernelspec);
+        self.selected_kernel_for_worktree.insert(worktree_id, kernelspec);
     }
 
     pub fn active_kernelspec(
@@ -214,9 +206,7 @@ impl ReplStore {
         let selected_kernelspec = self.selected_kernel_for_worktree.get(&worktree_id).cloned();
 
         if let Some(language_at_cursor) = language_at_cursor {
-            selected_kernelspec.or_else(|| {
-                self.kernelspec_legacy_by_lang_only(worktree_id, language_at_cursor, cx)
-            })
+            selected_kernelspec.or_else(|| self.kernelspec_legacy_by_lang_only(worktree_id, language_at_cursor, cx))
         } else {
             selected_kernelspec
         }
@@ -281,11 +271,7 @@ impl ReplStore {
     }
 
     #[cfg(test)]
-    pub fn set_kernel_specs_for_testing(
-        &mut self,
-        specs: Vec<KernelSpecification>,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn set_kernel_specs_for_testing(&mut self, specs: Vec<KernelSpecification>, cx: &mut Context<Self>) {
         self.kernel_specifications = specs;
         cx.notify();
     }

@@ -14,10 +14,7 @@ const PACKAGE_JSON_SCHEMA: &str = include_str!("schemas/package.json");
 
 pub fn init(cx: &mut App) {
     cx.set_global(SchemaStore::default());
-    project::lsp_store::json_language_server_ext::register_schema_handler(
-        handle_schema_request,
-        cx,
-    );
+    project::lsp_store::json_language_server_ext::register_schema_handler(handle_schema_request, cx);
 
     cx.observe_new(|_, _, cx| {
         let lsp_store = cx.weak_entity();
@@ -62,21 +59,13 @@ impl SchemaStore {
             let Some(lsp_store) = lsp_store.upgrade() else {
                 return false;
             };
-            project::lsp_store::json_language_server_ext::notify_schema_changed(
-                lsp_store,
-                uri.clone(),
-                cx,
-            );
+            project::lsp_store::json_language_server_ext::notify_schema_changed(lsp_store, uri.clone(), cx);
             true
         })
     }
 }
 
-fn handle_schema_request(
-    lsp_store: Entity<LspStore>,
-    uri: String,
-    cx: &mut AsyncApp,
-) -> Task<Result<String>> {
+fn handle_schema_request(lsp_store: Entity<LspStore>, uri: String, cx: &mut AsyncApp) -> Task<Result<String>> {
     let languages = lsp_store.read_with(cx, |lsp_store, _| lsp_store.languages.clone());
     cx.spawn(async move |cx| {
         let languages = languages?;
@@ -128,13 +117,10 @@ pub async fn resolve_schema_request_inner(
                         let Some(local) = lsp_store.as_local() else {
                             return None;
                         };
-                        let Some(worktree) = local.worktree_store.read(cx).worktrees().next()
-                        else {
+                        let Some(worktree) = local.worktree_store.read(cx).worktrees().next() else {
                             return None;
                         };
-                        Some(LocalLspAdapterDelegate::from_local_lsp(
-                            local, &worktree, cx,
-                        ))
+                        Some(LocalLspAdapterDelegate::from_local_lsp(local, &worktree, cx))
                     })
                 })?
                 .context(concat!(
@@ -181,15 +167,14 @@ pub async fn resolve_schema_request_inner(
                 let icon_theme_names = icon_theme_names.as_slice();
                 let theme_names = theme_names.as_slice();
 
-                cx.global::<settings::SettingsStore>().json_schema(
-                    &settings::SettingsJsonSchemaParams {
+                cx.global::<settings::SettingsStore>()
+                    .json_schema(&settings::SettingsJsonSchemaParams {
                         language_names,
                         font_names,
                         theme_names,
                         icon_theme_names,
                         lsp_adapter_names: &lsp_adapter_names,
-                    },
-                )
+                    })
             })?
         }
         "keymap" => cx.update(settings::KeymapFile::generate_json_schema_for_registered_actions)?,
@@ -207,9 +192,8 @@ pub async fn resolve_schema_request_inner(
         }
         "tasks" => task::TaskTemplates::generate_json_schema(),
         "debug_tasks" => {
-            let adapter_schemas = cx.read_global::<dap::DapRegistry, _>(|dap_registry, _| {
-                dap_registry.adapters_schema()
-            })?;
+            let adapter_schemas =
+                cx.read_global::<dap::DapRegistry, _>(|dap_registry, _| dap_registry.adapters_schema())?;
             task::DebugTaskFile::generate_json_schema(&adapter_schemas)
         }
         "package_json" => package_json_schema(),
@@ -304,15 +288,12 @@ pub fn all_schema_file_associations(
 
     #[cfg(debug_assertions)]
     {
-        file_associations
-            .as_array_mut()
-            .unwrap()
-            .push(serde_json::json!({
-                "fileMatch": [
-                    "gram-inspector-style.json"
-                ],
-                "url": "gram://schemas/gram_inspector_style"
-            }));
+        file_associations.as_array_mut().unwrap().push(serde_json::json!({
+            "fileMatch": [
+                "gram-inspector-style.json"
+            ],
+            "url": "gram://schemas/gram_inspector_style"
+        }));
     }
 
     file_associations.as_array_mut().unwrap().extend(

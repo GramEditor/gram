@@ -3,9 +3,7 @@ use anyhow::Result;
 use objc2::{MainThreadMarker, rc::Retained};
 use objc2_app_kit::NSScreen;
 use objc2_color_sync::CGDisplayCreateUUIDFromDisplayID;
-use objc2_core_graphics::{
-    CGDirectDisplayID, CGDisplayBounds, CGError, CGGetActiveDisplayList, kCGNullDirectDisplay,
-};
+use objc2_core_graphics::{CGDirectDisplayID, CGDisplayBounds, CGError, CGGetActiveDisplayList, kCGNullDirectDisplay};
 use objc2_foundation::{NSNumber, ns_string};
 use uuid::Uuid;
 
@@ -42,11 +40,7 @@ impl MacDisplay {
             // We're assuming there aren't more than 32 displays connected to the system.
             let mut displays = Vec::with_capacity(32);
             let mut display_count = 0;
-            let result = CGGetActiveDisplayList(
-                displays.capacity() as u32,
-                displays.as_mut_ptr(),
-                &mut display_count,
-            );
+            let result = CGGetActiveDisplayList(displays.capacity() as u32, displays.as_mut_ptr(), &mut display_count);
 
             match result {
                 CGError::Success => {
@@ -90,8 +84,7 @@ impl PlatformDisplay for MacDisplay {
 
         // Convert from bottom-left origin (AppKit) to top-left origin
         let origin_y =
-            screen_frame.size.height - visible_frame.origin.y - visible_frame.size.height
-                + screen_frame.origin.y;
+            screen_frame.size.height - visible_frame.origin.y - visible_frame.size.height + screen_frame.origin.y;
 
         Bounds {
             origin: point(

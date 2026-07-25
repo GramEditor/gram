@@ -206,12 +206,7 @@ impl NodeRuntime {
         self.instance().await.binary_path()
     }
 
-    pub async fn run_npm_subcommand(
-        &self,
-        directory: &Path,
-        subcommand: &str,
-        args: &[&str],
-    ) -> Result<Output> {
+    pub async fn run_npm_subcommand(&self, directory: &Path, subcommand: &str, args: &[&str]) -> Result<Output> {
         let http = self.0.lock().await.http.clone();
         self.instance()
             .await
@@ -252,24 +247,19 @@ impl NodeRuntime {
             )
             .await?;
 
-        let mut info: NpmInfo =
-            deserialize_npm_info_from_response(&output.stdout).map_err(|e| {
-                anyhow::anyhow!(
-                    "failed to parse npm info response: {e}\nstdout: {}",
-                    String::from_utf8_lossy(&output.stdout)
-                )
-            })?;
+        let mut info: NpmInfo = deserialize_npm_info_from_response(&output.stdout).map_err(|e| {
+            anyhow::anyhow!(
+                "failed to parse npm info response: {e}\nstdout: {}",
+                String::from_utf8_lossy(&output.stdout)
+            )
+        })?;
         info.dist_tags
             .latest
             .or_else(|| info.versions.pop())
             .with_context(|| format!("no version found for npm package {name}"))
     }
 
-    pub async fn npm_install_packages(
-        &self,
-        directory: &Path,
-        packages: &[(&str, &str)],
-    ) -> Result<()> {
+    pub async fn npm_install_packages(&self, directory: &Path, packages: &[(&str, &str)]) -> Result<()> {
         if packages.is_empty() {
             return Ok(());
         }
@@ -296,15 +286,11 @@ impl NodeRuntime {
             .context("Could not read node settings")?
             .allow_npm_install
         {
-            anyhow::bail!(
-                "npm install disabled in Language Server settings: {:?}",
-                packages,
-            );
+            anyhow::bail!("npm install disabled in Language Server settings: {:?}", packages,);
         }
 
         // This is also wrong because the directory is wrong.
-        self.run_npm_subcommand(directory, "install", &arguments)
-            .await?;
+        self.run_npm_subcommand(directory, "install", &arguments).await?;
         Ok(())
     }
 
@@ -415,11 +401,8 @@ trait NodeRuntimeTrait: Send + Sync {
         args: &[&str],
     ) -> Result<Output>;
 
-    async fn npm_package_installed_version(
-        &self,
-        local_package_directory: &Path,
-        name: &str,
-    ) -> Result<Option<String>>;
+    async fn npm_package_installed_version(&self, local_package_directory: &Path, name: &str)
+    -> Result<Option<String>>;
 }
 
 #[derive(Clone)]
@@ -600,10 +583,7 @@ impl NodeRuntimeTrait for ManagedNodeRuntime {
                 smol::fs::metadata(&node_binary).await.is_ok(),
                 "missing node binary file"
             );
-            anyhow::ensure!(
-                smol::fs::metadata(&npm_file).await.is_ok(),
-                "missing npm file"
-            );
+            anyhow::ensure!(smol::fs::metadata(&npm_file).await.is_ok(), "missing npm file");
 
             let node_ca_certs = env::var(NODE_CA_CERTS_ENV_VAR).unwrap_or_else(|_| String::new());
 
@@ -612,10 +592,7 @@ impl NodeRuntimeTrait for ManagedNodeRuntime {
             command.env(NODE_CA_CERTS_ENV_VAR, node_ca_certs);
             command.arg(npm_file).arg(subcommand);
             command.args(["--cache".into(), self.installation_path.join("cache")]);
-            command.args([
-                "--userconfig".into(),
-                self.installation_path.join("blank_user_npmrc"),
-            ]);
+            command.args(["--userconfig".into(), self.installation_path.join("blank_user_npmrc")]);
             command.args([
                 "--globalconfig".into(),
                 self.installation_path.join("blank_global_npmrc"),
@@ -700,8 +677,7 @@ impl SystemNodeRuntime {
             scratch_dir,
         };
         let output = this.run_npm_subcommand(None, None, "root", &["-g"]).await?;
-        this.global_node_modules =
-            PathBuf::from(String::from_utf8_lossy(&output.stdout).to_string());
+        this.global_node_modules = PathBuf::from(String::from_utf8_lossy(&output.stdout).to_string());
 
         Ok(this)
     }
@@ -778,10 +754,7 @@ impl NodeRuntimeTrait for SystemNodeRuntime {
     }
 }
 
-pub async fn read_package_installed_version(
-    node_module_directory: PathBuf,
-    name: &str,
-) -> Result<Option<String>> {
+pub async fn read_package_installed_version(node_module_directory: PathBuf, name: &str) -> Result<Option<String>> {
     let package_json_path = node_module_directory.join(name).join("package.json");
 
     let mut file = match fs::File::open(package_json_path).await {
@@ -830,20 +803,12 @@ impl NodeRuntimeTrait for UnavailableNodeRuntime {
         bail!("{}", self.error_message)
     }
 
-    async fn npm_package_installed_version(
-        &self,
-        _local_package_directory: &Path,
-        _: &str,
-    ) -> Result<Option<String>> {
+    async fn npm_package_installed_version(&self, _local_package_directory: &Path, _: &str) -> Result<Option<String>> {
         bail!("{}", self.error_message)
     }
 }
 
-fn configure_npm_command(
-    command: &mut smol::process::Command,
-    directory: Option<&Path>,
-    proxy: Option<&Url>,
-) {
+fn configure_npm_command(command: &mut smol::process::Command, directory: Option<&Path>, proxy: Option<&Url>) {
     if let Some(directory) = directory {
         command.current_dir(directory);
         command.args(["--prefix".into(), directory.to_path_buf()]);
@@ -854,8 +819,7 @@ fn configure_npm_command(
         // NodeRuntime without environment information can not parse `localhost`
         // correctly.
         // TODO: map to `[::1]` if we are using ipv6
-        if matches!(proxy.host(), Some(Host::Domain(domain)) if domain.eq_ignore_ascii_case("localhost"))
-        {
+        if matches!(proxy.host(), Some(Host::Domain(domain)) if domain.eq_ignore_ascii_case("localhost")) {
             // When localhost is a valid Host, so is `127.0.0.1`
             let _ = proxy.set_ip_host(IpAddr::V4(Ipv4Addr::LOCALHOST));
         }
@@ -913,16 +877,9 @@ mod tests {
             let mut dummy = smol::process::Command::new("");
             let proxy = Url::parse(proxy).unwrap();
             configure_npm_command(&mut dummy, None, Some(&proxy));
-            let proxy = dummy
-                .get_args()
-                .skip_while(|&arg| arg != "--proxy")
-                .skip(1)
-                .next();
+            let proxy = dummy.get_args().skip_while(|&arg| arg != "--proxy").skip(1).next();
             let proxy = proxy.expect("Proxy was not passed to Command correctly");
-            assert_eq!(
-                proxy, mapped_proxy,
-                "Incorrectly mapped localhost to 127.0.0.1"
-            );
+            assert_eq!(proxy, mapped_proxy, "Incorrectly mapped localhost to 127.0.0.1");
         }
     }
 
@@ -937,11 +894,7 @@ mod tests {
         assert_eq!(info.dist_tags.latest, Some("3.0.0".to_string()));
         assert_eq!(
             info.versions,
-            vec![
-                "1.0.0".to_string(),
-                "2.0.0".to_string(),
-                "3.0.0".to_string(),
-            ]
+            vec!["1.0.0".to_string(), "2.0.0".to_string(), "3.0.0".to_string(),]
         );
 
         Ok(())
@@ -960,11 +913,7 @@ mod tests {
         assert_eq!(info.dist_tags.latest, Some("3.0.0".into()));
         assert_eq!(
             info.versions,
-            vec![
-                "1.0.0".to_string(),
-                "2.0.0".to_string(),
-                "3.0.0".to_string(),
-            ]
+            vec!["1.0.0".to_string(), "2.0.0".to_string(), "3.0.0".to_string(),]
         );
         Ok(())
     }

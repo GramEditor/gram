@@ -1,10 +1,5 @@
-use gpui::{
-    AnyView, Corner, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, Pixels, Point,
-    Subscription,
-};
-use ui::{
-    FluentBuilder as _, IntoElement, PopoverMenu, PopoverMenuHandle, PopoverTrigger, prelude::*,
-};
+use gpui::{AnyView, Corner, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, Pixels, Point, Subscription};
+use ui::{FluentBuilder as _, IntoElement, PopoverMenu, PopoverMenuHandle, PopoverTrigger, prelude::*};
 
 use crate::{Picker, PickerDelegate};
 
@@ -29,13 +24,7 @@ where
     TT: Fn(&mut Window, &mut App) -> AnyView + 'static,
     P: PickerDelegate,
 {
-    pub fn new(
-        picker: Entity<Picker<P>>,
-        trigger: T,
-        tooltip: TT,
-        anchor: Corner,
-        cx: &mut App,
-    ) -> Self {
+    pub fn new(picker: Entity<Picker<P>>, trigger: T, tooltip: TT, anchor: Corner, cx: &mut App) -> Self {
         Self {
             _subscriptions: vec![cx.subscribe(&picker, |picker, &DismissEvent, cx| {
                 picker.update(cx, |_, cx| cx.emit(DismissEvent));

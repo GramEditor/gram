@@ -59,11 +59,7 @@ pub fn is_possibly_enabled_level(level: log::Level) -> bool {
     level as u8 <= LEVEL_ENABLED_MAX_CONFIG.load(Ordering::Acquire)
 }
 
-pub fn is_scope_enabled(
-    scope: &ScopeRef<'_>,
-    module_path: Option<&str>,
-    level: log::Level,
-) -> bool {
+pub fn is_scope_enabled(scope: &ScopeRef<'_>, module_path: Option<&str>, level: log::Level) -> bool {
     // TODO: is_always_allowed_level that checks against LEVEL_ENABLED_MIN_CONFIG
     if !is_possibly_enabled_level(level) {
         // [FAST PATH]
@@ -153,9 +149,7 @@ fn scope_alloc_from_scope_str(scope_str: &str) -> Option<ScopeAlloc> {
         return None;
     }
     if scope_iter.next().is_some() {
-        crate::warn!(
-            "Invalid scope key, too many nested scopes: '{scope_str}'. Max depth is {SCOPE_DEPTH_MAX}",
-        );
+        crate::warn!("Invalid scope key, too many nested scopes: '{scope_str}'. Max depth is {SCOPE_DEPTH_MAX}",);
         return None;
     }
     let scope = scope_buf.map(|s| s.to_string());
@@ -190,9 +184,7 @@ impl ScopeMap {
         default_filters: &[(&str, log::LevelFilter)],
     ) -> Self {
         let mut items = Vec::<(ScopeAlloc, log::LevelFilter)>::with_capacity(
-            items_input_map.len()
-                + env_config.map_or(0, |c| c.directive_names.len())
-                + default_filters.len(),
+            items_input_map.len() + env_config.map_or(0, |c| c.directive_names.len()) + default_filters.len(),
         );
         let mut modules = Vec::with_capacity(4);
 
@@ -209,11 +201,7 @@ impl ScopeMap {
             Some((scope_str.as_str(), level_filter))
         });
 
-        let all_filters = default_filters
-            .iter()
-            .cloned()
-            .chain(env_filters)
-            .chain(new_filters);
+        let all_filters = default_filters.iter().cloned().chain(env_filters).chain(new_filters);
 
         for (scope_str, level_filter) in all_filters {
             if scope_str.contains("::") {
@@ -227,10 +215,7 @@ impl ScopeMap {
             let Some(scope) = scope_alloc_from_scope_str(scope_str) else {
                 continue;
             };
-            if let Some(idx) = items
-                .iter()
-                .position(|(scope_existing, _)| scope_existing == &scope)
-            {
+            if let Some(idx) = items.iter().position(|(scope_existing, _)| scope_existing == &scope) {
                 items[idx].1 = level_filter;
             } else {
                 items.push((scope, level_filter));
@@ -342,10 +327,7 @@ impl ScopeMap {
             let mut enabled = None;
             let mut cur_range = &map.entries[0..map.root_count];
             let mut depth = 0;
-            'search: while !cur_range.is_empty()
-                && depth < SCOPE_DEPTH_MAX
-                && scope[depth].as_ref() != ""
-            {
+            'search: while !cur_range.is_empty() && depth < SCOPE_DEPTH_MAX && scope[depth].as_ref() != "" {
                 for entry in cur_range {
                     if entry.scope == scope[depth].as_ref() {
                         enabled = entry.enabled.or(enabled);
@@ -373,8 +355,7 @@ impl ScopeMap {
 
             if !self.modules.is_empty() {
                 let crate_name = private::extract_crate_name_from_module_path(module_path);
-                let is_scope_just_crate_name =
-                    scope[0].as_ref() == crate_name && scope[1].as_ref() == "";
+                let is_scope_just_crate_name = scope[0].as_ref() == crate_name && scope[1].as_ref() == "";
                 if enabled.is_none() || is_scope_just_crate_name {
                     for (module, filter) in &self.modules {
                         if module == module_path {
@@ -414,10 +395,7 @@ mod tests {
     use super::*;
 
     fn scope_map_from_keys(kv: &[(&str, &str)]) -> ScopeMap {
-        let hash_map: HashMap<String, String> = kv
-            .iter()
-            .map(|(k, v)| (k.to_string(), v.to_string()))
-            .collect();
+        let hash_map: HashMap<String, String> = kv.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect();
         ScopeMap::new_from_settings_and_env(&hash_map, None, &[])
     }
 
@@ -550,35 +528,19 @@ mod tests {
             .to_vec();
         use log::Level;
         assert_eq!(
-            map.is_enabled(
-                &scope_from_scope_str("__unused__"),
-                Some("a::b::c"),
-                Level::Trace
-            ),
+            map.is_enabled(&scope_from_scope_str("__unused__"), Some("a::b::c"), Level::Trace),
             EnabledStatus::Enabled
         );
         assert_eq!(
-            map.is_enabled(
-                &scope_from_scope_str("__unused__"),
-                Some("a::b::d"),
-                Level::Debug
-            ),
+            map.is_enabled(&scope_from_scope_str("__unused__"), Some("a::b::d"), Level::Debug),
             EnabledStatus::Enabled
         );
         assert_eq!(
-            map.is_enabled(
-                &scope_from_scope_str("__unused__"),
-                Some("a::b::d"),
-                Level::Trace,
-            ),
+            map.is_enabled(&scope_from_scope_str("__unused__"), Some("a::b::d"), Level::Trace,),
             EnabledStatus::Disabled
         );
         assert_eq!(
-            map.is_enabled(
-                &scope_from_scope_str("__unused__"),
-                Some("a::e"),
-                Level::Info
-            ),
+            map.is_enabled(&scope_from_scope_str("__unused__"), Some("a::e"), Level::Info),
             EnabledStatus::NotConfigured
         );
         // when scope is just crate name, more specific module path overrides it
@@ -588,20 +550,13 @@ mod tests {
         );
         // but when it is scoped, the scope overrides the module path
         assert_eq!(
-            map.is_enabled(
-                &scope_from_scope_str("a.scope"),
-                Some("a::b::d"),
-                Level::Trace
-            ),
+            map.is_enabled(&scope_from_scope_str("a.scope"), Some("a::b::d"), Level::Trace),
             EnabledStatus::Enabled,
         );
     }
 
     fn scope_map_from_keys_and_env(kv: &[(&str, &str)], env: &env_config::EnvFilter) -> ScopeMap {
-        let hash_map: HashMap<String, String> = kv
-            .iter()
-            .map(|(k, v)| (k.to_string(), v.to_string()))
-            .collect();
+        let hash_map: HashMap<String, String> = kv.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect();
         ScopeMap::new_from_settings_and_env(&hash_map, Some(env), &[])
     }
 
@@ -667,10 +622,7 @@ mod tests {
         env: &env_config::EnvFilter,
         default_filters: &[(&str, log::LevelFilter)],
     ) -> ScopeMap {
-        let hash_map: HashMap<String, String> = kv
-            .iter()
-            .map(|(k, v)| (k.to_string(), v.to_string()))
-            .collect();
+        let hash_map: HashMap<String, String> = kv.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect();
         ScopeMap::new_from_settings_and_env(&hash_map, Some(env), default_filters)
     }
 
@@ -680,17 +632,15 @@ mod tests {
 
         // Default filters - these should be overridden by env and kv when they overlap
         let default_filters = &[
-            ("a.b.c", log::LevelFilter::Debug), // Should be overridden by env
-            ("p.q.r", log::LevelFilter::Info),  // Should be overridden by kv
-            ("x.y.z", log::LevelFilter::Warn),  // Not overridden
+            ("a.b.c", log::LevelFilter::Debug),                  // Should be overridden by env
+            ("p.q.r", log::LevelFilter::Info),                   // Should be overridden by kv
+            ("x.y.z", log::LevelFilter::Warn),                   // Not overridden
             ("crate::module::default", log::LevelFilter::Error), // Module in default
-            ("crate::module::user", log::LevelFilter::Off), // Module disabled in default
+            ("crate::module::user", log::LevelFilter::Off),      // Module disabled in default
         ];
 
         // Environment filters - these should override default but be overridden by kv
-        let env_filter =
-            env_config::parse("a.b.c=trace,p.q=debug,m.n.o=error,crate::module::env=debug")
-                .unwrap();
+        let env_filter = env_config::parse("a.b.c=trace,p.q=debug,m.n.o=error,crate::module::env=debug").unwrap();
 
         // Key-value filters (highest precedence) - these should override everything
         let kv_filters = &[
@@ -763,20 +713,12 @@ mod tests {
 
         // Default is used when no override exists for modules
         assert_eq!(
-            map.is_enabled(
-                &scope_new(&[""]),
-                Some("crate::module::default"),
-                Level::Error
-            ),
+            map.is_enabled(&scope_new(&[""]), Some("crate::module::default"), Level::Error),
             EnabledStatus::Enabled,
             "Default filters should work for modules"
         );
         assert_eq!(
-            map.is_enabled(
-                &scope_new(&[""]),
-                Some("crate::module::default"),
-                Level::Warn
-            ),
+            map.is_enabled(&scope_new(&[""]), Some("crate::module::default"), Level::Warn),
             EnabledStatus::Disabled,
             "Default filters correctly limit log level for modules"
         );
@@ -788,11 +730,7 @@ mod tests {
         );
 
         assert_eq!(
-            map.is_enabled(
-                &scope_new(&["crate"]),
-                Some("crate::module::user"),
-                Level::Error
-            ),
+            map.is_enabled(&scope_new(&["crate"]), Some("crate::module::user"), Level::Error),
             EnabledStatus::Disabled,
             "Module turned off in default filters is not enabled, even with crate name as scope"
         );
@@ -818,11 +756,7 @@ mod tests {
             "Module crate::module should not be affected by crate::module::default filter"
         );
         assert_eq!(
-            map.is_enabled(
-                &scope_new(&[""]),
-                Some("crate::module::default::sub"),
-                Level::Error
-            ),
+            map.is_enabled(&scope_new(&[""]), Some("crate::module::default::sub"), Level::Error),
             EnabledStatus::NotConfigured,
             "Module crate::module::default::sub should not be affected by crate::module::default filter"
         );

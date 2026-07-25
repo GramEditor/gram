@@ -3,8 +3,8 @@ use gpui::Pixels;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use settings::{
-    DockSide, ProjectPanelEntrySpacing, ProjectPanelSortMode, RegisterSetting, Settings,
-    ShowDiagnostics, ShowIndentGuides,
+    DockSide, ProjectPanelEntrySpacing, ProjectPanelSortMode, RegisterSetting, Settings, ShowDiagnostics,
+    ShowIndentGuides,
 };
 use ui::{
     px,

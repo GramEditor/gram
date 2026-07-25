@@ -1,9 +1,7 @@
 use gpui::SharedString;
 use linkify::LinkFinder;
 pub use pulldown_cmark::TagEnd as MarkdownTagEnd;
-use pulldown_cmark::{
-    Alignment, CowStr, HeadingLevel, LinkType, MetadataBlockKind, Options, Parser,
-};
+use pulldown_cmark::{Alignment, CowStr, HeadingLevel, LinkType, MetadataBlockKind, Options, Parser};
 use std::{ops::Range, sync::Arc};
 
 use collections::HashSet;
@@ -34,14 +32,10 @@ pub fn parse_markdown(
     let mut language_paths = HashSet::default();
     let mut within_link = false;
     let mut within_metadata = false;
-    let mut parser = Parser::new_ext(text, PARSE_OPTIONS)
-        .into_offset_iter()
-        .peekable();
+    let mut parser = Parser::new_ext(text, PARSE_OPTIONS).into_offset_iter().peekable();
     while let Some((pulldown_event, range)) = parser.next() {
         if within_metadata {
-            if let pulldown_cmark::Event::End(pulldown_cmark::TagEnd::MetadataBlock { .. }) =
-                pulldown_event
-            {
+            if let pulldown_cmark::Event::End(pulldown_cmark::TagEnd::MetadataBlock { .. }) = pulldown_event {
                 within_metadata = false;
             }
             continue;
@@ -67,27 +61,19 @@ pub fn parse_markdown(
                         within_metadata = true;
                         MarkdownTag::MetadataBlock(kind)
                     }
-                    pulldown_cmark::Tag::CodeBlock(pulldown_cmark::CodeBlockKind::Indented) => {
-                        MarkdownTag::CodeBlock {
-                            kind: CodeBlockKind::Indented,
-                            metadata: CodeBlockMetadata {
-                                content_range: range.clone(),
-                                line_count: 1,
-                            },
-                        }
-                    }
-                    pulldown_cmark::Tag::CodeBlock(pulldown_cmark::CodeBlockKind::Fenced(
-                        ref info,
-                    )) => {
+                    pulldown_cmark::Tag::CodeBlock(pulldown_cmark::CodeBlockKind::Indented) => MarkdownTag::CodeBlock {
+                        kind: CodeBlockKind::Indented,
+                        metadata: CodeBlockMetadata {
+                            content_range: range.clone(),
+                            line_count: 1,
+                        },
+                    },
+                    pulldown_cmark::Tag::CodeBlock(pulldown_cmark::CodeBlockKind::Fenced(ref info)) => {
                         let content_range = extract_code_block_content_range(&text[range.clone()]);
-                        let content_range =
-                            content_range.start + range.start..content_range.end + range.start;
+                        let content_range = content_range.start + range.start..content_range.end + range.start;
 
                         // Valid to use bytes since multi-byte UTF-8 doesn't use ASCII chars.
-                        let line_count = text[content_range.clone()]
-                            .bytes()
-                            .filter(|c| *c == b'\n')
-                            .count();
+                        let line_count = text[content_range.clone()].bytes().filter(|c| *c == b'\n').count();
                         let metadata = CodeBlockMetadata {
                             content_range,
                             line_count,
@@ -167,9 +153,7 @@ pub fn parse_markdown(
                     pulldown_cmark::Tag::HtmlBlock => MarkdownTag::HtmlBlock,
                     pulldown_cmark::Tag::DefinitionList => MarkdownTag::DefinitionList,
                     pulldown_cmark::Tag::DefinitionListTitle => MarkdownTag::DefinitionListTitle,
-                    pulldown_cmark::Tag::DefinitionListDefinition => {
-                        MarkdownTag::DefinitionListDefinition
-                    }
+                    pulldown_cmark::Tag::DefinitionListDefinition => MarkdownTag::DefinitionListDefinition,
                 };
                 events.push((range, MarkdownEvent::Start(tag)))
             }
@@ -180,11 +164,7 @@ pub fn parse_markdown(
                 events.push((range, MarkdownEvent::End(tag)));
             }
             pulldown_cmark::Event::Text(parsed) => {
-                fn event_for(
-                    text: &str,
-                    range: Range<usize>,
-                    str: &str,
-                ) -> (Range<usize>, MarkdownEvent) {
+                fn event_for(text: &str, range: Range<usize>, str: &str) -> (Range<usize>, MarkdownEvent) {
                     if str == &text[range.clone()] {
                         (range, MarkdownEvent::Text)
                     } else {
@@ -206,8 +186,7 @@ pub fn parse_markdown(
                 }];
 
                 while matches!(parser.peek(), Some((pulldown_cmark::Event::Text(_), _))) {
-                    let Some((pulldown_cmark::Event::Text(next_event), next_range)) = parser.next()
-                    else {
+                    let Some((pulldown_cmark::Event::Text(next_event), next_range)) = parser.next() else {
                         unreachable!()
                     };
                     let next_len = last_len + next_event.len();
@@ -219,8 +198,7 @@ pub fn parse_markdown(
                     last_len = next_len;
                 }
 
-                let mut merged_text =
-                    String::with_capacity(ranges.last().unwrap().merged_range.end);
+                let mut merged_text = String::with_capacity(ranges.last().unwrap().merged_range.end);
                 for range in &ranges {
                     merged_text.push_str(&range.parsed);
                 }
@@ -310,15 +288,12 @@ pub fn parse_markdown(
             }
             pulldown_cmark::Event::Code(_) => {
                 let content_range = extract_code_content_range(&text[range.clone()]);
-                let content_range =
-                    content_range.start + range.start..content_range.end + range.start;
+                let content_range = content_range.start + range.start..content_range.end + range.start;
                 events.push((content_range, MarkdownEvent::Code))
             }
             pulldown_cmark::Event::Html(_) => events.push((range, MarkdownEvent::Html)),
             pulldown_cmark::Event::InlineHtml(_) => events.push((range, MarkdownEvent::InlineHtml)),
-            pulldown_cmark::Event::FootnoteReference(_) => {
-                events.push((range, MarkdownEvent::FootnoteReference))
-            }
+            pulldown_cmark::Event::FootnoteReference(_) => events.push((range, MarkdownEvent::FootnoteReference)),
             pulldown_cmark::Event::SoftBreak => events.push((range, MarkdownEvent::SoftBreak)),
             pulldown_cmark::Event::HardBreak => events.push((range, MarkdownEvent::HardBreak)),
             pulldown_cmark::Event::Rule => events.push((range, MarkdownEvent::Rule)),
@@ -566,10 +541,7 @@ mod tests {
 
     #[test]
     fn wanted_and_unwanted_options_disjoint() {
-        assert_eq!(
-            PARSE_OPTIONS.intersection(UNWANTED_OPTIONS),
-            Options::empty()
-        );
+        assert_eq!(PARSE_OPTIONS.intersection(UNWANTED_OPTIONS), Options::empty());
     }
 
     #[test]

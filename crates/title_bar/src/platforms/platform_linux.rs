@@ -8,9 +8,7 @@ pub struct LinuxWindowControls {
 
 impl LinuxWindowControls {
     pub fn new(close_window_action: Box<dyn Action>) -> Self {
-        Self {
-            close_window_action,
-        }
+        Self { close_window_action }
     }
 }
 
@@ -21,11 +19,7 @@ impl RenderOnce for LinuxWindowControls {
             .px_3()
             .gap_3()
             .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
-            .child(WindowControl::new(
-                "minimize",
-                WindowControlType::Minimize,
-                cx,
-            ))
+            .child(WindowControl::new("minimize", WindowControlType::Minimize, cx))
             .child(WindowControl::new(
                 "maximize-or-restore",
                 if window.is_maximized() {
@@ -153,11 +147,7 @@ impl WindowControl {
     }
 
     #[allow(unused)]
-    pub fn custom_style(
-        id: impl Into<ElementId>,
-        icon: WindowControlType,
-        style: WindowControlStyle,
-    ) -> Self {
+    pub fn custom_style(id: impl Into<ElementId>, icon: WindowControlType, style: WindowControlStyle) -> Self {
         Self {
             id: id.into(),
             icon,

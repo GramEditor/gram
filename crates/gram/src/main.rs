@@ -25,9 +25,9 @@ use reqwest_client::ReqwestClient;
 
 use assets::Assets;
 use gram::{
-    OpenListener, OpenRequest, RawOpenRequest, app_menus, build_window_options,
-    derive_paths_with_position, handle_cli_connection, handle_keymap_file_changes,
-    handle_settings_file_changes, initialize_workspace, open_paths_with_positions,
+    OpenListener, OpenRequest, RawOpenRequest, app_menus, build_window_options, derive_paths_with_position,
+    handle_cli_connection, handle_keymap_file_changes, handle_settings_file_changes, initialize_workspace,
+    open_paths_with_positions,
 };
 use node_runtime::{NodeBinaryOptions, NodeRuntime};
 use parking_lot::Mutex;
@@ -50,8 +50,8 @@ use theme::{ActiveTheme, GlobalTheme, ThemeRegistry};
 use util::ResultExt;
 use uuid::Uuid;
 use workspace::{
-    AppState, PathList, SerializedWorkspaceLocation, Toast, Workspace, WorkspaceSettings,
-    WorkspaceStore, notifications::NotificationId,
+    AppState, PathList, SerializedWorkspaceLocation, Toast, Workspace, WorkspaceSettings, WorkspaceStore,
+    notifications::NotificationId,
 };
 
 use crate::gram::{OpenRequestKind, eager_load_active_theme_and_icon_theme};
@@ -88,33 +88,29 @@ fn files_not_created_on_launch(errors: HashMap<io::ErrorKind, Vec<&Path>>) {
         .collect::<Vec<_>>().join("\n\n");
 
     eprintln!("{message}: {error_details}");
-    Application::new()
-        .with_quit_mode(QuitMode::Explicit)
-        .run(move |cx| {
-            if let Ok(window) = cx.open_window(gpui::WindowOptions::default(), |_, cx| {
-                cx.new(|_| gpui::Empty)
-            }) {
-                window
-                    .update(cx, |_, window, cx| {
-                        let response = window.prompt(
-                            gpui::PromptLevel::Critical,
-                            message,
-                            Some(&error_details),
-                            &["Exit"],
-                            cx,
-                        );
+    Application::new().with_quit_mode(QuitMode::Explicit).run(move |cx| {
+        if let Ok(window) = cx.open_window(gpui::WindowOptions::default(), |_, cx| cx.new(|_| gpui::Empty)) {
+            window
+                .update(cx, |_, window, cx| {
+                    let response = window.prompt(
+                        gpui::PromptLevel::Critical,
+                        message,
+                        Some(&error_details),
+                        &["Exit"],
+                        cx,
+                    );
 
-                        cx.spawn_in(window, async move |_, cx| {
-                            response.await?;
-                            cx.update(|_, cx| cx.quit())
-                        })
-                        .detach_and_log_err(cx);
+                    cx.spawn_in(window, async move |_, cx| {
+                        response.await?;
+                        cx.update(|_, cx| cx.quit())
                     })
-                    .log_err();
-            } else {
-                fail_to_open_window(anyhow::anyhow!("{message}: {error_details}"), cx)
-            }
-        })
+                    .detach_and_log_err(cx);
+                })
+                .log_err();
+        } else {
+            fail_to_open_window(anyhow::anyhow!("{message}: {error_details}"), cx)
+        }
+    })
 }
 
 fn fail_to_open_window_async(e: anyhow::Error, cx: &mut AsyncApp) {
@@ -122,9 +118,7 @@ fn fail_to_open_window_async(e: anyhow::Error, cx: &mut AsyncApp) {
 }
 
 fn fail_to_open_window(e: anyhow::Error, _cx: &mut App) {
-    eprintln!(
-        "Gram failed to open a window: {e:?}. See gram://docs/linux for troubleshooting steps."
-    );
+    eprintln!("Gram failed to open a window: {e:?}. See gram://docs/linux for troubleshooting steps.");
     #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
     {
         process::exit(1);
@@ -145,13 +139,10 @@ fn fail_to_open_window(e: anyhow::Error, _cx: &mut App) {
                     notification_id,
                     Notification::new("Gram failed to launch")
                         .body(Some(
-                            format!("{e:?}. See gram://docs/linux for troubleshooting steps.")
-                                .as_str(),
+                            format!("{e:?}. See gram://docs/linux for troubleshooting steps.").as_str(),
                         ))
                         .priority(Priority::High)
-                        .icon(ashpd::desktop::Icon::with_names(&[
-                            "dialog-question-symbolic",
-                        ])),
+                        .icon(ashpd::desktop::Icon::with_names(&["dialog-question-symbolic"])),
                 )
                 .await
                 .ok();
@@ -257,15 +248,11 @@ pub fn main() {
             None => "".to_string(),
         },
     };
-    let app_commit_sha =
-        option_env!("GRAM_COMMIT_SHA").map(|commit_sha| AppCommitSha::new(commit_sha.to_string()));
+    let app_commit_sha = option_env!("GRAM_COMMIT_SHA").map(|commit_sha| AppCommitSha::new(commit_sha.to_string()));
 
     if args.system_specs {
-        let system_specs = system_specs::SystemSpecs::new_stateless(
-            app_version,
-            app_commit_sha,
-            *release_channel::RELEASE_CHANNEL,
-        );
+        let system_specs =
+            system_specs::SystemSpecs::new_stateless(app_version, app_commit_sha, *release_channel::RELEASE_CHANNEL);
         println!("Gram System Specs (from CLI):\n{}", system_specs);
         return;
     }
@@ -293,9 +280,7 @@ pub fn main() {
     let app = Application::new().with_assets(Assets);
 
     let session_id = Uuid::new_v4().to_string();
-    let session = app
-        .background_executor()
-        .spawn(Session::new(session_id.clone()));
+    let session = app.background_executor().spawn(Session::new(session_id.clone()));
 
     app.background_executor()
         .spawn(crashes::init(InitCrashHandler {
@@ -312,64 +297,52 @@ pub fn main() {
 
     let (open_listener, mut open_rx) = OpenListener::new();
 
-    let failed_single_instance_check = if std::env::var("GRAM_STATELESS").is_ok()
-        || *release_channel::RELEASE_CHANNEL == ReleaseChannel::Dev
-    {
-        false
-    } else {
-        #[cfg(any(target_os = "linux", target_os = "freebsd"))]
-        {
-            crate::gram::listen_for_cli_connections(open_listener.clone()).is_err()
-        }
+    let failed_single_instance_check =
+        if std::env::var("GRAM_STATELESS").is_ok() || *release_channel::RELEASE_CHANNEL == ReleaseChannel::Dev {
+            false
+        } else {
+            #[cfg(any(target_os = "linux", target_os = "freebsd"))]
+            {
+                crate::gram::listen_for_cli_connections(open_listener.clone()).is_err()
+            }
 
-        #[cfg(target_os = "windows")]
-        {
-            !crate::gram::windows_only_instance::handle_single_instance(
-                open_listener.clone(),
-                &args,
-            )
-        }
+            #[cfg(target_os = "windows")]
+            {
+                !crate::gram::windows_only_instance::handle_single_instance(open_listener.clone(), &args)
+            }
 
-        #[cfg(target_os = "macos")]
-        {
-            use gram::mac_only_instance::*;
-            ensure_only_instance() != IsOnlyInstance::Yes
-        }
-    };
+            #[cfg(target_os = "macos")]
+            {
+                use gram::mac_only_instance::*;
+                ensure_only_instance() != IsOnlyInstance::Yes
+            }
+        };
     if failed_single_instance_check {
         println!("gram is already running");
         return;
     }
 
     let git_hosting_provider_registry = Arc::new(GitHostingProviderRegistry::new());
-    let git_binary_path =
-        if cfg!(target_os = "macos") && option_env!("GRAM_BUNDLE").as_deref() == Some("true") {
-            app.path_for_auxiliary_executable("git")
-                .context("could not find git binary path")
-                .log_err()
-        } else {
-            None
-        };
+    let git_binary_path = if cfg!(target_os = "macos") && option_env!("GRAM_BUNDLE").as_deref() == Some("true") {
+        app.path_for_auxiliary_executable("git")
+            .context("could not find git binary path")
+            .log_err()
+    } else {
+        None
+    };
     if let Some(git_binary_path) = &git_binary_path {
         log::info!("Using git binary path: {:?}", git_binary_path);
     }
 
     let fs = Arc::new(RealFs::new(git_binary_path, app.background_executor()));
-    let user_settings_file_rx = watch_config_file(
-        &app.background_executor(),
-        fs.clone(),
-        paths::settings_file().clone(),
-    );
+    let user_settings_file_rx =
+        watch_config_file(&app.background_executor(), fs.clone(), paths::settings_file().clone());
     let global_settings_file_rx = watch_config_file(
         &app.background_executor(),
         fs.clone(),
         paths::global_settings_file().clone(),
     );
-    let user_keymap_file_rx = watch_config_file(
-        &app.background_executor(),
-        fs.clone(),
-        paths::keymap_file().clone(),
-    );
+    let user_keymap_file_rx = watch_config_file(&app.background_executor(), fs.clone(), paths::keymap_file().clone());
 
     let (shell_env_loaded_tx, shell_env_loaded_rx) = oneshot::channel();
     if !stdout_is_a_pty() {
@@ -395,8 +368,7 @@ pub fn main() {
         }
     });
     app.on_reopen(move |cx| {
-        if let Some(app_state) = AppState::try_global(cx).and_then(|app_state| app_state.upgrade())
-        {
+        if let Some(app_state) = AppState::try_global(cx).and_then(|app_state| app_state.upgrade()) {
             cx.spawn({
                 let app_state = app_state;
                 async move |cx| {
@@ -433,8 +405,7 @@ pub fn main() {
         let http = {
             let _guard = Tokio::handle(cx).enter();
 
-            ReqwestClient::proxy_and_user_agent(proxy_url, &user_agent)
-                .expect("could not start HTTP client")
+            ReqwestClient::proxy_and_user_agent(proxy_url, &user_agent).expect("could not start HTTP client")
         };
         cx.set_http_client(Arc::new(http));
 
@@ -494,9 +465,7 @@ pub fn main() {
                             .workspaces()
                             .iter()
                             .map(|workspace| {
-                                workspace.update(cx, |workspace, _, cx| {
-                                    workspace.project().read(cx).lsp_store()
-                                })
+                                workspace.update(cx, |workspace, _, cx| workspace.project().read(cx).lsp_store())
                             })
                             .collect()
                     })
@@ -604,17 +573,11 @@ pub fn main() {
                         .ok();
                 }
 
-                cx.set_text_rendering_mode(
-                    match WorkspaceSettings::get_global(cx).text_rendering_mode {
-                        settings::TextRenderingMode::PlatformDefault => {
-                            gpui::TextRenderingMode::PlatformDefault
-                        }
-                        settings::TextRenderingMode::Subpixel => gpui::TextRenderingMode::Subpixel,
-                        settings::TextRenderingMode::Grayscale => {
-                            gpui::TextRenderingMode::Grayscale
-                        }
-                    },
-                );
+                cx.set_text_rendering_mode(match WorkspaceSettings::get_global(cx).text_rendering_mode {
+                    settings::TextRenderingMode::PlatformDefault => gpui::TextRenderingMode::PlatformDefault,
+                    settings::TextRenderingMode::Subpixel => gpui::TextRenderingMode::Subpixel,
+                    settings::TextRenderingMode::Grayscale => gpui::TextRenderingMode::Grayscale,
+                });
             }
         })
         .detach();
@@ -638,11 +601,7 @@ pub fn main() {
 
         cx.activate();
 
-        let urls: Vec<_> = args
-            .paths_or_urls
-            .iter()
-            .map(|arg| parse_url_arg(arg, cx))
-            .collect();
+        let urls: Vec<_> = args.paths_or_urls.iter().map(|arg| parse_url_arg(arg, cx)).collect();
 
         let diff_paths: Vec<[String; 2]> = args
             .diff
@@ -656,11 +615,7 @@ pub fn main() {
         let wsl = None;
 
         if !urls.is_empty() || !diff_paths.is_empty() {
-            open_listener.open(RawOpenRequest {
-                urls,
-                diff_paths,
-                wsl,
-            })
+            open_listener.open(RawOpenRequest { urls, diff_paths, wsl })
         }
 
         if let Ok(recv) = open_rx.try_recv()
@@ -706,8 +661,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
             }
             OpenRequestKind::Extension { extension_id } => {
                 cx.spawn(async move |cx| {
-                    let workspace =
-                        workspace::get_any_active_workspace(app_state, cx.clone()).await?;
+                    let workspace = workspace::get_any_active_workspace(app_state, cx.clone()).await?;
                     workspace.update(cx, |_, window, cx| {
                         window.dispatch_action(
                             Box::new(app_actions::Extensions {
@@ -729,21 +683,17 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                         let res = async move {
                             let json = app_state.languages.language_for_name("JSONC").await.ok();
                             let lsp_store = workspace.update(cx, |workspace, cx| {
-                                workspace
-                                    .project()
-                                    .update(cx, |project, _| project.lsp_store())
+                                workspace.project().update(cx, |project, _| project.lsp_store())
                             })?;
-                            let json_schema_content =
-                                json_schema_store::resolve_schema_request_inner(
-                                    &app_state.languages,
-                                    lsp_store,
-                                    &schema_path,
-                                    cx,
-                                )
-                                .await?;
-                            let json_schema_content =
-                                serde_json::to_string_pretty(&json_schema_content)
-                                    .context("Failed to serialize JSON Schema as JSON")?;
+                            let json_schema_content = json_schema_store::resolve_schema_request_inner(
+                                &app_state.languages,
+                                lsp_store,
+                                &schema_path,
+                                cx,
+                            )
+                            .await?;
+                            let json_schema_content = serde_json::to_string_pretty(&json_schema_content)
+                                .context("Failed to serialize JSON Schema as JSON")?;
                             let buffer_task = workspace.update(cx, |workspace, cx| {
                                 workspace
                                     .project()
@@ -756,17 +706,12 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                                 buffer.update(cx, |buffer, cx| {
                                     buffer.set_language(json, cx);
                                     buffer.edit([(0..0, json_schema_content)], None, cx);
-                                    buffer.edit(
-                                        [(0..0, format!("// {} JSON Schema\n", schema_path))],
-                                        None,
-                                        cx,
-                                    );
+                                    buffer.edit([(0..0, format!("// {} JSON Schema\n", schema_path))], None, cx);
                                 });
 
                                 workspace.add_item_to_active_pane(
                                     Box::new(cx.new(|cx| {
-                                        let mut editor =
-                                            editor::Editor::for_buffer(buffer, None, window, cx);
+                                        let mut editor = editor::Editor::for_buffer(buffer, None, window, cx);
                                         editor.set_read_only(true);
                                         editor
                                     })),
@@ -785,8 +730,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
             }
             OpenRequestKind::Docs { path } => {
                 cx.spawn(async move |cx| {
-                    let workspace =
-                        workspace::get_any_active_workspace(app_state, cx.clone()).await?;
+                    let workspace = workspace::get_any_active_workspace(app_state, cx.clone()).await?;
                     workspace.update(cx, |_, window, cx| {
                         window.dispatch_action(Box::new(app_actions::OpenDocsAt { path }), cx)
                     })
@@ -795,11 +739,9 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
             }
             OpenRequestKind::Keybinding { action } => {
                 cx.spawn(async move |cx| {
-                    let workspace =
-                        workspace::get_any_active_workspace(app_state, cx.clone()).await?;
+                    let workspace = workspace::get_any_active_workspace(app_state, cx.clone()).await?;
                     workspace.update(cx, |_, window, cx| {
-                        window
-                            .dispatch_action(Box::new(app_actions::ChangeKeybinding { action }), cx)
+                        window.dispatch_action(Box::new(app_actions::ChangeKeybinding { action }), cx)
                     })
                 })
                 .detach_and_log_err(cx);
@@ -810,15 +752,13 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                 // languages.$(language).tab_size
                 // [ languages $(language) tab_size]
                 cx.spawn(async move |cx| {
-                    let workspace =
-                        workspace::get_any_active_workspace(app_state, cx.clone()).await?;
+                    let workspace = workspace::get_any_active_workspace(app_state, cx.clone()).await?;
 
                     workspace.update(cx, |_, window, cx| match setting_path {
                         None => window.dispatch_action(Box::new(app_actions::OpenSettings), cx),
-                        Some(setting_path) => window.dispatch_action(
-                            Box::new(app_actions::OpenSettingsAt { path: setting_path }),
-                            cx,
-                        ),
+                        Some(setting_path) => {
+                            window.dispatch_action(Box::new(app_actions::OpenSettingsAt { path: setting_path }), cx)
+                        }
                     })
                 })
                 .detach_and_log_err(cx);
@@ -873,8 +813,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
 
                     workspace
                         .update(cx, |workspace, window, cx| {
-                            let Some(repo) = workspace.project().read(cx).active_repository(cx)
-                            else {
+                            let Some(repo) = workspace.project().read(cx).active_repository(cx) else {
                                 log::error!("no active repository found for commit view");
                                 return Err(anyhow::anyhow!("no active repository found"));
                             };
@@ -921,8 +860,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
     if !request.open_paths.is_empty() || !request.diff_paths.is_empty() {
         let app_state = app_state.clone();
         task = Some(cx.spawn(async move |cx| {
-            let paths_with_position =
-                derive_paths_with_position(app_state.fs.as_ref(), request.open_paths).await;
+            let paths_with_position = derive_paths_with_position(app_state.fs.as_ref(), request.open_paths).await;
             let (_window, results) = open_paths_with_positions(
                 &paths_with_position,
                 &request.diff_paths,
@@ -964,12 +902,7 @@ async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp
                     let app_state = app_state.clone();
                     let task = cx.spawn(async move |cx| {
                         let open_task = cx.update(|cx| {
-                            workspace::open_paths(
-                                &paths.paths(),
-                                app_state,
-                                workspace::OpenOptions::default(),
-                                cx,
-                            )
+                            workspace::open_paths(&paths.paths(), app_state, workspace::OpenOptions::default(), cx)
                         })?;
                         open_task.await.map(|_| ())
                     });
@@ -985,10 +918,7 @@ async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp
                 SerializedWorkspaceLocation::Remote(mut connection_options) => {
                     let app_state = app_state.clone();
                     if let RemoteConnectionOptions::Ssh(options) = &mut connection_options {
-                        cx.update(|cx| {
-                            SshSettings::get_global(cx)
-                                .fill_connection_options_from_settings(options)
-                        })?;
+                        cx.update(|cx| SshSettings::get_global(cx).fill_connection_options_from_settings(options))?;
                     }
                     let task = cx.spawn(async move |cx| {
                         recent_projects::open_remote_project(
@@ -1022,10 +952,7 @@ async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp
             let message = if error_count == 1 {
                 "Failed to restore 1 workspace. Check logs for details.".to_string()
             } else {
-                format!(
-                    "Failed to restore {} workspaces. Check logs for details.",
-                    error_count
-                )
+                format!("Failed to restore {} workspaces. Check logs for details.", error_count)
             };
 
             // Try to find an active workspace to show the toast
@@ -1036,10 +963,7 @@ async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp
                     {
                         workspace
                             .update(cx, |workspace, _, cx| {
-                                workspace.show_toast(
-                                    Toast::new(NotificationId::unique::<()>(), message),
-                                    cx,
-                                )
+                                workspace.show_toast(Toast::new(NotificationId::unique::<()>(), message), cx)
                             })
                             .ok();
                         return true;
@@ -1060,20 +984,15 @@ async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp
         cx.update(|cx| show_onboarding_view(app_state, cx))?.await?;
     } else {
         cx.update(|cx| {
-            workspace::open_new(
-                Default::default(),
-                app_state,
-                cx,
-                |workspace, window, cx| {
-                    let restore_on_startup = WorkspaceSettings::get_global(cx).restore_on_startup;
-                    match restore_on_startup {
-                        workspace::RestoreOnStartupBehavior::Launchpad => {}
-                        _ => {
-                            Editor::new_file(workspace, &Default::default(), window, cx);
-                        }
+            workspace::open_new(Default::default(), app_state, cx, |workspace, window, cx| {
+                let restore_on_startup = WorkspaceSettings::get_global(cx).restore_on_startup;
+                match restore_on_startup {
+                    workspace::RestoreOnStartupBehavior::Launchpad => {}
+                    _ => {
+                        Editor::new_file(workspace, &Default::default(), window, cx);
                     }
-                },
-            )
+                }
+            })
         })?
         .await?;
     }
@@ -1101,30 +1020,21 @@ pub(crate) async fn restorable_workspace_locations(
         })
         .ok()?;
 
-    if last_session_id.is_none()
-        && matches!(
-            restore_behavior,
-            workspace::RestoreOnStartupBehavior::LastSession
-        )
-    {
+    if last_session_id.is_none() && matches!(restore_behavior, workspace::RestoreOnStartupBehavior::LastSession) {
         restore_behavior = workspace::RestoreOnStartupBehavior::LastWorkspace;
     }
 
     match restore_behavior {
-        workspace::RestoreOnStartupBehavior::LastWorkspace => {
-            workspace::last_opened_workspace_location()
-                .await
-                .map(|location| vec![location])
-        }
+        workspace::RestoreOnStartupBehavior::LastWorkspace => workspace::last_opened_workspace_location()
+            .await
+            .map(|location| vec![location]),
         workspace::RestoreOnStartupBehavior::LastSession => {
             if let Some(last_session_id) = last_session_id {
                 let ordered = last_session_window_stack.is_some();
 
-                let mut locations = workspace::last_session_workspace_locations(
-                    &last_session_id,
-                    last_session_window_stack,
-                )
-                .filter(|locations| !locations.is_empty());
+                let mut locations =
+                    workspace::last_session_workspace_locations(&last_session_id, last_session_window_stack)
+                        .filter(|locations| !locations.is_empty());
 
                 // Since last_session_window_order returns the windows ordered front-to-back
                 // we need to open the window that was frontmost last.
@@ -1283,9 +1193,7 @@ fn load_embedded_fonts(cx: &App) {
         }
     }));
 
-    cx.text_system()
-        .add_fonts(embedded_fonts.into_inner())
-        .unwrap();
+    cx.text_system().add_fonts(embedded_fonts.into_inner()).unwrap();
 }
 
 /// Spawns a background task to load the user themes from the themes directory.
@@ -1295,20 +1203,14 @@ fn load_user_themes_in_background(fs: Arc<dyn fs::Fs>, cx: &mut App) {
         async move |cx| {
             if let Some(theme_registry) = cx.update(|cx| ThemeRegistry::global(cx)).log_err() {
                 let themes_dir = paths::themes_dir().as_ref();
-                match fs
-                    .metadata(themes_dir)
-                    .await
-                    .ok()
-                    .flatten()
-                    .map(|m| m.is_dir)
-                {
+                match fs.metadata(themes_dir).await.ok().flatten().map(|m| m.is_dir) {
                     Some(is_dir) => {
                         anyhow::ensure!(is_dir, "Themes dir path {themes_dir:?} is not a directory")
                     }
                     None => {
-                        fs.create_dir(themes_dir).await.with_context(|| {
-                            format!("Failed to create themes dir at path {themes_dir:?}")
-                        })?;
+                        fs.create_dir(themes_dir)
+                            .await
+                            .with_context(|| format!("Failed to create themes dir at path {themes_dir:?}"))?;
                     }
                 }
                 theme_registry.load_user_themes(themes_dir, fs).await?;
@@ -1336,12 +1238,8 @@ fn watch_themes(fs: Arc<dyn fs::Fs>, cx: &mut App) {
             for event in paths {
                 log::info!("Trying to load theme from {:?}", event);
                 if fs.metadata(&event.path).await.ok().flatten().is_some()
-                    && let Some(theme_registry) =
-                        cx.update(|cx| ThemeRegistry::global(cx)).log_err()
-                    && let Some(()) = theme_registry
-                        .load_user_theme(&event.path, fs.clone())
-                        .await
-                        .log_err()
+                    && let Some(theme_registry) = cx.update(|cx| ThemeRegistry::global(cx)).log_err()
+                    && let Some(()) = theme_registry.load_user_theme(&event.path, fs.clone()).await.log_err()
                 {
                     cx.update(GlobalTheme::reload_theme).log_err();
                 }
@@ -1430,9 +1328,7 @@ fn check_for_conpty_dll() {
 
     if let Ok(hmodule) = unsafe { LoadLibraryW(w!("conpty.dll")) } {
         unsafe {
-            FreeLibrary(hmodule)
-                .context("Failed to free conpty.dll")
-                .log_err();
+            FreeLibrary(hmodule).context("Failed to free conpty.dll").log_err();
         }
     } else {
         log::warn!("Failed to load conpty.dll. Terminal will work with reduced functionality.");

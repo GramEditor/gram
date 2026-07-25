@@ -105,11 +105,10 @@ async fn test_module_list(executor: BackgroundExecutor, cx: &mut TestAppContext)
 
     cx.run_until_parked();
 
-    let running_state =
-        active_debug_session_panel(workspace, cx).update_in(cx, |item, window, cx| {
-            cx.focus_self(window);
-            item.running_state().clone()
-        });
+    let running_state = active_debug_session_panel(workspace, cx).update_in(cx, |item, window, cx| {
+        cx.focus_self(window);
+        item.running_state().clone()
+    });
 
     running_state.update_in(cx, |this, window, cx| {
         this.activate_item(DebuggerPaneItem::Modules, window, cx);

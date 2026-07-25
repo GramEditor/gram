@@ -80,9 +80,7 @@ type MemoryAddress = u64;
 pub(super) struct PageAddress(u64);
 
 impl PageAddress {
-    pub(super) fn iter_range(
-        range: RangeInclusive<PageAddress>,
-    ) -> impl Iterator<Item = PageAddress> {
+    pub(super) fn iter_range(range: RangeInclusive<PageAddress>) -> impl Iterator<Item = PageAddress> {
         let mut current = range.start().0;
         let end = range.end().0;
 
@@ -114,9 +112,7 @@ impl Memory {
         }
     }
 
-    pub(super) fn memory_range_to_page_range(
-        range: RangeInclusive<MemoryAddress>,
-    ) -> RangeInclusive<PageAddress> {
+    pub(super) fn memory_range_to_page_range(range: RangeInclusive<MemoryAddress>) -> RangeInclusive<PageAddress> {
         let start_page = (range.start() / PAGE_SIZE) * PAGE_SIZE;
         let end_page = (range.end() / PAGE_SIZE) * PAGE_SIZE;
         PageAddress(start_page)..=PageAddress(end_page)
@@ -247,15 +243,10 @@ fn page_contents_into_iter(data: Arc<MappedPageContents>) -> Box<dyn Iterator<It
                 PageChunk::Mapped(items) => {
                     let chunk_range = 0..items.len();
                     let items = items.clone();
-                    Box::new(
-                        chunk_range
-                            .into_iter()
-                            .map(move |ix| MemoryCell(Some(items[ix]))),
-                    ) as Box<dyn Iterator<Item = MemoryCell>>
+                    Box::new(chunk_range.into_iter().map(move |ix| MemoryCell(Some(items[ix]))))
+                        as Box<dyn Iterator<Item = MemoryCell>>
                 }
-                PageChunk::Unmapped(len) => {
-                    Box::new(std::iter::repeat_n(MemoryCell(None), *len as usize))
-                }
+                PageChunk::Unmapped(len) => Box::new(std::iter::repeat_n(MemoryCell(None), *len as usize)),
             }
         })
     })
@@ -273,10 +264,7 @@ pub struct MemoryIterator {
 }
 
 impl MemoryIterator {
-    fn new(
-        range: RangeInclusive<MemoryAddress>,
-        pages: std::vec::IntoIter<(PageAddress, PageContents)>,
-    ) -> Self {
+    fn new(range: RangeInclusive<MemoryAddress>, pages: std::vec::IntoIter<(PageAddress, PageContents)>) -> Self {
         Self {
             start: *range.start(),
             end: *range.end(),
@@ -288,9 +276,7 @@ impl MemoryIterator {
         if let Some((mut address, chunk)) = self.pages.next() {
             let mut contents = match chunk {
                 PageContents::Unmapped => None,
-                PageContents::Mapped(mapped_page_contents) => {
-                    Some(page_contents_into_iter(mapped_page_contents))
-                }
+                PageContents::Mapped(mapped_page_contents) => Some(page_contents_into_iter(mapped_page_contents)),
             };
 
             if address.0 < self.start {
@@ -375,9 +361,7 @@ mod tests {
             vec![(PageAddress(0), PageContents::mapped((0..255).collect()))].into_iter(),
         );
         let actual = partial_iter.collect::<Vec<_>>();
-        let expected = (20..=30)
-            .map(|val| MemoryCell(Some(val)))
-            .collect::<Vec<_>>();
+        let expected = (20..=30).map(|val| MemoryCell(Some(val))).collect::<Vec<_>>();
         assert_eq!(actual.len(), expected.len());
         assert_eq!(actual, expected);
     }

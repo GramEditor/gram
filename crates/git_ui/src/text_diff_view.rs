@@ -5,8 +5,8 @@ use buffer_diff::BufferDiff;
 use editor::{Editor, EditorEvent, MultiBuffer, ToPoint, actions::DiffClipboardWithSelectionData};
 use futures::{FutureExt, select_biased};
 use gpui::{
-    AnyElement, App, AppContext as _, AsyncApp, Context, Entity, EventEmitter, FocusHandle,
-    Focusable, IntoElement, Render, Task, Window,
+    AnyElement, App, AppContext as _, AsyncApp, Context, Entity, EventEmitter, FocusHandle, Focusable, IntoElement,
+    Render, Task, Window,
 };
 use language::{self, Buffer, Point};
 use project::Project;
@@ -79,9 +79,7 @@ impl TextDiffView {
 
         source_editor.update(cx, |source_editor, cx| {
             source_editor.change_selections(Default::default(), window, cx, |s| {
-                s.select_ranges(vec![
-                    expanded_selection_range.start..expanded_selection_range.end,
-                ]);
+                s.select_ranges(vec![expanded_selection_range.start..expanded_selection_range.end]);
             })
         });
 
@@ -94,12 +92,8 @@ impl TextDiffView {
 
         let workspace = workspace.weak_handle();
         let diff_buffer = cx.new(|cx| BufferDiff::new(&source_buffer_snapshot.text, cx));
-        let clipboard_buffer = build_clipboard_buffer(
-            clipboard_text,
-            &source_buffer,
-            expanded_selection_range.clone(),
-            cx,
-        );
+        let clipboard_buffer =
+            build_clipboard_buffer(clipboard_text, &source_buffer, expanded_selection_range.clone(), cx);
 
         let task = window.spawn(cx, async move |cx| {
             let project = workspace.update(cx, |workspace, _| workspace.project().clone())?;
@@ -145,11 +139,7 @@ impl TextDiffView {
         let multibuffer = cx.new(|cx| {
             let mut multibuffer = MultiBuffer::new(language::Capability::ReadWrite);
 
-            multibuffer.push_excerpts(
-                source_buffer.clone(),
-                [editor::ExcerptRange::new(source_range)],
-                cx,
-            );
+            multibuffer.push_excerpts(source_buffer.clone(), [editor::ExcerptRange::new(source_range)], cx);
 
             multibuffer.add_diff(diff_buffer.clone(), cx);
             multibuffer
@@ -159,10 +149,7 @@ impl TextDiffView {
             editor.start_temporary_diff_override();
             editor.disable_diagnostics(cx);
             editor.set_expand_all_diff_hunks(cx);
-            editor.set_render_diff_hunk_controls(
-                Arc::new(|_, _, _, _, _, _, _, _| gpui::Empty.into_any_element()),
-                cx,
-            );
+            editor.set_render_diff_hunk_controls(Arc::new(|_, _, _, _, _, _, _, _| gpui::Empty.into_any_element()), cx);
             editor
         });
 
@@ -209,10 +196,7 @@ impl TextDiffView {
             _recalculate_diff_task: cx.spawn(async move |_, cx| {
                 while buffer_changes_rx.recv().await.is_ok() {
                     loop {
-                        let mut timer = cx
-                            .background_executor()
-                            .timer(RECALCULATE_DIFF_DEBOUNCE)
-                            .fuse();
+                        let mut timer = cx.background_executor().timer(RECALCULATE_DIFF_DEBOUNCE).fuse();
                         let mut recv = pin!(buffer_changes_rx.recv().fuse());
                         select_biased! {
                             _ = timer => break,
@@ -300,11 +284,7 @@ impl Item for TextDiffView {
 
     fn tab_content(&self, params: TabContentParams, _window: &Window, cx: &App) -> AnyElement {
         Label::new(self.tab_content_text(params.detail.unwrap_or_default(), cx))
-            .color(if params.selected {
-                Color::Default
-            } else {
-                Color::Muted
-            })
+            .color(if params.selected { Color::Default } else { Color::Muted })
             .into_any_element()
     }
 
@@ -321,8 +301,7 @@ impl Item for TextDiffView {
     }
 
     fn deactivated(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        self.diff_editor
-            .update(cx, |editor, cx| editor.deactivated(window, cx));
+        self.diff_editor.update(cx, |editor, cx| editor.deactivated(window, cx));
     }
 
     fn act_as_type<'a>(
@@ -344,31 +323,17 @@ impl Item for TextDiffView {
         Some(Box::new(self.diff_editor.clone()))
     }
 
-    fn for_each_project_item(
-        &self,
-        cx: &App,
-        f: &mut dyn FnMut(gpui::EntityId, &dyn project::ProjectItem),
-    ) {
+    fn for_each_project_item(&self, cx: &App, f: &mut dyn FnMut(gpui::EntityId, &dyn project::ProjectItem)) {
         self.diff_editor.for_each_project_item(cx, f)
     }
 
-    fn set_nav_history(
-        &mut self,
-        nav_history: ItemNavHistory,
-        _: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn set_nav_history(&mut self, nav_history: ItemNavHistory, _: &mut Window, cx: &mut Context<Self>) {
         self.diff_editor.update(cx, |editor, _| {
             editor.set_nav_history(Some(nav_history));
         });
     }
 
-    fn navigate(
-        &mut self,
-        data: Box<dyn Any>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> bool {
+    fn navigate(&mut self, data: Box<dyn Any>, window: &mut Window, cx: &mut Context<Self>) -> bool {
         self.diff_editor
             .update(cx, |editor, cx| editor.navigate(data, window, cx))
     }
@@ -381,15 +346,9 @@ impl Item for TextDiffView {
         self.diff_editor.breadcrumbs(theme, cx)
     }
 
-    fn added_to_workspace(
-        &mut self,
-        workspace: &mut Workspace,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        self.diff_editor.update(cx, |editor, cx| {
-            editor.added_to_workspace(workspace, window, cx)
-        });
+    fn added_to_workspace(&mut self, workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Self>) {
+        self.diff_editor
+            .update(cx, |editor, cx| editor.added_to_workspace(workspace, window, cx));
     }
 
     fn can_save(&self, cx: &App) -> bool {
@@ -464,9 +423,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_diffing_clipboard_against_empty_selection_uses_full_buffer_selection(
-        cx: &mut TestAppContext,
-    ) {
+    async fn test_diffing_clipboard_against_empty_selection_uses_full_buffer_selection(cx: &mut TestAppContext) {
         base_test(
             path!("/test"),
             path!("/test/text.txt"),
@@ -487,9 +444,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_diffing_clipboard_against_multiline_selection_expands_to_full_lines(
-        cx: &mut TestAppContext,
-    ) {
+    async fn test_diffing_clipboard_against_multiline_selection_expands_to_full_lines(cx: &mut TestAppContext) {
         base_test(
             path!("/test"),
             path!("/test/text.txt"),
@@ -662,11 +617,7 @@ mod tests {
     ) {
         init_test(cx);
 
-        let file_name = std::path::Path::new(file_path)
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap();
+        let file_name = std::path::Path::new(file_path).file_name().unwrap().to_str().unwrap();
 
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(
@@ -679,8 +630,7 @@ mod tests {
 
         let project = Project::test(fs, [project_root.as_ref()], cx).await;
 
-        let (workspace, cx) =
-            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
 
         let buffer = project
             .update(cx, |project, cx| project.open_local_buffer(file_path, cx))
@@ -728,10 +678,7 @@ mod tests {
 
         diff_view.read_with(cx, |diff_view, cx| {
             assert_eq!(diff_view.tab_content_text(0, cx), expected_tab_title);
-            assert_eq!(
-                diff_view.tab_tooltip_text(cx).unwrap(),
-                expected_tab_tooltip
-            );
+            assert_eq!(diff_view.tab_tooltip_text(cx).unwrap(), expected_tab_tooltip);
         });
     }
 }

@@ -27,13 +27,7 @@ impl AssetSource for Assets {
 
     fn list(&self, path: &str) -> Result<Vec<SharedString>> {
         Ok(Self::iter()
-            .filter_map(|p| {
-                if p.starts_with(path) {
-                    Some(p.into())
-                } else {
-                    None
-                }
-            })
+            .filter_map(|p| if p.starts_with(path) { Some(p.into()) } else { None })
             .collect())
     }
 }
@@ -58,9 +52,7 @@ impl Assets {
 
     pub fn load_test_fonts(&self, cx: &App) {
         cx.text_system()
-            .add_fonts(vec![
-                self.load("fonts/myna/Myna-Regular.ttf").unwrap().unwrap(),
-            ])
+            .add_fonts(vec![self.load("fonts/myna/Myna-Regular.ttf").unwrap().unwrap()])
             .unwrap()
     }
 }
@@ -80,13 +72,7 @@ impl AssetSource for Docs {
 
     fn list(&self, path: &str) -> Result<Vec<SharedString>> {
         Ok(Self::iter()
-            .filter_map(|p| {
-                if p.starts_with(path) {
-                    Some(p.into())
-                } else {
-                    None
-                }
-            })
+            .filter_map(|p| if p.starts_with(path) { Some(p.into()) } else { None })
             .collect())
     }
 }

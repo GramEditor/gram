@@ -2,8 +2,8 @@ use file_finder::file_finder_settings::FileFinderSettings;
 use file_icons::FileIcons;
 use fuzzy::{StringMatch, StringMatchCandidate, match_strings};
 use gpui::{
-    App, Context, DismissEvent, Entity, EventEmitter, Focusable, ParentElement, Render, Styled,
-    WeakEntity, Window, actions,
+    App, Context, DismissEvent, Entity, EventEmitter, Focusable, ParentElement, Render, Styled, WeakEntity, Window,
+    actions,
 };
 use language::{LanguageMatcher, LanguageName, LanguageRegistry};
 use paths::snippets_dir;
@@ -87,12 +87,7 @@ fn configure_snippets(
     });
 }
 
-fn open_folder(
-    workspace: &mut Workspace,
-    _: &OpenFolder,
-    _: &mut Window,
-    cx: &mut Context<Workspace>,
-) {
+fn open_folder(workspace: &mut Workspace, _: &OpenFolder, _: &mut Window, cx: &mut Context<Workspace>) {
     fs::create_dir_all(snippets_dir()).notify_err(workspace, cx);
     cx.open_with_system(snippets_dir().borrow());
 }
@@ -108,8 +103,7 @@ impl ScopeSelector {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let delegate =
-            ScopeSelectorDelegate::new(workspace, cx.entity().downgrade(), language_registry);
+        let delegate = ScopeSelectorDelegate::new(workspace, cx.entity().downgrade(), language_registry);
 
         let picker = cx.new(|cx| Picker::uniform_list(delegate, window, cx));
 
@@ -167,8 +161,7 @@ impl ScopeSelectorDelegate {
                         && extension.to_os_string().to_str() == Some("json")
                         && let Ok(file_name) = stem.to_os_string().into_string()
                     {
-                        existing_scopes
-                            .insert(ScopeName::from(ScopeFileName(Cow::Owned(file_name))));
+                        existing_scopes.insert(ScopeName::from(ScopeFileName(Cow::Owned(file_name))));
                     }
                 }
             }
@@ -244,30 +237,18 @@ impl PickerDelegate for ScopeSelectorDelegate {
     }
 
     fn dismissed(&mut self, _: &mut Window, cx: &mut Context<Picker<Self>>) {
-        self.scope_selector
-            .update(cx, |_, cx| cx.emit(DismissEvent))
-            .log_err();
+        self.scope_selector.update(cx, |_, cx| cx.emit(DismissEvent)).log_err();
     }
 
     fn selected_index(&self) -> usize {
         self.selected_index
     }
 
-    fn set_selected_index(
-        &mut self,
-        ix: usize,
-        _window: &mut Window,
-        _: &mut Context<Picker<Self>>,
-    ) {
+    fn set_selected_index(&mut self, ix: usize, _window: &mut Window, _: &mut Context<Picker<Self>>) {
         self.selected_index = ix;
     }
 
-    fn update_matches(
-        &mut self,
-        query: String,
-        window: &mut Window,
-        cx: &mut Context<Picker<Self>>,
-    ) -> gpui::Task<()> {
+    fn update_matches(&mut self, query: String, window: &mut Window, cx: &mut Context<Picker<Self>>) -> gpui::Task<()> {
         let background = cx.background_executor().clone();
         let candidates = self.candidates.clone();
         cx.spawn_in(window, async move |this, cx| {
@@ -283,24 +264,13 @@ impl PickerDelegate for ScopeSelectorDelegate {
                     })
                     .collect()
             } else {
-                match_strings(
-                    &candidates,
-                    &query,
-                    false,
-                    true,
-                    100,
-                    &Default::default(),
-                    background,
-                )
-                .await
+                match_strings(&candidates, &query, false, true, 100, &Default::default(), background).await
             };
 
             this.update(cx, |this, cx| {
                 let delegate = &mut this.delegate;
                 delegate.matches = matches;
-                delegate.selected_index = delegate
-                    .selected_index
-                    .min(delegate.matches.len().saturating_sub(1));
+                delegate.selected_index = delegate.selected_index.min(delegate.matches.len().saturating_sub(1));
                 cx.notify();
             })
             .log_err();
@@ -331,12 +301,7 @@ impl PickerDelegate for ScopeSelectorDelegate {
             self.language_registry
                 .available_language_for_name(language_name.as_ref())
                 .and_then(|available_language| self.scope_icon(available_language.matcher(), cx))
-                .or_else(|| {
-                    Some(
-                        Icon::from_path(IconName::ToolWeb.path())
-                            .map(|icon| icon.color(Color::Muted)),
-                    )
-                })
+                .or_else(|| Some(Icon::from_path(IconName::ToolWeb.path()).map(|icon| icon.color(Color::Muted))))
         } else {
             None
         };
@@ -352,11 +317,7 @@ impl PickerDelegate for ScopeSelectorDelegate {
                         .gap_x_2()
                         .child(HighlightedLabel::new(name_label, mat.positions.clone()))
                         .when_some(file_label, |item, path_label| {
-                            item.child(
-                                Label::new(path_label)
-                                    .color(Color::Muted)
-                                    .size(LabelSize::Small),
-                            )
+                            item.child(Label::new(path_label).color(Color::Muted).size(LabelSize::Small))
                         }),
                 ),
         )

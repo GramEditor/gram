@@ -5,8 +5,7 @@ use anyhow::{Context as _, Result, bail};
 use async_trait::async_trait;
 use futures::AsyncReadExt;
 use git::{
-    BuildCommitPermalinkParams, BuildPermalinkParams, GitHostingProvider, ParsedGitRemote,
-    PullRequest, RemoteUrl,
+    BuildCommitPermalinkParams, BuildPermalinkParams, GitHostingProvider, ParsedGitRemote, PullRequest, RemoteUrl,
 };
 use gpui::SharedString;
 use http_client::{AsyncBody, HttpClient, HttpRequestExt, Request};
@@ -19,12 +18,8 @@ const CHROMIUM_REVIEW_URL: &str = "https://chromium-review.googlesource.com";
 /// Parses Gerrit URLs like
 /// https://chromium-review.googlesource.com/c/chromium/src/+/3310961.
 fn pull_request_regex() -> &'static Regex {
-    static PULL_REQUEST_NUMBER_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-        Regex::new(&format!(
-            r#"Reviewed-on: ({CHROMIUM_REVIEW_URL}/c/(.*)/\+/(\d+))"#
-        ))
-        .unwrap()
-    });
+    static PULL_REQUEST_NUMBER_REGEX: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(&format!(r#"Reviewed-on: ({CHROMIUM_REVIEW_URL}/c/(.*)/\+/(\d+))"#)).unwrap());
     &PULL_REQUEST_NUMBER_REGEX
 }
 
@@ -65,10 +60,7 @@ impl Chromium {
 
         if response.status().is_client_error() {
             let text = String::from_utf8_lossy(body.as_slice());
-            bail!(
-                "status error {}, response: {text:?}",
-                response.status().as_u16()
-            );
+            bail!("status error {}, response: {text:?}", response.status().as_u16());
         }
 
         // Remove XSSI protection prefix.
@@ -120,11 +112,7 @@ impl GitHostingProvider for Chromium {
         })
     }
 
-    fn build_commit_permalink(
-        &self,
-        remote: &ParsedGitRemote,
-        params: BuildCommitPermalinkParams,
-    ) -> Url {
+    fn build_commit_permalink(&self, remote: &ParsedGitRemote, params: BuildCommitPermalinkParams) -> Url {
         let BuildCommitPermalinkParams { sha } = params;
         let ParsedGitRemote { owner: _, repo } = remote;
 
@@ -133,21 +121,10 @@ impl GitHostingProvider for Chromium {
 
     fn build_permalink(&self, remote: ParsedGitRemote, params: BuildPermalinkParams) -> Url {
         let ParsedGitRemote { owner: _, repo } = remote;
-        let BuildPermalinkParams {
-            sha,
-            path,
-            selection,
-        } = params;
+        let BuildPermalinkParams { sha, path, selection } = params;
 
-        let mut permalink = self
-            .base_url()
-            .join(&format!("{repo}/+/{sha}/{path}"))
-            .unwrap();
-        permalink.set_fragment(
-            selection
-                .map(|selection| self.line_fragment(&selection))
-                .as_deref(),
-        );
+        let mut permalink = self.base_url().join(&format!("{repo}/+/{sha}/{path}")).unwrap();
+        permalink.set_fragment(selection.map(|selection| self.line_fragment(&selection)).as_deref());
         permalink
     }
 
@@ -172,17 +149,11 @@ impl GitHostingProvider for Chromium {
         http_client: Arc<dyn HttpClient>,
     ) -> Result<Option<Url>> {
         let commit = commit.to_string();
-        let Some(author) = self
-            .fetch_chromium_commit_author(repo, &commit, &http_client)
-            .await?
-        else {
+        let Some(author) = self.fetch_chromium_commit_author(repo, &commit, &http_client).await? else {
             return Ok(None);
         };
 
-        let mut avatar_url = Url::parse(&format!(
-            "{CHROMIUM_REVIEW_URL}/accounts/{}/avatar",
-            author.id
-        ))?;
+        let mut avatar_url = Url::parse(&format!("{CHROMIUM_REVIEW_URL}/accounts/{}/avatar", author.id))?;
         avatar_url.set_query(Some("size=128"));
 
         Ok(Some(avatar_url))
@@ -292,11 +263,7 @@ mod tests {
         };
 
         assert_eq!(
-            Chromium
-                .extract_pull_request(&remote, message)
-                .unwrap()
-                .url
-                .as_str(),
+            Chromium.extract_pull_request(&remote, message).unwrap().url.as_str(),
             "https://chromium-review.googlesource.com/c/chromium/src/+/3310961"
         );
     }

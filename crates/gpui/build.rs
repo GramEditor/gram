@@ -92,8 +92,8 @@ mod windows {
 
     /// You can set the `GPUI_FXC_PATH` environment variable to specify the path to the fxc.exe compiler.
     fn compile_shaders() {
-        let shader_path = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap())
-            .join("src/platform/windows/shaders.hlsl");
+        let shader_path =
+            PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("src/platform/windows/shaders.hlsl");
         let out_dir = std::env::var("OUT_DIR").unwrap();
 
         println!("cargo:rerun-if-changed={}", shader_path.display());
@@ -115,8 +115,7 @@ mod windows {
 
         let rust_binding_path = format!("{}/shaders_bytes.rs", out_dir);
         if Path::new(&rust_binding_path).exists() {
-            fs::remove_file(&rust_binding_path)
-                .expect("Failed to remove existing Rust binding file");
+            fs::remove_file(&rust_binding_path).expect("Failed to remove existing Rust binding file");
         }
         for module in modules {
             compile_shader_for_module(
@@ -142,11 +141,9 @@ mod windows {
     }
 
     /// Locate `binary` in the newest installed Windows SDK.
-    pub fn find_latest_windows_sdk_binary(
-        binary: &str,
-    ) -> Result<Option<PathBuf>, Box<dyn std::error::Error>> {
-        let key = windows_registry::LOCAL_MACHINE
-            .open("SOFTWARE\\WOW6432Node\\Microsoft\\Microsoft SDKs\\Windows\\v10.0")?;
+    pub fn find_latest_windows_sdk_binary(binary: &str) -> Result<Option<PathBuf>, Box<dyn std::error::Error>> {
+        let key =
+            windows_registry::LOCAL_MACHINE.open("SOFTWARE\\WOW6432Node\\Microsoft\\Microsoft SDKs\\Windows\\v10.0")?;
 
         let install_folder: String = key.get_string("InstallationFolder")?; // "C:\Program Files (x86)\Windows Kits\10\"
         let install_folder_bin = Path::new(&install_folder).join("bin");
@@ -157,28 +154,16 @@ mod windows {
             .filter_map(|entry| entry.file_name().into_string().ok())
             .collect();
 
-        versions.sort_by_key(|s| {
-            s.split('.')
-                .filter_map(|p| p.parse().ok())
-                .collect::<Vec<u32>>()
-        });
+        versions.sort_by_key(|s| s.split('.').filter_map(|p| p.parse().ok()).collect::<Vec<u32>>());
 
         let arch = match std::env::consts::ARCH {
             "x86_64" => "x64",
             "aarch64" => "arm64",
-            _ => Err(format!(
-                "Unsupported architecture: {}",
-                std::env::consts::ARCH
-            ))?,
+            _ => Err(format!("Unsupported architecture: {}", std::env::consts::ARCH))?,
         };
 
         if let Some(highest_version) = versions.last() {
-            return Ok(Some(
-                install_folder_bin
-                    .join(highest_version)
-                    .join(arch)
-                    .join(binary),
-            ));
+            return Ok(Some(install_folder_bin.join(highest_version).join(arch).join(binary)));
         }
 
         Ok(None)
@@ -195,9 +180,7 @@ mod windows {
 
         // Try to find in PATH
         // NOTE: This has to be `where.exe` on Windows, not `where`, it must be ended with `.exe`
-        if let Ok(output) = std::process::Command::new("where.exe")
-            .arg("fxc.exe")
-            .output()
+        if let Ok(output) = std::process::Command::new("where.exe").arg("fxc.exe").output()
             && output.status.success()
         {
             let path = String::from_utf8_lossy(&output.stdout);

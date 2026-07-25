@@ -171,13 +171,10 @@ impl Global {
 
     /// Iterates all replicas observed by this global as well as any unobserved replicas whose ID is lower than the highest observed replica.
     pub fn iter(&self) -> impl Iterator<Item = Lamport> + '_ {
-        self.values
-            .iter()
-            .enumerate()
-            .map(|(replica_id, seq)| Lamport {
-                replica_id: ReplicaId(replica_id as u16),
-                value: *seq,
-            })
+        self.values.iter().enumerate().map(|(replica_id, seq)| Lamport {
+            replica_id: ReplicaId(replica_id as u16),
+            value: *seq,
+        })
     }
 }
 
@@ -218,10 +215,7 @@ impl Lamport {
     };
 
     pub fn new(replica_id: ReplicaId) -> Self {
-        Self {
-            value: 1,
-            replica_id,
-        }
+        Self { value: 1, replica_id }
     }
 
     pub fn as_u64(self) -> u64 {

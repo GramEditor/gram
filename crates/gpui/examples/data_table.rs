@@ -2,9 +2,9 @@ use rand::RngExt as _;
 use std::{ops::Range, rc::Rc, time::Duration};
 
 use gpui::{
-    App, Application, Bounds, Context, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Point,
-    Render, SharedString, UniformListScrollHandle, Window, WindowBounds, WindowOptions, canvas,
-    div, point, prelude::*, px, rgb, size, uniform_list,
+    App, Application, Bounds, Context, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Point, Render,
+    SharedString, UniformListScrollHandle, Window, WindowBounds, WindowOptions, canvas, div, point, prelude::*, px,
+    rgb, size, uniform_list,
 };
 
 const TOTAL_ITEMS: usize = 10000;
@@ -145,61 +145,36 @@ impl TableRow {
     }
 
     fn render_cell(&self, key: &str, width: Pixels, color: gpui::Hsla) -> impl IntoElement {
-        div()
-            .whitespace_nowrap()
-            .truncate()
-            .w(width)
-            .px_1()
-            .child(match key {
-                "id" => div().child(format!("{}", self.ix)),
-                "symbol" => div().child(self.quote.symbol.clone()),
-                "name" => div().child(self.quote.name.clone()),
-                "last_done" => div()
-                    .text_color(color)
-                    .child(format!("{:.3}", self.quote.last_done)),
-                "prev_close" => div()
-                    .text_color(color)
-                    .child(format!("{:.3}", self.quote.prev_close)),
-                "change" => div()
-                    .text_color(color)
-                    .child(format!("{:.2}%", self.quote.change())),
-                "timestamp" => div()
-                    .text_color(color)
-                    .child(format!("{:?}", self.quote.timestamp.as_secs())),
-                "open" => div()
-                    .text_color(color)
-                    .child(format!("{:.2}", self.quote.open)),
-                "low" => div()
-                    .text_color(color)
-                    .child(format!("{:.2}", self.quote.low)),
-                "high" => div()
-                    .text_color(color)
-                    .child(format!("{:.2}", self.quote.high)),
-                "ttm" => div()
-                    .text_color(color)
-                    .child(format!("{:.2}", self.quote.ttm)),
-                "eps" => div()
-                    .text_color(color)
-                    .child(format!("{:.2}", self.quote.eps)),
-                "market_cap" => {
-                    div().child(format!("{:.2} M", self.quote.market_cap / 1_000_000.0))
-                }
-                "float_cap" => div().child(format!("{:.2} M", self.quote.float_cap / 1_000_000.0)),
-                "turnover" => div().child(format!("{:.2} M", self.quote.turnover / 1_000_000.0)),
-                "volume" => div().child(format!("{:.2} M", self.quote.volume as f64 / 1_000_000.0)),
-                "turnover_ratio" => div().child(format!("{:.2}%", self.quote.turnover_ratio())),
-                "pe" => div().child(format!("{:.2}", self.quote.pe)),
-                "pb" => div().child(format!("{:.2}", self.quote.pb)),
-                "shares" => div().child(format!("{:.2}", self.quote.shares)),
-                "dividend" => div().child(format!("{:.2}", self.quote.dividend)),
-                "yield" => div().child(format!("{:.2}%", self.quote.dividend_yield)),
-                "dividend_per_share" => {
-                    div().child(format!("{:.2}", self.quote.dividend_per_share))
-                }
-                "dividend_date" => div().child(format!("{}", self.quote.dividend_date)),
-                "dividend_payment" => div().child(format!("{:.2}", self.quote.dividend_payment)),
-                _ => div().child("--"),
-            })
+        div().whitespace_nowrap().truncate().w(width).px_1().child(match key {
+            "id" => div().child(format!("{}", self.ix)),
+            "symbol" => div().child(self.quote.symbol.clone()),
+            "name" => div().child(self.quote.name.clone()),
+            "last_done" => div().text_color(color).child(format!("{:.3}", self.quote.last_done)),
+            "prev_close" => div().text_color(color).child(format!("{:.3}", self.quote.prev_close)),
+            "change" => div().text_color(color).child(format!("{:.2}%", self.quote.change())),
+            "timestamp" => div()
+                .text_color(color)
+                .child(format!("{:?}", self.quote.timestamp.as_secs())),
+            "open" => div().text_color(color).child(format!("{:.2}", self.quote.open)),
+            "low" => div().text_color(color).child(format!("{:.2}", self.quote.low)),
+            "high" => div().text_color(color).child(format!("{:.2}", self.quote.high)),
+            "ttm" => div().text_color(color).child(format!("{:.2}", self.quote.ttm)),
+            "eps" => div().text_color(color).child(format!("{:.2}", self.quote.eps)),
+            "market_cap" => div().child(format!("{:.2} M", self.quote.market_cap / 1_000_000.0)),
+            "float_cap" => div().child(format!("{:.2} M", self.quote.float_cap / 1_000_000.0)),
+            "turnover" => div().child(format!("{:.2} M", self.quote.turnover / 1_000_000.0)),
+            "volume" => div().child(format!("{:.2} M", self.quote.volume as f64 / 1_000_000.0)),
+            "turnover_ratio" => div().child(format!("{:.2}%", self.quote.turnover_ratio())),
+            "pe" => div().child(format!("{:.2}", self.quote.pe)),
+            "pb" => div().child(format!("{:.2}", self.quote.pb)),
+            "shares" => div().child(format!("{:.2}", self.quote.shares)),
+            "dividend" => div().child(format!("{:.2}", self.quote.dividend)),
+            "yield" => div().child(format!("{:.2}%", self.quote.dividend_yield)),
+            "dividend_per_share" => div().child(format!("{:.2}", self.quote.dividend_per_share)),
+            "dividend_date" => div().child(format!("{}", self.quote.dividend_date)),
+            "dividend_payment" => div().child(format!("{:.2}", self.quote.dividend_payment)),
+            _ => div().child("--"),
+        })
     }
 }
 
@@ -299,10 +274,8 @@ impl DataTable {
         }
 
         let percentage = -self.scroll_top() / scroll_height;
-        let offset_top = (table_height * percentage).clamp(
-            px(4.),
-            (table_height - SCROLLBAR_THUMB_HEIGHT - px(4.)).max(px(4.)),
-        );
+        let offset_top =
+            (table_height * percentage).clamp(px(4.), (table_height - SCROLLBAR_THUMB_HEIGHT - px(4.)).max(px(4.)));
         let entity = cx.entity();
         let scroll_handle = self.scroll_handle.0.borrow().base_handle.clone();
 
@@ -328,9 +301,7 @@ impl DataTable {
                                 }
 
                                 entity.update(cx, |this, _| {
-                                    this.drag_position = Some(
-                                        ev.position - thumb_bounds.origin - table_bounds.origin,
-                                    );
+                                    this.drag_position = Some(ev.position - thumb_bounds.origin - table_bounds.origin);
                                 })
                             }
                         });
@@ -353,13 +324,11 @@ impl DataTable {
                             };
 
                             let inside_offset = drag_pos.y;
-                            let percentage = ((ev.position.y - table_bounds.origin.y
-                                + inside_offset)
+                            let percentage = ((ev.position.y - table_bounds.origin.y + inside_offset)
                                 / (table_bounds.size.height))
                                 .clamp(0., 1.);
 
-                            let offset_y = ((scroll_height - table_bounds.size.height)
-                                * percentage)
+                            let offset_y = ((scroll_height - table_bounds.size.height) * percentage)
                                 .clamp(px(0.), scroll_height - SCROLLBAR_THUMB_HEIGHT);
                             scroll_handle.set_offset(point(px(0.), -offset_y));
                             cx.notify(entity.entity_id());

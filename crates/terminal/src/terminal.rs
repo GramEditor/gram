@@ -21,9 +21,7 @@ use alacritty_terminal::{
     },
     tty::{self},
     vi_mode::{ViModeCursor, ViMotion},
-    vte::ansi::{
-        ClearMode, CursorStyle as AlacCursorStyle, Handler, NamedPrivateMode, PrivateMode,
-    },
+    vte::ansi::{ClearMode, CursorStyle as AlacCursorStyle, Handler, NamedPrivateMode, PrivateMode},
 };
 use anyhow::{Context as _, Result, bail};
 use log::trace;
@@ -35,8 +33,7 @@ use futures::{
 
 use itertools::Itertools as _;
 use mappings::mouse::{
-    alt_scroll, grid_point, grid_point_and_side, mouse_button_report, mouse_moved_report,
-    scroll_report,
+    alt_scroll, grid_point, grid_point_and_side, mouse_button_report, mouse_moved_report, scroll_report,
 };
 
 use collections::{HashMap, VecDeque};
@@ -67,9 +64,9 @@ use std::{
 use thiserror::Error;
 
 use gpui::{
-    App, AppContext as _, Bounds, ClipboardItem, Context, EventEmitter, Hsla, Keystroke, Modifiers,
-    MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Point, Rgba,
-    ScrollWheelEvent, Size, Task, TouchPhase, Window, actions, black, px,
+    App, AppContext as _, Bounds, ClipboardItem, Context, EventEmitter, Hsla, Keystroke, Modifiers, MouseButton,
+    MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Point, Rgba, ScrollWheelEvent, Size, Task, TouchPhase,
+    Window, actions, black, px,
 };
 
 use crate::mappings::{colors::to_alac_rgb, keys::to_esc_str};
@@ -348,11 +345,7 @@ impl TerminalBuilder {
         };
 
         let (events_tx, events_rx) = unbounded();
-        let mut term = Term::new(
-            config.clone(),
-            &TerminalBounds::default(),
-            GramListener(events_tx),
-        );
+        let mut term = Term::new(config.clone(), &TerminalBounds::default(), GramListener(events_tx));
 
         if let AlternateScroll::Off = alternate_scroll {
             term.unset_private_mode(PrivateMode::Named(NamedPrivateMode::AlternateScroll));
@@ -400,10 +393,7 @@ impl TerminalBuilder {
             event_loop_task: Task::ready(Ok(())),
         };
 
-        Ok(TerminalBuilder {
-            terminal,
-            events_rx,
-        })
+        Ok(TerminalBuilder { terminal, events_rx })
     }
 
     pub fn new(
@@ -451,11 +441,7 @@ impl TerminalBuilder {
             }
 
             impl ShellParams {
-                fn new(
-                    program: String,
-                    args: Option<Vec<String>>,
-                    title_override: Option<String>,
-                ) -> Self {
+                fn new(program: String, args: Option<Vec<String>>, title_override: Option<String>) -> Self {
                     log::debug!("Using {program} as shell");
                     Self {
                         program,
@@ -468,11 +454,7 @@ impl TerminalBuilder {
             let shell_params = match shell.clone() {
                 Shell::System => {
                     if cfg!(windows) {
-                        Some(ShellParams::new(
-                            util::shell::get_windows_system_shell(),
-                            None,
-                            None,
-                        ))
+                        Some(ShellParams::new(util::shell::get_windows_system_shell(), None, None))
                     } else {
                         None
                     }
@@ -484,8 +466,7 @@ impl TerminalBuilder {
                     title_override,
                 } => Some(ShellParams::new(program, Some(args), title_override)),
             };
-            let terminal_title_override =
-                shell_params.as_ref().and_then(|e| e.title_override.clone());
+            let terminal_title_override = shell_params.as_ref().and_then(|e| e.title_override.clone());
 
             #[cfg(windows)]
             let shell_program = shell_params.as_ref().map(|params| {
@@ -505,10 +486,7 @@ impl TerminalBuilder {
 
             let pty_options = {
                 let alac_shell = shell_params.as_ref().map(|params| {
-                    alacritty_terminal::tty::Shell::new(
-                        params.program.clone(),
-                        params.args.clone().unwrap_or_default(),
-                    )
+                    alacritty_terminal::tty::Shell::new(params.program.clone(), params.args.clone().unwrap_or_default())
                 });
 
                 alacritty_terminal::tty::Options {
@@ -575,8 +553,7 @@ impl TerminalBuilder {
                     .command_label
                     .replace("\r\n", "\r")
                     .replace('\n', "\r");
-                let command_line =
-                    format!("{TASK_DELIMITER}Running command: {escaped_command_label}");
+                let command_line = format!("{TASK_DELIMITER}Running command: {escaped_command_label}");
 
                 for c in command_line.chars() {
                     term.input(c);
@@ -626,10 +603,7 @@ impl TerminalBuilder {
                 scroll_px: px(0.),
                 next_link_id: 0,
                 selection_phase: SelectionPhase::Ended,
-                hyperlink_regex_searches: RegexSearches::new(
-                    &path_hyperlink_regexes,
-                    path_hyperlink_timeout_ms,
-                ),
+                hyperlink_regex_searches: RegexSearches::new(&path_hyperlink_regexes, path_hyperlink_timeout_ms),
                 vi_mode_enabled: false,
                 is_remote_terminal,
                 last_mouse_move_time: Instant::now(),
@@ -673,10 +647,7 @@ impl TerminalBuilder {
                 terminal.write_to_pty(b"\x0d");
             }
 
-            Ok(TerminalBuilder {
-                terminal,
-                events_rx,
-            })
+            Ok(TerminalBuilder { terminal, events_rx })
         };
         // the thread we spawn things on has an effect on signal handling
         if !cfg!(target_os = "windows") {
@@ -835,10 +806,7 @@ pub enum SelectionPhase {
 }
 
 enum TerminalType {
-    Pty {
-        pty_tx: Notifier,
-        info: PtyProcessInfo,
-    },
+    Pty { pty_tx: Notifier, info: PtyProcessInfo },
     DisplayOnly,
 }
 
@@ -928,12 +896,7 @@ impl Terminal {
                 // and it would end up showing the shell executable path in breadcrumbs
                 #[cfg(windows)]
                 {
-                    if self
-                        .shell_program
-                        .as_ref()
-                        .map(|e| *e == title)
-                        .unwrap_or(false)
-                    {
+                    if self.shell_program.as_ref().map(|e| *e == title).unwrap_or(false) {
                         return;
                     }
                 }
@@ -945,9 +908,7 @@ impl Terminal {
                 self.breadcrumb_text = String::new();
                 cx.emit(Event::BreadcrumbsChanged);
             }
-            AlacTermEvent::ClipboardStore(_, data) => {
-                cx.write_to_clipboard(ClipboardItem::new_string(data))
-            }
+            AlacTermEvent::ClipboardStore(_, data) => cx.write_to_clipboard(ClipboardItem::new_string(data)),
             AlacTermEvent::ClipboardLoad(_, format) => {
                 self.write_to_pty(
                     match &cx.read_from_clipboard().and_then(|item| item.text()) {
@@ -1016,8 +977,7 @@ impl Terminal {
         match event {
             &InternalEvent::Resize(mut new_bounds) => {
                 trace!("Resizing: new_bounds={new_bounds:?}");
-                new_bounds.bounds.size.height =
-                    cmp::max(new_bounds.line_height, new_bounds.height());
+                new_bounds.bounds.size.height = cmp::max(new_bounds.line_height, new_bounds.height());
                 new_bounds.bounds.size.width = cmp::max(new_bounds.cell_width, new_bounds.width());
 
                 self.last_content.terminal_bounds = new_bounds;
@@ -1056,8 +1016,7 @@ impl Terminal {
                 }
 
                 // Reset the cursor
-                term.grid_mut().cursor.point =
-                    AlacPoint::new(Line(0), term.grid_mut().cursor.point.column);
+                term.grid_mut().cursor.point = AlacPoint::new(Line(0), term.grid_mut().cursor.point.column);
                 let new_cursor = term.grid().cursor.point;
 
                 // Clear the lines below the new cursor
@@ -1186,11 +1145,7 @@ impl Terminal {
                 )
                 .grid_clamp(term, Boundary::Grid);
 
-                match terminal_hyperlinks::find_from_grid_point(
-                    term,
-                    point,
-                    &mut self.hyperlink_regex_searches,
-                ) {
+                match terminal_hyperlinks::find_from_grid_point(term, point, &mut self.hyperlink_regex_searches) {
                     Some(hyperlink) => {
                         self.process_hyperlink(hyperlink, *open, cx);
                     }
@@ -1206,12 +1161,7 @@ impl Terminal {
         }
     }
 
-    fn process_hyperlink(
-        &mut self,
-        hyperlink: (String, bool, Match),
-        open: bool,
-        cx: &mut Context<Self>,
-    ) {
+    fn process_hyperlink(&mut self, hyperlink: (String, bool, Match), open: bool, cx: &mut Context<Self>) {
         let (maybe_url_or_path, is_url, url_match) = hyperlink;
         let prev_hovered_word = self.last_content.last_hovered_word.take();
 
@@ -1307,9 +1257,8 @@ impl Terminal {
             prev_byte = byte;
         }
 
-        let mut processor = alacritty_terminal::vte::ansi::Processor::<
-            alacritty_terminal::vte::ansi::StdSyncHandler,
-        >::new();
+        let mut processor =
+            alacritty_terminal::vte::ansi::Processor::<alacritty_terminal::vte::ansi::StdSyncHandler>::new();
         {
             let mut term = self.term.lock();
             processor.advance(&mut *term, &converted);
@@ -1350,10 +1299,7 @@ impl Terminal {
             .cloned()
             .collect::<Vec<_>>();
         for match_to_select in matches_to_select {
-            self.set_selection(Some((
-                make_selection(&match_to_select),
-                *match_to_select.end(),
-            )));
+            self.set_selection(Some((make_selection(&match_to_select), *match_to_select.end())));
         }
     }
 
@@ -1366,8 +1312,7 @@ impl Terminal {
     }
 
     fn set_selection(&mut self, selection: Option<(Selection, AlacPoint)>) {
-        self.events
-            .push_back(InternalEvent::SetSelection(selection));
+        self.events.push_back(InternalEvent::SetSelection(selection));
     }
 
     pub fn copy(&mut self, keep_selection: Option<bool>) {
@@ -1379,8 +1324,7 @@ impl Terminal {
     }
 
     pub fn scroll_line_up(&mut self) {
-        self.events
-            .push_back(InternalEvent::Scroll(AlacScroll::Delta(1)));
+        self.events.push_back(InternalEvent::Scroll(AlacScroll::Delta(1)));
     }
 
     pub fn scroll_up_by(&mut self, lines: usize) {
@@ -1389,8 +1333,7 @@ impl Terminal {
     }
 
     pub fn scroll_line_down(&mut self) {
-        self.events
-            .push_back(InternalEvent::Scroll(AlacScroll::Delta(-1)));
+        self.events.push_back(InternalEvent::Scroll(AlacScroll::Delta(-1)));
     }
 
     pub fn scroll_down_by(&mut self, lines: usize) {
@@ -1399,23 +1342,19 @@ impl Terminal {
     }
 
     pub fn scroll_page_up(&mut self) {
-        self.events
-            .push_back(InternalEvent::Scroll(AlacScroll::PageUp));
+        self.events.push_back(InternalEvent::Scroll(AlacScroll::PageUp));
     }
 
     pub fn scroll_page_down(&mut self) {
-        self.events
-            .push_back(InternalEvent::Scroll(AlacScroll::PageDown));
+        self.events.push_back(InternalEvent::Scroll(AlacScroll::PageDown));
     }
 
     pub fn scroll_to_top(&mut self) {
-        self.events
-            .push_back(InternalEvent::Scroll(AlacScroll::Top));
+        self.events.push_back(InternalEvent::Scroll(AlacScroll::Top));
     }
 
     pub fn scroll_to_bottom(&mut self) {
-        self.events
-            .push_back(InternalEvent::Scroll(AlacScroll::Bottom));
+        self.events.push_back(InternalEvent::Scroll(AlacScroll::Bottom));
     }
 
     pub fn scrolled_to_top(&self) -> bool {
@@ -1450,8 +1389,7 @@ impl Terminal {
     }
 
     pub fn input(&mut self, input: impl Into<Cow<'static, [u8]>>) {
-        self.events
-            .push_back(InternalEvent::Scroll(AlacScroll::Bottom));
+        self.events.push_back(InternalEvent::Scroll(AlacScroll::Bottom));
         self.events.push_back(InternalEvent::SetSelection(None));
 
         self.write_to_pty(input);
@@ -1496,8 +1434,7 @@ impl Terminal {
                 x: cursor.column.0 as f32 * self.last_content.terminal_bounds.cell_width,
                 y: cursor.line.0 as f32 * self.last_content.terminal_bounds.line_height,
             };
-            self.events
-                .push_back(InternalEvent::UpdateSelection(cursor_pos));
+            self.events.push_back(InternalEvent::UpdateSelection(cursor_pos));
             self.events.push_back(InternalEvent::ViMotion(motion));
             return;
         }
@@ -1568,12 +1505,7 @@ impl Terminal {
         }
     }
 
-    pub fn try_modifiers_change(
-        &mut self,
-        modifiers: &Modifiers,
-        window: &Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn try_modifiers_change(&mut self, modifiers: &Modifiers, window: &Window, cx: &mut Context<Self>) {
         if self
             .last_content
             .terminal_bounds
@@ -1691,8 +1623,7 @@ impl Terminal {
             );
 
             if self.mouse_changed(point, side)
-                && let Some(bytes) =
-                    mouse_moved_report(point, e.pressed_button, e.modifiers, self.last_content.mode)
+                && let Some(bytes) = mouse_moved_report(point, e.pressed_button, e.modifiers, self.last_content.mode)
             {
                 self.write_to_pty(bytes);
             }
@@ -1713,17 +1644,13 @@ impl Terminal {
 
         // Throttle hyperlink searches to avoid excessive processing
         let now = Instant::now();
-        if self
-            .last_hyperlink_search_position
-            .map_or(true, |last_pos| {
-                // Only search if mouse moved significantly or enough time passed
-                let distance_moved = ((position.x - last_pos.x).abs()
-                    + (position.y - last_pos.y).abs())
-                    > FIND_HYPERLINK_THROTTLE_PX;
-                let time_elapsed = now.duration_since(self.last_mouse_move_time).as_millis() > 100;
-                distance_moved || time_elapsed
-            })
-        {
+        if self.last_hyperlink_search_position.map_or(true, |last_pos| {
+            // Only search if mouse moved significantly or enough time passed
+            let distance_moved =
+                ((position.x - last_pos.x).abs() + (position.y - last_pos.y).abs()) > FIND_HYPERLINK_THROTTLE_PX;
+            let time_elapsed = now.duration_since(self.last_mouse_move_time).as_millis() > 100;
+            distance_moved || time_elapsed
+        }) {
             self.last_mouse_move_time = now;
             self.last_hyperlink_search_position = Some(position);
             self.events.push_back(InternalEvent::FindHyperlink(
@@ -1745,12 +1672,7 @@ impl Terminal {
             .push_back(InternalEvent::SetSelection(Some((selection, point))));
     }
 
-    pub fn mouse_drag(
-        &mut self,
-        e: &MouseMoveEvent,
-        region: Bounds<Pixels>,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn mouse_drag(&mut self, e: &MouseMoveEvent, region: Bounds<Pixels>, cx: &mut Context<Self>) {
         let position = e.position - self.last_content.terminal_bounds.bounds.origin;
         if !self.mouse_mode(e.modifiers.shift) {
             if let Some((.., hyperlink_range)) = &self.mouse_down_hyperlink {
@@ -1770,8 +1692,7 @@ impl Terminal {
             self.selection_phase = SelectionPhase::Selecting;
             // Alacritty has the same ordering, of first updating the selection
             // then scrolling 15ms later
-            self.events
-                .push_back(InternalEvent::UpdateSelection(position));
+            self.events.push_back(InternalEvent::UpdateSelection(position));
 
             // Doesn't make sense to scroll the alt screen
             if !self.last_content.mode.contains(TermMode::ALT_SCREEN) {
@@ -1813,16 +1734,10 @@ impl Terminal {
             self.last_content.display_offset,
         );
 
-        if e.button == MouseButton::Left
-            && e.modifiers.secondary()
-            && !self.mouse_mode(e.modifiers.shift)
-        {
+        if e.button == MouseButton::Left && e.modifiers.secondary() && !self.mouse_mode(e.modifiers.shift) {
             let term_lock = self.term.lock();
-            self.mouse_down_hyperlink = terminal_hyperlinks::find_from_grid_point(
-                &term_lock,
-                point,
-                &mut self.hyperlink_regex_searches,
-            );
+            self.mouse_down_hyperlink =
+                terminal_hyperlinks::find_from_grid_point(&term_lock, point, &mut self.hyperlink_regex_searches);
             drop(term_lock);
 
             if self.mouse_down_hyperlink.is_some() {
@@ -1831,9 +1746,7 @@ impl Terminal {
         }
 
         if self.mouse_mode(e.modifiers.shift) {
-            if let Some(bytes) =
-                mouse_button_report(point, e.button, e.modifiers, true, self.last_content.mode)
-            {
+            if let Some(bytes) = mouse_button_report(point, e.button, e.modifiers, true, self.last_content.mode) {
                 self.write_to_pty(bytes);
             }
         } else {
@@ -1854,17 +1767,14 @@ impl Terminal {
                     };
 
                     if selection_type == Some(SelectionType::Simple) && e.modifiers.shift {
-                        self.events
-                            .push_back(InternalEvent::UpdateSelection(position));
+                        self.events.push_back(InternalEvent::UpdateSelection(position));
                         return;
                     }
 
-                    let selection = selection_type
-                        .map(|selection_type| Selection::new(selection_type, point, side));
+                    let selection = selection_type.map(|selection_type| Selection::new(selection_type, point, side));
 
                     if let Some(sel) = selection {
-                        self.events
-                            .push_back(InternalEvent::SetSelection(Some((sel, point))));
+                        self.events.push_back(InternalEvent::SetSelection(Some((sel, point))));
                     }
                 }
                 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
@@ -1890,9 +1800,7 @@ impl Terminal {
                 self.last_content.display_offset,
             );
 
-            if let Some(bytes) =
-                mouse_button_report(point, e.button, e.modifiers, false, self.last_content.mode)
-            {
+            if let Some(bytes) = mouse_button_report(point, e.button, e.modifiers, false, self.last_content.mode) {
                 self.write_to_pty(bytes);
             }
         } else {
@@ -1909,11 +1817,7 @@ impl Terminal {
 
                 if let Some(mouse_up_hyperlink) = {
                     let term_lock = self.term.lock();
-                    terminal_hyperlinks::find_from_grid_point(
-                        &term_lock,
-                        point,
-                        &mut self.hyperlink_regex_searches,
-                    )
+                    terminal_hyperlinks::find_from_grid_point(&term_lock, point, &mut self.hyperlink_regex_searches)
                 } {
                     if mouse_down_hyperlink == mouse_up_hyperlink {
                         self.events
@@ -1927,13 +1831,11 @@ impl Terminal {
 
             //Hyperlinks
             if self.selection_phase == SelectionPhase::Ended {
-                let mouse_cell_index =
-                    content_index_for_mouse(position, &self.last_content.terminal_bounds);
+                let mouse_cell_index = content_index_for_mouse(position, &self.last_content.terminal_bounds);
                 if let Some(link) = self.last_content.cells[mouse_cell_index].hyperlink() {
                     cx.open_url(link.uri());
                 } else if e.modifiers.secondary() {
-                    self.events
-                        .push_back(InternalEvent::FindHyperlink(position, true));
+                    self.events.push_back(InternalEvent::FindHyperlink(position, true));
                 }
             }
         }
@@ -1957,8 +1859,7 @@ impl Terminal {
                     self.last_content.display_offset,
                 );
 
-                if let Some(scrolls) = scroll_report(point, scroll_lines, e, self.last_content.mode)
-                {
+                if let Some(scrolls) = scroll_report(point, scroll_lines, e, self.last_content.mode) {
                     for scroll in scrolls {
                         self.write_to_pty(scroll);
                     }
@@ -1982,11 +1883,7 @@ impl Terminal {
         self.schedule_find_hyperlink(window.modifiers(), window.mouse_position());
     }
 
-    fn determine_scroll_lines(
-        &mut self,
-        e: &ScrollWheelEvent,
-        scroll_multiplier: f32,
-    ) -> Option<i32> {
+    fn determine_scroll_lines(&mut self, e: &ScrollWheelEvent, scroll_multiplier: f32) -> Option<i32> {
         let line_height = self.last_content.terminal_bounds.line_height;
         match e.touch_phase {
             /* Reset scroll state on started */
@@ -2012,11 +1909,7 @@ impl Terminal {
         }
     }
 
-    pub fn find_matches(
-        &self,
-        mut searcher: RegexSearch,
-        cx: &Context<Self>,
-    ) -> Task<Vec<RangeInclusive<AlacPoint>>> {
+    pub fn find_matches(&self, mut searcher: RegexSearch, cx: &Context<Self>) -> Task<Vec<RangeInclusive<AlacPoint>>> {
         let term = self.term.clone();
         cx.background_spawn(async move {
             let term = term.lock();
@@ -2044,9 +1937,7 @@ impl Terminal {
     /// remote host, in case Gram is connected to a remote host.
     fn client_side_working_directory(&self) -> Option<PathBuf> {
         match &self.terminal_type {
-            TerminalType::Pty { info, .. } => {
-                info.current.as_ref().map(|process| process.cwd.clone())
-            }
+            TerminalType::Pty { info, .. } => info.current.as_ref().map(|process| process.cwd.clone()),
             TerminalType::DisplayOnly => None,
         }
     }
@@ -2235,19 +2126,12 @@ impl Terminal {
 
 // Helper function to convert a grid row to a string
 pub fn row_to_string(row: &Row<Cell>) -> String {
-    row[..Column(row.len())]
-        .iter()
-        .map(|cell| cell.c)
-        .collect::<String>()
+    row[..Column(row.len())].iter().map(|cell| cell.c).collect::<String>()
 }
 
 const TASK_DELIMITER: &str = "⏵ ";
 fn task_summary(task: &TaskState, exit_status: Option<ExitStatus>) -> (bool, String) {
-    let escaped_full_label = task
-        .spawned_task
-        .full_label
-        .replace("\r\n", "\r")
-        .replace('\n', "\r");
+    let escaped_full_label = task.spawned_task.full_label.replace("\r\n", "\r").replace('\n', "\r");
     let task_label = |suffix: &str| format!("{TASK_DELIMITER}Task `{escaped_full_label}` {suffix}");
     let (success, task_line) = match exit_status {
         Some(status) => {
@@ -2259,14 +2143,8 @@ fn task_summary(task: &TaskState, exit_status: Option<ExitStatus>) -> (bool, Str
 
             match (code, signal) {
                 (Some(0), _) => (true, task_label("finished successfully")),
-                (Some(code), _) => (
-                    false,
-                    task_label(&format!("finished with exit code: {code}")),
-                ),
-                (None, Some(signal)) => (
-                    false,
-                    task_label(&format!("terminated by signal: {signal}")),
-                ),
+                (Some(code), _) => (false, task_label(&format!("finished with exit code: {code}"))),
+                (None, Some(signal)) => (false, task_label(&format!("terminated by signal: {signal}"))),
                 (None, None) => (false, task_label("finished")),
             }
         }
@@ -2329,10 +2207,7 @@ fn make_selection(range: &RangeInclusive<AlacPoint>) -> Selection {
     selection
 }
 
-fn all_search_matches<'a, T>(
-    term: &'a Term<T>,
-    regex: &'a mut RegexSearch,
-) -> impl Iterator<Item = Match> + 'a {
+fn all_search_matches<'a, T>(term: &'a Term<T>, regex: &'a mut RegexSearch) -> impl Iterator<Item = Match> + 'a {
     let start = AlacPoint::new(term.grid().topmost_line(), Column(0));
     let end = AlacPoint::new(term.grid().bottommost_line(), term.grid().last_column());
     RegexIter::new(start, end, AlacDirection::Right, term, regex)
@@ -2443,8 +2318,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        IndexedCell, TerminalBounds, TerminalBuilder, TerminalContent, content_index_for_mouse,
-        rgb_for_index,
+        IndexedCell, TerminalBounds, TerminalBuilder, TerminalContent, content_index_for_mouse, rgb_for_index,
     };
     use alacritty_terminal::{
         index::{Column, Line, Point as AlacPoint},
@@ -2452,8 +2326,8 @@ mod tests {
     };
     use collections::HashMap;
     use gpui::{
-        Entity, Modifiers, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels,
-        Point, TestAppContext, bounds, point, size, smol_timeout,
+        Entity, Modifiers, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Point, TestAppContext,
+        bounds, point, size, smol_timeout,
     };
     use rand::{distr, rngs::ThreadRng};
     use task::ShellBuilder;
@@ -2493,11 +2367,7 @@ mod tests {
         terminal
     }
 
-    fn ctrl_mouse_down_at(
-        terminal: &mut Terminal,
-        position: Point<Pixels>,
-        cx: &mut Context<Terminal>,
-    ) {
+    fn ctrl_mouse_down_at(terminal: &mut Terminal, position: Point<Pixels>, cx: &mut Context<Terminal>) {
         let mouse_down = MouseDownEvent {
             button: MouseButton::Left,
             position,
@@ -2508,11 +2378,7 @@ mod tests {
         terminal.mouse_down(&mouse_down, cx);
     }
 
-    fn ctrl_mouse_move_to(
-        terminal: &mut Terminal,
-        position: Point<Pixels>,
-        cx: &mut Context<Terminal>,
-    ) {
+    fn ctrl_mouse_move_to(terminal: &mut Terminal, position: Point<Pixels>, cx: &mut Context<Terminal>) {
         let terminal_bounds = terminal.last_content.terminal_bounds.bounds;
         let drag_event = MouseMoveEvent {
             position,
@@ -2522,11 +2388,7 @@ mod tests {
         terminal.mouse_drag(&drag_event, terminal_bounds, cx);
     }
 
-    fn ctrl_mouse_up_at(
-        terminal: &mut Terminal,
-        position: Point<Pixels>,
-        cx: &mut Context<Terminal>,
-    ) {
+    fn ctrl_mouse_up_at(terminal: &mut Terminal, position: Point<Pixels>, cx: &mut Context<Terminal>) {
         let mouse_up = MouseUpEvent {
             button: MouseButton::Left,
             position,
@@ -2541,8 +2403,8 @@ mod tests {
         cx.executor().allow_parking();
 
         let (completion_tx, completion_rx) = smol::channel::unbounded();
-        let (program, args) = ShellBuilder::new(&Shell::System, false)
-            .build(Some("echo".to_owned()), &["hello".to_owned()]);
+        let (program, args) =
+            ShellBuilder::new(&Shell::System, false).build(Some("echo".to_owned()), &["hello".to_owned()]);
         let builder = cx
             .update(|cx| {
                 TerminalBuilder::new(
@@ -2569,14 +2431,8 @@ mod tests {
             .await
             .unwrap();
         let terminal = cx.new(|cx| builder.subscribe(cx));
-        assert_eq!(
-            completion_rx.recv().await.unwrap(),
-            Some(ExitStatus::default())
-        );
-        assert_eq!(
-            terminal.update(cx, |term, _| term.get_content()).trim(),
-            "hello"
-        );
+        assert_eq!(completion_rx.recv().await.unwrap(), Some(ExitStatus::default()));
+        assert_eq!(terminal.update(cx, |term, _| term.get_content()).trim(), "hello");
 
         // Inject additional output directly into the emulator (display-only path)
         terminal.update(cx, |term, cx| {
@@ -2666,8 +2522,8 @@ mod tests {
         cx.executor().allow_parking();
 
         let (completion_tx, completion_rx) = smol::channel::unbounded();
-        let (program, args) = ShellBuilder::new(&Shell::System, false)
-            .build(Some("asdasdasdasd".to_owned()), &["@@@@@".to_owned()]);
+        let (program, args) =
+            ShellBuilder::new(&Shell::System, false).build(Some("asdasdasdasd".to_owned()), &["@@@@@".to_owned()]);
         let builder = cx
             .update(|cx| {
                 TerminalBuilder::new(
@@ -2707,20 +2563,14 @@ mod tests {
             {
                 let exit_status = completion_rx.recv().await.ok().flatten();
                 if let Some(exit_status) = exit_status {
-                    assert!(
-                        !exit_status.success(),
-                        "Wrong shell command should result in a failure"
-                    );
+                    assert!(!exit_status.success(), "Wrong shell command should result in a failure");
                     assert_eq!(exit_status.code(), Some(1));
                 }
             }
             #[cfg(not(target_os = "windows"))]
             {
                 if let Ok(Some(exit_status)) = completion_rx.recv().await {
-                    assert!(
-                        !exit_status.success(),
-                        "Wrong shell command should result in a failure"
-                    );
+                    assert!(!exit_status.success(), "Wrong shell command should result in a failure");
                     if let Some(code) = exit_status.code() {
                         #[cfg(target_os = "windows")]
                         assert_eq!(code, 1);
@@ -2733,16 +2583,12 @@ mod tests {
         .detach();
 
         let mut all_events = Vec::new();
-        while let Ok(Ok(new_event)) =
-            smol_timeout(Duration::from_millis(500), event_rx.recv()).await
-        {
+        while let Ok(Ok(new_event)) = smol_timeout(Duration::from_millis(500), event_rx.recv()).await {
             all_events.push(new_event.clone());
         }
 
         assert!(
-            !all_events
-                .iter()
-                .any(|event| event == &Event::CloseTerminal),
+            !all_events.iter().any(|event| event == &Event::CloseTerminal),
             "Wrong shell command should update the title but not should not close the terminal to show the error message, but got events: {all_events:?}",
         );
     }
@@ -2764,8 +2610,7 @@ mod tests {
 
         for _ in 0..ITERATIONS {
             let viewport_cells = rng.random_range(15..20);
-            let cell_size =
-                rng.random_range(5 * PRECISION..20 * PRECISION) as f32 / PRECISION as f32;
+            let cell_size = rng.random_range(5 * PRECISION..20 * PRECISION) as f32 / PRECISION as f32;
 
             let size = crate::TerminalBounds {
                 cell_width: Pixels::from(cell_size),
@@ -2795,8 +2640,7 @@ mod tests {
                         Pixels::from(row as f32 * cell_size + row_offset),
                     );
 
-                    let content_index =
-                        content_index_for_mouse(mouse_pos, &content.terminal_bounds);
+                    let content_index = content_index_for_mouse(mouse_pos, &content.terminal_bounds);
                     let mouse_cell = content.cells[content_index].c;
                     let real_cell = cells[row][col];
 
@@ -2813,20 +2657,15 @@ mod tests {
         let size = crate::TerminalBounds {
             cell_width: Pixels::from(10.),
             line_height: Pixels::from(10.),
-            bounds: bounds(
-                Point::default(),
-                size(Pixels::from(100.), Pixels::from(100.)),
-            ),
+            bounds: bounds(Point::default(), size(Pixels::from(100.), Pixels::from(100.))),
         };
 
         let cells = get_cells(size, &mut rng);
         let content = convert_cells_to_content(size, &cells);
 
         assert_eq!(
-            content.cells[content_index_for_mouse(
-                point(Pixels::from(-10.), Pixels::from(-10.)),
-                &content.terminal_bounds,
-            )]
+            content.cells
+                [content_index_for_mouse(point(Pixels::from(-10.), Pixels::from(-10.)), &content.terminal_bounds,)]
             .c,
             cells[0][0]
         );
@@ -2855,10 +2694,7 @@ mod tests {
         cells
     }
 
-    fn convert_cells_to_content(
-        terminal_bounds: TerminalBounds,
-        cells: &[Vec<char>],
-    ) -> TerminalContent {
+    fn convert_cells_to_content(terminal_bounds: TerminalBounds, cells: &[Vec<char>]) -> TerminalContent {
         let mut ic = Vec::new();
 
         for (index, row) in cells.iter().enumerate() {
@@ -2950,10 +2786,7 @@ mod tests {
             }
         }
 
-        assert!(
-            found_lines_at_column_0 >= 2,
-            "Both lines should start at column 0"
-        );
+        assert!(found_lines_at_column_0 >= 2, "Both lines should start at column 0");
     }
 
     #[gpui::test]
@@ -3013,10 +2846,8 @@ mod tests {
 
     #[gpui::test]
     async fn test_hyperlink_ctrl_click_drag_outside_bounds(cx: &mut TestAppContext) {
-        let terminal = init_ctrl_click_hyperlink_test(
-            cx,
-            b"Visit https://zed.dev/ for more\r\nThis is another line\r\n",
-        );
+        let terminal =
+            init_ctrl_click_hyperlink_test(cx, b"Visit https://zed.dev/ for more\r\nThis is another line\r\n");
 
         terminal.update(cx, |terminal, cx| {
             let down_position = point(px(80.0), px(10.0));
@@ -3061,15 +2892,12 @@ mod tests {
     mod perf {
         use super::super::*;
         use gpui::{
-            Entity, Point, ScrollDelta, ScrollWheelEvent, TestAppContext, VisualContext,
-            VisualTestContext, point,
+            Entity, Point, ScrollDelta, ScrollWheelEvent, TestAppContext, VisualContext, VisualTestContext, point,
         };
         use util::default;
         use util_macros::perf;
 
-        async fn init_scroll_perf_test(
-            cx: &mut TestAppContext,
-        ) -> (Entity<Terminal>, &mut VisualTestContext) {
+        async fn init_scroll_perf_test(cx: &mut TestAppContext) -> (Entity<Terminal>, &mut VisualTestContext) {
             cx.update(|cx| {
                 let settings_store = settings::SettingsStore::test(cx);
                 cx.set_global(settings_store);
@@ -3121,13 +2949,7 @@ mod tests {
                     let center = bounds.origin + bounds.center();
                     let position = center + wobble * lines as f32;
 
-                    terminal.mouse_move(
-                        &MouseMoveEvent {
-                            position,
-                            ..default()
-                        },
-                        cx,
-                    );
+                    terminal.mouse_move(&MouseMoveEvent { position, ..default() }, cx);
 
                     terminal.scroll_wheel(
                         &ScrollWheelEvent {

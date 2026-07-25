@@ -144,11 +144,7 @@ fn cover_or_next<I: Iterator<Item = (Range<MultiBufferOffset>, Range<MultiBuffer
                 close_range: close_range.clone(),
             };
 
-            if open_range
-                .start
-                .to_offset(snapshot)
-                .to_display_point(map)
-                .row()
+            if open_range.start.to_offset(snapshot).to_display_point(map).row()
                 == caret_offset.to_display_point(map).row()
             {
                 if start_off <= caret_offset && caret_offset < end_off {
@@ -163,8 +159,7 @@ fn cover_or_next<I: Iterator<Item = (Range<MultiBufferOffset>, Range<MultiBuffer
     // 1) covering -> smallest width
     if !covering.is_empty() {
         return covering.into_iter().min_by_key(|r| {
-            r.candidate.end.to_offset(map, Bias::Right)
-                - r.candidate.start.to_offset(map, Bias::Left)
+            r.candidate.end.to_offset(map, Bias::Right) - r.candidate.start.to_offset(map, Bias::Left)
         });
     }
 
@@ -213,29 +208,24 @@ fn find_mini_delimiters(
     let buffer = excerpt.buffer();
     let buffer_offset = excerpt.map_offset_to_buffer(offset);
 
-    let bracket_filter = |open: Range<usize>, close: Range<usize>| {
-        is_valid_delimiter(buffer, open.start, close.start)
-    };
+    let bracket_filter = |open: Range<usize>, close: Range<usize>| is_valid_delimiter(buffer, open.start, close.start);
 
     // Try to find delimiters in visible range first
-    let ranges = map
-        .buffer_snapshot()
-        .bracket_ranges(visible_line_range)
-        .map(|ranges| {
-            ranges.filter_map(|(open, close)| {
-                // Convert the ranges from multibuffer space to buffer space as
-                // that is what `is_valid_delimiter` expects, otherwise it might
-                // panic as the values might be out of bounds.
-                let buffer_open = excerpt.map_range_to_buffer(open.clone());
-                let buffer_close = excerpt.map_range_to_buffer(close.clone());
+    let ranges = map.buffer_snapshot().bracket_ranges(visible_line_range).map(|ranges| {
+        ranges.filter_map(|(open, close)| {
+            // Convert the ranges from multibuffer space to buffer space as
+            // that is what `is_valid_delimiter` expects, otherwise it might
+            // panic as the values might be out of bounds.
+            let buffer_open = excerpt.map_range_to_buffer(open.clone());
+            let buffer_close = excerpt.map_range_to_buffer(close.clone());
 
-                if is_valid_delimiter(buffer, buffer_open.start.0, buffer_close.start.0) {
-                    Some((open, close))
-                } else {
-                    None
-                }
-            })
-        });
+            if is_valid_delimiter(buffer, buffer_open.start.0, buffer_close.start.0) {
+                Some((open, close))
+            } else {
+                None
+            }
+        })
+    });
 
     if let Some(candidate) = cover_or_next(ranges, display_point, map) {
         return Some(
@@ -248,27 +238,20 @@ fn find_mini_delimiters(
     }
 
     // Fall back to innermost enclosing brackets
-    let (open_bracket, close_bracket) = buffer
-        .innermost_enclosing_bracket_ranges(buffer_offset..buffer_offset, Some(&bracket_filter))?;
+    let (open_bracket, close_bracket) =
+        buffer.innermost_enclosing_bracket_ranges(buffer_offset..buffer_offset, Some(&bracket_filter))?;
 
     Some(
         DelimiterRange {
-            open: excerpt.map_range_from_buffer(
-                BufferOffset(open_bracket.start)..BufferOffset(open_bracket.end),
-            ),
-            close: excerpt.map_range_from_buffer(
-                BufferOffset(close_bracket.start)..BufferOffset(close_bracket.end),
-            ),
+            open: excerpt.map_range_from_buffer(BufferOffset(open_bracket.start)..BufferOffset(open_bracket.end)),
+            close: excerpt.map_range_from_buffer(BufferOffset(close_bracket.start)..BufferOffset(close_bracket.end)),
         }
         .to_display_range(map, around),
     )
 }
 
 fn get_line_range(map: &DisplaySnapshot, point: Point) -> Range<Point> {
-    let (start, mut end) = (
-        map.prev_line_boundary(point).0,
-        map.next_line_boundary(point).0,
-    );
+    let (start, mut end) = (map.prev_line_boundary(point).0, map.next_line_boundary(point).0);
 
     if end == point {
         end = map.max_point().to_point(map);
@@ -287,25 +270,14 @@ fn is_quote_delimiter(buffer: &BufferSnapshot, _start: usize, end: usize) -> boo
 }
 
 fn is_bracket_delimiter(buffer: &BufferSnapshot, start: usize, _end: usize) -> bool {
-    matches!(
-        buffer.chars_at(start).next(),
-        Some('(' | '[' | '{' | '<' | '|')
-    )
+    matches!(buffer.chars_at(start).next(), Some('(' | '[' | '{' | '<' | '|'))
 }
 
-fn find_mini_quotes(
-    map: &DisplaySnapshot,
-    display_point: DisplayPoint,
-    around: bool,
-) -> Option<Range<DisplayPoint>> {
+fn find_mini_quotes(map: &DisplaySnapshot, display_point: DisplayPoint, around: bool) -> Option<Range<DisplayPoint>> {
     find_mini_delimiters(map, display_point, around, &is_quote_delimiter)
 }
 
-fn find_mini_brackets(
-    map: &DisplaySnapshot,
-    display_point: DisplayPoint,
-    around: bool,
-) -> Option<Range<DisplayPoint>> {
+fn find_mini_brackets(map: &DisplaySnapshot, display_point: DisplayPoint, around: bool) -> Option<Range<DisplayPoint>> {
     find_mini_delimiters(map, display_point, around, &is_bracket_delimiter)
 }
 
@@ -348,13 +320,9 @@ actions!(
 );
 
 pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
-    Vim::action(
-        editor,
-        cx,
-        |vim, &Word { ignore_punctuation }: &Word, window, cx| {
-            vim.object(Object::Word { ignore_punctuation }, window, cx)
-        },
-    );
+    Vim::action(editor, cx, |vim, &Word { ignore_punctuation }: &Word, window, cx| {
+        vim.object(Object::Word { ignore_punctuation }, window, cx)
+    });
     Vim::action(
         editor,
         cx,
@@ -442,19 +410,11 @@ impl Vim {
         self.object_impl(object, false, window, cx);
     }
 
-    fn object_impl(
-        &mut self,
-        object: Object,
-        opening: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn object_impl(&mut self, object: Object, opening: bool, window: &mut Window, cx: &mut Context<Self>) {
         let count = Self::take_count(cx);
 
         match self.mode {
-            Mode::Normal | Mode::HelixNormal => {
-                self.normal_object(object, count, opening, window, cx)
-            }
+            Mode::Normal | Mode::HelixNormal => self.normal_object(object, count, opening, window, cx),
             Mode::Visual | Mode::VisualLine | Mode::VisualBlock | Mode::HelixSelect => {
                 self.visual_object(object, count, window, cx)
             }
@@ -595,12 +555,8 @@ impl Object {
             Object::Sentence => sentence(map, relative_to, around),
             //change others later
             Object::Paragraph => paragraph(map, relative_to, around, times.unwrap_or(1)),
-            Object::Quotes => {
-                surrounding_markers(map, relative_to, around, self.is_multiline(), '\'', '\'')
-            }
-            Object::BackQuotes => {
-                surrounding_markers(map, relative_to, around, self.is_multiline(), '`', '`')
-            }
+            Object::Quotes => surrounding_markers(map, relative_to, around, self.is_multiline(), '\'', '\''),
+            Object::BackQuotes => surrounding_markers(map, relative_to, around, self.is_multiline(), '`', '`'),
             Object::AnyQuotes => {
                 let cursor_offset = relative_to.to_offset(map, Bias::Left);
 
@@ -610,14 +566,8 @@ impl Object {
 
                 // First pass: find innermost enclosing range
                 for &SurroundPair { open, close } in QUOTE_PAIRS {
-                    if let Some(range) = surrounding_markers(
-                        map,
-                        relative_to,
-                        around,
-                        self.is_multiline(),
-                        open,
-                        close,
-                    ) {
+                    if let Some(range) = surrounding_markers(map, relative_to, around, self.is_multiline(), open, close)
+                    {
                         let start_offset = range.start.to_offset(map, Bias::Left);
                         let end_offset = range.end.to_offset(map, Bias::Right);
 
@@ -639,14 +589,7 @@ impl Object {
                 QUOTE_PAIRS
                     .iter()
                     .flat_map(|&SurroundPair { open, close }| {
-                        surrounding_markers(
-                            map,
-                            relative_to,
-                            around,
-                            self.is_multiline(),
-                            open,
-                            close,
-                        )
+                        surrounding_markers(map, relative_to, around, self.is_multiline(), open, close)
                     })
                     .min_by_key(|range| {
                         let start_offset = range.start.to_offset(map, Bias::Left);
@@ -661,15 +604,9 @@ impl Object {
                     })
             }
             Object::MiniQuotes => find_mini_quotes(map, relative_to, around),
-            Object::DoubleQuotes => {
-                surrounding_markers(map, relative_to, around, self.is_multiline(), '"', '"')
-            }
-            Object::VerticalBars => {
-                surrounding_markers(map, relative_to, around, self.is_multiline(), '|', '|')
-            }
-            Object::Parentheses => {
-                surrounding_markers(map, relative_to, around, self.is_multiline(), '(', ')')
-            }
+            Object::DoubleQuotes => surrounding_markers(map, relative_to, around, self.is_multiline(), '"', '"'),
+            Object::VerticalBars => surrounding_markers(map, relative_to, around, self.is_multiline(), '|', '|'),
+            Object::Parentheses => surrounding_markers(map, relative_to, around, self.is_multiline(), '(', ')'),
             Object::Tag => {
                 let head = selection.head();
                 let range = selection.range();
@@ -683,14 +620,8 @@ impl Object {
                 let mut min_size = usize::MAX;
 
                 for &SurroundPair { open, close } in BRACKET_PAIRS {
-                    if let Some(range) = surrounding_markers(
-                        map,
-                        relative_to,
-                        around,
-                        self.is_multiline(),
-                        open,
-                        close,
-                    ) {
+                    if let Some(range) = surrounding_markers(map, relative_to, around, self.is_multiline(), open, close)
+                    {
                         let start_offset = range.start.to_offset(map, Bias::Left);
                         let end_offset = range.end.to_offset(map, Bias::Right);
 
@@ -712,14 +643,7 @@ impl Object {
                 BRACKET_PAIRS
                     .iter()
                     .flat_map(|&SurroundPair { open, close }| {
-                        surrounding_markers(
-                            map,
-                            relative_to,
-                            around,
-                            self.is_multiline(),
-                            open,
-                            close,
-                        )
+                        surrounding_markers(map, relative_to, around, self.is_multiline(), open, close)
                     })
                     .min_by_key(|range| {
                         let start_offset = range.start.to_offset(map, Bias::Left);
@@ -734,15 +658,9 @@ impl Object {
                     })
             }
             Object::MiniBrackets => find_mini_brackets(map, relative_to, around),
-            Object::SquareBrackets => {
-                surrounding_markers(map, relative_to, around, self.is_multiline(), '[', ']')
-            }
-            Object::CurlyBrackets => {
-                surrounding_markers(map, relative_to, around, self.is_multiline(), '{', '}')
-            }
-            Object::AngleBrackets => {
-                surrounding_markers(map, relative_to, around, self.is_multiline(), '<', '>')
-            }
+            Object::SquareBrackets => surrounding_markers(map, relative_to, around, self.is_multiline(), '[', ']'),
+            Object::CurlyBrackets => surrounding_markers(map, relative_to, around, self.is_multiline(), '{', '}'),
+            Object::AngleBrackets => surrounding_markers(map, relative_to, around, self.is_multiline(), '<', '>'),
             Object::Method => text_object(
                 map,
                 relative_to,
@@ -816,10 +734,9 @@ fn in_word(
         |left, right| classifier.kind(left) != classifier.kind(right),
     );
 
-    let mut end =
-        movement::find_boundary(map, relative_to, FindRange::SingleLine, |left, right| {
-            classifier.kind(left) != classifier.kind(right)
-        });
+    let mut end = movement::find_boundary(map, relative_to, FindRange::SingleLine, |left, right| {
+        classifier.kind(left) != classifier.kind(right)
+    });
 
     let is_boundary = |left: char, right: char| classifier.kind(left) != classifier.kind(right);
 
@@ -831,8 +748,7 @@ fn in_word(
 
         // Skip whitespace but not punctuation (punctuation is its own word unit).
         let next_end = if kind_at_end == Some(CharKind::Whitespace) {
-            let after_whitespace =
-                movement::find_boundary(map, end, FindRange::MultiLine, is_boundary);
+            let after_whitespace = movement::find_boundary(map, end, FindRange::MultiLine, is_boundary);
             movement::find_boundary(map, after_whitespace, FindRange::MultiLine, is_boundary)
         } else {
             movement::find_boundary(map, end, FindRange::MultiLine, is_boundary)
@@ -937,19 +853,11 @@ pub fn surrounding_html_tag(
                 let open_tag = open_tag(buffer.chars_for_range(first_child.byte_range()));
                 let close_tag = close_tag(buffer.chars_for_range(last_child.byte_range()));
                 // It needs to be handled differently according to the selection length
-                let is_valid = if range.end.to_offset(map, Bias::Left)
-                    - range.start.to_offset(map, Bias::Left)
-                    <= 1
-                {
+                let is_valid = if range.end.to_offset(map, Bias::Left) - range.start.to_offset(map, Bias::Left) <= 1 {
                     offset.0 <= last_child.end_byte()
                 } else {
-                    excerpt
-                        .map_offset_to_buffer(range.start.to_offset(map, Bias::Left))
-                        .0
-                        >= first_child.start_byte()
-                        && excerpt
-                            .map_offset_to_buffer(range.end.to_offset(map, Bias::Left))
-                            .0
+                    excerpt.map_offset_to_buffer(range.start.to_offset(map, Bias::Left)).0 >= first_child.start_byte()
+                        && excerpt.map_offset_to_buffer(range.end.to_offset(map, Bias::Left)).0
                             <= last_child.start_byte() + 1
                 };
                 if open_tag.is_some() && open_tag == close_tag && is_valid {
@@ -961,9 +869,7 @@ pub fn surrounding_html_tag(
                     let range = BufferOffset(range.start)..BufferOffset(range.end);
                     if excerpt.contains_buffer_range(range.clone()) {
                         let result = excerpt.map_range_from_buffer(range);
-                        return Some(
-                            result.start.to_display_point(map)..result.end.to_display_point(map),
-                        );
+                        return Some(result.start.to_display_point(map)..result.end.to_display_point(map));
                     }
                 }
             }
@@ -1027,8 +933,7 @@ fn around_subword(
         movement::FindRange::SingleLine,
         |left, right| {
             let is_separator = |c: char| "._-".contains(c);
-            let is_word_start =
-                classifier.kind(left) != classifier.kind(right) && !is_separator(left);
+            let is_word_start = classifier.kind(left) != classifier.kind(right) && !is_separator(left);
             is_word_start || is_subword_start(left, right, "._-")
         },
     );
@@ -1055,9 +960,7 @@ fn around_containing_word(
         let line_start = DisplayPoint::new(range.start.row(), 0);
         let is_first_word = map
             .buffer_chars_at(line_start.to_offset(map, Bias::Left))
-            .take_while(|(ch, offset)| {
-                offset < &range.start.to_offset(map, Bias::Left) && ch.is_whitespace()
-            })
+            .take_while(|(ch, offset)| offset < &range.start.to_offset(map, Bias::Left) && ch.is_whitespace())
             .count()
             > 0;
 
@@ -1124,11 +1027,7 @@ fn entire_file(map: &DisplaySnapshot) -> Option<Range<DisplayPoint>> {
     Some(DisplayPoint::zero()..map.max_point())
 }
 
-fn text_object(
-    map: &DisplaySnapshot,
-    relative_to: DisplayPoint,
-    target: TextObject,
-) -> Option<Range<DisplayPoint>> {
+fn text_object(map: &DisplaySnapshot, relative_to: DisplayPoint, target: TextObject) -> Option<Range<DisplayPoint>> {
     let snapshot = &map.buffer_snapshot();
     let offset = relative_to.to_offset(map, Bias::Left);
 
@@ -1172,11 +1071,7 @@ fn text_object(
     return Some(buffer_range.start.to_display_point(map)..buffer_range.end.to_display_point(map));
 }
 
-fn argument(
-    map: &DisplaySnapshot,
-    relative_to: DisplayPoint,
-    around: bool,
-) -> Option<Range<DisplayPoint>> {
+fn argument(map: &DisplaySnapshot, relative_to: DisplayPoint, around: bool) -> Option<Range<DisplayPoint>> {
     let snapshot = &map.buffer_snapshot();
     let offset = relative_to.to_offset(map, Bias::Left);
 
@@ -1209,10 +1104,7 @@ fn argument(
 
             // TODO: Is there any better way to filter out string brackets?
             // Used to filter out string brackets
-            matches!(
-                buffer.chars_at(open.start).next(),
-                Some('(' | '[' | '{' | '<' | '|')
-            )
+            matches!(buffer.chars_at(open.start).next(), Some('(' | '[' | '{' | '<' | '|'))
         };
 
         // Find the brackets containing the cursor
@@ -1230,8 +1122,7 @@ fn argument(
         loop {
             let node = cursor.node();
             let range = node.byte_range();
-            let covers_bracket_range =
-                range.start == open_bracket.start && range.end == close_bracket.end;
+            let covers_bracket_range = range.start == open_bracket.start && range.end == close_bracket.end;
             if parent_covers_bracket_range && !covers_bracket_range {
                 break;
             }
@@ -1373,11 +1264,7 @@ fn indent(
     Some(start..end)
 }
 
-fn sentence(
-    map: &DisplaySnapshot,
-    relative_to: DisplayPoint,
-    around: bool,
-) -> Option<Range<DisplayPoint>> {
+fn sentence(map: &DisplaySnapshot, relative_to: DisplayPoint, around: bool) -> Option<Range<DisplayPoint>> {
     let mut start = None;
     let relative_offset = relative_to.to_offset(map, Bias::Left);
     let mut previous_end = relative_offset;
@@ -1538,9 +1425,7 @@ fn paragraph(
         let paragraph_end_row = paragraph_end.row();
         let paragraph_ends_with_eof = paragraph_end_row == map.max_point().row();
         let point = relative_to.to_point(map);
-        let current_line_is_empty = map
-            .buffer_snapshot()
-            .is_line_blank(MultiBufferRow(point.row));
+        let current_line_is_empty = map.buffer_snapshot().is_line_blank(MultiBufferRow(point.row));
 
         if around {
             if paragraph_ends_with_eof {
@@ -1578,9 +1463,7 @@ pub fn start_of_paragraph(map: &DisplaySnapshot, display_point: DisplayPoint) ->
         return DisplayPoint::zero();
     }
 
-    let is_current_line_blank = map
-        .buffer_snapshot()
-        .is_line_blank(MultiBufferRow(point.row));
+    let is_current_line_blank = map.buffer_snapshot().is_line_blank(MultiBufferRow(point.row));
 
     for row in (0..point.row).rev() {
         let blank = map.buffer_snapshot().is_line_blank(MultiBufferRow(row));
@@ -1601,9 +1484,7 @@ pub fn end_of_paragraph(map: &DisplaySnapshot, display_point: DisplayPoint) -> D
         return map.max_point();
     }
 
-    let is_current_line_blank = map
-        .buffer_snapshot()
-        .is_line_blank(MultiBufferRow(point.row));
+    let is_current_line_blank = map.buffer_snapshot().is_line_blank(MultiBufferRow(point.row));
 
     for row in point.row + 1..map.buffer_snapshot().max_row().0 + 1 {
         let blank = map.buffer_snapshot().is_line_blank(MultiBufferRow(row));
@@ -1877,13 +1758,9 @@ mod test {
         */
         cx.set_shared_state("The quick brown\nˇ\nfox").await;
         cx.simulate_shared_keystrokes("v").await;
-        cx.shared_state()
-            .await
-            .assert_eq("The quick brown\n«\nˇ»fox");
+        cx.shared_state().await.assert_eq("The quick brown\n«\nˇ»fox");
         cx.simulate_shared_keystrokes("i w").await;
-        cx.shared_state()
-            .await
-            .assert_eq("The quick brown\n«\nˇ»fox");
+        cx.shared_state().await.assert_eq("The quick brown\n«\nˇ»fox");
 
         cx.simulate_at_each_offset("v i w", WORD_LOCATIONS)
             .await
@@ -2386,9 +2263,7 @@ mod test {
     }
 
     #[gpui::test]
-    async fn test_singleline_surrounding_character_objects_with_escape(
-        cx: &mut gpui::TestAppContext,
-    ) {
+    async fn test_singleline_surrounding_character_objects_with_escape(cx: &mut gpui::TestAppContext) {
         let mut cx = NeovimBackedTestContext::new(cx).await;
         cx.set_shared_state(indoc! {
             "h\"e\\\"lˇlo \\\"world\"!"
@@ -2460,10 +2335,7 @@ mod test {
         cx.assert_state("fn boop<«A: Debugˇ», B>() {}", Mode::Visual);
 
         // Function arguments
-        cx.set_state(
-            "fn boop(ˇarg_a: (Tuple, Of, Types), arg_b: String) {}",
-            Mode::Normal,
-        );
+        cx.set_state("fn boop(ˇarg_a: (Tuple, Of, Types), arg_b: String) {}", Mode::Normal);
         cx.simulate_keystrokes("d a a");
         cx.assert_state("fn boop(ˇarg_b: String) {}", Mode::Normal);
 
@@ -2472,15 +2344,9 @@ mod test {
         cx.assert_state("std::namespace::test(«\"string\", ˇ»a.b.c())", Mode::Visual);
 
         // Tuple, vec, and array arguments
-        cx.set_state(
-            "fn boop(arg_a: (Tuple, Ofˇ, Types), arg_b: String) {}",
-            Mode::Normal,
-        );
+        cx.set_state("fn boop(arg_a: (Tuple, Ofˇ, Types), arg_b: String) {}", Mode::Normal);
         cx.simulate_keystrokes("c i a");
-        cx.assert_state(
-            "fn boop(arg_a: (Tuple, ˇ, Types), arg_b: String) {}",
-            Mode::Insert,
-        );
+        cx.assert_state("fn boop(arg_a: (Tuple, ˇ, Types), arg_b: String) {}", Mode::Insert);
 
         // Upstream hasn't fixed this either, yet..
         // cx.set_state("let a = (test::call(), 'p', my_macro!{ˇ});", Mode::Normal);
@@ -2491,10 +2357,7 @@ mod test {
         cx.simulate_keystrokes("c i a");
         cx.assert_state("let a = [ˇ, 300];", Mode::Insert);
 
-        cx.set_state(
-            "let a = vec![Vec::new(), vecˇ![test::call(), 300]];",
-            Mode::Normal,
-        );
+        cx.set_state("let a = vec![Vec::new(), vecˇ![test::call(), 300]];", Mode::Normal);
         cx.simulate_keystrokes("c a a");
         cx.assert_state("let a = vec![Vec::new()ˇ];", Mode::Insert);
 
@@ -3386,14 +3249,11 @@ mod test {
     #[gpui::test]
     async fn test_minibrackets_trailing_space(cx: &mut gpui::TestAppContext) {
         let mut cx = NeovimBackedTestContext::new(cx).await;
-        cx.set_shared_state("(trailingˇ whitespace          )")
-            .await;
+        cx.set_shared_state("(trailingˇ whitespace          )").await;
         cx.simulate_shared_keystrokes("v i b").await;
         cx.shared_state().await.assert_matches();
         cx.simulate_shared_keystrokes("escape y i b").await;
-        cx.shared_clipboard()
-            .await
-            .assert_eq("trailing whitespace          ");
+        cx.shared_clipboard().await.assert_eq("trailing whitespace          ");
     }
 
     #[gpui::test]
@@ -3402,42 +3262,21 @@ mod test {
 
         cx.set_state("<html><head></head><body><b>hˇi!</b></body>", Mode::Normal);
         cx.simulate_keystrokes("v i t");
-        cx.assert_state(
-            "<html><head></head><body><b>«hi!ˇ»</b></body>",
-            Mode::Visual,
-        );
+        cx.assert_state("<html><head></head><body><b>«hi!ˇ»</b></body>", Mode::Visual);
         cx.simulate_keystrokes("a t");
-        cx.assert_state(
-            "<html><head></head><body>«<b>hi!</b>ˇ»</body>",
-            Mode::Visual,
-        );
+        cx.assert_state("<html><head></head><body>«<b>hi!</b>ˇ»</body>", Mode::Visual);
         cx.simulate_keystrokes("a t");
-        cx.assert_state(
-            "<html><head></head>«<body><b>hi!</b></body>ˇ»",
-            Mode::Visual,
-        );
+        cx.assert_state("<html><head></head>«<body><b>hi!</b></body>ˇ»", Mode::Visual);
 
         // The cursor is before the tag
-        cx.set_state(
-            "<html><head></head><body> ˇ  <b>hi!</b></body>",
-            Mode::Normal,
-        );
+        cx.set_state("<html><head></head><body> ˇ  <b>hi!</b></body>", Mode::Normal);
         cx.simulate_keystrokes("v i t");
-        cx.assert_state(
-            "<html><head></head><body>   <b>«hi!ˇ»</b></body>",
-            Mode::Visual,
-        );
+        cx.assert_state("<html><head></head><body>   <b>«hi!ˇ»</b></body>", Mode::Visual);
         cx.simulate_keystrokes("a t");
-        cx.assert_state(
-            "<html><head></head><body>   «<b>hi!</b>ˇ»</body>",
-            Mode::Visual,
-        );
+        cx.assert_state("<html><head></head><body>   «<b>hi!</b>ˇ»</body>", Mode::Visual);
 
         // The cursor is in the open tag
-        cx.set_state(
-            "<html><head></head><body><bˇ>hi!</b><b>hello!</b></body>",
-            Mode::Normal,
-        );
+        cx.set_state("<html><head></head><body><bˇ>hi!</b><b>hello!</b></body>", Mode::Normal);
         cx.simulate_keystrokes("v a t");
         cx.assert_state(
             "<html><head></head><body>«<b>hi!</b>ˇ»<b>hello!</b></body>",
@@ -3450,61 +3289,36 @@ mod test {
         );
 
         // current selection length greater than 1
-        cx.set_state(
-            "<html><head></head><body><«b>hi!ˇ»</b></body>",
-            Mode::Visual,
-        );
+        cx.set_state("<html><head></head><body><«b>hi!ˇ»</b></body>", Mode::Visual);
         cx.simulate_keystrokes("i t");
-        cx.assert_state(
-            "<html><head></head><body><b>«hi!ˇ»</b></body>",
-            Mode::Visual,
-        );
+        cx.assert_state("<html><head></head><body><b>«hi!ˇ»</b></body>", Mode::Visual);
         cx.simulate_keystrokes("a t");
-        cx.assert_state(
-            "<html><head></head><body>«<b>hi!</b>ˇ»</body>",
-            Mode::Visual,
-        );
+        cx.assert_state("<html><head></head><body>«<b>hi!</b>ˇ»</body>", Mode::Visual);
 
-        cx.set_state(
-            "<html><head></head><body><«b>hi!</ˇ»b></body>",
-            Mode::Visual,
-        );
+        cx.set_state("<html><head></head><body><«b>hi!</ˇ»b></body>", Mode::Visual);
         cx.simulate_keystrokes("a t");
-        cx.assert_state(
-            "<html><head></head>«<body><b>hi!</b></body>ˇ»",
-            Mode::Visual,
-        );
+        cx.assert_state("<html><head></head>«<body><b>hi!</b></body>ˇ»", Mode::Visual);
     }
     #[gpui::test]
     async fn test_around_containing_word_indent(cx: &mut gpui::TestAppContext) {
         let mut cx = NeovimBackedTestContext::new(cx).await;
 
-        cx.set_shared_state("    ˇconst f = (x: unknown) => {")
-            .await;
+        cx.set_shared_state("    ˇconst f = (x: unknown) => {").await;
         cx.simulate_shared_keystrokes("v a w").await;
-        cx.shared_state()
-            .await
-            .assert_eq("    «const ˇ»f = (x: unknown) => {");
+        cx.shared_state().await.assert_eq("    «const ˇ»f = (x: unknown) => {");
 
-        cx.set_shared_state("    ˇconst f = (x: unknown) => {")
-            .await;
+        cx.set_shared_state("    ˇconst f = (x: unknown) => {").await;
         cx.simulate_shared_keystrokes("y a w").await;
         cx.shared_clipboard().await.assert_eq("const ");
 
-        cx.set_shared_state("    ˇconst f = (x: unknown) => {")
-            .await;
+        cx.set_shared_state("    ˇconst f = (x: unknown) => {").await;
         cx.simulate_shared_keystrokes("d a w").await;
-        cx.shared_state()
-            .await
-            .assert_eq("    ˇf = (x: unknown) => {");
+        cx.shared_state().await.assert_eq("    ˇf = (x: unknown) => {");
         cx.shared_clipboard().await.assert_eq("const ");
 
-        cx.set_shared_state("    ˇconst f = (x: unknown) => {")
-            .await;
+        cx.set_shared_state("    ˇconst f = (x: unknown) => {").await;
         cx.simulate_shared_keystrokes("c a w").await;
-        cx.shared_state()
-            .await
-            .assert_eq("    ˇf = (x: unknown) => {");
+        cx.shared_state().await.assert_eq("    ˇf = (x: unknown) => {");
         cx.shared_clipboard().await.assert_eq("const ");
     }
 

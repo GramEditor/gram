@@ -1,10 +1,9 @@
 use super::MacDisplay;
 use crate::{
-    AnyWindowHandle, Bounds, Capslock, DevicePixels, DisplayLink, ExternalPaths, FileDropEvent,
-    ForegroundExecutor, KeyDownEvent, Keystroke, Modifiers, MouseMoveEvent, Pixels, PlatformAtlas,
-    PlatformDisplay, PlatformInput, PlatformWindow, Point, PromptButton, PromptLevel,
-    RequestFrameOptions, SharedString, Size, SystemWindowTab, Timer, WindowAppearance,
-    WindowBackgroundAppearance, WindowBounds, WindowControlArea, WindowKind, WindowParams,
+    AnyWindowHandle, Bounds, Capslock, DevicePixels, DisplayLink, ExternalPaths, FileDropEvent, ForegroundExecutor,
+    KeyDownEvent, Keystroke, Modifiers, MouseMoveEvent, Pixels, PlatformAtlas, PlatformDisplay, PlatformInput,
+    PlatformWindow, Point, PromptButton, PromptLevel, RequestFrameOptions, SharedString, Size, SystemWindowTab, Timer,
+    WindowAppearance, WindowBackgroundAppearance, WindowBounds, WindowControlArea, WindowKind, WindowParams,
     platform::{
         PlatformInputHandler,
         mac::{blurred_view::BlurredView, events::ESCAPE_KEY, gpui_view::GPUIView},
@@ -21,20 +20,18 @@ use objc2::{
     sel,
 };
 use objc2_app_kit::{
-    NSAlert, NSAlertStyle, NSAppKitVersionNumber, NSAppKitVersionNumber12_0,
-    NSAppearanceCustomization, NSApplication, NSAutoresizingMaskOptions, NSBackingStoreType,
-    NSButton, NSColor, NSDragOperation, NSDraggingInfo, NSEvent, NSEventModifierFlags,
-    NSNormalWindowLevel, NSPanel, NSPasteboardTypeFileURL, NSPopUpMenuWindowLevel, NSScreen,
-    NSTextInputContext, NSTitlebarAccessoryViewController, NSTrackingArea, NSTrackingAreaOptions,
-    NSView, NSWindow, NSWindowAnimationBehavior, NSWindowButton, NSWindowCollectionBehavior,
-    NSWindowDelegate, NSWindowOcclusionState, NSWindowOrderingMode, NSWindowStyleMask,
-    NSWindowTabbingMode, NSWindowTitleVisibility,
+    NSAlert, NSAlertStyle, NSAppKitVersionNumber, NSAppKitVersionNumber12_0, NSAppearanceCustomization, NSApplication,
+    NSAutoresizingMaskOptions, NSBackingStoreType, NSButton, NSColor, NSDragOperation, NSDraggingInfo, NSEvent,
+    NSEventModifierFlags, NSNormalWindowLevel, NSPanel, NSPasteboardTypeFileURL, NSPopUpMenuWindowLevel, NSScreen,
+    NSTextInputContext, NSTitlebarAccessoryViewController, NSTrackingArea, NSTrackingAreaOptions, NSView, NSWindow,
+    NSWindowAnimationBehavior, NSWindowButton, NSWindowCollectionBehavior, NSWindowDelegate, NSWindowOcclusionState,
+    NSWindowOrderingMode, NSWindowStyleMask, NSWindowTabbingMode, NSWindowTitleVisibility,
 };
 use objc2_core_foundation::CGPoint;
 use objc2_foundation::{
-    MainThreadMarker, NSArray, NSCopying, NSDictionary, NSInteger, NSMutableIndexSet,
-    NSNotification, NSObjectNSScriptClassDescription, NSObjectProtocol, NSOperatingSystemVersion,
-    NSPoint, NSProcessInfo, NSRange, NSRect, NSSize, NSString, NSURL, NSUserDefaults, ns_string,
+    MainThreadMarker, NSArray, NSCopying, NSDictionary, NSInteger, NSMutableIndexSet, NSNotification,
+    NSObjectNSScriptClassDescription, NSObjectProtocol, NSOperatingSystemVersion, NSPoint, NSProcessInfo, NSRange,
+    NSRect, NSSize, NSString, NSURL, NSUserDefaults, ns_string,
 };
 use objc2_quartz_core::CALayer;
 use parking_lot::Mutex;
@@ -222,15 +219,11 @@ pub trait GpuiWindowShared {
         }
     }
 
-    fn dragging_entered(
-        &self,
-        dragging_info: &ProtocolObject<dyn NSDraggingInfo>,
-    ) -> NSDragOperation {
+    fn dragging_entered(&self, dragging_info: &ProtocolObject<dyn NSDraggingInfo>) -> NSDragOperation {
         let window_state = self.state();
         let position = drag_event_position(&window_state, dragging_info);
         let paths = external_paths_from_event(dragging_info);
-        if let Some(event) =
-            paths.map(|paths| PlatformInput::FileDrop(FileDropEvent::Entered { position, paths }))
+        if let Some(event) = paths.map(|paths| PlatformInput::FileDrop(FileDropEvent::Entered { position, paths }))
             && send_new_event(&window_state, event)
         {
             window_state.lock().external_files_dragged = true;
@@ -239,10 +232,7 @@ pub trait GpuiWindowShared {
         NSDragOperation::None
     }
 
-    fn dragging_updated(
-        &self,
-        dragging_info: &ProtocolObject<dyn NSDraggingInfo>,
-    ) -> NSDragOperation {
+    fn dragging_updated(&self, dragging_info: &ProtocolObject<dyn NSDraggingInfo>) -> NSDragOperation {
         let window_state = self.state();
         let position = drag_event_position(&window_state, dragging_info);
         if send_new_event(
@@ -257,10 +247,7 @@ pub trait GpuiWindowShared {
 
     fn dragging_exited(&self, _: Option<&ProtocolObject<dyn NSDraggingInfo>>) {
         let window_state = self.state();
-        send_new_event(
-            &window_state,
-            PlatformInput::FileDrop(FileDropEvent::Exited),
-        );
+        send_new_event(&window_state, PlatformInput::FileDrop(FileDropEvent::Exited));
         window_state.lock().external_files_dragged = false;
     }
 
@@ -275,16 +262,10 @@ pub trait GpuiWindowShared {
 
     fn conclude_drag_operation(&self, _: Option<&ProtocolObject<dyn NSDraggingInfo>>) {
         let window_state = self.state();
-        send_new_event(
-            &window_state,
-            PlatformInput::FileDrop(FileDropEvent::Exited),
-        );
+        send_new_event(&window_state, PlatformInput::FileDrop(FileDropEvent::Exited));
     }
 
-    fn add_titlebar_accessory_view_controller(
-        &self,
-        view_controller: &NSTitlebarAccessoryViewController,
-    ) {
+    fn add_titlebar_accessory_view_controller(&self, view_controller: &NSTitlebarAccessoryViewController) {
         // Hide the native tab bar and set its height to 0, since we render our own.
         let accessory_view = view_controller.view();
         accessory_view.setHidden(true);
@@ -679,12 +660,8 @@ impl MacWindowState {
             return;
         };
         let display_id = screen_display_id(&screen);
-        if let Some(mut display_link) = DisplayLink::new(
-            display_id,
-            Retained::as_ptr(&self.native_view) as *mut c_void,
-            step,
-        )
-        .log_err()
+        if let Some(mut display_link) =
+            DisplayLink::new(display_id, Retained::as_ptr(&self.native_view) as *mut c_void, step).log_err()
         {
             display_link.start().log_err();
             self.display_link = Some(display_link);
@@ -717,18 +694,14 @@ impl MacWindowState {
         let screen_frame = screen.frame();
 
         // Flip the y coordinate to be top-left origin
-        window_frame.origin.y =
-            screen_frame.size.height - window_frame.origin.y - window_frame.size.height;
+        window_frame.origin.y = screen_frame.size.height - window_frame.origin.y - window_frame.size.height;
 
         Bounds::new(
             point(
                 px((window_frame.origin.x - screen_frame.origin.x) as f32),
                 px((window_frame.origin.y + screen_frame.origin.y) as f32),
             ),
-            size(
-                px(window_frame.size.width as f32),
-                px(window_frame.size.height as f32),
-            ),
+            size(px(window_frame.size.width as f32), px(window_frame.size.height as f32)),
         )
     }
 
@@ -867,15 +840,12 @@ impl MacWindow {
         );
 
         let native_window = match kind {
-            WindowKind::Normal | WindowKind::Floating => GpuiWindowVariant::Window(
-                GpuiWindow::new(mtm, window_rect, style_mask, target_screen.as_deref()),
-            ),
-            WindowKind::PopUp => GpuiWindowVariant::Panel(GpuiPanel::new(
-                mtm,
-                window_rect,
-                style_mask,
-                target_screen.as_deref(),
-            )),
+            WindowKind::Normal | WindowKind::Floating => {
+                GpuiWindowVariant::Window(GpuiWindow::new(mtm, window_rect, style_mask, target_screen.as_deref()))
+            }
+            WindowKind::PopUp => {
+                GpuiWindowVariant::Panel(GpuiPanel::new(mtm, window_rect, style_mask, target_screen.as_deref()))
+            }
         };
 
         let nswindow = match &native_window {
@@ -884,9 +854,7 @@ impl MacWindow {
         };
 
         unsafe {
-            nswindow.registerForDraggedTypes(&NSArray::from_retained_slice(&[
-                NSPasteboardTypeFileURL.copy(),
-            ]));
+            nswindow.registerForDraggedTypes(&NSArray::from_retained_slice(&[NSPasteboardTypeFileURL.copy()]));
             nswindow.setReleasedWhenClosed(false);
         }
 
@@ -933,12 +901,8 @@ impl MacWindow {
             input_handler: None,
             last_key_equivalent: None,
             synthetic_drag_counter: 0,
-            traffic_light_position: titlebar
-                .as_ref()
-                .and_then(|titlebar| titlebar.traffic_light_position),
-            transparent_titlebar: titlebar
-                .as_ref()
-                .is_none_or(|titlebar| titlebar.appears_transparent),
+            traffic_light_position: titlebar.as_ref().and_then(|titlebar| titlebar.traffic_light_position),
+            transparent_titlebar: titlebar.as_ref().is_none_or(|titlebar| titlebar.appears_transparent),
             previous_modifiers_changed_event: None,
             keystroke_for_do_command: None,
             do_command_handled: None,
@@ -965,10 +929,7 @@ impl MacWindow {
         }
         native_view.set_window_state(window.0.clone());
 
-        if let Some(title) = titlebar
-            .as_ref()
-            .and_then(|t| t.title.as_ref().map(AsRef::as_ref))
-        {
+        if let Some(title) = titlebar.as_ref().and_then(|t| t.title.as_ref().map(AsRef::as_ref)) {
             window.set_title(title);
         }
 
@@ -999,9 +960,7 @@ impl MacWindow {
         // on we explicitly make the view layer-backed up front so that AppKit doesn't do it
         // itself and break the association with its context.
         native_view.setWantsLayer(true);
-        native_view.setLayerContentsRedrawPolicy(
-            objc2_app_kit::NSViewLayerContentsRedrawPolicy::DuringViewResize,
-        );
+        native_view.setLayerContentsRedrawPolicy(objc2_app_kit::NSViewLayerContentsRedrawPolicy::DuringViewResize);
 
         content_view.inspect(|view| {
             view.addSubview(&native_view);
@@ -1042,25 +1001,19 @@ impl MacWindow {
                 panel.setLevel(NSPopUpMenuWindowLevel);
                 panel.setAnimationBehavior(NSWindowAnimationBehavior::UtilityWindow);
                 panel.setCollectionBehavior(
-                    NSWindowCollectionBehavior::CanJoinAllSpaces
-                        | NSWindowCollectionBehavior::FullScreenAuxiliary,
+                    NSWindowCollectionBehavior::CanJoinAllSpaces | NSWindowCollectionBehavior::FullScreenAuxiliary,
                 );
             }
         }
 
         let app = NSApplication::sharedApplication(mtm);
         let main_window = app.mainWindow();
-        if allows_automatic_window_tabbing
-            && !main_window.is_none()
-            && main_window.as_ref() != Some(&nswindow)
-        {
-            let main_window_is_fullscreen =
-                nswindow.styleMask().contains(NSWindowStyleMask::FullScreen);
+        if allows_automatic_window_tabbing && !main_window.is_none() && main_window.as_ref() != Some(&nswindow) {
+            let main_window_is_fullscreen = nswindow.styleMask().contains(NSWindowStyleMask::FullScreen);
             let user_tabbing_preference =
                 Self::get_user_tabbing_preference().unwrap_or(UserTabbingPreference::InFullScreen);
             let should_add_as_tab = user_tabbing_preference == UserTabbingPreference::Always
-                || user_tabbing_preference == UserTabbingPreference::InFullScreen
-                    && main_window_is_fullscreen;
+                || user_tabbing_preference == UserTabbingPreference::InFullScreen && main_window_is_fullscreen;
 
             if should_add_as_tab {
                 let main_window_can_tab = main_window
@@ -1273,11 +1226,7 @@ impl PlatformWindow for MacWindow {
     }
 
     fn mouse_position(&self) -> Point<Pixels> {
-        let position = self
-            .0
-            .lock()
-            .native_window
-            .mouseLocationOutsideOfEventStream();
+        let position = self.0.lock().native_window.mouseLocationOutsideOfEventStream();
         convert_mouse_position(position, self.content_size().height)
     }
 
@@ -1456,8 +1405,7 @@ impl PlatformWindow for MacWindow {
             // Not using `+[NSColor clearColor]` to avoid broken shadow.
             NSColor::colorWithSRGBRed_green_blue_alpha(0f64, 0f64, 0f64, 0.0001)
         };
-        this.native_window
-            .setBackgroundColor(Some(&background_color));
+        this.native_window.setBackgroundColor(Some(&background_color));
 
         if unsafe { NSAppKitVersionNumber < NSAppKitVersionNumber12_0 } {
             // Whether `-[NSVisualEffectView respondsToSelector:@selector(_updateProxyLayer)]`.
@@ -1470,9 +1418,7 @@ impl PlatformWindow for MacWindow {
             };
 
             let window_number = this.native_window.windowNumber();
-            unsafe {
-                CGSSetWindowBackgroundBlurRadius(CGSMainConnectionID(), window_number, blur_radius)
-            };
+            unsafe { CGSSetWindowBackgroundBlurRadius(CGSMainConnectionID(), window_number, blur_radius) };
         } else {
             // On newer macOS `NSVisualEffectView` manages the effect layer directly. Using it
             // could have a better performance (it downsamples the backdrop) and more control
@@ -1488,15 +1434,10 @@ impl PlatformWindow for MacWindow {
                 let mtm = MainThreadMarker::new().expect("Must run on the main thread");
                 let blur_view = super::blurred_view::BlurredView::new(mtm, frame);
                 blur_view.setAutoresizingMask(
-                    NSAutoresizingMaskOptions::ViewWidthSizable
-                        | NSAutoresizingMaskOptions::ViewHeightSizable,
+                    NSAutoresizingMaskOptions::ViewWidthSizable | NSAutoresizingMaskOptions::ViewHeightSizable,
                 );
 
-                content_view.addSubview_positioned_relativeTo(
-                    &blur_view,
-                    NSWindowOrderingMode::Below,
-                    None,
-                );
+                content_view.addSubview_positioned_relativeTo(&blur_view, NSWindowOrderingMode::Below, None);
                 this.blurred_view = Some(blur_view);
             }
         }
@@ -1594,8 +1535,7 @@ impl PlatformWindow for MacWindow {
         self.0.as_ref().lock().close_callback = Some(callback);
     }
 
-    fn on_hit_test_window_control(&self, _callback: Box<dyn FnMut() -> Option<WindowControlArea>>) {
-    }
+    fn on_hit_test_window_control(&self, _callback: Box<dyn FnMut() -> Option<WindowControlArea>>) {}
 
     fn on_appearance_changed(&self, callback: Box<dyn FnMut()>) {
         self.0.lock().appearance_changed_callback = Some(callback);
@@ -1727,22 +1667,14 @@ impl rwh::HasWindowHandle for MacWindow {
         // SAFETY: The AppKitWindowHandle is a wrapper around a pointer to an NSView
         let view = self.0.lock().native_view.clone();
         let view = NonNull::new(Retained::as_ptr(&view) as *mut c_void).unwrap();
-        Ok(unsafe {
-            rwh::WindowHandle::borrow_raw(rwh::RawWindowHandle::AppKit(
-                rwh::AppKitWindowHandle::new(view),
-            ))
-        })
+        Ok(unsafe { rwh::WindowHandle::borrow_raw(rwh::RawWindowHandle::AppKit(rwh::AppKitWindowHandle::new(view))) })
     }
 }
 
 impl rwh::HasDisplayHandle for MacWindow {
     fn display_handle(&self) -> Result<rwh::DisplayHandle<'_>, rwh::HandleError> {
         // SAFETY: This is a no-op on macOS
-        unsafe {
-            Ok(rwh::DisplayHandle::borrow_raw(
-                rwh::AppKitDisplayHandle::new().into(),
-            ))
-        }
+        unsafe { Ok(rwh::DisplayHandle::borrow_raw(rwh::AppKitDisplayHandle::new().into())) }
     }
 }
 
@@ -1799,11 +1731,7 @@ pub(crate) fn update_window_scale_factor(window_state: &Arc<Mutex<MacWindowState
     };
 }
 
-pub(crate) async fn synthetic_drag(
-    window_state: Weak<Mutex<MacWindowState>>,
-    drag_id: usize,
-    event: MouseMoveEvent,
-) {
+pub(crate) async fn synthetic_drag(window_state: Weak<Mutex<MacWindowState>>, drag_id: usize, event: MouseMoveEvent) {
     loop {
         Timer::after(Duration::from_millis(16)).await;
         if let Some(window_state) = window_state.upgrade() {
@@ -1837,16 +1765,12 @@ fn drag_event_position(
     convert_mouse_position(drag_location, window_state.lock().content_size().height)
 }
 
-fn external_paths_from_event(
-    dragging_info: &ProtocolObject<dyn NSDraggingInfo>,
-) -> Option<ExternalPaths> {
+fn external_paths_from_event(dragging_info: &ProtocolObject<dyn NSDraggingInfo>) -> Option<ExternalPaths> {
     let mut paths = SmallVec::new();
     let pasteboard = dragging_info.draggingPasteboard();
     let classes = NSArray::from_slice(&[NSURL::class()]);
     let options = NSDictionary::new();
-    let Some(urls) =
-        (unsafe { pasteboard.readObjectsForClasses_options(&classes, Some(&options)) })
-    else {
+    let Some(urls) = (unsafe { pasteboard.readObjectsForClasses_options(&classes, Some(&options)) }) else {
         return None;
     };
     for file in urls {
@@ -1871,11 +1795,7 @@ fn send_new_event(window_state_lock: &Mutex<MacWindowState>, e: PlatformInput) -
 }
 
 #[allow(non_snake_case)]
-pub(crate) fn is_macos_version_at_least(
-    majorVersion: isize,
-    minorVersion: isize,
-    patchVersion: isize,
-) -> bool {
+pub(crate) fn is_macos_version_at_least(majorVersion: isize, minorVersion: isize, patchVersion: isize) -> bool {
     let min_version = NSOperatingSystemVersion {
         majorVersion,
         minorVersion,
@@ -1941,9 +1861,5 @@ pub(crate) fn remove_layer_background(layer: &CALayer) {
 unsafe extern "C" {
     // Widely used private APIs; Apple uses them for their Terminal.app.
     fn CGSMainConnectionID() -> *mut AnyObject;
-    fn CGSSetWindowBackgroundBlurRadius(
-        connection_id: *mut AnyObject,
-        window_id: NSInteger,
-        radius: i64,
-    ) -> i32;
+    fn CGSSetWindowBackgroundBlurRadius(connection_id: *mut AnyObject, window_id: NSInteger, radius: i64) -> i32;
 }

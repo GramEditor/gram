@@ -43,21 +43,20 @@ impl RenderOnce for ListBulletItem {
                     .gap_1()
                     .items_start()
                     .child(
-                        h_flex().h(line_height).justify_center().child(
-                            Icon::new(IconName::Dash)
-                                .size(IconSize::XSmall)
-                                .color(Color::Hidden),
-                        ),
+                        h_flex()
+                            .h(line_height)
+                            .justify_center()
+                            .child(Icon::new(IconName::Dash).size(IconSize::XSmall).color(Color::Hidden)),
                     )
                     .map(|this| {
                         if !self.children.is_empty() {
                             this.child(h_flex().gap_0p5().flex_wrap().children(self.children))
                         } else {
                             this.child(
-                                div().w_full().min_w_0().child(
-                                    Label::new(self.label)
-                                        .color(self.label_color.unwrap_or(Color::Default)),
-                                ),
+                                div()
+                                    .w_full()
+                                    .min_w_0()
+                                    .child(Label::new(self.label).color(self.label_color.unwrap_or(Color::Default))),
                             )
                         }
                     }),
@@ -77,10 +76,7 @@ impl Component for ListBulletItem {
 
     fn preview(_window: &mut Window, _cx: &mut App) -> Option<AnyElement> {
         let basic_examples = vec![
-            single_example(
-                "Simple",
-                ListBulletItem::new("First bullet item").into_any_element(),
-            ),
+            single_example("Simple", ListBulletItem::new("First bullet item").into_any_element()),
             single_example(
                 "Multiple Lines",
                 v_flex()
@@ -91,19 +87,13 @@ impl Component for ListBulletItem {
             ),
             single_example(
                 "Long Text",
-                ListBulletItem::new(
-                    "A longer bullet item that demonstrates text wrapping behavior",
-                )
-                .into_any_element(),
+                ListBulletItem::new("A longer bullet item that demonstrates text wrapping behavior").into_any_element(),
             ),
             single_example(
                 "With Link",
                 ListBulletItem::new("")
                     .child(Label::new("Create a Codeberg account by"))
-                    .child(ButtonLink::new(
-                        "visiting the website",
-                        "https://codeberg.org",
-                    ))
+                    .child(ButtonLink::new("visiting the website", "https://codeberg.org"))
                     .into_any_element(),
             ),
         ];

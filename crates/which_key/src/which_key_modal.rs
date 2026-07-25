@@ -2,16 +2,13 @@
 
 use gpui::prelude::FluentBuilder;
 use gpui::{
-    App, Context, DismissEvent, EventEmitter, FocusHandle, Focusable, FontWeight, Keystroke,
-    ScrollHandle, Subscription, WeakEntity, Window,
+    App, Context, DismissEvent, EventEmitter, FocusHandle, Focusable, FontWeight, Keystroke, ScrollHandle,
+    Subscription, WeakEntity, Window,
 };
 use settings::Settings;
 use std::collections::HashMap;
 use theme::ThemeSettings;
-use ui::{
-    Divider, DividerColor, DynamicSpacing, LabelSize, WithScrollbar, prelude::*,
-    text_for_keystrokes,
-};
+use ui::{Divider, DividerColor, DynamicSpacing, LabelSize, WithScrollbar, prelude::*, text_for_keystrokes};
 use workspace::{ModalView, Workspace};
 
 use crate::FILTERED_KEYSTROKES;
@@ -27,11 +24,7 @@ pub struct WhichKeyModal {
 }
 
 impl WhichKeyModal {
-    pub fn new(
-        workspace: WeakEntity<Workspace>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn new(workspace: WeakEntity<Workspace>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         // Keep focus where it currently is
         let focus_handle = window.focused(cx).unwrap_or(cx.focus_handle());
 
@@ -42,12 +35,9 @@ impl WhichKeyModal {
             scroll_handle: ScrollHandle::new(),
             bindings: Vec::new(),
             pending_keys: SharedString::new_static(""),
-            _pending_input_subscription: cx.observe_pending_input(
-                window,
-                |this: &mut Self, window, cx| {
-                    this.update_pending_keys(window, cx);
-                },
-            ),
+            _pending_input_subscription: cx.observe_pending_input(window, |this: &mut Self, window, cx| {
+                this.update_pending_keys(window, cx);
+            }),
             _focus_out_subscription: window.on_focus_out(&focus_handle, cx, move |_, _, cx| {
                 handle.update(cx, |_, cx| cx.emit(DismissEvent)).ok();
             }),
@@ -82,16 +72,14 @@ impl WhichKeyModal {
             })
             .filter(|(keystrokes, _action)| {
                 // Check if this binding matches any filtered keystroke pattern
-                !FILTERED_KEYSTROKES.iter().any(|filtered| {
-                    keystrokes.len() >= filtered.len()
-                        && keystrokes[..filtered.len()] == filtered[..]
-                })
+                !FILTERED_KEYSTROKES
+                    .iter()
+                    .any(|filtered| keystrokes.len() >= filtered.len() && keystrokes[..filtered.len()] == filtered[..])
             })
             .map(|(keystrokes, action)| {
                 // Map to remaining keystrokes and action name
                 let remaining_keystrokes = keystrokes[pending_keys.len()..].to_vec();
-                let action_name: SharedString =
-                    command_palette::humanize_action_name(action.name()).into();
+                let action_name: SharedString = command_palette::humanize_action_name(action.name()).into();
                 (remaining_keystrokes, action_name)
             })
             .collect();
@@ -150,10 +138,7 @@ impl Render for WhichKeyModal {
             .and_then(|workspace| {
                 workspace.read_with(cx, |workspace, cx| {
                     if workspace.status_bar_visible(cx) {
-                        Some(
-                            DynamicSpacing::Base04.px(cx) * 2.0
-                                + ThemeSettings::get_global(cx).ui_font_size(cx),
-                        )
+                        Some(DynamicSpacing::Base04.px(cx) * 2.0 + ThemeSettings::get_global(cx).ui_font_size(cx))
                     } else {
                         None
                     }
@@ -219,11 +204,7 @@ impl Render for WhichKeyModal {
                     .min_w_0()
                     .children(self.bindings.iter().map(|(_, action_name)| {
                         let is_group = action_name.starts_with('+');
-                        let label_color = if is_group {
-                            Color::Success
-                        } else {
-                            Color::Default
-                        };
+                        let label_color = if is_group { Color::Success } else { Color::Default };
 
                         div().child(
                             Label::new(action_name.clone())
@@ -246,12 +227,11 @@ impl Render for WhichKeyModal {
             .elevation_3(cx)
             .px(px(12.))
             .child(v_flex().child(title_section).when(has_rows, |el| {
-                el.child(
-                    div()
-                        .max_h(max_content_height)
-                        .child(content)
-                        .vertical_scrollbar_for(&self.scroll_handle, window, cx),
-                )
+                el.child(div().max_h(max_content_height).child(content).vertical_scrollbar_for(
+                    &self.scroll_handle,
+                    window,
+                    cx,
+                ))
             }))
     }
 }
@@ -270,11 +250,8 @@ impl ModalView for WhichKeyModal {
     }
 }
 
-fn group_bindings(
-    binding_data: Vec<(Vec<Keystroke>, SharedString)>,
-) -> Vec<(Vec<Keystroke>, SharedString)> {
-    let mut groups: HashMap<Option<Keystroke>, Vec<(Vec<Keystroke>, SharedString)>> =
-        HashMap::new();
+fn group_bindings(binding_data: Vec<(Vec<Keystroke>, SharedString)>) -> Vec<(Vec<Keystroke>, SharedString)> {
+    let mut groups: HashMap<Option<Keystroke>, Vec<(Vec<Keystroke>, SharedString)>> = HashMap::new();
 
     // Group bindings by their first keystroke
     for (remaining_keystrokes, action_name) in binding_data {

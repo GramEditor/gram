@@ -29,11 +29,7 @@ impl PlatformKeyboardLayout for MacKeyboardLayout {
 }
 
 impl PlatformKeyboardMapper for MacKeyboardMapper {
-    fn map_key_equivalent(
-        &self,
-        mut keystroke: Keystroke,
-        use_key_equivalents: bool,
-    ) -> KeybindingKeystroke {
+    fn map_key_equivalent(&self, mut keystroke: Keystroke, use_key_equivalents: bool) -> KeybindingKeystroke {
         if use_key_equivalents && let Some(key_equivalents) = &self.key_equivalents {
             if keystroke.key.chars().count() == 1
                 && let Some(key) = key_equivalents.get(&keystroke.key.chars().next().unwrap())
@@ -54,17 +50,11 @@ impl MacKeyboardLayout {
         unsafe {
             let current_keyboard = TISCopyCurrentKeyboardLayoutInputSource();
 
-            let id = TISGetInputSourceProperty(
-                current_keyboard,
-                kTISPropertyInputSourceID as *const c_void,
-            );
+            let id = TISGetInputSourceProperty(current_keyboard, kTISPropertyInputSourceID as *const c_void);
             let id: *const std::os::raw::c_char = msg_send![id, UTF8String];
             let id = CStr::from_ptr(id).to_str().unwrap().to_string();
 
-            let name = TISGetInputSourceProperty(
-                current_keyboard,
-                kTISPropertyLocalizedName as *const c_void,
-            );
+            let name = TISGetInputSourceProperty(current_keyboard, kTISPropertyLocalizedName as *const c_void);
             let name: *const std::os::raw::c_char = msg_send![name, UTF8String];
             let name = CStr::from_ptr(name).to_str().unwrap().to_string();
 

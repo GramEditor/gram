@@ -14,9 +14,8 @@ pub use modal::{Rerun, ShowAttachModal, Spawn, TaskOverrides, TasksModal};
 pub fn init(cx: &mut App) {
     cx.observe_new(
         |workspace: &mut Workspace, _: Option<&mut Window>, _: &mut Context<Workspace>| {
-            workspace
-                .register_action(spawn_task_or_modal)
-                .register_action(move |workspace, action: &modal::Rerun, window, cx| {
+            workspace.register_action(spawn_task_or_modal).register_action(
+                move |workspace, action: &modal::Rerun, window, cx| {
                     if let Some((task_source_kind, mut last_scheduled_task)) = workspace
                         .project()
                         .read(cx)
@@ -24,13 +23,9 @@ pub fn init(cx: &mut App) {
                         .read(cx)
                         .task_inventory()
                         .and_then(|inventory| {
-                            inventory.read(cx).last_scheduled_task(
-                                action
-                                    .task_id
-                                    .as_ref()
-                                    .map(|id| TaskId(id.clone()))
-                                    .as_ref(),
-                            )
+                            inventory
+                                .read(cx)
+                                .last_scheduled_task(action.task_id.as_ref().map(|id| TaskId(id.clone())).as_ref())
                         })
                     {
                         if action.reevaluate_context {
@@ -50,9 +45,7 @@ pub fn init(cx: &mut App) {
                                         workspace.schedule_task(
                                             task_source_kind,
                                             &original_task,
-                                            task_contexts
-                                                .active_context()
-                                                .unwrap_or(&default_context),
+                                            task_contexts.active_context().unwrap_or(&default_context),
                                             false,
                                             window,
                                             cx,
@@ -71,36 +64,19 @@ pub fn init(cx: &mut App) {
                                 resolved.use_new_terminal = use_new_terminal;
                             }
 
-                            workspace.schedule_resolved_task(
-                                task_source_kind,
-                                last_scheduled_task,
-                                false,
-                                window,
-                                cx,
-                            );
+                            workspace.schedule_resolved_task(task_source_kind, last_scheduled_task, false, window, cx);
                         }
                     } else {
-                        spawn_task_or_modal(
-                            workspace,
-                            &Spawn::ViaModal {
-                                reveal_target: None,
-                            },
-                            window,
-                            cx,
-                        );
+                        spawn_task_or_modal(workspace, &Spawn::ViaModal { reveal_target: None }, window, cx);
                     };
-                });
+                },
+            );
         },
     )
     .detach();
 }
 
-fn spawn_task_or_modal(
-    workspace: &mut Workspace,
-    action: &Spawn,
-    window: &mut Window,
-    cx: &mut Context<Workspace>,
-) {
+fn spawn_task_or_modal(workspace: &mut Workspace, action: &Spawn, window: &mut Window, cx: &mut Context<Workspace>) {
     if let Some(provider) = workspace.debugger_provider() {
         provider.spawn_task_or_modal(workspace, action, window, cx);
         return;
@@ -115,8 +91,7 @@ fn spawn_task_or_modal(
                 reveal_target: Some(reveal_target),
             });
             let name = task_name.clone();
-            spawn_tasks_filtered(move |(_, task)| task.label.eq(&name), overrides, window, cx)
-                .detach_and_log_err(cx)
+            spawn_tasks_filtered(move |(_, task)| task.label.eq(&name), overrides, window, cx).detach_and_log_err(cx)
         }
         Spawn::ByTag {
             task_tag,
@@ -126,17 +101,10 @@ fn spawn_task_or_modal(
                 reveal_target: Some(reveal_target),
             });
             let tag = task_tag.clone();
-            spawn_tasks_filtered(
-                move |(_, task)| task.tags.contains(&tag),
-                overrides,
-                window,
-                cx,
-            )
-            .detach_and_log_err(cx)
+            spawn_tasks_filtered(move |(_, task)| task.tags.contains(&tag), overrides, window, cx)
+                .detach_and_log_err(cx)
         }
-        Spawn::ViaModal { reveal_target } => {
-            toggle_modal(workspace, *reveal_target, window, cx).detach()
-        }
+        Spawn::ViaModal { reveal_target } => toggle_modal(workspace, *reveal_target, window, cx).detach(),
     }
 }
 
@@ -186,9 +154,7 @@ where
     F: FnMut((&TaskSourceKind, &TaskTemplate)) -> bool + 'static,
 {
     cx.spawn_in(window, async move |workspace, cx| {
-        let task_contexts = workspace.update_in(cx, |workspace, window, cx| {
-            task_contexts(workspace, window, cx)
-        })?;
+        let task_contexts = workspace.update_in(cx, |workspace, window, cx| task_contexts(workspace, window, cx))?;
         let task_contexts = task_contexts.await;
         let mut tasks = workspace
             .update(cx, |workspace, cx| {
@@ -206,10 +172,7 @@ where
                     .location()
                     .map(|location| {
                         let buffer = location.buffer.read(cx);
-                        (
-                            buffer.file().cloned(),
-                            buffer.language_at(location.range.start),
-                        )
+                        (buffer.file().cloned(), buffer.language_at(location.range.start))
                     })
                     .unwrap_or_default();
                 task_inventory
@@ -266,11 +229,7 @@ where
     })
 }
 
-pub fn task_contexts(
-    workspace: &Workspace,
-    window: &mut Window,
-    cx: &mut App,
-) -> Task<TaskContexts> {
+pub fn task_contexts(workspace: &Workspace, window: &mut Window, cx: &mut App) -> Task<TaskContexts> {
     let active_item = workspace.active_item(cx);
     let active_worktree = active_item
         .as_ref()
@@ -283,26 +242,20 @@ pub fn task_contexts(
                 .worktree_for_id(*worktree_id, cx)
                 .is_some_and(|worktree| is_visible_directory(&worktree, cx))
         })
-        .or_else(|| {
-            workspace
-                .visible_worktrees(cx)
-                .next()
-                .map(|tree| tree.read(cx).id())
-        });
+        .or_else(|| workspace.visible_worktrees(cx).next().map(|tree| tree.read(cx).id()));
 
     let active_editor = active_item.and_then(|item| item.act_as::<Editor>(cx));
 
-    let editor_context_task = active_editor.as_ref().map(|active_editor| {
-        active_editor.update(cx, |editor, cx| editor.task_context(window, cx))
-    });
+    let editor_context_task = active_editor
+        .as_ref()
+        .map(|active_editor| active_editor.update(cx, |editor, cx| editor.task_context(window, cx)));
 
     let location = active_editor.as_ref().and_then(|editor| {
         editor.update(cx, |editor, cx| {
             let selection = editor.selections.newest_anchor();
             let multi_buffer = editor.buffer().clone();
             let multi_buffer_snapshot = multi_buffer.read(cx).snapshot(cx);
-            let (buffer_snapshot, buffer_offset) =
-                multi_buffer_snapshot.point_to_buffer_offset(selection.head())?;
+            let (buffer_snapshot, buffer_offset) = multi_buffer_snapshot.point_to_buffer_offset(selection.head())?;
             let buffer_anchor = buffer_snapshot.anchor_before(buffer_offset);
             let buffer = multi_buffer.read(cx).buffer(buffer_snapshot.remote_id())?;
             Some(Location {
@@ -317,14 +270,9 @@ pub fn task_contexts(
         .map(|active_editor| active_editor.update(cx, |editor, cx| editor.lsp_task_sources(cx)))
         .unwrap_or_default();
 
-    let latest_selection = active_editor.as_ref().map(|active_editor| {
-        active_editor
-            .read(cx)
-            .selections
-            .newest_anchor()
-            .head()
-            .text_anchor
-    });
+    let latest_selection = active_editor
+        .as_ref()
+        .map(|active_editor| active_editor.read(cx).selections.newest_anchor().head().text_anchor);
 
     let mut worktree_abs_paths = workspace
         .worktrees(cx)
@@ -434,19 +382,14 @@ mod tests {
         let project = Project::test(fs, [path!("/dir").as_ref()], cx).await;
         let worktree_store = project.read_with(cx, |project, _| project.worktree_store());
         let rust_language = Arc::new(
-            Language::new(
-                LanguageConfig::default(),
-                Some(tree_sitter_rust::LANGUAGE.into()),
-            )
-            .with_outline_query(
-                r#"(function_item
+            Language::new(LanguageConfig::default(), Some(tree_sitter_rust::LANGUAGE.into()))
+                .with_outline_query(
+                    r#"(function_item
             "fn" @context
             name: (_) @name) @item"#,
-            )
-            .unwrap()
-            .with_context_provider(Some(Arc::new(BasicContextProvider::new(
-                worktree_store.clone(),
-            )))),
+                )
+                .unwrap()
+                .with_context_provider(Some(Arc::new(BasicContextProvider::new(worktree_store.clone())))),
         );
 
         let typescript_language = Arc::new(
@@ -464,31 +407,21 @@ mod tests {
                         ")" @context)) @item"#,
             )
             .unwrap()
-            .with_context_provider(Some(Arc::new(BasicContextProvider::new(
-                worktree_store.clone(),
-            )))),
+            .with_context_provider(Some(Arc::new(BasicContextProvider::new(worktree_store.clone())))),
         );
 
-        let worktree_id = project.update(cx, |project, cx| {
-            project.worktrees(cx).next().unwrap().read(cx).id()
-        });
-        let (workspace, cx) =
-            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let worktree_id = project.update(cx, |project, cx| project.worktrees(cx).next().unwrap().read(cx).id());
+        let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
 
         let buffer1 = workspace
             .update(cx, |this, cx| {
-                this.project().update(cx, |this, cx| {
-                    this.open_buffer((worktree_id, rel_path("a.ts")), cx)
-                })
+                this.project()
+                    .update(cx, |this, cx| this.open_buffer((worktree_id, rel_path("a.ts")), cx))
             })
             .await
             .unwrap();
-        buffer1.update(cx, |this, cx| {
-            this.set_language(Some(typescript_language), cx)
-        });
-        let editor1 = cx.new_window_entity(|window, cx| {
-            Editor::for_buffer(buffer1, Some(project.clone()), window, cx)
-        });
+        buffer1.update(cx, |this, cx| this.set_language(Some(typescript_language), cx));
+        let editor1 = cx.new_window_entity(|window, cx| Editor::for_buffer(buffer1, Some(project.clone()), window, cx));
         let buffer2 = workspace
             .update(cx, |this, cx| {
                 this.project().update(cx, |this, cx| {
@@ -498,25 +431,19 @@ mod tests {
             .await
             .unwrap();
         buffer2.update(cx, |this, cx| this.set_language(Some(rust_language), cx));
-        let editor2 = cx
-            .new_window_entity(|window, cx| Editor::for_buffer(buffer2, Some(project), window, cx));
+        let editor2 = cx.new_window_entity(|window, cx| Editor::for_buffer(buffer2, Some(project), window, cx));
 
         let first_context = workspace
             .update_in(cx, |workspace, window, cx| {
                 workspace.add_item_to_center(Box::new(editor1.clone()), window, cx);
                 workspace.add_item_to_center(Box::new(editor2.clone()), window, cx);
-                assert_eq!(
-                    workspace.active_item(cx).unwrap().item_id(),
-                    editor2.entity_id()
-                );
+                assert_eq!(workspace.active_item(cx).unwrap().item_id(), editor2.entity_id());
                 task_contexts(workspace, window, cx)
             })
             .await;
 
         assert_eq!(
-            first_context
-                .active_context()
-                .expect("Should have an active context"),
+            first_context.active_context().expect("Should have an active context"),
             &TaskContext {
                 cwd: Some(path!("/dir").into()),
                 task_variables: TaskVariables::from_iter([
@@ -543,9 +470,7 @@ mod tests {
 
         assert_eq!(
             workspace
-                .update_in(cx, |workspace, window, cx| {
-                    task_contexts(workspace, window, cx)
-                })
+                .update_in(cx, |workspace, window, cx| { task_contexts(workspace, window, cx) })
                 .await
                 .active_context()
                 .expect("Should have an active context"),

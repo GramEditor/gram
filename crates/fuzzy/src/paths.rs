@@ -104,10 +104,7 @@ pub fn match_fixed_path_set(
     let mut results = Vec::with_capacity(candidates.len());
     let (path_prefix, path_prefix_chars, lowercase_prefix) = match worktree_root_name {
         Some(worktree_root_name) => {
-            let mut path_prefix_chars = worktree_root_name
-                .display(path_style)
-                .chars()
-                .collect::<Vec<_>>();
+            let mut path_prefix_chars = worktree_root_name.display(path_style).chars().collect::<Vec<_>>();
             path_prefix_chars.extend(path_style.primary_separator().chars());
             let lowercase_pfx = path_prefix_chars
                 .iter()
@@ -116,11 +113,7 @@ pub fn match_fixed_path_set(
 
             (worktree_root_name, path_prefix_chars, lowercase_pfx)
         }
-        None => (
-            RelPath::empty().into(),
-            Default::default(),
-            Default::default(),
-        ),
+        None => (RelPath::empty().into(), Default::default(), Default::default()),
     };
 
     matcher.match_candidates(
@@ -170,10 +163,7 @@ pub async fn match_path_sets<'a, Set: PathMatchCandidateSet<'a>>(
         })
         .collect::<Vec<_>>();
 
-    let lowercase_query = query
-        .iter()
-        .map(|query| simple_lowercase(*query))
-        .collect::<Vec<_>>();
+    let lowercase_query = query.iter().map(|query| simple_lowercase(*query)).collect::<Vec<_>>();
 
     let query = &query;
     let lowercase_query = &lowercase_query;
@@ -191,8 +181,7 @@ pub async fn match_path_sets<'a, Set: PathMatchCandidateSet<'a>>(
                 scope.spawn(async move {
                     let segment_start = segment_idx * segment_size;
                     let segment_end = segment_start + segment_size;
-                    let mut matcher =
-                        Matcher::new(query, lowercase_query, query_char_bag, smart_case, true);
+                    let mut matcher = Matcher::new(query, lowercase_query, query_char_bag, smart_case, true);
 
                     let mut tree_start = 0;
                     for candidate_set in candidate_sets {
@@ -208,18 +197,11 @@ pub async fn match_path_sets<'a, Set: PathMatchCandidateSet<'a>>(
                             let candidates = candidate_set.candidates(start).take(end - start);
 
                             let worktree_id = candidate_set.id();
-                            let mut prefix = candidate_set
-                                .prefix()
-                                .as_unix_str()
-                                .chars()
-                                .collect::<Vec<_>>();
+                            let mut prefix = candidate_set.prefix().as_unix_str().chars().collect::<Vec<_>>();
                             if !candidate_set.root_is_file() && !prefix.is_empty() {
                                 prefix.push('/');
                             }
-                            let lowercase_prefix = prefix
-                                .iter()
-                                .map(|c| simple_lowercase(*c))
-                                .collect::<Vec<_>>();
+                            let lowercase_prefix = prefix.iter().map(|c| simple_lowercase(*c)).collect::<Vec<_>>();
                             matcher.match_candidates(
                                 &prefix,
                                 &lowercase_prefix,
@@ -233,15 +215,11 @@ pub async fn match_path_sets<'a, Set: PathMatchCandidateSet<'a>>(
                                     path: Arc::from(candidate.path),
                                     is_dir: candidate.is_dir,
                                     path_prefix: candidate_set.prefix(),
-                                    distance_to_relative_ancestor: relative_to.as_ref().map_or(
-                                        usize::MAX,
-                                        |relative_to| {
-                                            distance_between_paths(
-                                                candidate.path,
-                                                relative_to.as_ref(),
-                                            )
-                                        },
-                                    ),
+                                    distance_to_relative_ancestor: relative_to
+                                        .as_ref()
+                                        .map_or(usize::MAX, |relative_to| {
+                                            distance_between_paths(candidate.path, relative_to.as_ref())
+                                        }),
                                 },
                             );
                         }

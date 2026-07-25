@@ -4,9 +4,7 @@ use collections::FxHashMap;
 use gpui::{App, Global, SharedString};
 use language::LanguageName;
 use parking_lot::RwLock;
-use task::{
-    AdapterSchema, AdapterSchemas, DebugRequest, DebugScenario, SpawnInTerminal, TaskTemplate,
-};
+use task::{AdapterSchema, AdapterSchemas, DebugRequest, DebugScenario, SpawnInTerminal, TaskTemplate};
 
 use crate::adapters::{DebugAdapter, DebugAdapterName};
 use std::{collections::BTreeMap, sync::Arc};

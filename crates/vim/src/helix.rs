@@ -7,8 +7,8 @@ mod surround;
 
 use editor::display_map::DisplaySnapshot;
 use editor::{
-    DisplayPoint, Editor, EditorSettings, HideMouseCursorOrigin, MultiBufferOffset,
-    SelectionEffects, ToOffset, ToPoint, movement,
+    DisplayPoint, Editor, EditorSettings, HideMouseCursorOrigin, MultiBufferOffset, SelectionEffects, ToOffset,
+    ToPoint, movement,
 };
 use gpui::actions;
 use gpui::{Context, Window};
@@ -85,28 +85,14 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
         vim.clear_operator(window, cx);
         vim.push_operator(Operator::HelixSurroundAdd, window, cx);
     });
-    Vim::action(
-        editor,
-        cx,
-        |vim, _: &PushHelixSurroundReplace, window, cx| {
-            vim.clear_operator(window, cx);
-            vim.push_operator(
-                Operator::HelixSurroundReplace {
-                    replaced_char: None,
-                },
-                window,
-                cx,
-            );
-        },
-    );
-    Vim::action(
-        editor,
-        cx,
-        |vim, _: &PushHelixSurroundDelete, window, cx| {
-            vim.clear_operator(window, cx);
-            vim.push_operator(Operator::HelixSurroundDelete, window, cx);
-        },
-    );
+    Vim::action(editor, cx, |vim, _: &PushHelixSurroundReplace, window, cx| {
+        vim.clear_operator(window, cx);
+        vim.push_operator(Operator::HelixSurroundReplace { replaced_char: None }, window, cx);
+    });
+    Vim::action(editor, cx, |vim, _: &PushHelixSurroundDelete, window, cx| {
+        vim.clear_operator(window, cx);
+        vim.push_operator(Operator::HelixSurroundDelete, window, cx);
+    });
 }
 
 impl Vim {
@@ -160,30 +146,18 @@ impl Vim {
                         // Helix: `w` goes to the character before a word
                         Motion::NextWordStart { ignore_punctuation } => {
                             let mut head = movement::right(map, current_head);
-                            let classifier =
-                                map.buffer_snapshot().char_classifier_at(head.to_point(map));
+                            let classifier = map.buffer_snapshot().char_classifier_at(head.to_point(map));
                             for _ in 0..times.unwrap_or(1) {
-                                let (_, new_head) =
-                                    movement::find_boundary_trail(map, head, |left, right| {
-                                        Self::is_boundary_right(ignore_punctuation)(
-                                            left,
-                                            right,
-                                            &classifier,
-                                        )
-                                    });
+                                let (_, new_head) = movement::find_boundary_trail(map, head, |left, right| {
+                                    Self::is_boundary_right(ignore_punctuation)(left, right, &classifier)
+                                });
                                 head = new_head;
                             }
                             head = movement::left(map, head);
                             (head, SelectionGoal::None)
                         }
                         _ => motion
-                            .move_point(
-                                map,
-                                current_head,
-                                selection.goal,
-                                times,
-                                &text_layout_details,
-                            )
+                            .move_point(map, current_head, selection.goal, times, &text_layout_details)
                             .unwrap_or((current_head, selection.goal)),
                     };
 
@@ -257,9 +231,7 @@ impl Vim {
             }
             for _ in 0..times {
                 let (maybe_next_tail, next_head) =
-                    movement::find_boundary_trail(map, head, |left, right| {
-                        is_boundary(left, right, &classifier)
-                    });
+                    movement::find_boundary_trail(map, head, |left, right| is_boundary(left, right, &classifier));
 
                 if next_head == head && maybe_next_tail.unwrap_or(next_head) == tail {
                     break;
@@ -293,10 +265,9 @@ impl Vim {
                 return None;
             }
             for _ in 0..times {
-                let (maybe_next_tail, next_head) =
-                    movement::find_preceding_boundary_trail(map, head, |left, right| {
-                        is_boundary(left, right, &classifier)
-                    });
+                let (maybe_next_tail, next_head) = movement::find_preceding_boundary_trail(map, head, |left, right| {
+                    is_boundary(left, right, &classifier)
+                });
 
                 if next_head == head && maybe_next_tail.unwrap_or(next_head) == tail {
                     break;
@@ -339,9 +310,7 @@ impl Vim {
         });
     }
 
-    fn is_boundary_right(
-        ignore_punctuation: bool,
-    ) -> impl FnMut(char, char, &CharClassifier) -> bool {
+    fn is_boundary_right(ignore_punctuation: bool) -> impl FnMut(char, char, &CharClassifier) -> bool {
         move |left, right, classifier| {
             let left_kind = classifier.kind_with(left, ignore_punctuation);
             let right_kind = classifier.kind_with(right, ignore_punctuation);
@@ -351,9 +320,7 @@ impl Vim {
         }
     }
 
-    fn is_boundary_left(
-        ignore_punctuation: bool,
-    ) -> impl FnMut(char, char, &CharClassifier) -> bool {
+    fn is_boundary_left(ignore_punctuation: bool) -> impl FnMut(char, char, &CharClassifier) -> bool {
         move |left, right, classifier| {
             let left_kind = classifier.kind_with(left, ignore_punctuation);
             let right_kind = classifier.kind_with(right, ignore_punctuation);
@@ -371,30 +338,18 @@ impl Vim {
         cx: &mut Context<Self>,
     ) {
         match motion {
-            Motion::NextWordStart { ignore_punctuation } => self.helix_find_range_forward(
-                times,
-                window,
-                cx,
-                Self::is_boundary_right(ignore_punctuation),
-            ),
-            Motion::NextWordEnd { ignore_punctuation } => self.helix_find_range_forward(
-                times,
-                window,
-                cx,
-                Self::is_boundary_left(ignore_punctuation),
-            ),
-            Motion::PreviousWordStart { ignore_punctuation } => self.helix_find_range_backward(
-                times,
-                window,
-                cx,
-                Self::is_boundary_left(ignore_punctuation),
-            ),
-            Motion::PreviousWordEnd { ignore_punctuation } => self.helix_find_range_backward(
-                times,
-                window,
-                cx,
-                Self::is_boundary_right(ignore_punctuation),
-            ),
+            Motion::NextWordStart { ignore_punctuation } => {
+                self.helix_find_range_forward(times, window, cx, Self::is_boundary_right(ignore_punctuation))
+            }
+            Motion::NextWordEnd { ignore_punctuation } => {
+                self.helix_find_range_forward(times, window, cx, Self::is_boundary_left(ignore_punctuation))
+            }
+            Motion::PreviousWordStart { ignore_punctuation } => {
+                self.helix_find_range_backward(times, window, cx, Self::is_boundary_left(ignore_punctuation))
+            }
+            Motion::PreviousWordEnd { ignore_punctuation } => {
+                self.helix_find_range_backward(times, window, cx, Self::is_boundary_right(ignore_punctuation))
+            }
             Motion::EndOfLine { .. } => {
                 // In Helix mode, EndOfLine should position cursor ON the last character,
                 // not after it. We therefore need special handling for it.
@@ -430,15 +385,11 @@ impl Vim {
                     let start = cursor;
                     let mut last_boundary = start;
                     for _ in 0..times.unwrap_or(1) {
-                        last_boundary = movement::find_boundary(
-                            map,
-                            movement::right(map, last_boundary),
-                            mode,
-                            |left, right| {
+                        last_boundary =
+                            movement::find_boundary(map, movement::right(map, last_boundary), mode, |left, right| {
                                 let current_char = if before { right } else { left };
                                 motion::is_character_match(char, current_char, smartcase)
-                            },
-                        );
+                            });
                     }
                     Some((last_boundary, start))
                 });
@@ -453,15 +404,11 @@ impl Vim {
                     let start = cursor;
                     let mut last_boundary = start;
                     for _ in 0..times.unwrap_or(1) {
-                        last_boundary = movement::find_preceding_boundary_display_point(
-                            map,
-                            last_boundary,
-                            mode,
-                            |left, right| {
+                        last_boundary =
+                            movement::find_preceding_boundary_display_point(map, last_boundary, mode, |left, right| {
                                 let current_char = if after { left } else { right };
                                 motion::is_character_match(char, current_char, smartcase)
-                            },
-                        );
+                            });
                     }
                     // The original cursor was one character wide,
                     // but the search started from the left side of it,
@@ -491,12 +438,7 @@ impl Vim {
                         selection.set_head(new_head, SelectionGoal::None);
                     });
                 });
-                vim.yank_selections_content(
-                    editor,
-                    crate::motion::MotionKind::Exclusive,
-                    window,
-                    cx,
-                );
+                vim.yank_selections_content(editor, crate::motion::MotionKind::Exclusive, window, cx);
                 editor.change_selections(Default::default(), window, cx, |s| {
                     s.move_with(|_map, selection| {
                         selection.collapse_to(selection.start, SelectionGoal::None);
@@ -504,12 +446,7 @@ impl Vim {
                 });
             } else {
                 // Yank the selection(s)
-                vim.yank_selections_content(
-                    editor,
-                    crate::motion::MotionKind::Exclusive,
-                    window,
-                    cx,
-                );
+                vim.yank_selections_content(editor, crate::motion::MotionKind::Exclusive, window, cx);
             }
         });
 
@@ -532,12 +469,7 @@ impl Vim {
         self.switch_mode(Mode::Insert, false, window, cx);
     }
 
-    fn helix_select_regex(
-        &mut self,
-        _: &HelixSelectRegex,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn helix_select_regex(&mut self, _: &HelixSelectRegex, window: &mut Window, cx: &mut Context<Self>) {
         Vim::take_forced_motion(cx);
         let Some(pane) = self.pane(window, cx) else {
             return;
@@ -560,11 +492,9 @@ impl Vim {
                         options |= SearchOptions::CASE_SENSITIVE;
                     }
                     search_bar.set_search_options(options, cx);
-                    if let Some(search) = search_bar.set_search_within_selection(
-                        Some(FilteredSearchRange::Selection),
-                        window,
-                        cx,
-                    ) {
+                    if let Some(search) =
+                        search_bar.set_search_within_selection(Some(FilteredSearchRange::Selection), window, cx)
+                    {
                         cx.spawn_in(window, async move |search_bar, cx| {
                             if search.await.is_ok() {
                                 search_bar.update_in(cx, |search_bar, window, cx| {
@@ -641,8 +571,8 @@ impl Vim {
                         range.end = movement::saturating_right(&display_map, range.start);
                     }
 
-                    let byte_range = range.start.to_offset(&display_map, Bias::Left)
-                        ..range.end.to_offset(&display_map, Bias::Left);
+                    let byte_range =
+                        range.start.to_offset(&display_map, Bias::Left)..range.end.to_offset(&display_map, Bias::Left);
 
                     if !byte_range.is_empty() {
                         let replacement_text = text.repeat(byte_range.end - byte_range.start);
@@ -692,12 +622,7 @@ impl Vim {
         self.jump(".".into(), false, false, window, cx);
     }
 
-    pub fn helix_select_lines(
-        &mut self,
-        _: &HelixSelectLine,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn helix_select_lines(&mut self, _: &HelixSelectLine, window: &mut Window, cx: &mut Context<Self>) {
         let count = Vim::take_count(cx).unwrap_or(1);
         self.update_editor(cx, |_, editor, cx| {
             editor.hide_mouse_cursor(HideMouseCursorOrigin::MovementAction, cx);
@@ -758,10 +683,7 @@ impl Vim {
                         }
 
                         // If the selection starts and ends on a newline, we exclude the last one.
-                        if !selection.is_empty()
-                            && selection.start.column() == 0
-                            && selection.end.column() == 0
-                        {
+                        if !selection.is_empty() && selection.start.column() == 0 && selection.end.column() == 0 {
                             selection.end = movement::left(map, selection.end);
                         }
                     })
@@ -769,10 +691,7 @@ impl Vim {
                 if yank {
                     vim.copy_selections_content(editor, MotionKind::Exclusive, window, cx);
                 }
-                let selections = editor
-                    .selections
-                    .all::<Point>(&editor.display_snapshot(cx))
-                    .into_iter();
+                let selections = editor.selections.all::<Point>(&editor.display_snapshot(cx)).into_iter();
                 let edits = selections.map(|selection| (selection.start..selection.end, ""));
                 editor.edit(edits, cx);
             });
@@ -780,48 +699,23 @@ impl Vim {
         self.switch_mode(Mode::Insert, true, window, cx);
     }
 
-    fn helix_substitute(
-        &mut self,
-        _: &HelixSubstitute,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn helix_substitute(&mut self, _: &HelixSubstitute, window: &mut Window, cx: &mut Context<Self>) {
         self.do_helix_substitute(true, window, cx);
     }
 
-    fn helix_substitute_no_yank(
-        &mut self,
-        _: &HelixSubstituteNoYank,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn helix_substitute_no_yank(&mut self, _: &HelixSubstituteNoYank, window: &mut Window, cx: &mut Context<Self>) {
         self.do_helix_substitute(false, window, cx);
     }
 
-    fn helix_select_next(
-        &mut self,
-        _: &HelixSelectNext,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn helix_select_next(&mut self, _: &HelixSelectNext, window: &mut Window, cx: &mut Context<Self>) {
         self.do_helix_select(Direction::Next, window, cx);
     }
 
-    fn helix_select_previous(
-        &mut self,
-        _: &HelixSelectPrevious,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn helix_select_previous(&mut self, _: &HelixSelectPrevious, window: &mut Window, cx: &mut Context<Self>) {
         self.do_helix_select(Direction::Prev, window, cx);
     }
 
-    fn do_helix_select(
-        &mut self,
-        direction: searchable::Direction,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn do_helix_select(&mut self, direction: searchable::Direction, window: &mut Window, cx: &mut Context<Self>) {
         let Some(pane) = self.pane(window, cx) else {
             return;
         };
@@ -1271,10 +1165,7 @@ mod test {
         cx.simulate_keystrokes("escape");
 
         // TODO: this fails, because state is no longer helix
-        cx.assert_state(
-            "line one\nline modified ˇtwo\nline three",
-            Mode::HelixNormal,
-        );
+        cx.assert_state("line one\nline modified ˇtwo\nline three", Mode::HelixNormal);
 
         // Move cursor away from the modification
         cx.simulate_keystrokes("up");
@@ -1283,24 +1174,15 @@ mod test {
         cx.simulate_keystrokes("g .");
 
         // Verify we're back at the modification location and still in HelixNormal mode
-        cx.assert_state(
-            "line one\nline modifiedˇ two\nline three",
-            Mode::HelixNormal,
-        );
+        cx.assert_state("line one\nline modifiedˇ two\nline three", Mode::HelixNormal);
     }
 
     #[gpui::test]
     async fn test_helix_select_lines(cx: &mut gpui::TestAppContext) {
         let mut cx = VimTestContext::new(cx, true).await;
-        cx.set_state(
-            "line one\nline ˇtwo\nline three\nline four",
-            Mode::HelixNormal,
-        );
+        cx.set_state("line one\nline ˇtwo\nline three\nline four", Mode::HelixNormal);
         cx.simulate_keystrokes("2 x");
-        cx.assert_state(
-            "line one\n«line two\nline three\nˇ»line four",
-            Mode::HelixNormal,
-        );
+        cx.assert_state("line one\n«line two\nline three\nˇ»line four", Mode::HelixNormal);
 
         // Test extending existing line selection
         cx.set_state(

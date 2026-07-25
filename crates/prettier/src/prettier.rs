@@ -83,9 +83,7 @@ impl Prettier {
             .take_while(|component| component.as_os_str().to_string_lossy() != "node_modules")
             .collect::<PathBuf>();
         if path_to_check != locate_from {
-            log::debug!(
-                "Skipping prettier location for path {path_to_check:?} that is inside node_modules"
-            );
+            log::debug!("Skipping prettier location for path {path_to_check:?} that is inside node_modules");
             return Ok(ControlFlow::Break(()));
         }
         let path_to_check_metadata = fs
@@ -102,56 +100,64 @@ impl Prettier {
             if installed_prettiers.contains(&path_to_check) {
                 log::debug!("Found prettier path {path_to_check:?} in installed prettiers");
                 return Ok(ControlFlow::Continue(Some(path_to_check)));
-            } else if let Some(package_json_contents) =
-                read_package_json(fs, &path_to_check).await?
-            {
+            } else if let Some(package_json_contents) = read_package_json(fs, &path_to_check).await? {
                 if has_prettier_in_node_modules(fs, &path_to_check).await? {
                     log::debug!("Found prettier path {path_to_check:?} in the node_modules");
                     return Ok(ControlFlow::Continue(Some(path_to_check)));
                 } else {
                     match &closest_package_json_path {
                         None => closest_package_json_path = Some(path_to_check.clone()),
-                        Some(closest_package_json_path) => {
-                            match package_json_contents.get("workspaces") {
-                                Some(serde_json::Value::Array(workspaces)) => {
-                                    let subproject_path = closest_package_json_path.strip_prefix(&path_to_check).expect("traversing path parents, should be able to strip prefix");
-                                    if workspaces.iter().filter_map(|value| {
+                        Some(closest_package_json_path) => match package_json_contents.get("workspaces") {
+                            Some(serde_json::Value::Array(workspaces)) => {
+                                let subproject_path = closest_package_json_path
+                                    .strip_prefix(&path_to_check)
+                                    .expect("traversing path parents, should be able to strip prefix");
+                                if workspaces
+                                    .iter()
+                                    .filter_map(|value| {
                                         if let serde_json::Value::String(s) = value {
                                             Some(s.clone())
                                         } else {
                                             log::warn!("Skipping non-string 'workspaces' value: {value:?}");
                                             None
                                         }
-                                    }).any(|workspace_definition| {
-                                        workspace_definition == subproject_path.to_string_lossy() || PathMatcher::new(&[workspace_definition], PathStyle::local()).ok().is_some_and(
-                                            |path_matcher| RelPath::new(subproject_path, PathStyle::local()).is_ok_and(|path|  path_matcher.is_match(path)))
-                                    }) {
-                                        anyhow::ensure!(has_prettier_in_node_modules(fs, &path_to_check).await?,
-                                            "Path {path_to_check:?} is the workspace root for project in \
+                                    })
+                                    .any(|workspace_definition| {
+                                        workspace_definition == subproject_path.to_string_lossy()
+                                            || PathMatcher::new(&[workspace_definition], PathStyle::local())
+                                                .ok()
+                                                .is_some_and(|path_matcher| {
+                                                    RelPath::new(subproject_path, PathStyle::local())
+                                                        .is_ok_and(|path| path_matcher.is_match(path))
+                                                })
+                                    })
+                                {
+                                    anyhow::ensure!(
+                                        has_prettier_in_node_modules(fs, &path_to_check).await?,
+                                        "Path {path_to_check:?} is the workspace root for project in \
                                             {closest_package_json_path:?}, but it has no prettier installed"
-                                        );
-                                        log::info!(
-                                            "Found prettier path {path_to_check:?} in the workspace \
+                                    );
+                                    log::info!(
+                                        "Found prettier path {path_to_check:?} in the workspace \
                                             root for project in {closest_package_json_path:?}"
-                                        );
-                                        return Ok(ControlFlow::Continue(Some(path_to_check)));
-                                    } else {
-                                        log::warn!(
-                                            "Skipping path {path_to_check:?} workspace root with \
+                                    );
+                                    return Ok(ControlFlow::Continue(Some(path_to_check)));
+                                } else {
+                                    log::warn!(
+                                        "Skipping path {path_to_check:?} workspace root with \
                                             workspaces {workspaces:?} that have no prettier installed"
-                                        );
-                                    }
+                                    );
                                 }
-                                Some(unknown) => log::error!(
-                                    "Failed to parse workspaces for {path_to_check:?} from package.json, \
-                                    got {unknown:?}. Skipping."
-                                ),
-                                None => log::warn!(
-                                    "Skipping path {path_to_check:?} that has no prettier \
-                                    dependency and no workspaces section in its package.json"
-                                ),
                             }
-                        }
+                            Some(unknown) => log::error!(
+                                "Failed to parse workspaces for {path_to_check:?} from package.json, \
+                                    got {unknown:?}. Skipping."
+                            ),
+                            None => log::warn!(
+                                "Skipping path {path_to_check:?} that has no prettier \
+                                    dependency and no workspaces section in its package.json"
+                            ),
+                        },
                     }
                 }
             }
@@ -173,9 +179,7 @@ impl Prettier {
             .take_while(|component| component.as_os_str().to_string_lossy() != "node_modules")
             .collect::<PathBuf>();
         if path_to_check != locate_from {
-            log::debug!(
-                "Skipping prettier ignore location for path {path_to_check:?} that is inside node_modules"
-            );
+            log::debug!("Skipping prettier ignore location for path {path_to_check:?} that is inside node_modules");
             return Ok(ControlFlow::Break(()));
         }
 
@@ -193,9 +197,7 @@ impl Prettier {
             if prettier_ignores.contains(&path_to_check) {
                 log::debug!("Found prettier ignore at {path_to_check:?}");
                 return Ok(ControlFlow::Continue(Some(path_to_check)));
-            } else if let Some(package_json_contents) =
-                read_package_json(fs, &path_to_check).await?
-            {
+            } else if let Some(package_json_contents) = read_package_json(fs, &path_to_check).await? {
                 let ignore_path = path_to_check.join(".prettierignore");
                 if let Some(metadata) = fs
                     .metadata(&ignore_path)
@@ -210,9 +212,7 @@ impl Prettier {
                 match &closest_package_json_path {
                     None => closest_package_json_path = Some(path_to_check.clone()),
                     Some(closest_package_json_path) => {
-                        if let Some(serde_json::Value::Array(workspaces)) =
-                            package_json_contents.get("workspaces")
-                        {
+                        if let Some(serde_json::Value::Array(workspaces)) = package_json_contents.get("workspaces") {
                             let subproject_path = closest_package_json_path
                                 .strip_prefix(&path_to_check)
                                 .expect("traversing path parents, should be able to strip prefix");
@@ -223,36 +223,25 @@ impl Prettier {
                                     if let serde_json::Value::String(s) = value {
                                         Some(s.clone())
                                     } else {
-                                        log::warn!(
-                                            "Skipping non-string 'workspaces' value: {value:?}"
-                                        );
+                                        log::warn!("Skipping non-string 'workspaces' value: {value:?}");
                                         None
                                     }
                                 })
                                 .any(|workspace_definition| {
                                     workspace_definition == subproject_path.to_string_lossy()
-                                        || PathMatcher::new(
-                                            &[workspace_definition],
-                                            PathStyle::local(),
-                                        )
-                                        .ok()
-                                        .is_some_and(
-                                            |path_matcher| {
+                                        || PathMatcher::new(&[workspace_definition], PathStyle::local())
+                                            .ok()
+                                            .is_some_and(|path_matcher| {
                                                 RelPath::new(subproject_path, PathStyle::local())
-                                                    .is_ok_and(|rel_path| {
-                                                        path_matcher.is_match(rel_path)
-                                                    })
-                                            },
-                                        )
+                                                    .is_ok_and(|rel_path| path_matcher.is_match(rel_path))
+                                            })
                                 })
                             {
                                 let workspace_ignore = path_to_check.join(".prettierignore");
                                 if let Some(metadata) = fs.metadata(&workspace_ignore).await?
                                     && !metadata.is_dir
                                 {
-                                    log::info!(
-                                        "Found prettier ignore at workspace root {workspace_ignore:?}"
-                                    );
+                                    log::info!("Found prettier ignore at workspace root {workspace_ignore:?}");
                                     return Ok(ControlFlow::Continue(Some(path_to_check)));
                                 }
                             }
@@ -301,9 +290,7 @@ impl Prettier {
             "no prettier server package found at {prettier_server:?}"
         );
 
-        let node_path = executor
-            .spawn(async move { node.binary_path().await })
-            .await?;
+        let node_path = executor.spawn(async move { node.binary_path().await }).await?;
         let server_name = LanguageServerName("prettier".into());
         let server_binary = LanguageServerBinary {
             path: node_path,
@@ -478,39 +465,24 @@ impl Prettier {
                 })?
                 .context("building prettier request")?;
 
-                let response = local
-                    .server
-                    .request::<Format>(params)
-                    .await
-                    .into_response()?;
+                let response = local.server.request::<Format>(params).await.into_response()?;
                 let diff_task = buffer.update(cx, |buffer, cx| buffer.diff(response.text, cx))?;
                 Ok(diff_task.await)
             }
             #[cfg(any(test, feature = "test-support"))]
             Self::Test(_) => Ok(buffer
                 .update(cx, |buffer, cx| {
-                    match buffer
-                        .language()
-                        .map(|language| language.lsp_id())
-                        .as_deref()
-                    {
+                    match buffer.language().map(|language| language.lsp_id()).as_deref() {
                         Some("rust") => anyhow::bail!("prettier does not support Rust"),
                         Some(_other) => {
                             let mut formatted_text = buffer.text() + FORMAT_SUFFIX;
 
-                            let buffer_language =
-                                buffer.language().map(|language| language.as_ref());
-                            let language_settings = language_settings(
-                                buffer_language.map(|l| l.name()),
-                                buffer.file(),
-                                cx,
-                            );
+                            let buffer_language = buffer.language().map(|language| language.as_ref());
+                            let language_settings =
+                                language_settings(buffer_language.map(|l| l.name()), buffer.file(), cx);
                             let prettier_settings = &language_settings.prettier;
-                            let parser = prettier_parser_name(
-                                buffer_path.as_deref(),
-                                buffer_language,
-                                prettier_settings,
-                            )?;
+                            let parser =
+                                prettier_parser_name(buffer_path.as_deref(), buffer_language, prettier_settings)?;
 
                             if let Some(parser) = parser {
                                 formatted_text = format!("{formatted_text}\n{parser}");
@@ -609,10 +581,7 @@ async fn has_prettier_in_node_modules(fs: &dyn Fs, path: &Path) -> anyhow::Resul
     Ok(false)
 }
 
-async fn read_package_json(
-    fs: &dyn Fs,
-    path: &Path,
-) -> anyhow::Result<Option<HashMap<String, serde_json::Value>>> {
+async fn read_package_json(fs: &dyn Fs, path: &Path) -> anyhow::Result<Option<HashMap<String, serde_json::Value>>> {
     let possible_package_json = path.join("package.json");
     if let Some(package_json_metadata) = fs
         .metadata(&possible_package_json)
@@ -872,9 +841,7 @@ mod tests {
         assert_eq!(
             Prettier::locate_prettier_installation(
                 fs.as_ref(),
-                &HashSet::from_iter(
-                    [PathBuf::from("/root"), PathBuf::from("/root/work")].into_iter()
-                ),
+                &HashSet::from_iter([PathBuf::from("/root"), PathBuf::from("/root/work")].into_iter()),
                 Path::new("/root/work/web_blog/pages/[slug].tsx")
             )
             .await
@@ -897,9 +864,7 @@ mod tests {
         assert_eq!(
             Prettier::locate_prettier_installation(
                 fs.as_ref(),
-                &HashSet::from_iter(
-                    [PathBuf::from("/root"), PathBuf::from("/root/work")].into_iter()
-                ),
+                &HashSet::from_iter([PathBuf::from("/root"), PathBuf::from("/root/work")].into_iter()),
                 Path::new("/root/work/web_blog/node_modules/expect/build/print.js")
             )
             .await
@@ -979,7 +944,9 @@ mod tests {
             Prettier::locate_prettier_installation(
                 fs.as_ref(),
                 &HashSet::default(),
-                Path::new("/root/work/full-stack-foundations/exercises/03.loading/01.problem.loader/node_modules/test.js")
+                Path::new(
+                    "/root/work/full-stack-foundations/exercises/03.loading/01.problem.loader/node_modules/test.js"
+                )
             )
             .await
             .unwrap(),
@@ -989,9 +956,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_prettier_lookup_in_npm_workspaces_for_not_installed(
-        cx: &mut gpui::TestAppContext,
-    ) {
+    async fn test_prettier_lookup_in_npm_workspaces_for_not_installed(cx: &mut gpui::TestAppContext) {
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(
             "/root",
@@ -1077,9 +1042,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_prettier_ignore_in_monorepo_with_only_child_ignore(
-        cx: &mut gpui::TestAppContext,
-    ) {
+    async fn test_prettier_ignore_in_monorepo_with_only_child_ignore(cx: &mut gpui::TestAppContext) {
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(
             "/root",
@@ -1127,9 +1090,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_prettier_ignore_in_monorepo_with_root_and_child_ignores(
-        cx: &mut gpui::TestAppContext,
-    ) {
+    async fn test_prettier_ignore_in_monorepo_with_root_and_child_ignores(cx: &mut gpui::TestAppContext) {
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(
             "/root",

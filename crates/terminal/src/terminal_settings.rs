@@ -1,6 +1,4 @@
-use alacritty_terminal::vte::ansi::{
-    CursorShape as AlacCursorShape, CursorStyle as AlacCursorStyle,
-};
+use alacritty_terminal::vte::ansi::{CursorShape as AlacCursorShape, CursorStyle as AlacCursorStyle};
 use collections::HashMap;
 use gpui::{FontFallbacks, FontFeatures, FontWeight, Pixels, px};
 use schemars::JsonSchema;
@@ -9,8 +7,8 @@ use serde::{Deserialize, Serialize};
 pub use settings::AlternateScroll;
 
 use settings::{
-    PathHyperlinkRegex, RegisterSetting, ShowScrollbar, TerminalBlink, TerminalDockPosition,
-    TerminalLineHeight, VenvSettings, WorkingDirectory, merge_from::MergeFrom,
+    PathHyperlinkRegex, RegisterSetting, ShowScrollbar, TerminalBlink, TerminalDockPosition, TerminalLineHeight,
+    VenvSettings, WorkingDirectory, merge_from::MergeFrom,
 };
 use task::Shell;
 use theme::FontFamilyName;
@@ -87,12 +85,7 @@ impl settings::Settings for TerminalSettings {
             font_size: user_content.font_size.map(Into::into),
             font_family: user_content.font_family,
             font_fallbacks: user_content.font_fallbacks.map(|fallbacks| {
-                FontFallbacks::from_fonts(
-                    fallbacks
-                        .into_iter()
-                        .map(|family| family.0.to_string())
-                        .collect(),
-                )
+                FontFallbacks::from_fonts(fallbacks.into_iter().map(|family| family.0.to_string()).collect())
             }),
             font_features: user_content.font_features,
             font_weight: user_content.font_weight,
