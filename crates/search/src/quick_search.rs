@@ -284,7 +284,7 @@ impl QuickSearch {
             buffer.update(cx, |buf, cx| {
                 let snapshot = buf.snapshot();
                 // Sort descending to avoid offset invalidation when editing
-                anchor_ranges.sort_by(|a, b| b.start.to_offset(&snapshot).cmp(&a.start.to_offset(&snapshot)));
+                anchor_ranges.sort_by_key(|r| std::cmp::Reverse(r.start.to_offset(&snapshot)));
 
                 for anchor_range in anchor_ranges {
                     let snapshot = buf.snapshot();
