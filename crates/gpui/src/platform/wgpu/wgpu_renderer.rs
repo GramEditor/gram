@@ -218,6 +218,7 @@ impl WgpuRenderer {
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
+            color_space: wgpu::SurfaceColorSpace::Auto,
             width: size.width,
             height: size.height,
             present_mode,
@@ -862,6 +863,7 @@ impl WgpuRenderer {
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
             format: self.surface_format,
+            color_space: wgpu::SurfaceColorSpace::Auto,
             width: self.size.width,
             height: self.size.height,
             present_mode: self.present_mode,
@@ -1223,7 +1225,7 @@ impl WgpuRenderer {
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
-        frame.present();
+        self.queue.present(frame);
         return true;
     }
 

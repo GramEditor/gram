@@ -314,8 +314,8 @@ zlog_settings = { path = "crates/zlog_settings" }
 #
 
 # Keep these in sync
-naga = { version = "29.0.3", features = ["wgsl-in"] }
-wgpu = "29.0.3"
+naga = { version = "30.0.0", features = ["wgsl-in"] }
+wgpu = "30.0.0"
 
 aho-corasick = "1.1"
 alacritty_terminal = {
