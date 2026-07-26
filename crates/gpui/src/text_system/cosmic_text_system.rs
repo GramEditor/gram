@@ -13,8 +13,9 @@ use gpui::{
 use itertools::Itertools;
 use parking_lot::RwLock;
 use smallvec::SmallVec;
-use std::{borrow::Cow, sync::Arc};
+use std::{borrow::Cow, iter, sync::Arc};
 use swash::{
+    NormalizedCoord,
     scale::{Render, ScaleContext, Source, StrikeWith},
     zeno::{Format, Vector},
 };
@@ -358,6 +359,7 @@ impl CosmicTextSystemState {
             .swash_scale_context
             .builder_with_id(font_ref, [params.font_id.0 as u64, 0])
             .size(pixel_size * params.scale_factor)
+            .normalized_coords(iter::empty::<NormalizedCoord>())
             .variations(&[("wght", loaded_font.weight.0 as f32)])
             .hint(true)
             .build();
