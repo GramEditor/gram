@@ -1019,7 +1019,7 @@ struct PathRasterizationVertex {
 struct PathRasterizationVarying {
     @builtin(position) position: vec4<f32>,
     @location(0) st_position: vec2<f32>,
-    @location(1) vertex_id: u32,
+    @location(1) @interpolate(flat) vertex_id: u32,
     //TODO: use `clip_distance` once Naga supports it
     @location(3) clip_distances: vec4<f32>,
 }
