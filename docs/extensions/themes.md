@@ -2,13 +2,16 @@
 
 The `themes` directory in an extension should contain one or more theme files.
 
-Each theme file should adhere to the JSON schema specified at [`https://zed.dev/schema/themes/v0.2.0.json`](https://zed.dev/schema/themes/v0.2.0.json).
+Each theme file should adhere to the JSON schema specified at
+[`https://zed.dev/schema/themes/v0.2.0.json`](https://zed.dev/schema/themes/v0.2.0.json).
 
-See [this Zed blog post](https://zed.dev/blog/user-themes-now-in-preview) for more details about creating themes.
+See [this Zed blog post](https://zed.dev/blog/user-themes-now-in-preview) for
+more details about creating themes.
 
 ## Theme JSON Structure
 
-The structure of a Gram theme is defined in the [Zed Theme JSON Schema](https://zed.dev/schema/themes/v0.2.0.json).
+The structure of a Gram theme is defined in the
+[Zed Theme JSON Schema](https://zed.dev/schema/themes/v0.2.0.json).
 
 A Gram theme consists of a Theme Family object including:
 
@@ -31,7 +34,8 @@ The core components a Theme object include:
 
 3. Syntax Highlighting:
 
-   - `syntax`: An object containing color definitions for various syntax elements (e.g., keywords, strings, comments)
+   - `syntax`: An object containing color definitions for various syntax
+     elements (e.g., keywords, strings, comments)
 
 4. UI Elements:
 

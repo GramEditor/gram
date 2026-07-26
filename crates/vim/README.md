@@ -1,14 +1,19 @@
 This contains the code for Gram's Vim emulation mode.
 
-Vim mode in Gram is supposed to primarily "do what you expect": it mostly tries to copy vim exactly, but will use Gram-specific functionality when available to make things smoother. This means Gram will never be 100% vim compatible, but should be 100% vim familiar!
+Vim mode in Gram is supposed to primarily "do what you expect": it mostly tries
+to copy vim exactly, but will use Gram-specific functionality when available to
+make things smoother. This means Gram will never be 100% vim compatible, but
+should be 100% vim familiar!
 
 The backlog is maintained in the `#vim` channel notes.
 
 ## Testing against Neovim
 
-If you are making a change to make Gram's behavior more closely match vim/nvim, you can create a test using the `NeovimBackedTestContext`.
+If you are making a change to make Gram's behavior more closely match vim/nvim,
+you can create a test using the `NeovimBackedTestContext`.
 
-For example, the following test checks that Gram and Neovim have the same behavior when running `*` in visual mode:
+For example, the following test checks that Gram and Neovim have the same
+behavior when running `*` in visual mode:
 
 ```rust
 #[gpui::test]
@@ -21,16 +26,20 @@ async fn test_visual_star_hash(cx: &mut gpui::TestAppContext) {
 }
 ```
 
-To keep CI runs fast, by default the neovim tests use a cached JSON file that records what neovim did (see crates/vim/test_data),
-but while developing this test you'll need to run it with the neovim flag enabled:
+To keep CI runs fast, by default the neovim tests use a cached JSON file that
+records what neovim did (see crates/vim/test_data), but while developing this
+test you'll need to run it with the neovim flag enabled:
 
 ```sh
 cargo test -p vim --features neovim test_visual_star_hash
 ```
 
-This will run your keystrokes against a headless neovim and cache the results in the test_data directory. Note that neovim must be installed and reachable on your $PATH in order to run the feature.
-
+This will run your keystrokes against a headless neovim and cache the results in
+the test_data directory. Note that neovim must be installed and reachable on
+your $PATH in order to run the feature.
 
 ## Testing gram-only behavior
 
-Gram does more than vim/neovim in their default modes. The `VimTestContext` can be used instead. This lets you test integration with the language server and other parts of gram's UI that don't have a NeoVim equivalent.
+Gram does more than vim/neovim in their default modes. The `VimTestContext` can
+be used instead. This lets you test integration with the language server and
+other parts of gram's UI that don't have a NeoVim equivalent.

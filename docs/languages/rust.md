@@ -2,9 +2,12 @@
 
 Rust support is available natively in Gram.
 
-- Tree-sitter: [tree-sitter/tree-sitter-rust](https://github.com/tree-sitter/tree-sitter-rust)
-- Language Server: [rust-lang/rust-analyzer](https://github.com/rust-lang/rust-analyzer)
-- Debug Adapter: [CodeLLDB](https://github.com/vadimcn/codelldb) (primary), [GDB](https://sourceware.org/gdb/) (secondary, not available on Apple silicon)
+- Tree-sitter:
+  [tree-sitter/tree-sitter-rust](https://github.com/tree-sitter/tree-sitter-rust)
+- Language Server:
+  [rust-lang/rust-analyzer](https://github.com/rust-lang/rust-analyzer)
+- Debug Adapter: [CodeLLDB](https://github.com/vadimcn/codelldb) (primary),
+  [GDB](https://sourceware.org/gdb/) (secondary, not available on Apple silicon)
 
 <!--
 TBD: Polish Rust Docs. Gram is a good rust editor, good Rust docs make it look like we care about Rust (we do!)
@@ -14,9 +17,10 @@ TBD: Provide explicit examples not just `....`
 
 ## Inlay Hints
 
-The following configuration can be used to change the inlay hint settings for `rust-analyzer` in Rust:
+The following configuration can be used to change the inlay hint settings for
+`rust-analyzer` in Rust:
 
-```jsonc
+```json
 {
   "lsp": {
     "rust-analyzer": {
@@ -37,13 +41,15 @@ The following configuration can be used to change the inlay hint settings for `r
 }
 ```
 
-See [Inlay Hints](https://rust-analyzer.github.io/book/features.html#inlay-hints) in the Rust Analyzer Manual for more information.
+See
+[Inlay Hints](https://rust-analyzer.github.io/book/features.html#inlay-hints) in
+the Rust Analyzer Manual for more information.
 
 ## Target directory
 
 The `rust-analyzer` target directory can be set in `initialization_options`:
 
-```jsonc
+```json
 {
   "lsp": {
     "rust-analyzer": {
@@ -57,17 +63,24 @@ The `rust-analyzer` target directory can be set in `initialization_options`:
 }
 ```
 
-A `true` setting will set the target directory to `target/rust-analyzer`. You can set a custom directory with a string like `"target/analyzer"` instead of `true`.
+A `true` setting will set the target directory to `target/rust-analyzer`. You
+can set a custom directory with a string like `"target/analyzer"` instead of
+`true`.
 
 ## Binary
 
 You can configure which `rust-analyzer` binary Gram should use.
 
-By default, Gram will try to find a `rust-analyzer` in your `$PATH` and try to use that. If that binary successfully executes `rust-analyzer --help`, it's used. Otherwise, Gram will fall back to installing its own stable `rust-analyzer` version and use that.
+By default, Gram will try to find a `rust-analyzer` in your `$PATH` and try to
+use that. If that binary successfully executes `rust-analyzer --help`, it's
+used. Otherwise, Gram will fall back to installing its own stable
+`rust-analyzer` version and use that.
 
-If you want to install pre-release `rust-analyzer` version instead you can instruct Gram to do so by setting `pre_release` to `true` in your `settings.json`:
+If you want to install pre-release `rust-analyzer` version instead you can
+instruct Gram to do so by setting `pre_release` to `true` in your
+`settings.json`:
 
-```jsonc
+```json
 {
   "lsp": {
     "rust-analyzer": {
@@ -79,9 +92,10 @@ If you want to install pre-release `rust-analyzer` version instead you can instr
 }
 ```
 
-If you want to disable Gram looking for a `rust-analyzer` binary, you can set `ignore_system_version` to `true` in your `settings.json`:
+If you want to disable Gram looking for a `rust-analyzer` binary, you can set
+`ignore_system_version` to `true` in your `settings.json`:
 
-```jsonc
+```json
 {
   "lsp": {
     "rust-analyzer": {
@@ -93,9 +107,10 @@ If you want to disable Gram looking for a `rust-analyzer` binary, you can set `i
 }
 ```
 
-If you want to use a binary in a custom location, you can specify a `path` and optional `arguments`:
+If you want to use a binary in a custom location, you can specify a `path` and
+optional `arguments`:
 
-```jsonc
+```json
 {
   "lsp": {
     "rust-analyzer": {
@@ -112,9 +127,11 @@ This `"path"` has to be an absolute path.
 
 ## Alternate Targets
 
-If you want rust-analyzer to provide diagnostics for a target other than your current platform (e.g. for windows when running on macOS) you can use the following Gram lsp settings:
+If you want rust-analyzer to provide diagnostics for a target other than your
+current platform (e.g. for windows when running on macOS) you can use the
+following Gram lsp settings:
 
-```jsonc
+```json
 {
   "lsp": {
     "rust-analyzer": {
@@ -128,7 +145,8 @@ If you want rust-analyzer to provide diagnostics for a target other than your cu
 }
 ```
 
-If you are using `rustup`, you can find a list of available target triples (`aarch64-apple-darwin`, `x86_64-unknown-linux-gnu`, etc) by running:
+If you are using `rustup`, you can find a list of available target triples
+(`aarch64-apple-darwin`, `x86_64-unknown-linux-gnu`, etc) by running:
 
 ```sh
 rustup target list --installed
@@ -136,10 +154,11 @@ rustup target list --installed
 
 ## LSP tasks
 
-Gram provides tasks using tree-sitter, but rust-analyzer has an LSP extension method for querying file-related tasks via LSP.
-This is enabled by default and can be configured as
+Gram provides tasks using tree-sitter, but rust-analyzer has an LSP extension
+method for querying file-related tasks via LSP. This is enabled by default and
+can be configured as
 
-```jsonc
+```json
 "lsp": {
   "rust-analyzer": {
     "enable_lsp_tasks": true,
@@ -149,8 +168,13 @@ This is enabled by default and can be configured as
 
 ## Manual Cargo Diagnostics fetch
 
-By default, rust-analyzer has `checkOnSave: true` enabled, which causes every buffer save to trigger a `cargo check --workspace --all-targets` command.
-If disabled with `checkOnSave: false` (see the example of the server configuration json above), it's still possible to fetch the diagnostics manually, with the `editor: run/clear/cancel flycheck` commands in Rust files to refresh cargo diagnostics; the project diagnostics editor will also refresh cargo diagnostics with `editor: run flycheck` command when the setting is enabled.
+By default, rust-analyzer has `checkOnSave: true` enabled, which causes every
+buffer save to trigger a `cargo check --workspace --all-targets` command. If
+disabled with `checkOnSave: false` (see the example of the server configuration
+json above), it's still possible to fetch the diagnostics manually, with the
+`editor: run/clear/cancel flycheck` commands in Rust files to refresh cargo
+diagnostics; the project diagnostics editor will also refresh cargo diagnostics
+with `editor: run flycheck` command when the setting is enabled.
 
 ## More server configuration
 
@@ -158,12 +182,14 @@ If disabled with `checkOnSave: false` (see the example of the server configurati
 TBD: Is it possible to specify RUSTFLAGS? https://github.com/zed-industries/zed/issues/14334
 -->
 
-Rust-analyzer [manual](https://rust-analyzer.github.io/book/) describes various features and configuration options for rust-analyzer language server.
+Rust-analyzer [manual](https://rust-analyzer.github.io/book/) describes various
+features and configuration options for rust-analyzer language server.
 Rust-analyzer in Gram runs with the default parameters.
 
 ### Large projects and performance
 
-One of the main caveats that might cause extensive resource usage on large projects, is the combination of the following features:
+One of the main caveats that might cause extensive resource usage on large
+projects, is the combination of the following features:
 
 ```
 rust-analyzer.checkOnSave (default: true)
@@ -180,18 +206,29 @@ rust-analyzer.cargo.allTargets (default: true)
     Pass --all-targets to cargo invocation
 ```
 
-Which would mean that every time Gram saves, a `cargo check --workspace --all-targets` command is run, checking the entire project (workspace), lib, doc, test, bin, bench and [other targets](https://doc.rust-lang.org/cargo/reference/cargo-targets.html).
+Which would mean that every time Gram saves, a
+`cargo check --workspace --all-targets` command is run, checking the entire
+project (workspace), lib, doc, test, bin, bench and
+[other targets](https://doc.rust-lang.org/cargo/reference/cargo-targets.html).
 
 While that works fine on small projects, it does not scale well.
 
-The alternatives would be to use [tasks](../tasks.md), as Gram already provides a `cargo check --workspace --all-targets` task and the ability to cmd/ctrl-click on the terminal output to navigate to the error, and limit or turn off the check on save feature entirely.
+The alternatives would be to use [tasks](../tasks.md), as Gram already provides
+a `cargo check --workspace --all-targets` task and the ability to cmd/ctrl-click
+on the terminal output to navigate to the error, and limit or turn off the check
+on save feature entirely.
 
-Check on save feature is responsible for returning part of the diagnostics based on cargo check output, so turning it off will limit rust-analyzer with its own [diagnostics](https://rust-analyzer.github.io/book/diagnostics.html).
+Check on save feature is responsible for returning part of the diagnostics based
+on cargo check output, so turning it off will limit rust-analyzer with its own
+[diagnostics](https://rust-analyzer.github.io/book/diagnostics.html).
 
-Consider more `rust-analyzer.cargo.` and `rust-analyzer.check.` and `rust-analyzer.diagnostics.` settings from the manual for more fine-grained configuration.
-Here's a snippet for Gram settings.json (the language server will restart automatically after the `lsp.rust-analyzer` section is edited and saved):
+Consider more `rust-analyzer.cargo.` and `rust-analyzer.check.` and
+`rust-analyzer.diagnostics.` settings from the manual for more fine-grained
+configuration. Here's a snippet for Gram settings.json (the language server will
+restart automatically after the `lsp.rust-analyzer` section is edited and
+saved):
 
-```jsonc
+```json
 {
   "lsp": {
     "rust-analyzer": {
@@ -222,10 +259,11 @@ Here's a snippet for Gram settings.json (the language server will restart automa
 
 ### Multi-project workspaces
 
-If you want rust-analyzer to analyze multiple Rust projects in the same folder that are not listed in `[members]` in the Cargo workspace,
-you can list them in `linkedProjects` in the local project settings:
+If you want rust-analyzer to analyze multiple Rust projects in the same folder
+that are not listed in `[members]` in the Cargo workspace, you can list them in
+`linkedProjects` in the local project settings:
 
-```jsonc
+```json
 {
   "lsp": {
     "rust-analyzer": {
@@ -239,9 +277,10 @@ you can list them in `linkedProjects` in the local project settings:
 
 ### Snippets
 
-There's a way to get custom completion items from rust-analyzer, that will transform the code according to the snippet body:
+There's a way to get custom completion items from rust-analyzer, that will
+transform the code according to the snippet body:
 
-```jsonc
+```json
 {
   "lsp": {
     "rust-analyzer": {
@@ -294,9 +333,12 @@ There's a way to get custom completion items from rust-analyzer, that will trans
 
 ## Debugging
 
-Gram supports debugging Rust binaries and tests out of the box with `CodeLLDB` and `GDB`. Run {#action debugger::Start} ({#kb debugger::Start}) to launch one of these preconfigured debug tasks.
+Gram supports debugging Rust binaries and tests out of the box with `CodeLLDB`
+and `GDB`. Run {#action debugger::Start} ({#kb debugger::Start}) to launch one
+of these preconfigured debug tasks.
 
-For more control, you can add debug configurations to `.gram/debug.jsonc`. See the examples below.
+For more control, you can add debug configurations to `.gram/debug.jsonc`. See
+the examples below.
 
 - [CodeLLDB configuration documentation](https://github.com/vadimcn/codelldb/blob/master/MANUAL.md#starting-a-new-debug-session)
 - [GDB configuration documentation](https://sourceware.org/gdb/current/onlinedocs/gdb.html/Debugger-Adapter-Protocol.html)
@@ -322,7 +364,8 @@ For more control, you can add debug configurations to `.gram/debug.jsonc`. See t
 
 ### Automatically locate a debug target based on build command
 
-When you use `cargo build` or `cargo test` as the build command, Gram can infer the path to the output binary.
+When you use `cargo build` or `cargo test` as the build command, Gram can infer
+the path to the output binary.
 
 ```json [debug]
 [

@@ -4,15 +4,16 @@
 
 ― Ursula K. Le Guin, The Dispossessed
 
-The Gram text editor is a fork of the Zed text editor. This
-document is an attempt to explain why the fork exists.
+The Gram text editor is a fork of the Zed text editor. This document is an
+attempt to explain why the fork exists.
 
 ## Performance, but at what cost?
 
-Programming is more than just productivity. We need tools that are fit for purpose,
-that aren't beholden to investors or share holders. There are aspects of the Zed
-code editor that I think are wrong in the moral and ethical sense, and there are
-aspects that I think are simply bad choices from a technical perspective.
+Programming is more than just productivity. We need tools that are fit for
+purpose, that aren't beholden to investors or share holders. There are aspects
+of the Zed code editor that I think are wrong in the moral and ethical sense,
+and there are aspects that I think are simply bad choices from a technical
+perspective.
 
 At first, the promise of Zed seemed alluring. I moved from Emacs to Neovim
 because I started coding in Rust, and using the Rust LSP in Emacs was a very
@@ -42,8 +43,8 @@ So, I read the terms!
 > updated their Terms of Use and removed the section that seemed to conflict
 > with the terms of the open source licenses.
 
-The quotes below are excerpts from the [Zed End User
-Terms](https://zed.dev/terms).
+The quotes below are excerpts from the
+[Zed End User Terms](https://zed.dev/terms).
 
 > PLEASE READ THESE TERMS AND CONDITIONS CAREFULLY BEFORE USING THE SERVICE OR
 > SOFTWARE OFFERED BY ZED INDUSTRIES, INC. ("ZED", OR "WE"). BY ACCESSING OR
@@ -57,7 +58,8 @@ other license. Does this mean that I could no longer use any of the code from
 Zed under an open source license, if the rights afforded by that license
 contradicts these terms? That is my interpretation.
 
-Let's read on, to section 2 "TERMS APPLICABLE TO THE EDITOR", paragraph 2.2, "License Limitations":
+Let's read on, to section 2 "TERMS APPLICABLE TO THE EDITOR", paragraph 2.2,
+"License Limitations":
 
 > You agree that You shall not: (a) exceed the scope of the licenses granted in
 > Section 2.1; (b) make copies of the Editor; (c) distribute, sublicense,
@@ -82,8 +84,7 @@ Let's read on, to section 2 "TERMS APPLICABLE TO THE EDITOR", paragraph 2.2, "Li
 
 ...
 
-> You shall not [..] modify, translate or
-> create derivative works of the Editor
+> You shall not [..] modify, translate or create derivative works of the Editor
 
 ...etc.
 
@@ -162,12 +163,13 @@ determined to not only get the editor to run without all of the misfeatures, but
 to make it a full-blown fork of the project. Independent of corporate control,
 in the spirit of Vim and the late Bram Moolenaar who could have added
 subscription fees and abusive license agreements had he so wanted, but instead
-gave his work as a gift to the world and asked only for donations to a [good
-cause close to his heart](https://en.wikipedia.org/wiki/ICCF_Holland) in return.
+gave his work as a gift to the world and asked only for donations to a
+[good cause close to his heart](https://en.wikipedia.org/wiki/ICCF_Holland) in
+return.
 
-This is the result. Feel free to build it and see if it works for you. There
-is no license agreement or subscription beyond the open source license of the
-code (GPLv3). It is yours now, to do with as you please.
+This is the result. Feel free to build it and see if it works for you. There is
+no license agreement or subscription beyond the open source license of the code
+(GPLv3). It is yours now, to do with as you please.
 
 To be honest, I am happy in Neovim. For most projects I still prefer it over
 this editor. Don't expect this project to keep pace with Zed or to be a
@@ -193,13 +195,13 @@ capable, general-purpose, open source text editor, what other options are there?
 Here are some other editors that I have used and would consider reasonable
 alternatives to Zed. What they all have in common is that they are first and
 foremost _text editors_, and do not push or endorse LLM services. Some of them
-are also strict about the use of LLMs to develop the editors themselves, but
-not all of them are.
+are also strict about the use of LLMs to develop the editors themselves, but not
+all of them are.
 
-> _Note:_ Gram is also not AI free. I have not and do not think it is feasible to
-> remove all generated code from the code base. Not all of it is clearly marked as
-> such. We also merge patches from upstream sometimes, mainly to fix bugs. This
-> stance may change in the future.
+> _Note:_ Gram is also not AI free. I have not and do not think it is feasible
+> to remove all generated code from the code base. Not all of it is clearly
+> marked as such. We also merge patches from upstream sometimes, mainly to fix
+> bugs. This stance may change in the future.
 
 As far as I know, these editors are completely free of AI-generated code.
 
@@ -216,4 +218,5 @@ These editors may not be AI free, but I am still OK with recommending them.
 - [Helix](https://helix-editor.com)
 - [Kakoune](https://kakoune.org)
 
-> _Note:_ Also see: [ethical-foss/open-slopware](https://codeberg.org/ethical-foss/open-slopware#text-and-code-editors).
+> _Note:_ Also see:
+> [ethical-foss/open-slopware](https://codeberg.org/ethical-foss/open-slopware#text-and-code-editors).

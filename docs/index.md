@@ -1,7 +1,7 @@
 # Documentation
 
-Gram is a **hard fork** of the Zed editor, with
-the following list (incomplete) of changes:
+Gram is a **hard fork** of the Zed editor, with the following list (incomplete)
+of changes:
 
 - All AI integration has been removed
 - All Telemetry has been removed
@@ -17,8 +17,8 @@ the following list (incomplete) of changes:
 - Partial support for Wasm extensions (due to AI removal)
 - Added [SuperTab](./supertab.md)
 
-For more details on the motivation behind this fork,
-read the [Mission Statement](./mission.md).
+For more details on the motivation behind this fork, read the
+[Mission Statement](./mission.md).
 
 ### Migrating
 
@@ -34,7 +34,8 @@ read the [Mission Statement](./mission.md).
 - [Extensions](./extensions.md): Add support for additional languages, themes
   and icons using the extension system.
 - [Supported Languages](./languages.md)
-- [Language Servers](./language-servers.md): Gram relies on language servers for providing advanced semantic functionality for various programming languages.
+- [Language Servers](./language-servers.md): Gram relies on language servers for
+  providing advanced semantic functionality for various programming languages.
 
 ## Development
 
@@ -105,7 +106,6 @@ read the [Mission Statement](./mission.md).
 - [Theme Extensions](./extensions/themes.md)
 - [Icon Theme Extensions](./extensions/icon-themes.md)
 
-
 ## Integrations and related tools
 
 There are some related projects mostly around making Gram available in various
@@ -116,7 +116,8 @@ free to submit a PR at <https://codeberg.org/GramEditor/gram>.
 - **Homebrew (Mac):** <https://formulae.brew.sh/cask/gram>
 - **Arch Linux:** <https://archlinux.org/packages/extra/x86_64/gram>
 - **Arch Linux (AUR):** <https://aur.archlinux.org/packages/gram-git>
-- **Alpine Linux:** <https://pkgs.alpinelinux.org/package/edge/testing/x86_64/gram>
+- **Alpine Linux:**
+  <https://pkgs.alpinelinux.org/package/edge/testing/x86_64/gram>
 - **Gentoo Linux:** <https://codeberg.org/GramEditor/gram-gentoo>
 - **Raycast (Mac):** <https://www.raycast.com/justyt65/gram>
 - **Chimera Linux (WIP):** <https://github.com/chimera-linux/cports/pull/5506>
@@ -130,8 +131,9 @@ use would not hold up at least in European court, but I don't know. For that
 exact reason, I never agreed to their license. This is the main reason this fork
 even exists.
 
-If you do want to contribute patches, you will have to accept full responsibility
-for ensuring and warranting that you are legally allowed to do so.
+If you do want to contribute patches, you will have to accept full
+responsibility for ensuring and warranting that you are legally allowed to do
+so.
 
 ## You are the community
 
@@ -156,8 +158,8 @@ No more AI. I used to have a milder version of this statement here before, which
 I wrote early on when I wasn't really aware of "vibe-coding" as such and was
 mostly annoyed purely at the chatbox / autocomplete version of AI. That was bad
 enough, but I really am not a fan of what that has become (in March 2026 when I
-am writing this). I have copied this policy from the
-[Zig language project Code of Conduct][zig-coc]:
+am writing this). I have copied this policy from the [Zig language project Code
+of Conduct][zig-coc]:
 
 > No LLMs for issues.
 >
@@ -172,4 +174,3 @@ The Zed code base contains a lot of AI-generated code. It doesn't need a single
 line more.
 
 [zig-coc]: https://ziglang.org/code-of-conduct/
-

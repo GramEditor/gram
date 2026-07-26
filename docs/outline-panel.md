@@ -7,10 +7,11 @@ outline_panel::ToggleFocus} via the command palette), or by clicking the
 
 When viewing a "singleton" buffer (i.e., a single file on a tab), the outline
 panel works similarly to that of the outline modal－it displays the outline of
-the current buffer's symbols, as reported by [tree-sitter](https://tree-sitter.github.io/tree-sitter/).
-Clicking on an entry jumps to the associated section in the file. The outline
-view will also automatically scroll to the section associated with the current
-cursor position within the file.
+the current buffer's symbols, as reported by
+[tree-sitter](https://tree-sitter.github.io/tree-sitter/). Clicking on an entry
+jumps to the associated section in the file. The outline view will also
+automatically scroll to the section associated with the current cursor position
+within the file.
 
 ## Project Search Results
 
@@ -22,7 +23,8 @@ View a summary of all errors and warnings reported by the language server.
 
 ## Find All References
 
-Quickly navigate through all references when using the {#action editor::FindAllReferences} action.
+Quickly navigate through all references when using the {#action
+editor::FindAllReferences} action.
 
 The outline view provides a way to quickly navigate to specific parts of the
 code to help maintain context when working with large result sets in

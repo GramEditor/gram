@@ -1,6 +1,8 @@
 # Tasks
 
-Gram supports ways to spawn (and rerun) commands using its integrated terminal to output the results. These commands can read a limited subset of Gram state (such as a path to the file currently being edited or selected text).
+Gram supports ways to spawn (and rerun) commands using its integrated terminal
+to output the results. These commands can read a limited subset of Gram state
+(such as a path to the file currently being edited or selected text).
 
 ```json [tasks]
 [
@@ -57,61 +59,85 @@ Gram supports ways to spawn (and rerun) commands using its integrated terminal t
 ]
 ```
 
-There are two actions that drive the workflow of using tasks: `task: spawn` and `task: rerun`.
-`task: spawn` opens a modal with all available tasks in the current file.
-`task: rerun` reruns the most recently spawned task. You can also rerun tasks from the task modal.
+There are two actions that drive the workflow of using tasks: `task: spawn` and
+`task: rerun`. `task: spawn` opens a modal with all available tasks in the
+current file. `task: rerun` reruns the most recently spawned task. You can also
+rerun tasks from the task modal.
 
-By default, rerunning tasks reuses the same terminal (due to the `"use_new_terminal": false` default) but waits for the previous task to finish before starting (due to the `"allow_concurrent_runs": false` default).
+By default, rerunning tasks reuses the same terminal (due to the
+`"use_new_terminal": false` default) but waits for the previous task to finish
+before starting (due to the `"allow_concurrent_runs": false` default).
 
-Keep `"use_new_terminal": false` and set `"allow_concurrent_runs": true` to allow cancelling previous tasks on rerun.
+Keep `"use_new_terminal": false` and set `"allow_concurrent_runs": true` to
+allow cancelling previous tasks on rerun.
 
 ## Task templates
 
 Tasks can be defined:
 
-- in the global `tasks.jsonc` file; such tasks are available in all Gram projects you work on. This file is usually located in `~/.config/gram/tasks.json`. You can edit them by using the `gram: open tasks` action.
-- in the worktree-specific (local) `.gram/tasks.jsonc` file; such tasks are available only when working on a project with that worktree included. You can edit worktree-specific tasks by using the `gram: open project tasks` action.
-- on the fly with [oneshot tasks](#oneshot-tasks). These tasks are project-specific and do not persist across sessions.
+- in the global `tasks.jsonc` file; such tasks are available in all Gram
+  projects you work on. This file is usually located in
+  `~/.config/gram/tasks.json`. You can edit them by using the `gram: open tasks`
+  action.
+- in the worktree-specific (local) `.gram/tasks.jsonc` file; such tasks are
+  available only when working on a project with that worktree included. You can
+  edit worktree-specific tasks by using the `gram: open project tasks` action.
+- on the fly with [oneshot tasks](#oneshot-tasks). These tasks are
+  project-specific and do not persist across sessions.
 - by language extension.
 
 ## Variables
 
-Gram tasks act just like your shell; that also means that you can reference environmental variables via sh-esque `$VAR_NAME` syntax. A couple of additional environmental variables are set for your convenience.
-These variables allow you to pull information from the current editor and use it in your tasks. The following variables are available:
+Gram tasks act just like your shell; that also means that you can reference
+environmental variables via sh-esque `$VAR_NAME` syntax. A couple of additional
+environmental variables are set for your convenience. These variables allow you
+to pull information from the current editor and use it in your tasks. The
+following variables are available:
 
 - `GRAM_COLUMN`: current line column
 - `GRAM_ROW`: current line row
-- `GRAM_FILE`: absolute path of the currently opened file (e.g. `/Users/my-user/path/to/project/src/main.rs`)
+- `GRAM_FILE`: absolute path of the currently opened file (e.g.
+  `/Users/my-user/path/to/project/src/main.rs`)
 - `GRAM_FILENAME`: filename of the currently opened file (e.g. `main.rs`)
-- `GRAM_DIRNAME`: absolute path of the currently opened file with file name stripped (e.g. `/Users/my-user/path/to/project/src`)
-- `GRAM_RELATIVE_FILE`: path of the currently opened file, relative to `GRAM_WORKTREE_ROOT` (e.g. `src/main.rs`)
-- `GRAM_RELATIVE_DIR`: path of the currently opened file's directory, relative to `GRAM_WORKTREE_ROOT` (e.g. `src`)
-- `GRAM_STEM`: stem (filename without extension) of the currently opened file (e.g. `main`)
-- `GRAM_SYMBOL`: currently selected symbol; should match the last symbol shown in a symbol breadcrumb (e.g. `mod tests > fn test_task_contexts`)
+- `GRAM_DIRNAME`: absolute path of the currently opened file with file name
+  stripped (e.g. `/Users/my-user/path/to/project/src`)
+- `GRAM_RELATIVE_FILE`: path of the currently opened file, relative to
+  `GRAM_WORKTREE_ROOT` (e.g. `src/main.rs`)
+- `GRAM_RELATIVE_DIR`: path of the currently opened file's directory, relative
+  to `GRAM_WORKTREE_ROOT` (e.g. `src`)
+- `GRAM_STEM`: stem (filename without extension) of the currently opened file
+  (e.g. `main`)
+- `GRAM_SYMBOL`: currently selected symbol; should match the last symbol shown
+  in a symbol breadcrumb (e.g. `mod tests > fn test_task_contexts`)
 - `GRAM_SELECTED_TEXT`: currently selected text
-- `GRAM_WORKTREE_ROOT`: absolute path to the root of the current worktree. (e.g. `/Users/my-user/path/to/project`)
-- `GRAM_CUSTOM_RUST_PACKAGE`: (Rust-specific) name of the parent package of $GRAM_FILE source file.
+- `GRAM_WORKTREE_ROOT`: absolute path to the root of the current worktree. (e.g.
+  `/Users/my-user/path/to/project`)
+- `GRAM_CUSTOM_RUST_PACKAGE`: (Rust-specific) name of the parent package of
+  $GRAM_FILE source file.
 
 To use a variable in a task, prefix it with a dollar sign (`$`):
 
-```jsonc
+```json
 {
   "label": "echo current file's path",
   "command": "echo $GRAM_FILE",
 }
 ```
 
-You can also use verbose syntax that allows specifying a default if a given variable is not available: `${GRAM_FILE:default_value}`
+You can also use verbose syntax that allows specifying a default if a given
+variable is not available: `${GRAM_FILE:default_value}`
 
-These environmental variables can also be used in tasks' `cwd`, `args`, and `label` fields.
+These environmental variables can also be used in tasks' `cwd`, `args`, and
+`label` fields.
 
 ### Variable Quoting
 
-When working with paths containing spaces or other special characters, please ensure variables are properly escaped.
+When working with paths containing spaces or other special characters, please
+ensure variables are properly escaped.
 
 For example, instead of this (which will fail if the path has a space):
 
-```jsonc
+```json
 {
   "label": "stat current file",
   "command": "stat $GRAM_FILE",
@@ -120,7 +146,7 @@ For example, instead of this (which will fail if the path has a space):
 
 Provide the following:
 
-```jsonc
+```json
 {
   "label": "stat current file",
   "command": "stat",
@@ -130,7 +156,7 @@ Provide the following:
 
 Or explicitly include escaped quotes like so:
 
-```jsonc
+```json
 {
   "label": "stat current file",
   "command": "stat \"$GRAM_FILE\"",
@@ -139,10 +165,11 @@ Or explicitly include escaped quotes like so:
 
 ### Task filtering based on variables
 
-Task definitions with variables which are not present at the moment the task list is determined are filtered out.
-For example, the following task will appear in the spawn modal only if there is a text selection:
+Task definitions with variables which are not present at the moment the task
+list is determined are filtered out. For example, the following task will appear
+in the spawn modal only if there is a text selection:
 
-```jsonc
+```json
 {
   "label": "selected text",
   "command": "echo \"$GRAM_SELECTED_TEXT\"",
@@ -151,7 +178,7 @@ For example, the following task will appear in the spawn modal only if there is 
 
 Set default values to such variables to have such tasks always displayed:
 
-```jsonc
+```json
 {
   "label": "selected text with default",
   "command": "echo \"${GRAM_SELECTED_TEXT:no text selected}\"",
@@ -160,24 +187,34 @@ Set default values to such variables to have such tasks always displayed:
 
 ## Oneshot tasks
 
-The same task modal opened via `task: spawn` supports arbitrary bash-like command execution: type a command inside the modal text field, and use `opt-enter` to spawn it.
+The same task modal opened via `task: spawn` supports arbitrary bash-like
+command execution: type a command inside the modal text field, and use
+`opt-enter` to spawn it.
 
-The task modal persists these ad-hoc commands for the duration of the session, `task: rerun` will also rerun such tasks if they were the last ones spawned.
+The task modal persists these ad-hoc commands for the duration of the session,
+`task: rerun` will also rerun such tasks if they were the last ones spawned.
 
-You can also adjust the currently selected task in a modal (`tab` is the default key binding). Doing so will put its command into a prompt that can then be edited & spawned as a oneshot task.
+You can also adjust the currently selected task in a modal (`tab` is the default
+key binding). Doing so will put its command into a prompt that can then be
+edited & spawned as a oneshot task.
 
 ### Ephemeral tasks
 
-You can use the `cmd` modifier when spawning a task via a modal; tasks spawned this way will not have their usage count increased (thus, they will not be respawned with `task: rerun` and they won't have a high rank in the task modal).
-The intended use of ephemeral tasks is to stay in the flow with continuous `task: rerun` usage.
+You can use the `cmd` modifier when spawning a task via a modal; tasks spawned
+this way will not have their usage count increased (thus, they will not be
+respawned with `task: rerun` and they won't have a high rank in the task modal).
+The intended use of ephemeral tasks is to stay in the flow with continuous
+`task: rerun` usage.
 
 ### More task rerun control
 
-By default, tasks capture their variables into a context once, and this "resolved task" is being rerun always.
+By default, tasks capture their variables into a context once, and this
+"resolved task" is being rerun always.
 
-This can be controlled with the `"reevaluate_context"` argument to the task: setting it to `true` will force the task to be reevaluated before each run.
+This can be controlled with the `"reevaluate_context"` argument to the task:
+setting it to `true` will force the task to be reevaluated before each run.
 
-```jsonc
+```json
 {
   "context": "Workspace",
   "bindings": {
@@ -188,9 +225,12 @@ This can be controlled with the `"reevaluate_context"` argument to the task: set
 
 ## Custom keybindings for tasks
 
-You can define your own keybindings for your tasks via an additional argument to `task::Spawn`. If you wanted to bind the aforementioned `echo current file's path` task to `alt-g`, you would add the following snippet in your [`keymap.json`](./key-bindings.md) file:
+You can define your own keybindings for your tasks via an additional argument to
+`task::Spawn`. If you wanted to bind the aforementioned
+`echo current file's path` task to `alt-g`, you would add the following snippet
+in your [`keymap.json`](./key-bindings.md) file:
 
-```jsonc
+```json
 {
   "context": "Workspace",
   "bindings": {
@@ -199,8 +239,9 @@ You can define your own keybindings for your tasks via an additional argument to
 }
 ```
 
-Note that these tasks can also have a 'target' specified to control where the spawned task should show up.
-This could be useful for launching a terminal application that you want to use in the center area:
+Note that these tasks can also have a 'target' specified to control where the
+spawned task should show up. This could be useful for launching a terminal
+application that you want to use in the center area:
 
 ```json [tasks]
 // In tasks.jsonc
@@ -210,7 +251,7 @@ This could be useful for launching a terminal application that you want to use i
 }
 ```
 
-```jsonc
+```json
 // In keymap.jsonc
 {
   "context": "Workspace",
@@ -225,15 +266,18 @@ This could be useful for launching a terminal application that you want to use i
 
 ## Binding runnable tags to task templates
 
-Gram supports overriding the default action for inline runnable indicators via workspace-local and global `tasks.jsonc` file with the following precedence hierarchy:
+Gram supports overriding the default action for inline runnable indicators via
+workspace-local and global `tasks.jsonc` file with the following precedence
+hierarchy:
 
 1. Workspace `tasks.jsonc`
 2. Global `tasks.jsonc`
 3. Language-provided tag bindings (default).
 
-To tag a task, add the runnable tag name to the `tags` field on the task template:
+To tag a task, add the runnable tag name to the `tags` field on the task
+template:
 
-```jsonc
+```json
 {
   "label": "echo current file's path",
   "command": "echo $GRAM_FILE",
@@ -245,4 +289,8 @@ In doing so, you can change which task is shown in the runnables indicator.
 
 ## Keybindings to run tasks bound to runnables
 
-When you have a task definition that is bound to the runnable, you can quickly run it using [Code Actions](./configuring-languages?#code-actions.md) that you can trigger either via `editor: Toggle Code Actions` command or by the `cmd-.`/`ctrl-.` shortcut. Your task will be the first in the dropdown. The task will run immediately if there are no additional Code Actions for this line.
+When you have a task definition that is bound to the runnable, you can quickly
+run it using [Code Actions](./configuring-languages?#code-actions.md) that you
+can trigger either via `editor: Toggle Code Actions` command or by the
+`cmd-.`/`ctrl-.` shortcut. Your task will be the first in the dropdown. The task
+will run immediately if there are no additional Code Actions for this line.

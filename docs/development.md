@@ -17,10 +17,10 @@ linkers may offer better performance and lower RAM usage. Check the platform
 specific instructions for more details on compiling with an alternative linker
 like `wild` or `mold`.
 
-If you have a lot of CPU cores, Rust will try to use all of them and may
-require even more RAM as a consequence. You can limit the level of concurrency
-by setting the `CARGO_BUILD_JOBS` environment variable. For example, if you have
-16 CPU cores available, Cargo will run up to 16 jobs in parallel. By setting
+If you have a lot of CPU cores, Rust will try to use all of them and may require
+even more RAM as a consequence. You can limit the level of concurrency by
+setting the `CARGO_BUILD_JOBS` environment variable. For example, if you have 16
+CPU cores available, Cargo will run up to 16 jobs in parallel. By setting
 `CARGO_BUILD_JOBS=8` you can reduce RAM usage by only running up to 8 jobs in
 parallel.
 
@@ -36,21 +36,27 @@ use less memory.
 
 ## Performance Measurements
 
-Gram includes a frame time measurement system that can be used to profile how long it takes to render each frame. This is particularly useful when comparing rendering performance between different versions or when optimizing frame rendering code.
+Gram includes a frame time measurement system that can be used to profile how
+long it takes to render each frame. This is particularly useful when comparing
+rendering performance between different versions or when optimizing frame
+rendering code.
 
 ### Using GRAM_MEASUREMENTS
 
-To enable performance measurements, set the `GRAM_MEASUREMENTS` environment variable:
+To enable performance measurements, set the `GRAM_MEASUREMENTS` environment
+variable:
 
 ```sh
 export GRAM_MEASUREMENTS=1
 ```
 
-When enabled, Gram will print frame rendering timing information to stderr, showing how long each frame takes to render.
+When enabled, Gram will print frame rendering timing information to stderr,
+showing how long each frame takes to render.
 
 ### Performance Comparison Workflow
 
-Here's a typical workflow for comparing frame rendering performance between different versions:
+Here's a typical workflow for comparing frame rendering performance between
+different versions:
 
 1. **Enable measurements:**
 
@@ -61,12 +67,14 @@ Here's a typical workflow for comparing frame rendering performance between diff
 2. **Test the first version:**
 
    - Checkout the commit you want to measure
-   - Run Gram in release mode and use it for 5-10 seconds: `cargo run --release &> version-a`
+   - Run Gram in release mode and use it for 5-10 seconds:
+     `cargo run --release &> version-a`
 
 3. **Test the second version:**
 
    - Checkout another commit you want to compare
-   - Run Gram in release mode and use it for 5-10 seconds: `cargo run --release &> version-b`
+   - Run Gram in release mode and use it for 5-10 seconds:
+     `cargo run --release &> version-b`
 
 4. **Generate comparison:**
 
@@ -74,10 +82,13 @@ Here's a typical workflow for comparing frame rendering performance between diff
    script/histogram version-a version-b
    ```
 
-The `script/histogram` tool can accept as many measurement files as you like and will generate a histogram visualization comparing the frame rendering performance data between the provided versions.
+The `script/histogram` tool can accept as many measurement files as you like and
+will generate a histogram visualization comparing the frame rendering
+performance data between the provided versions.
 
 ### Using `util_macros::perf`
 
-For benchmarking unit tests, annotate them with the `#[perf]` attribute from the `util_macros` crate. Then run `cargo
-perf-test -p $CRATE` to benchmark them. See the rustdoc documentation on `crates/util_macros` and `tooling/perf` for
+For benchmarking unit tests, annotate them with the `#[perf]` attribute from the
+`util_macros` crate. Then run `cargo perf-test -p $CRATE` to benchmark them. See
+the rustdoc documentation on `crates/util_macros` and `tooling/perf` for
 in-depth examples and explanations.

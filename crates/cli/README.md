@@ -2,7 +2,8 @@
 
 ## Testing
 
-You can test your changes to the `cli` crate by first building the main gram binary:
+You can test your changes to the `cli` crate by first building the main gram
+binary:
 
 ```
 cargo build -p gram

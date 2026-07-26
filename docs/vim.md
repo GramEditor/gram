@@ -1,37 +1,57 @@
 # Vim Mode
 
-Gram includes an emulation of Vim mode (modal editing). To learn more about Vim and modal editing, see the [Vim documentation](https://www.vim.org/docs.php).
+Gram includes an emulation of Vim mode (modal editing). To learn more about Vim
+and modal editing, see the [Vim documentation](https://www.vim.org/docs.php).
 
-Full compatibility is impossible, but many of the basic features of Vim are supported as well as some features of various vim plugins.
+Full compatibility is impossible, but many of the basic features of Vim are
+supported as well as some features of various vim plugins.
 
 ## Gram's vim mode design
 
-The Gram Vim mode tries to offer a familiar experience to Vim users: it replicates the behavior of motions and commands precisely when it makes sense and uses Gram-specific functionality where appropriate.
+The Gram Vim mode tries to offer a familiar experience to Vim users: it
+replicates the behavior of motions and commands precisely when it makes sense
+and uses Gram-specific functionality where appropriate.
 
-This includes support for semantic navigation, multiple cursors, or other features usually provided by plugins like surrounding text.
+This includes support for semantic navigation, multiple cursors, or other
+features usually provided by plugins like surrounding text.
 
-So, Gram's vim mode does not replicate Vim one-to-one, but meshes Vim's modal design with Gram's extended feature set. It's also possible to add additional key bindings or override the defaults.
+So, Gram's vim mode does not replicate Vim one-to-one, but meshes Vim's modal
+design with Gram's extended feature set. It's also possible to add additional
+key bindings or override the defaults.
 
 ### Core differences
 
-There are four types of features in vim mode that use Gram's core functionality, leading to some differences in behavior:
+There are four types of features in vim mode that use Gram's core functionality,
+leading to some differences in behavior:
 
-1. **Motions**: vim mode uses Gram's semantic parsing to tune the behavior of motions per language. For example, in Rust, jumping to matching bracket with `%` works with the pipe character `|`. In JavaScript, `w` considers `$` to be a word character.
-2. **Visual block selections**: vim mode uses Gram's multiple cursor to emulate visual block selections, making block selections a lot more flexible. For example, anything you insert after a block selection updates on every line in real-time, and you can add or remove cursors anytime.
-3. **Macros**: vim mode uses Gram's recording system for vim macros. So, you can capture and replay more complex actions, like autocompletion.
-4. **Search and replace**: vim mode uses Gram's search system, so, the syntax for regular expressions is slightly different compared to Vim. See the [Regex differences](#regex-differences) section for details.
+1. **Motions**: vim mode uses Gram's semantic parsing to tune the behavior of
+   motions per language. For example, in Rust, jumping to matching bracket with
+   `%` works with the pipe character `|`. In JavaScript, `w` considers `$` to be
+   a word character.
+2. **Visual block selections**: vim mode uses Gram's multiple cursor to emulate
+   visual block selections, making block selections a lot more flexible. For
+   example, anything you insert after a block selection updates on every line in
+   real-time, and you can add or remove cursors anytime.
+3. **Macros**: vim mode uses Gram's recording system for vim macros. So, you can
+   capture and replay more complex actions, like autocompletion.
+4. **Search and replace**: vim mode uses Gram's search system, so, the syntax
+   for regular expressions is slightly different compared to Vim. See the
+   [Regex differences](#regex-differences) section for details.
 
-The foundations of Gram's vim mode should already cover many use cases, but patches to add features or additional functionality is always welcome.
+The foundations of Gram's vim mode should already cover many use cases, but
+patches to add features or additional functionality is always welcome.
 
 ## Enabling and disabling vim mode
 
-Vim mode can be enabled from the Onboarding screen shown when first installing the editor.
+Vim mode can be enabled from the Onboarding screen shown when first installing
+the editor.
 
-Later, vim mode can be toggled on or off at any time using the command {#action workspace::ToggleVimMode}.
+Later, vim mode can be toggled on or off at any time using the command {#action
+workspace::ToggleVimMode}.
 
 > **Note**: This command toggles the following property in `settings.json`:
 >
-> ```jsonc
+> ```json
 > {
 >   "vim_mode": true,
 > }
@@ -39,13 +59,16 @@ Later, vim mode can be toggled on or off at any time using the command {#action 
 
 ## Gram-specific features
 
-Gram uses Tree-sitter and the language server protocol to understand the structure of files and supports multiple cursors out of the box.
+Gram uses Tree-sitter and the language server protocol to understand the
+structure of files and supports multiple cursors out of the box.
 
-Vim mode has several "core Gram" key bindings that will help make the most of Gram's specific feature set.
+Vim mode has several "core Gram" key bindings that will help make the most of
+Gram's specific feature set.
 
 ### Language server (LSP)
 
-The following commands use a language server (if available) to help navigate and refactor code semantically.
+The following commands use a language server (if available) to help navigate and
+refactor code semantically.
 
 | Command                                  | Default Shortcut |
 | ---------------------------------------- | ---------------- |
@@ -76,7 +99,11 @@ The following commands use a language server (if available) to help navigate and
 
 ### Tree-sitter
 
-[Tree-sitter](https://tree-sitter.github.io/tree-sitter/) is an open source project independent from Gram which Gram uses to understand the structure of code, and which supports many programming languages. Gram provides motions that change the current cursor position, and text objects that can be used as the target of actions.
+[Tree-sitter](https://tree-sitter.github.io/tree-sitter/) is an open source
+project independent from Gram which Gram uses to understand the structure of
+code, and which supports many programming languages. Gram provides motions that
+change the current cursor position, and text objects that can be used as the
+target of actions.
 
 | Command                         | Default Shortcut            |
 | ------------------------------- | --------------------------- |
@@ -103,14 +130,16 @@ The following commands use a language server (if available) to help navigate and
 | The current indent level, and one line before              | `a i`            |
 | The current indent level                                   | `i i`            |
 
-Note that the definitions for the targets of the `[m` family of motions are the same as the
-boundaries defined by `af`. The targets of the `[[` are the same as those defined by `ac`, though
-if there are no classes, then functions are also used. Similarly `gc` is used to find `[ /`. `g c`
+Note that the definitions for the targets of the `[m` family of motions are the
+same as the boundaries defined by `af`. The targets of the `[[` are the same as
+those defined by `ac`, though if there are no classes, then functions are also
+used. Similarly `gc` is used to find `[ /`. `g c`
 
-The definition of functions, classes and comments is language dependent, and support can be added
-to extensions by adding a [`textobjects.scm`]. The definition of arguments and tags operates at
-the Tree-sitter level, but looks for certain patterns in the parse tree and is not currently configurable
-per language.
+The definition of functions, classes and comments is language dependent, and
+support can be added to extensions by adding a [`textobjects.scm`]. The
+definition of arguments and tags operates at the Tree-sitter level, but looks
+for certain patterns in the parse tree and is not currently configurable per
+language.
 
 ### Multi cursor
 
@@ -149,21 +178,46 @@ The following commands control Gram's completion menu.
 
 ### Supported plugins
 
-Gram's vim mode includes some features that are usually provided by popular plugins in the Vim ecosystem:
+Gram's vim mode includes some features that are usually provided by popular
+plugins in the Vim ecosystem:
 
-- Surround text objects with `ys` (yank surround), change surrounding with `cs`, and delete surrounding with `ds`.
-- Comment and uncomment selections with `gc` in visual mode and `gcc` in normal mode.
-- The project panel supports many shortcuts modeled after the Vim plugin `netrw`: navigation with `hjkl`, open file with `o`, open file in a new tab with `t`, etc.
-- It's possible to add key bindings to your keymap to navigate "camelCase" names. See the [optional key bindings](#optional-key-bindings) section to learn how.
-- Use `gR` to do [ReplaceWithRegister](https://github.com/vim-scripts/ReplaceWithRegister).
-- Use `cx` for [vim-exchange](https://github.com/tommcdo/vim-exchange) functionality. Note that it does not have a default binding in visual mode, but you can add one to your keymap (refer to the [optional key bindings](#optional-key-bindings) section).
-- Navigate to indent depths relative to your cursor with the [indent wise](https://github.com/jeetsukumaran/vim-indentwise) plugin `[-`, `]-`, `[+`, `]+`, `[=`, `]=`.
-- Select quoted text with AnyQuotes and bracketed text with AnyBrackets text objects. Gram also provides MiniQuotes and MiniBrackets which offer alternative selection behavior based on the [mini.ai](https://github.com/echasnovski/mini.nvim/blob/main/readmes/mini-ai.md) Neovim plugin. See the [Quote and Bracket text objects](#quote-and-bracket-text-objects) section below for details.
-- It's possible to configure AnyQuotes, AnyBrackets, MiniQuotes, and MiniBrackets text objects for selecting quoted and bracketed text using different selection strategies. See the [Any Bracket Functionality](#any-bracket-functionality) section below for details.
+- Surround text objects with `ys` (yank surround), change surrounding with `cs`,
+  and delete surrounding with `ds`.
+- Comment and uncomment selections with `gc` in visual mode and `gcc` in normal
+  mode.
+- The project panel supports many shortcuts modeled after the Vim plugin
+  `netrw`: navigation with `hjkl`, open file with `o`, open file in a new tab
+  with `t`, etc.
+- It's possible to add key bindings to your keymap to navigate "camelCase"
+  names. See the [optional key bindings](#optional-key-bindings) section to
+  learn how.
+- Use `gR` to do
+  [ReplaceWithRegister](https://github.com/vim-scripts/ReplaceWithRegister).
+- Use `cx` for [vim-exchange](https://github.com/tommcdo/vim-exchange)
+  functionality. Note that it does not have a default binding in visual mode,
+  but you can add one to your keymap (refer to the
+  [optional key bindings](#optional-key-bindings) section).
+- Navigate to indent depths relative to your cursor with the
+  [indent wise](https://github.com/jeetsukumaran/vim-indentwise) plugin `[-`,
+  `]-`, `[+`, `]+`, `[=`, `]=`.
+- Select quoted text with AnyQuotes and bracketed text with AnyBrackets text
+  objects. Gram also provides MiniQuotes and MiniBrackets which offer
+  alternative selection behavior based on the
+  [mini.ai](https://github.com/echasnovski/mini.nvim/blob/main/readmes/mini-ai.md)
+  Neovim plugin. See the
+  [Quote and Bracket text objects](#quote-and-bracket-text-objects) section
+  below for details.
+- It's possible to configure AnyQuotes, AnyBrackets, MiniQuotes, and
+  MiniBrackets text objects for selecting quoted and bracketed text using
+  different selection strategies. See the
+  [Any Bracket Functionality](#any-bracket-functionality) section below for
+  details.
 
 ### Any Bracket Functionality
 
-Gram offers two different strategies for selecting text surrounded by any quote, or any bracket. These text objects are **not enabled by default** and must be configured in your keymap to be used.
+Gram offers two different strategies for selecting text surrounded by any quote,
+or any bracket. These text objects are **not enabled by default** and must be
+configured in your keymap to be used.
 
 #### Included Characters
 
@@ -174,7 +228,8 @@ Each text object type works with specific characters:
 | AnyQuotes/MiniQuotes     | Single quote (`'`), Double quote (`"`), Backtick (`` ` ``)                             |
 | AnyBrackets/MiniBrackets | Parentheses (`()`), Square brackets (`[]`), Curly braces (`{}`), Angle brackets (`<>`) |
 
-Both "Any" and "Mini" variants work with the same character sets, but differ in their selection strategy.
+Both "Any" and "Mini" variants work with the same character sets, but differ in
+their selection strategy.
 
 #### AnyQuotes and AnyBrackets (Traditional Vim behavior)
 
@@ -182,16 +237,24 @@ These text objects implement traditional Vim behavior:
 
 - **Selection priority**: Finds the innermost (closest) quotes or brackets first
 - **Fallback mechanism**: If none are found, falls back to the current line
-- **Character-based matching**: Focuses solely on open and close characters without considering syntax
-- **Vanilla Vim similarity**: AnyBrackets matches the behavior of commands like `ci<`, `ci(`, etc., in vanilla Vim, including potential edge cases (like considering `>` in `=>` as a closing delimiter)
+- **Character-based matching**: Focuses solely on open and close characters
+  without considering syntax
+- **Vanilla Vim similarity**: AnyBrackets matches the behavior of commands like
+  `ci<`, `ci(`, etc., in vanilla Vim, including potential edge cases (like
+  considering `>` in `=>` as a closing delimiter)
 
 #### MiniQuotes and MiniBrackets (mini.ai behavior)
 
-These text objects implement the behavior of the [mini.ai](https://github.com/echasnovski/mini.nvim/blob/main/readmes/mini-ai.md) Neovim plugin:
+These text objects implement the behavior of the
+[mini.ai](https://github.com/echasnovski/mini.nvim/blob/main/readmes/mini-ai.md)
+Neovim plugin:
 
-- **Selection priority**: Searches the current line first before expanding outward
-- **Tree-sitter integration**: Uses Tree-sitter queries for more context-aware selections
-- **Syntax-aware matching**: Can distinguish between actual brackets and similar characters in other contexts (like `>` in `=>`)
+- **Selection priority**: Searches the current line first before expanding
+  outward
+- **Tree-sitter integration**: Uses Tree-sitter queries for more context-aware
+  selections
+- **Syntax-aware matching**: Can distinguish between actual brackets and similar
+  characters in other contexts (like `>` in `=>`)
 
 #### Choosing Between Approaches
 
@@ -208,9 +271,11 @@ These text objects implement the behavior of the [mini.ai](https://github.com/ec
 
 #### Example Configuration
 
-To use these text objects, you need to add bindings to your keymap. Here's an example configuration that makes them available when using text object operators (`i` and `a`) or change-surrounds (`cs`):
+To use these text objects, you need to add bindings to your keymap. Here's an
+example configuration that makes them available when using text object operators
+(`i` and `a`) or change-surrounds (`cs`):
 
-```jsonc
+```json
 {
   "context": "vim_operator == a || vim_operator == i || vim_operator == cs",
   "bindings": {
@@ -234,15 +299,24 @@ With this configuration, you can use commands like:
 
 ## Command palette
 
-Vim mode allows you to open Gram's command palette with `:`. You can then type to access any usual Gram command. Additionally, vim mode adds aliases for popular Vim commands to ensure your muscle memory transfers to Gram. For example, you can write `:w` or `:write` to save the file.
+Vim mode allows you to open Gram's command palette with `:`. You can then type
+to access any usual Gram command. Additionally, vim mode adds aliases for
+popular Vim commands to ensure your muscle memory transfers to Gram. For
+example, you can write `:w` or `:write` to save the file.
 
-Below, you'll find tables listing the commands you can use in the command palette. We put optional characters in square brackets to indicate that you can omit them.
+Below, you'll find tables listing the commands you can use in the command
+palette. We put optional characters in square brackets to indicate that you can
+omit them.
 
-> **Note**: Gram does not emulate the full power of Vim's command line yet. Commands currently do not support arguments, and full command history is not available.
+> **Note**: Gram does not emulate the full power of Vim's command line yet.
+> Commands currently do not support arguments, and full command history is not
+> available.
 
 ### File and window management
 
-This table shows commands for managing windows, tabs, and panes. As commands don't support arguments currently, you cannot specify a filename when saving or creating a new file.
+This table shows commands for managing windows, tabs, and panes. As commands
+don't support arguments currently, you cannot specify a filename when saving or
+creating a new file.
 
 | Command        | Description                                           |
 | -------------- | ----------------------------------------------------- |
@@ -266,7 +340,8 @@ This table shows commands for managing windows, tabs, and panes. As commands don
 | `:tabc[lose]`  | Close the current tab                                 |
 | `:ls`          | Show all buffers                                      |
 
-> **Note:** The `!` character is used to force the command to execute without saving changes or prompting before overwriting a file.
+> **Note:** The `!` character is used to force the command to execute without
+> saving changes or prompting before overwriting a file.
 
 ### Ex commands
 
@@ -313,7 +388,12 @@ These commands jump to specific positions in the file.
 
 ### Replacement
 
-This command replaces text. It emulates the substitute command in vim. The substitute command uses regular expressions, and Gram uses a slightly different syntax than vim. You can learn more about Gram's syntax below, [in the regex differences section](#regex-differences). Gram will replace only the first occurrence of the search pattern in the current line. To replace all matches append the `g` flag.
+This command replaces text. It emulates the substitute command in vim. The
+substitute command uses regular expressions, and Gram uses a slightly different
+syntax than vim. You can learn more about Gram's syntax below,
+[in the regex differences section](#regex-differences). Gram will replace only
+the first occurrence of the search pattern in the current line. To replace all
+matches append the `g` flag.
 
 | Command                 | Description                       |
 | ----------------------- | --------------------------------- |
@@ -343,7 +423,8 @@ These commands modify editor options locally for the current buffer.
 
 ### Command mnemonics
 
-As any Gram command is available, you may find that it's helpful to remember mnemonics that run the correct command. For example:
+As any Gram command is available, you may find that it's helpful to remember
+mnemonics that run the correct command. For example:
 
 - `:diffs` for "toggle all hunk diffs"
 - `:cpp` for "copy path to file"
@@ -354,7 +435,8 @@ As any Gram command is available, you may find that it's helpful to remember mne
 
 ## Customizing key bindings
 
-In this section, we'll learn how to customize the key bindings of Gram's vim mode. You'll learn:
+In this section, we'll learn how to customize the key bindings of Gram's vim
+mode. You'll learn:
 
 - How to select the correct context for your new key bindings.
 - Useful contexts for vim mode key bindings.
@@ -362,9 +444,13 @@ In this section, we'll learn how to customize the key bindings of Gram's vim mod
 
 ### Selecting the correct context
 
-Gram's key bindings are evaluated only when the `"context"` property matches your location in the editor. For example, if you add key bindings to the `"Editor"` context, they will only work when you're editing a file. If you add key bindings to the `"Workspace"` context, they will work everywhere in Gram. Here's an example of a key binding that saves when you're editing a file:
+Gram's key bindings are evaluated only when the `"context"` property matches
+your location in the editor. For example, if you add key bindings to the
+`"Editor"` context, they will only work when you're editing a file. If you add
+key bindings to the `"Workspace"` context, they will work everywhere in Gram.
+Here's an example of a key binding that saves when you're editing a file:
 
-```jsonc
+```json
 {
   "context": "Editor",
   "bindings": {
@@ -373,9 +459,12 @@ Gram's key bindings are evaluated only when the `"context"` property matches you
 }
 ```
 
-Contexts are nested, so when you're editing a file, the context is the `"Editor"` context, which is inside the `"Pane"` context, which is inside the `"Workspace"` context. That's why any key bindings you add to the `"Workspace"` context will work when you're editing a file. Here's an example:
+Contexts are nested, so when you're editing a file, the context is the
+`"Editor"` context, which is inside the `"Pane"` context, which is inside the
+`"Workspace"` context. That's why any key bindings you add to the `"Workspace"`
+context will work when you're editing a file. Here's an example:
 
-```jsonc
+```json
 // This key binding will work when you're editing a file. It comes built into Gram by default as the workspace: save command.
 {
   "context": "Workspace",
@@ -385,7 +474,10 @@ Contexts are nested, so when you're editing a file, the context is the `"Editor"
 }
 ```
 
-Contexts are expressions. They support boolean operators like `&&` (and) and `||` (or). For example, you can use the context `"Editor && vim_mode == normal"` to create key bindings that only work when you're editing a file _and_ you're in vim's normal mode.
+Contexts are expressions. They support boolean operators like `&&` (and) and
+`||` (or). For example, you can use the context `"Editor && vim_mode == normal"`
+to create key bindings that only work when you're editing a file _and_ you're in
+vim's normal mode.
 
 Vim mode adds several contexts to the `"Editor"` context:
 
@@ -400,13 +492,17 @@ Vim mode adds several contexts to the `"Editor"` context:
 | vim_mode == operator | Waiting for another binding to trigger (e.g., after typing `c` or `d`)                                                                                                             |
 | vim_operator         | Set to `none` unless `vim_mode == operator`, in which case it is set to the current operator's default keybinding (e.g., after typing `d`, `vim_operator == d`)                    |
 
-> **Note**: Contexts are matched only on one level at a time. So it is possible to use the expression `"Editor && vim_mode == normal"`, but `"Workspace && vim_mode == normal"` will never match because we set the vim context at the `"Editor"` level.
+> **Note**: Contexts are matched only on one level at a time. So it is possible
+> to use the expression `"Editor && vim_mode == normal"`, but
+> `"Workspace && vim_mode == normal"` will never match because we set the vim
+> context at the `"Editor"` level.
 
 ### Useful contexts for vim mode key bindings
 
-Here's a template with useful vim mode contexts to help you customize your vim mode key bindings. You can copy it and integrate it into your user keymap.
+Here's a template with useful vim mode contexts to help you customize your vim
+mode key bindings. You can copy it and integrate it into your user keymap.
 
-```jsonc
+```json
 [
   {
     "context": "VimControl && !menu",
@@ -437,15 +533,20 @@ Here's a template with useful vim mode contexts to help you customize your vim m
 ]
 ```
 
-> **Note**: If you would like to emulate Vim's `map` commands (`nmap`, etc.), you can use the action `workspace::SendKeystrokes` in the correct context.
+> **Note**: If you would like to emulate Vim's `map` commands (`nmap`, etc.),
+> you can use the action `workspace::SendKeystrokes` in the correct context.
 
 ### Optional key bindings
 
-By default, you can navigate between the different files open in the editor with shortcuts like `ctrl+w` followed by one of `hjkl` to move to the left, down, up, or right, respectively.
+By default, you can navigate between the different files open in the editor with
+shortcuts like `ctrl+w` followed by one of `hjkl` to move to the left, down, up,
+or right, respectively.
 
-But you cannot use the same shortcuts to move between all the editor docks (the terminal, project panel, ...). If you want to use the same shortcuts to navigate to the docks, you can add the following key bindings to your user keymap.
+But you cannot use the same shortcuts to move between all the editor docks (the
+terminal, project panel, ...). If you want to use the same shortcuts to navigate
+to the docks, you can add the following key bindings to your user keymap.
 
-```jsonc
+```json
 {
   "context": "Dock",
   "bindings": {
@@ -458,9 +559,11 @@ But you cannot use the same shortcuts to move between all the editor docks (the 
 }
 ```
 
-Subword motion, which allows you to navigate and select individual words in `camelCase` or `snake_case`, is not enabled by default. To enable it, add these bindings to your keymap.
+Subword motion, which allows you to navigate and select individual words in
+`camelCase` or `snake_case`, is not enabled by default. To enable it, add these
+bindings to your keymap.
 
-```jsonc
+```json
 {
   "context": "VimControl && !menu && vim_mode != operator",
   "bindings": {
@@ -475,9 +578,13 @@ Subword motion, which allows you to navigate and select individual words in `cam
 > Note: Operations like `dw` remain unaffected. If you would like operations to
 > also use subword motion, remove `vim_mode != operator` from the `context`.
 
-Vim mode comes with shortcuts to surround the selection in normal mode (`ys`), but it doesn't have a shortcut to add surrounds in visual mode. By default, `shift-s` substitutes the selection (erases the text and enters insert mode). To use `shift-s` to add surrounds in visual mode, you can add the following object to your keymap.
+Vim mode comes with shortcuts to surround the selection in normal mode (`ys`),
+but it doesn't have a shortcut to add surrounds in visual mode. By default,
+`shift-s` substitutes the selection (erases the text and enters insert mode). To
+use `shift-s` to add surrounds in visual mode, you can add the following object
+to your keymap.
 
-```jsonc
+```json
 {
   "context": "vim_mode == visual",
   "bindings": {
@@ -486,9 +593,12 @@ Vim mode comes with shortcuts to surround the selection in normal mode (`ys`), b
 }
 ```
 
-In non-modal text editors, cursor navigation typically wraps when moving past line ends. Gram, however, handles this behavior exactly like Vim by default: the cursor stops at line boundaries. If you prefer your cursor to wrap between lines, override these keybindings:
+In non-modal text editors, cursor navigation typically wraps when moving past
+line ends. Gram, however, handles this behavior exactly like Vim by default: the
+cursor stops at line boundaries. If you prefer your cursor to wrap between
+lines, override these keybindings:
 
-```jsonc
+```json
 // In VimScript, this would look like this:
 // set whichwrap+=<,>,[,],h,l
 {
@@ -502,9 +612,13 @@ In non-modal text editors, cursor navigation typically wraps when moving past li
 }
 ```
 
-The [Sneak motion](https://github.com/justinmk/vim-sneak) feature allows for quick navigation to any two-character sequence in your text. You can enable it by adding the following keybindings to your keymap. By default, the `s` key is mapped to `vim::Substitute`. Adding these bindings will override that behavior, so ensure this change aligns with your workflow preferences.
+The [Sneak motion](https://github.com/justinmk/vim-sneak) feature allows for
+quick navigation to any two-character sequence in your text. You can enable it
+by adding the following keybindings to your keymap. By default, the `s` key is
+mapped to `vim::Substitute`. Adding these bindings will override that behavior,
+so ensure this change aligns with your workflow preferences.
 
-```jsonc
+```json
 {
   "context": "vim_mode == normal || vim_mode == visual",
   "bindings": {
@@ -514,9 +628,13 @@ The [Sneak motion](https://github.com/justinmk/vim-sneak) feature allows for qui
 }
 ```
 
-The [vim-exchange](https://github.com/tommcdo/vim-exchange) feature does not have a default binding for visual mode, as the `shift-x` binding conflicts with the default `shift-x` binding for visual mode (`vim::VisualDeleteLine`). To assign the default vim-exchange binding, add the following keybinding to your keymap:
+The [vim-exchange](https://github.com/tommcdo/vim-exchange) feature does not
+have a default binding for visual mode, as the `shift-x` binding conflicts with
+the default `shift-x` binding for visual mode (`vim::VisualDeleteLine`). To
+assign the default vim-exchange binding, add the following keybinding to your
+keymap:
 
-```jsonc
+```json
 {
   "context": "vim_mode == visual",
   "bindings": {
@@ -527,9 +645,11 @@ The [vim-exchange](https://github.com/tommcdo/vim-exchange) feature does not hav
 
 ### Restoring common text editing and Gram keybindings
 
-If you're using vim mode on Linux or Windows, you may find it overrides keybindings you can't live without: `ctrl+v` to paste, `ctrl+f` to search, etc. You can restore them by copying this data into your keymap:
+If you're using vim mode on Linux or Windows, you may find it overrides
+keybindings you can't live without: `ctrl+v` to paste, `ctrl+f` to search, etc.
+You can restore them by copying this data into your keymap:
 
-```jsonc
+```json
 {
   "context": "Editor && !menu",
   "bindings": {
@@ -560,9 +680,11 @@ You can change the following settings to modify vim mode's behavior:
 | custom_digraphs              | An object that allows you to add custom digraphs. Read below for an example.                                                                                                                  | {}            |
 | highlight_on_yank_duration   | The duration of the highlight animation(in ms). Set to `0` to disable                                                                                                                         | 200           |
 
-Here's an example of adding a digraph for the zombie emoji. This allows you to type `ctrl-k f z` to insert a zombie emoji. You can add as many digraphs as you like.
+Here's an example of adding a digraph for the zombie emoji. This allows you to
+type `ctrl-k f z` to insert a zombie emoji. You can add as many digraphs as you
+like.
 
-```jsonc
+```json
 {
   "vim": {
     "custom_digraphs": {
@@ -574,7 +696,7 @@ Here's an example of adding a digraph for the zombie emoji. This allows you to t
 
 Here's an example of these settings changed:
 
-```jsonc
+```json
 {
   "vim": {
     "default_mode": "insert",
@@ -591,7 +713,8 @@ Here's an example of these settings changed:
 
 ## Useful core Gram settings for vim mode
 
-Here are a few general Gram settings that can help you fine-tune your Vim experience:
+Here are a few general Gram settings that can help you fine-tune your Vim
+experience:
 
 | Property                | Description                                                                                                                                                   | Default Value        |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
@@ -605,7 +728,7 @@ Here are a few general Gram settings that can help you fine-tune your Vim experi
 
 Here's an example of these settings changed:
 
-```jsonc
+```json
 {
   // Disable cursor blink
   "cursor_blink": false,
@@ -629,20 +752,38 @@ Here's an example of these settings changed:
 }
 ```
 
-The `command_aliases` property is a single object that maps keys or key sequences to vim mode commands. The example above defines multiple aliases: `W` for `w`, `Wq` for `wq`, and `Q` for `q`.
+The `command_aliases` property is a single object that maps keys or key
+sequences to vim mode commands. The example above defines multiple aliases: `W`
+for `w`, `Wq` for `wq`, and `Q` for `q`.
 
 ## Regex differences
 
-Gram uses a different regular expression engine from Vim. This means that you will have to use a different syntax in some cases. Here are the most common differences:
+Gram uses a different regular expression engine from Vim. This means that you
+will have to use a different syntax in some cases. Here are the most common
+differences:
 
-- **Capture groups**: Vim uses `\(` and `\)` to represent capture groups, in Gram these are `(` and `)`. On the flip side, in Vim, `(` and `)` represent literal parentheses, but in Gram these must be escaped to `\(` and `\)`.
-- **Matches**: When replacing, Vim uses the backslash character followed by a number to represent a matched capture group. For example, `\1`. Gram uses the dollar sign instead. So, when in Vim you use `\0` to represent the entire match, in Gram the syntax is `$0` instead. Same for numbered capture groups: `\1` in Vim is `$1` in Gram.
-- **Global option**: By default, in Vim, regex searches only match the first occurrence on a line, and you append `/g` at the end of your query to find all matches. In Gram, regex searches are global by default.
-- **Case sensitivity**: Vim uses `/i` to indicate a case-insensitive search. In Gram you can either write `(?i)` at the start of the pattern or toggle case-sensitivity with the shortcut {#kb search::ToggleCaseSensitive}.
+- **Capture groups**: Vim uses `\(` and `\)` to represent capture groups, in
+  Gram these are `(` and `)`. On the flip side, in Vim, `(` and `)` represent
+  literal parentheses, but in Gram these must be escaped to `\(` and `\)`.
+- **Matches**: When replacing, Vim uses the backslash character followed by a
+  number to represent a matched capture group. For example, `\1`. Gram uses the
+  dollar sign instead. So, when in Vim you use `\0` to represent the entire
+  match, in Gram the syntax is `$0` instead. Same for numbered capture groups:
+  `\1` in Vim is `$1` in Gram.
+- **Global option**: By default, in Vim, regex searches only match the first
+  occurrence on a line, and you append `/g` at the end of your query to find all
+  matches. In Gram, regex searches are global by default.
+- **Case sensitivity**: Vim uses `/i` to indicate a case-insensitive search. In
+  Gram you can either write `(?i)` at the start of the pattern or toggle
+  case-sensitivity with the shortcut {#kb search::ToggleCaseSensitive}.
 
-> **Note**: To help with the transition, the command palette will fix parentheses and replace groups for you when you write a Vim-style substitute command, `:%s//`. So, Gram will convert `%s:/\(a\)(b)/\1/` into a search for "(a)\(b\)" and a replacement of "$1".
+> **Note**: To help with the transition, the command palette will fix
+> parentheses and replace groups for you when you write a Vim-style substitute
+> command, `:%s//`. So, Gram will convert `%s:/\(a\)(b)/\1/` into a search for
+> "(a)\(b\)" and a replacement of "$1".
 
-For the full syntax supported by Gram's regex engine [see the regex crate documentation](https://docs.rs/regex/latest/regex/#syntax).
+For the full syntax supported by Gram's regex engine
+[see the regex crate documentation](https://docs.rs/regex/latest/regex/#syntax).
 
 ## Smaller tips for vim users
 
@@ -652,7 +793,7 @@ The default key bindings for space interfere with using space as leader, and in
 particular getting the which key-popup to stay open. To fix this, add this key
 binding to your user keymap:
 
-```jsonc
+```json
 // Make which-key persist longer by disabling
 // the default action vim::WrappingRight
 {
@@ -672,7 +813,7 @@ This is a common rebinding used by vim users to retain the block selection after
 indent and outdent using the `<` and `<` keys, allowing you to hit the keys
 multiple times to indent/outdent to the desired depth:
 
-```jsonc
+```json
 // keep selection during indent/outdent
 {
   "context": "vim_mode == visual",
@@ -682,4 +823,3 @@ multiple times to indent/outdent to the desired depth:
   }
 }
 ```
-

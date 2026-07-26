@@ -1,15 +1,18 @@
 # Helm
 
-Support for Helm in Gram is provided by the community-maintained [Helm extension](https://github.com/cabrinha/helm.zed).
+Support for Helm in Gram is provided by the community-maintained
+[Helm extension](https://github.com/cabrinha/helm.zed).
 
-- Tree-sitter: [tree-sitter-go-template](https://github.com/ngalaiko/tree-sitter-go-template/tree/master)
+- Tree-sitter:
+  [tree-sitter-go-template](https://github.com/ngalaiko/tree-sitter-go-template/tree/master)
 - Language Server: [mrjosh/helm-ls](https://github.com/mrjosh/helm-ls)
 
 ## Setup
 
-Enable Helm language for Helm files by editing your `.gram/settings.jsonc` and adding:
+Enable Helm language for Helm files by editing your `.gram/settings.jsonc` and
+adding:
 
-```jsonc
+```json
   "file_types": {
     "Helm": [
       "**/templates/**/*.tpl",
@@ -22,4 +25,5 @@ Enable Helm language for Helm files by editing your `.gram/settings.jsonc` and a
   }
 ```
 
-This will also mark values.yaml files as the type helm, since helm-ls supports this.
+This will also mark values.yaml files as the type helm, since helm-ls supports
+this.

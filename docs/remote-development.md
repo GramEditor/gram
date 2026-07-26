@@ -14,8 +14,8 @@ The remote server communicates with the editor over SSH and GRPC.
 ## Overview
 
 Remote development requires two computers, your local machine that runs the UI
-and the remote server which runs a small server. The two communicate over
-SSH, so you will need to be able to SSH from your local machine into the remote
+and the remote server which runs a small server. The two communicate over SSH,
+so you will need to be able to SSH from your local machine into the remote
 server to use this feature.
 
 On your local machine, Gram runs its UI, uses
@@ -30,8 +30,8 @@ run on the remote server.
 2. Build and copy the remote editor process to your development machine.
 
    Either get a pre-built copy of the remote server from the
-   [Codeberg releases](https://codeberg.org/GramEditor/gram/releases)
-   page, or build it from source.
+   [Codeberg releases](https://codeberg.org/GramEditor/gram/releases) page, or
+   build it from source.
 
    If you download the pre-built release, make sure to get a version that
    matches your remote server. If you are running the editor on a Mac but want
@@ -103,13 +103,13 @@ The following platforms should work:
 
 ## Configuration
 
-The list of remote servers is stored in your settings file {#kb gram::OpenSettings}.
-You can edit this list using the Remote Projects dialog
+The list of remote servers is stored in your settings file {#kb
+gram::OpenSettings}. You can edit this list using the Remote Projects dialog
 {#kb projects::OpenRemote}, which provides some robustness - for example it
 checks that the connection can be established before writing it to the settings
 file.
 
-```jsonc
+```json
 {
   "ssh_connections": [
     {
@@ -125,7 +125,7 @@ configuration you have in `~/.ssh/config` for the given host. That said, if you
 need to override anything you can configure the following additional options on
 each connection:
 
-```jsonc
+```json
 {
   "ssh_connections": [
     {
@@ -143,7 +143,7 @@ each connection:
 
 You can also set a nickname for the remote server:
 
-```jsonc
+```json
 {
   "ssh_connections": [
     {
@@ -156,9 +156,10 @@ You can also set a nickname for the remote server:
 }
 ```
 
-If you use the command line to open a connection to a host by doing `gram ssh://192.168.1.10/~/.vimrc`,
-then extra options are read from your settings file by finding the first connection that matches
-the host/username/port of the URL on the command line.
+If you use the command line to open a connection to a host by doing
+`gram ssh://192.168.1.10/~/.vimrc`, then extra options are read from your
+settings file by finding the first connection that matches the
+host/username/port of the URL on the command line.
 
 Additionally it's worth noting that while you can pass a password on the command
 line `gram ssh://user:password@host/~`, we do not support writing a password to
@@ -167,13 +168,18 @@ configure key-based authentication.
 
 ## Remote Development on Windows (SSH)
 
-Gram on Windows supports SSH remoting and will prompt for credentials when needed.
+Gram on Windows supports SSH remoting and will prompt for credentials when
+needed.
 
-If you encounter authentication issues, confirm that your SSH key agent is running (e.g., ssh-agent or your Git client's agent) and that ssh.exe is on PATH.
+If you encounter authentication issues, confirm that your SSH key agent is
+running (e.g., ssh-agent or your Git client's agent) and that ssh.exe is on
+PATH.
 
 ### Troubleshooting SSH on Windows
 
-When prompted for credentials, use the graphical askpass dialog. If it doesn't appear, check for credential manager conflicts and that GUI prompts aren't blocked by your terminal.
+When prompted for credentials, use the graphical askpass dialog. If it doesn't
+appear, check for credential manager conflicts and that GUI prompts aren't
+blocked by your terminal.
 
 ## WSL Support
 
@@ -181,17 +187,25 @@ Gram supports opening folders inside of WSL natively on Windows.
 
 ### Opening a local folder in WSL
 
-To open a local folder inside a WSL container, use the `projects: open in wsl` action and select the folder you want to open. You will be presented with a list of available WSL distributions to open the folder in.
+To open a local folder inside a WSL container, use the `projects: open in wsl`
+action and select the folder you want to open. You will be presented with a list
+of available WSL distributions to open the folder in.
 
 ### Opening a folder already in WSL
 
-To open a folder that's already located inside of a WSL container, use the `projects: open wsl` action and select the WSL distribution. The distribution will be added to the `Remote Projects` window where you will be able to open the folder.
+To open a folder that's already located inside of a WSL container, use the
+`projects: open wsl` action and select the WSL distribution. The distribution
+will be added to the `Remote Projects` window where you will be able to open the
+folder.
 
 ## Port forwarding
 
-If you'd like to be able to connect to ports on your remote server from your local machine, you can configure port forwarding in your settings file. This is particularly useful for developing websites so you can load the site in your browser while working.
+If you'd like to be able to connect to ports on your remote server from your
+local machine, you can configure port forwarding in your settings file. This is
+particularly useful for developing websites so you can load the site in your
+browser while working.
 
-```jsonc
+```json
 {
   "ssh_connections": [
     {
@@ -202,11 +216,16 @@ If you'd like to be able to connect to ports on your remote server from your loc
 }
 ```
 
-This will cause requests from your local machine to `localhost:8080` to be forwarded to the remote machine's port 80. Under the hood this uses the `-L` argument to ssh.
+This will cause requests from your local machine to `localhost:8080` to be
+forwarded to the remote machine's port 80. Under the hood this uses the `-L`
+argument to ssh.
 
-By default these ports are bound to localhost, so other computers in the same network as your development machine cannot access them. You can set the local_host to bind to a different interface, for example, 0.0.0.0 will bind to all local interfaces.
+By default these ports are bound to localhost, so other computers in the same
+network as your development machine cannot access them. You can set the
+local_host to bind to a different interface, for example, 0.0.0.0 will bind to
+all local interfaces.
 
-```jsonc
+```json
 {
   "ssh_connections": [
     {
@@ -223,9 +242,10 @@ By default these ports are bound to localhost, so other computers in the same ne
 }
 ```
 
-These ports also default to the `localhost` interface on the remote host. If you need to change this, you can also set the remote host:
+These ports also default to the `localhost` interface on the remote host. If you
+need to change this, you can also set the remote host:
 
-```jsonc
+```json
 {
   "ssh_connections": [
     {
@@ -246,27 +266,39 @@ These ports also default to the `localhost` interface on the remote host. If you
 
 When opening a remote project there are three relevant settings locations:
 
-- The local Gram settings (in `~/.gram/settings.json` on macOS or `~/.config/gram/settings.json` on Linux) on your local machine.
+- The local Gram settings (in `~/.gram/settings.json` on macOS or
+  `~/.config/gram/settings.json` on Linux) on your local machine.
 - The server Gram settings (in the same place) on the remote server.
-- The project settings (in `.gram/settings.json` or `.editorconfig` of your project)
+- The project settings (in `.gram/settings.json` or `.editorconfig` of your
+  project)
 
-Both the local Gram and the server Gram read the project settings, but they are not aware of the other's main `settings.json`.
+Both the local Gram and the server Gram read the project settings, but they are
+not aware of the other's main `settings.json`.
 
-Which settings file you should use depends on the kind of setting you want to make:
+Which settings file you should use depends on the kind of setting you want to
+make:
 
-- Project settings should be used for things that affect the project: indentation settings, which formatter / language server to use, etc.
-- Server settings should be used for things that affect the server: paths to language servers, proxy settings, etc.
+- Project settings should be used for things that affect the project:
+  indentation settings, which formatter / language server to use, etc.
+- Server settings should be used for things that affect the server: paths to
+  language servers, proxy settings, etc.
 - Local settings should be used for things that affect the UI: font size, etc.
 
-In addition any extensions you have installed locally will be propagated to the remote server. This means that language servers, etc. will run correctly.
+In addition any extensions you have installed locally will be propagated to the
+remote server. This means that language servers, etc. will run correctly.
 
 ## Proxy Configuration
 
-The remote server will not use your local machine's proxy configuration because they may be under different network policies. If your remote server requires a proxy to access the internet, you must configure it on the remote server itself.
+The remote server will not use your local machine's proxy configuration because
+they may be under different network policies. If your remote server requires a
+proxy to access the internet, you must configure it on the remote server itself.
 
-In most cases, your remote server will already have proxy environment variables configured. Gram will automatically use them when downloading language servers, communicating with LLM models, etc.
+In most cases, your remote server will already have proxy environment variables
+configured. Gram will automatically use them when downloading language servers,
+communicating with LLM models, etc.
 
-If needed, you can set these environment variables in the server's shell configuration (e.g., `~/.bashrc`):
+If needed, you can set these environment variables in the server's shell
+configuration (e.g., `~/.bashrc`):
 
 ```bash
 export http_proxy="http://proxy.example.com:8080"
@@ -274,7 +306,8 @@ export https_proxy="http://proxy.example.com:8080"
 export no_proxy="localhost,127.0.0.1"
 ```
 
-Alternatively, you can configure the proxy in the remote machine's `~/.config/gram/settings.json` (Linux) or `~/.gram/settings.json` (macOS):
+Alternatively, you can configure the proxy in the remote machine's
+`~/.config/gram/settings.json` (Linux) or `~/.gram/settings.json` (macOS):
 
 ```json
 {
@@ -282,45 +315,72 @@ Alternatively, you can configure the proxy in the remote machine's `~/.config/gr
 }
 ```
 
-See the [proxy documentation](./configuring-gram.md#network-proxy) for supported proxy types and additional configuration options.
+See the [proxy documentation](./configuring-gram.md#network-proxy) for supported
+proxy types and additional configuration options.
 
 ## Initializing the remote server
 
-Once you provide the SSH options, Gram shells out to `ssh` on your local machine to create a ControlMaster connection with the options you provide.
+Once you provide the SSH options, Gram shells out to `ssh` on your local machine
+to create a ControlMaster connection with the options you provide.
 
-Any prompts that SSH needs will be shown in the UI, so you can verify host keys, type key passwords, etc.
+Any prompts that SSH needs will be shown in the UI, so you can verify host keys,
+type key passwords, etc.
 
-Once the master connection is established, Gram will check to see if the remote server binary is present in `~/.gram_server` on the remote, and that its version matches the current version of Gram that you're using.
+Once the master connection is established, Gram will check to see if the remote
+server binary is present in `~/.gram_server` on the remote, and that its version
+matches the current version of Gram that you're using.
 
-To build the remote server binary, run `cargo build -p remote_server --release`. Upload it to `~/.gram_server/gram-remote-server-{RELEASE_CHANNEL}-{VERSION}` on the server, for example `~/.gram_server/gram-remote-server-stable-0.181.6`. The version must exactly match the version of Gram itself you are using.
+To build the remote server binary, run `cargo build -p remote_server --release`.
+Upload it to `~/.gram_server/gram-remote-server-{RELEASE_CHANNEL}-{VERSION}` on
+the server, for example `~/.gram_server/gram-remote-server-stable-0.181.6`. The
+version must exactly match the version of Gram itself you are using.
 
 ## Maintaining the SSH connection
 
-Once the server is initialized. Gram will create new SSH connections (reusing the existing ControlMaster) to run the remote development server.
+Once the server is initialized. Gram will create new SSH connections (reusing
+the existing ControlMaster) to run the remote development server.
 
-Each connection tries to run the development server in proxy mode. This mode will start the daemon if it is not running, and reconnect to it if it is. This way when your connection drops and is restarted, you can continue to work without interruption.
+Each connection tries to run the development server in proxy mode. This mode
+will start the daemon if it is not running, and reconnect to it if it is. This
+way when your connection drops and is restarted, you can continue to work
+without interruption.
 
-In the case that reconnecting fails, the daemon will not be re-used. That said, unsaved changes are by default persisted locally, so that you do not lose work. You can always reconnect to the project at a later date and Gram will restore unsaved changes.
+In the case that reconnecting fails, the daemon will not be re-used. That said,
+unsaved changes are by default persisted locally, so that you do not lose work.
+You can always reconnect to the project at a later date and Gram will restore
+unsaved changes.
 
-If you are struggling with connection issues, you should be able to see more information in the Gram log `cmd-shift-p Open Log`.
+If you are struggling with connection issues, you should be able to see more
+information in the Gram log `cmd-shift-p Open Log`.
 
 ## Supported SSH Options
 
-Under the hood, Gram shells out to the `ssh` binary to connect to the remote server. We create one SSH control master per project, and then use that to multiplex SSH connections for the Gram protocol itself, any terminals you open and tasks you run. We read settings from your SSH config file, but if you want to specify additional options to the SSH control master you can configure Gram to set them.
+Under the hood, Gram shells out to the `ssh` binary to connect to the remote
+server. We create one SSH control master per project, and then use that to
+multiplex SSH connections for the Gram protocol itself, any terminals you open
+and tasks you run. We read settings from your SSH config file, but if you want
+to specify additional options to the SSH control master you can configure Gram
+to set them.
 
-When typing in the "Connect New Server" dialog, you can use bash-style quoting to pass options containing a space. Once you have created a server it will be added to the `"ssh_connections": []` array in your settings file. You can edit the settings file directly to make changes to SSH connections.
+When typing in the "Connect New Server" dialog, you can use bash-style quoting
+to pass options containing a space. Once you have created a server it will be
+added to the `"ssh_connections": []` array in your settings file. You can edit
+the settings file directly to make changes to SSH connections.
 
 Supported options:
 
-- `-p` / `-l` - these are equivalent to passing the port and the username in the host string.
+- `-p` / `-l` - these are equivalent to passing the port and the username in the
+  host string.
 - `-L` / `-R` for port forwarding
 - `-i` - to use a specific key file
 - `-o` - to set custom options
 - `-J` / `-w` - to proxy the SSH connection
 - `-F` for specifying an `ssh_config`
-- And also... `-4`, `-6`, `-A`, `-B`, `-C`, `-D`, `-I`, `-K`, `-P`, `-X`, `-Y`, `-a`, `-b`, `-c`, `-i`, `-k`, `-l`, `-m`, `-o`, `-p`, `-w`, `-x`, `-y`
+- And also... `-4`, `-6`, `-A`, `-B`, `-C`, `-D`, `-I`, `-K`, `-P`, `-X`, `-Y`,
+  `-a`, `-b`, `-c`, `-i`, `-k`, `-l`, `-m`, `-o`, `-p`, `-w`, `-x`, `-y`
 
-Note that we deliberately disallow some options (for example `-t` or `-T`) that Gram will set for you.
+Note that we deliberately disallow some options (for example `-t` or `-T`) that
+Gram will set for you.
 
 ## Known Limitations
 

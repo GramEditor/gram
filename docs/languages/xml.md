@@ -2,13 +2,16 @@
 
 XML syntax highlighting is supported natively.
 
-- Tree-sitter: [tree-sitter-grammars/tree-sitter-xml](https://github.com/tree-sitter-grammars/tree-sitter-xml)
+- Tree-sitter:
+  [tree-sitter-grammars/tree-sitter-xml](https://github.com/tree-sitter-grammars/tree-sitter-xml)
 
 ## Configuration
 
-If you have additional file extensions that are not being automatically recognized as XML just add them to [file_types](../configuring-gram.md#file-types) in your Gram settings:
+If you have additional file extensions that are not being automatically
+recognized as XML just add them to
+[file_types](../configuring-gram.md#file-types) in your Gram settings:
 
-```jsonc
+```json
   "file_types": {
     "XML": ["rdf", "gpx", "kml"]
   }

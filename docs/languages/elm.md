@@ -1,15 +1,20 @@
 # Elm
 
-Elm support is available through the [Elm extension](https://github.com/zed-extensions/elm).
+Elm support is available through the
+[Elm extension](https://github.com/zed-extensions/elm).
 
-- Tree-sitter: [elm-tooling/tree-sitter-elm](https://github.com/elm-tooling/tree-sitter-elm)
-- Language Server: [elm-tooling/elm-language-server](https://github.com/elm-tooling/elm-language-server)
+- Tree-sitter:
+  [elm-tooling/tree-sitter-elm](https://github.com/elm-tooling/tree-sitter-elm)
+- Language Server:
+  [elm-tooling/elm-language-server](https://github.com/elm-tooling/elm-language-server)
 
 ## Setup
 
-Gram support for Elm requires installation of `elm`, `elm-format`, and `elm-review`.
+Gram support for Elm requires installation of `elm`, `elm-format`, and
+`elm-review`.
 
-1. [Install Elm](https://guide.elm-lang.org/install/elm.html) (or run `brew install elm` on macOS).
+1. [Install Elm](https://guide.elm-lang.org/install/elm.html) (or run
+   `brew install elm` on macOS).
 2. Install `elm-review` to support code linting:
    ```sh
    npm install elm-review --save-dev
@@ -23,7 +28,7 @@ Gram support for Elm requires installation of `elm`, `elm-format`, and `elm-revi
 
 Elm language server can be configured in your `settings.jsonc`, e.g.:
 
-```jsonc
+```json
 {
   "lsp": {
     "elm-language-server": {
@@ -37,4 +42,6 @@ Elm language server can be configured in your `settings.jsonc`, e.g.:
 }
 ```
 
-`elm-format`, `elm-review` and `elm` need to be installed and made available in the environment or configured in the settings. See the [full list of server settings here](https://github.com/elm-tooling/elm-language-server?tab=readme-ov-file#server-settings).
+`elm-format`, `elm-review` and `elm` need to be installed and made available in
+the environment or configured in the settings. See the
+[full list of server settings here](https://github.com/elm-tooling/elm-language-server?tab=readme-ov-file#server-settings).

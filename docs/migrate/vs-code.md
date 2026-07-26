@@ -1,6 +1,7 @@
 # How to Migrate from VS Code to Gram
 
-This guide is for developers who spent serious time in VS Code and want to try Gram without starting from scratch.
+This guide is for developers who spent serious time in VS Code and want to try
+Gram without starting from scratch.
 
 If you're here, you are probably a VS Code user frustrated by the slow,
 Electron-based implementation and the increasing reliance on flaky AI tooling
@@ -19,15 +20,18 @@ To install the editor, you will need to build it from source. Fortunately,
 building a Rust project is really easy. All you need is https://rustup.rs, which
 will help you install the compiler and tooling that compiling Gram requires.
 
-After installation, you can launch Gram in the same way that you usually run applications on your platform.
+After installation, you can launch Gram in the same way that you usually run
+applications on your platform.
 
 ## Import Settings from VS Code
 
-During setup, you have the option to import key settings from VS Code. Gram imports the following settings:
+During setup, you have the option to import key settings from VS Code. Gram
+imports the following settings:
 
 ### Settings Imported from VS Code
 
-The following VS Code settings are automatically imported when you use **Import Settings from VS Code**:
+The following VS Code settings are automatically imported when you use **Import
+Settings from VS Code**:
 
 **Editor**
 
@@ -157,7 +161,9 @@ The following VS Code settings are automatically imported when you use **Import 
 | `npm.packageManager` | `node.npm_path`                                          |
 | `outline.icons`      | `outline_panel.file_icons`, `outline_panel.folder_icons` |
 
-Gram doesn’t import extensions or keybindings, but this is the fastest way to get a familiar feel while trying something new. If you skip that step during setup, you can still import settings manually later via the command palette:
+Gram doesn’t import extensions or keybindings, but this is the fastest way to
+get a familiar feel while trying something new. If you skip that step during
+setup, you can still import settings manually later via the command palette:
 
 `Cmd+Shift+P → Gram: Import VS Code Settings`
 
@@ -172,34 +178,44 @@ To edit your settings:
 
 Here’s how common VS Code settings translate:
 
-| VS Code | Gram | Notes |
-| --- | --- | --- |
-| editor.fontFamily | buffer_font_family | Gram uses Fira Code by default |
-| editor.fontSize | buffer_font_size | Set in pixels |
-| editor.tabSize | tab_size | Can override per language |
-| editor.insertSpaces | insert_spaces | Boolean |
-| editor.formatOnSave | format_on_save | Works with formatter enabled |
-| editor.wordWrap | soft_wrap | Supports optional wrap column |
+| VS Code             | Gram               | Notes                          |
+| ------------------- | ------------------ | ------------------------------ |
+| editor.fontFamily   | buffer_font_family | Gram uses Fira Code by default |
+| editor.fontSize     | buffer_font_size   | Set in pixels                  |
+| editor.tabSize      | tab_size           | Can override per language      |
+| editor.insertSpaces | insert_spaces      | Boolean                        |
+| editor.formatOnSave | format_on_save     | Works with formatter enabled   |
+| editor.wordWrap     | soft_wrap          | Supports optional wrap column  |
 
-Gram also supports per-project settings. You can find these in the Settings Editor as well.
+Gram also supports per-project settings. You can find these in the Settings
+Editor as well.
 
 ## Open or Create a Project
 
-After setup, press `Cmd+O` (`Ctrl+O` on Linux) to open a folder. This becomes your workspace in Gram. There's no support for multi-root workspaces or `.code-workspace` files like in VS Code. Gram keeps it simple: one folder, one workspace.
+After setup, press `Cmd+O` (`Ctrl+O` on Linux) to open a folder. This becomes
+your workspace in Gram. There's no support for multi-root workspaces or
+`.code-workspace` files like in VS Code. Gram keeps it simple: one folder, one
+workspace.
 
-To start a new project, create a directory using your terminal or file manager, then open it in Gram. The editor will treat that folder as the root of your project.
+To start a new project, create a directory using your terminal or file manager,
+then open it in Gram. The editor will treat that folder as the root of your
+project.
 
-You can also launch Gram from the terminal inside any folder with:
-`gram .`
+You can also launch Gram from the terminal inside any folder with: `gram .`
 
-Once inside a project, use `Cmd+P` to jump between files quickly. `Cmd+Shift+P` (`Ctrl+Shift+P` on Linux) opens the command palette for running actions / tasks, toggling settings, or running other actions.
+Once inside a project, use `Cmd+P` to jump between files quickly. `Cmd+Shift+P`
+(`Ctrl+Shift+P` on Linux) opens the command palette for running actions / tasks,
+toggling settings, or running other actions.
 
-Open buffers appear as tabs across the top. The sidebar shows your file tree and Git status. Collapse it with `Cmd+B` for a distraction-free view.
+Open buffers appear as tabs across the top. The sidebar shows your file tree and
+Git status. Collapse it with `Cmd+B` for a distraction-free view.
 
 ## Differences in Keybindings
 
-If you chose the VS Code keymap during onboarding, you're likely good to go, and most of your shortcuts should already feel familiar.
-Here’s a quick reference guide for how our keybindings compare to what you’re used to coming from VS Code.
+If you chose the VS Code keymap during onboarding, you're likely good to go, and
+most of your shortcuts should already feel familiar. Here’s a quick reference
+guide for how our keybindings compare to what you’re used to coming from VS
+Code.
 
 ### Common Shared Keybindings (Gram <> VS Code)
 
@@ -245,51 +261,69 @@ To edit your keybindings:
 - Open the command palette (`Cmd+Shift+P`)
 - Run `Gram: Open Keymap Editor`
 
-This opens a list of all available bindings. You can override individual shortcuts, remove conflicts, or build a layout that works better for your setup.
+This opens a list of all available bindings. You can override individual
+shortcuts, remove conflicts, or build a layout that works better for your setup.
 
-Gram also supports chords (multi-key sequences) like `Cmd+K Cmd+C`, like VS Code does.
+Gram also supports chords (multi-key sequences) like `Cmd+K Cmd+C`, like VS Code
+does.
 
 ## Differences in User Interfaces
 
 ### No Workspace
 
-VS Code uses a dedicated Workspace concept, with multi-root folders, `.code-workspace` files, and a clear distinction between “a window” and “a workspace.”
-Gram simplifies this model.
+VS Code uses a dedicated Workspace concept, with multi-root folders,
+`.code-workspace` files, and a clear distinction between “a window” and “a
+workspace.” Gram simplifies this model.
 
 In Gram:
 
 - There is no workspace file format. Opening a folder is your project context.
 
-- Gram does not support multi-root workspaces. You can only open one folder at a time in a window.
+- Gram does not support multi-root workspaces. You can only open one folder at a
+  time in a window.
 
-- Most project-level behavior is scoped to the folder you open. Search, Git integration, tasks, and environment detection all treat the opened directory as the project root.
+- Most project-level behavior is scoped to the folder you open. Search, Git
+  integration, tasks, and environment detection all treat the opened directory
+  as the project root.
 
-- Per-project settings are optional. You can add a `.gram/settings.json` file inside a project to override global settings, but Gram does not use `.code-workspace` files and won’t import them.
+- Per-project settings are optional. You can add a `.gram/settings.json` file
+  inside a project to override global settings, but Gram does not use
+  `.code-workspace` files and won’t import them.
 
-- You can start from a single file or an empty window. Gram doesn’t require you to open a folder to begin editing.
+- You can start from a single file or an empty window. Gram doesn’t require you
+  to open a folder to begin editing.
 
-The result is a simpler model:
-Open a folder → work inside that folder → no additional workspace layer.
+The result is a simpler model: Open a folder → work inside that folder → no
+additional workspace layer.
 
 ### Navigating in a Project
 
-In VS Code, the standard entry point is opening a folder. From there, the left-hand sidebar is central to your navigation.
-Gram takes a different approach:
+In VS Code, the standard entry point is opening a folder. From there, the
+left-hand sidebar is central to your navigation. Gram takes a different
+approach:
 
-- You can still open folders, but you don’t need to. Opening a single file or even starting with an empty workspace is valid.
-- The Command Palette (`Cmd+Shift+P`) and File Finder (`Cmd+P`) are your primary navigation tools. The File Finder searches across the entire workspace instantly; files, symbols and commands.
+- You can still open folders, but you don’t need to. Opening a single file or
+  even starting with an empty workspace is valid.
+- The Command Palette (`Cmd+Shift+P`) and File Finder (`Cmd+P`) are your primary
+  navigation tools. The File Finder searches across the entire workspace
+  instantly; files, symbols and commands.
 - Instead of a persistent sidebar, Gram encourages you to:
   - Fuzzy-find files by name (`Cmd+P`)
   - Jump directly to symbols (`Cmd+Shift+O`)
-  - Use split panes and tabs for context, rather than keeping a large file tree open (though you can do this with the Project Panel if you prefer).
+  - Use split panes and tabs for context, rather than keeping a large file tree
+    open (though you can do this with the Project Panel if you prefer).
 
-The UI is intentionally minimal. Panels slide in only when needed, then get out of your way. The focus is on flowing between code instead of managing panes.
+The UI is intentionally minimal. Panels slide in only when needed, then get out
+of your way. The focus is on flowing between code instead of managing panes.
 
 ### Extensions vs. Marketplace
 
-Gram does not offer as many extensions as VS Code. The available extensions are focused on language support, themes, syntax highlighting, and other core editing enhancements.
+Gram does not offer as many extensions as VS Code. The available extensions are
+focused on language support, themes, syntax highlighting, and other core editing
+enhancements.
 
-However there are several features that typically require extensions in VS Code which we built directly into Gram:
+However there are several features that typically require extensions in VS Code
+which we built directly into Gram:
 
 - Vim modal editing mode (as well as a Helix mode)
 - Built-in terminal panel
@@ -297,11 +331,14 @@ However there are several features that typically require extensions in VS Code 
 - Task runner with JSON config
 - Inline diagnostics and code actions via LSP
 
-You won’t find one-to-one replacements for every VS Code extension, especially if you rely on tools for DevOps, containers, or test runners. Gram's extension ecosystem is still growing, and the catalog is smaller by design.
+You won’t find one-to-one replacements for every VS Code extension, especially
+if you rely on tools for DevOps, containers, or test runners. Gram's extension
+ecosystem is still growing, and the catalog is smaller by design.
 
 ### Advanced Config and Productivity Tweaks
 
-Gram exposes advanced settings for power users who want to fine-tune their environment.
+Gram exposes advanced settings for power users who want to fine-tune their
+environment.
 
 Here are a few useful tweaks:
 
@@ -317,7 +354,8 @@ Here are a few useful tweaks:
 "load_direnv": "shell_hook"
 ```
 
-**Custom Tasks**: Define build or run commands in your `tasks.jsonc` (accessed via command palette: `gram: open tasks`):
+**Custom Tasks**: Define build or run commands in your `tasks.jsonc` (accessed
+via command palette: `gram: open tasks`):
 
 ```json
 [
@@ -328,5 +366,5 @@ Here are a few useful tweaks:
 ]
 ```
 
-**Bring over custom snippets**
-Copy your VS Code snippet JSON directly into Gram's snippets folder (`gram: configure snippets`).
+**Bring over custom snippets** Copy your VS Code snippet JSON directly into
+Gram's snippets folder (`gram: configure snippets`).

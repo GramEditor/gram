@@ -2,21 +2,26 @@
 
 JavaScript support is available natively in Gram.
 
-- Tree-sitter: [tree-sitter/tree-sitter-javascript](https://github.com/tree-sitter/tree-sitter-javascript)
+- Tree-sitter:
+  [tree-sitter/tree-sitter-javascript](https://github.com/tree-sitter/tree-sitter-javascript)
 - Language Server: [yioneko/vtsls](https://github.com/yioneko/vtsls)
-- Alternate Language Server: [typescript-language-server/typescript-language-server](https://github.com/typescript-language-server/typescript-language-server)
+- Alternate Language Server:
+  [typescript-language-server/typescript-language-server](https://github.com/typescript-language-server/typescript-language-server)
 - Debug Adapter: [vscode-js-debug](https://github.com/microsoft/vscode-js-debug)
 
 ## Code formatting
 
-Formatting on save is enabled by default for JavaScript, using TypeScript's built-in code formatting.
-But many JavaScript projects use other command-line code-formatting tools, such as [Prettier](https://prettier.io/).
-You can use one of these tools by specifying an _external_ code formatter for JavaScript in your settings.
-See [the configuration docs](../configuring-gram.md) for more information.
+Formatting on save is enabled by default for JavaScript, using TypeScript's
+built-in code formatting. But many JavaScript projects use other command-line
+code-formatting tools, such as [Prettier](https://prettier.io/). You can use one
+of these tools by specifying an _external_ code formatter for JavaScript in your
+settings. See [the configuration docs](../configuring-gram.md) for more
+information.
 
-For example, if you have Prettier installed and on your `PATH`, you can use it to format JavaScript files by adding the following to your `settings.jsonc`:
+For example, if you have Prettier installed and on your `PATH`, you can use it
+to format JavaScript files by adding the following to your `settings.jsonc`:
 
-```jsonc
+```json
 {
   "languages": {
     "JavaScript": {
@@ -35,18 +40,22 @@ For example, if you have Prettier installed and on your `PATH`, you can use it t
 
 Gram supports JSX syntax highlighting out of the box.
 
-In JSX strings, the [`tailwindcss-language-server`](./tailwindcss.md) is used to provide autocompletion for Tailwind CSS classes.
+In JSX strings, the [`tailwindcss-language-server`](./tailwindcss.md) is used to
+provide autocompletion for Tailwind CSS classes.
 
 ## JSDoc
 
-Gram supports JSDoc syntax in JavaScript and TypeScript comments that match the JSDoc syntax.
-Gram uses [tree-sitter/tree-sitter-jsdoc](https://github.com/tree-sitter/tree-sitter-jsdoc) for parsing and highlighting JSDoc.
+Gram supports JSDoc syntax in JavaScript and TypeScript comments that match the
+JSDoc syntax. Gram uses
+[tree-sitter/tree-sitter-jsdoc](https://github.com/tree-sitter/tree-sitter-jsdoc)
+for parsing and highlighting JSDoc.
 
 ## ESLint
 
-You can configure Gram to format code using `eslint --fix` by running the ESLint code action when formatting:
+You can configure Gram to format code using `eslint --fix` by running the ESLint
+code action when formatting:
 
-```jsonc
+```json
 {
   "languages": {
     "JavaScript": {
@@ -60,7 +69,7 @@ You can configure Gram to format code using `eslint --fix` by running the ESLint
 
 You can also only execute a single ESLint rule when using `fixAll`:
 
-```jsonc
+```json
 {
   "languages": {
     "JavaScript": {
@@ -81,15 +90,15 @@ You can also only execute a single ESLint rule when using `fixAll`:
 }
 ```
 
-> **Note:** the other formatter you have configured will still run, after ESLint.
-> So if your language server or Prettier configuration don't format according to
-> ESLint's rules, then they will overwrite what ESLint fixed and you end up with
-> errors.
+> **Note:** the other formatter you have configured will still run, after
+> ESLint. So if your language server or Prettier configuration don't format
+> according to ESLint's rules, then they will overwrite what ESLint fixed and
+> you end up with errors.
 
 If you **only** want to run ESLint on save, you can configure code actions as
 the formatter:
 
-```jsonc
+```json
 {
   "languages": {
     "JavaScript": {
@@ -106,7 +115,7 @@ the formatter:
 
 You can configure ESLint's `nodePath` setting:
 
-```jsonc
+```json
 {
   "lsp": {
     "eslint": {
@@ -124,7 +133,7 @@ You can configure ESLint's `problems` setting.
 
 For example, here's how to set `problems.shortenToSingleLine`:
 
-```jsonc
+```json
 {
   "lsp": {
     "eslint": {
@@ -142,7 +151,7 @@ For example, here's how to set `problems.shortenToSingleLine`:
 
 You can configure ESLint's `rulesCustomizations` setting:
 
-```jsonc
+```json
 {
   "lsp": {
     "eslint": {
@@ -161,7 +170,7 @@ You can configure ESLint's `rulesCustomizations` setting:
 
 You can configure ESLint's `workingDirectory` setting:
 
-```jsonc
+```json
 {
   "lsp": {
     "eslint": {
@@ -181,21 +190,31 @@ Gram supports debugging JavaScript code out of the box with `vscode-js-debug`.
 The following can be debugged without writing additional configuration:
 
 - Tasks from `package.json`
-- Tests written using several popular frameworks (Jest, Mocha, Vitest, Jasmine, Bun, Node)
+- Tests written using several popular frameworks (Jest, Mocha, Vitest, Jasmine,
+  Bun, Node)
 
-Run {#action debugger::Start} ({#kb debugger::Start}) to see a contextual list of these predefined debug tasks.
+Run {#action debugger::Start} ({#kb debugger::Start}) to see a contextual list
+of these predefined debug tasks.
 
-> **Note:** Bun test is automatically detected when `@types/bun` is present in `package.json`.
+> **Note:** Bun test is automatically detected when `@types/bun` is present in
+> `package.json`.
 >
-> **Note:** Node test is automatically detected when `@types/node` is present in `package.json` (requires Node.js 20+).
+> **Note:** Node test is automatically detected when `@types/node` is present in
+> `package.json` (requires Node.js 20+).
 
-As for all languages, configurations from `.vscode/launch.json` are also available for debugging in Gram.
+As for all languages, configurations from `.vscode/launch.json` are also
+available for debugging in Gram.
 
-If your use-case isn't covered by any of these, you can take full control by adding debug configurations to `.gram/debug.jsonc`. See below for example configurations.
+If your use-case isn't covered by any of these, you can take full control by
+adding debug configurations to `.gram/debug.jsonc`. See below for example
+configurations.
 
 ### Configuring JavaScript debug tasks
 
-JavaScript debugging is more complicated than other languages because there are two different environments: Node.js and the browser. `vscode-js-debug` exposes a `type` field, that you can use to specify the environment, either `node` or `chrome`.
+JavaScript debugging is more complicated than other languages because there are
+two different environments: Node.js and the browser. `vscode-js-debug` exposes a
+`type` field, that you can use to specify the environment, either `node` or
+`chrome`.
 
 - [vscode-js-debug configuration documentation](https://github.com/microsoft/vscode-js-debug/blob/main/OPTIONS.md)
 
@@ -233,5 +252,6 @@ JavaScript debugging is more complicated than other languages because there are 
 
 ## See also
 
-- [Yarn documentation](./yarn.md) for a walkthrough of configuring your project to use Yarn.
+- [Yarn documentation](./yarn.md) for a walkthrough of configuring your project
+  to use Yarn.
 - [TypeScript documentation](./typescript.md)

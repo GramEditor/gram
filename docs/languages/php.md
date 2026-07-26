@@ -1,6 +1,7 @@
 # PHP
 
-PHP support is available through the [PHP extension](https://github.com/zed-extensions/php).
+PHP support is available through the
+[PHP extension](https://github.com/zed-extensions/php).
 
 - Tree-sitter: https://github.com/tree-sitter/tree-sitter-php
 - Language Servers:
@@ -9,13 +10,15 @@ PHP support is available through the [PHP extension](https://github.com/zed-exte
 
 ## Choosing a language server
 
-The PHP extension offers both `phpactor` and `intelephense` language server support.
+The PHP extension offers both `phpactor` and `intelephense` language server
+support.
 
 `phpactor` is enabled by default.
 
 ### Phpactor
 
-The Gram PHP Extension can install `phpactor` automatically but requires `php` to be installed and available in your path:
+The Gram PHP Extension can install `phpactor` automatically but requires `php`
+to be installed and available in your path:
 
 ```sh
 # brew install php            # macOS
@@ -27,11 +30,14 @@ which php
 
 ### Intelephense
 
-[Intelephense](https://intelephense.com/) is a [proprietary](https://github.com/bmewburn/vscode-intelephense/blob/master/LICENSE.txt#L29) language server for PHP operating under a freemium model. Certain features require purchase of a [premium license](https://intelephense.com/).
+[Intelephense](https://intelephense.com/) is a
+[proprietary](https://github.com/bmewburn/vscode-intelephense/blob/master/LICENSE.txt#L29)
+language server for PHP operating under a freemium model. Certain features
+require purchase of a [premium license](https://intelephense.com/).
 
 To switch to `intelephense`, add the following to your `settings.json`:
 
-```jsonc
+```json
 {
   "languages": {
     "PHP": {
@@ -41,9 +47,14 @@ To switch to `intelephense`, add the following to your `settings.json`:
 }
 ```
 
-To use the premium features, you can place your [licence.txt file](https://intelephense.com/faq.html) at `~/intelephense/licence.txt` inside your home directory. Alternatively, you can pass the licence key or a path to a file containing the licence key as an initialization option for the `intelephense` language server. To do this, add the following to your `settings.jsonc`:
+To use the premium features, you can place your
+[licence.txt file](https://intelephense.com/faq.html) at
+`~/intelephense/licence.txt` inside your home directory. Alternatively, you can
+pass the licence key or a path to a file containing the licence key as an
+initialization option for the `intelephense` language server. To do this, add
+the following to your `settings.jsonc`:
 
-```jsonc
+```json
 {
   "lsp": {
     "intelephense": {
@@ -59,11 +70,13 @@ To use the premium features, you can place your [licence.txt file](https://intel
 
 Gram supports syntax highlighting for PHPDoc comments.
 
-- Tree-sitter: [claytonrcarter/tree-sitter-phpdoc](https://github.com/claytonrcarter/tree-sitter-phpdoc)
+- Tree-sitter:
+  [claytonrcarter/tree-sitter-phpdoc](https://github.com/claytonrcarter/tree-sitter-phpdoc)
 
 ## Setting up Xdebug
 
-Gram’s PHP extension provides a debug adapter for PHP and Xdebug. The adapter name is `Xdebug`. Here a couple ways you can use it:
+Gram’s PHP extension provides a debug adapter for PHP and Xdebug. The adapter
+name is `Xdebug`. Here a couple ways you can use it:
 
 ```json
 [
@@ -89,4 +102,5 @@ In case you run into issues:
 - ensure that Xdebug is configured to run in `debug` mode
 - ensure that Xdebug is actually starting a debugging session
 - check that the host and port matches between Xdebug and Gram
-- look at the diagnostics log by using the `xdebug_info()` function in the page you’re trying to debug
+- look at the diagnostics log by using the `xdebug_info()` function in the page
+  you’re trying to debug

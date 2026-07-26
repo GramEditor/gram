@@ -8,7 +8,7 @@ There is support for two different language servers: `nil` and `nixd`.
 
 To only enable `nil`:
 
-```jsonc
+```json
   "languages": {
     "Nix": {
       "language_servers": ["nil", "!nixd", "..."]
@@ -18,7 +18,7 @@ To only enable `nil`:
 
 To only enable `nixd`:
 
-```jsonc
+```json
   "languages": {
     "Nix": {
       "language_servers": ["!nil", "nixd", "..."]
@@ -29,13 +29,15 @@ To only enable `nixd`:
 ## Configuration
 
 Language server options can be set in the `settings.jsonc` file. See the
-[Configuring Languages](../configuring-languages.md) documentation for more information.
+[Configuring Languages](../configuring-languages.md) documentation for more
+information.
 
 ### nixd
 
-For more details, see the [nixd documentation](https://github.com/nix-community/nixd/blob/main/nixd/docs/configuration.md).
+For more details, see the
+[nixd documentation](https://github.com/nix-community/nixd/blob/main/nixd/docs/configuration.md).
 
-```jsonc
+```json
 {
   "lsp": {
     "nixd": {
@@ -51,10 +53,10 @@ For more details, see the [nixd documentation](https://github.com/nix-community/
 
 ### nil
 
-For more details, see the [nil
-documentation](https://github.com/oxalica/nil/blob/main/docs/configuration.md).
+For more details, see the
+[nil documentation](https://github.com/oxalica/nil/blob/main/docs/configuration.md).
 
-```jsonc
+```json
 {
   "lsp": {
     "nil": {
@@ -67,4 +69,3 @@ documentation](https://github.com/oxalica/nil/blob/main/docs/configuration.md).
   }
 }
 ```
-

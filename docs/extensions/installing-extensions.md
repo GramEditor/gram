@@ -23,9 +23,8 @@ sysroot instead.
 
 You can manage your extensions by launching the Gram Extension Gallery.
 
-Press {#kb gram::Extensions} , open the command palette and select
-{#action gram::Extensions} or select "Gram > Extensions" from the menu
-bar.
+Press {#kb gram::Extensions} , open the command palette and select {#action
+gram::Extensions} or select "Gram > Extensions" from the menu bar.
 
 Here you can view the extensions that you currently have installed, and you can
 also install extensions for your local file system, or via a git URL. To get the
@@ -56,18 +55,21 @@ gram::InstallExtensionFromUrl} action) and enter the git url for the extension.
 You should see the extension begin to install in the status bar.
 
 > **Note:** The editor must be able to authenticate the git URL, but does not
-support SSH authentication. Using a public URL such as an `http(s)` git URL is
-recommended. Check the logs to debug ({#action gram::OpenLog}).
+> support SSH authentication. Using a public URL such as an `http(s)` git URL is
+> recommended. Check the logs to debug ({#action gram::OpenLog}).
 
 ## Installation Location
 
-- On macOS, extensions are installed in `~/Library/Application Support/Gram/extensions`.
-- On Linux, they are installed in either `$XDG_DATA_HOME/gram/extensions` or `~/.local/share/gram/extensions`.
+- On macOS, extensions are installed in
+  `~/Library/Application Support/Gram/extensions`.
+- On Linux, they are installed in either `$XDG_DATA_HOME/gram/extensions` or
+  `~/.local/share/gram/extensions`.
 
 This directory contains two subdirectories:
 
 - `installed`, which contains the source code for each extension.
-- `work` which contains files created by the extension itself, such as downloaded language servers.
+- `work` which contains files created by the extension itself, such as
+  downloaded language servers.
 
 ## Removing extensions
 

@@ -1,16 +1,25 @@
 # Debugger
 
-Gram uses the [Debug Adapter Protocol (DAP)](https://microsoft.github.io/debug-adapter-protocol/) to provide debugging functionality across multiple programming languages.
-DAP is a standardized protocol that defines how debuggers, editors, and IDEs communicate with each other.
-It allows Gram to support various debuggers without needing to implement language-specific debugging logic.
-Gram implements the client side of the protocol, and various _debug adapters_ implement the server side.
+Gram uses the
+[Debug Adapter Protocol (DAP)](https://microsoft.github.io/debug-adapter-protocol/)
+to provide debugging functionality across multiple programming languages. DAP is
+a standardized protocol that defines how debuggers, editors, and IDEs
+communicate with each other. It allows Gram to support various debuggers without
+needing to implement language-specific debugging logic. Gram implements the
+client side of the protocol, and various _debug adapters_ implement the server
+side.
 
-This protocol enables features like setting breakpoints, stepping through code, inspecting variables,
-and more, in a consistent manner across different programming languages and runtime environments.
+This protocol enables features like setting breakpoints, stepping through code,
+inspecting variables, and more, in a consistent manner across different
+programming languages and runtime environments.
 
 ## Supported Languages
 
-To debug code written in a specific language, Gram needs to find a debug adapter for that language. Some debug adapters are provided by Gram without additional setup, and some are provided by [language extensions](./extensions/debugger-extensions.md). The following languages currently have debug adapters available:
+To debug code written in a specific language, Gram needs to find a debug adapter
+for that language. Some debug adapters are provided by Gram without additional
+setup, and some are provided by
+[language extensions](./extensions/debugger-extensions.md). The following
+languages currently have debug adapters available:
 
 - [C](./languages/c.md#debugging) (built-in)
 - [C++](./languages/cpp.md#debugging) (built-in)
@@ -24,17 +33,29 @@ To debug code written in a specific language, Gram needs to find a debug adapter
 - [Swift](./languages/swift.md#debugging) (provided by extension)
 - [TypeScript](./languages/typescript.md#debugging) (built-in)
 
-> If your language isn't listed, you can contribute by [adding a debug adapter for it](./extensions/debugger-extensions.md).
+> If your language isn't listed, you can contribute by
+> [adding a debug adapter for it](./extensions/debugger-extensions.md).
 
-Follow those links for language- and adapter-specific information and examples, or read on for more about Gram's general debugging features that apply to all adapters.
+Follow those links for language- and adapter-specific information and examples,
+or read on for more about Gram's general debugging features that apply to all
+adapters.
 
 ## Getting Started
 
-For most languages, the fastest way to get started is to run {#action debugger::Start} ({#kb debugger::Start}). This opens the _new process modal_, which shows you a contextual list of preconfigured debug tasks for the current project. Debug tasks are created from tests, entry points (like a `main` function), and from other sources — consult the documentation for your language for full information about what's supported.
+For most languages, the fastest way to get started is to run {#action
+debugger::Start} ({#kb debugger::Start}). This opens the _new process modal_,
+which shows you a contextual list of preconfigured debug tasks for the current
+project. Debug tasks are created from tests, entry points (like a `main`
+function), and from other sources — consult the documentation for your language
+for full information about what's supported.
 
-You can open the same modal by clicking the "plus" button at the top right of the debug panel.
+You can open the same modal by clicking the "plus" button at the top right of
+the debug panel.
 
-For languages that don't provide preconfigured debug tasks (this includes C, C++, and some extension-supported languages), you can define debug configurations in the `.gram/debug.jsonc` file in your project root. This file should be an array of configuration objects:
+For languages that don't provide preconfigured debug tasks (this includes C,
+C++, and some extension-supported languages), you can define debug
+configurations in the `.gram/debug.jsonc` file in your project root. This file
+should be an array of configuration objects:
 
 ```json [debug]
 [
@@ -51,35 +72,59 @@ For languages that don't provide preconfigured debug tasks (this includes C, C++
 ]
 ```
 
-Check the documentation for your language for example configurations covering typical use-cases. Once you've added configurations to `.gram/debug.jsonc`, they'll appear in the list in the new process modal.
+Check the documentation for your language for example configurations covering
+typical use-cases. Once you've added configurations to `.gram/debug.jsonc`,
+they'll appear in the list in the new process modal.
 
-Gram will also load debug configurations from `.vscode/launch.json`, and show them in the new process modal if no configurations are found in `.gram/debug.jsonc`.
+Gram will also load debug configurations from `.vscode/launch.json`, and show
+them in the new process modal if no configurations are found in
+`.gram/debug.jsonc`.
 
 #### Global debug configurations
 
-If you run the same launch profiles across multiple projects, you can store them once in your user configuration. Invoke {#action gram::OpenDebugTasks} from the command palette to open the global `debug.jsonc` file; Gram creates it next to your user `settings.jsonc` and keeps it in sync with the debugger UI. The file lives at:
+If you run the same launch profiles across multiple projects, you can store them
+once in your user configuration. Invoke {#action gram::OpenDebugTasks} from the
+command palette to open the global `debug.jsonc` file; Gram creates it next to
+your user `settings.jsonc` and keeps it in sync with the debugger UI. The file
+lives at:
 
 - **macOS:** `~/Library/Application Support/Gram/debug.jsonc`
-- **Linux/BSD:** `$XDG_CONFIG_HOME/gram/debug.jsonc` (falls back to `~/.config/gram/debug.jsonc`)
+- **Linux/BSD:** `$XDG_CONFIG_HOME/gram/debug.jsonc` (falls back to
+  `~/.config/gram/debug.jsonc`)
 - **Windows:** `%APPDATA%\Gram\debug.jsonc`
 
-Populate this file with the same array of objects you would place in `.gram/debug.jsonc`. Any scenarios defined there are merged into every workspace, so your favorite launch presets appear automatically in the "New Debug Session" dialog.
+Populate this file with the same array of objects you would place in
+`.gram/debug.jsonc`. Any scenarios defined there are merged into every
+workspace, so your favorite launch presets appear automatically in the "New
+Debug Session" dialog.
 
 ### Launching & Attaching
 
-Gram debugger offers two ways to debug your program; you can either _launch_ a new instance of your program or _attach_ to an existing process.
-Which one you choose depends on what you are trying to achieve.
+Gram debugger offers two ways to debug your program; you can either _launch_ a
+new instance of your program or _attach_ to an existing process. Which one you
+choose depends on what you are trying to achieve.
 
-When launching a new instance, Gram (and the underlying debug adapter) can often do a better job at picking up the debug information compared to attaching to an existing process, since it controls the lifetime of a whole program.
-Running unit tests or a debug build of your application is a good use case for launching.
+When launching a new instance, Gram (and the underlying debug adapter) can often
+do a better job at picking up the debug information compared to attaching to an
+existing process, since it controls the lifetime of a whole program. Running
+unit tests or a debug build of your application is a good use case for
+launching.
 
-Compared to launching, attaching to an existing process might seem inferior, but that's far from truth; there are cases where you cannot afford to restart your program, because for example, the bug is not reproducible outside of a production environment or some other circumstances.
+Compared to launching, attaching to an existing process might seem inferior, but
+that's far from truth; there are cases where you cannot afford to restart your
+program, because for example, the bug is not reproducible outside of a
+production environment or some other circumstances.
 
 ## Configuration
 
-Gram requires the `adapter` and `label` fields for all debug tasks. In addition, Gram will use the `build` field to run any necessary setup steps before the debugger starts [(see below)](#build-tasks), and can accept a `tcp_connection` field to connect to an existing process.
+Gram requires the `adapter` and `label` fields for all debug tasks. In addition,
+Gram will use the `build` field to run any necessary setup steps before the
+debugger starts [(see below)](#build-tasks), and can accept a `tcp_connection`
+field to connect to an existing process.
 
-All other fields are provided by the debug adapter and can contain [task variables](./tasks.md#variables). Most adapters support `request`, `program`, and `cwd`:
+All other fields are provided by the debug adapter and can contain
+[task variables](./tasks.md#variables). Most adapters support `request`,
+`program`, and `cwd`:
 
 ```json [debug]
 [
@@ -100,11 +145,14 @@ All other fields are provided by the debug adapter and can contain [task variabl
 ]
 ```
 
-Check your debug adapter's documentation for more information on the fields it supports.
+Check your debug adapter's documentation for more information on the fields it
+supports.
 
 ### Build tasks
 
-Gram allows embedding a Gram task in the `build` field that is run before the debugger starts. This is useful for setting up the environment or running any necessary setup steps before the debugger starts.
+Gram allows embedding a Gram task in the `build` field that is run before the
+debugger starts. This is useful for setting up the environment or running any
+necessary setup steps before the debugger starts.
 
 ```json [debug]
 [
@@ -137,36 +185,53 @@ Build tasks can also refer to the existing tasks by unsubstituted label:
 
 ### Automatic scenario creation
 
-Given a Gram task, Gram can automatically create a scenario for you. Automatic scenario creation also powers our scenario creation from gutter.
-Automatic scenario creation is currently supported for Rust, Go, Python, JavaScript, and TypeScript.
+Given a Gram task, Gram can automatically create a scenario for you. Automatic
+scenario creation also powers our scenario creation from gutter. Automatic
+scenario creation is currently supported for Rust, Go, Python, JavaScript, and
+TypeScript.
 
 ## Breakpoints
 
 To set a breakpoint, simply click next to the line number in the editor gutter.
-Breakpoints can be tweaked depending on your needs; to access additional options of a given breakpoint, right-click on the breakpoint icon in the gutter and select the desired option.
-At present, you can:
+Breakpoints can be tweaked depending on your needs; to access additional options
+of a given breakpoint, right-click on the breakpoint icon in the gutter and
+select the desired option. At present, you can:
 
-- Add a log to a breakpoint, which will output a log message whenever that breakpoint is hit.
-- Make the breakpoint conditional, which will only stop at the breakpoint when the condition is met. The syntax for conditions is adapter-specific.
-- Add a hit count to a breakpoint, which will only stop at the breakpoint after it's hit a certain number of times.
-- Disable a breakpoint, which will prevent it from being hit while leaving it visible in the gutter.
+- Add a log to a breakpoint, which will output a log message whenever that
+  breakpoint is hit.
+- Make the breakpoint conditional, which will only stop at the breakpoint when
+  the condition is met. The syntax for conditions is adapter-specific.
+- Add a hit count to a breakpoint, which will only stop at the breakpoint after
+  it's hit a certain number of times.
+- Disable a breakpoint, which will prevent it from being hit while leaving it
+  visible in the gutter.
 
-Some debug adapters (e.g. CodeLLDB and JavaScript) will also _verify_ whether your breakpoints can be hit; breakpoints that cannot be hit are surfaced more prominently in the UI.
+Some debug adapters (e.g. CodeLLDB and JavaScript) will also _verify_ whether
+your breakpoints can be hit; breakpoints that cannot be hit are surfaced more
+prominently in the UI.
 
-All breakpoints enabled for a given project are also listed in "Breakpoints" item in your debugging session UI. From "Breakpoints" item in your UI you can also manage exception breakpoints.
-The debug adapter will then stop whenever an exception of a given kind occurs. Which exception types are supported depends on the debug adapter.
+All breakpoints enabled for a given project are also listed in "Breakpoints"
+item in your debugging session UI. From "Breakpoints" item in your UI you can
+also manage exception breakpoints. The debug adapter will then stop whenever an
+exception of a given kind occurs. Which exception types are supported depends on
+the debug adapter.
 
 ## Settings
 
-The settings for the debugger are grouped under the `debugger` key in `settings.jsonc`:
+The settings for the debugger are grouped under the `debugger` key in
+`settings.jsonc`:
 
 - `dock`: Determines the position of the debug panel in the UI.
 - `stepping_granularity`: Determines the stepping granularity.
-- `save_breakpoints`: Whether the breakpoints should be reused across Gram sessions.
+- `save_breakpoints`: Whether the breakpoints should be reused across Gram
+  sessions.
 - `button`: Whether to show the debug button in the status bar.
-- `timeout`: Time in milliseconds until timeout error when connecting to a TCP debug adapter.
-- `log_dap_communications`: Whether to log messages between active debug adapters and Gram.
-- `format_dap_log_messages`: Whether to format DAP messages when adding them to the debug adapter logger.
+- `timeout`: Time in milliseconds until timeout error when connecting to a TCP
+  debug adapter.
+- `log_dap_communications`: Whether to log messages between active debug
+  adapters and Gram.
+- `format_dap_log_messages`: Whether to format DAP messages when adding them to
+  the debug adapter logger.
 
 ### Dock
 
@@ -180,7 +245,7 @@ The settings for the debugger are grouped under the `debugger` key in `settings.
 2. `right` - The debug panel will be docked to the right side of the UI.
 3. `bottom` - The debug panel will be docked to the bottom of the UI.
 
-```jsonc
+```json
 "debugger": {
   "dock": "bottom"
 },
@@ -194,11 +259,13 @@ The settings for the debugger are grouped under the `debugger` key in `settings.
 
 **Options**
 
-1. Statement - The step should allow the program to run until the current statement has finished executing.
-   The meaning of a statement is determined by the adapter and it may be considered equivalent to a line.
-   For example 'for(int i = 0; i < 10; i++)' could be considered to have 3 statements 'int i = 0', 'i < 10', and 'i++'.
+1. Statement - The step should allow the program to run until the current
+   statement has finished executing. The meaning of a statement is determined by
+   the adapter and it may be considered equivalent to a line. For example
+   'for(int i = 0; i < 10; i++)' could be considered to have 3 statements 'int i
+   = 0', 'i < 10', and 'i++'.
 
-```jsonc
+```json
 {
   "debugger": {
     "stepping_granularity": "statement",
@@ -206,9 +273,10 @@ The settings for the debugger are grouped under the `debugger` key in `settings.
 }
 ```
 
-2. Line - The step should allow the program to run until the current source line has executed.
+2. Line - The step should allow the program to run until the current source line
+   has executed.
 
-```jsonc
+```json
 {
   "debugger": {
     "stepping_granularity": "line",
@@ -216,9 +284,10 @@ The settings for the debugger are grouped under the `debugger` key in `settings.
 }
 ```
 
-3. Instruction - The step should allow one instruction to execute (e.g. one x86 instruction).
+3. Instruction - The step should allow one instruction to execute (e.g. one x86
+   instruction).
 
-```jsonc
+```json
 {
   "debugger": {
     "stepping_granularity": "instruction",
@@ -236,7 +305,7 @@ The settings for the debugger are grouped under the `debugger` key in `settings.
 
 `boolean` values
 
-```jsonc
+```json
 {
   "debugger": {
     "save_breakpoints": true,
@@ -254,7 +323,7 @@ The settings for the debugger are grouped under the `debugger` key in `settings.
 
 `boolean` values
 
-```jsonc
+```json
 {
   "debugger": {
     "show_button": true,
@@ -264,7 +333,8 @@ The settings for the debugger are grouped under the `debugger` key in `settings.
 
 ### Timeout
 
-- Description: Time in milliseconds until timeout error when connecting to a TCP debug adapter.
+- Description: Time in milliseconds until timeout error when connecting to a TCP
+  debug adapter.
 - Default: `2000`
 - Setting: `debugger.timeout`
 
@@ -272,7 +342,7 @@ The settings for the debugger are grouped under the `debugger` key in `settings.
 
 `integer` values
 
-```jsonc
+```json
 {
   "debugger": {
     "timeout": 3000,
@@ -282,13 +352,14 @@ The settings for the debugger are grouped under the `debugger` key in `settings.
 
 ### Inline Values
 
-- Description: Whether to enable editor inlay hints showing the values of variables in your code during debugging sessions.
+- Description: Whether to enable editor inlay hints showing the values of
+  variables in your code during debugging sessions.
 - Default: `true`
 - Setting: `inlay_hints.show_value_hints`
 
 **Options**
 
-```jsonc
+```json
 {
   "inlay_hints": {
     "show_value_hints": false,
@@ -296,11 +367,13 @@ The settings for the debugger are grouped under the `debugger` key in `settings.
 }
 ```
 
-Inline value hints can also be toggled from the Editor Controls menu in the editor toolbar.
+Inline value hints can also be toggled from the Editor Controls menu in the
+editor toolbar.
 
 ### Log Dap Communications
 
-- Description: Whether to log messages between active debug adapters and Gram. (Used for DAP development)
+- Description: Whether to log messages between active debug adapters and Gram.
+  (Used for DAP development)
 - Default: false
 - Setting: debugger.log_dap_communications
 
@@ -308,7 +381,7 @@ Inline value hints can also be toggled from the Editor Controls menu in the edit
 
 `boolean` values
 
-```jsonc
+```json
 {
   "debugger": {
     "log_dap_communications": true,
@@ -318,7 +391,8 @@ Inline value hints can also be toggled from the Editor Controls menu in the edit
 
 ### Format Dap Log Messages
 
-- Description: Whether to format DAP messages when adding them to the debug adapter logger. (Used for DAP development)
+- Description: Whether to format DAP messages when adding them to the debug
+  adapter logger. (Used for DAP development)
 - Default: false
 - Setting: debugger.format_dap_log_messages
 
@@ -326,7 +400,7 @@ Inline value hints can also be toggled from the Editor Controls menu in the edit
 
 `boolean` values
 
-```jsonc
+```json
 {
   "debugger": {
     "format_dap_log_messages": true,
@@ -336,13 +410,16 @@ Inline value hints can also be toggled from the Editor Controls menu in the edit
 
 ### Customizing Debug Adapters
 
-- Description: Custom program path and arguments to override how Gram launches a specific debug adapter.
+- Description: Custom program path and arguments to override how Gram launches a
+  specific debug adapter.
 - Default: Adapter-specific
 - Setting: `dap.$ADAPTER.binary` and `dap.$ADAPTER.args`
 
-You can pass `binary`, `args`, or both. `binary` should be a path to a _debug adapter_ (like `lldb-dap`) not a _debugger_ (like `lldb` itself). The `args` setting overrides any arguments that Gram would otherwise pass to the adapter.
+You can pass `binary`, `args`, or both. `binary` should be a path to a _debug
+adapter_ (like `lldb-dap`) not a _debugger_ (like `lldb` itself). The `args`
+setting overrides any arguments that Gram would otherwise pass to the adapter.
 
-```jsonc
+```json
 {
   "dap": {
     "CodeLLDB": {
@@ -357,13 +434,21 @@ You can pass `binary`, `args`, or both. `binary` should be a path to a _debug ad
 
 The Debugger supports the following theme options:
 
-- `debugger.accent`: Color used to accent breakpoint & breakpoint-related symbols
-- `editor.debugger_active_line.background`: Background color of active debug line
+- `debugger.accent`: Color used to accent breakpoint & breakpoint-related
+  symbols
+- `editor.debugger_active_line.background`: Background color of active debug
+  line
 
 ## Troubleshooting
 
 If you're running into problems with the debugger, there are some features you
 can use to gather more information about the problem:
 
-- When you have a session running in the debug panel, you can run the {#action dev::CopyDebugAdapterArguments} action to copy a JSON blob to the clipboard that describes how Gram initialized the session. This is especially useful when the session failed to start, and is great context to add if you open a GitHub issue.
-- You can also use the {#action dev::OpenDebugAdapterLogs} action to see a trace of all of Gram's communications with debug adapters during the most recent debug sessions.
+- When you have a session running in the debug panel, you can run the {#action
+  dev::CopyDebugAdapterArguments} action to copy a JSON blob to the clipboard
+  that describes how Gram initialized the session. This is especially useful
+  when the session failed to start, and is great context to add if you open a
+  GitHub issue.
+- You can also use the {#action dev::OpenDebugAdapterLogs} action to see a trace
+  of all of Gram's communications with debug adapters during the most recent
+  debug sessions.

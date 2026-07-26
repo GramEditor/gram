@@ -11,21 +11,27 @@ Extensions are able to provide the following features to Gram:
 
 ## Developing an Extension
 
-Before starting to develop an extension for Gram, be sure to [install Rust via rustup](https://www.rust-lang.org/tools/install).
+Before starting to develop an extension for Gram, be sure to
+[install Rust via rustup](https://www.rust-lang.org/tools/install).
 
 Note: If you have installed rustup via [Homebrew](https://brew.sh), you may need
 to run `rustup-init` for the command to work properly.
 
 When developing an extension, you can use it in Gram by installing it:
 
-From the extensions page, click the `Install Local` button (or the {#action gram::InstallExtensionFromFolder} action) and select the directory containing your extension.
+From the extensions page, click the `Install Local` button (or the {#action
+gram::InstallExtensionFromFolder} action) and select the directory containing
+your extension.
 
-If you need to troubleshoot, you can check the Gram.log ({#action gram::OpenLog}) for additional output. For debug output, close and relaunch the editor with the flag `gram --foreground` from the command line which show more verbose INFO level logging.
+If you need to troubleshoot, you can check the Gram.log ({#action
+gram::OpenLog}) for additional output. For debug output, close and relaunch the
+editor with the flag `gram --foreground` from the command line which show more
+verbose INFO level logging.
 
 ## Directory Structure of a Gram Extension
 
-A Gram extension is a Git repository that contains an `extension.toml`. This file must contain some
-basic information about the extension:
+A Gram extension is a Git repository that contains an `extension.toml`. This
+file must contain some basic information about the extension:
 
 ```toml
 id = "my-extension"
@@ -37,7 +43,9 @@ description = "My cool extension"
 repository = "https://github.com/your-name/my-gram-extension"
 ```
 
-In addition to this, there are several other optional files and directories that can be used to add functionality to a Gram extension. An example directory structure of an extension that provides all capabilities is as follows:
+In addition to this, there are several other optional files and directories that
+can be used to add functionality to a Gram extension. An example directory
+structure of an extension that provides all capabilities is as follows:
 
 ```
 my-extension/
@@ -55,7 +63,9 @@ my-extension/
 
 ## WebAssembly
 
-Procedural parts of extensions are written in Rust and compiled to WebAssembly. To develop an extension that includes custom code, include a `Cargo.toml` like this:
+Procedural parts of extensions are written in Rust and compiled to WebAssembly.
+To develop an extension that includes custom code, include a `Cargo.toml` like
+this:
 
 ```toml
 [package]
@@ -70,9 +80,14 @@ crate-type = ["cdylib"]
 zed_extension_api = "0.1.0"
 ```
 
-Use the latest version of the [`zed_extension_api`](https://crates.io/crates/zed_extension_api) available on crates.io. Make sure it's still compatible with Gram versions you want to support.
+Use the latest version of the
+[`zed_extension_api`](https://crates.io/crates/zed_extension_api) available on
+crates.io. Make sure it's still compatible with Gram versions you want to
+support.
 
-In the `src/lib.rs` file in your Rust crate you will need to define a struct for your extension and implement the `Extension` trait, as well as use the `register_extension!` macro to register your extension:
+In the `src/lib.rs` file in your Rust crate you will need to define a struct for
+your extension and implement the `Extension` trait, as well as use the
+`register_extension!` macro to register your extension:
 
 ```rs
 use zed_extension_api as zed;
@@ -94,8 +109,8 @@ gram::register_extension!(MyExtension);
 
 ## Extension License
 
-Extension repositories should include a license.
-The following licenses are recommended:
+Extension repositories should include a license. The following licenses are
+recommended:
 
 - [GNU GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html)
 - [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)
@@ -105,8 +120,8 @@ The following licenses are recommended:
 Your license file should be at the root of your extension repository. Any
 filename that has `LICENCE` or `LICENSE` as a prefix (case insensitive).
 
-> Note: This license applies only to your extension code itself.
-> It does not apply to any tools your extension may download or interact with,
-> such as language servers or other external dependencies.
-> If your repository contains both extension code and other projects (like a
-> language server), you don't need to relicense those other projects.
+> Note: This license applies only to your extension code itself. It does not
+> apply to any tools your extension may download or interact with, such as
+> language servers or other external dependencies. If your repository contains
+> both extension code and other projects (like a language server), you don't
+> need to relicense those other projects.
