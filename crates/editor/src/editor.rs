@@ -6585,8 +6585,12 @@ impl Editor {
 
     fn insert_tasks(&mut self, key: (BufferId, BufferRow), value: RunnableTasks) {
         if self.tasks.insert(key, value).is_some() {
-            // This case should hopefully be rare, but just in case...
-            log::error!("multiple different run targets found on a single line, only the last target will be rendered")
+            // see https://github.com/zed-industries/zed/issues/21138
+            log::info!(
+                "multiple different run targets found in buffer={}, line={}, only the last one will be rendered in the gutter",
+                key.0,
+                key.1 + 1,
+            )
         }
     }
 
