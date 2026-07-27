@@ -90,7 +90,7 @@ pub fn platform_background_executor() -> BackgroundExecutor {
 /// Returns a background executor for the current platform.
 #[cfg(target_os = "windows")]
 pub fn platform_background_executor() -> BackgroundExecutor {
-    WindowsPlatform::background_executor().unwrap()
+    WindowsPlatform::new_background_executor().unwrap()
 }
 
 #[cfg(target_os = "macos")]

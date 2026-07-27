@@ -170,7 +170,7 @@ impl WindowsPlatform {
         })
     }
 
-    pub fn background_executor() -> Result<BackgroundExecutor> {
+    pub fn new_background_executor() -> Result<BackgroundExecutor> {
         unsafe {
             OleInitialize(None).context("unable to initialize Windows OLE")?;
         }
@@ -211,7 +211,7 @@ impl WindowsPlatform {
             .take()
             .context("CreateWindowExW did not run correctly")?;
         let _handle = result?;
-        BackgroundExecutor::new(dispatcher)
+        Ok(BackgroundExecutor::new(dispatcher))
     }
 
     pub fn window_from_hwnd(&self, hwnd: HWND) -> Option<Rc<WindowsWindowInner>> {

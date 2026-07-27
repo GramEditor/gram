@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-07-27
+
+## Changed
+
+- Also look for gram-remote-server in $PATH (#384) by @icewind
+
+## Fixed
+
+- Fix Windows build
+
 ## [3.1.0] - 2026-07-26
 
 ## Added
