@@ -566,7 +566,14 @@ impl SshRemoteConnection {
             _ => version.to_string(),
         };
         let binary_name = format!("gram-remote-server-{}-{}", release_channel.dev_name(), version_str);
-        let dst_path = paths::remote_server_dir_relative().join(RelPath::unix(&binary_name).unwrap());
+
+        // is there a valid version in $PATH
+        let binary_path = RelPath::unix(&binary_name).unwrap();
+        if self.try_server_binary(binary_path).await {
+            return Ok(binary_path.into());
+        }
+
+        let dst_path = paths::remote_server_dir_relative().join(binary_path);
 
         #[cfg(not(debug_assertions))]
         {
@@ -593,17 +600,7 @@ impl SshRemoteConnection {
             return Ok(dst_path);
         }
 
-        if self
-            .socket
-            .run_command(
-                self.ssh_shell_kind,
-                &dst_path.display(self.path_style()),
-                &["version"],
-                true,
-            )
-            .await
-            .is_ok()
-        {
+        if self.try_server_binary(&dst_path).await {
             return Ok(dst_path);
         }
 
@@ -611,6 +608,18 @@ impl SshRemoteConnection {
             "Could not find remote server at {:?}",
             dst_path.display(self.path_style())
         );
+    }
+
+    async fn try_server_binary(&self, path: &RelPath) -> bool {
+        self.socket
+            .run_command(
+                self.ssh_shell_kind,
+                &path.display(self.path_style()),
+                &["version"],
+                true,
+            )
+            .await
+            .is_ok()
     }
 
     #[cfg(debug_assertions)]
