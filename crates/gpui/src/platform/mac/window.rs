@@ -20,16 +20,16 @@ use objc2::{
     sel,
 };
 use objc2_app_kit::{
-    NSAlert, NSAlertStyle, NSAppKitVersionNumber, NSAppKitVersionNumber12_0, NSAppearanceCustomization, NSApplication,
-    NSAutoresizingMaskOptions, NSBackingStoreType, NSButton, NSColor, NSDragOperation, NSDraggingInfo, NSEvent,
-    NSEventModifierFlags, NSNormalWindowLevel, NSPanel, NSPasteboardTypeFileURL, NSPopUpMenuWindowLevel, NSScreen,
-    NSTextInputContext, NSTitlebarAccessoryViewController, NSTrackingArea, NSTrackingAreaOptions, NSView, NSWindow,
-    NSWindowAnimationBehavior, NSWindowButton, NSWindowCollectionBehavior, NSWindowDelegate, NSWindowOcclusionState,
-    NSWindowOrderingMode, NSWindowStyleMask, NSWindowTabbingMode, NSWindowTitleVisibility,
+    NSAlert, NSAlertStyle, NSAppearanceCustomization, NSApplication, NSAutoresizingMaskOptions, NSBackingStoreType,
+    NSButton, NSColor, NSDragOperation, NSDraggingInfo, NSEvent, NSEventModifierFlags, NSNormalWindowLevel, NSPanel,
+    NSPasteboardTypeFileURL, NSPopUpMenuWindowLevel, NSScreen, NSTextInputContext, NSTitlebarAccessoryViewController,
+    NSTrackingArea, NSTrackingAreaOptions, NSView, NSWindow, NSWindowAnimationBehavior, NSWindowButton,
+    NSWindowCollectionBehavior, NSWindowDelegate, NSWindowOcclusionState, NSWindowOrderingMode, NSWindowStyleMask,
+    NSWindowTabbingMode, NSWindowTitleVisibility,
 };
 use objc2_core_foundation::CGPoint;
 use objc2_foundation::{
-    MainThreadMarker, NSArray, NSCopying, NSDictionary, NSInteger, NSMutableIndexSet, NSNotification,
+    MainThreadMarker, NSArray, NSCopying, NSDictionary, NSMutableIndexSet, NSNotification,
     NSObjectNSScriptClassDescription, NSObjectProtocol, NSOperatingSystemVersion, NSPoint, NSProcessInfo, NSRange,
     NSRect, NSSize, NSString, NSURL, NSUserDefaults, ns_string,
 };
@@ -1407,39 +1407,22 @@ impl PlatformWindow for MacWindow {
         };
         this.native_window.setBackgroundColor(Some(&background_color));
 
-        if unsafe { NSAppKitVersionNumber < NSAppKitVersionNumber12_0 } {
-            // Whether `-[NSVisualEffectView respondsToSelector:@selector(_updateProxyLayer)]`.
-            // On macOS Catalina/Big Sur `NSVisualEffectView` doesn’t own concrete sublayers
-            // but uses a `CAProxyLayer`. Use the legacy WindowServer API.
-            let blur_radius = if background_appearance == WindowBackgroundAppearance::Blurred {
-                80
-            } else {
-                0
-            };
-
-            let window_number = this.native_window.windowNumber();
-            unsafe { CGSSetWindowBackgroundBlurRadius(CGSMainConnectionID(), window_number, blur_radius) };
-        } else {
-            // On newer macOS `NSVisualEffectView` manages the effect layer directly. Using it
-            // could have a better performance (it downsamples the backdrop) and more control
-            // over the effect layer.
-            if background_appearance != WindowBackgroundAppearance::Blurred {
-                if let Some(blur_view) = this.blurred_view.clone() {
-                    NSView::removeFromSuperview(&blur_view);
-                    this.blurred_view = None;
-                }
-            } else if this.blurred_view.is_none() {
-                let content_view = this.native_window.contentView().unwrap();
-                let frame = content_view.bounds();
-                let mtm = MainThreadMarker::new().expect("Must run on the main thread");
-                let blur_view = super::blurred_view::BlurredView::new(mtm, frame);
-                blur_view.setAutoresizingMask(
-                    NSAutoresizingMaskOptions::ViewWidthSizable | NSAutoresizingMaskOptions::ViewHeightSizable,
-                );
-
-                content_view.addSubview_positioned_relativeTo(&blur_view, NSWindowOrderingMode::Below, None);
-                this.blurred_view = Some(blur_view);
+        if background_appearance != WindowBackgroundAppearance::Blurred {
+            if let Some(blur_view) = this.blurred_view.clone() {
+                NSView::removeFromSuperview(&blur_view);
+                this.blurred_view = None;
             }
+        } else if this.blurred_view.is_none()
+            && let Some(content_view) = this.native_window.contentView()
+        {
+            let mtm = MainThreadMarker::new().expect("Must run on the main thread");
+            let frame = content_view.bounds();
+            let blur_view = super::blurred_view::BlurredView::new(mtm, frame);
+            blur_view.setAutoresizingMask(
+                NSAutoresizingMaskOptions::ViewWidthSizable | NSAutoresizingMaskOptions::ViewHeightSizable,
+            );
+            content_view.addSubview_positioned_relativeTo(&blur_view, NSWindowOrderingMode::Below, None);
+            this.blurred_view = Some(blur_view);
         }
     }
 
@@ -1855,11 +1838,4 @@ pub(crate) fn remove_layer_background(layer: &CALayer) {
             remove_layer_background(&sublayer);
         }
     }
-}
-
-#[link(name = "CoreGraphics", kind = "framework")]
-unsafe extern "C" {
-    // Widely used private APIs; Apple uses them for their Terminal.app.
-    fn CGSMainConnectionID() -> *mut AnyObject;
-    fn CGSSetWindowBackgroundBlurRadius(connection_id: *mut AnyObject, window_id: NSInteger, radius: i64) -> i32;
 }
