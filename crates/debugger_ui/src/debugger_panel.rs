@@ -533,7 +533,7 @@ impl DebugPanel {
         let new_session_button = || {
             IconButton::new("debug-new-session", IconName::Plus)
                 .icon_size(IconSize::Small)
-                .on_click(move |_, window, cx| window.dispatch_action(crate::Start.boxed_clone(), cx) )
+                .on_click(move |_, window, cx| window.dispatch_action(crate::Start.boxed_clone(), cx))
                 .tooltip({
                     let focus_handle = focus_handle.clone();
                     move |_window, cx| Tooltip::for_action_in("Start Debug Session", &crate::Start, &focus_handle, cx)

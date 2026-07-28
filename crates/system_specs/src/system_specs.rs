@@ -117,29 +117,27 @@ impl Display for SystemSpecs {
 }
 
 fn try_determine_available_gpus() -> Option<String> {
-    #[cfg(any(target_os = "linux", target_os = "freebsd"))]
-    {
-        #[allow(clippy::disallowed_methods, reason = "we are not running in an executor")]
-        std::process::Command::new("vulkaninfo")
-            .args(&["--summary"])
-            .output()
-            .ok()
-            .map(|output| {
-                [
-                    "<details><summary>`vulkaninfo --summary` output</summary>",
-                    "",
-                    "```",
-                    String::from_utf8_lossy(&output.stdout).as_ref(),
-                    "```",
-                    "</details>",
-                ]
-                .join("\n")
-            })
-            .or(Some("Failed to run `vulkaninfo --summary`".to_string()))
-    }
-    #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
-    {
-        None
+    cfg_select! {
+        any(target_os = "linux", target_os = "freebsd") => {
+            #[allow(clippy::disallowed_methods, reason = "we are not running in an executor")]
+            std::process::Command::new("vulkaninfo")
+                .args(&["--summary"])
+                .output()
+                .ok()
+                .map(|output| {
+                    [
+                        "<details><summary>`vulkaninfo --summary` output</summary>",
+                        "",
+                        "```",
+                        String::from_utf8_lossy(&output.stdout).as_ref(),
+                        "```",
+                        "</details>",
+                    ]
+                    .join("\n")
+                })
+                .or(Some("Failed to run `vulkaninfo --summary`".to_string()))
+        }
+        _ => None,
     }
 }
 

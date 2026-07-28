@@ -457,19 +457,19 @@ impl SshRemoteConnection {
         #[cfg(not(target_os = "windows"))]
         let socket_path = temp_dir.path().join("ssh.sock");
 
-        #[cfg(target_os = "windows")]
-        let mut master_process = MasterProcess::new(
-            askpass.script_path().as_ref(),
-            connection_options.additional_args(),
-            &destination,
-        )?;
-        #[cfg(not(target_os = "windows"))]
-        let mut master_process = MasterProcess::new(
-            askpass.script_path().as_ref(),
-            connection_options.additional_args(),
-            &socket_path,
-            &destination,
-        )?;
+        let mut master_process = cfg_select! {
+            windows => MasterProcess::new(
+                askpass.script_path().as_ref(),
+                connection_options.additional_args(),
+                &destination,
+            ),
+            _ => MasterProcess::new(
+                askpass.script_path().as_ref(),
+                connection_options.additional_args(),
+                &socket_path,
+                &destination,
+            ),
+        }?;
 
         let result = select_biased! {
             result = askpass.run().fuse() => {
@@ -502,17 +502,17 @@ impl SshRemoteConnection {
             anyhow::bail!(error_message);
         }
 
-        #[cfg(not(target_os = "windows"))]
-        let socket = SshSocket::new(connection_options, socket_path).await?;
-        #[cfg(target_os = "windows")]
-        let socket = SshSocket::new(
-            connection_options,
-            askpass
-                .get_password()
-                .or_else(|| askpass::EncryptedPassword::try_from("").ok())
-                .context("Failed to fetch askpass password")?,
-            cx.background_executor().clone(),
-        )
+        let socket = cfg_select! {
+            windows => SshSocket::new(
+                connection_options,
+                askpass
+                    .get_password()
+                    .or_else(|| askpass::EncryptedPassword::try_from("").ok())
+                    .context("Failed to fetch askpass password")?,
+                cx.background_executor().clone(),
+            ),
+            _ => SshSocket::new(connection_options, socket_path),
+        }
         .await?;
         drop(askpass);
 
@@ -575,29 +575,30 @@ impl SshRemoteConnection {
 
         let dst_path = paths::remote_server_dir_relative().join(binary_path);
 
-        #[cfg(not(debug_assertions))]
-        {
-            let _ = delegate;
-            let _ = cx;
-            let _ = &self.ssh_platform;
-        }
-
-        #[cfg(debug_assertions)]
-        if let Some(remote_server_path) =
-            super::build_remote_server_from_source(&self.ssh_platform, delegate.as_ref(), cx).await?
-        {
-            let tmp_path = paths::remote_server_dir_relative().join(
-                RelPath::unix(&format!(
-                    "download-{}-{}",
-                    std::process::id(),
-                    remote_server_path.file_name().unwrap().to_string_lossy()
-                ))
-                .unwrap(),
-            );
-            self.upload_local_server_binary(&remote_server_path, &tmp_path, delegate, cx)
-                .await?;
-            self.extract_server_binary(&dst_path, &tmp_path, delegate, cx).await?;
-            return Ok(dst_path);
+        cfg_select! {
+            debug_assertions => {
+                if let Some(remote_server_path) =
+                    super::build_remote_server_from_source(&self.ssh_platform, delegate.as_ref(), cx).await?
+                {
+                    let tmp_path = paths::remote_server_dir_relative().join(
+                        RelPath::unix(&format!(
+                            "download-{}-{}",
+                            std::process::id(),
+                            remote_server_path.file_name().unwrap().to_string_lossy()
+                        ))
+                        .unwrap(),
+                    );
+                    self.upload_local_server_binary(&remote_server_path, &tmp_path, delegate, cx)
+                        .await?;
+                    self.extract_server_binary(&dst_path, &tmp_path, delegate, cx).await?;
+                    return Ok(dst_path);
+                }
+            },
+            _ => {
+                let _ = delegate;
+                let _ = cx;
+                let _ = &self.ssh_platform;
+            }
         }
 
         if self.try_server_binary(&dst_path).await {
@@ -870,67 +871,65 @@ impl SshSocket {
         Ok(String::from_utf8_lossy(&output.stdout).to_string())
     }
 
-    #[cfg(not(target_os = "windows"))]
     fn ssh_options<'a>(
         &self,
         command: &'a mut process::Command,
         include_port_forwards: bool,
     ) -> &'a mut process::Command {
-        let args = if include_port_forwards {
-            self.connection_options.additional_args()
-        } else {
-            self.connection_options.additional_args_for_scp()
-        };
+        cfg_select! {
+            windows => {
+                let args = if include_port_forwards {
+                    self.connection_options.additional_args()
+                } else {
+                    self.connection_options.additional_args_for_scp()
+                };
 
-        command
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .args(args)
-            .args(["-o", "ControlMaster=no", "-o"])
-            .arg(format!("ControlPath={}", self.socket_path.display()))
-    }
+                command
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .args(args)
+                    .envs(self.envs.clone())
+            }
+            _ => {
+                let args = if include_port_forwards {
+                    self.connection_options.additional_args()
+                } else {
+                    self.connection_options.additional_args_for_scp()
+                };
 
-    #[cfg(target_os = "windows")]
-    fn ssh_options<'a>(
-        &self,
-        command: &'a mut process::Command,
-        include_port_forwards: bool,
-    ) -> &'a mut process::Command {
-        let args = if include_port_forwards {
-            self.connection_options.additional_args()
-        } else {
-            self.connection_options.additional_args_for_scp()
-        };
-
-        command
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .args(args)
-            .envs(self.envs.clone())
+                command
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .args(args)
+                    .args(["-o", "ControlMaster=no", "-o"])
+                    .arg(format!("ControlPath={}", self.socket_path.display()))
+            },
+        }
     }
 
     // On Windows, we need to use `SSH_ASKPASS` to provide the password to ssh.
     // On Linux, we use the `ControlPath` option to create a socket file that ssh can use to
-    #[cfg(not(target_os = "windows"))]
     fn ssh_args(&self) -> Vec<String> {
-        let mut arguments = self.connection_options.additional_args();
-        arguments.extend(vec![
-            "-o".to_string(),
-            "ControlMaster=no".to_string(),
-            "-o".to_string(),
-            format!("ControlPath={}", self.socket_path.display()),
-            self.connection_options.ssh_destination(),
-        ]);
-        arguments
-    }
-
-    #[cfg(target_os = "windows")]
-    fn ssh_args(&self) -> Vec<String> {
-        let mut arguments = self.connection_options.additional_args();
-        arguments.push(self.connection_options.ssh_destination());
-        arguments
+        cfg_select! {
+            windows => {
+                let mut arguments = self.connection_options.additional_args();
+                arguments.push(self.connection_options.ssh_destination());
+                arguments
+            }
+            _ => {
+                let mut arguments = self.connection_options.additional_args();
+                arguments.extend(vec![
+                    "-o".to_string(),
+                    "ControlMaster=no".to_string(),
+                    "-o".to_string(),
+                    format!("ControlPath={}", self.socket_path.display()),
+                    self.connection_options.ssh_destination(),
+                ]);
+                arguments
+            }
+        }
     }
 
     async fn platform(&self, shell: ShellKind) -> Result<RemotePlatform> {

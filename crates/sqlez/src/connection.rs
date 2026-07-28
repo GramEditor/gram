@@ -127,11 +127,10 @@ impl Connection {
                     )
                 };
 
-                #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
-                let offset = unsafe { sqlite3_error_offset(temp_connection.sqlite3) };
-
-                #[cfg(any(target_os = "linux", target_os = "freebsd"))]
-                let offset = 0;
+                let offset = cfg_select! {
+                    any(target_os = "linux", target_os = "freebsd") => 0,
+                    _ => unsafe { sqlite3_error_offset(temp_connection.sqlite3) },
+                };
 
                 unsafe {
                     (
@@ -152,11 +151,10 @@ impl Connection {
                     )
                 };
 
-                #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
-                let offset = unsafe { sqlite3_error_offset(self.sqlite3) };
-
-                #[cfg(any(target_os = "linux", target_os = "freebsd"))]
-                let offset = 0;
+                let offset = cfg_select! {
+                    any(target_os = "linux", target_os = "freebsd") => 0,
+                    _ => unsafe { sqlite3_error_offset(self.sqlite3) },
+                };
 
                 unsafe {
                     (

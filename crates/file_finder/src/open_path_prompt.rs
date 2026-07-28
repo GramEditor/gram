@@ -808,56 +808,57 @@ fn path_candidates(parent_path_is_root: bool, mut children: Vec<DirectoryItem>) 
         .collect()
 }
 
-#[cfg(target_os = "windows")]
 fn get_dir_and_suffix(query: String, path_style: PathStyle) -> (String, String) {
-    let last_item = Path::new(&query).file_name().unwrap_or_default().to_string_lossy();
-    let (mut dir, suffix) = if let Some(dir) = query.strip_suffix(last_item.as_ref()) {
-        (dir.to_string(), last_item.into_owned())
-    } else {
-        (query.to_string(), String::new())
-    };
-    match path_style {
-        PathStyle::Posix => {
-            if dir.is_empty() {
-                dir = "/".to_string();
-            }
-        }
-        PathStyle::Windows => {
-            if dir.len() < 3 {
-                dir = "C:\\".to_string();
-            }
-        }
-    }
-    (dir, suffix)
-}
-
-#[cfg(not(target_os = "windows"))]
-fn get_dir_and_suffix(query: String, path_style: PathStyle) -> (String, String) {
-    match path_style {
-        PathStyle::Posix => {
-            let (mut dir, suffix) = if let Some(index) = query.rfind('/') {
-                (query[..index].to_string(), query[index + 1..].to_string())
+    cfg_select! {
+        windows => {
+            let last_item = Path::new(&query).file_name().unwrap_or_default().to_string_lossy();
+            let (mut dir, suffix) = if let Some(dir) = query.strip_suffix(last_item.as_ref()) {
+                (dir.to_string(), last_item.into_owned())
             } else {
-                (query, String::new())
+                (query.to_string(), String::new())
             };
-            if !dir.ends_with('/') {
-                dir.push('/');
+            match path_style {
+                PathStyle::Posix => {
+                    if dir.is_empty() {
+                        dir = "/".to_string();
+                    }
+                }
+                PathStyle::Windows => {
+                    if dir.len() < 3 {
+                        dir = "C:\\".to_string();
+                    }
+                }
             }
             (dir, suffix)
         }
-        PathStyle::Windows => {
-            let (mut dir, suffix) = if let Some(index) = query.rfind('\\') {
-                (query[..index].to_string(), query[index + 1..].to_string())
-            } else {
-                (query, String::new())
-            };
-            if dir.len() < 3 {
-                dir = "C:\\".to_string();
+        _ => {
+            match path_style {
+                PathStyle::Posix => {
+                    let (mut dir, suffix) = if let Some(index) = query.rfind('/') {
+                        (query[..index].to_string(), query[index + 1..].to_string())
+                    } else {
+                        (query, String::new())
+                    };
+                    if !dir.ends_with('/') {
+                        dir.push('/');
+                    }
+                    (dir, suffix)
+                }
+                PathStyle::Windows => {
+                    let (mut dir, suffix) = if let Some(index) = query.rfind('\\') {
+                        (query[..index].to_string(), query[index + 1..].to_string())
+                    } else {
+                        (query, String::new())
+                    };
+                    if dir.len() < 3 {
+                        dir = "C:\\".to_string();
+                    }
+                    if !dir.ends_with('\\') {
+                        dir.push('\\');
+                    }
+                    (dir, suffix)
+                }
             }
-            if !dir.ends_with('\\') {
-                dir.push('\\');
-            }
-            (dir, suffix)
         }
     }
 }

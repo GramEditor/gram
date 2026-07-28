@@ -161,27 +161,28 @@ impl WslRemoteConnection {
                 .map_err(|e| anyhow!("Failed to create directory: {}", e))?;
         }
 
-        #[cfg(not(debug_assertions))]
-        {
-            let _ = delegate;
-            let _ = cx;
-        }
-
-        #[cfg(debug_assertions)]
-        if let Some(remote_server_path) =
-            super::build_remote_server_from_source(&self.platform, delegate.as_ref(), cx).await?
-        {
-            let tmp_path = paths::remote_wsl_server_dir_relative().join(
-                &RelPath::unix(&format!(
-                    "download-{}-{}",
-                    std::process::id(),
-                    remote_server_path.file_name().unwrap().to_string_lossy()
-                ))
-                .unwrap(),
-            );
-            self.upload_file(&remote_server_path, &tmp_path, delegate, cx).await?;
-            self.extract_and_install(&tmp_path, &dst_path, delegate, cx).await?;
-            return Ok(dst_path);
+        cfg_select! {
+            debug_assertions => {
+                if let Some(remote_server_path) =
+                    super::build_remote_server_from_source(&self.platform, delegate.as_ref(), cx).await?
+                {
+                    let tmp_path = paths::remote_wsl_server_dir_relative().join(
+                        &RelPath::unix(&format!(
+                            "download-{}-{}",
+                            std::process::id(),
+                            remote_server_path.file_name().unwrap().to_string_lossy()
+                        ))
+                        .unwrap(),
+                    );
+                    self.upload_file(&remote_server_path, &tmp_path, delegate, cx).await?;
+                    self.extract_and_install(&tmp_path, &dst_path, delegate, cx).await?;
+                    return Ok(dst_path);
+                }
+            }
+            _ => {
+                let _ = delegate;
+                let _ = cx;
+            }
         }
 
         if self

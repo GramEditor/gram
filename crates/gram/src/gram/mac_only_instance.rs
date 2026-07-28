@@ -49,19 +49,18 @@ fn address() -> SocketAddr {
     SocketAddr::V4(SocketAddrV4::new(LOCALHOST, user_port))
 }
 
-#[cfg(unix)]
 fn get_uid_as_u32(uid: &sysinfo::Uid) -> u32 {
-    *uid.clone()
-}
-
-#[cfg(windows)]
-fn get_uid_as_u32(uid: &sysinfo::Uid) -> u32 {
-    // Extract the RID which is an integer
-    uid.to_string()
-        .rsplit('-')
-        .next()
-        .and_then(|rid| rid.parse::<u32>().ok())
-        .unwrap_or(0)
+    cfg_select! {
+        unix => *uid.clone()
+        windows => {
+            // Extract the RID which is an integer
+            uid.to_string()
+                .rsplit('-')
+                .next()
+                .and_then(|rid| rid.parse::<u32>().ok())
+                .unwrap_or(0)
+        }
+    }
 }
 
 fn instance_handshake() -> &'static str {
