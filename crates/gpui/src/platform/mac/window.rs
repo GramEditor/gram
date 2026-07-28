@@ -1678,7 +1678,7 @@ impl rwh::HasDisplayHandle for MacWindow {
     }
 }
 
-unsafe extern "C" fn step(view: *mut c_void) {
+extern "C" fn step(view: *mut c_void) {
     if view.is_null() {
         return;
     }

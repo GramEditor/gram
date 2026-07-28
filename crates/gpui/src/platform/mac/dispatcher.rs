@@ -1,30 +1,16 @@
-#![allow(non_upper_case_globals)]
-#![allow(non_camel_case_types)]
-#![allow(non_snake_case)]
-
 use crate::{
     GLOBAL_THREAD_TIMINGS, PlatformDispatcher, RunnableMeta, RunnableVariant, THREAD_TIMINGS, TaskLabel, TaskTiming,
     ThreadTaskTimings,
 };
 
 use async_task::Runnable;
+use dispatch2::{DispatchQueue, DispatchQueueGlobalPriority, DispatchTime, GlobalQueueIdentifier};
 use objc2::MainThreadMarker;
 use std::{
     ffi::c_void,
-    ptr::{NonNull, addr_of},
+    ptr::NonNull,
     time::{Duration, Instant},
 };
-
-/// All items in the generated file are marked as pub, so we're gonna wrap it in a separate mod to prevent
-/// these pub items from leaking into public API.
-pub(crate) mod dispatch_sys {
-    include!(concat!(env!("OUT_DIR"), "/dispatch_sys.rs"));
-}
-
-use dispatch_sys::*;
-pub(crate) fn dispatch_get_main_queue() -> dispatch_queue_t {
-    addr_of!(_dispatch_main_q) as *const _ as dispatch_queue_t
-}
 
 pub(crate) struct MacDispatcher;
 
@@ -55,19 +41,16 @@ impl PlatformDispatcher for MacDispatcher {
         let (context, trampoline) = match runnable {
             RunnableVariant::Meta(runnable) => (
                 runnable.into_raw().as_ptr() as *mut c_void,
-                Some(trampoline as unsafe extern "C" fn(*mut c_void)),
+                trampoline as extern "C" fn(*mut c_void),
             ),
             RunnableVariant::Compat(runnable) => (
                 runnable.into_raw().as_ptr() as *mut c_void,
-                Some(trampoline_compat as unsafe extern "C" fn(*mut c_void)),
+                trampoline_compat as extern "C" fn(*mut c_void),
             ),
         };
+        let queue = DispatchQueue::global_queue(GlobalQueueIdentifier::Priority(DispatchQueueGlobalPriority::High));
         unsafe {
-            dispatch_async_f(
-                dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH.try_into().unwrap(), 0),
-                context,
-                trampoline,
-            );
+            queue.exec_async_f(context, trampoline);
         }
     }
 
@@ -75,15 +58,15 @@ impl PlatformDispatcher for MacDispatcher {
         let (context, trampoline) = match runnable {
             RunnableVariant::Meta(runnable) => (
                 runnable.into_raw().as_ptr() as *mut c_void,
-                Some(trampoline as unsafe extern "C" fn(*mut c_void)),
+                trampoline as extern "C" fn(*mut c_void),
             ),
             RunnableVariant::Compat(runnable) => (
                 runnable.into_raw().as_ptr() as *mut c_void,
-                Some(trampoline_compat as unsafe extern "C" fn(*mut c_void)),
+                trampoline_compat as extern "C" fn(*mut c_void),
             ),
         };
         unsafe {
-            dispatch_async_f(dispatch_get_main_queue(), context, trampoline);
+            DispatchQueue::main().exec_async_f(context, trampoline);
         }
     }
 
@@ -91,17 +74,17 @@ impl PlatformDispatcher for MacDispatcher {
         let (context, trampoline) = match runnable {
             RunnableVariant::Meta(runnable) => (
                 runnable.into_raw().as_ptr() as *mut c_void,
-                Some(trampoline as unsafe extern "C" fn(*mut c_void)),
+                trampoline as extern "C" fn(*mut c_void),
             ),
             RunnableVariant::Compat(runnable) => (
                 runnable.into_raw().as_ptr() as *mut c_void,
-                Some(trampoline_compat as unsafe extern "C" fn(*mut c_void)),
+                trampoline_compat as extern "C" fn(*mut c_void),
             ),
         };
+        let queue = DispatchQueue::global_queue(GlobalQueueIdentifier::Priority(DispatchQueueGlobalPriority::High));
+        let when = DispatchTime::NOW.time(duration.as_nanos() as i64);
         unsafe {
-            let queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH.try_into().unwrap(), 0);
-            let when = dispatch_time(DISPATCH_TIME_NOW as u64, duration.as_nanos() as i64);
-            dispatch_after_f(when, queue, context, trampoline);
+            DispatchQueue::exec_after_f(when, &queue, context, trampoline);
         }
     }
 }

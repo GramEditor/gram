@@ -8,6 +8,7 @@ use crate::{
 };
 use anyhow::{Context, anyhow};
 use block2::RcBlock;
+use dispatch2::DispatchQueue;
 use futures::channel::oneshot;
 use itertools::Itertools;
 use objc2::{
@@ -605,13 +606,11 @@ impl Platform for MacPlatform {
         // this, we make quitting the application asynchronous so that we aren't holding borrows to
         // the app state on the stack when we actually terminate the app.
 
-        use super::dispatcher::{dispatch_get_main_queue, dispatch_sys::dispatch_async_f};
-
         unsafe {
-            dispatch_async_f(dispatch_get_main_queue(), ptr::null_mut(), Some(quit));
+            DispatchQueue::main().exec_async_f(ptr::null_mut(), quit);
         }
 
-        unsafe extern "C" fn quit(_: *mut c_void) {
+        extern "C" fn quit(_: *mut c_void) {
             let mtm = MainThreadMarker::new().unwrap();
             let app = NSApplication::sharedApplication(mtm);
             app.terminate(None);
