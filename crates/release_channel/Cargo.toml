@@ -1,13 +1,13 @@
 [package]
 name = "release_channel"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [dependencies]
 gpui.workspace = true
+
+[lints]
+workspace = true

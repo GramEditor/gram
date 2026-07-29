@@ -1,23 +1,17 @@
 [package]
 name = "settings_ui"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [lib]
 path = "src/settings_ui.rs"
 
-[features]
-default = []
-test-support = []
-
 [dependencies]
 anyhow.workspace = true
+app_actions.workspace = true
 bm25 = "2.3.2"
 editor.workspace = true
 fs.workspace = true
@@ -37,14 +31,20 @@ settings.workspace = true
 strum.workspace = true
 theme.workspace = true
 title_bar.workspace = true
-ui_input.workspace = true
 ui.workspace = true
+ui_input.workspace = true
 util.workspace = true
 workspace.workspace = true
-app_actions.workspace = true
 
 [dev-dependencies]
 gpui = { workspace = true, features = ["test-support"] }
 paths.workspace = true
 pretty_assertions.workspace = true
 settings.workspace = true
+
+[features]
+default = []
+test-support = []
+
+[lints]
+workspace = true

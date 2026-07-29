@@ -1,22 +1,15 @@
 [package]
-description = "Shared logic for communication between the Gram app and the remote editing server"
-edition.workspace = true
 name = "rpc"
 version.workspace = true
+edition.workspace = true
+description = "Shared logic for communication between the Gram app and the remote editing server"
 repository.workspace = true
-publish.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [lib]
-path = "src/rpc.rs"
 doctest = false
-
-[features]
-gpui = ["dep:gpui"]
-test-support = ["collections/test-support", "gpui/test-support", "proto/test-support"]
+path = "src/rpc.rs"
 
 [dependencies]
 anyhow.workspace = true
@@ -42,3 +35,10 @@ collections = { workspace = true, features = ["test-support"] }
 gpui = { workspace = true, features = ["test-support"] }
 proto = { workspace = true, features = ["test-support"] }
 zlog.workspace = true
+
+[features]
+gpui = ["dep:gpui"]
+test-support = ["collections/test-support", "gpui/test-support", "proto/test-support"]
+
+[lints]
+workspace = true

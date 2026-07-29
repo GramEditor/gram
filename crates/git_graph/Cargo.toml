@@ -1,27 +1,17 @@
 [package]
 name = "git_graph"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [lib]
 path = "src/git_graph.rs"
 
-[features]
-default = []
-test-support = [
-    "project/test-support",
-    "gpui/test-support",
-]
-
 [dependencies]
-app_actions.workspace = true
 anyhow.workspace = true
+app_actions.workspace = true
 collections.workspace = true
 db.workspace = true
 git.workspace = true
@@ -45,3 +35,13 @@ rand.workspace = true
 serde_json.workspace = true
 settings = { workspace = true, features = ["test-support"] }
 workspace = { workspace = true, features = ["test-support"] }
+
+[features]
+default = []
+test-support = [
+  "gpui/test-support",
+  "project/test-support",
+]
+
+[lints]
+workspace = true

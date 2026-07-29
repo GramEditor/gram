@@ -1,16 +1,13 @@
 [package]
 name = "html_to_markdown"
 version.workspace = true
-repository.workspace = true
+edition.workspace = true
 description = "Convert HTML to Markdown"
 documentation = "https://docs.rs/html_to_markdown"
-keywords = ["html", "markdown", "html-to-markdown"]
-edition.workspace = true
-publish = true
+repository.workspace = true
 license = "Apache-2.0"
-
-[lints]
-workspace = true
+keywords = ["html", "html-to-markdown", "markdown"]
+publish = true
 
 [lib]
 path = "src/html_to_markdown.rs"
@@ -24,3 +21,6 @@ regex.workspace = true
 [dev-dependencies]
 indoc.workspace = true
 pretty_assertions.workspace = true
+
+[lints]
+workspace = true

@@ -1,19 +1,13 @@
 [package]
 name = "markdown_preview"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [lib]
 path = "src/markdown_preview.rs"
-
-[features]
-test-support = []
 
 [dependencies]
 anyhow.workspace = true
@@ -29,6 +23,7 @@ linkify.workspace = true
 log.workspace = true
 markdown.workspace = true
 markup5ever_rcdom.workspace = true
+mermaid-rs-renderer.workspace = true
 pretty_assertions.workspace = true
 pulldown-cmark.workspace = true
 settings.workspace = true
@@ -38,7 +33,12 @@ ui.workspace = true
 urlencoding.workspace = true
 util.workspace = true
 workspace.workspace = true
-mermaid-rs-renderer.workspace = true
 
 [dev-dependencies]
 editor = { workspace = true, features = ["test-support"] }
+
+[features]
+test-support = []
+
+[lints]
+workspace = true
