@@ -89,6 +89,8 @@ actions!(
         ToggleActiveEditorPin,
         /// Unfolds the selected directory.
         UnfoldDirectory,
+        /// Toggles the outline panel.
+        Toggle,
         /// Toggles focus on the outline panel.
         ToggleFocus,
     ]
@@ -643,6 +645,11 @@ struct SerializedOutlinePanel {
 
 pub fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, _, _| {
+        workspace.register_action(|workspace, _: &Toggle, window, cx| {
+            if !workspace.toggle_panel_focus::<OutlinePanel>(window, cx) {
+                workspace.close_panel::<OutlinePanel>(window, cx);
+            }
+        });
         workspace.register_action(|workspace, _: &ToggleFocus, window, cx| {
             workspace.toggle_panel_focus::<OutlinePanel>(window, cx);
         });

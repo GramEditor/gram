@@ -1,6 +1,6 @@
 use std::any::TypeId;
 
-use app_actions::ToggleFocus;
+use app_actions::{Toggle, ToggleFocus};
 use debugger_panel::DebugPanel;
 use editor::{Editor, MultiBufferOffsetUtf16};
 use gpui::{Action, App, DispatchPhase, EntityInputHandler, actions};
@@ -112,6 +112,11 @@ pub fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, _, _| {
         workspace
             .register_action(spawn_task_or_modal)
+            .register_action(|workspace, _: &Toggle, window, cx| {
+                if !workspace.toggle_panel_focus::<DebugPanel>(window, cx) {
+                    workspace.close_panel::<DebugPanel>(window, cx);
+                }
+            })
             .register_action(|workspace, _: &ToggleFocus, window, cx| {
                 workspace.toggle_panel_focus::<DebugPanel>(window, cx);
             })
