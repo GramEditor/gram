@@ -50,6 +50,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sizes (zed#55233) (zed#60331)
 - Size the commit modal from the buffer font it renders in, rather than the
   narrower UI font, so it fits the commit message
+- Canonicalize the placement of ambiguous diff hunks, fixing hunks that
+  rendered as staged while git had them unstaged (zed#60584)
 
 ## [3.2.0] - 2026-07-27
 
