@@ -2813,7 +2813,7 @@ impl BackgroundScannerState {
         self.snapshot.check_invariants(false);
     }
 
-    fn remove_path(&mut self, path: &RelPath, watcher: &dyn Watcher) {
+    fn remove_path(&mut self, path: &RelPath, prune_repositories: bool, watcher: &dyn Watcher) {
         log::trace!("background scanner removing path {path:?}");
         let mut new_entries;
         let removed_entries;
@@ -2863,9 +2863,11 @@ impl BackgroundScannerState {
         self.snapshot
             .entries_by_id
             .edit(removed_ids.iter().map(|&id| Edit::Remove(id)).collect(), ());
-        self.snapshot
-            .git_repositories
-            .retain(|id, _| removed_ids.binary_search(id).is_err());
+        if prune_repositories {
+            self.snapshot
+                .git_repositories
+                .retain(|id, _| removed_ids.binary_search(id).is_err());
+        }
 
         for removed_dir_abs_path in removed_dir_abs_paths {
             watcher.remove(&removed_dir_abs_path).log_err();
@@ -4340,7 +4342,10 @@ impl BackgroundScanner {
 
             if self.settings.is_path_excluded(&child_path) {
                 log::debug!("skipping excluded child entry {child_path:?}");
-                self.state.lock().await.remove_path(&child_path, self.watcher.as_ref());
+                self.state
+                    .lock()
+                    .await
+                    .remove_path(&child_path, true, self.watcher.as_ref());
                 continue;
             }
 
@@ -4520,8 +4525,9 @@ impl BackgroundScanner {
         // refreshed. Do this before adding any new entries, so that renames can be
         // detected regardless of the order of the paths.
         for (path, metadata) in relative_paths.iter().zip(metadata.iter()) {
-            if matches!(metadata, Ok(None)) || doing_recursive_update {
-                state.remove_path(path, self.watcher.as_ref());
+            let path_was_removed = matches!(metadata, Ok(None));
+            if path_was_removed || doing_recursive_update {
+                state.remove_path(path, path_was_removed, self.watcher.as_ref());
             }
         }
 
@@ -4907,7 +4913,9 @@ impl BackgroundScanner {
                     .is_some()
             });
 
-            if exists_in_snapshot || matches!(self.fs.metadata(&entry.dot_git_abs_path).await, Ok(Some(_))) {
+            let dot_git_present = !matches!(self.fs.metadata(&entry.dot_git_abs_path).await, Ok(None));
+
+            if exists_in_snapshot || dot_git_present {
                 ids_to_preserve.insert(work_directory_id);
             }
         }
