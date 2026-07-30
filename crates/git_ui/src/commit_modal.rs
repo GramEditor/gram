@@ -3,6 +3,8 @@ use crate::git_panel::{GitPanel, commit_message_editor};
 use git::repository::CommitOptions;
 use git::{Amend, Commit, Signoff};
 use panel::{panel_button, panel_editor_style};
+use settings::Settings;
+use theme::ThemeSettings;
 use ui::{ContextMenu, KeybindingHint, PopoverMenu, PopoverMenuHandle, SplitButton, Tooltip, prelude::*};
 
 use editor::{Editor, EditorElement};
@@ -26,14 +28,14 @@ pub struct ModalContainerProperties {
 }
 
 impl ModalContainerProperties {
-    pub fn new(window: &Window, preferred_char_width: usize) -> Self {
+    pub fn new(window: &Window, cx: &App, preferred_char_width: usize) -> Self {
         let container_padding = 5.0;
 
         // Calculate width based on character width
         let mut modal_width = 460.0;
-        let style = window.text_style();
-        let font_id = window.text_system().resolve_font(&style.font());
-        let font_size = style.font_size.to_pixels(window.rem_size());
+        let settings = ThemeSettings::get_global(cx);
+        let font_id = window.text_system().resolve_font(&settings.buffer_font);
+        let font_size = settings.buffer_font_size(cx);
 
         if let Ok(em_width) = window.text_system().em_width(font_id, font_size) {
             modal_width = f32::from(preferred_char_width as f32 * em_width + px(container_padding * 2.0));
@@ -202,7 +204,7 @@ impl CommitModal {
         })
         .detach();
 
-        let properties = ModalContainerProperties::new(window, 50);
+        let properties = ModalContainerProperties::new(window, cx, 80);
 
         Self {
             git_panel,
@@ -512,6 +514,7 @@ impl Render for CommitModal {
             .border_1()
             .border_color(cx.theme().colors().border)
             .w(width)
+            .min_h(rems(28.))
             .p(container_padding)
             .child(
                 v_flex()

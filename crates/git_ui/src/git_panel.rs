@@ -15,7 +15,8 @@ use collections::{BTreeMap, HashMap, HashSet};
 use db::kvp::KEY_VALUE_STORE;
 use editor::RewrapOptions;
 use editor::{
-    Direction, Editor, EditorElement, EditorMode, MultiBuffer, MultiBufferOffset, actions::ExpandAllDiffHunks,
+    Direction, Editor, EditorElement, EditorMode, MultiBuffer, MultiBufferOffset, SizingBehavior,
+    actions::ExpandAllDiffHunks,
 };
 use git::commit::ParsedCommitMessage;
 use git::repository::{
@@ -27,7 +28,7 @@ use git::status::{DiffStat, StageStatus};
 use git::{Amend, Signoff, ToggleStaged, repository::RepoPath, status::FileStatus};
 use git::{
     ExpandCommitEditor, GitHostingProviderRegistry, RestoreTrackedFiles, StageAll, StashAll, StashApply, StashPop,
-    TrashUntrackedFiles, UnstageAll,
+    ToggleFillCommitEditor, TrashUntrackedFiles, UnstageAll,
 };
 use gpui::{
     Action, AsyncWindowContext, Bounds, ClickEvent, Corner, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable,
@@ -196,6 +197,13 @@ pub fn register(workspace: &mut Workspace) {
     });
     workspace.register_action(|workspace, _: &ToggleFocus, window, cx| {
         workspace.toggle_panel_focus::<GitPanel>(window, cx);
+    });
+    workspace.register_action(|workspace, _: &ToggleFillCommitEditor, window, cx| {
+        if let Some(panel) = workspace.panel::<GitPanel>(cx) {
+            panel.update(cx, |panel, cx| {
+                panel.toggle_fill_commit_editor(&Default::default(), window, cx)
+            });
+        }
     });
     workspace.register_action(|workspace, _: &ExpandCommitEditor, window, cx| {
         CommitModal::toggle(workspace, None, window, cx)
@@ -552,6 +560,7 @@ impl TruncatedPatch {
 pub struct GitPanel {
     pub(crate) active_repository: Option<Entity<Repository>>,
     pub(crate) commit_editor: Entity<Editor>,
+    commit_editor_expanded: bool,
     conflicted_count: usize,
     conflicted_staged_count: usize,
     entries: Vec<GitListEntry>,
@@ -711,6 +720,7 @@ impl GitPanel {
             let mut this = Self {
                 active_repository,
                 commit_editor,
+                commit_editor_expanded: false,
                 conflicted_count: 0,
                 conflicted_staged_count: 0,
                 entries: Vec::new(),
@@ -3337,6 +3347,26 @@ impl GitPanel {
         }
     }
 
+    fn toggle_fill_commit_editor(&mut self, _: &ToggleFillCommitEditor, _window: &mut Window, cx: &mut Context<Self>) {
+        self.commit_editor_expanded = !self.commit_editor_expanded;
+        self.commit_editor.update(cx, |editor, _cx| {
+            if self.commit_editor_expanded {
+                editor.set_mode(EditorMode::Full {
+                    scale_ui_elements_with_buffer_font_size: false,
+                    show_active_line_background: false,
+                    sizing_behavior: SizingBehavior::ExcludeOverscrollMargin,
+                })
+            } else {
+                editor.set_mode(EditorMode::AutoHeight {
+                    min_lines: MAX_PANEL_EDITOR_LINES,
+                    max_lines: Some(MAX_PANEL_EDITOR_LINES),
+                })
+            }
+        });
+
+        cx.notify();
+    }
+
     fn expand_commit_editor(&mut self, _: &git::ExpandCommitEditor, window: &mut Window, cx: &mut Context<Self>) {
         let workspace = self.workspace.clone();
         window.defer(cx, move |window, cx| {
@@ -3444,11 +3474,6 @@ impl GitPanel {
         let branch = active_repository.read(cx).branch.clone();
         let head_commit = active_repository.read(cx).head_commit.clone();
 
-        let footer_size = px(32.);
-        let gap = px(9.0);
-        let max_height =
-            panel_editor_style.text.line_height_in_pixels(window.rem_size()) * MAX_PANEL_EDITOR_LINES + gap;
-
         let git_panel = cx.entity();
         let display_name = SharedString::from(Arc::from(
             active_repository.read(cx).display_name().trim_end_matches("/"),
@@ -3457,71 +3482,86 @@ impl GitPanel {
             editor.max_point(cx).row().0 >= MAX_PANEL_EDITOR_LINES as u32
         });
 
+        let vertical_buttons = v_flex()
+            .h_full()
+            .gap_px()
+            .p_1p5()
+            .opacity(0.6)
+            .hover(|this| this.opacity(1.0))
+            .child(
+                panel_icon_button("expand-commit-editor", IconName::ArrowUpRight)
+                    .icon_size(IconSize::Small)
+                    .tooltip(move |_window, cx| {
+                        Tooltip::for_action_in(
+                            "Open Commit Modal",
+                            &git::ExpandCommitEditor,
+                            &expand_tooltip_focus_handle,
+                            cx,
+                        )
+                    })
+                    .on_click(cx.listener({
+                        move |_, _, window, cx| window.dispatch_action(git::ExpandCommitEditor.boxed_clone(), cx)
+                    })),
+            )
+            .child({
+                let (icon, label) = if self.commit_editor_expanded {
+                    (IconName::Minimize, "Collapse Commit Editor")
+                } else {
+                    (IconName::Maximize, "Fill Commit Editor")
+                };
+                let focus_handle = self.focus_handle.clone();
+
+                panel_icon_button("fill-commit-editor", icon)
+                    .icon_size(IconSize::Small)
+                    .tooltip(move |_window, cx| {
+                        Tooltip::for_action_in(label, &git::ToggleFillCommitEditor, &focus_handle, cx)
+                    })
+                    .on_click(cx.listener({
+                        move |_, _, window, cx| window.dispatch_action(git::ToggleFillCommitEditor.boxed_clone(), cx)
+                    }))
+            });
+
         let footer = v_flex()
+            .when(self.commit_editor_expanded, |this| this.flex_1().min_h_0())
             .child(PanelRepoFooter::new(display_name, branch, head_commit, Some(git_panel)))
             .child(
                 panel_editor_container(window, cx)
                     .id("commit-editor-container")
-                    .relative()
                     .w_full()
-                    .h(max_height + footer_size)
+                    .when(self.commit_editor_expanded, |this| this.flex_1().min_h_0())
                     .border_t_1()
                     .border_color(cx.theme().colors().border)
-                    .cursor_text()
                     .on_click(cx.listener(move |this, _: &ClickEvent, window, cx| {
                         window.focus(&this.commit_editor.focus_handle(cx), cx);
                     }))
                     .child(
                         h_flex()
-                            .id("commit-footer")
-                            .border_t_1()
-                            .when(editor_is_long, |el| el.border_color(cx.theme().colors().border_variant))
-                            .absolute()
-                            .bottom_0()
-                            .left_0()
-                            .w_full()
-                            .px_2()
-                            .h(footer_size)
-                            .flex_none()
-                            .justify_between()
-                            .child(h_flex().gap_0p5().child(self.render_commit_button(cx))),
-                    )
-                    .child(
-                        div()
-                            .pr_2p5()
-                            .on_action(|&editor::actions::MoveUp, _, cx| {
-                                cx.stop_propagation();
-                            })
-                            .on_action(|&editor::actions::MoveDown, _, cx| {
-                                cx.stop_propagation();
-                            })
-                            .child(EditorElement::new(&self.commit_editor, panel_editor_style)),
+                            .size_full()
+                            .child(
+                                div()
+                                    .pt_2()
+                                    .px_2()
+                                    .cursor_text()
+                                    .flex_grow()
+                                    .on_action(|&editor::actions::MoveUp, _, cx| {
+                                        cx.stop_propagation();
+                                    })
+                                    .on_action(|&editor::actions::MoveDown, _, cx| {
+                                        cx.stop_propagation();
+                                    })
+                                    .child(EditorElement::new(&self.commit_editor, panel_editor_style)),
+                            )
+                            .child(vertical_buttons),
                     )
                     .child(
                         h_flex()
-                            .absolute()
-                            .top_2()
-                            .right_2()
-                            .opacity(0.5)
-                            .hover(|this| this.opacity(1.0))
-                            .child(
-                                panel_icon_button("expand-commit-editor", IconName::Maximize)
-                                    .icon_size(IconSize::Small)
-                                    .size(ui::ButtonSize::Default)
-                                    .tooltip(move |_window, cx| {
-                                        Tooltip::for_action_in(
-                                            "Open Commit Modal",
-                                            &git::ExpandCommitEditor,
-                                            &expand_tooltip_focus_handle,
-                                            cx,
-                                        )
-                                    })
-                                    .on_click(cx.listener({
-                                        move |_, _, window, cx| {
-                                            window.dispatch_action(git::ExpandCommitEditor.boxed_clone(), cx)
-                                        }
-                                    })),
-                            ),
+                            .id("commit-footer")
+                            .w_full()
+                            .p_1p5()
+                            .border_t_1()
+                            .when(editor_is_long, |el| el.border_color(cx.theme().colors().border_variant))
+                            .justify_between()
+                            .child(h_flex().gap_0p5().child(self.render_commit_button(cx))),
                     ),
             );
 
@@ -4576,13 +4616,14 @@ impl Render for GitPanel {
             .child(
                 v_flex()
                     .size_full()
-                    .children(self.render_panel_header(window, cx))
-                    .map(|this| {
-                        if has_entries {
-                            this.child(self.render_entries(has_write_access, window, cx))
-                        } else {
-                            this.child(self.render_empty_state(cx).into_any_element())
-                        }
+                    .when(!self.commit_editor_expanded, |this| {
+                        this.children(self.render_panel_header(window, cx)).map(|this| {
+                            if has_entries {
+                                this.child(self.render_entries(has_write_access, window, cx))
+                            } else {
+                                this.child(self.render_empty_state(cx).into_any_element())
+                            }
+                        })
                     })
                     .children(self.render_footer(window, cx))
                     .when(self.amend_pending, |this| this.child(self.render_pending_amend(cx)))
@@ -4605,7 +4646,7 @@ impl Render for GitPanel {
 
 impl Focusable for GitPanel {
     fn focus_handle(&self, cx: &App) -> gpui::FocusHandle {
-        if self.entries.is_empty() {
+        if self.entries.is_empty() || self.commit_editor_expanded {
             self.commit_editor.focus_handle(cx)
         } else {
             self.focus_handle.clone()
@@ -6174,6 +6215,106 @@ mod tests {
             [...skipped 2 hunks...]
         "};
         assert_eq!(result, expected);
+    }
+
+    #[gpui::test]
+    async fn test_panel_editor_style_uses_buffer_font_size(cx: &mut TestAppContext) {
+        init_test(cx);
+
+        cx.update(|cx| {
+            SettingsStore::update_global(cx, |store, cx| {
+                store.update_user_settings(cx, |settings| {
+                    settings.theme.buffer_font_size = Some(20.0.into());
+                });
+            });
+        });
+
+        cx.add_window(|window, cx| {
+            let style = panel_editor_style(true, window, cx);
+            assert_eq!(style.text.font_size.to_pixels(window.rem_size()), px(20.0));
+            Editor::single_line(window, cx)
+        });
+    }
+
+    #[gpui::test]
+    async fn test_fill_commit_editor_toggle(cx: &mut TestAppContext) {
+        init_test(cx);
+
+        let fs = FakeFs::new(cx.background_executor.clone());
+        fs.insert_tree(
+            path!("/project"),
+            json!({
+                ".git": {},
+                "tracked": "tracked\n",
+            }),
+        )
+        .await;
+
+        let project = Project::test(fs.clone(), [Path::new(path!("/project"))], cx).await;
+        let workspace = cx.add_window(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let cx = &mut VisualTestContext::from_window(*workspace, cx);
+        let panel = workspace.update(cx, GitPanel::new).unwrap();
+
+        panel.update_in(cx, |panel, window, cx| {
+            assert!(!panel.commit_editor_expanded);
+            assert!(matches!(
+                panel.commit_editor.read(cx).mode(),
+                EditorMode::AutoHeight { .. }
+            ));
+
+            panel.toggle_fill_commit_editor(&ToggleFillCommitEditor, window, cx);
+            assert!(panel.commit_editor_expanded);
+            assert!(matches!(panel.commit_editor.read(cx).mode(), EditorMode::Full { .. }));
+
+            panel.toggle_fill_commit_editor(&ToggleFillCommitEditor, window, cx);
+            assert!(!panel.commit_editor_expanded);
+            assert!(matches!(
+                panel.commit_editor.read(cx).mode(),
+                EditorMode::AutoHeight { .. }
+            ));
+        });
+    }
+
+    #[gpui::test]
+    async fn test_focus_handle_follows_expanded_commit_editor(cx: &mut TestAppContext) {
+        init_test(cx);
+
+        let fs = FakeFs::new(cx.background_executor.clone());
+        fs.insert_tree(
+            path!("/project"),
+            json!({
+                ".git": {},
+                "tracked": "tracked\n",
+            }),
+        )
+        .await;
+        fs.set_status_for_repo(
+            path!("/project/.git").as_ref(),
+            &[("tracked", StatusCode::Modified.worktree())],
+        );
+
+        let project = Project::test(fs.clone(), [Path::new(path!("/project"))], cx).await;
+        let workspace = cx.add_window(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let cx = &mut VisualTestContext::from_window(*workspace, cx);
+        let panel = workspace.update(cx, GitPanel::new).unwrap();
+
+        let handle = cx.update_window_entity(&panel, |panel, _, _| {
+            std::mem::replace(&mut panel.update_visible_entries_task, Task::ready(()))
+        });
+        cx.executor().advance_clock(2 * UPDATE_DEBOUNCE);
+        handle.await;
+
+        panel.update(cx, |panel, cx| {
+            assert!(!panel.entries.is_empty());
+            assert!(!panel.commit_editor_expanded);
+            assert_eq!(panel.focus_handle(cx), panel.focus_handle.clone());
+        });
+
+        panel.update_in(cx, |panel, window, cx| {
+            panel.toggle_fill_commit_editor(&ToggleFillCommitEditor, window, cx);
+            assert!(panel.commit_editor_expanded);
+            assert_eq!(panel.focus_handle(cx), panel.commit_editor.focus_handle(cx));
+        });
     }
 
     #[gpui::test]

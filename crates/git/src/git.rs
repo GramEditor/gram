@@ -94,6 +94,8 @@ actions!(
         Cancel,
         /// Expands the commit message editor.
         ExpandCommitEditor,
+        /// Toggles whether the commit message editor fills all the available vertical space within the git panel
+        ToggleFillCommitEditor,
         /// Initializes a new git repository.
         Init,
         /// Opens all modified files in the editor.

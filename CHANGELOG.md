@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show added and deleted line counts per entry and in total in the git panel,
   behind the `git_panel.diff_stats` setting (zed#49519) (zed#58018)
 - Add a branch picker filter for all, local, or remote branches (zed#60857)
+- Add `git::ToggleFillCommitEditor` to expand the commit editor to fill the
+  git panel, bound to `alt-shift-escape` (zed#55043) (zed#55565) (zed#60368)
+  (zed#59901)
 
 ## Changed
 
@@ -42,6 +45,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   suggested
 - Refresh git state after resetting, fetching and pulling, so the panel and
   the ahead/behind counts stay current (zed#60590)
+- Use `buffer_font_size` for the commit message editor instead of the smaller
+  UI font, and lay the commit container out so it holds up at larger font
+  sizes (zed#55233) (zed#60331)
+- Size the commit modal from the buffer font it renders in, rather than the
+  narrower UI font, so it fits the commit message
 
 ## [3.2.0] - 2026-07-27
 
