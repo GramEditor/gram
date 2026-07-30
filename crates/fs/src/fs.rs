@@ -1629,6 +1629,12 @@ impl FakeFs {
         self.state.lock().buffered_events.clear();
     }
 
+    pub fn simulate_watcher_overflow(&self, root: impl Into<PathBuf>) {
+        let mut state = self.state.lock();
+        state.buffered_events.clear();
+        state.emit_event([(root, Some(PathEventKind::Rescan))]);
+    }
+
     pub fn flush_events(&self, count: usize) {
         self.state.lock().flush_events(count);
     }

@@ -562,11 +562,6 @@ pub struct GitDiffStat {
     pub entries: Arc<[(RepoPath, DiffStat)]>,
 }
 
-/// Parses the output of `git diff --numstat` where output looks like:
-///
-/// ```text
-/// 24   12   dir/file.txt
-/// ```
 pub fn parse_numstat(output: &str) -> GitDiffStat {
     let mut entries = Vec::new();
     for line in output.lines() {
@@ -629,7 +624,6 @@ mod tests {
 
     #[test]
     fn test_parse_numstat_binary_files_skipped() {
-        // git diff --numstat outputs "-\t-\tpath" for binary files
         let input = "-\t-\timage.png\n5\t2\tsrc/lib.rs\n";
         let result = parse_numstat(input);
         assert_eq!(result.entries.len(), 1);
@@ -660,7 +654,6 @@ mod tests {
 
     #[test]
     fn test_parse_numstat_incomplete_lines_skipped() {
-        // Lines with fewer than 3 tab-separated fields are skipped
         let input = "10\t5\n7\t3\tok.rs\n";
         let result = parse_numstat(input);
         assert_eq!(result.entries.len(), 1);

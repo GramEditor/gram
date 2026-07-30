@@ -5553,14 +5553,15 @@ impl Repository {
 
         let this = cx.weak_entity();
         let _ = self.send_keyed_job(Some(GitJobKey::RefreshStatuses), None, |state, mut cx| async move {
-            let (prev_snapshot, mut changed_paths) = this.update(&mut cx, |this, _| {
+            let (prev_snapshot, changed_paths) = this.update(&mut cx, |this, _| {
                 (this.snapshot.clone(), mem::take(&mut this.paths_needing_status_update))
             })?;
             let RepositoryState::Local(LocalRepositoryState { backend, .. }) = state else {
                 bail!("not a local repository")
             };
 
-            let paths = changed_paths.iter().cloned().collect::<Vec<_>>();
+            let changed_paths = GitStore::coalesce_repo_paths(changed_paths.into_iter().collect());
+            let paths = changed_paths.clone();
             if paths.is_empty() {
                 return Ok(());
             }
@@ -5582,10 +5583,30 @@ impl Repository {
                         diff_stats.entries.iter().map(|(p, s)| (p, *s)).collect();
                     let mut changed_path_statuses = Vec::new();
                     let prev_statuses = prev_snapshot.statuses_by_path.clone();
+                    let current_status_paths = statuses
+                        .entries
+                        .iter()
+                        .map(|(repo_path, _)| repo_path.clone())
+                        .collect::<BTreeSet<_>>();
+
+                    for path in &changed_paths {
+                        let mut cursor = prev_statuses.cursor::<PathProgress>(());
+                        cursor.seek_forward(&PathTarget::Path(path), Bias::Left);
+                        while let Some(entry) = cursor.item() {
+                            if !entry.repo_path.starts_with(path) {
+                                break;
+                            }
+
+                            if !current_status_paths.contains(&entry.repo_path) {
+                                changed_path_statuses.push(Edit::Remove(PathKey(entry.repo_path.as_ref().clone())));
+                            }
+                            cursor.next();
+                        }
+                    }
+
                     let mut cursor = prev_statuses.cursor::<PathProgress>(());
 
                     for (repo_path, status) in &*statuses.entries {
-                        changed_paths.remove(repo_path);
                         let diff_stat = diff_stat_map.get(repo_path).copied();
                         if cursor.seek_forward(&PathTarget::Path(repo_path), Bias::Left)
                             && cursor
@@ -5600,12 +5621,6 @@ impl Repository {
                             status: *status,
                             diff_stat,
                         }));
-                    }
-                    let mut cursor = prev_statuses.cursor::<PathProgress>(());
-                    for path in changed_paths.into_iter() {
-                        if cursor.seek_forward(&PathTarget::Path(&path), Bias::Left) {
-                            changed_path_statuses.push(Edit::Remove(PathKey(path.as_ref().clone())));
-                        }
                     }
                     changed_path_statuses
                 })

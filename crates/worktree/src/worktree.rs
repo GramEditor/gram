@@ -2944,11 +2944,17 @@ impl BackgroundScannerState {
 
         let work_directory_id = work_dir_entry.id;
 
+        let git_dir_scan_id = self
+            .snapshot
+            .git_repositories
+            .get(&work_directory_id)
+            .map_or(0, |existing_repository| existing_repository.git_dir_scan_id);
+
         let local_repository = LocalRepositoryEntry {
             work_directory_id,
             work_directory,
             work_directory_abs_path: work_directory_abs_path.as_path().into(),
-            git_dir_scan_id: 0,
+            git_dir_scan_id,
             dot_git_abs_path,
             common_dir_abs_path,
             repository_dir_abs_path,
@@ -3940,6 +3946,23 @@ impl BackgroundScanner {
                             .expect("stripping off the ancestor");
                         dot_git_paths = Some((ancestor.to_owned(), path_in_git_dir.to_owned()));
                         break;
+                    }
+                }
+
+                if matches!(event.kind, Some(fs::PathEventKind::Rescan)) {
+                    for repository in snapshot.git_repositories.values() {
+                        let affected_by_rescan = [
+                            &repository.dot_git_abs_path,
+                            &repository.common_dir_abs_path,
+                            &repository.repository_dir_abs_path,
+                        ]
+                        .iter()
+                        .any(|git_dir_abs_path| git_dir_abs_path.starts_with(abs_path.as_path()));
+                        let dot_git_abs_path = repository.dot_git_abs_path.to_path_buf();
+                        if affected_by_rescan && !dot_git_abs_paths.contains(&dot_git_abs_path) {
+                            log::debug!("reloading git repo at {dot_git_abs_path:?} due to rescan of {abs_path:?}");
+                            dot_git_abs_paths.push(dot_git_abs_path);
+                        }
                     }
                 }
 

@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix multiple menus entries on some Linux distributions (#394) by @koru
 - Fix Gentoo packaging parse errors (#397) by @koru
 - Use cfg_select where reasonable (#387) by @ltdk
+- Fix stale git status entries left behind when a directory is moved or removed
+  (zed#59934)
+- Reload git state when a watcher rescan covers a repository (zed#61541)
 
 ## [3.2.0] - 2026-07-27
 
