@@ -3550,8 +3550,9 @@ impl GitPanel {
                                 div()
                                     .pt_2()
                                     .px_2()
-                                    .cursor_text()
+                                    .h_full()
                                     .flex_grow()
+                                    .cursor_text()
                                     .on_action(|&editor::actions::MoveUp, _, cx| {
                                         cx.stop_propagation();
                                     })

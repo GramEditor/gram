@@ -74,11 +74,7 @@ pub fn panel_filled_icon_button(id: impl Into<SharedString>, icon: IconName) -> 
 }
 
 pub fn panel_editor_container(_window: &mut Window, cx: &mut App) -> Div {
-    v_flex()
-        .size_full()
-        .gap(px(8.))
-        .p_2()
-        .bg(cx.theme().colors().editor_background)
+    v_flex().size_full().bg(cx.theme().colors().editor_background)
 }
 
 pub fn panel_editor_style(monospace: bool, window: &Window, cx: &App) -> EditorStyle {

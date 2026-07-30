@@ -9887,7 +9887,6 @@ fn check_git(output: &Output) {
     );
 }
 
-#[allow(clippy::disallowed_methods)]
 fn without_diff_stat(entry: StatusEntry) -> StatusEntry {
     StatusEntry {
         diff_stat: None,
@@ -9895,6 +9894,7 @@ fn without_diff_stat(entry: StatusEntry) -> StatusEntry {
     }
 }
 
+#[allow(clippy::disallowed_methods)]
 #[track_caller]
 fn git_init(path: &Path) -> PathBuf {
     let output = git_cmd(path)
