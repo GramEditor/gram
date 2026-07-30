@@ -58,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   saying "restore" for modified files too (zed#61554)
 - Stop git panel keybindings from intercepting typing in the branch and
   repository selectors (zed#61282)
+- Align the commit button back to the right of the commit editor footer
 
 ## [3.2.0] - 2026-07-27
 

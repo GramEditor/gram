@@ -3569,7 +3569,7 @@ impl GitPanel {
                             .p_1p5()
                             .border_t_1()
                             .when(editor_is_long, |el| el.border_color(cx.theme().colors().border_variant))
-                            .justify_between()
+                            .justify_end()
                             .child(h_flex().gap_0p5().child(self.render_commit_button(cx))),
                     ),
             );
