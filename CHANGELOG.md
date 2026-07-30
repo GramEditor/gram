@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   committed files until the next reload
 - Enable the commit button when the editor is empty and a commit message is
   suggested
+- Refresh git state after resetting, fetching and pulling, so the panel and
+  the ahead/behind counts stay current (zed#60590)
 
 ## [3.2.0] - 2026-07-27
 

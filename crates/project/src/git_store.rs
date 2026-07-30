@@ -3793,12 +3793,19 @@ impl Repository {
 
     pub fn reset(&mut self, commit: String, reset_mode: ResetMode, _cx: &mut App) -> oneshot::Receiver<Result<()>> {
         let id = self.id;
+        let git_store = self.git_store.clone();
 
-        self.send_job(None, move |git_repo, _| async move {
+        self.send_job(None, move |git_repo, mut cx| async move {
             match git_repo {
                 RepositoryState::Local(LocalRepositoryState {
                     backend, environment, ..
-                }) => backend.reset(commit, reset_mode, environment).await,
+                }) => {
+                    let result = backend.reset(commit, reset_mode, environment).await;
+                    if result.is_ok() {
+                        git_store.update(&mut cx, |git_store, cx| git_store.refresh(cx)).ok();
+                    }
+                    result
+                }
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     client
                         .request(proto::GitReset {
@@ -4573,11 +4580,19 @@ impl Repository {
         let askpass_id = util::post_inc(&mut self.latest_askpass_id);
         let id = self.id;
 
-        self.send_job(Some("git fetch".into()), move |git_repo, cx| async move {
+        let git_store = self.git_store.clone();
+
+        self.send_job(Some("git fetch".into()), move |git_repo, mut cx| async move {
             match git_repo {
                 RepositoryState::Local(LocalRepositoryState {
                     backend, environment, ..
-                }) => backend.fetch(fetch_options, askpass, environment, cx).await,
+                }) => {
+                    let result = backend.fetch(fetch_options, askpass, environment, cx.clone()).await;
+                    if result.is_ok() {
+                        git_store.update(&mut cx, |git_store, cx| git_store.refresh(cx)).ok();
+                    }
+                    result
+                }
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     askpass_delegates.lock().insert(askpass_id, askpass);
                     let _defer = util::defer(|| {
@@ -4712,6 +4727,8 @@ impl Repository {
         let askpass_id = util::post_inc(&mut self.latest_askpass_id);
         let id = self.id;
 
+        let git_store = self.git_store.clone();
+
         let mut status = "git pull".to_string();
         if rebase {
             status.push_str(" --rebase");
@@ -4721,21 +4738,25 @@ impl Repository {
             status.push_str(&format!(" {}", b));
         }
 
-        self.send_job(Some(status.into()), move |git_repo, cx| async move {
+        self.send_job(Some(status.into()), move |git_repo, mut cx| async move {
             match git_repo {
                 RepositoryState::Local(LocalRepositoryState {
                     backend, environment, ..
                 }) => {
-                    backend
+                    let result = backend
                         .pull(
                             branch.as_ref().map(|b| b.to_string()),
                             remote.to_string(),
                             rebase,
                             askpass,
                             environment.clone(),
-                            cx,
+                            cx.clone(),
                         )
-                        .await
+                        .await;
+                    if result.is_ok() {
+                        git_store.update(&mut cx, |git_store, cx| git_store.refresh(cx)).ok();
+                    }
+                    result
                 }
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     askpass_delegates.lock().insert(askpass_id, askpass);
