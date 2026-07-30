@@ -8,7 +8,9 @@ use project::git_store::Repository;
 use ui::{FluentBuilder, ToggleButtonGroup, ToggleButtonGroupStyle, ToggleButtonSimple, Tooltip, prelude::*};
 use workspace::{ModalView, Workspace, pane};
 
-use crate::branch_picker::{self, BranchList, DeleteBranch, FilterRemotes};
+use crate::branch_picker::{
+    self, BranchList, CycleBranchFilter, DeleteBranch, ShowAllBranches, ShowLocalBranches, ShowRemoteBranches,
+};
 use crate::stash_picker::{self, DropStashItem, ShowStashItem, StashList};
 use crate::worktree_picker::{self, WorktreeFromDefault, WorktreeFromDefaultOnWindow, WorktreeList};
 
@@ -301,10 +303,35 @@ impl GitPicker {
         }
     }
 
-    fn handle_filter_remotes(&mut self, _: &FilterRemotes, window: &mut Window, cx: &mut Context<Self>) {
+    fn set_active_branch_filter(
+        &mut self,
+        branch_filter: branch_picker::BranchFilter,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         if let Some(branch_list) = &self.branch_list {
             branch_list.update(cx, |list, cx| {
-                list.handle_filter(&FilterRemotes, window, cx);
+                list.set_branch_filter(branch_filter, window, cx);
+            });
+        }
+    }
+
+    fn handle_show_all_branches(&mut self, _: &ShowAllBranches, window: &mut Window, cx: &mut Context<Self>) {
+        self.set_active_branch_filter(branch_picker::BranchFilter::All, window, cx);
+    }
+
+    fn handle_show_local_branches(&mut self, _: &ShowLocalBranches, window: &mut Window, cx: &mut Context<Self>) {
+        self.set_active_branch_filter(branch_picker::BranchFilter::Local, window, cx);
+    }
+
+    fn handle_show_remote_branches(&mut self, _: &ShowRemoteBranches, window: &mut Window, cx: &mut Context<Self>) {
+        self.set_active_branch_filter(branch_picker::BranchFilter::Remote, window, cx);
+    }
+
+    fn handle_cycle_branch_filter(&mut self, _: &CycleBranchFilter, window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(branch_list) = &self.branch_list {
+            branch_list.update(cx, |list, cx| {
+                list.cycle_branch_filter(window, cx);
             });
         }
     }
@@ -424,7 +451,10 @@ impl Render for GitPicker {
             .on_modifiers_changed(cx.listener(Self::handle_modifiers_changed))
             .when(self.tab == GitPickerTab::Branches, |el| {
                 el.on_action(cx.listener(Self::handle_delete_branch))
-                    .on_action(cx.listener(Self::handle_filter_remotes))
+                    .on_action(cx.listener(Self::handle_show_all_branches))
+                    .on_action(cx.listener(Self::handle_show_local_branches))
+                    .on_action(cx.listener(Self::handle_show_remote_branches))
+                    .on_action(cx.listener(Self::handle_cycle_branch_filter))
             })
             .when(self.tab == GitPickerTab::Worktrees, |el| {
                 el.on_action(cx.listener(Self::handle_worktree_from_default))

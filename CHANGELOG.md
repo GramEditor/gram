@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `Toggle` actions to all the side panels (#389) by @ycna07
 - Show added and deleted line counts per entry and in total in the git panel,
   behind the `git_panel.diff_stats` setting (zed#49519) (zed#58018)
+- Add a branch picker filter for all, local, or remote branches (zed#60857)
 
 ## Changed
 
@@ -33,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix stale git status entries left behind when a directory is moved or removed
   (zed#59934)
 - Reload git state when a watcher rescan covers a repository (zed#61541)
+- Render file names in the git panel on a single line (zed#60862)
 
 ## [3.2.0] - 2026-07-27
 
