@@ -35,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (zed#59934)
 - Reload git state when a watcher rescan covers a repository (zed#61541)
 - Render file names in the git panel on a single line (zed#60862)
+- Avoid dropping git repositories during watcher rescans (zed#59976)
+- Refresh git state after committing, so the panel no longer lists the
+  committed files until the next reload
 
 ## [3.2.0] - 2026-07-27
 
