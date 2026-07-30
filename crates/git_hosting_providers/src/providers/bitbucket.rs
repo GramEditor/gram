@@ -69,10 +69,6 @@ impl GitHostingProvider for Bitbucket {
         self.base_url.clone()
     }
 
-    fn supports_avatars(&self) -> bool {
-        false
-    }
-
     fn format_line_number(&self, line: u32) -> String {
         if self.is_self_hosted() {
             return format!("{line}");

@@ -1,20 +1,18 @@
 use crate::commit_view::CommitView;
 use editor::hover_markdown_style;
-use futures::Future;
 use git::blame::BlameEntry;
+use git::commit::ParsedCommitMessage;
 use git::repository::CommitSummary;
-use git::{GitRemote, commit::ParsedCommitMessage};
 use gpui::{
-    App, Asset, Element, Entity, MouseButton, ParentElement, Render, ScrollHandle, StatefulInteractiveElement,
-    WeakEntity, prelude::*,
+    Element, Entity, MouseButton, ParentElement, Render, ScrollHandle, StatefulInteractiveElement, WeakEntity,
+    prelude::*,
 };
 use markdown::{Markdown, MarkdownElement};
 use project::git_store::Repository;
 use settings::Settings;
-use std::hash::Hash;
 use theme::ThemeSettings;
 use time::{OffsetDateTime, UtcOffset};
-use ui::{Avatar, CopyButton, Divider, prelude::*, tooltip_container};
+use ui::{CopyButton, Divider, prelude::*, tooltip_container};
 use workspace::Workspace;
 
 #[derive(Clone, Debug)]
@@ -26,27 +24,17 @@ pub struct CommitDetails {
     pub message: Option<ParsedCommitMessage>,
 }
 
-pub struct CommitAvatar<'a> {
-    sha: &'a SharedString,
-    remote: Option<&'a GitRemote>,
+pub struct CommitAvatar {
     size: Option<IconSize>,
 }
 
-impl<'a> CommitAvatar<'a> {
-    pub fn new(sha: &'a SharedString, remote: Option<&'a GitRemote>) -> Self {
-        Self {
-            sha,
-            remote,
-            size: None,
-        }
+impl CommitAvatar {
+    pub fn new() -> Self {
+        Self { size: None }
     }
 
-    pub fn from_commit_details(details: &'a CommitDetails) -> Self {
-        Self {
-            sha: &details.sha,
-            remote: details.message.as_ref().and_then(|details| details.remote.as_ref()),
-            size: None,
-        }
+    pub fn from_commit_details() -> Self {
+        Self { size: None }
     }
 
     pub fn size(mut self, size: IconSize) -> Self {
@@ -54,62 +42,11 @@ impl<'a> CommitAvatar<'a> {
         self
     }
 
-    pub fn render(&'a self, window: &mut Window, cx: &mut App) -> AnyElement {
-        match self.avatar(window, cx) {
-            // Loading or no avatar found
-            None => Icon::new(IconName::Person)
-                .color(Color::Muted)
-                .when_some(self.size, |this, size| this.size(size))
-                .into_any_element(),
-            // Found
-            Some(avatar) => avatar
-                .when_some(self.size, |this, size| this.size(size.rems()))
-                .into_any_element(),
-        }
-    }
-
-    pub fn avatar(&'a self, window: &mut Window, cx: &mut App) -> Option<Avatar> {
-        let remote = self.remote.filter(|remote| remote.host_supports_avatars())?;
-        let avatar_url = CommitAvatarAsset::new(remote.clone(), self.sha.clone());
-
-        let url = window.use_asset::<CommitAvatarAsset>(&avatar_url, cx)??;
-        Some(Avatar::new(url.to_string()))
-    }
-}
-
-#[derive(Clone, Debug)]
-struct CommitAvatarAsset {
-    sha: SharedString,
-    remote: GitRemote,
-}
-
-impl Hash for CommitAvatarAsset {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.sha.hash(state);
-        self.remote.host.name().hash(state);
-    }
-}
-
-impl CommitAvatarAsset {
-    fn new(remote: GitRemote, sha: SharedString) -> Self {
-        Self { remote, sha }
-    }
-}
-
-impl Asset for CommitAvatarAsset {
-    type Source = Self;
-    type Output = Option<SharedString>;
-
-    fn load(source: Self::Source, cx: &mut App) -> impl Future<Output = Self::Output> + Send + 'static {
-        let client = cx.http_client();
-
-        async move {
-            source
-                .remote
-                .avatar_url(source.sha, client)
-                .await
-                .map(|url| SharedString::from(url.to_string()))
-        }
+    pub fn render(&self) -> AnyElement {
+        Icon::new(IconName::Person)
+            .color(Color::Muted)
+            .when_some(self.size, |this, size| this.size(size))
+            .into_any_element()
     }
 }
 
@@ -178,7 +115,7 @@ impl CommitTooltip {
 
 impl Render for CommitTooltip {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let avatar = CommitAvatar::from_commit_details(&self.commit).render(window, cx);
+        let avatar = CommitAvatar::new().render();
 
         let author = self.commit.author_name.clone();
 

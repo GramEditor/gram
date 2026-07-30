@@ -1,13 +1,9 @@
 use std::str::FromStr;
-use std::sync::{Arc, LazyLock};
+use std::sync::LazyLock;
 
-use anyhow::{Context as _, Result, bail};
+use anyhow::{Result, bail};
 use async_trait::async_trait;
-use futures::AsyncReadExt;
-use gpui::SharedString;
-use http_client::{AsyncBody, HttpClient, HttpRequestExt, Request};
 use regex::Regex;
-use serde::Deserialize;
 use url::Url;
 use urlencoding::encode;
 
@@ -20,44 +16,6 @@ use crate::get_host_from_git_remote_url;
 fn pull_request_number_regex() -> &'static Regex {
     static PULL_REQUEST_NUMBER_REGEX: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\(#(\d+)\)$").unwrap());
     &PULL_REQUEST_NUMBER_REGEX
-}
-
-#[derive(Debug, Deserialize)]
-struct CommitDetails {
-    #[expect(
-        unused,
-        reason = "This field was found to be unused with serde library bump; it's left as is due to insufficient context on PO's side, but it *may* be fine to remove"
-    )]
-    commit: Commit,
-    author: Option<User>,
-}
-
-#[derive(Debug, Deserialize)]
-struct Commit {
-    #[expect(
-        unused,
-        reason = "This field was found to be unused with serde library bump; it's left as is due to insufficient context on PO's side, but it *may* be fine to remove"
-    )]
-    author: Author,
-}
-
-#[derive(Debug, Deserialize)]
-struct Author {
-    #[expect(
-        unused,
-        reason = "This field was found to be unused with serde library bump; it's left as is due to insufficient context on PO's side, but it *may* be fine to remove"
-    )]
-    email: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct User {
-    #[expect(
-        unused,
-        reason = "This field was found to be unused with serde library bump; it's left as is due to insufficient context on PO's side, but it *may* be fine to remove"
-    )]
-    pub id: u64,
-    pub avatar_url: String,
 }
 
 #[derive(Debug)]
@@ -96,46 +54,6 @@ impl Github {
             Url::parse(&format!("https://{}", host))?,
         ))
     }
-
-    async fn fetch_github_commit_author(
-        &self,
-        repo_owner: &str,
-        repo: &str,
-        commit: &str,
-        client: &Arc<dyn HttpClient>,
-    ) -> Result<Option<User>> {
-        let Some(host) = self.base_url.host_str() else {
-            bail!("failed to get host from github base url");
-        };
-        let url = format!("https://api.{host}/repos/{repo_owner}/{repo}/commits/{commit}");
-
-        let mut request = Request::get(&url)
-            .header("Content-Type", "application/json")
-            .follow_redirects(http_client::RedirectPolicy::FollowAll);
-
-        if let Ok(github_token) = std::env::var("GITHUB_TOKEN") {
-            request = request.header("Authorization", format!("Bearer {}", github_token));
-        }
-
-        let mut response = client
-            .send(request.body(AsyncBody::default())?)
-            .await
-            .with_context(|| format!("error fetching GitHub commit details at {:?}", url))?;
-
-        let mut body = Vec::new();
-        response.body_mut().read_to_end(&mut body).await?;
-
-        if response.status().is_client_error() {
-            let text = String::from_utf8_lossy(body.as_slice());
-            bail!("status error {}, response: {text:?}", response.status().as_u16());
-        }
-
-        let body_str = std::str::from_utf8(&body)?;
-
-        serde_json::from_str::<CommitDetails>(body_str)
-            .map(|commit| commit.author)
-            .context("failed to deserialize GitHub commit details")
-    }
 }
 
 #[async_trait]
@@ -146,12 +64,6 @@ impl GitHostingProvider for Github {
 
     fn base_url(&self) -> Url {
         self.base_url.clone()
-    }
-
-    fn supports_avatars(&self) -> bool {
-        // Avatars are not supported for self-hosted GitHub instances
-        // See tracking issue: https://github.com/zed-industries/zed/issues/11043
-        &self.name == "GitHub"
     }
 
     fn format_line_number(&self, line: u32) -> String {
@@ -226,26 +138,6 @@ impl GitHostingProvider for Github {
 
         Some(PullRequest { number, url })
     }
-
-    async fn commit_author_avatar_url(
-        &self,
-        repo_owner: &str,
-        repo: &str,
-        commit: SharedString,
-        http_client: Arc<dyn HttpClient>,
-    ) -> Result<Option<Url>> {
-        let commit = commit.to_string();
-        let avatar_url = self
-            .fetch_github_commit_author(repo_owner, repo, &commit, &http_client)
-            .await?
-            .map(|author| -> Result<Url, url::ParseError> {
-                let mut url = Url::parse(&author.avatar_url)?;
-                url.set_query(Some("size=128"));
-                Ok(url)
-            })
-            .transpose()?;
-        Ok(avatar_url)
-    }
 }
 
 #[cfg(test)]
@@ -282,7 +174,6 @@ mod tests {
         let remote_url = "git@github.my-enterprise.com:GramEditor/gram.git";
         let github = Github::from_remote_url(remote_url).unwrap();
 
-        assert!(!github.supports_avatars());
         assert_eq!(github.name, "GitHub Self-Hosted".to_string());
         assert_eq!(github.base_url, Url::parse("https://github.my-enterprise.com").unwrap());
     }
@@ -292,7 +183,6 @@ mod tests {
         let remote_url = "https://github.my-enterprise.com/GramEditor/gram.git";
         let github = Github::from_remote_url(remote_url).unwrap();
 
-        assert!(!github.supports_avatars());
         assert_eq!(github.name, "GitHub Self-Hosted".to_string());
         assert_eq!(github.base_url, Url::parse("https://github.my-enterprise.com").unwrap());
     }

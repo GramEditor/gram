@@ -35,7 +35,6 @@ use workspace::{
     searchable::SearchableItemHandle,
 };
 
-use crate::commit_tooltip::CommitAvatar;
 use crate::git_panel::GitPanel;
 
 actions!(git, [ApplyCurrentStash, PopCurrentStash, DropCurrentStash,]);
@@ -377,15 +376,8 @@ impl CommitView {
         }
     }
 
-    fn render_commit_avatar(
-        &self,
-        sha: &SharedString,
-        size: impl Into<gpui::AbsoluteLength>,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> AnyElement {
+    fn render_commit_avatar(&self, size: impl Into<gpui::AbsoluteLength>, cx: &mut App) -> AnyElement {
         let size = size.into();
-        let avatar = CommitAvatar::new(sha, self.remote.as_ref());
 
         v_flex()
             .w(size)
@@ -396,15 +388,10 @@ impl CommitView {
             .justify_center()
             .items_center()
             .child(
-                avatar
-                    .avatar(window, cx)
-                    .map(|a| a.size(size).into_any_element())
-                    .unwrap_or_else(|| {
-                        Icon::new(IconName::Person)
-                            .color(Color::Muted)
-                            .size(IconSize::Medium)
-                            .into_any_element()
-                    }),
+                Icon::new(IconName::Person)
+                    .color(Color::Muted)
+                    .size(IconSize::Medium)
+                    .into_any_element(),
             )
             .into_any()
     }
@@ -508,7 +495,7 @@ impl CommitView {
                 h_flex()
                     .w(gutter_width)
                     .justify_center()
-                    .child(self.render_commit_avatar(&commit.sha, rems(3.), window, cx)),
+                    .child(self.render_commit_avatar(rems(3.), cx)),
             )
             .child(
                 h_flex()

@@ -1,16 +1,11 @@
 use std::str::FromStr;
 use std::sync::{Arc, LazyLock};
 
-use anyhow::{Context as _, Result, bail};
 use async_trait::async_trait;
-use futures::AsyncReadExt;
 use git::{
     BuildCommitPermalinkParams, BuildPermalinkParams, GitHostingProvider, ParsedGitRemote, PullRequest, RemoteUrl,
 };
-use gpui::SharedString;
-use http_client::{AsyncBody, HttpClient, HttpRequestExt, Request};
 use regex::Regex;
-use serde::Deserialize;
 use url::Url;
 
 const CHROMIUM_REVIEW_URL: &str = "https://chromium-review.googlesource.com";
@@ -23,54 +18,7 @@ fn pull_request_regex() -> &'static Regex {
     &PULL_REQUEST_NUMBER_REGEX
 }
 
-/// https://gerrit-review.googlesource.com/Documentation/rest-api-changes.html
-#[derive(Debug, Deserialize)]
-struct ChangeInfo {
-    owner: AccountInfo,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct AccountInfo {
-    #[serde(rename = "_account_id")]
-    id: u64,
-}
-
 pub struct Chromium;
-
-impl Chromium {
-    async fn fetch_chromium_commit_author(
-        &self,
-        _repo: &str,
-        commit: &str,
-        client: &Arc<dyn HttpClient>,
-    ) -> Result<Option<AccountInfo>> {
-        let url = format!("{CHROMIUM_REVIEW_URL}/changes/{commit}");
-
-        let request = Request::get(&url)
-            .header("Content-Type", "application/json")
-            .follow_redirects(http_client::RedirectPolicy::FollowAll);
-
-        let mut response = client
-            .send(request.body(AsyncBody::default())?)
-            .await
-            .with_context(|| format!("error fetching Gerrit commit details at {:?}", url))?;
-
-        let mut body = Vec::new();
-        response.body_mut().read_to_end(&mut body).await?;
-
-        if response.status().is_client_error() {
-            let text = String::from_utf8_lossy(body.as_slice());
-            bail!("status error {}, response: {text:?}", response.status().as_u16());
-        }
-
-        // Remove XSSI protection prefix.
-        let body_str = std::str::from_utf8(&body)?.trim_start_matches(")]}'");
-
-        serde_json::from_str::<ChangeInfo>(body_str)
-            .map(|change| Some(change.owner))
-            .context("failed to deserialize Gerrit change info")
-    }
-}
 
 #[async_trait]
 impl GitHostingProvider for Chromium {
@@ -80,10 +28,6 @@ impl GitHostingProvider for Chromium {
 
     fn base_url(&self) -> Url {
         Url::parse("https://chromium.googlesource.com").unwrap()
-    }
-
-    fn supports_avatars(&self) -> bool {
-        true
     }
 
     fn format_line_number(&self, line: u32) -> String {
@@ -139,24 +83,6 @@ impl GitHostingProvider for Chromium {
         let number = capture.get(3)?.as_str().parse::<u32>().ok()?;
 
         Some(PullRequest { number, url })
-    }
-
-    async fn commit_author_avatar_url(
-        &self,
-        _repo_owner: &str,
-        repo: &str,
-        commit: SharedString,
-        http_client: Arc<dyn HttpClient>,
-    ) -> Result<Option<Url>> {
-        let commit = commit.to_string();
-        let Some(author) = self.fetch_chromium_commit_author(repo, &commit, &http_client).await? else {
-            return Ok(None);
-        };
-
-        let mut avatar_url = Url::parse(&format!("{CHROMIUM_REVIEW_URL}/accounts/{}/avatar", author.id))?;
-        avatar_url.set_query(Some("size=128"));
-
-        Ok(Some(avatar_url))
     }
 }
 

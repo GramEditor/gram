@@ -35,25 +35,13 @@ impl BlameRenderer for GitBlameRenderer {
         editor: Entity<Editor>,
         ix: usize,
         sha_color: Hsla,
-        window: &mut Window,
+        _window: &mut Window,
         cx: &mut App,
     ) -> Option<AnyElement> {
         let relative_timestamp = blame_entry_relative_timestamp(&blame_entry);
         let short_commit_id = blame_entry.sha.display_short();
         let author_name = blame_entry.author.as_deref().unwrap_or("<no name>");
         let name = util::truncate_and_trailoff(author_name, GIT_BLAME_MAX_AUTHOR_CHARS_DISPLAYED);
-
-        let avatar = if ProjectSettings::get_global(cx).git.blame.show_avatar {
-            Some(
-                CommitAvatar::new(
-                    &blame_entry.sha.to_string().into(),
-                    details.as_ref().and_then(|it| it.remote.as_ref()),
-                )
-                .render(window, cx),
-            )
-        } else {
-            None
-        };
 
         Some(
             div()
@@ -71,7 +59,6 @@ impl BlameRenderer for GitBlameRenderer {
                             h_flex()
                                 .gap_2()
                                 .child(div().text_color(sha_color).child(short_commit_id))
-                                .children(avatar)
                                 .child(name),
                         )
                         .child(relative_timestamp)
@@ -176,10 +163,10 @@ impl BlameRenderer for GitBlameRenderer {
             .and_then(|t| OffsetDateTime::from_unix_timestamp(t).ok())
             .unwrap_or(OffsetDateTime::now_utc());
 
-        let sha = blame.sha.to_string().into();
+        let sha = SharedString::from(blame.sha.to_string());
         let author: SharedString = blame.author.clone().unwrap_or("<no name>".to_string()).into();
         let author_email = blame.author_mail.as_deref().unwrap_or_default();
-        let avatar = CommitAvatar::new(&sha, details.as_ref().and_then(|it| it.remote.as_ref())).render(window, cx);
+        let avatar = CommitAvatar::new().render();
 
         let short_commit_id = sha
             .get(..8)

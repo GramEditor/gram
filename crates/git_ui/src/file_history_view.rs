@@ -1,9 +1,7 @@
 use anyhow::Result;
-use futures::Future;
 use git::repository::{FileHistory, FileHistoryEntry, RepoPath};
-use git::{GitHostingProviderRegistry, GitRemote, parse_git_remote_url};
 use gpui::{
-    AnyElement, AnyEntity, App, Asset, Context, Entity, EventEmitter, FocusHandle, Focusable, IntoElement, Render,
+    AnyElement, AnyEntity, App, Context, Entity, EventEmitter, FocusHandle, Focusable, IntoElement, Render,
     ScrollStrategy, Task, UniformListScrollHandle, WeakEntity, Window, actions, uniform_list,
 };
 use project::{
@@ -39,7 +37,6 @@ pub struct FileHistoryView {
     repository: WeakEntity<Repository>,
     git_store: WeakEntity<GitStore>,
     workspace: WeakEntity<Workspace>,
-    remote: Option<GitRemote>,
     selected_entry: Option<usize>,
     scroll_handle: UniformListScrollHandle,
     focus_handle: FocusHandle,
@@ -71,15 +68,12 @@ impl FileHistoryView {
 
                 workspace
                     .update_in(cx, |workspace, window, cx| {
-                        let project = workspace.project();
                         let view = cx.new(|cx| {
                             FileHistoryView::new(
                                 file_history,
                                 git_store.clone(),
                                 repo.clone(),
                                 workspace.weak_handle(),
-                                project.clone(),
-                                window,
                                 cx,
                             )
                         });
@@ -107,35 +101,17 @@ impl FileHistoryView {
         git_store: WeakEntity<GitStore>,
         repository: Entity<Repository>,
         workspace: WeakEntity<Workspace>,
-        _project: Entity<Project>,
-        _window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
         let focus_handle = cx.focus_handle();
         let scroll_handle = UniformListScrollHandle::new();
         let has_more = history.entries.len() >= PAGE_SIZE;
 
-        let snapshot = repository.read(cx).snapshot();
-        let remote_url = snapshot
-            .remote_upstream_url
-            .as_ref()
-            .or(snapshot.remote_origin_url.as_ref());
-
-        let remote = remote_url.and_then(|url| {
-            let provider_registry = GitHostingProviderRegistry::default_global(cx);
-            parse_git_remote_url(provider_registry, url).map(|(host, parsed)| GitRemote {
-                host,
-                owner: parsed.owner.into(),
-                repo: parsed.repo.into(),
-            })
-        });
-
         Self {
             history,
             git_store,
             repository: repository.downgrade(),
             workspace,
-            remote,
             selected_entry: None,
             scroll_handle,
             focus_handle,
@@ -258,27 +234,11 @@ impl FileHistoryView {
         }
     }
 
-    fn render_commit_avatar(&self, sha: &SharedString, window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let remote = self.remote.as_ref().filter(|r| r.host_supports_avatars());
-        let size = rems(1.25);
-
-        if let Some(remote) = remote {
-            let avatar_asset = CommitAvatarAsset::new(remote.clone(), sha.clone());
-            if let Some(Some(url)) = window.use_asset::<CommitAvatarAsset>(&avatar_asset, cx) {
-                Avatar::new(url.to_string()).size(size)
-            } else {
-                Avatar::new("").size(size)
-            }
-        } else {
-            Avatar::new("").size(size)
-        }
-    }
-
     fn render_commit_entry(
         &self,
         ix: usize,
         entry: &FileHistoryEntry,
-        window: &mut Window,
+        _window: &mut Window,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let pr_number = entry
@@ -335,7 +295,7 @@ impl FileHistoryView {
                         h_flex()
                             .gap_1()
                             .ml_auto()
-                            .child(self.render_commit_avatar(&entry.sha, window, cx))
+                            .child(Avatar::new("").size(rems(1.25)))
                             .child(
                                 div().w_full().child(
                                     Label::new(entry.author_name.clone())
@@ -354,46 +314,6 @@ impl FileHistoryView {
                 this.open_commit_view(window, cx);
             }))
             .into_any_element()
-    }
-}
-
-#[derive(Clone, Debug)]
-struct CommitAvatarAsset {
-    sha: SharedString,
-    remote: GitRemote,
-}
-
-impl std::hash::Hash for CommitAvatarAsset {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.sha.hash(state);
-        self.remote.host.name().hash(state);
-    }
-}
-
-impl CommitAvatarAsset {
-    fn new(remote: GitRemote, sha: SharedString) -> Self {
-        Self { remote, sha }
-    }
-}
-
-impl Asset for CommitAvatarAsset {
-    type Source = Self;
-    type Output = Option<SharedString>;
-
-    fn load(source: Self::Source, cx: &mut App) -> impl Future<Output = Self::Output> + Send + 'static {
-        let client = cx.http_client();
-        async move {
-            match source
-                .remote
-                .host
-                .commit_author_avatar_url(&source.remote.owner, &source.remote.repo, source.sha.clone(), client)
-                .await
-            {
-                Ok(Some(url)) => Some(SharedString::from(url.to_string())),
-                Ok(None) => None,
-                Err(_) => None,
-            }
-        }
     }
 }
 

@@ -3739,7 +3739,6 @@ dependencies = [
  "derive_more",
  "futures 0.3.33",
  "gpui",
- "http_client",
  "itertools 0.14.0",
  "log",
  "parking_lot",
@@ -3792,10 +3791,8 @@ version = "3.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "futures 0.3.33",
  "git",
  "gpui",
- "http_client",
  "indoc",
  "pretty_assertions",
  "regex",
