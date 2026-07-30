@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Avoid dropping git repositories during watcher rescans (zed#59976)
 - Refresh git state after committing, so the panel no longer lists the
   committed files until the next reload
+- Enable the commit button when the editor is empty and a commit message is
+  suggested
 
 ## [3.2.0] - 2026-07-27
 

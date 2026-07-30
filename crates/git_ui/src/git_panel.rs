@@ -578,6 +578,7 @@ pub struct GitPanel {
     tracked_count: usize,
     tracked_staged_count: usize,
     diff_stat_total: DiffStat,
+    suggested_commit_message: Option<String>,
     update_visible_entries_task: Task<()>,
     width: Option<Pixels>,
     pub(crate) workspace: WeakEntity<Workspace>,
@@ -735,6 +736,7 @@ impl GitPanel {
                 tracked_count: 0,
                 tracked_staged_count: 0,
                 diff_stat_total: DiffStat::default(),
+                suggested_commit_message: None,
                 update_visible_entries_task: Task::ready(()),
                 width: None,
                 show_placeholders: false,
@@ -1975,7 +1977,8 @@ impl GitPanel {
         let message = self.commit_editor.read(cx).text(cx);
         if message.is_empty() {
             return self
-                .suggest_commit_message(cx)
+                .suggested_commit_message
+                .clone()
                 .filter(|message| !message.trim().is_empty());
         } else if message.trim().is_empty() {
             return None;
@@ -2008,7 +2011,8 @@ impl GitPanel {
         if !text.trim().is_empty() {
             true
         } else if text.is_empty() {
-            self.suggest_commit_message(cx)
+            self.suggested_commit_message
+                .as_ref()
                 .is_some_and(|text| !text.trim().is_empty())
         } else {
             false
@@ -3022,8 +3026,11 @@ impl GitPanel {
 
         self.select_first_entry_if_none(window, cx);
 
-        let suggested_commit_message = self.suggest_commit_message(cx);
-        let placeholder_text = suggested_commit_message.unwrap_or("Enter commit message".into());
+        self.suggested_commit_message = self.suggest_commit_message(cx);
+        let placeholder_text = self
+            .suggested_commit_message
+            .clone()
+            .unwrap_or("Enter commit message".into());
 
         self.commit_editor.update(cx, |editor, cx| {
             editor.set_placeholder_text(&placeholder_text, window, cx)
@@ -6167,6 +6174,54 @@ mod tests {
             [...skipped 2 hunks...]
         "};
         assert_eq!(result, expected);
+    }
+
+    #[gpui::test]
+    async fn test_commit_button_enabled_by_suggested_message(cx: &mut TestAppContext) {
+        init_test(cx);
+
+        let fs = FakeFs::new(cx.background_executor.clone());
+        fs.insert_tree(
+            path!("/project"),
+            json!({
+                ".git": {},
+                "tracked": "tracked\n",
+            }),
+        )
+        .await;
+
+        fs.set_head_and_index_for_repo(path!("/project/.git").as_ref(), &[("tracked", "old tracked\n".into())]);
+
+        let project = Project::test(fs.clone(), [Path::new(path!("/project"))], cx).await;
+        let workspace = cx.add_window(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let cx = &mut VisualTestContext::from_window(*workspace, cx);
+        let panel = workspace.update(cx, GitPanel::new).unwrap();
+
+        let handle = cx.update_window_entity(&panel, |panel, _, _| {
+            std::mem::replace(&mut panel.update_visible_entries_task, Task::ready(()))
+        });
+        cx.executor().advance_clock(2 * UPDATE_DEBOUNCE);
+        handle.await;
+
+        panel.update(cx, |panel, cx| {
+            assert_eq!(panel.suggested_commit_message, Some("Update tracked".to_string()));
+            assert!(panel.commit_editor.read(cx).text(cx).is_empty());
+            assert!(panel.has_commit_message(cx));
+
+            panel.single_staged_entry = None;
+            panel.single_tracked_entry = None;
+
+            assert_eq!(panel.suggest_commit_message(cx), None);
+            assert!(
+                panel.has_commit_message(cx),
+                "commit button must accept the message shown in the editor placeholder"
+            );
+        });
+
+        panel.update_in(cx, |panel, window, cx| {
+            let message = panel.custom_or_suggested_commit_message(window, cx);
+            assert_eq!(message, Some("Update tracked".to_string()));
+        });
     }
 
     #[gpui::test]
