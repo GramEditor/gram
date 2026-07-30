@@ -1232,17 +1232,23 @@ impl GitPanel {
             let prompt = if skip_prompt {
                 Task::ready(Ok(0))
             } else {
+                let (message, confirm_text) = if entry.status.is_deleted() {
+                    ("Are you sure you want to restore", "Restore File")
+                } else {
+                    ("Are you sure you want to discard changes to", "Discard Changes")
+                };
                 let prompt = window.prompt(
                     PromptLevel::Warning,
                     &format!(
-                        "Are you sure you want to restore {}?",
+                        "{} {}?",
+                        message,
                         entry
                             .repo_path
                             .file_name()
                             .unwrap_or(entry.repo_path.display(path_style).as_ref()),
                     ),
                     None,
-                    &["Restore", "Cancel"],
+                    &[confirm_text, "Cancel"],
                     cx,
                 );
                 cx.background_spawn(prompt)
@@ -1430,13 +1436,16 @@ impl GitPanel {
         .detach();
     }
 
-    fn restore_tracked_files(&mut self, _: &RestoreTrackedFiles, window: &mut Window, cx: &mut Context<Self>) {
-        let entries = self
-            .entries
+    fn tracked_entries_to_restore(&self) -> Vec<GitStatusEntry> {
+        self.entries
             .iter()
             .filter_map(|entry| entry.status_entry().cloned())
-            .filter(|status_entry| !status_entry.status.is_created())
-            .collect::<Vec<_>>();
+            .filter(|status_entry| !status_entry.status.is_created() && status_entry.status.staging().has_staged())
+            .collect()
+    }
+
+    fn restore_tracked_files(&mut self, _: &RestoreTrackedFiles, window: &mut Window, cx: &mut Context<Self>) {
+        let entries = self.tracked_entries_to_restore();
 
         match entries.len() {
             0 => return,
@@ -3990,8 +3999,10 @@ impl GitPanel {
         };
         let restore_title = if entry.status.is_created() {
             "Trash File"
-        } else {
+        } else if entry.status.is_deleted() {
             "Restore File"
+        } else {
+            "Discard Changes"
         };
         let context_menu = ContextMenu::build(window, cx, |context_menu, _, _| {
             let is_created = entry.status.is_created();
@@ -6215,6 +6226,56 @@ mod tests {
             [...skipped 2 hunks...]
         "};
         assert_eq!(result, expected);
+    }
+
+    #[gpui::test]
+    async fn test_discard_tracked_changes_respects_staging(cx: &mut TestAppContext) {
+        init_test(cx);
+
+        let fs = FakeFs::new(cx.background_executor.clone());
+        fs.insert_tree(
+            path!("/project"),
+            json!({
+                ".git": {},
+                "staged_a.rs": "staged a\n",
+                "staged_b.rs": "staged b\n",
+                "unstaged.rs": "unstaged\n",
+            }),
+        )
+        .await;
+        fs.set_status_for_repo(
+            path!("/project/.git").as_ref(),
+            &[
+                ("staged_a.rs", FileStatus::index(StatusCode::Modified)),
+                ("staged_b.rs", FileStatus::index(StatusCode::Modified)),
+                ("unstaged.rs", StatusCode::Modified.worktree()),
+            ],
+        );
+
+        let project = Project::test(fs.clone(), [Path::new(path!("/project"))], cx).await;
+        let workspace = cx.add_window(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let cx = &mut VisualTestContext::from_window(*workspace, cx);
+        let panel = workspace.update(cx, GitPanel::new).unwrap();
+
+        let handle = cx.update_window_entity(&panel, |panel, _, _| {
+            std::mem::replace(&mut panel.update_visible_entries_task, Task::ready(()))
+        });
+        cx.executor().advance_clock(2 * UPDATE_DEBOUNCE);
+        handle.await;
+
+        panel.update(cx, |panel, _| {
+            let discarded = panel
+                .tracked_entries_to_restore()
+                .into_iter()
+                .map(|entry| entry.repo_path.as_unix_str().to_owned())
+                .collect::<Vec<_>>();
+
+            assert_eq!(
+                discarded,
+                vec!["staged_a.rs".to_owned(), "staged_b.rs".to_owned()],
+                "discarding tracked changes must leave unstaged files alone"
+            );
+        });
     }
 
     #[gpui::test]

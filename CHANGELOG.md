@@ -52,6 +52,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   narrower UI font, so it fits the commit message
 - Canonicalize the placement of ambiguous diff hunks, fixing hunks that
   rendered as staged while git had them unstaged (zed#60584)
+- Stop Discard Tracked Changes from also discarding unstaged files
+  (zed#61608)
+- Use a specific label and prompt when reverting a deleted file, rather than
+  saying "restore" for modified files too (zed#61554)
 
 ## [3.2.0] - 2026-07-27
 
