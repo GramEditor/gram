@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Added
 
 - Add `Toggle` actions to all the side panels (#389) by @ycna07
+- Show added and deleted line counts per entry and in total in the git panel,
+  behind the `git_panel.diff_stats` setting (zed#49519) (zed#58018)
 
 ## Changed
 

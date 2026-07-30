@@ -7811,19 +7811,22 @@ async fn test_git_repository_status(cx: &mut gpui::TestAppContext) {
 
     // Check that the right git state is observed on startup
     repository.read_with(cx, |repository, _| {
-        let entries = repository.cached_status().collect::<Vec<_>>();
+        let entries = repository.cached_status().map(without_diff_stat).collect::<Vec<_>>();
         assert_eq!(
             entries,
             [
                 StatusEntry {
+                    diff_stat: None,
                     repo_path: repo_path("a.txt"),
                     status: StatusCode::Modified.worktree(),
                 },
                 StatusEntry {
+                    diff_stat: None,
                     repo_path: repo_path("b.txt"),
                     status: FileStatus::Untracked,
                 },
                 StatusEntry {
+                    diff_stat: None,
                     repo_path: repo_path("d.txt"),
                     status: StatusCode::Deleted.worktree(),
                 },
@@ -7838,23 +7841,27 @@ async fn test_git_repository_status(cx: &mut gpui::TestAppContext) {
     cx.executor().run_until_parked();
 
     repository.read_with(cx, |repository, _| {
-        let entries = repository.cached_status().collect::<Vec<_>>();
+        let entries = repository.cached_status().map(without_diff_stat).collect::<Vec<_>>();
         assert_eq!(
             entries,
             [
                 StatusEntry {
+                    diff_stat: None,
                     repo_path: repo_path("a.txt"),
                     status: StatusCode::Modified.worktree(),
                 },
                 StatusEntry {
+                    diff_stat: None,
                     repo_path: repo_path("b.txt"),
                     status: FileStatus::Untracked,
                 },
                 StatusEntry {
+                    diff_stat: None,
                     repo_path: repo_path("c.txt"),
                     status: StatusCode::Modified.worktree(),
                 },
                 StatusEntry {
+                    diff_stat: None,
                     repo_path: repo_path("d.txt"),
                     status: StatusCode::Deleted.worktree(),
                 },
@@ -7877,13 +7884,14 @@ async fn test_git_repository_status(cx: &mut gpui::TestAppContext) {
     cx.executor().run_until_parked();
 
     repository.read_with(cx, |repository, _cx| {
-        let entries = repository.cached_status().collect::<Vec<_>>();
+        let entries = repository.cached_status().map(without_diff_stat).collect::<Vec<_>>();
 
         // Deleting an untracked entry, b.txt, should leave no status
         // a.txt was tracked, and so should have a status
         assert_eq!(
             entries,
             [StatusEntry {
+                diff_stat: None,
                 repo_path: repo_path("a.txt"),
                 status: StatusCode::Deleted.worktree(),
             }]
@@ -7930,13 +7938,14 @@ async fn test_git_status_postprocessing(cx: &mut gpui::TestAppContext) {
     });
 
     repository.read_with(cx, |repository, _cx| {
-        let entries = repository.cached_status().collect::<Vec<_>>();
+        let entries = repository.cached_status().map(without_diff_stat).collect::<Vec<_>>();
 
         // `sub` doesn't appear in our computed statuses.
         // a.txt appears with a combined `DA` status.
         assert_eq!(
             entries,
             [StatusEntry {
+                diff_stat: None,
                 repo_path: repo_path("a.txt"),
                 status: TrackedStatus {
                     index_status: StatusCode::Deleted,
@@ -8121,11 +8130,12 @@ async fn test_repository_pending_ops_staging(executor: gpui::BackgroundExecutor,
     );
 
     repo.update(cx, |repo, _cx| {
-        let git_statuses = repo.cached_status().collect::<Vec<_>>();
+        let git_statuses = repo.cached_status().map(without_diff_stat).collect::<Vec<_>>();
 
         assert_eq!(
             git_statuses,
             [StatusEntry {
+                diff_stat: None,
                 repo_path: repo_path("a.txt"),
                 status: TrackedStatus {
                     index_status: StatusCode::Added,
@@ -8213,11 +8223,12 @@ async fn test_repository_pending_ops_long_running_staging(
     );
 
     repo.update(cx, |repo, _cx| {
-        let git_statuses = repo.cached_status().collect::<Vec<_>>();
+        let git_statuses = repo.cached_status().map(without_diff_stat).collect::<Vec<_>>();
 
         assert_eq!(
             git_statuses,
             [StatusEntry {
+                diff_stat: None,
                 repo_path: repo_path("a.txt"),
                 status: TrackedStatus {
                     index_status: StatusCode::Added,
@@ -8318,16 +8329,18 @@ async fn test_repository_pending_ops_stage_all(executor: gpui::BackgroundExecuto
     );
 
     repo.update(cx, |repo, _cx| {
-        let git_statuses = repo.cached_status().collect::<Vec<_>>();
+        let git_statuses = repo.cached_status().map(without_diff_stat).collect::<Vec<_>>();
 
         assert_eq!(
             git_statuses,
             [
                 StatusEntry {
+                    diff_stat: None,
                     repo_path: repo_path("a.txt"),
                     status: FileStatus::Untracked,
                 },
                 StatusEntry {
+                    diff_stat: None,
                     repo_path: repo_path("b.txt"),
                     status: FileStatus::Untracked,
                 },
@@ -9791,6 +9804,13 @@ fn check_git(output: &Output) {
 }
 
 #[allow(clippy::disallowed_methods)]
+fn without_diff_stat(entry: StatusEntry) -> StatusEntry {
+    StatusEntry {
+        diff_stat: None,
+        ..entry
+    }
+}
+
 #[track_caller]
 fn git_init(path: &Path) -> PathBuf {
     let output = git_cmd(path)

@@ -4402,6 +4402,19 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                     files: USER,
                 }),
                 SettingsPageItem::SettingItem(SettingItem {
+                    title: "Diff Stats",
+                    description: "Whether to show added and deleted line counts for each entry.",
+                    field: Box::new(SettingField {
+                        json_path: Some("git_panel.diff_stats"),
+                        pick: |settings_content| settings_content.git_panel.as_ref()?.diff_stats.as_ref(),
+                        write: |settings_content, value| {
+                            settings_content.git_panel.get_or_insert_default().diff_stats = value;
+                        },
+                    }),
+                    metadata: None,
+                    files: USER,
+                }),
+                SettingsPageItem::SettingItem(SettingItem {
                     title: "Collapse Untracked Diff",
                     description: "Whether to collapse untracked files in the diff panel.",
                     field: Box::new(SettingField {

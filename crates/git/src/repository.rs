@@ -799,6 +799,12 @@ pub trait GitRepository: Send + Sync {
     /// Run git diff
     fn diff(&self, diff: DiffType) -> BoxFuture<'_, Result<String>>;
 
+    fn diff_stat(
+        &self,
+        diff: DiffStatType,
+        path_prefixes: &[RepoPath],
+    ) -> BoxFuture<'static, Result<crate::status::GitDiffStat>>;
+
     /// Creates a checkpoint for the repository.
     fn checkpoint(&self) -> BoxFuture<'static, Result<GitRepositoryCheckpoint>>;
 
@@ -836,6 +842,13 @@ pub trait GitRepository: Send + Sync {
 pub enum DiffType {
     HeadToIndex,
     HeadToWorktree,
+}
+
+#[derive(Clone, Copy)]
+pub enum DiffStatType {
+    HeadToIndex,
+    HeadToWorktree,
+    IndexToWorktree,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
@@ -1796,6 +1809,33 @@ impl GitRepository for RealGitRepository {
                     String::from_utf8_lossy(&output.stderr)
                 );
                 Ok(String::from_utf8_lossy(&output.stdout).to_string())
+            })
+            .boxed()
+    }
+
+    fn diff_stat(
+        &self,
+        diff: DiffStatType,
+        path_prefixes: &[RepoPath],
+    ) -> BoxFuture<'static, Result<crate::status::GitDiffStat>> {
+        let path_prefixes = path_prefixes.to_vec();
+        let git = self.git_binary_in_worktree();
+
+        self.executor
+            .spawn(async move {
+                let git = git?;
+                let mut args: Vec<String> = vec!["diff".into(), "--numstat".into(), "--no-renames".into()];
+                match diff {
+                    DiffStatType::HeadToIndex => args.extend(["--cached".into(), "HEAD".into()]),
+                    DiffStatType::HeadToWorktree => args.push("HEAD".into()),
+                    DiffStatType::IndexToWorktree => {}
+                }
+                if !path_prefixes.is_empty() {
+                    args.push("--".into());
+                    args.extend(path_prefixes.iter().map(|p| p.as_unix_str().to_owned()));
+                }
+                let output = git.run(&args).await?;
+                Ok(crate::status::parse_numstat(&output))
             })
             .boxed()
     }

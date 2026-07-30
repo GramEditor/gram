@@ -23,7 +23,7 @@ use git::repository::{
     RemoteCommandOutput, ResetMode, Upstream, UpstreamTracking, UpstreamTrackingStatus, get_git_committer,
 };
 use git::stash::GitStash;
-use git::status::StageStatus;
+use git::status::{DiffStat, StageStatus};
 use git::{Amend, Signoff, ToggleStaged, repository::RepoPath, status::FileStatus};
 use git::{
     ExpandCommitEditor, GitHostingProviderRegistry, RestoreTrackedFiles, StageAll, StashAll, StashApply, StashPop,
@@ -56,8 +56,8 @@ use std::{sync::Arc, time::Duration, usize};
 use strum::{IntoEnumIterator, VariantNames};
 use time::OffsetDateTime;
 use ui::{
-    ButtonLike, Checkbox, ContextMenu, ElevationIndex, IndentGuideColors, PopoverMenu, RenderedIndentGuide, ScrollAxes,
-    Scrollbars, SplitButton, Tooltip, WithScrollbar, prelude::*,
+    ButtonLike, Checkbox, ContextMenu, DiffStat as DiffStatLabel, ElevationIndex, IndentGuideColors, PopoverMenu,
+    RenderedIndentGuide, ScrollAxes, Scrollbars, SplitButton, Tooltip, WithScrollbar, prelude::*,
 };
 use util::paths::PathStyle;
 use util::{ResultExt, TryFutureExt, maybe};
@@ -185,6 +185,8 @@ const GIT_PANEL_KEY: &str = "GitPanel";
 const UPDATE_DEBOUNCE: Duration = Duration::from_millis(50);
 // TODO: We should revise this part. It seems the indentation width is not aligned with the one in project panel
 const TREE_INDENT: f32 = 16.0;
+
+const DIFF_STAT_DECORATION_WIDTH: usize = 6;
 
 pub fn register(workspace: &mut Workspace) {
     workspace.register_action(|workspace, _: &Toggle, window, cx| {
@@ -466,6 +468,7 @@ pub struct GitStatusEntry {
     pub(crate) repo_path: RepoPath,
     pub(crate) status: FileStatus,
     pub(crate) staging: StageStatus,
+    pub(crate) diff_stat: Option<DiffStat>,
 }
 
 impl GitStatusEntry {
@@ -574,6 +577,7 @@ pub struct GitPanel {
     marked_entries: Vec<usize>,
     tracked_count: usize,
     tracked_staged_count: usize,
+    diff_stat_total: DiffStat,
     update_visible_entries_task: Task<()>,
     width: Option<Pixels>,
     pub(crate) workspace: WeakEntity<Workspace>,
@@ -639,18 +643,21 @@ impl GitPanel {
 
             let mut was_sort_by_path = GitPanelSettings::get_global(cx).sort_by_path;
             let mut was_tree_view = GitPanelSettings::get_global(cx).tree_view;
+            let mut was_diff_stats = GitPanelSettings::get_global(cx).diff_stats;
             cx.observe_global_in::<SettingsStore>(window, move |this, window, cx| {
                 let sort_by_path = GitPanelSettings::get_global(cx).sort_by_path;
                 let tree_view = GitPanelSettings::get_global(cx).tree_view;
+                let diff_stats = GitPanelSettings::get_global(cx).diff_stats;
                 if tree_view != was_tree_view {
                     this.view_mode = GitPanelViewMode::from_settings(cx);
                 }
-                if sort_by_path != was_sort_by_path || tree_view != was_tree_view {
+                if sort_by_path != was_sort_by_path || tree_view != was_tree_view || diff_stats != was_diff_stats {
                     this.bulk_staging.take();
                     this.update_visible_entries(window, cx);
                 }
                 was_sort_by_path = sort_by_path;
                 was_tree_view = tree_view;
+                was_diff_stats = diff_stats;
             })
             .detach();
 
@@ -727,6 +734,7 @@ impl GitPanel {
                 marked_entries: Vec::new(),
                 tracked_count: 0,
                 tracked_staged_count: 0,
+                diff_stat_total: DiffStat::default(),
                 update_visible_entries_task: Task::ready(()),
                 width: None,
                 show_placeholders: false,
@@ -2816,8 +2824,10 @@ impl GitPanel {
         self.tracked_staged_count = 0;
         self.entry_count = 0;
         self.max_width_item_index = None;
+        self.diff_stat_total = DiffStat::default();
 
         let sort_by_path = GitPanelSettings::get_global(cx).sort_by_path;
+        let show_diff_stats = GitPanelSettings::get_global(cx).diff_stats;
         let is_tree_view = matches!(self.view_mode, GitPanelViewMode::Tree(_));
         let group_by_status = is_tree_view || !sort_by_path;
 
@@ -2855,10 +2865,16 @@ impl GitPanel {
                 continue;
             }
 
+            if let Some(diff_stat) = entry.diff_stat {
+                self.diff_stat_total.added = self.diff_stat_total.added.saturating_add(diff_stat.added);
+                self.diff_stat_total.deleted = self.diff_stat_total.deleted.saturating_add(diff_stat.deleted);
+            }
+
             let entry = GitStatusEntry {
                 repo_path: entry.repo_path.clone(),
                 status: entry.status,
                 staging,
+                diff_stat: entry.diff_stat,
             };
 
             if staging.has_staged() {
@@ -2893,6 +2909,7 @@ impl GitPanel {
                     repo_path: ops.repo_path.clone(),
                     status: status.status,
                     staging: StageStatus::Staged,
+                    diff_stat: status.diff_stat,
                 });
             }
         }
@@ -2903,7 +2920,9 @@ impl GitPanel {
 
         let mut push_entry =
             |this: &mut Self, entry: GitListEntry, is_visible: bool, logical_indices: Option<&mut Vec<usize>>| {
-                if let Some(estimate) = this.width_estimate_for_list_entry(is_tree_view, &entry, path_style) {
+                if let Some(estimate) =
+                    this.width_estimate_for_list_entry(is_tree_view, show_diff_stats, &entry, path_style)
+                {
                     if estimate > max_width_estimate {
                         max_width_estimate = estimate;
                         max_width_item_index = Some(this.entries.len());
@@ -3135,8 +3154,14 @@ impl GitPanel {
         self.has_staged_changes()
     }
 
-    fn status_width_estimate(tree_view: bool, entry: &GitStatusEntry, path_style: PathStyle, depth: usize) -> usize {
-        if tree_view {
+    fn status_width_estimate(
+        tree_view: bool,
+        diff_stats: bool,
+        entry: &GitStatusEntry,
+        path_style: PathStyle,
+        depth: usize,
+    ) -> usize {
+        let base = if tree_view {
             Self::item_width_estimate(0, entry.display_name(path_style).len(), depth)
         } else {
             Self::item_width_estimate(
@@ -3144,19 +3169,31 @@ impl GitPanel {
                 entry.display_name(path_style).len(),
                 0,
             )
+        };
+        base + Self::diff_stat_width_estimate(diff_stats.then_some(entry.diff_stat).flatten())
+    }
+
+    fn diff_stat_width_estimate(diff_stat: Option<DiffStat>) -> usize {
+        match diff_stat {
+            Some(stat) => DIFF_STAT_DECORATION_WIDTH + stat.added.to_string().len() + stat.deleted.to_string().len(),
+            None => 0,
         }
     }
 
     fn width_estimate_for_list_entry(
         &self,
         tree_view: bool,
+        diff_stats: bool,
         entry: &GitListEntry,
         path_style: PathStyle,
     ) -> Option<usize> {
         match entry {
-            GitListEntry::Status(status) => Some(Self::status_width_estimate(tree_view, status, path_style, 0)),
+            GitListEntry::Status(status) => Some(Self::status_width_estimate(
+                tree_view, diff_stats, status, path_style, 0,
+            )),
             GitListEntry::TreeStatus(status) => Some(Self::status_width_estimate(
                 tree_view,
+                diff_stats,
                 &status.entry,
                 path_style,
                 status.depth,
@@ -3317,19 +3354,36 @@ impl GitPanel {
             count => format!("{} Changes", count),
         };
 
+        let diff_stat_total = self.diff_stat_total;
+
         Some(
             self.panel_header_container(window, cx)
                 .px_2()
                 .justify_between()
                 .child(
-                    panel_button(change_string)
-                        .color(Color::Muted)
-                        .tooltip(Tooltip::for_action_title_in("Open Diff", &Diff, &self.focus_handle))
-                        .on_click(|_, _, cx| {
-                            cx.defer(|cx| {
-                                cx.dispatch_action(&Diff);
-                            })
-                        }),
+                    h_flex()
+                        .gap_1()
+                        .min_w_0()
+                        .child(
+                            panel_button(change_string)
+                                .color(Color::Muted)
+                                .tooltip(Tooltip::for_action_title_in("Open Diff", &Diff, &self.focus_handle))
+                                .on_click(|_, _, cx| {
+                                    cx.defer(|cx| {
+                                        cx.dispatch_action(&Diff);
+                                    })
+                                }),
+                        )
+                        .when(
+                            GitPanelSettings::get_global(cx).diff_stats && diff_stat_total != DiffStat::default(),
+                            |this| {
+                                this.child(DiffStatLabel::new(
+                                    "changes-diff-stat-total",
+                                    diff_stat_total.added as usize,
+                                    diff_stat_total.deleted as usize,
+                                ))
+                            },
+                        ),
                 )
                 .child(
                     h_flex()
@@ -4000,6 +4054,7 @@ impl GitPanel {
         let checkbox_wrapper_id: ElementId =
             ElementId::Name(format!("entry_{}_{}_checkbox_wrapper", display_name, ix).into());
         let checkbox_id: ElementId = ElementId::Name(format!("entry_{}_{}_checkbox", display_name, ix).into());
+        let diff_stat_id: ElementId = ElementId::Name(format!("entry_{}_{}_diff_stat", display_name, ix).into());
 
         let active_repo = self.project.read(cx).active_repository(cx)?;
         let repo = active_repo.read(cx);
@@ -4082,6 +4137,15 @@ impl GitPanel {
                 .hover(|s| s.bg(hover_bg))
                 .active(|s| s.bg(active_bg))
                 .child(name_row)
+                .when(GitPanelSettings::get_global(cx).diff_stats, |el| {
+                    el.when_some(entry.diff_stat, |this, stat| {
+                        this.child(div().flex_none().child(DiffStatLabel::new(
+                            diff_stat_id,
+                            stat.added as usize,
+                            stat.deleted as usize,
+                        )))
+                    })
+                })
                 .child(
                     div()
                         .id(checkbox_wrapper_id)
@@ -5245,11 +5309,13 @@ mod tests {
                     repo_path: repo_path("crates/gpui/gpui.rs"),
                     status: StatusCode::Modified.worktree(),
                     staging: StageStatus::Unstaged,
+                    diff_stat: Some(DiffStat { added: 1, deleted: 1 }),
                 }),
                 GitListEntry::Status(GitStatusEntry {
                     repo_path: repo_path("crates/util/util.rs"),
                     status: StatusCode::Modified.worktree(),
                     staging: StageStatus::Unstaged,
+                    diff_stat: Some(DiffStat { added: 1, deleted: 1 }),
                 },),
             ],
         );
@@ -5270,11 +5336,13 @@ mod tests {
                     repo_path: repo_path("crates/gpui/gpui.rs"),
                     status: StatusCode::Modified.worktree(),
                     staging: StageStatus::Unstaged,
+                    diff_stat: Some(DiffStat { added: 1, deleted: 1 }),
                 }),
                 GitListEntry::Status(GitStatusEntry {
                     repo_path: repo_path("crates/util/util.rs"),
                     status: StatusCode::Modified.worktree(),
                     staging: StageStatus::Unstaged,
+                    diff_stat: Some(DiffStat { added: 1, deleted: 1 }),
                 },),
             ],
         );
