@@ -848,7 +848,6 @@ pub enum DiffType {
 pub enum DiffStatType {
     HeadToIndex,
     HeadToWorktree,
-    IndexToWorktree,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
@@ -1828,11 +1827,10 @@ impl GitRepository for RealGitRepository {
                 match diff {
                     DiffStatType::HeadToIndex => args.extend(["--cached".into(), "HEAD".into()]),
                     DiffStatType::HeadToWorktree => args.push("HEAD".into()),
-                    DiffStatType::IndexToWorktree => {}
                 }
                 if !path_prefixes.is_empty() {
                     args.push("--".into());
-                    args.extend(path_prefixes.iter().map(|p| p.as_unix_str().to_owned()));
+                    args.extend(path_prefixes.iter().map(|p| p.as_pathspec().to_owned()));
                 }
                 let output = git.run(&args).await?;
                 Ok(crate::status::parse_numstat(&output))
@@ -2940,6 +2938,10 @@ impl RepoPath {
         } else {
             self.0.as_std_path()
         }
+    }
+
+    pub fn as_pathspec(&self) -> &str {
+        if self.is_empty() { "." } else { self.as_unix_str() }
     }
 }
 

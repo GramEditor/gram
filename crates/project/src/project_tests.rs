@@ -16,7 +16,7 @@ use futures::{StreamExt, future};
 use git::{
     GitHostingProviderRegistry,
     repository::{RepoPath, repo_path},
-    status::{StatusCode, TrackedStatus},
+    status::{DiffStat, StatusCode, TrackedStatus},
 };
 use gpui::{App, BackgroundExecutor, FutureExt, SemanticVersion, UpdateGlobal};
 use itertools::Itertools;
@@ -7955,6 +7955,67 @@ async fn test_git_status_postprocessing(cx: &mut gpui::TestAppContext) {
             }]
         )
     });
+}
+
+#[gpui::test]
+async fn test_diff_stats_follow_edits(cx: &mut gpui::TestAppContext) {
+    init_test(cx);
+    cx.executor().allow_parking();
+
+    let root = TempTree::new(json!({
+        "project": {
+            "a.txt": "one\ntwo\nthree\n",
+            "sub": {
+                "b.txt": "nested\nlines\n",
+            },
+        },
+    }));
+
+    let work_dir = root.path().join("project");
+    let repo = git_init(work_dir.as_path());
+    git_add("a.txt", &repo);
+    git_add("sub/b.txt", &repo);
+    git_commit("Initial commit", &repo);
+
+    std::fs::write(work_dir.join("a.txt"), "one\nCHANGED\nthree\n").unwrap();
+
+    let project = Project::test(Arc::new(RealFs::new(None, cx.executor())), [root.path()], cx).await;
+    let tree = project.read_with(cx, |project, cx| project.worktrees(cx).next().unwrap());
+    let repository = {
+        tree.flush_fs_events(cx).await;
+        project.update(cx, |project, cx| project.git_scans_complete(cx)).await;
+        cx.executor().run_until_parked();
+        project.read_with(cx, |project, cx| {
+            project.repositories(cx).values().next().unwrap().clone()
+        })
+    };
+
+    let stat_of = |cx: &mut gpui::TestAppContext, path: &str| {
+        let path = repo_path(path);
+        repository.read_with(cx, |repository, _| repository.status_for_path(&path).unwrap())
+    };
+
+    let entry = stat_of(cx, "a.txt");
+    assert_eq!(entry.diff_stat, Some(DiffStat { added: 1, deleted: 1 }));
+
+    std::fs::write(work_dir.join("a.txt"), "one\nCHANGED\nALSO\nCHANGED\nthree\n").unwrap();
+    std::fs::write(work_dir.join("sub").join("b.txt"), "nested\nEDITED\n").unwrap();
+    tree.flush_fs_events(cx).await;
+    project.update(cx, |project, cx| project.git_scans_complete(cx)).await;
+    cx.executor().run_until_parked();
+
+    let entry = stat_of(cx, "a.txt");
+    assert_eq!(
+        entry.diff_stat,
+        Some(DiffStat { added: 3, deleted: 1 }),
+        "diff stat must follow further edits, not stick at the first value"
+    );
+
+    assert_eq!(
+        stat_of(cx, "sub/b.txt").diff_stat,
+        Some(DiffStat { added: 1, deleted: 1 }),
+        "stats must survive a changed path set that coalesces to the repository root"
+    );
 }
 
 #[gpui::test]

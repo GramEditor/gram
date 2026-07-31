@@ -562,6 +562,15 @@ pub struct GitDiffStat {
     pub entries: Arc<[(RepoPath, DiffStat)]>,
 }
 
+impl GitDiffStat {
+    pub fn get(&self, path: &RepoPath) -> Option<DiffStat> {
+        self.entries
+            .binary_search_by(|(entry_path, _)| entry_path.cmp(path))
+            .ok()
+            .map(|ix| self.entries[ix].1)
+    }
+}
+
 pub fn parse_numstat(output: &str) -> GitDiffStat {
     let mut entries = Vec::new();
     for line in output.lines() {

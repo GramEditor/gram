@@ -480,6 +480,15 @@ pub struct GitStatusEntry {
 }
 
 impl GitStatusEntry {
+    fn from_status(entry: &project::git_store::StatusEntry, staging: StageStatus) -> Self {
+        Self {
+            repo_path: entry.repo_path.clone(),
+            status: entry.status,
+            staging,
+            diff_stat: entry.diff_stat,
+        }
+    }
+
     fn display_name(&self, path_style: PathStyle) -> String {
         self.repo_path
             .file_name()
@@ -2888,17 +2897,12 @@ impl GitPanel {
                 continue;
             }
 
+            let entry = GitStatusEntry::from_status(&entry, staging);
+
             if let Some(diff_stat) = entry.diff_stat {
                 self.diff_stat_total.added = self.diff_stat_total.added.saturating_add(diff_stat.added);
                 self.diff_stat_total.deleted = self.diff_stat_total.deleted.saturating_add(diff_stat.deleted);
             }
-
-            let entry = GitStatusEntry {
-                repo_path: entry.repo_path.clone(),
-                status: entry.status,
-                staging,
-                diff_stat: entry.diff_stat,
-            };
 
             if staging.has_staged() {
                 staged_count += 1;
@@ -2928,12 +2932,9 @@ impl GitPanel {
             } else if repo.pending_ops_summary().item_summary.staging_count == 1
                 && let Some(ops) = repo.pending_ops().find(|ops| ops.staging())
             {
-                self.single_staged_entry = repo.status_for_path(&ops.repo_path).map(|status| GitStatusEntry {
-                    repo_path: ops.repo_path.clone(),
-                    status: status.status,
-                    staging: StageStatus::Staged,
-                    diff_stat: status.diff_stat,
-                });
+                self.single_staged_entry = repo
+                    .status_for_path(&ops.repo_path)
+                    .map(|status| GitStatusEntry::from_status(&status, StageStatus::Staged));
             }
         }
 

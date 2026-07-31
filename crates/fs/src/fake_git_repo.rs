@@ -630,7 +630,6 @@ impl GitRepository for FakeGitRepository {
             let (old_files, new_files) = match diff {
                 git::repository::DiffStatType::HeadToIndex => (&state.head_contents, &state.index_contents),
                 git::repository::DiffStatType::HeadToWorktree => (&state.head_contents, &worktree_files),
-                git::repository::DiffStatType::IndexToWorktree => (&state.index_contents, &worktree_files),
             };
             let all_paths: HashSet<&RepoPath> = match diff {
                 git::repository::DiffStatType::HeadToIndex => {
@@ -645,7 +644,6 @@ impl GitRepository for FakeGitRepository {
                             .filter(|path| state.index_contents.contains_key(*path)),
                     )
                     .collect(),
-                git::repository::DiffStatType::IndexToWorktree => state.index_contents.keys().collect(),
             };
             for path in all_paths {
                 if !matches_prefixes(path, &path_prefixes) {

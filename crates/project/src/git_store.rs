@@ -218,10 +218,10 @@ impl TryFrom<proto::StatusEntry> for StatusEntry {
     fn try_from(value: proto::StatusEntry) -> Result<Self, Self::Error> {
         let repo_path = RepoPath::from_proto(&value.repo_path).context("invalid repo path")?;
         let status = status_from_proto(value.simple_status, value.status)?;
-        let diff_stat = match (value.diff_stat_added, value.diff_stat_deleted) {
-            (Some(added), Some(deleted)) => Some(DiffStat { added, deleted }),
-            _ => None,
-        };
+        let diff_stat = value
+            .diff_stat_added
+            .zip(value.diff_stat_deleted)
+            .map(|(added, deleted)| DiffStat { added, deleted });
         Ok(Self {
             repo_path,
             status,
@@ -5593,20 +5593,10 @@ impl Repository {
             }
             let statuses = backend.status(&paths).await?;
             let stash_entries = backend.stash_entries().await?;
-            let diff_stats = if prev_snapshot.head_commit.is_some() {
-                backend
-                    .diff_stat(DiffStatType::HeadToWorktree, &paths)
-                    .await
-                    .log_err()
-                    .unwrap_or_default()
-            } else {
-                GitDiffStat::default()
-            };
+            let diff_stats = collect_diff_stats(&backend, &paths, prev_snapshot.head_commit.is_some()).await;
 
             let changed_path_statuses = cx
                 .background_spawn(async move {
-                    let diff_stat_map: HashMap<&RepoPath, DiffStat> =
-                        diff_stats.entries.iter().map(|(p, s)| (p, *s)).collect();
                     let mut changed_path_statuses = Vec::new();
                     let prev_statuses = prev_snapshot.statuses_by_path.clone();
                     let current_status_paths = statuses
@@ -5633,7 +5623,7 @@ impl Repository {
                     let mut cursor = prev_statuses.cursor::<PathProgress>(());
 
                     for (repo_path, status) in &*statuses.entries {
-                        let diff_stat = diff_stat_map.get(repo_path).copied();
+                        let diff_stat = diff_stats.get(repo_path);
                         if cursor.seek_forward(&PathTarget::Path(repo_path), Bias::Left)
                             && cursor
                                 .item()
@@ -5962,6 +5952,17 @@ fn proto_to_commit_details(proto: &proto::GitCommitDetails) -> CommitDetails {
     }
 }
 
+async fn collect_diff_stats(backend: &Arc<dyn GitRepository>, paths: &[RepoPath], has_head: bool) -> GitDiffStat {
+    if !has_head {
+        return GitDiffStat::default();
+    }
+    backend
+        .diff_stat(DiffStatType::HeadToWorktree, paths)
+        .await
+        .log_err()
+        .unwrap_or_default()
+}
+
 async fn compute_snapshot(
     id: RepositoryId,
     work_directory_abs_path: Arc<Path>,
@@ -5978,21 +5979,12 @@ async fn compute_snapshot(
         .await?;
     let stash_entries = backend.stash_entries().await?;
     let head_sha = backend.head_sha().await;
-    let diff_stats = if head_sha.is_some() {
-        backend
-            .diff_stat(DiffStatType::HeadToWorktree, &[])
-            .await
-            .log_err()
-            .unwrap_or_default()
-    } else {
-        GitDiffStat::default()
-    };
-    let diff_stat_map: HashMap<&RepoPath, DiffStat> = diff_stats.entries.iter().map(|(p, s)| (p, *s)).collect();
+    let diff_stats = collect_diff_stats(&backend, &[], head_sha.is_some()).await;
     let statuses_by_path = SumTree::from_iter(
         statuses.entries.iter().map(|(repo_path, status)| StatusEntry {
             repo_path: repo_path.clone(),
             status: *status,
-            diff_stat: diff_stat_map.get(repo_path).copied(),
+            diff_stat: diff_stats.get(repo_path),
         }),
         (),
     );

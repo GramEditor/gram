@@ -532,6 +532,8 @@ non-visual customization options.
     "default_width": 360,         // Default width of the git panel.
     "status_style": "icon",       // label_color, icon
     "sort_by_path": false,        // Sort by path (false) or status (true)
+    "tree_view": false,           // Tree (true) or flat list (false)
+    "diff_stats": true,           // Show added/deleted line counts
     "scrollbar": {
       "show": null                // Show/hide: (auto, system, always, never)
     }
