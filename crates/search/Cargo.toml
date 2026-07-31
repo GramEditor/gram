@@ -1,28 +1,19 @@
 [package]
 name = "search"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[features]
-test-support = [
-    "editor/test-support",
-    "gpui/test-support",
-    "workspace/test-support",
-]
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [lib]
-path = "src/search.rs"
 doctest = false
+path = "src/search.rs"
 
 [dependencies]
-anyhow.workspace = true
 any_vec.workspace = true
+anyhow.workspace = true
+app_actions.workspace = true
 assets.workspace = true
 bitflags.workspace = true
 clock.workspace = true
@@ -31,6 +22,7 @@ editor.workspace = true
 fs.workspace = true
 futures.workspace = true
 gpui.workspace = true
+itertools.workspace = true
 language.workspace = true
 log.workspace = true
 menu.workspace = true
@@ -50,8 +42,6 @@ util.workspace = true
 util_macros.workspace = true
 workspace.workspace = true
 worktree.workspace = true
-app_actions.workspace = true
-itertools.workspace = true
 
 [dev-dependencies]
 editor = { workspace = true, features = ["test-support"] }
@@ -61,3 +51,13 @@ lsp.workspace = true
 pretty_assertions.workspace = true
 unindent.workspace = true
 workspace = { workspace = true, features = ["test-support"] }
+
+[features]
+test-support = [
+  "editor/test-support",
+  "gpui/test-support",
+  "workspace/test-support",
+]
+
+[lints]
+workspace = true

@@ -1,26 +1,18 @@
 [package]
 name = "task"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[features]
-test-support = [
-    "gpui/test-support",
-    "util/test-support"
-]
+publish.workspace = true
 
 [lib]
-path = "src/task.rs"
 doctest = false
-
-[lints]
-workspace = true
+path = "src/task.rs"
 
 [dependencies]
 anyhow.workspace = true
+app_actions.workspace = true
 collections.workspace = true
 futures.workspace = true
 gpui.workspace = true
@@ -35,8 +27,13 @@ serde_json_lenient.workspace = true
 sha2.workspace = true
 shellexpand.workspace = true
 util.workspace = true
-app_actions.workspace = true
 
 [dev-dependencies]
 gpui = { workspace = true, features = ["test-support"] }
 pretty_assertions.workspace = true
+
+[features]
+test-support = ["gpui/test-support", "util/test-support"]
+
+[lints]
+workspace = true
