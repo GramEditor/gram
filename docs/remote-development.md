@@ -18,7 +18,7 @@ and the remote server which runs a small server. The two communicate over
 SSH, so you will need to be able to SSH from your local machine into the remote
 server to use this feature.
 
-On your local machine, Gram runs its UI, talks to language models, uses
+On your local machine, Gram runs its UI, uses
 Tree-sitter to parse and syntax-highlight code, and store unsaved changes and
 recent projects. The source code, language servers, tasks, and the terminal all
 run on the remote server.
