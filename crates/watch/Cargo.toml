@@ -1,13 +1,10 @@
 [package]
 name = "watch"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "Apache-2.0"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [lib]
 path = "src/watch.rs"
@@ -17,4 +14,7 @@ parking_lot.workspace = true
 
 [dev-dependencies]
 futures.workspace = true
-tokio = { version = "1", features = ["rt", "macros"] }
+tokio = { version = "1", features = ["macros", "rt"] }
+
+[lints]
+workspace = true

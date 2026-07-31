@@ -1,26 +1,14 @@
 [package]
 name = "dap"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [lib]
-path = "src/dap.rs"
 doctest = false
-
-[features]
-test-support = [
-    "gpui/test-support",
-    "util/test-support",
-    "task/test-support",
-    "async-pipe",
-    "settings/test-support",
-]
+path = "src/dap.rs"
 
 [dependencies]
 anyhow.workspace = true
@@ -49,9 +37,6 @@ smol.workspace = true
 task.workspace = true
 util.workspace = true
 
-[target.'cfg(not(windows))'.dependencies]
-libc.workspace = true
-
 [dev-dependencies]
 async-pipe.workspace = true
 gpui = { workspace = true, features = ["test-support"] }
@@ -59,3 +44,18 @@ settings = { workspace = true, features = ["test-support"] }
 task = { workspace = true, features = ["test-support"] }
 util = { workspace = true, features = ["test-support"] }
 zlog.workspace = true
+
+[target.'cfg(not(windows))'.dependencies]
+libc.workspace = true
+
+[features]
+test-support = [
+  "async-pipe",
+  "gpui/test-support",
+  "settings/test-support",
+  "task/test-support",
+  "util/test-support",
+]
+
+[lints]
+workspace = true

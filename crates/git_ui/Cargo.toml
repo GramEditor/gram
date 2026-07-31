@@ -1,24 +1,18 @@
 [package]
 name = "git_ui"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [lib]
 name = "git_ui"
 path = "src/git_ui.rs"
 
-[features]
-default = []
-test-support = ["multi_buffer/test-support"]
-
 [dependencies]
 anyhow.workspace = true
+app_actions.workspace = true
 askpass.workspace = true
 buffer_diff.workspace = true
 collections.workspace = true
@@ -55,7 +49,6 @@ ui.workspace = true
 util.workspace = true
 watch.workspace = true
 workspace.workspace = true
-app_actions.workspace = true
 zeroize.workspace = true
 
 [dev-dependencies]
@@ -70,3 +63,10 @@ settings = { workspace = true, features = ["test-support"] }
 unindent.workspace = true
 workspace = { workspace = true, features = ["test-support"] }
 zlog.workspace = true
+
+[features]
+default = []
+test-support = ["multi_buffer/test-support"]
+
+[lints]
+workspace = true

@@ -1,30 +1,14 @@
 [package]
 name = "project"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [lib]
-path = "src/project.rs"
 doctest = false
-
-[features]
-test-support = [
-    "buffer_diff/test-support",
-    "language/test-support",
-    "settings/test-support",
-    "snippet_provider/test-support",
-    "text/test-support",
-    "prettier/test-support",
-    "worktree/test-support",
-    "gpui/test-support",
-    "dap/test-support",
-]
+path = "src/project.rs"
 
 [dependencies]
 aho-corasick.workspace = true
@@ -49,8 +33,8 @@ globset.workspace = true
 gpui.workspace = true
 http_client.workspace = true
 image.workspace = true
-itertools.workspace = true
 indexmap.workspace = true
+itertools.workspace = true
 language.workspace = true
 log.workspace = true
 lsp.workspace = true
@@ -92,8 +76,8 @@ zeroize.workspace = true
 zlog.workspace = true
 
 [dev-dependencies]
-collections = { workspace = true, features = ["test-support"] }
 buffer_diff = { workspace = true, features = ["test-support"] }
+collections = { workspace = true, features = ["test-support"] }
 dap = { workspace = true, features = ["test-support"] }
 fs = { workspace = true, features = ["test-support"] }
 gpui = { workspace = true, features = ["test-support"] }
@@ -108,3 +92,19 @@ snippet_provider = { workspace = true, features = ["test-support"] }
 unindent.workspace = true
 util = { workspace = true, features = ["test-support"] }
 worktree = { workspace = true, features = ["test-support"] }
+
+[features]
+test-support = [
+  "buffer_diff/test-support",
+  "dap/test-support",
+  "gpui/test-support",
+  "language/test-support",
+  "prettier/test-support",
+  "settings/test-support",
+  "snippet_provider/test-support",
+  "text/test-support",
+  "worktree/test-support",
+]
+
+[lints]
+workspace = true

@@ -1,13 +1,10 @@
 [package]
 name = "extension_cli"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [[bin]]
 name = "gram-extension"
@@ -31,3 +28,6 @@ tokio = { workspace = true, features = ["full"] }
 toml.workspace = true
 tree-sitter.workspace = true
 wasmtime.workspace = true
+
+[lints]
+workspace = true

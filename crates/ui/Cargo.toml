@@ -1,13 +1,10 @@
 [package]
 name = "ui"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [lib]
 name = "ui"
@@ -38,3 +35,6 @@ gpui = { workspace = true, features = ["test-support"] }
 [features]
 default = []
 stories = ["dep:story"]
+
+[lints]
+workspace = true

@@ -1,13 +1,10 @@
 [package]
 name = "ui_macros"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [lib]
 path = "src/ui_macros.rs"
@@ -19,3 +16,6 @@ syn.workspace = true
 
 [dev-dependencies]
 component.workspace = true
+
+[lints]
+workspace = true

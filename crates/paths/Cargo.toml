@@ -1,16 +1,10 @@
 [package]
 name = "paths"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
-
-[features]
-test-support = []
+publish.workspace = true
 
 [lib]
 path = "src/paths.rs"
@@ -19,3 +13,9 @@ path = "src/paths.rs"
 dirs.workspace = true
 ignore.workspace = true
 util.workspace = true
+
+[features]
+test-support = []
+
+[lints]
+workspace = true

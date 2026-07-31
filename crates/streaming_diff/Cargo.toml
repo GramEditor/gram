@@ -1,13 +1,10 @@
 [package]
 name = "streaming_diff"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [lib]
 path = "src/streaming_diff.rs"
@@ -19,3 +16,6 @@ rope.workspace = true
 [dev-dependencies]
 rand.workspace = true
 util = { workspace = true, features = ["test-support"] }
+
+[lints]
+workspace = true

@@ -1,22 +1,16 @@
 [package]
 name = "gpui_macros"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish = false
-license = "Apache-2.0"
 description = "Macros used by gpui"
-
-[lints]
-workspace = true
-
-[features]
-inspector = []
+repository.workspace = true
+license = "Apache-2.0"
+publish = false
 
 [lib]
+doctest = true
 path = "src/gpui_macros.rs"
 proc-macro = true
-doctest = true
 
 [dependencies]
 heck.workspace = true
@@ -26,3 +20,9 @@ syn.workspace = true
 
 [dev-dependencies]
 gpui = { workspace = true, features = ["inspector"] }
+
+[features]
+inspector = []
+
+[lints]
+workspace = true
