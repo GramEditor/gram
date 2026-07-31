@@ -1,14 +1,17 @@
 [package]
 name = "docs"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/docs.rs"
+doctest = false
 
 [dependencies]
 anyhow.workspace = true
@@ -32,6 +35,3 @@ gpui = { workspace = true, features = ["test-support"] }
 language = { workspace = true, features = ["test-support"] }
 theme = { workspace = true, features = ["test-support"] }
 workspace = { workspace = true, features = ["test-support"] }
-
-[lints]
-workspace = true

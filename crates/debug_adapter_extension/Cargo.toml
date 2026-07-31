@@ -1,13 +1,10 @@
 [package]
 name = "debug_adapter_extension"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
 license = "GPL-3.0-or-later"
 publish.workspace = true
-
-[lib]
-path = "src/debug_adapter_extension.rs"
+edition.workspace = true
 
 [dependencies]
 anyhow.workspace = true
@@ -17,8 +14,11 @@ dap.workspace = true
 extension.workspace = true
 gpui.workspace = true
 serde_json.workspace = true
-task.workspace = true
 util.workspace = true
+task.workspace = true
 
 [lints]
 workspace = true
+
+[lib]
+path = "src/debug_adapter_extension.rs"

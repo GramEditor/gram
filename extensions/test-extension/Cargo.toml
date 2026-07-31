@@ -2,15 +2,15 @@
 name = "zed_test_extension"
 version = "0.1.0"
 edition.workspace = true
-license = "Apache-2.0"
 publish.workspace = true
-
-[lib]
-crate-type = ["cdylib"]
-path = "src/test_extension.rs"
-
-[dependencies]
-zed_extension_api = { path = "../../crates/extension_api" }
+license = "Apache-2.0"
 
 [lints]
 workspace = true
+
+[lib]
+path = "src/test_extension.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+zed_extension_api = { path = "../../crates/extension_api" }

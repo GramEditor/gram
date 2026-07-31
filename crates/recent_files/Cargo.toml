@@ -1,14 +1,17 @@
 [package]
 name = "recent_files"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/recent_files.rs"
+doctest = false
 
 [dependencies]
 file_icons.workspace = true
@@ -20,6 +23,3 @@ postage.workspace = true
 ui.workspace = true
 util.workspace = true
 workspace.workspace = true
-
-[lints]
-workspace = true

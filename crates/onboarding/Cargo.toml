@@ -1,17 +1,22 @@
 [package]
 name = "onboarding"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
 path = "src/onboarding.rs"
 
+[features]
+default = []
+
 [dependencies]
 anyhow.workspace = true
-app_actions.workspace = true
 component.workspace = true
 db.workspace = true
 documented.workspace = true
@@ -30,13 +35,8 @@ ui.workspace = true
 util.workspace = true
 vim_mode_setting.workspace = true
 workspace.workspace = true
+app_actions.workspace = true
 zlog.workspace = true
 
 [dev-dependencies]
-db = { workspace = true, features = ["test-support"] }
-
-[features]
-default = []
-
-[lints]
-workspace = true
+db = {workspace = true, features = ["test-support"]}

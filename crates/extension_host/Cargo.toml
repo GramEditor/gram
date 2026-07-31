@@ -1,18 +1,20 @@
 [package]
 name = "extension_host"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/extension_host.rs"
+doctest = false
 
-[[bench]]
-harness = false
-name = "extension_compilation_benchmark"
+[features]
+test-support = []
 
 [dependencies]
 anyhow.workspace = true
@@ -35,8 +37,8 @@ moka.workspace = true
 node_runtime.workspace = true
 paths.workspace = true
 project.workspace = true
-release_channel.workspace = true
 remote.workspace = true
+release_channel.workspace = true
 semver.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -48,8 +50,8 @@ toml.workspace = true
 url.workspace = true
 util.workspace = true
 wasmparser.workspace = true
-wasmtime.workspace = true
 wasmtime-wasi.workspace = true
+wasmtime.workspace = true
 
 [dev-dependencies]
 criterion.workspace = true
@@ -60,8 +62,6 @@ project = { workspace = true, features = ["test-support"] }
 rand.workspace = true
 reqwest_client.workspace = true
 
-[features]
-test-support = []
-
-[lints]
-workspace = true
+[[bench]]
+name = "extension_compilation_benchmark"
+harness = false

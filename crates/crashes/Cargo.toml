@@ -1,13 +1,10 @@
 [package]
 name = "crashes"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
 publish.workspace = true
-
-[lib]
-path = "src/crashes.rs"
+edition.workspace = true
+license = "GPL-3.0-or-later"
 
 [dependencies]
 bitcode.workspace = true
@@ -16,9 +13,9 @@ extension_host.workspace = true
 log.workspace = true
 minidumper.workspace = true
 paths.workspace = true
+smol.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-smol.workspace = true
 system_specs.workspace = true
 zstd.workspace = true
 
@@ -30,3 +27,6 @@ windows.workspace = true
 
 [lints]
 workspace = true
+
+[lib]
+path = "src/crashes.rs"

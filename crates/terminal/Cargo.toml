@@ -1,14 +1,24 @@
 [package]
 name = "terminal"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[features]
+test-support = [
+    "collections/test-support",
+    "gpui/test-support",
+    "settings/test-support",
+]
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/terminal.rs"
+doctest = false
 
 [dependencies]
 alacritty_terminal.workspace = true
@@ -24,30 +34,20 @@ release_channel.workspace = true
 schemars.workspace = true
 serde.workspace = true
 settings.workspace = true
-smol.workspace = true
 sysinfo.workspace = true
+smol.workspace = true
 task.workspace = true
 theme.workspace = true
 thiserror.workspace = true
 url.workspace = true
-urlencoding.workspace = true
 util.workspace = true
+urlencoding.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows.workspace = true
 
 [dev-dependencies]
 gpui = { workspace = true, features = ["test-support"] }
 rand.workspace = true
 settings = { workspace = true, features = ["test-support"] }
 util_macros.workspace = true
-
-[target.'cfg(windows)'.dependencies]
-windows.workspace = true
-
-[features]
-test-support = [
-  "collections/test-support",
-  "gpui/test-support",
-  "settings/test-support",
-]
-
-[lints]
-workspace = true

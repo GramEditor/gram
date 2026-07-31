@@ -1,14 +1,20 @@
 [package]
 name = "node_runtime"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/node_runtime.rs"
+doctest = false
+
+[features]
+test-support = []
 
 [dependencies]
 anyhow.workspace = true
@@ -26,9 +32,3 @@ smol.workspace = true
 util.workspace = true
 watch.workspace = true
 which.workspace = true
-
-[features]
-test-support = []
-
-[lints]
-workspace = true

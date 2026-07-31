@@ -1,14 +1,17 @@
 [package]
 name = "tab_switcher"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/tab_switcher.rs"
+doctest = false
 
 [dependencies]
 collections.workspace = true
@@ -33,6 +36,3 @@ serde_json.workspace = true
 theme = { workspace = true, features = ["test-support"] }
 workspace = { workspace = true, features = ["test-support"] }
 zlog.workspace = true
-
-[lints]
-workspace = true

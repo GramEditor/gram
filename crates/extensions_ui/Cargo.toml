@@ -1,16 +1,18 @@
 [package]
 name = "extensions_ui"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
 path = "src/extensions_ui.rs"
 
 [dependencies]
-app_actions.workspace = true
 client.workspace = true
 collections.workspace = true
 db.workspace = true
@@ -35,9 +37,7 @@ ui.workspace = true
 util.workspace = true
 vim_mode_setting.workspace = true
 workspace.workspace = true
+app_actions.workspace = true
 
 [dev-dependencies]
 editor = { workspace = true, features = ["test-support"] }
-
-[lints]
-workspace = true

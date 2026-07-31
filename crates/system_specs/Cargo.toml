@@ -1,13 +1,19 @@
 [package]
 name = "system_specs"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
 path = "src/system_specs.rs"
+
+[features]
+default = []
 
 [dependencies]
 anyhow.workspace = true
@@ -19,9 +25,3 @@ sysinfo.workspace = true
 
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 pciid-parser.workspace = true
-
-[features]
-default = []
-
-[lints]
-workspace = true

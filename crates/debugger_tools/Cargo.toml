@@ -1,14 +1,20 @@
 [package]
 name = "debugger_tools"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/debugger_tools.rs"
+doctest = false
+
+[features]
+test-support = []
 
 [dependencies]
 anyhow.workspace = true
@@ -22,9 +28,3 @@ settings.workspace = true
 smol.workspace = true
 util.workspace = true
 workspace.workspace = true
-
-[features]
-test-support = []
-
-[lints]
-workspace = true

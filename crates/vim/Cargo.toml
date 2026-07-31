@@ -1,18 +1,23 @@
 [package]
 name = "vim"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/vim.rs"
+doctest = false
+
+[features]
+neovim = ["nvim-rs", "async-compat", "async-trait", "tokio"]
 
 [dependencies]
 anyhow.workspace = true
-app_actions.workspace = true
 async-compat = { workspace = true, "optional" = true }
 async-trait = { workspace = true, "optional" = true }
 collections.workspace = true
@@ -27,7 +32,6 @@ gpui.workspace = true
 itertools.workspace = true
 language.workspace = true
 log.workspace = true
-menu.workspace = true
 multi_buffer.workspace = true
 nvim-rs = { git = "https://github.com/KillTheMule/nvim-rs", rev = "764dd270c642f77f10f3e19d05cc178a6cbe69f3", features = ["use_tokio"], optional = true }
 picker.workspace = true
@@ -41,12 +45,14 @@ settings.workspace = true
 task.workspace = true
 text.workspace = true
 theme.workspace = true
+menu.workspace = true
 tokio = { version = "1.15", features = ["full"], optional = true }
 ui.workspace = true
 util.workspace = true
 util_macros.workspace = true
 vim_mode_setting.workspace = true
 workspace.workspace = true
+app_actions.workspace = true
 
 [dev-dependencies]
 command_palette = { workspace = true, features = ["test-support"] }
@@ -55,21 +61,15 @@ git_ui = { workspace = true, features = ["test-support"] }
 gpui = { workspace = true, features = ["test-support"] }
 indoc.workspace = true
 language = { workspace = true, features = ["test-support"] }
+project = { workspace = true, features = ["test-support"] }
 lsp = { workspace = true, features = ["test-support"] }
 markdown_preview.workspace = true
-outline_panel.workspace = true
 parking_lot.workspace = true
-perf.workspace = true
-project = { workspace = true, features = ["test-support"] }
 project_panel.workspace = true
+outline_panel.workspace = true
 release_channel.workspace = true
-settings.workspace = true
 settings_ui.workspace = true
+settings.workspace = true
+perf.workspace = true
 util = { workspace = true, features = ["test-support"] }
 workspace = { workspace = true, features = ["test-support"] }
-
-[features]
-neovim = ["async-compat", "async-trait", "nvim-rs", "tokio"]
-
-[lints]
-workspace = true

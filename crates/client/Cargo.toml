@@ -1,14 +1,20 @@
 [package]
 name = "client"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/client.rs"
+doctest = false
+
+[features]
+test-support = ["gpui/test-support", "rpc/test-support"]
 
 [dependencies]
 anyhow.workspace = true
@@ -27,8 +33,8 @@ serde.workspace = true
 settings.workspace = true
 thiserror.workspace = true
 time.workspace = true
-tokio.workspace = true
 tokio-socks = { version = "0.5.2", default-features = false, features = ["futures-io"] }
+tokio.workspace = true
 url.workspace = true
 util.workspace = true
 
@@ -44,10 +50,4 @@ tokio-native-tls = "0.3"
 
 [target.'cfg(not(any(target_os = "windows", target_os = "macos")))'.dependencies]
 rustls-pki-types = "1.12"
-tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12"] }
-
-[features]
-test-support = ["gpui/test-support", "rpc/test-support"]
-
-[lints]
-workspace = true
+tokio-rustls = { version = "0.26", features = ["tls12", "ring"], default-features = false }

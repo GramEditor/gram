@@ -1,23 +1,26 @@
 [package]
 name = "settings_profile_selector"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/settings_profile_selector.rs"
+doctest = false
 
 [dependencies]
-app_actions.workspace = true
 fuzzy.workspace = true
 gpui.workspace = true
 picker.workspace = true
 settings.workspace = true
 ui.workspace = true
 workspace.workspace = true
+app_actions.workspace = true
 
 [dev-dependencies]
 editor = { workspace = true, features = ["test-support"] }
@@ -28,6 +31,3 @@ serde_json.workspace = true
 settings = { workspace = true, features = ["test-support"] }
 theme = { workspace = true, features = ["test-support"] }
 workspace = { workspace = true, features = ["test-support"] }
-
-[lints]
-workspace = true

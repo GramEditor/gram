@@ -1,14 +1,20 @@
 [package]
 name = "settings"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/settings.rs"
+doctest = false
+
+[features]
+test-support = ["gpui/test-support", "fs/test-support"]
 
 [dependencies]
 anyhow.workspace = true
@@ -43,9 +49,3 @@ gpui = { workspace = true, features = ["test-support"] }
 indoc.workspace = true
 pretty_assertions.workspace = true
 unindent.workspace = true
-
-[features]
-test-support = ["fs/test-support", "gpui/test-support"]
-
-[lints]
-workspace = true

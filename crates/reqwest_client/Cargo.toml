@@ -1,14 +1,20 @@
 [package]
 name = "reqwest_client"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "Apache-2.0"
+edition.workspace = true
 publish.workspace = true
+license = "Apache-2.0"
+
+[lints]
+workspace = true
+
+[features]
+test-support = []
 
 [lib]
-doctest = true
 path = "src/reqwest_client.rs"
+doctest = true
 
 [dependencies]
 anyhow.workspace = true
@@ -16,14 +22,8 @@ bytes.workspace = true
 futures.workspace = true
 http_client.workspace = true
 http_client_tls.workspace = true
+serde.workspace = true
 log.workspace = true
+tokio = { workspace = true, features = ["rt", "rt-multi-thread"] }
 regex.workspace = true
 reqwest.workspace = true
-serde.workspace = true
-tokio = { workspace = true, features = ["rt", "rt-multi-thread"] }
-
-[features]
-test-support = []
-
-[lints]
-workspace = true

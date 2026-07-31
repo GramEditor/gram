@@ -1,24 +1,24 @@
 [package]
 name = "net"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/net.rs"
+doctest = false
 
 [dependencies]
 smol.workspace = true
-
-[dev-dependencies]
-tempfile.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
 async-io = "2.4"
 windows.workspace = true
 
-[lints]
-workspace = true
+[dev-dependencies]
+tempfile.workspace = true

@@ -1,20 +1,20 @@
 [package]
 name = "file_icons"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/file_icons.rs"
+doctest = false
 
 [dependencies]
 gpui.workspace = true
 serde.workspace = true
 theme.workspace = true
 util.workspace = true
-
-[lints]
-workspace = true

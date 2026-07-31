@@ -1,28 +1,28 @@
 [package]
 name = "migrator"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/migrator.rs"
+doctest = false
 
 [dependencies]
 anyhow.workspace = true
 log.workspace = true
-serde_json.workspace = true
-serde_json_lenient.workspace = true
-settings_json.workspace = true
 streaming-iterator.workspace = true
-tree-sitter.workspace = true
 tree-sitter-json.workspace = true
+tree-sitter.workspace = true
+serde_json_lenient.workspace = true
+serde_json.workspace = true
+settings_json.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true
 unindent.workspace = true
-
-[lints]
-workspace = true

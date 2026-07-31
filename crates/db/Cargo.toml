@@ -1,14 +1,20 @@
 [package]
 name = "db"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/db.rs"
+doctest = false
+
+[features]
+test-support = []
 
 [dependencies]
 anyhow.workspace = true
@@ -25,9 +31,3 @@ util.workspace = true
 [dev-dependencies]
 gpui = { workspace = true, features = ["test-support"] }
 tempfile.workspace = true
-
-[features]
-test-support = []
-
-[lints]
-workspace = true

@@ -1,25 +1,25 @@
 [package]
 name = "sum_tree"
 version.workspace = true
-edition.workspace = true
-description = "A sum tree data structure, a concurrency-friendly B-tree"
 repository.workspace = true
-license = "Apache-2.0"
+edition.workspace = true
 publish = false
+license = "Apache-2.0"
+description = "A sum tree data structure, a concurrency-friendly B-tree"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/sum_tree.rs"
+doctest = false
 
 [dependencies]
 arrayvec = "0.7.1"
-log.workspace = true
 rayon.workspace = true
+log.workspace = true
 
 [dev-dependencies]
 ctor.workspace = true
 rand.workspace = true
 zlog.workspace = true
-
-[lints]
-workspace = true

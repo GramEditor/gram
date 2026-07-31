@@ -1,14 +1,20 @@
 [package]
 name = "text"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/text.rs"
+doctest = false
+
+[features]
+test-support = ["util/test-support"]
 
 [dependencies]
 anyhow.workspace = true
@@ -30,9 +36,3 @@ ctor.workspace = true
 gpui = { workspace = true, features = ["test-support"] }
 util = { workspace = true, features = ["test-support"] }
 zlog.workspace = true
-
-[features]
-test-support = ["util/test-support"]
-
-[lints]
-workspace = true

@@ -1,14 +1,20 @@
 [package]
 name = "image_viewer"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/image_viewer.rs"
+doctest = false
+
+[features]
+test-support = ["gpui/test-support", "editor/test-support"]
 
 [dependencies]
 anyhow.workspace = true
@@ -28,9 +34,3 @@ workspace.workspace = true
 
 [dev-dependencies]
 editor = { workspace = true, features = ["test-support"] }
-
-[features]
-test-support = ["editor/test-support", "gpui/test-support"]
-
-[lints]
-workspace = true

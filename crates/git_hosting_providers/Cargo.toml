@@ -1,10 +1,13 @@
 [package]
 name = "git_hosting_providers"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
 path = "src/git_hosting_providers.rs"
@@ -22,10 +25,7 @@ urlencoding.workspace = true
 util.workspace = true
 
 [dev-dependencies]
-git = { workspace = true, features = ["test-support"] }
 indoc.workspace = true
-pretty_assertions.workspace = true
 serde_json.workspace = true
-
-[lints]
-workspace = true
+pretty_assertions.workspace = true
+git = { workspace = true, features = ["test-support"] }

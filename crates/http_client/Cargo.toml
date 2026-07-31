@@ -1,15 +1,21 @@
 [package]
 name = "http_client"
 version.workspace = true
-edition.workspace = true
-description = "A HTTP client library for Gram and GPUI"
 repository.workspace = true
-license = "Apache-2.0"
+edition.workspace = true
 publish = false
+license = "Apache-2.0"
+description = "A HTTP client library for Gram and GPUI"
+
+[lints]
+workspace = true
+
+[features]
+test-support = []
 
 [lib]
-doctest = true
 path = "src/http_client.rs"
+doctest = true
 
 [dependencies]
 anyhow.workspace = true
@@ -19,8 +25,8 @@ async-tar.workspace = true
 bytes.workspace = true
 derive_more.workspace = true
 futures.workspace = true
-http.workspace = true
 http-body.workspace = true
+http.workspace = true
 log.workspace = true
 parking_lot.workspace = true
 serde.workspace = true
@@ -29,9 +35,3 @@ sha2.workspace = true
 tempfile.workspace = true
 url.workspace = true
 util.workspace = true
-
-[features]
-test-support = []
-
-[lints]
-workspace = true

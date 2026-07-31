@@ -1,20 +1,20 @@
 [package]
 name = "gpui_tokio"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "Apache-2.0"
+edition.workspace = true
 publish.workspace = true
-
-[lib]
-doctest = false
-path = "src/gpui_tokio.rs"
-
-[dependencies]
-anyhow.workspace = true
-gpui.workspace = true
-tokio = { workspace = true, features = ["rt", "rt-multi-thread"] }
-util.workspace = true
+license = "Apache-2.0"
 
 [lints]
 workspace = true
+
+[lib]
+path = "src/gpui_tokio.rs"
+doctest = false
+
+[dependencies]
+anyhow.workspace = true
+util.workspace = true
+gpui.workspace = true
+tokio = { workspace = true, features = ["rt", "rt-multi-thread"] }

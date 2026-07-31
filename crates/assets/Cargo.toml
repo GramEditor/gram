@@ -1,18 +1,18 @@
 [package]
 name = "assets"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
 
 [lib]
 path = "src/assets.rs"
+
+[lints]
+workspace = true
 
 [dependencies]
 anyhow.workspace = true
 gpui.workspace = true
 rust-embed.workspace = true
-
-[lints]
-workspace = true

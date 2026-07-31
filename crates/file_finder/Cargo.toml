@@ -1,14 +1,17 @@
 [package]
 name = "file_finder"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/file_finder.rs"
+doctest = false
 
 [dependencies]
 anyhow.workspace = true
@@ -23,8 +26,8 @@ picker.workspace = true
 project.workspace = true
 schemars.workspace = true
 search.workspace = true
-serde.workspace = true
 settings.workspace = true
+serde.workspace = true
 shellexpand.workspace = true
 text.workspace = true
 theme.workspace = true
@@ -42,6 +45,3 @@ serde_json.workspace = true
 theme = { workspace = true, features = ["test-support"] }
 workspace = { workspace = true, features = ["test-support"] }
 zlog.workspace = true
-
-[lints]
-workspace = true

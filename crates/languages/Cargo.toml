@@ -1,10 +1,52 @@
 [package]
 name = "languages"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
+
+[features]
+test-support = [
+    "load-grammars"
+]
+load-grammars = [
+    "tree-sitter",
+    "tree-sitter-bash",
+    "tree-sitter-c",
+    "tree-sitter-cpp",
+    "tree-sitter-css",
+    "tree-sitter-diff",
+    "tree-sitter-gitcommit",
+    "tree-sitter-git-rebase",
+    "tree-sitter-erlang",
+    "tree-sitter-gleam",
+    "tree-sitter-go",
+    "tree-sitter-go-mod",
+    "tree-sitter-gowork",
+    "tree-sitter-hcl",
+    "tree-sitter-html",
+    "tree-sitter-jsdoc",
+    "tree-sitter-json",
+    "tree-sitter-lua",
+    "tree-sitter-nix",
+    "tree-sitter-md",
+    "tree-sitter-odin",
+    "tree-sitter-python",
+    "tree-sitter-regex",
+    "tree-sitter-roto",
+    "tree-sitter-rust",
+    "tree-sitter-scheme",
+    "tree-sitter-sql",
+    "tree-sitter-toml",
+    "tree-sitter-typescript",
+    "tree-sitter-xml",
+    "tree-sitter-yaml",
+    "tree-sitter-zig",
+]
 
 [dependencies]
 anyhow.workspace = true
@@ -25,13 +67,13 @@ log.workspace = true
 lsp.workspace = true
 node_runtime.workspace = true
 parking_lot.workspace = true
-pet.workspace = true
 pet-conda.workspace = true
 pet-core.workspace = true
 pet-fs.workspace = true
 pet-poetry.workspace = true
 pet-reporter.workspace = true
 pet-virtualenv.workspace = true
+pet.workspace = true
 project.workspace = true
 regex.workspace = true
 rope.workspace = true
@@ -55,8 +97,8 @@ tree-sitter-cpp = { workspace = true, optional = true }
 tree-sitter-css = { workspace = true, optional = true }
 tree-sitter-diff = { workspace = true, optional = true }
 tree-sitter-erlang = { workspace = true, optional = true }
-tree-sitter-git-rebase = { workspace = true, optional = true }
 tree-sitter-gitcommit = { workspace = true, optional = true }
+tree-sitter-git-rebase = { workspace = true, optional = true }
 tree-sitter-gleam = { workspace = true, optional = true }
 tree-sitter-go = { workspace = true, optional = true }
 tree-sitter-go-mod = { workspace = true, optional = true }
@@ -66,8 +108,8 @@ tree-sitter-html = { workspace = true, optional = true }
 tree-sitter-jsdoc = { workspace = true, optional = true }
 tree-sitter-json = { workspace = true, optional = true }
 tree-sitter-lua = { workspace = true, optional = true }
-tree-sitter-md = { workspace = true, optional = true }
 tree-sitter-nix = { workspace = true, optional = true }
+tree-sitter-md = { workspace = true, optional = true }
 tree-sitter-odin = { workspace = true, optional = true }
 tree-sitter-python = { workspace = true, optional = true }
 tree-sitter-regex = { workspace = true, optional = true }
@@ -86,7 +128,6 @@ util.workspace = true
 [dev-dependencies]
 pretty_assertions.workspace = true
 theme = { workspace = true, features = ["test-support"] }
-tree-sitter.workspace = true
 tree-sitter-bash.workspace = true
 tree-sitter-c.workspace = true
 tree-sitter-cpp.workspace = true
@@ -94,56 +135,17 @@ tree-sitter-css.workspace = true
 tree-sitter-erlang.workspace = true
 tree-sitter-gleam.workspace = true
 tree-sitter-go.workspace = true
-tree-sitter-hcl.workspace = true
 tree-sitter-html.workspace = true
+tree-sitter-hcl.workspace = true
 tree-sitter-lua.workspace = true
 tree-sitter-nix.workspace = true
 tree-sitter-odin.workspace = true
 tree-sitter-python.workspace = true
-tree-sitter-scheme.workspace = true
 tree-sitter-sql.workspace = true
+tree-sitter-scheme.workspace = true
 tree-sitter-toml.workspace = true
 tree-sitter-typescript.workspace = true
 tree-sitter-xml.workspace = true
 tree-sitter-zig.workspace = true
+tree-sitter.workspace = true
 unindent.workspace = true
-
-[features]
-load-grammars = [
-  "tree-sitter",
-  "tree-sitter-bash",
-  "tree-sitter-c",
-  "tree-sitter-cpp",
-  "tree-sitter-css",
-  "tree-sitter-diff",
-  "tree-sitter-erlang",
-  "tree-sitter-git-rebase",
-  "tree-sitter-gitcommit",
-  "tree-sitter-gleam",
-  "tree-sitter-go",
-  "tree-sitter-go-mod",
-  "tree-sitter-gowork",
-  "tree-sitter-hcl",
-  "tree-sitter-html",
-  "tree-sitter-jsdoc",
-  "tree-sitter-json",
-  "tree-sitter-lua",
-  "tree-sitter-md",
-  "tree-sitter-nix",
-  "tree-sitter-odin",
-  "tree-sitter-python",
-  "tree-sitter-regex",
-  "tree-sitter-roto",
-  "tree-sitter-rust",
-  "tree-sitter-scheme",
-  "tree-sitter-sql",
-  "tree-sitter-toml",
-  "tree-sitter-typescript",
-  "tree-sitter-xml",
-  "tree-sitter-yaml",
-  "tree-sitter-zig",
-]
-test-support = ["load-grammars"]
-
-[lints]
-workspace = true

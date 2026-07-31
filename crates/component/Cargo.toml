@@ -1,10 +1,13 @@
 [package]
 name = "component"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
 path = "src/component.rs"
@@ -22,6 +25,3 @@ documented.workspace = true
 
 [features]
 default = []
-
-[lints]
-workspace = true

@@ -1,20 +1,23 @@
 [package]
 name = "repl"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/repl.rs"
+doctest = false
 
 [dependencies]
 alacritty_terminal.workspace = true
 anyhow.workspace = true
 async-dispatcher.workspace = true
-async-tungstenite = { workspace = true, features = ["tokio", "tokio-runtime", "tokio-rustls-manual-roots"] }
+async-tungstenite = { workspace = true, features = ["tokio", "tokio-rustls-manual-roots", "tokio-runtime"] }
 base64.workspace = true
 collections.workspace = true
 command_palette_hooks.workspace = true
@@ -24,15 +27,14 @@ futures.workspace = true
 gpui.workspace = true
 http_client.workspace = true
 image.workspace = true
-jupyter-protocol.workspace = true
 jupyter-websocket-client.workspace = true
+jupyter-protocol.workspace = true
 language.workspace = true
 log.workspace = true
 markdown_preview.workspace = true
 menu.workspace = true
 multi_buffer.workspace = true
 nbformat.workspace = true
-picker.workspace = true
 project.workspace = true
 proto.workspace = true
 runtimelib.workspace = true
@@ -47,6 +49,7 @@ ui.workspace = true
 util.workspace = true
 uuid.workspace = true
 workspace.workspace = true
+picker.workspace = true
 
 [dev-dependencies]
 editor = { workspace = true, features = ["test-support"] }
@@ -60,9 +63,6 @@ settings = { workspace = true, features = ["test-support"] }
 terminal_view = { workspace = true, features = ["test-support"] }
 theme = { workspace = true, features = ["test-support"] }
 tree-sitter-md.workspace = true
-tree-sitter-python.workspace = true
 tree-sitter-typescript.workspace = true
+tree-sitter-python.workspace = true
 util = { workspace = true, features = ["test-support"] }
-
-[lints]
-workspace = true

@@ -1,14 +1,20 @@
 [package]
 name = "prettier"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/prettier.rs"
+doctest = false
+
+[features]
+test-support = []
 
 [dependencies]
 anyhow.workspace = true
@@ -26,12 +32,6 @@ serde_json.workspace = true
 util.workspace = true
 
 [dev-dependencies]
-fs = { workspace = true, features = ["test-support"] }
+fs = { workspace = true,  features = ["test-support"] }
 gpui = { workspace = true, features = ["test-support"] }
 language = { workspace = true, features = ["test-support"] }
-
-[features]
-test-support = []
-
-[lints]
-workspace = true

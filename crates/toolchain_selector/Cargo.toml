@@ -1,14 +1,10 @@
 [package]
 name = "toolchain_selector"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
-
-[lib]
-doctest = false
-path = "src/toolchain_selector.rs"
+license = "GPL-3.0-or-later"
 
 [dependencies]
 anyhow.workspace = true
@@ -28,3 +24,7 @@ workspace.workspace = true
 
 [lints]
 workspace = true
+
+[lib]
+path = "src/toolchain_selector.rs"
+doctest = false

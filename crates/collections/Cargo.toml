@@ -1,22 +1,22 @@
 [package]
 name = "collections"
 version.workspace = true
-edition.workspace = true
-description = "Standard collection type re-exports used by Gram and GPUI"
 repository.workspace = true
-license = "Apache-2.0"
+edition.workspace = true
 publish = false
+license = "Apache-2.0"
+description = "Standard collection type re-exports used by Gram and GPUI"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/collections.rs"
-
-[dependencies]
-indexmap.workspace = true
-rustc-hash.workspace = true
+doctest = false
 
 [features]
 test-support = []
 
-[lints]
-workspace = true
+[dependencies]
+indexmap.workspace = true
+rustc-hash.workspace = true

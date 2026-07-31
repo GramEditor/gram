@@ -1,21 +1,33 @@
 [package]
 name = "multi_buffer"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/multi_buffer.rs"
+doctest = false
+
+[features]
+test-support = [
+    "buffer_diff/test-support",
+    "gpui/test-support",
+    "language/test-support",
+    "text/test-support",
+    "util/test-support",
+]
 
 [dependencies]
 anyhow.workspace = true
-buffer_diff.workspace = true
 clock.workspace = true
 collections.workspace = true
 ctor.workspace = true
+buffer_diff.workspace = true
 gpui.workspace = true
 itertools.workspace = true
 language.workspace = true
@@ -23,10 +35,10 @@ log.workspace = true
 parking_lot.workspace = true
 rand.workspace = true
 rope.workspace = true
-serde.workspace = true
-settings.workspace = true
-smallvec.workspace = true
 smol.workspace = true
+settings.workspace = true
+serde.workspace = true
+smallvec.workspace = true
 sum_tree.workspace = true
 text.workspace = true
 theme.workspace = true
@@ -44,15 +56,3 @@ settings = { workspace = true, features = ["test-support"] }
 text = { workspace = true, features = ["test-support"] }
 util = { workspace = true, features = ["test-support"] }
 zlog.workspace = true
-
-[features]
-test-support = [
-  "buffer_diff/test-support",
-  "gpui/test-support",
-  "language/test-support",
-  "text/test-support",
-  "util/test-support",
-]
-
-[lints]
-workspace = true

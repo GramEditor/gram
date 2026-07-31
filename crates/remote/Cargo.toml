@@ -1,15 +1,22 @@
 [package]
 name = "remote"
-version.workspace = true
-edition.workspace = true
 description = "Client-side subsystem for remote editing"
+edition.workspace = true
+version.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/remote.rs"
+doctest = false
+
+[features]
+default = []
+test-support = ["fs/test-support"]
 
 [dependencies]
 anyhow.workspace = true
@@ -37,12 +44,5 @@ util.workspace = true
 which.workspace = true
 
 [dev-dependencies]
-fs = { workspace = true, features = ["test-support"] }
 gpui = { workspace = true, features = ["test-support"] }
-
-[features]
-default = []
-test-support = ["fs/test-support"]
-
-[lints]
-workspace = true
+fs = { workspace = true, features = ["test-support"] }

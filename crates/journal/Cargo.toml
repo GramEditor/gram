@@ -1,14 +1,17 @@
 [package]
 name = "journal"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/journal.rs"
+doctest = false
 
 [dependencies]
 anyhow.workspace = true
@@ -23,6 +26,3 @@ workspace.workspace = true
 
 [dev-dependencies]
 editor = { workspace = true, features = ["test-support"] }
-
-[lints]
-workspace = true

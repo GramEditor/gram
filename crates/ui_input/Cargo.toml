@@ -1,10 +1,13 @@
 [package]
 name = "ui_input"
 version.workspace = true
-edition.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+edition.workspace = true
 publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
 
 [lib]
 path = "src/ui_input.rs"
@@ -20,6 +23,3 @@ ui.workspace = true
 
 [features]
 default = []
-
-[lints]
-workspace = true

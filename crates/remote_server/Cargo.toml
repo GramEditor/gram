@@ -1,21 +1,26 @@
 [package]
 name = "remote_server"
-version.workspace = true
-edition.workspace = true
 description = "Daemon used for remote editing"
+edition.workspace = true
+version.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
 publish.workspace = true
+license = "GPL-3.0-or-later"
 
-[package.metadata.cargo-machete]
-ignored = ["rust-embed"]
+[lints]
+workspace = true
 
 [lib]
-doctest = false
 path = "src/remote_server.rs"
+doctest = false
 
 [[bin]]
 name = "remote_server"
+
+[features]
+default = []
+debug-embed = ["dep:rust-embed"]
+test-support = ["fs/test-support"]
 
 [dependencies]
 anyhow.workspace = true
@@ -45,12 +50,11 @@ node_runtime.workspace = true
 paths.workspace = true
 project.workspace = true
 proto.workspace = true
-rayon.workspace = true
 release_channel.workspace = true
 remote.workspace = true
 reqwest_client.workspace = true
 rpc.workspace = true
-rust-embed = { workspace = true, features = ["debug-embed"], optional = true }
+rust-embed = { workspace = true, optional = true, features = ["debug-embed"] }
 serde.workspace = true
 serde_json.workspace = true
 settings.workspace = true
@@ -58,10 +62,16 @@ shellexpand.workspace = true
 smol.workspace = true
 sysinfo.workspace = true
 task.workspace = true
-thiserror.workspace = true
 util.workspace = true
 watch.workspace = true
 worktree.workspace = true
+thiserror.workspace = true
+rayon.workspace = true
+
+[target.'cfg(not(windows))'.dependencies]
+crashes.workspace = true
+fork.workspace = true
+libc.workspace = true
 
 [dev-dependencies]
 collections.workspace = true
@@ -70,24 +80,14 @@ fs = { workspace = true, features = ["test-support"] }
 gpui = { workspace = true, features = ["test-support"] }
 http_client = { workspace = true, features = ["test-support"] }
 language = { workspace = true, features = ["test-support"] }
-lsp = { workspace = true, features = ["test-support"] }
 node_runtime = { workspace = true, features = ["test-support"] }
 project = { workspace = true, features = ["test-support"] }
 remote = { workspace = true, features = ["test-support"] }
-serde_json.workspace = true
 theme = { workspace = true, features = ["test-support"] }
+lsp = { workspace = true, features = ["test-support"] }
 unindent.workspace = true
+serde_json.workspace = true
 zlog.workspace = true
 
-[target.'cfg(not(windows))'.dependencies]
-crashes.workspace = true
-fork.workspace = true
-libc.workspace = true
-
-[features]
-default = []
-debug-embed = ["dep:rust-embed"]
-test-support = ["fs/test-support"]
-
-[lints]
-workspace = true
+[package.metadata.cargo-machete]
+ignored = ["rust-embed"]
