@@ -109,12 +109,6 @@ pub struct WorkspaceSettingsContent {
     ///
     /// Default: true
     pub zoomed_padding: Option<bool>,
-    /// Whether toggling a panel (e.g. with its keyboard shortcut) also closes
-    /// the panel when it is already focused, instead of just moving focus back
-    /// to the editor.
-    ///
-    /// Default: false
-    pub close_panel_on_toggle: Option<bool>,
     /// What draws window decorations/titlebar, the client application (Gram) or display server
     /// Default: client
     pub window_decorations: Option<WindowDecorations>,
