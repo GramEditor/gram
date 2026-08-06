@@ -1247,45 +1247,51 @@ fn watch_themes(fs: Arc<dyn fs::Fs>, cx: &mut App) {
 }
 
 fn watch_languages(fs: Arc<dyn fs::Fs>, languages: Arc<LanguageRegistry>, cx: &mut App) {
-    #[cfg(debug_assertions)]
-    {
-        use std::time::Duration;
+    cfg_select! {
+        debug_assertions => {
+            use std::time::Duration;
 
-        cx.background_spawn(async move {
-            let languages_src = Path::new("crates/languages/src");
-            let Some(languages_src) = fs.canonicalize(languages_src).await.log_err() else {
-                return;
-            };
+            cx.background_spawn(async move {
+                let languages_src = Path::new("crates/languages/src");
+                let Some(languages_src) = fs.canonicalize(languages_src).await.log_err() else {
+                    return;
+                };
 
-            let (mut events, watcher) = fs
-                .watch(
-                    &languages_src,
-                    Duration::from_millis(100),
-                    fs::fs_watcher::WatcherMode::Native,
-                )
-                .await;
+                let (mut events, watcher) = fs
+                    .watch(
+                        &languages_src,
+                        Duration::from_millis(100),
+                        fs::fs_watcher::WatcherMode::Native,
+                    )
+                    .await;
 
-            // add subdirectories since fs.watch is not recursive on Linux
-            if let Some(mut paths) = fs.read_dir(&languages_src).await.log_err() {
-                while let Some(path) = paths.next().await {
-                    if let Some(path) = path.log_err()
-                        && fs.is_dir(&path).await
-                    {
-                        watcher.add(&path).log_err();
+                // add subdirectories since fs.watch is not recursive on Linux
+                if let Some(mut paths) = fs.read_dir(&languages_src).await.log_err() {
+                    while let Some(path) = paths.next().await {
+                        if let Some(path) = path.log_err()
+                            && fs.is_dir(&path).await
+                        {
+                            watcher.add(&path).log_err();
+                        }
                     }
                 }
-            }
 
-            while let Some(event) = events.next().await {
-                let has_language_file = event
-                    .iter()
-                    .any(|event| event.path.extension().is_some_and(|ext| ext == "scm"));
-                if has_language_file {
-                    languages.reload();
+                while let Some(event) = events.next().await {
+                    let has_language_file = event
+                        .iter()
+                        .any(|event| event.path.extension().is_some_and(|ext| ext == "scm"));
+                    if has_language_file {
+                        languages.reload();
+                    }
                 }
-            }
-        })
-        .detach();
+            })
+            .detach();
+        }
+        _ => {
+            let _ = fs;
+            let _ = languages;
+            let _ = cx;
+        }
     }
 }
 

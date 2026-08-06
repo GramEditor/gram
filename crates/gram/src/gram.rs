@@ -434,62 +434,70 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
 fn unstable_version_notification(_cx: &mut App) {}
 
 fn initialize_file_watcher(window: &mut Window, cx: &mut Context<Workspace>) {
-    if let Err(e) = fs::fs_watcher::global(|_| {}) {
-        cfg_select! {
-            any(target_os = "linux", target_os = "freebsd") => {
-                let message = format!(
-                    db::indoc! {r#"
-                    inotify_init returned {}
+    cfg_select! {
+        any(target_os = "linux", target_os = "freebsd", target_os = "windows") => {
+            if let Err(e) = fs::fs_watcher::global(|_| {}) {
+                cfg_select! {
+                    any(target_os = "linux", target_os = "freebsd") => {
+                        let message = format!(
+                            db::indoc! {r#"
+                            inotify_init returned {}
 
-                    This may be due to system-wide limits on inotify instances. For troubleshooting see: gram://docs/linux
-                    "#},
-                    e
-                );
-                let prompt = window.prompt(
-                    PromptLevel::Critical,
-                    "Could not start inotify",
-                    Some(&message),
-                    &["Troubleshoot and Quit"],
-                    cx,
-                );
-                cx.spawn(async move |_, cx| {
-                    if prompt.await == Ok(0) {
-                        cx.update(|cx| {
-                            cx.open_url("gram://docs/linux#could-not-start-inotify");
-                            cx.quit();
+                            This may be due to system-wide limits on inotify instances. For troubleshooting see: gram://docs/linux
+                            "#},
+                            e
+                        );
+                        let prompt = window.prompt(
+                            PromptLevel::Critical,
+                            "Could not start inotify",
+                            Some(&message),
+                            &["Troubleshoot and Quit"],
+                            cx,
+                        );
+                        cx.spawn(async move |_, cx| {
+                            if prompt.await == Ok(0) {
+                                cx.update(|cx| {
+                                    cx.open_url("gram://docs/linux#could-not-start-inotify");
+                                    cx.quit();
+                                })
+                                .ok();
+                            }
                         })
-                        .ok();
+                        .detach()
                     }
-                })
-                .detach()
-            }
-            target_os = "windows" => {
-                let message = format!(
-                    db::indoc! {r#"
-                    ReadDirectoryChangesW initialization failed: {}
+                    target_os = "windows" => {
+                        let message = format!(
+                            db::indoc! {r#"
+                            ReadDirectoryChangesW initialization failed: {}
 
-                    This may occur on network filesystems and WSL paths. For troubleshooting see: gram://docs/windows
-                    "#},
-                    e
-                );
-                let prompt = window.prompt(
-                    PromptLevel::Critical,
-                    "Could not start ReadDirectoryChangesW",
-                    Some(&message),
-                    &["Troubleshoot and Quit"],
-                    cx,
-                );
-                cx.spawn(async move |_, cx| {
-                    if prompt.await == Ok(0) {
-                        cx.update(|cx| {
-                            cx.open_url("gram://docs/windows");
-                            cx.quit()
+                            This may occur on network filesystems and WSL paths. For troubleshooting see: gram://docs/windows
+                            "#},
+                            e
+                        );
+                        let prompt = window.prompt(
+                            PromptLevel::Critical,
+                            "Could not start ReadDirectoryChangesW",
+                            Some(&message),
+                            &["Troubleshoot and Quit"],
+                            cx,
+                        );
+                        cx.spawn(async move |_, cx| {
+                            if prompt.await == Ok(0) {
+                                cx.update(|cx| {
+                                    cx.open_url("gram://docs/windows");
+                                    cx.quit()
+                                })
+                                .ok();
+                            }
                         })
-                        .ok();
+                        .detach()
                     }
-                })
-                .detach()
+                }
             }
+        }
+        _ => {
+            let _ = window;
+            let _ = cx;
         }
     }
 }
