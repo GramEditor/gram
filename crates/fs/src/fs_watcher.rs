@@ -208,15 +208,14 @@ impl Watcher for FsWatcher {
         {
             // Return early if an ancestor of this path was already being watched.
             // saves a huge amount of memory
-            if let Some((watched_path, _)) = self
-                .registrations
-                .lock()
-                .range::<Path, _>((std::ops::Bound::Unbounded, std::ops::Bound::Included(path)))
-                .next_back()
-                && path.starts_with(watched_path.as_ref())
-            {
-                log::trace!("path to watch is covered by existing registration: {path:?}, {watched_path:?}");
-                return Ok(());
+            let registrations = self.registrations.lock();
+            let range = registrations.range::<Path, _>((std::ops::Bound::Unbounded, std::ops::Bound::Included(path)));
+
+            for (watched_path, _) in range.rev() {
+                if path.starts_with(watched_path.as_ref()) {
+                    log::trace!("path to watch is covered by existing registration: {path:?}, {watched_path:?}");
+                    return Ok(());
+                }
             }
         }
         #[cfg(any(target_os = "linux"))]
