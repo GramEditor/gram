@@ -4,8 +4,8 @@ version.workspace = true
 edition.workspace = true
 description = "What cannot be mended must be transcended."
 repository.workspace = true
-publish.workspace = true
 license = "GPL-3.0-or-later"
+publish.workspace = true
 
 [package.metadata.bundle-dev]
 icon = ["resources/app-icon-dev@2x.png", "resources/app-icon-dev.png"]
