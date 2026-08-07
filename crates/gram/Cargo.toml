@@ -5,7 +5,6 @@ name = "gram"
 version.workspace = true
 repository.workspace = true
 publish.workspace = true
-authors.workspace = true
 license = "GPL-3.0-or-later"
 
 [lints]

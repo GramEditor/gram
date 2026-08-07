@@ -3,7 +3,6 @@ name = "gpui"
 version.workspace = true
 edition.workspace = true
 description = "Gram's GPU-accelerated UI framework"
-authors.workspace = true
 repository.workspace = true
 publish = true
 license = "Apache-2.0"
