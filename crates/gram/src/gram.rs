@@ -433,7 +433,7 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
 #[cfg(target_os = "windows")]
 fn unstable_version_notification(_cx: &mut App) {}
 
-#[cfg(any(target = "linux", target_os = "freebsd", target_os = "windows"))]
+#[cfg(any(target_os = "linux", target_os = "freebsd", target_os = "windows"))]
 fn initialize_file_watcher(window: &mut Window, cx: &mut Context<Workspace>) {
     if let Err(e) = fs::fs_watcher::global(|_| {}) {
         cfg_select! {
