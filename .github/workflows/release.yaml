@@ -13,8 +13,8 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_BACKTRACE: '1'
-  CARGO_INCREMENTAL: '0'
+  RUST_BACKTRACE: "1"
+  CARGO_INCREMENTAL: "0"
 
 jobs:
   linux:
@@ -26,6 +26,7 @@ jobs:
           - arch: x86_64
             runner: ubuntu-24.04
             artifact_name: linux-x86_64
+
           - arch: aarch64
             runner: ubuntu-24.04-arm
             artifact_name: linux-aarch64
@@ -34,19 +35,23 @@ jobs:
       CXX: clang++
       CC_x86_64_unknown_linux_musl: musl-gcc
       CC_aarch64_unknown_linux_musl: musl-gcc
+
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: install dependencies
+
+      - name: Install dependencies
         run: ./script/prepare-ci release
-      - name: flatpak-deps
+
+      - name: Flatpak-deps
         run: ./script/flatpak/deps
-      # the flatpak build will build the tarball too
-      - name: bundle-flatpak
+
+      # Flatpak build will build the tarball too
+      - name: Bundle-flatpak
         run: ./script/flatpak/bundle-flatpak
 
-      - name: copy artifacts
+      - name: Copy artifacts
         shell: bash
         run: |
           find target -name '*.gz'
@@ -60,42 +65,46 @@ jobs:
           cp target/gram-remote-server-linux-${{ matrix.arch }}.gz "artifacts/gram-remote-server-linux-${{ matrix.arch }}-${version}.gz"
           cp target/release/app.liten.Gram.flatpak "artifacts/app.liten.Gram-${{ matrix.arch }}-${version}.flatpak"
 
-      - name: upload artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact_name }}
           path: artifacts/*
 
   windows:
-    name: release windows
+    name: Release Windows
     runs-on: ${{ matrix.os }}
     strategy:
-        matrix:
-          include:
-            - build: windows
-              os: windows-latest
-              target: x86_64-pc-windows-msvc
-              artifact_name: windows-x64
+      matrix:
+        include:
+          - build: windows
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: windows-x64
+
     steps:
       - uses: actions/checkout@v6
 
-      - name: Fix microslop # https://github.com/microsoft/python-environment-tools/issues/171
+      - name: Fix Microslop # https://github.com/microsoft/python-environment-tools/issues/171
         run: git config --global core.longpaths true
 
-      - name: Bundle windows
+      - name: Bundle Windows
         run: script/bundle-windows.ps1 -Architecture x86_64
         shell: pwsh
+
       - name: List
         shell: bash
         run: |
           ls -la target/*
-      - name: upload Gram
+
+      - name: Upload Gram
         uses: actions/upload-artifact@v7
         with:
           name: Gram-${{ matrix.artifact_name }}-${{ matrix.target }}.exe
           path: target/Gram-x86_64.exe
           if-no-files-found: error
-      - name: upload remote-server
+
+      - name: Upload remote-server
         uses: actions/upload-artifact@v7
         with:
           name: gram-remote-server-${{ matrix.artifact_name}}-${{ matrix.target }}.zip
