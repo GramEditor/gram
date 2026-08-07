@@ -11,7 +11,7 @@ use project::{
 use std::any::{Any, TypeId};
 
 use time::OffsetDateTime;
-use ui::{Avatar, Chip, Divider, ListItem, WithScrollbar, prelude::*};
+use ui::{Chip, Divider, ListItem, WithScrollbar, prelude::*, render_avatar};
 use util::ResultExt;
 use workspace::{
     Item, Workspace,
@@ -238,7 +238,7 @@ impl FileHistoryView {
         &self,
         ix: usize,
         entry: &FileHistoryEntry,
-        _window: &mut Window,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let pr_number = entry
@@ -295,7 +295,7 @@ impl FileHistoryView {
                         h_flex()
                             .gap_1()
                             .ml_auto()
-                            .child(Avatar::new("").size(rems(1.25)))
+                            .child(render_avatar(rems(1.25), window, cx))
                             .child(
                                 div().w_full().child(
                                     Label::new(entry.author_name.clone())

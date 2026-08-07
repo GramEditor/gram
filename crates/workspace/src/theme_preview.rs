@@ -3,8 +3,8 @@ use gpui::{AnyElement, App, Entity, EventEmitter, FocusHandle, Focusable, Hsla, 
 use strum::IntoEnumIterator;
 use theme::all_theme_colors;
 use ui::{
-    Avatar, ButtonLike, Checkbox, ContentGroup, DecoratedIcon, ElevationIndex, IconDecoration, Indicator,
-    KeybindingHint, Switch, TintColor, Tooltip, prelude::*, utils::calculate_contrast_ratio,
+    ButtonLike, Checkbox, ContentGroup, DecoratedIcon, ElevationIndex, IconDecoration, Indicator, KeybindingHint,
+    Switch, TintColor, Tooltip, prelude::*, utils::calculate_contrast_ratio,
 };
 
 use crate::{Item, Workspace};

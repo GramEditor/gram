@@ -1,141 +1,23 @@
 use crate::prelude::*;
 
-use documented::Documented;
-use gpui::{AnyElement, Hsla, ImageSource, Img, IntoElement, Styled, img};
+use gpui::{IntoElement, Styled, img};
 
-/// An element that renders a user avatar with customizable appearance options.
-///
-/// # Examples
-///
-/// ```
-/// use ui::Avatar;
-///
-/// Avatar::new("path/to/image.png")
-///     .grayscale(true)
-///     .border_color(gpui::red());
-/// ```
-#[derive(IntoElement, Documented, RegisterComponent)]
-pub struct Avatar {
-    image: Img,
-    size: Option<AbsoluteLength>,
-    border_color: Option<Hsla>,
-    indicator: Option<AnyElement>,
-}
+pub fn render_avatar(size: Rems, window: &mut Window, cx: &mut App) -> impl IntoElement {
+    let border_width = px(0.);
+    let container_size = size.to_pixels(window.rem_size()) + border_width * 2.;
+    let image = img("");
 
-impl Avatar {
-    /// Creates a new avatar element with the specified image source.
-    pub fn new(src: impl Into<ImageSource>) -> Self {
-        Avatar {
-            image: img(src),
-            size: None,
-            border_color: None,
-            indicator: None,
-        }
-    }
-
-    /// Applies a grayscale filter to the avatar image.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use ui::Avatar;
-    ///
-    /// let avatar = Avatar::new("path/to/image.png").grayscale(true);
-    /// ```
-    pub fn grayscale(mut self, grayscale: bool) -> Self {
-        self.image = self.image.grayscale(grayscale);
-        self
-    }
-
-    /// Sets the border color of the avatar.
-    ///
-    /// This might be used to match the border to the background color of
-    /// the parent element to create the illusion of cropping another
-    /// shape underneath (for example in face piles.)
-    pub fn border_color(mut self, color: impl Into<Hsla>) -> Self {
-        self.border_color = Some(color.into());
-        self
-    }
-
-    /// Size overrides the avatar size. By default they are 1rem.
-    pub fn size<L: Into<AbsoluteLength>>(mut self, size: impl Into<Option<L>>) -> Self {
-        self.size = size.into().map(Into::into);
-        self
-    }
-
-    /// Sets the current indicator to be displayed on the avatar, if any.
-    pub fn indicator<E: IntoElement>(mut self, indicator: impl Into<Option<E>>) -> Self {
-        self.indicator = indicator.into().map(IntoElement::into_any_element);
-        self
-    }
-}
-
-impl RenderOnce for Avatar {
-    fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let border_width = if self.border_color.is_some() { px(2.) } else { px(0.) };
-
-        let image_size = self.size.unwrap_or_else(|| rems(1.).into());
-        let container_size = image_size.to_pixels(window.rem_size()) + border_width * 2.;
-
-        div()
-            .size(container_size)
+    div().size(container_size).rounded_full().child(
+        image
+            .size(size)
             .rounded_full()
-            .when_some(self.border_color, |this, color| {
-                this.border(border_width).border_color(color)
-            })
-            .child(
-                self.image
-                    .size(image_size)
-                    .rounded_full()
-                    .bg(cx.theme().colors().element_disabled)
-                    .with_fallback(|| {
-                        h_flex()
-                            .size_full()
-                            .justify_center()
-                            .child(Icon::new(IconName::Person).color(Color::Muted).size(IconSize::Small))
-                            .into_any_element()
-                    }),
-            )
-            .children(self.indicator.map(|indicator| div().child(indicator)))
-    }
-}
-
-// View this component preview using `workspace: open component-preview`
-impl Component for Avatar {
-    fn scope() -> ComponentScope {
-        ComponentScope::Editor
-    }
-
-    fn description() -> Option<&'static str> {
-        Some(Avatar::DOCS)
-    }
-
-    fn preview(_window: &mut Window, cx: &mut App) -> Option<AnyElement> {
-        let example_avatar = "https://avatars.githubusercontent.com/u/270902619?v=4";
-
-        Some(
-            v_flex()
-                .gap_6()
-                .children(vec![
-                    example_group(vec![
-                        single_example("Default", Avatar::new(example_avatar).size(rems(4.)).into_any_element()),
-                        single_example(
-                            "Grayscale",
-                            Avatar::new(example_avatar)
-                                .size(rems(4.))
-                                .grayscale(true)
-                                .into_any_element(),
-                        ),
-                        single_example(
-                            "Border",
-                            Avatar::new(example_avatar)
-                                .size(rems(4.))
-                                .border_color(cx.theme().colors().border)
-                                .into_any_element(),
-                        ).description("Can be used to create visual space by setting the border color\nto match the background, which creates the appearance of a gap around the avatar."),
-                    ]),
-                ])
-                .into_any_element(),
-        )
-    }
+            .bg(cx.theme().colors().element_disabled)
+            .with_fallback(|| {
+                h_flex()
+                    .size_full()
+                    .justify_center()
+                    .child(Icon::new(IconName::Person).color(Color::Muted).size(IconSize::Small))
+                    .into_any_element()
+            }),
+    )
 }
