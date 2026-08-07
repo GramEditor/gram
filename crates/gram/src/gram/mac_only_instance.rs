@@ -51,7 +51,7 @@ fn address() -> SocketAddr {
 
 fn get_uid_as_u32(uid: &sysinfo::Uid) -> u32 {
     cfg_select! {
-        unix => *uid.clone()
+        unix => *uid.clone(),
         windows => {
             // Extract the RID which is an integer
             uid.to_string()
