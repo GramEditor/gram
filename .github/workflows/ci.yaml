@@ -26,34 +26,36 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
       - uses: taiki-e/install-action@3235f8901fd37ffed0052b276cec25a362fb82e9
         with:
           tool: |
             cargo-nextest
 
-      - name: Fix microslop # https://github.com/microsoft/python-environment-tools/issues/171
+      - name: Fix Microslop # https://github.com/microsoft/python-environment-tools/issues/171
         if: runner.os == 'Windows'
         run: git config --global core.longpaths true
 
-      - name: install dependencies
+      - name: Install dependencies
         if: runner.os == 'Linux'
         run: ./script/prepare-ci ci
 
-      - name: update cargo path
+      - name: Update cargo path
         if: runner.os == 'macOS'
         run: |
           echo "/Users/runner/.cargo/bin" >> $GITHUB_PATH
 
-      - name: run nextest
+      - name: Run nextest
         if: runner.os == 'Linux'
         run: cargo-nextest nextest run --workspace --no-fail-fast --success-output never --show-progress none
-      - name: run nextest
+
+      - name: Run nextest
         if: runner.os == 'macOS'
         run: cargo-nextest nextest run --workspace --no-fail-fast --success-output never --show-progress none
-      - name: run nextest
+
+      - name: Run nextest
         if: runner.os == 'Windows'
         env:
           MAKEOPTS: "-j2 -l2"
           CARGO_BUILD_JOBS: "2"
         run: cargo-nextest nextest run --workspace --no-fail-fast --success-output never --show-progress none
-

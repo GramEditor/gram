@@ -1,4 +1,5 @@
 name: build release (linux amd64)
+
 on:
   push:
     tags:
@@ -21,6 +22,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Cache build
         uses: actions/cache@v3
         id: cache-gram-build
@@ -32,10 +34,13 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-gram-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: install dependencies
+
+      - name: Install dependencies
         run: ./script/prepare-ci release
-      - name: bundle-linux
+
+      - name: Bundle-linux
         run: ./script/bundle-linux --tarball --deb --rpm
+
       - name: Set artifact name
         id: set_artifact_name
         shell: bash
@@ -61,7 +66,7 @@ jobs:
           echo "rpm_amd64=gram_${debversion}-1_x86_64.rpm" >> $FORGEJO_OUTPUT
 
       - id: upload_tarball_amd64
-        name: upload tarball
+        name: Upload tarball
         uses: forgejo/upload-artifact@v4
         with:
           name: ${{steps.set_artifact_name.outputs.tarball_amd64}}
@@ -69,7 +74,7 @@ jobs:
           compression-level: 0
 
       - id: upload_remote_server_amd64
-        name: upload remote-server
+        name: Upload remote-server
         uses: forgejo/upload-artifact@v4
         with:
           name: ${{steps.set_artifact_name.outputs.remote_server_amd64}}
@@ -77,7 +82,7 @@ jobs:
           compression-level: 0
 
       - id: upload_deb_amd64
-        name: upload deb
+        name: Upload DEB
         uses: forgejo/upload-artifact@v4
         with:
           name: ${{steps.set_artifact_name.outputs.deb_amd64}}
@@ -85,14 +90,14 @@ jobs:
           compression-level: 0
 
       - id: upload_deb_amd64_repo
-        name: publish deb to package registry
+        name: Publish DEB to package registry
         run: |
           curl --user krig:${{secrets.CODEBERG_PACKAGE_TOKEN}} \
                --upload-file ${{steps.set_artifact_name.outputs.deb_amd64}} \
                https://codeberg.org/api/packages/GramEditor/debian/pool/gram/release/upload
 
       - id: upload_rpm_amd64
-        name: upload rpm
+        name: Upload RPM
         uses: forgejo/upload-artifact@v4
         with:
           name: ${{steps.set_artifact_name.outputs.rpm_amd64}}
@@ -100,7 +105,7 @@ jobs:
           compression-level: 0
 
       - id: upload_rpm_amd64_repo
-        name: publish rpm to package registry
+        name: Publish RPM to package registry
         run: |
           curl --user krig:${{secrets.CODEBERG_PACKAGE_TOKEN}} \
                --upload-file ${{steps.set_artifact_name.outputs.rpm_amd64}} \
