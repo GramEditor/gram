@@ -1257,9 +1257,15 @@ impl Workspace {
                 GlobalTheme::reload_icon_theme(cx);
             }),
             cx.on_release(move |this, cx| {
-                this.app_state.workspace_store.update(cx, move |store, _| {
-                    store.workspaces.remove(&window_handle);
-                })
+                let has_replacement_in_same_store = window_handle.read(cx).is_ok_and(|workspace| {
+                    workspace.weak_self != this.weak_self
+                        && workspace.app_state.workspace_store == this.app_state.workspace_store
+                });
+                if !has_replacement_in_same_store {
+                    this.app_state.workspace_store.update(cx, move |store, _| {
+                        store.workspaces.remove(&window_handle);
+                    })
+                }
             }),
         ];
 
@@ -7513,7 +7519,6 @@ mod tests {
             assert!(workspace.zoomed.is_none());
         });
     }
-
 
     #[gpui::test]
     async fn test_pane_zoom_in_out(cx: &mut TestAppContext) {

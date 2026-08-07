@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Fixed
 
 - Fix FsWatcher::add to correctly check watched ancestors on macOS (#406) by @sir_nacnud
+- Don't remove window handle from workspace store if another workspace refers to it (#407) by @jasonmader
 - Remove mention of LLMs in docs/remote-development (#396) by @mayas
 - Downgrade embed-resource to 3.0.9 for Windows compatibility (#390)
 - Fix multiple menus entries on some Linux distributions (#394) by @koru
