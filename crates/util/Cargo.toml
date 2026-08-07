@@ -1,22 +1,15 @@
 [package]
 name = "util"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish = false
-license = "Apache-2.0"
 description = "A collection of utility structs and functions used by Gram and GPUI"
-
-
-[lints]
-workspace = true
+repository.workspace = true
+license = "Apache-2.0"
+publish = false
 
 [lib]
-path = "src/util.rs"
 doctest = true
-
-[features]
-test-support = ["rand", "util_macros"]
+path = "src/util.rs"
 
 [dependencies]
 anyhow.workspace = true
@@ -25,8 +18,8 @@ async_zip.workspace = true
 collections.workspace = true
 dirs.workspace = true
 dunce = "1.0"
-futures-lite.workspace = true
 futures.workspace = true
+futures-lite.workspace = true
 globset.workspace = true
 itertools.workspace = true
 log.workspace = true
@@ -46,18 +39,24 @@ util_macros = { workspace = true, optional = true }
 walkdir.workspace = true
 which.workspace = true
 
+[dev-dependencies]
+pretty_assertions.workspace = true
+rand.workspace = true
+util_macros.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+mach2.workspace = true
+
 [target.'cfg(unix)'.dependencies]
 command-fds = "0.3.1"
 libc.workspace = true
 nix = { workspace = true, features = ["user"] }
 
-[target.'cfg(target_os = "macos")'.dependencies]
-mach2.workspace = true
-
 [target.'cfg(windows)'.dependencies]
 tendril = "0.4.3"
 
-[dev-dependencies]
-rand.workspace = true
-util_macros.workspace = true
-pretty_assertions.workspace = true
+[features]
+test-support = ["rand", "util_macros"]
+
+[lints]
+workspace = true

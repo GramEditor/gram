@@ -1,20 +1,20 @@
 [package]
 name = "sqlez_macros"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [lib]
+doctest = false
 path = "src/sqlez_macros.rs"
 proc-macro = true
-doctest = false
 
 [dependencies]
 sqlez.workspace = true
 sqlformat.workspace = true
 syn.workspace = true
+
+[lints]
+workspace = true

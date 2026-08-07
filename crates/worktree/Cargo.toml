@@ -1,26 +1,14 @@
 [package]
 name = "worktree"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
+publish.workspace = true
 
 [lib]
-path = "src/worktree.rs"
 doctest = false
-
-[lints]
-workspace = true
-
-[features]
-test-support = [
-    "gpui/test-support",
-    "language/test-support",
-    "settings/test-support",
-    "text/test-support",
-    "util/test-support",
-]
+path = "src/worktree.rs"
 
 [dependencies]
 anyhow.workspace = true
@@ -61,3 +49,15 @@ rpc = { workspace = true, features = ["test-support"] }
 settings = { workspace = true, features = ["test-support"] }
 util = { workspace = true, features = ["test-support"] }
 zlog.workspace = true
+
+[features]
+test-support = [
+  "gpui/test-support",
+  "language/test-support",
+  "settings/test-support",
+  "text/test-support",
+  "util/test-support",
+]
+
+[lints]
+workspace = true

@@ -1,32 +1,19 @@
 [package]
 name = "workspace"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
+publish.workspace = true
 
 [lib]
-path = "src/workspace.rs"
 doctest = false
-
-[features]
-test-support = [
-    "http_client/test-support",
-    "db/test-support",
-    "project/test-support",
-    "session/test-support",
-    "settings/test-support",
-    "gpui/test-support",
-    "fs/test-support",
-]
+path = "src/workspace.rs"
 
 [dependencies]
 any_vec.workspace = true
 anyhow.workspace = true
+app_actions.workspace = true
 async-recursion.workspace = true
 client.workspace = true
 collections.workspace = true
@@ -40,8 +27,8 @@ http_client.workspace = true
 itertools.workspace = true
 language.workspace = true
 log.workspace = true
-menu.workspace = true
 markdown.workspace = true
+menu.workspace = true
 node_runtime.workspace = true
 parking_lot.workspace = true
 postage.workspace = true
@@ -61,16 +48,29 @@ theme.workspace = true
 ui.workspace = true
 util.workspace = true
 uuid.workspace = true
-app_actions.workspace = true
 
 [dev-dependencies]
 db = { workspace = true, features = ["test-support"] }
 fs = { workspace = true, features = ["test-support"] }
 gpui = { workspace = true, features = ["test-support"] }
+http_client = { workspace = true, features = ["test-support"] }
+pretty_assertions.workspace = true
 project = { workspace = true, features = ["test-support"] }
 session = { workspace = true, features = ["test-support"] }
 settings = { workspace = true, features = ["test-support"] }
-http_client = { workspace = true, features = ["test-support"] }
-pretty_assertions.workspace = true
 tempfile.workspace = true
 zlog.workspace = true
+
+[features]
+test-support = [
+  "db/test-support",
+  "fs/test-support",
+  "gpui/test-support",
+  "http_client/test-support",
+  "project/test-support",
+  "session/test-support",
+  "settings/test-support",
+]
+
+[lints]
+workspace = true

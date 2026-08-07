@@ -1,23 +1,18 @@
 [package]
 name = "terminal_view"
 version.workspace = true
-repository.workspace = true
 edition.workspace = true
-publish.workspace = true
+repository.workspace = true
 license = "GPL-3.0-or-later"
-
-[lints]
-workspace = true
-
-[features]
-test-support = ["editor/test-support", "gpui/test-support"]
+publish.workspace = true
 
 [lib]
-path = "src/terminal_view.rs"
 doctest = false
+path = "src/terminal_view.rs"
 
 [dependencies]
 anyhow.workspace = true
+app_actions.workspace = true
 async-recursion.workspace = true
 breadcrumbs.workspace = true
 collections.workspace = true
@@ -33,22 +28,27 @@ menu.workspace = true
 pretty_assertions.workspace = true
 project.workspace = true
 regex.workspace = true
-task.workspace = true
 schemars.workspace = true
 search.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 settings.workspace = true
 shellexpand.workspace = true
+task.workspace = true
 terminal.workspace = true
 theme.workspace = true
 ui.workspace = true
 util.workspace = true
 workspace.workspace = true
-app_actions.workspace = true
 
 [dev-dependencies]
 editor = { workspace = true, features = ["test-support"] }
 gpui = { workspace = true, features = ["test-support"] }
 project = { workspace = true, features = ["test-support"] }
 workspace = { workspace = true, features = ["test-support"] }
+
+[features]
+test-support = ["editor/test-support", "gpui/test-support"]
+
+[lints]
+workspace = true
