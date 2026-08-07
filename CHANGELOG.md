@@ -7,9 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Added
+
+- Add `Toggle` actions to all the side panels (#389) by @ycna07
+
 ## Changed
 
 - Remove avatar fetching from git crate (#388)
+- Remove use of private MacOS APIs and drop support for MacOS < 12 (zed#56315)
+- Tweaked ferra theme colors (#391) (#399) by @BillyDM
+
+## Fixed
+
+- Fix FsWatcher::add to correctly check watched ancestors on macOS (#406) by @sir_nacnud
+- Remove mention of LLMs in docs/remote-development (#396) by @mayas
+- Downgrade embed-resource to 3.0.9 for Windows compatibility (#390)
+- Fix multiple menus entries on some Linux distributions (#394) by @koru
+- Fix Gentoo packaging parse errors (#397) by @koru
 
 ## [3.2.0] - 2026-07-27
 
