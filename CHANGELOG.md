@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Downgrade embed-resource to 3.0.9 for Windows compatibility (#390)
 - Fix multiple menus entries on some Linux distributions (#394) by @koru
 - Fix Gentoo packaging parse errors (#397) by @koru
+- Use cfg_select where reasonable (#387) by @ltdk
 
 ## [3.2.0] - 2026-07-27
 
