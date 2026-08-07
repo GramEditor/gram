@@ -7514,6 +7514,7 @@ mod tests {
         });
     }
 
+
     #[gpui::test]
     async fn test_pane_zoom_in_out(cx: &mut TestAppContext) {
         init_test(cx);

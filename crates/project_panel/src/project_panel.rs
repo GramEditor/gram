@@ -2,7 +2,10 @@ mod project_panel_settings;
 mod utils;
 
 use anyhow::{Context as _, Result};
-use app_actions::{project_panel::ToggleFocus, workspace::OpenWithSystem};
+use app_actions::{
+    project_panel::{Toggle, ToggleFocus},
+    workspace::OpenWithSystem,
+};
 use client::{ErrorCode, ErrorExt};
 use collections::{BTreeSet, HashMap, hash_map};
 use command_palette_hooks::CommandPaletteFilter;
@@ -388,6 +391,11 @@ impl FoldedAncestors {
 
 pub fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, _, _| {
+        workspace.register_action(|workspace, _: &Toggle, window, cx| {
+            if !workspace.toggle_panel_focus::<ProjectPanel>(window, cx) {
+                workspace.close_panel::<ProjectPanel>(window, cx);
+            }
+        });
         workspace.register_action(|workspace, _: &ToggleFocus, window, cx| {
             workspace.toggle_panel_focus::<ProjectPanel>(window, cx);
         });
