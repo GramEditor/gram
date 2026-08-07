@@ -46,10 +46,10 @@ async fn test_open_path_prompt(cx: &mut TestAppContext) {
     insert_query(query, &picker, cx).await;
     assert_eq!(collect_match_candidates(&picker, cx), vec!["root"]);
 
-    #[cfg(not(windows))]
-    let expected_separator = "./";
-    #[cfg(windows)]
-    let expected_separator = ".\\";
+    let expected_separator = cfg_select! {
+        windows => ".\\",
+        _ => "./",
+    };
 
     // If the query ends with a slash, the picker should show the contents of the directory.
     let query = path!("/root/");

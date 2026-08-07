@@ -3723,19 +3723,20 @@ async fn test_rename_with_hide_root(cx: &mut gpui::TestAppContext) {
         select_path(&panel, "root1", cx);
         panel.update_in(cx, |panel, window, cx| panel.rename(&Rename, window, cx));
 
-        #[cfg(target_os = "windows")]
-        assert!(
-            panel.read_with(cx, |panel, _| panel.state.edit_state.is_none()),
-            "Rename should be blocked on Windows even with multiple worktrees"
-        );
-
-        #[cfg(not(target_os = "windows"))]
-        {
-            assert!(
-                panel.read_with(cx, |panel, _| panel.state.edit_state.is_some()),
-                "Rename should work with multiple worktrees on non-Windows when hide_root=true"
-            );
-            panel.update_in(cx, |panel, window, cx| panel.cancel(&menu::Cancel, window, cx));
+        cfg_select! {
+            windows => {
+                assert!(
+                    panel.read_with(cx, |panel, _| panel.state.edit_state.is_none()),
+                    "Rename should be blocked on Windows even with multiple worktrees"
+                )
+            }
+            _ => {
+                assert!(
+                    panel.read_with(cx, |panel, _| panel.state.edit_state.is_some()),
+                    "Rename should work with multiple worktrees on non-Windows when hide_root=true"
+                );
+                panel.update_in(cx, |panel, window, cx| panel.cancel(&menu::Cancel, window, cx));
+            }
         }
     }
 }
@@ -7680,10 +7681,10 @@ fn visible_entries_as_strings(
             } else {
                 "  "
             };
-            #[cfg(windows)]
-            let filename = details.filename.replace("\\", "/");
-            #[cfg(not(windows))]
-            let filename = details.filename;
+            let filename = cfg_select! {
+                windows => details.filename.replace("\\", "/"),
+                _ => details.filename,
+            };
             let name = if details.is_editing {
                 format!("[EDITOR: '{}']", filename)
             } else if details.is_processing {

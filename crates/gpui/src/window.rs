@@ -2091,9 +2091,8 @@ impl Window {
         self.tooltip_bounds.take();
 
         let _inspector_width: Pixels = rems(30.0).to_pixels(self.rem_size());
-        let root_size = {
-            #[cfg(any(feature = "inspector", debug_assertions))]
-            {
+        let root_size = cfg_select! {
+            any(feature = "inspector", debug_assertions) => {
                 if self.inspector.is_some() {
                     let mut size = self.viewport_size;
                     size.width = (size.width - _inspector_width).max(px(0.0));
@@ -2102,10 +2101,7 @@ impl Window {
                     self.viewport_size
                 }
             }
-            #[cfg(not(any(feature = "inspector", debug_assertions)))]
-            {
-                self.viewport_size
-            }
+            _ => self.viewport_size,
         };
 
         // Layout all root elements.
@@ -2681,18 +2677,13 @@ impl Window {
             let mut state_box = inner
                 .downcast::<Option<S>>()
                 .map_err(|_| {
-                    #[cfg(debug_assertions)]
-                    {
-                        anyhow::anyhow!(
+                    cfg_select! {
+                        debug_assertions => anyhow::anyhow!(
                             "invalid element state type for id, requested {:?}, actual: {:?}",
                             std::any::type_name::<S>(),
                             type_name
-                        )
-                    }
-
-                    #[cfg(not(debug_assertions))]
-                    {
-                        anyhow::anyhow!(
+                        ),
+                        _ => anyhow::anyhow!(
                             "invalid element state type for id, requested {:?}",
                             std::any::type_name::<S>(),
                         )
@@ -3861,12 +3852,12 @@ impl Window {
             return;
         }
 
-        #[cfg(not(target_os = "mac"))]
-        let filter = |key_down_event: &&KeyDownEvent| key_down_event.prefer_character_input;
-        #[cfg(target_os = "mac")]
         let filter = |key_down_event: &&KeyDownEvent| {
-            key_down_event.prefer_character_input
-                && !(key_down_event.keystroke.altgr && (self.option_as_alt == OptionAsAlt::Both))
+            cfg_select! {
+                target_os = "macos" => key_down_event.prefer_character_input
+                    && !(key_down_event.keystroke.altgr && (self.option_as_alt == OptionAsAlt::Both)),
+                _ => key_down_event.prefer_character_input,
+            }
         };
 
         let skip_bindings = event

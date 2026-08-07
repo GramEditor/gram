@@ -473,48 +473,48 @@ impl ToolbarItemView for BufferSearchBar {
                 }),
             );
 
-            #[cfg(target_os = "macos")]
-            {
-                let item_focus_handle = searchable_item_handle.item_focus_handle(cx);
+            cfg_select! {
+                target_os = "macos" => {
+                    let item_focus_handle = searchable_item_handle.item_focus_handle(cx);
 
-                self.active_searchable_item_subscriptions = Some([
-                    search_event_subscription,
-                    cx.on_focus(&item_focus_handle, window, |this, window, cx| {
-                        if this.query_editor_focused || this.replacement_editor_focused {
-                            // no need to read pasteboard since focus came from toolbar
-                            return;
-                        }
-
-                        cx.defer_in(window, |this, window, cx| {
-                            let Some(item) = cx.read_from_find_pasteboard() else {
-                                return;
-                            };
-                            let Some(text) = item.text() else {
-                                return;
-                            };
-
-                            if this.query(cx) == text {
+                    self.active_searchable_item_subscriptions = Some([
+                        search_event_subscription,
+                        cx.on_focus(&item_focus_handle, window, |this, window, cx| {
+                            if this.query_editor_focused || this.replacement_editor_focused {
+                                // no need to read pasteboard since focus came from toolbar
                                 return;
                             }
 
-                            let search_options = item
-                                .metadata()
-                                .and_then(|m| m.parse().ok())
-                                .and_then(SearchOptions::from_bits)
-                                .unwrap_or(this.search_options);
+                            cx.defer_in(window, |this, window, cx| {
+                                let Some(item) = cx.read_from_find_pasteboard() else {
+                                    return;
+                                };
+                                let Some(text) = item.text() else {
+                                    return;
+                                };
 
-                            if this.dismissed {
-                                this.pending_external_query = Some((text, search_options));
-                            } else {
-                                drop(this.search(&text, Some(search_options), true, window, cx));
-                            }
-                        });
-                    }),
-                ]);
-            }
-            #[cfg(not(target_os = "macos"))]
-            {
-                self.active_searchable_item_subscriptions = Some(search_event_subscription);
+                                if this.query(cx) == text {
+                                    return;
+                                }
+
+                                let search_options = item
+                                    .metadata()
+                                    .and_then(|m| m.parse().ok())
+                                    .and_then(SearchOptions::from_bits)
+                                    .unwrap_or(this.search_options);
+
+                                if this.dismissed {
+                                    this.pending_external_query = Some((text, search_options));
+                                } else {
+                                    drop(this.search(&text, Some(search_options), true, window, cx));
+                                }
+                            });
+                        }),
+                    ]);
+                }
+                _ => {
+                    self.active_searchable_item_subscriptions = Some(search_event_subscription);
+                }
             }
 
             let is_project_search = searchable_item_handle.supported_options(cx).find_in_results;

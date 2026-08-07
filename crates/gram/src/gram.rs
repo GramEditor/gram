@@ -433,65 +433,65 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
 #[cfg(target_os = "windows")]
 fn unstable_version_notification(_cx: &mut App) {}
 
-#[cfg(any(target_os = "linux", target_os = "freebsd"))]
+#[cfg(any(target = "linux", target_os = "freebsd", target_os = "windows"))]
 fn initialize_file_watcher(window: &mut Window, cx: &mut Context<Workspace>) {
     if let Err(e) = fs::fs_watcher::global(|_| {}) {
-        let message = format!(
-            db::indoc! {r#"
-            inotify_init returned {}
+        cfg_select! {
+            any(target_os = "linux", target_os = "freebsd") => {
+                let message = format!(
+                    db::indoc! {r#"
+                            inotify_init returned {}
 
-            This may be due to system-wide limits on inotify instances. For troubleshooting see: gram://docs/linux
-            "#},
-            e
-        );
-        let prompt = window.prompt(
-            PromptLevel::Critical,
-            "Could not start inotify",
-            Some(&message),
-            &["Troubleshoot and Quit"],
-            cx,
-        );
-        cx.spawn(async move |_, cx| {
-            if prompt.await == Ok(0) {
-                cx.update(|cx| {
-                    cx.open_url("gram://docs/linux#could-not-start-inotify");
-                    cx.quit();
+                            This may be due to system-wide limits on inotify instances. For troubleshooting see: gram://docs/linux
+                            "#},
+                    e
+                );
+                let prompt = window.prompt(
+                    PromptLevel::Critical,
+                    "Could not start inotify",
+                    Some(&message),
+                    &["Troubleshoot and Quit"],
+                    cx,
+                );
+                cx.spawn(async move |_, cx| {
+                    if prompt.await == Ok(0) {
+                        cx.update(|cx| {
+                            cx.open_url("gram://docs/linux#could-not-start-inotify");
+                            cx.quit();
+                        })
+                        .ok();
+                    }
                 })
-                .ok();
+                .detach()
             }
-        })
-        .detach()
-    }
-}
+            target_os = "windows" => {
+                let message = format!(
+                    db::indoc! {r#"
+                            ReadDirectoryChangesW initialization failed: {}
 
-#[cfg(target_os = "windows")]
-fn initialize_file_watcher(window: &mut Window, cx: &mut Context<Workspace>) {
-    if let Err(e) = fs::fs_watcher::global(|_| {}) {
-        let message = format!(
-            db::indoc! {r#"
-            ReadDirectoryChangesW initialization failed: {}
-
-            This may occur on network filesystems and WSL paths. For troubleshooting see: gram://docs/windows
-            "#},
-            e
-        );
-        let prompt = window.prompt(
-            PromptLevel::Critical,
-            "Could not start ReadDirectoryChangesW",
-            Some(&message),
-            &["Troubleshoot and Quit"],
-            cx,
-        );
-        cx.spawn(async move |_, cx| {
-            if prompt.await == Ok(0) {
-                cx.update(|cx| {
-                    cx.open_url("gram://docs/windows");
-                    cx.quit()
+                            This may occur on network filesystems and WSL paths. For troubleshooting see: gram://docs/windows
+                            "#},
+                    e
+                );
+                let prompt = window.prompt(
+                    PromptLevel::Critical,
+                    "Could not start ReadDirectoryChangesW",
+                    Some(&message),
+                    &["Troubleshoot and Quit"],
+                    cx,
+                );
+                cx.spawn(async move |_, cx| {
+                    if prompt.await == Ok(0) {
+                        cx.update(|cx| {
+                            cx.open_url("gram://docs/windows");
+                            cx.quit()
+                        })
+                        .ok();
+                    }
                 })
-                .ok();
+                .detach()
             }
-        })
-        .detach()
+        }
     }
 }
 
@@ -1436,30 +1436,29 @@ pub fn handle_keymap_file_changes(mut user_keymap_file_rx: mpsc::UnboundedReceiv
     })
     .detach();
 
-    #[cfg(target_os = "windows")]
-    {
-        let mut current_layout_id = cx.keyboard_layout().id().to_string();
-        cx.on_keyboard_layout_change(move |cx| {
-            let next_layout_id = cx.keyboard_layout().id();
-            if next_layout_id != current_layout_id {
-                current_layout_id = next_layout_id.to_string();
-                keyboard_layout_tx.unbounded_send(()).ok();
-            }
-        })
-        .detach();
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        let mut current_mapping = cx.keyboard_mapper().get_key_equivalents().cloned();
-        cx.on_keyboard_layout_change(move |cx| {
-            let next_mapping = cx.keyboard_mapper().get_key_equivalents();
-            if current_mapping.as_ref() != next_mapping {
-                current_mapping = next_mapping.cloned();
-                keyboard_layout_tx.unbounded_send(()).ok();
-            }
-        })
-        .detach();
+    cfg_select! {
+        windows => {
+            let mut current_layout_id = cx.keyboard_layout().id().to_string();
+            cx.on_keyboard_layout_change(move |cx| {
+                let next_layout_id = cx.keyboard_layout().id();
+                if next_layout_id != current_layout_id {
+                    current_layout_id = next_layout_id.to_string();
+                    keyboard_layout_tx.unbounded_send(()).ok();
+                }
+            })
+            .detach();
+        }
+        _ => {
+            let mut current_mapping = cx.keyboard_mapper().get_key_equivalents().cloned();
+            cx.on_keyboard_layout_change(move |cx| {
+                let next_mapping = cx.keyboard_mapper().get_key_equivalents();
+                if current_mapping.as_ref() != next_mapping {
+                    current_mapping = next_mapping.cloned();
+                    keyboard_layout_tx.unbounded_send(()).ok();
+                }
+            })
+            .detach();
+        }
     }
 
     load_default_keymap(cx);

@@ -75,10 +75,10 @@ pub struct AskPassSession {
     askpass_kill_master_rx: Option<oneshot::Receiver<()>>,
 }
 
-#[cfg(not(target_os = "windows"))]
-const ASKPASS_SCRIPT_NAME: &str = "askpass.sh";
-#[cfg(target_os = "windows")]
-const ASKPASS_SCRIPT_NAME: &str = "askpass.ps1";
+const ASKPASS_SCRIPT_NAME: &str = cfg_select! {
+    windows => "askpass.ps1",
+    _ => "askpass.sh",
+};
 
 impl AskPassSession {
     /// This will create a new AskPassSession.
@@ -256,13 +256,9 @@ impl PasswordProxy {
     }
 
     pub fn script_path(&self) -> impl AsRef<OsStr> {
-        #[cfg(not(target_os = "windows"))]
-        {
-            &self.askpass_script_path
-        }
-        #[cfg(target_os = "windows")]
-        {
-            &self.askpass_helper
+        cfg_select! {
+            windows => &self.askpass_helper,
+            _ => &self.askpass_script_path,
         }
     }
 }

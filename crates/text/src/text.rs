@@ -196,10 +196,10 @@ impl History {
             redo_stack: Vec::new(),
             transaction_depth: 0,
             // Don't group transactions in tests unless we opt in, because it's a footgun.
-            #[cfg(any(test, feature = "test-support"))]
-            group_interval: Duration::ZERO,
-            #[cfg(not(any(test, feature = "test-support")))]
-            group_interval: Duration::from_millis(300),
+            group_interval: cfg_select! {
+                any(test, feature = "test-support") => Duration::ZERO,
+                _ => Duration::from_millis(300),
+            },
         }
     }
 
@@ -3193,11 +3193,10 @@ pub enum LineEnding {
 
 impl Default for LineEnding {
     fn default() -> Self {
-        #[cfg(unix)]
-        return Self::Unix;
-
-        #[cfg(not(unix))]
-        return Self::Windows;
+        return cfg_select! {
+            unix => Self::Unix,
+            _ => Self::Windows,
+        };
     }
 }
 

@@ -618,10 +618,10 @@ impl From<Nonce> for u128 {
     }
 }
 
-#[cfg(any(test, feature = "test-support"))]
-pub const MAX_WORKTREE_UPDATE_MAX_CHUNK_SIZE: usize = 2;
-#[cfg(not(any(test, feature = "test-support")))]
-pub const MAX_WORKTREE_UPDATE_MAX_CHUNK_SIZE: usize = 256;
+pub const MAX_WORKTREE_UPDATE_MAX_CHUNK_SIZE: usize = cfg_select! {
+    any(test, feature = "test-support") => 2,
+    _ => 256,
+};
 
 pub fn split_worktree_update(mut message: UpdateWorktree) -> impl Iterator<Item = UpdateWorktree> {
     let mut done = false;
