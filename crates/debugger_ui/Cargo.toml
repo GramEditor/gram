@@ -73,17 +73,7 @@ workspace = { workspace = true, features = ["test-support"] }
 zlog.workspace = true
 
 [features]
-test-support = [
-  "dap_adapters/test-support",
-  "dap/test-support",
-  "debugger_tools/test-support",
-  "editor/test-support",
-  "gpui/test-support",
-  "project/test-support",
-  "unindent",
-  "util/test-support",
-  "workspace/test-support",
-]
+test-support = ["dap_adapters/test-support", "dap/test-support", "debugger_tools/test-support", "editor/test-support", "gpui/test-support", "project/test-support", "unindent", "util/test-support", "workspace/test-support"]
 
 [lints]
 workspace = true

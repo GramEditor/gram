@@ -51,13 +51,7 @@ util = { workspace = true, features = ["test-support"] }
 zlog.workspace = true
 
 [features]
-test-support = [
-  "gpui/test-support",
-  "language/test-support",
-  "settings/test-support",
-  "text/test-support",
-  "util/test-support",
-]
+test-support = ["gpui/test-support", "language/test-support", "settings/test-support", "text/test-support", "util/test-support"]
 
 [lints]
 workspace = true
