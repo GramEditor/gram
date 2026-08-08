@@ -67,16 +67,7 @@ repository = "https://github.com/hasit/zed-fish"
 
 [extensions.git-firefly]
 name = "git-firefly"
-ids = [
-  ".gitconfig",
-  ".gitignore",
-  "COMMIT_EDITMSG",
-  "EDIT_DESCRIPTION",
-  "MERGE_MSG",
-  "NOTES_EDITMSG",
-  "TAG_EDITMSG",
-  "git-rebase-todo",
-]
+ids = [".gitconfig", ".gitignore", "COMMIT_EDITMSG", "EDIT_DESCRIPTION", "MERGE_MSG", "NOTES_EDITMSG", "TAG_EDITMSG", "git-rebase-todo"]
 repository = "https://github.com/zed-extensions/git_firefly"
 
 [extensions.gleam]
@@ -103,10 +94,7 @@ repository = "https://github.com/zed-extensions/haskell"
 name = "html"
 ids = ["htm", "html", "shtml"]
 repository = ""
-extras = [
-  "https://github.com/zed-extensions/superhtml",
-  "https://github.com/seekode/zed-html-snippets",
-]
+extras = ["https://github.com/zed-extensions/superhtml", "https://github.com/seekode/zed-html-snippets"]
 
 [extensions.java]
 name = "java"
