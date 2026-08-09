@@ -3,9 +3,10 @@
 # under different email addresses.
 #
 # Reference: https://git-scm.com/docs/gitmailmap
-
+#
 # Keep these entries sorted alphabetically.
 # In Gram: `editor: sort lines case insensitive`
+# Or `grep -v '^#' .mailmap | LC_ALL=en_US.utf-8 sort`.
 
 Agus Zubiaga <agus@zed.dev>
 Agus Zubiaga <agus@zed.dev> <hi@aguz.me>
@@ -64,6 +65,8 @@ Kaylee Simmons <kay@the-simmons.net> <keith@the-simmons.net>
 Kaylee Simmons <kay@the-simmons.net> <keith@zed.dev>
 Kirill Bulatov <kirill@zed.dev>
 Kirill Bulatov <kirill@zed.dev> <mail4score@gmail.com>
+koru <koru@cock.li>
+koru <koru@cock.li> <koru@noreply.codeberg.org>
 Kyle Caverly <kylebcaverly@gmail.com>
 Kyle Caverly <kylebcaverly@gmail.com> <kyle@zed.dev>
 Lilith Iris <itslirissama@gmail.com>
