@@ -2985,6 +2985,7 @@ mod tests {
             "Excluded files should get opened, excluded dir should not get opened"
         );
 
+        cx.executor().run_until_parked();
         let entries = cx.read(|cx| workspace.file_project_paths(cx));
         assert_eq!(
             initial_entries, entries,

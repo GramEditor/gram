@@ -1720,6 +1720,10 @@ impl LocalWorktree {
     }
 
     pub fn refresh_entries_for_paths(&self, paths: Vec<Arc<RelPath>>) -> barrier::Receiver {
+        let paths = paths
+            .into_iter()
+            .filter(|path| !self.settings.is_path_excluded(&path))
+            .collect();
         let (tx, rx) = barrier::channel();
         self.scan_requests_tx
             .try_send(ScanRequest {
