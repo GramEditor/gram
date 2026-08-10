@@ -14,7 +14,7 @@ In any other scenario, it will produce a tab character.
 To enable SuperTab, bind the tab key to {#action editor::SuperTab} in your
 `keymap.jsonc`:
 
-```jsonc
+```json
 {
   "context": "Editor && mode == full",
   "use_key_equivalents": true,
@@ -31,7 +31,7 @@ not at the beginning of the line or at a completion point. To have it always
 indent unless completing, you can configure `supertab_fallback` in
 `settings.jsonc` or via the Settings interface:
 
-```jsonc
+```json
 {
   "supertab_fallback": "indent", // default is "tab"
 }

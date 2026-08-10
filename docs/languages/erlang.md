@@ -2,20 +2,23 @@
 
 Erlang support is built into the editor.
 
-- Tree-sitter: [WhatsApp/tree-sitter-erlang](https://github.com/WhatsApp/tree-sitter-erlang)
+- Tree-sitter:
+  [WhatsApp/tree-sitter-erlang](https://github.com/WhatsApp/tree-sitter-erlang)
 - Language Servers:
   - [erlang-ls/erlang_ls](https://github.com/erlang-ls/erlang_ls)
   - [WhatsApp/erlang-language-platform](https://github.com/WhatsApp/erlang-language-platform)
 
 ## Choosing a language server
 
-The Erlang extension offers language server support for `erlang_ls` and `erlang-language-platform`.
+The Erlang extension offers language server support for `erlang_ls` and
+`erlang-language-platform`.
 
 `erlang_ls` is enabled by default.
 
-To switch to `erlang-language-platform`, add the following to your `settings.jsonc`:
+To switch to `erlang-language-platform`, add the following to your
+`settings.jsonc`:
 
-```jsonc
+```json
 {
   "languages": {
     "Erlang": {

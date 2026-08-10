@@ -2,12 +2,18 @@
 
 Markdown support is available natively in Gram.
 
-- Tree-sitter: [tree-sitter-markdown](https://github.com/tree-sitter-grammars/tree-sitter-markdown)
+- Tree-sitter:
+  [tree-sitter-markdown](https://github.com/tree-sitter-grammars/tree-sitter-markdown)
 - Language Server: N/A
 
 ## Syntax Highlighting Code Blocks
 
-Gram supports language-specific syntax highlighting of markdown code blocks by leveraging [tree-sitter language grammars](../extensions/languages.md#grammar). All [Gram supported languages](../languages.md), including those provided by official or community extensions, are available for use in markdown code blocks. All you need to do is provide a language name after the opening <kbd>```</kbd> code fence like so:
+Gram supports language-specific syntax highlighting of markdown code blocks by
+leveraging [tree-sitter language grammars](../extensions/languages.md#grammar).
+All [Gram supported languages](../languages.md), including those provided by
+official or community extensions, are available for use in markdown code blocks.
+All you need to do is provide a language name after the opening <kbd>```</kbd>
+code fence like so:
 
 ````python
 ```python
@@ -23,9 +29,13 @@ def fib(n):
 
 ### Format
 
-Gram supports using Prettier to automatically re-format Markdown documents. You can trigger this manually via the {#action editor::Format} action or via the {#kb editor::Format} keyboard shortcut. Alternately, you can automatically format by enabling [`format_on_save`](../configuring-gram.md#format-on-save) in your settings.json:
+Gram supports using Prettier to automatically re-format Markdown documents. You
+can trigger this manually via the {#action editor::Format} action or via the
+{#kb editor::Format} keyboard shortcut. Alternately, you can automatically
+format by enabling [`format_on_save`](../configuring-gram.md#format-on-save) in
+your settings.json:
 
-```jsonc
+```json
   "languages": {
     "Markdown": {
       "format_on_save": "on"
@@ -35,9 +45,11 @@ Gram supports using Prettier to automatically re-format Markdown documents. You 
 
 ### Trailing Whitespace
 
-By default Gram will remove trailing whitespace on save. If you rely on invisible trailing whitespace being converted to `<br />` in Markdown files you can disable this behavior with:
+By default Gram will remove trailing whitespace on save. If you rely on
+invisible trailing whitespace being converted to `<br />` in Markdown files you
+can disable this behavior with:
 
-```jsonc
+```json
   "languages": {
     "Markdown": {
       "remove_trailing_whitespace_on_save": false

@@ -14,15 +14,21 @@ Clone the [Gram repository](https://codeberg.org/GramEditor/gram).
   script/linux
   ```
 
-  If you prefer to install the system libraries manually, you can find the list of required packages in the `script/linux` file.
+  If you prefer to install the system libraries manually, you can find the list
+  of required packages in the `script/linux` file.
 
 ### Linkers {#linker}
 
-On Linux, Rust's default linker is [LLVM's `lld`](https://blog.rust-lang.org/2025/09/18/Rust-1.90.0/). Alternative linkers, especially [Wild](https://github.com/davidlattimore/wild) and [Mold](https://github.com/rui314/mold) can significantly improve clean and incremental build time.
+On Linux, Rust's default linker is
+[LLVM's `lld`](https://blog.rust-lang.org/2025/09/18/Rust-1.90.0/). Alternative
+linkers, especially [Wild](https://github.com/davidlattimore/wild) and
+[Mold](https://github.com/rui314/mold) can significantly improve clean and
+incremental build time.
 
 For local development Wild is recommended because it's 5-20% faster than Mold.
 
-These linkers can be installed with `script/install-mold` and `script/install-wild`.
+These linkers can be installed with `script/install-mold` and
+`script/install-wild`.
 
 To use Wild as your default, add these lines to your `~/.cargo/config.toml`:
 
@@ -45,7 +51,8 @@ rustflags = ["-C", "link-arg=-fuse-ld=mold"]
 
 ## Building from source
 
-Once the dependencies are installed, you can build using [Cargo](https://doc.rust-lang.org/cargo/).
+Once the dependencies are installed, you can build using
+[Cargo](https://doc.rust-lang.org/cargo/).
 
 For a debug build of the editor:
 
@@ -59,7 +66,8 @@ To run the tests:
 cargo test --workspace
 ```
 
-In release mode, the primary user interface is the `cli` crate. You can run it in development with:
+In release mode, the primary user interface is the `cli` crate. You can run it
+in development with:
 
 ```sh
 cargo run -p cli
@@ -73,7 +81,8 @@ You can install a local build on your machine with:
 ./script/install.sh --build
 ```
 
-This will build gram and the cli in release mode and make them available at `~/.local/bin/gram`, installing .desktop files to `~/.local/share`.
+This will build gram and the cli in release mode and make them available at
+`~/.local/bin/gram`, installing .desktop files to `~/.local/share`.
 
 > **_Note_**: If you encounter linker errors similar to the following:
 >
@@ -91,28 +100,50 @@ This will build gram and the cli in release mode and make them available at `~/.
 > error: could not compile `remote_server` (bin "remote_server") due to 1 previous error
 > ```
 >
-> **Cause**:
-> this is caused by known bugs in aws-lc-rs(doesn't support GCC >= 14): [FIPS fails to build with GCC >= 14](https://github.com/aws/aws-lc-rs/issues/569)
-> & [GCC-14 - build failure for FIPS module](https://github.com/aws/aws-lc/issues/2010)
+> **Cause**: this is caused by known bugs in aws-lc-rs(doesn't support GCC >=
+> 14):
+> [FIPS fails to build with GCC >= 14](https://github.com/aws/aws-lc-rs/issues/569)
+> &
+> [GCC-14 - build failure for FIPS module](https://github.com/aws/aws-lc/issues/2010)
 >
-> You can refer to [linux: Linker error for remote_server when using script/install-linux](https://github.com/zed-industries/zed/issues/24880) for more information.
+> You can refer to
+> [linux: Linker error for remote_server when using script/install-linux](https://github.com/zed-industries/zed/issues/24880)
+> for more information.
 >
-> **Workarounds**:
-> Set the remote server target to `x86_64-unknown-linux-gnu` like so `export REMOTE_SERVER_TARGET=x86_64-unknown-linux-gnu; script/install-linux`
+> **Workarounds**: Set the remote server target to `x86_64-unknown-linux-gnu`
+> like so
+> `export REMOTE_SERVER_TARGET=x86_64-unknown-linux-gnu; script/install-linux`
 
 ## Wayland & X11
 
-Gram supports both X11 and Wayland. By default, we pick whichever we can find at runtime. If you're on Wayland and want to run in X11 mode, use the environment variable `WAYLAND_DISPLAY=''`.
+Gram supports both X11 and Wayland. By default, we pick whichever we can find at
+runtime. If you're on Wayland and want to run in X11 mode, use the environment
+variable `WAYLAND_DISPLAY=''`.
 
 ## Packaging Gram
 
 Gram has two main binaries:
 
-- You will need to build `crates/cli` and make its binary available in `$PATH` with the name `gram`.
-- You will need to build `crates/gram` and put it at `$PATH/to/cli/../../libexec/gram-editor`. For example, if you are going to put the cli at `~/.local/bin/gram` put gram at `~/.local/libexec/gram-editor`. As some linux distributions (notably Arch) discourage the use of `libexec`, you can also put this binary at `$PATH/to/cli/../../lib/gram/gram-editor` (e.g. `~/.local/lib/gram/gram-editor`) instead.
-- If you are going to provide a `.desktop` file you can find a template in `crates/gram/resources/gram.desktop.in`, and use `envsubst` to populate it with the values required. This file should also be renamed to `$APP_ID.desktop` so that the file [follows the FreeDesktop standards](https://github.com/zed-industries/zed/issues/12707#issuecomment-2168742761). You should also make this desktop file executable (`chmod 755`).
-- You will need to ensure that the necessary libraries are installed. You can get the current list by [inspecting the built binary](https://github.com/zed-industries/zed/blob/935cf542aebf55122ce6ed1c91d0fe8711970c82/script/bundle-linux#L65-L67) on your system.
-- For an example of a complete build script, see [script/bundle-linux](https://github.com/zed-industries/zed/blob/935cf542aebf55122ce6ed1c91d0fe8711970c82/script/bundle-linux).
+- You will need to build `crates/cli` and make its binary available in `$PATH`
+  with the name `gram`.
+- You will need to build `crates/gram` and put it at
+  `$PATH/to/cli/../../libexec/gram-editor`. For example, if you are going to put
+  the cli at `~/.local/bin/gram` put gram at `~/.local/libexec/gram-editor`. As
+  some linux distributions (notably Arch) discourage the use of `libexec`, you
+  can also put this binary at `$PATH/to/cli/../../lib/gram/gram-editor` (e.g.
+  `~/.local/lib/gram/gram-editor`) instead.
+- If you are going to provide a `.desktop` file you can find a template in
+  `crates/gram/resources/gram.desktop.in`, and use `envsubst` to populate it
+  with the values required. This file should also be renamed to
+  `$APP_ID.desktop` so that the file
+  [follows the FreeDesktop standards](https://github.com/zed-industries/zed/issues/12707#issuecomment-2168742761).
+  You should also make this desktop file executable (`chmod 755`).
+- You will need to ensure that the necessary libraries are installed. You can
+  get the current list by
+  [inspecting the built binary](https://github.com/zed-industries/zed/blob/935cf542aebf55122ce6ed1c91d0fe8711970c82/script/bundle-linux#L65-L67)
+  on your system.
+- For an example of a complete build script, see
+  [script/bundle-linux](https://github.com/zed-industries/zed/blob/935cf542aebf55122ce6ed1c91d0fe8711970c82/script/bundle-linux).
 - Set the environment variable `GRAM_NO_BUNDLED_UNINSTALL` to something like
   "Use flatpak to uninstall" so that the CLI uninstall command doesn't try to
   run the uninstallation script.
@@ -121,41 +152,59 @@ Gram has two main binaries:
 
 Zed comes with some (in our opinion) pretty severe caveats:
 
-- It automatically downloads and installs binaries without explicit user prompting in the same way as rustup/rbenv/pyenv, etc. They say that they "understand this is contentious", and yet they insist on doing it. [See here](https://github.com/zed-industries/zed/issues/12589).
-- They download and install extension binaries from [zed-industries/extensions](https://github.com/zed-industries/extensions) without explicit permission or any way to inspect what is being installed. These extensions may in turn install further software without explicit permission or control. For more details, [see here](https://github.com/zed-industries/zed/issues/12358).
-- It does not play nice with sandboxes, [see here](https://github.com/zed-industries/zed/pull/12006#issuecomment-2130421220)
+- It automatically downloads and installs binaries without explicit user
+  prompting in the same way as rustup/rbenv/pyenv, etc. They say that they
+  "understand this is contentious", and yet they insist on doing it.
+  [See here](https://github.com/zed-industries/zed/issues/12589).
+- They download and install extension binaries from
+  [zed-industries/extensions](https://github.com/zed-industries/extensions)
+  without explicit permission or any way to inspect what is being installed.
+  These extensions may in turn install further software without explicit
+  permission or control. For more details,
+  [see here](https://github.com/zed-industries/zed/issues/12358).
+- It does not play nice with sandboxes,
+  [see here](https://github.com/zed-industries/zed/pull/12006#issuecomment-2130421220)
 
 Our (Gram's) intention is to resolve all of these problems.
 
 ## Distro Packages
 
-The Gram project includes scripts to build binary packages for various targets, including `.deb`, `.rpm` and `AppImage`. The driver for all these is the `scripts/bundle-linux`
-script which takes the following flags (among others):
+The Gram project includes scripts to build binary packages for various targets,
+including `.deb`, `.rpm` and `AppImage`. The driver for all these is the
+`scripts/bundle-linux` script which takes the following flags (among others):
 
 - `--deb` (requires [`cargo-deb`](https://github.com/kornelski/cargo-deb))
-- `--rpm` (requires [`cargo-generate-rpm`](https://github.com/cat-in-136/cargo-generate-rpm))
-- `--appimage` (requires [`pkg2appimage`](https://github.com/AppImageCommunity/pkg2appimage))
+- `--rpm` (requires
+  [`cargo-generate-rpm`](https://github.com/cat-in-136/cargo-generate-rpm))
+- `--appimage` (requires
+  [`pkg2appimage`](https://github.com/AppImageCommunity/pkg2appimage))
 
-Adding any of these will build the corresponding package. Note that the `AppImage` is created from the `.deb.` package so while you can only provide the `--appimage` flag
-it will automatically build a `.deb` as well.
+Adding any of these will build the corresponding package. Note that the
+`AppImage` is created from the `.deb.` package so while you can only provide the
+`--appimage` flag it will automatically build a `.deb` as well.
 
-Note that each of these package builds requires an additional dependency as noted above.
+Note that each of these package builds requires an additional dependency as
+noted above.
 
 ## Flatpak
 
-> Gram's current Flatpak integration exits the sandbox on startup. Workflows that rely on Flatpak's sandboxing may not work as expected.
+> Gram's current Flatpak integration exits the sandbox on startup. Workflows
+> that rely on Flatpak's sandboxing may not work as expected.
 
 To build & install the Flatpak package locally follow the steps below:
 
-1. Install Flatpak for your distribution as outlined [here](https://flathub.org/setup).
+1. Install Flatpak for your distribution as outlined
+   [here](https://flathub.org/setup).
 2. Run `script/linux` to install Linux dependencies.
 3. Run `script/flatpak/deps` script to install the required dependencies.
 4. Run `script/flatpak/bundle-flatpak`.
-5. Now the package has been installed and has a bundle available at `target/release/{app-id}.flatpak`.
+5. Now the package has been installed and has a bundle available at
+   `target/release/{app-id}.flatpak`.
 
 ## Memory profiling
 
-[`heaptrack`](https://github.com/KDE/heaptrack) is quite useful for diagnosing memory leaks. To install it:
+[`heaptrack`](https://github.com/KDE/heaptrack) is quite useful for diagnosing
+memory leaks. To install it:
 
 ```sh
 $ sudo apt install heaptrack heaptrack-gui
@@ -168,7 +217,9 @@ Then, to build and run Gram with the profiler attached:
 $ cargo heaptrack -b gram
 ```
 
-When this editor instance is exited, terminal output will include a command to run `heaptrack_interpret` to convert the `*.raw.zst` profile to a `*.zst` file which can be passed to `heaptrack_gui` for viewing.
+When this editor instance is exited, terminal output will include a command to
+run `heaptrack_interpret` to convert the `*.raw.zst` profile to a `*.zst` file
+which can be passed to `heaptrack_gui` for viewing.
 
 ## Perf recording
 
@@ -179,21 +230,19 @@ lot of CPU. It's not useful for debugging hangs or memory usage.
 ### During the incident
 
 - Find the PID (process ID) using:
-  `ps -eo size,pid,comm | grep gram | sort | head -n 1 | cut -d ' ' -f 2`
-  Or find the pid of the command gram-editor with the most ram usage in something
+  `ps -eo size,pid,comm | grep gram | sort | head -n 1 | cut -d ' ' -f 2` Or
+  find the pid of the command gram-editor with the most ram usage in something
   like htop/btop/top.
 
-- Install perf:
-  On Ubuntu (derivatives) run `sudo apt install linux-tools`.
+- Install perf: On Ubuntu (derivatives) run `sudo apt install linux-tools`.
 
-- Perf Record:
-  run `sudo perf record -p <pid you just found>`, wait a few seconds to gather data then press Ctrl+C. You should now have a perf.data file
+- Perf Record: run `sudo perf record -p <pid you just found>`, wait a few
+  seconds to gather data then press Ctrl+C. You should now have a perf.data file
 
-- Make the output file user owned:
-  run `sudo chown $USER:$USER perf.data`
+- Make the output file user owned: run `sudo chown $USER:$USER perf.data`
 
-- Get build info:
-  Run gram again and type `gram: about` in the command pallet to get the exact commit.
+- Get build info: Run gram again and type `gram: about` in the command pallet to
+  get the exact commit.
 
 ### Later
 
@@ -213,11 +262,9 @@ lot of CPU. It's not useful for debugging hangs or memory usage.
 - Resolve the symbols from the db:
   `perf inject -i perf.data -o perf_with_symbols.data`
 
-- Install flamegraph:
-  `cargo install cargo-flamegraph`
+- Install flamegraph: `cargo install cargo-flamegraph`
 
-- Render the flamegraph:
-  `flamegraph --perfdata perf_with_symbols.data`
+- Render the flamegraph: `flamegraph --perfdata perf_with_symbols.data`
 
 ## Troubleshooting
 

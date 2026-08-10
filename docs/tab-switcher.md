@@ -27,10 +27,12 @@ While the Tab Switcher is open, you can:
 
 - Press {#kb menu::SelectNext} to move to the next tab in the list
 - Press {#kb menu::SelectPrevious} to move to the previous tab
-- Press <kbd class="keybinding">enter</kbd> to confirm the selected tab and close the switcher
-- Press <kbd class="keybinding">escape</kbd> to close the switcher and return to the original tab from which
-  the switcher was opened
-- Press {#kb tab_switcher::CloseSelectedItem} to close the currently selected tab
+- Press <kbd class="keybinding">enter</kbd> to confirm the selected tab and
+  close the switcher
+- Press <kbd class="keybinding">escape</kbd> to close the switcher and return to
+  the original tab from which the switcher was opened
+- Press {#kb tab_switcher::CloseSelectedItem} to close the currently selected
+  tab
 
 As you navigate through the list, Gram will update the pane's active item to
 match the selected tab.

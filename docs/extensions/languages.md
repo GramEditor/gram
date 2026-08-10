@@ -9,9 +9,11 @@ Language support in Gram has several components:
 
 ## Language Metadata
 
-Each language supported by Gram must be defined in a subdirectory inside the `languages` directory of your extension.
+Each language supported by Gram must be defined in a subdirectory inside the
+`languages` directory of your extension.
 
-This subdirectory must contain a file called `config.toml` file with the following structure:
+This subdirectory must contain a file called `config.toml` file with the
+following structure:
 
 ```toml
 name = "My Language"
@@ -20,14 +22,29 @@ path_suffixes = ["myl"]
 line_comments = ["# "]
 ```
 
-- `name` (required) is the human readable name that will show up in the Select Language dropdown.
-- `grammar` (required) is the name of a grammar. Grammars are registered separately, described below.
-- `path_suffixes` is an array of file suffixes that should be associated with this language. Unlike `file_types` in settings, this does not support glob patterns.
-- `line_comments` is an array of strings that are used to identify line comments in the language. This is used for the `editor::ToggleComments` keybind: {#kb editor::ToggleComments} for toggling lines of code.
-- `tab_size` defines the indentation/tab size used for this language (default is `4`).
-- `hard_tabs` whether to indent with tabs (`true`) or spaces (`false`, the default).
-- `first_line_pattern` is a regular expression, that in addition to `path_suffixes` (above) or `file_types` in settings can be used to match files which should use this language. For example Gram uses this to identify Shell Scripts by matching the [shebangs lines](https://github.com/zed-industries/zed/blob/main/crates/languages/src/bash/config.toml) in the first line of a script.
-- `debuggers` is an array of strings that are used to identify debuggers in the language. When launching a debugger's `New Process Modal`, Gram will order available debuggers by the order of entries in this array.
+- `name` (required) is the human readable name that will show up in the Select
+  Language dropdown.
+- `grammar` (required) is the name of a grammar. Grammars are registered
+  separately, described below.
+- `path_suffixes` is an array of file suffixes that should be associated with
+  this language. Unlike `file_types` in settings, this does not support glob
+  patterns.
+- `line_comments` is an array of strings that are used to identify line comments
+  in the language. This is used for the `editor::ToggleComments` keybind: {#kb
+  editor::ToggleComments} for toggling lines of code.
+- `tab_size` defines the indentation/tab size used for this language (default is
+  `4`).
+- `hard_tabs` whether to indent with tabs (`true`) or spaces (`false`, the
+  default).
+- `first_line_pattern` is a regular expression, that in addition to
+  `path_suffixes` (above) or `file_types` in settings can be used to match files
+  which should use this language. For example Gram uses this to identify Shell
+  Scripts by matching the
+  [shebangs lines](https://github.com/zed-industries/zed/blob/main/crates/languages/src/bash/config.toml)
+  in the first line of a script.
+- `debuggers` is an array of strings that are used to identify debuggers in the
+  language. When launching a debugger's `New Process Modal`, Gram will order
+  available debuggers by the order of entries in this array.
 
 <!--
 TBD: Document `language_name/config.toml` keys
@@ -47,7 +64,15 @@ TBD: Document `language_name/config.toml` keys
 
 ## Grammar
 
-Gram uses the [Tree-sitter](https://tree-sitter.github.io) parsing library to provide built-in language-specific features. There are grammars available for many languages, and you can also [develop your own grammar](https://tree-sitter.github.io/tree-sitter/creating-parsers#writing-the-grammar). A growing list of Gram features are built using pattern matching over syntax trees with Tree-sitter queries. As mentioned above, every language that is defined in an extension must specify the name of a Tree-sitter grammar that is used for parsing. These grammars are then registered separately in extensions' `extension.toml` file, like this:
+Gram uses the [Tree-sitter](https://tree-sitter.github.io) parsing library to
+provide built-in language-specific features. There are grammars available for
+many languages, and you can also
+[develop your own grammar](https://tree-sitter.github.io/tree-sitter/creating-parsers#writing-the-grammar).
+A growing list of Gram features are built using pattern matching over syntax
+trees with Tree-sitter queries. As mentioned above, every language that is
+defined in an extension must specify the name of a Tree-sitter grammar that is
+used for parsing. These grammars are then registered separately in extensions'
+`extension.toml` file, like this:
 
 ```toml
 [grammars.gleam]
@@ -55,12 +80,18 @@ repository = "https://github.com/gleam-lang/tree-sitter-gleam"
 rev = "58b7cac8fc14c92b0677c542610d8738c373fa81"
 ```
 
-The `repository` field must specify a repository where the Tree-sitter grammar should be loaded from, and the `rev` field must contain a Git revision to use, such as the SHA of a Git commit. If you're developing an extension locally and want to load a grammar from the local filesystem, you can use a `file://` URL for `repository`. An extension can provide multiple grammars by referencing multiple tree-sitter repositories.
+The `repository` field must specify a repository where the Tree-sitter grammar
+should be loaded from, and the `rev` field must contain a Git revision to use,
+such as the SHA of a Git commit. If you're developing an extension locally and
+want to load a grammar from the local filesystem, you can use a `file://` URL
+for `repository`. An extension can provide multiple grammars by referencing
+multiple tree-sitter repositories.
 
 ## Tree-sitter Queries
 
-Gram uses the syntax tree produced by the [Tree-sitter](https://tree-sitter.github.io) query language to implement
-several features:
+Gram uses the syntax tree produced by the
+[Tree-sitter](https://tree-sitter.github.io) query language to implement several
+features:
 
 - Syntax highlighting
 - Bracket matching
@@ -72,12 +103,15 @@ several features:
 - Runnable code detection
 - Selecting classes, functions, etc.
 
-The following sections elaborate on how [Tree-sitter queries](https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax) enable these
-features in Gram, using [JSON syntax](https://www.json.org/json-en.html) as a guiding example.
+The following sections elaborate on how
+[Tree-sitter queries](https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax)
+enable these features in Gram, using
+[JSON syntax](https://www.json.org/json-en.html) as a guiding example.
 
 ### Syntax highlighting
 
-In Tree-sitter, the `highlights.scm` file defines syntax highlighting rules for a particular syntax.
+In Tree-sitter, the `highlights.scm` file defines syntax highlighting rules for
+a particular syntax.
 
 Here's an example from a `highlights.scm` for JSON:
 
@@ -90,7 +124,8 @@ Here's an example from a `highlights.scm` for JSON:
 (number) @number
 ```
 
-This query marks strings, object keys, and numbers for highlighting. The following is a comprehensive list of captures supported by themes:
+This query marks strings, object keys, and numbers for highlighting. The
+following is a comprehensive list of captures supported by themes:
 
 | Capture                  | Description                            |
 | ------------------------ | -------------------------------------- |
@@ -154,9 +189,12 @@ This query identifies opening and closing brackets, braces, and quotation marks.
 | @open   | Captures opening brackets, braces, and quotes |
 | @close  | Captures closing brackets, braces, and quotes |
 
-Gram uses these to highlight matching brackets: painting each bracket pair with a different color ("rainbow brackets") and highlighting the brackets if the cursor is inside the bracket pair.
+Gram uses these to highlight matching brackets: painting each bracket pair with
+a different color ("rainbow brackets") and highlighting the brackets if the
+cursor is inside the bracket pair.
 
-To opt out of rainbow brackets colorization, add the following to the corresponding `brackets.scm` entry:
+To opt out of rainbow brackets colorization, add the following to the
+corresponding `brackets.scm` entry:
 
 ```scheme
 (("\"" @open "\"" @close) (#set! rainbow.exclude))
@@ -183,7 +221,9 @@ This query captures object keys for the outline structure.
 | @context.extra | Captures additional contextual information for the outline item                      |
 | @annotation    | Captures nodes that annotate outline item (doc comments, attributes, decorators)[^1] |
 
-[^1]: These annotations are used by Assistant when generating code modification steps.
+[^1]:
+    These annotations are used by Assistant when generating code modification
+    steps.
 
 ### Auto-indentation
 
@@ -205,7 +245,8 @@ This query marks the end of arrays and objects for indentation purposes.
 
 ### Code injections
 
-The `injections.scm` file defines rules for embedding one language within another, such as code blocks in Markdown or SQL queries in Python strings.
+The `injections.scm` file defines rules for embedding one language within
+another, such as code blocks in Markdown or SQL queries in Python strings.
 
 Here's an example from an `injections.scm` file for Markdown:
 
@@ -219,22 +260,33 @@ Here's an example from an `injections.scm` file for Markdown:
  (#set! injection.language "markdown-inline"))
 ```
 
-This query identifies fenced code blocks, capturing the language specified in the info string and the content within the block. It also captures inline content and sets its language to "markdown-inline".
+This query identifies fenced code blocks, capturing the language specified in
+the info string and the content within the block. It also captures inline
+content and sets its language to "markdown-inline".
 
 | Capture             | Description                                                |
 | ------------------- | ---------------------------------------------------------- |
 | @injection.language | Captures the language identifier for a code block          |
 | @injection.content  | Captures the content to be treated as a different language |
 
-Note that we couldn't use JSON as an example here because it doesn't support language injections.
+Note that we couldn't use JSON as an example here because it doesn't support
+language injections.
 
 ### Syntax overrides
 
-The `overrides.scm` file defines syntactic _scopes_ that can be used to override certain editor settings within specific language constructs.
+The `overrides.scm` file defines syntactic _scopes_ that can be used to override
+certain editor settings within specific language constructs.
 
-For example, there is a language-specific setting called `word_characters` that controls which non-alphabetic characters are considered part of a word, for example when you double click to select a variable. In JavaScript, "$" and "#" are considered word characters.
+For example, there is a language-specific setting called `word_characters` that
+controls which non-alphabetic characters are considered part of a word, for
+example when you double click to select a variable. In JavaScript, "$" and "#"
+are considered word characters.
 
-There is also a language-specific setting called `completion_query_characters` that controls which characters trigger autocomplete suggestions. In JavaScript, when your cursor is within a _string_, "-" is should be considered a completion query character. To achieve this, the JavaScript `overrides.scm` file contains the following pattern:
+There is also a language-specific setting called `completion_query_characters`
+that controls which characters trigger autocomplete suggestions. In JavaScript,
+when your cursor is within a _string_, "-" is should be considered a completion
+query character. To achieve this, the JavaScript `overrides.scm` file contains
+the following pattern:
 
 ```scheme
 [
@@ -252,7 +304,9 @@ word_characters = ["#", "$"]
 completion_query_characters = ["-"]
 ```
 
-You can also disable certain auto-closing brackets in a specific scope. For example, to prevent auto-closing `'` within strings, you could put the following in the JavaScript `config.toml`:
+You can also disable certain auto-closing brackets in a specific scope. For
+example, to prevent auto-closing `'` within strings, you could put the following
+in the JavaScript `config.toml`:
 
 ```toml
 brackets = [
@@ -263,9 +317,16 @@ brackets = [
 
 #### Range inclusivity
 
-By default, the ranges defined in `overrides.scm` are _exclusive_. So in the case above, if you cursor was _outside_ the quotation marks delimiting the string, the `string` scope would not take effect. Sometimes, you may want to make the range _inclusive_. You can do this by adding the `.inclusive` suffix to the capture name in the query.
+By default, the ranges defined in `overrides.scm` are _exclusive_. So in the
+case above, if you cursor was _outside_ the quotation marks delimiting the
+string, the `string` scope would not take effect. Sometimes, you may want to
+make the range _inclusive_. You can do this by adding the `.inclusive` suffix to
+the capture name in the query.
 
-For example, in JavaScript, we also disable auto-closing of single quotes within comments. And the comment scope must extend all the way to the newline after a line comment. To achieve this, the JavaScript `overrides.scm` contains the following pattern:
+For example, in JavaScript, we also disable auto-closing of single quotes within
+comments. And the comment scope must extend all the way to the newline after a
+line comment. To achieve this, the JavaScript `overrides.scm` contains the
+following pattern:
 
 ```scheme
 (comment) @comment.inclusive
@@ -273,15 +334,30 @@ For example, in JavaScript, we also disable auto-closing of single quotes within
 
 ### Text objects
 
-The `textobjects.scm` file defines rules for navigating by text objects. This was added in Gram v0.165 and is currently used only in Vim mode.
+The `textobjects.scm` file defines rules for navigating by text objects. This
+was added in Gram v0.165 and is currently used only in Vim mode.
 
-Vim provides two levels of granularity for navigating around files. Section-by-section with `[]` etc., and method-by-method with `]m` etc. Even languages that don't support functions and classes can work well by defining similar concepts. For example CSS defines a rule-set as a method, and a media-query as a class.
+Vim provides two levels of granularity for navigating around files.
+Section-by-section with `[]` etc., and method-by-method with `]m` etc. Even
+languages that don't support functions and classes can work well by defining
+similar concepts. For example CSS defines a rule-set as a method, and a
+media-query as a class.
 
-For languages with closures, these typically should not count as functions in Gram. This is best-effort however, as languages like JavaScript do not syntactically differentiate syntactically between closures and top-level function declarations.
+For languages with closures, these typically should not count as functions in
+Gram. This is best-effort however, as languages like JavaScript do not
+syntactically differentiate syntactically between closures and top-level
+function declarations.
 
-For languages with declarations like C, provide queries that match `@class.around` or `@function.around`. The `if` and `ic` text objects will default to these if there is no inside.
+For languages with declarations like C, provide queries that match
+`@class.around` or `@function.around`. The `if` and `ic` text objects will
+default to these if there is no inside.
 
-If you are not sure what to put in textobjects.scm, both [nvim-treesitter-textobjects](https://github.com/nvim-treesitter/nvim-treesitter-textobjects), and the [Helix editor](https://github.com/helix-editor/helix) have queries for many languages. You can refer to the Gram [built-in languages](https://github.com/zed-industries/zed/tree/main/crates/languages/src) to see how to adapt these.
+If you are not sure what to put in textobjects.scm, both
+[nvim-treesitter-textobjects](https://github.com/nvim-treesitter/nvim-treesitter-textobjects),
+and the [Helix editor](https://github.com/helix-editor/helix) have queries for
+many languages. You can refer to the Gram
+[built-in languages](https://github.com/zed-industries/zed/tree/main/crates/languages/src)
+to see how to adapt these.
 
 | Capture          | Description                                                             | Vim mode                                         |
 | ---------------- | ----------------------------------------------------------------------- | ------------------------------------------------ |
@@ -339,7 +415,10 @@ Here's an example from a `runnables.scm` file for JSON:
 
 This query detects runnable scripts in package.json and composer.json files.
 
-The `@run` capture specifies where the run button should appear in the editor. Other captures, except those prefixed with an underscore, are exposed as environment variables with a prefix of `GRAM_CUSTOM_$(capture_name)` when running the code.
+The `@run` capture specifies where the run button should appear in the editor.
+Other captures, except those prefixed with an underscore, are exposed as
+environment variables with a prefix of `GRAM_CUSTOM_$(capture_name)` when
+running the code.
 
 | Capture | Description                                            |
 | ------- | ------------------------------------------------------ |
@@ -353,9 +432,15 @@ TBD: `#set! tag`
 
 ## Language Servers
 
-Gram uses the [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) to provide advanced language support.
+Gram uses the
+[Language Server Protocol](https://microsoft.github.io/language-server-protocol/)
+to provide advanced language support.
 
-An extension may provide any number of language servers. To provide a language server from your extension, add an entry to your `extension.toml` with the name of your language server and the language(s) it applies to. The entry in the list of `languages` has to match the `name` field from the `config.toml` file for that language:
+An extension may provide any number of language servers. To provide a language
+server from your extension, add an entry to your `extension.toml` with the name
+of your language server and the language(s) it applies to. The entry in the list
+of `languages` has to match the `name` field from the `config.toml` file for
+that language:
 
 ```toml
 [language_servers.my-language-server]
@@ -363,7 +448,8 @@ name = "My Language LSP"
 languages = ["My Language"]
 ```
 
-Then, in the Rust code for your extension, implement the `language_server_command` method on your extension:
+Then, in the Rust code for your extension, implement the
+`language_server_command` method on your extension:
 
 ```rust
 impl gram::Extension for MyExtension {
@@ -381,11 +467,18 @@ impl gram::Extension for MyExtension {
 }
 ```
 
-You can customize the handling of the language server using several optional methods in the `Extension` trait. For example, you can control how completions are styled using the `label_for_completion` method. For a complete list of methods, see the [API docs for the Gram extension API](https://docs.rs/zed_extension_api).
+You can customize the handling of the language server using several optional
+methods in the `Extension` trait. For example, you can control how completions
+are styled using the `label_for_completion` method. For a complete list of
+methods, see the
+[API docs for the Gram extension API](https://docs.rs/zed_extension_api).
 
 ### Multi-Language Support
 
-If your language server supports additional languages, you can use `language_ids` to map Gram `languages` to the desired [LSP-specific `languageId`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem) identifiers:
+If your language server supports additional languages, you can use
+`language_ids` to map Gram `languages` to the desired
+[LSP-specific `languageId`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem)
+identifiers:
 
 ```toml
 

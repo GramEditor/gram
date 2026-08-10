@@ -1,6 +1,7 @@
 # Ruby
 
-Ruby support is available through the [Ruby extension](https://github.com/zed-extensions/ruby).
+Ruby support is available through the
+[Ruby extension](https://github.com/zed-extensions/ruby).
 
 - Tree-sitters:
   - [tree-sitter-ruby](https://github.com/tree-sitter/tree-sitter-ruby)
@@ -16,37 +17,54 @@ The Ruby extension also provides support for ERB files.
 
 ## Language Servers
 
-There are multiple language servers available for Ruby. Gram supports the two following:
+There are multiple language servers available for Ruby. Gram supports the two
+following:
 
 - [solargraph](https://github.com/castwide/solargraph)
 - [ruby-lsp](https://github.com/Shopify/ruby-lsp)
 
-They both have an overlapping feature set of autocomplete, diagnostics, code actions, etc. and it's up to you to decide which one you want to use. Note that you can't use both at the same time.
+They both have an overlapping feature set of autocomplete, diagnostics, code
+actions, etc. and it's up to you to decide which one you want to use. Note that
+you can't use both at the same time.
 
 In addition to these two language servers, Gram also supports:
 
-- [rubocop](https://github.com/rubocop/rubocop) which is a static code analyzer and linter for Ruby. Under the hood, it's also used by Gram as a language server, but its functionality is complimentary to that of solargraph and ruby-lsp.
-- [sorbet](https://sorbet.org/) which is a static type checker for Ruby with a custom gradual type system.
-- [steep](https://github.com/soutaro/steep) which is a static type checker for Ruby that leverages Ruby Signature (RBS).
+- [rubocop](https://github.com/rubocop/rubocop) which is a static code analyzer
+  and linter for Ruby. Under the hood, it's also used by Gram as a language
+  server, but its functionality is complimentary to that of solargraph and
+  ruby-lsp.
+- [sorbet](https://sorbet.org/) which is a static type checker for Ruby with a
+  custom gradual type system.
+- [steep](https://github.com/soutaro/steep) which is a static type checker for
+  Ruby that leverages Ruby Signature (RBS).
 - [Herb](https://herb-tools.dev) which is a language server for ERB files.
 
-When configuring a language server, it helps to open the LSP Logs window using the 'dev: Open Language Server Logs' command. You can then choose the corresponding language instance to see any logged information.
+When configuring a language server, it helps to open the LSP Logs window using
+the 'dev: Open Language Server Logs' command. You can then choose the
+corresponding language instance to see any logged information.
 
 ## Configuring a language server
 
-The [Ruby extension](https://github.com/zed-extensions/ruby) offers both `solargraph` and `ruby-lsp` language server support.
+The [Ruby extension](https://github.com/zed-extensions/ruby) offers both
+`solargraph` and `ruby-lsp` language server support.
 
 ### Language Server Activation
 
-For all supported Ruby language servers (`solargraph`, `ruby-lsp`, `rubocop`, `sorbet`, and `steep`), the Ruby extension follows this activation sequence:
+For all supported Ruby language servers (`solargraph`, `ruby-lsp`, `rubocop`,
+`sorbet`, and `steep`), the Ruby extension follows this activation sequence:
 
-1. If the language server is found in your project's `Gemfile`, it will be used through `bundle exec`.
-2. If not found in the `Gemfile`, the Ruby extension will look for the executable in your system `PATH`.
-3. If the language server is not found in either location, the Ruby extension will automatically install it as a global gem (note: this will not install to your current Ruby gemset).
+1. If the language server is found in your project's `Gemfile`, it will be used
+   through `bundle exec`.
+2. If not found in the `Gemfile`, the Ruby extension will look for the
+   executable in your system `PATH`.
+3. If the language server is not found in either location, the Ruby extension
+   will automatically install it as a global gem (note: this will not install to
+   your current Ruby gemset).
 
-You can skip step 1 and force using the system executable by setting `use_bundler` to `false` in your settings:
+You can skip step 1 and force using the system executable by setting
+`use_bundler` to `false` in your settings:
 
-```jsonc
+```json
 {
   "lsp": {
     "<SERVER_NAME>": {
@@ -66,7 +84,7 @@ You can skip step 1 and force using the system executable by setting `use_bundle
 
 To switch to `ruby-lsp`, add the following to your `settings.json`:
 
-```jsonc
+```json
 {
   "languages": {
     "Ruby": {
@@ -92,11 +110,12 @@ That disables `solargraph` and `rubocop` and enables `ruby-lsp`.
 
 ### Using `rubocop`
 
-The Ruby extension also provides support for `rubocop` language server for offense detection and autocorrection.
+The Ruby extension also provides support for `rubocop` language server for
+offense detection and autocorrection.
 
 To enable it, add the following to your `settings.json`:
 
-```jsonc
+```json
 {
   "languages": {
     "Ruby": {
@@ -106,9 +125,10 @@ To enable it, add the following to your `settings.json`:
 }
 ```
 
-Or, conversely, you can disable `ruby-lsp` and enable `solargraph` and `rubocop` by adding the following to your `settings.json`:
+Or, conversely, you can disable `ruby-lsp` and enable `solargraph` and `rubocop`
+by adding the following to your `settings.json`:
 
-```jsonc
+```json
 {
   "languages": {
     "Ruby": {
@@ -120,9 +140,10 @@ Or, conversely, you can disable `ruby-lsp` and enable `solargraph` and `rubocop`
 
 ## Setting up `solargraph`
 
-Solargraph has formatting and diagnostics disabled by default. We can tell Gram to enable them by adding the following to your `settings.json`:
+Solargraph has formatting and diagnostics disabled by default. We can tell Gram
+to enable them by adding the following to your `settings.json`:
 
-```jsonc
+```json
 {
   "lsp": {
     "solargraph": {
@@ -137,13 +158,15 @@ Solargraph has formatting and diagnostics disabled by default. We can tell Gram 
 
 ### Configuration
 
-Solargraph reads its configuration from a file called `.solargraph.yml` in the root of your project. For more information about this file, see the [Solargraph configuration documentation](https://solargraph.org/guides/configuration).
+Solargraph reads its configuration from a file called `.solargraph.yml` in the
+root of your project. For more information about this file, see the
+[Solargraph configuration documentation](https://solargraph.org/guides/configuration).
 
 ## Setting up `ruby-lsp`
 
 You can pass Ruby LSP configuration to `initialization_options`, e.g.
 
-```jsonc
+```json
 {
   "languages": {
     "Ruby": {
@@ -162,9 +185,12 @@ You can pass Ruby LSP configuration to `initialization_options`, e.g.
 }
 ```
 
-LSP `settings` and `initialization_options` can also be project-specific. For example to use [standardrb/standard](https://github.com/standardrb/standard) as a formatter and linter for a particular project, add this to a `.gram/settings.jsonc` inside your project repo:
+LSP `settings` and `initialization_options` can also be project-specific. For
+example to use [standardrb/standard](https://github.com/standardrb/standard) as
+a formatter and linter for a particular project, add this to a
+`.gram/settings.jsonc` inside your project repo:
 
-```jsonc
+```json
 {
   "lsp": {
     "ruby-lsp": {
@@ -179,9 +205,10 @@ LSP `settings` and `initialization_options` can also be project-specific. For ex
 
 ## Setting up `rubocop` LSP
 
-Rubocop has unsafe autocorrection disabled by default. We can tell Gram to enable it by adding the following to your `settings.json`:
+Rubocop has unsafe autocorrection disabled by default. We can tell Gram to
+enable it by adding the following to your `settings.json`:
 
-```jsonc
+```json
 {
   "languages": {
     "Ruby": {
@@ -208,11 +235,15 @@ Rubocop has unsafe autocorrection disabled by default. We can tell Gram to enabl
 
 ## Setting up Sorbet
 
-[Sorbet](https://sorbet.org/) is a popular static type checker for Ruby that includes a language server.
+[Sorbet](https://sorbet.org/) is a popular static type checker for Ruby that
+includes a language server.
 
-To enable Sorbet, add `\"sorbet\"` to the `language_servers` list for Ruby in your `settings.json`. You may want to disable other language servers if Sorbet is intended to be your primary LSP, or if you plan to use it alongside another LSP for specific features like type checking.
+To enable Sorbet, add `\"sorbet\"` to the `language_servers` list for Ruby in
+your `settings.json`. You may want to disable other language servers if Sorbet
+is intended to be your primary LSP, or if you plan to use it alongside another
+LSP for specific features like type checking.
 
-```jsonc
+```json
 {
   "languages": {
     "Ruby": {
@@ -228,15 +259,20 @@ To enable Sorbet, add `\"sorbet\"` to the `language_servers` list for Ruby in yo
 }
 ```
 
-For all aspects of installing Sorbet, setting it up in your project, and configuring its behavior, please refer to the [official Sorbet documentation](https://sorbet.org/docs/overview).
+For all aspects of installing Sorbet, setting it up in your project, and
+configuring its behavior, please refer to the
+[official Sorbet documentation](https://sorbet.org/docs/overview).
 
 ## Setting up Steep
 
-[Steep](https://github.com/soutaro/steep) is a static type checker for Ruby that uses RBS files to define types.
+[Steep](https://github.com/soutaro/steep) is a static type checker for Ruby that
+uses RBS files to define types.
 
-To enable Steep, add `\"steep\"` to the `language_servers` list for Ruby in your `settings.json`. You may need to adjust the order or disable other LSPs depending on your desired setup.
+To enable Steep, add `\"steep\"` to the `language_servers` list for Ruby in your
+`settings.json`. You may need to adjust the order or disable other LSPs
+depending on your desired setup.
 
-```jsonc
+```json
 {
   "languages": {
     "Ruby": {
@@ -258,11 +294,15 @@ To enable Steep, add `\"steep\"` to the `language_servers` list for Ruby in your
 
 ## Using the Tailwind CSS Language Server with Ruby
 
-It's possible to use the [Tailwind CSS Language Server](https://github.com/tailwindlabs/tailwindcss-intellisense/tree/HEAD/packages/tailwindcss-language-server#readme) in Ruby and ERB files.
+It's possible to use the
+[Tailwind CSS Language Server](https://github.com/tailwindlabs/tailwindcss-intellisense/tree/HEAD/packages/tailwindcss-language-server#readme)
+in Ruby and ERB files.
 
-In order to do that, you need to configure the language server so that it knows about where to look for CSS classes in Ruby/ERB files by adding the following to your `settings.json`:
+In order to do that, you need to configure the language server so that it knows
+about where to look for CSS classes in Ruby/ERB files by adding the following to
+your `settings.json`:
 
-```jsonc
+```json
 {
   "languages": {
     "Ruby": {
@@ -281,7 +321,9 @@ In order to do that, you need to configure the language server so that it knows 
 }
 ```
 
-With these settings you will get completions for Tailwind CSS classes in HTML attributes inside ERB files and inside Ruby/ERB strings that are coming after a `class:` key. Examples:
+With these settings you will get completions for Tailwind CSS classes in HTML
+attributes inside ERB files and inside Ruby/ERB strings that are coming after a
+`class:` key. Examples:
 
 ```rb
 # Ruby file:
@@ -298,7 +340,11 @@ end
 
 ## Running tests
 
-To run tests in your Ruby project, you can set up custom tasks in your local `.gram/tasks.jsonc` configuration file. These tasks can be defined to work with different test frameworks like Minitest, RSpec, quickdraw, and tldr. Below are some examples of how to set up these tasks to run your tests from within your editor.
+To run tests in your Ruby project, you can set up custom tasks in your local
+`.gram/tasks.jsonc` configuration file. These tasks can be defined to work with
+different test frameworks like Minitest, RSpec, quickdraw, and tldr. Below are
+some examples of how to set up these tasks to run your tests from within your
+editor.
 
 ### Minitest with Rails
 
@@ -321,7 +367,8 @@ To run tests in your Ruby project, you can set up custom tasks in your local `.g
 
 ### Minitest
 
-Plain minitest does not support running tests by line number, only by name, so we need to use `$GRAM_CUSTOM_RUBY_TEST_NAME` instead:
+Plain minitest does not support running tests by line number, only by name, so
+we need to use `$GRAM_CUSTOM_RUBY_TEST_NAME` instead:
 
 ```json [tasks]
 [
@@ -356,11 +403,15 @@ Plain minitest does not support running tests by line number, only by name, so w
 ]
 ```
 
-Similar task syntax can be used for other test frameworks such as `quickdraw` or `tldr`.
+Similar task syntax can be used for other test frameworks such as `quickdraw` or
+`tldr`.
 
 ## Debugging
 
-The Ruby extension provides a debug adapter for debugging Ruby code. Gram's name for the adapter (in the UI and `debug.json`) is `rdbg`, and under the hood, it uses the [`debug`](https://github.com/ruby/debug) gem. The extension uses the [same activation logic](#language-server-activation) as the language servers.
+The Ruby extension provides a debug adapter for debugging Ruby code. Gram's name
+for the adapter (in the UI and `debug.json`) is `rdbg`, and under the hood, it
+uses the [`debug`](https://github.com/ruby/debug) gem. The extension uses the
+[same activation logic](#language-server-activation) as the language servers.
 
 ### Examples
 
@@ -400,9 +451,11 @@ The Ruby extension provides a debug adapter for debugging Ruby code. Gram's name
 
 ### `erb-formatter`
 
-To format ERB templates, you can use the `erb-formatter` formatter. This formatter uses the [`erb-formatter`](https://rubygems.org/gems/erb-formatter) gem to format ERB templates.
+To format ERB templates, you can use the `erb-formatter` formatter. This
+formatter uses the [`erb-formatter`](https://rubygems.org/gems/erb-formatter)
+gem to format ERB templates.
 
-```jsonc
+```json
 {
   "HTML+ERB": {
     "formatter": {

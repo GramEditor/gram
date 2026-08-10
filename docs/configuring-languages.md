@@ -2,8 +2,10 @@
 
 The language support is built on two main technologies:
 
-1. Tree-sitter: This handles syntax highlighting and structure-based features like the outline panel.
-2. Language Server Protocol (LSP): This provides semantic features such as code completion and diagnostics.
+1. Tree-sitter: This handles syntax highlighting and structure-based features
+   like the outline panel.
+2. Language Server Protocol (LSP): This provides semantic features such as code
+   completion and diagnostics.
 
 These components work together to provide language capabilities.
 
@@ -17,8 +19,8 @@ These components work together to provide language capabilities.
 - Advanced language features
 
 See the list of [Supported Languages](./languages.md) for details on specific
-configurations. To add support for additional languages, see the guide on how
-to create new [Language Extensions](./extensions/languages.md).
+configurations. To add support for additional languages, see the guide on how to
+create new [Language Extensions](./extensions/languages.md).
 
 ## Language-specific Settings
 
@@ -28,7 +30,7 @@ custom configurations are defined in the `settings.jsonc` file under the
 
 Here's an example of language-specific settings:
 
-```jsonc
+```json
 "languages": {
   "Python": {
     "tab_size": 4,
@@ -49,24 +51,38 @@ Here's an example of language-specific settings:
 
 Some of the settings that can be customized include:
 
-- [`tab_size`](./configuring-gram.md#tab-size): The number of spaces for each indentation level
-- [`formatter`](./configuring-gram.md#formatter): The tool used for code formatting
-- [`format_on_save`](./configuring-gram.md#format-on-save): Whether to automatically format code when saving
-- [`enable_language_server`](./configuring-gram.md#enable-language-server): Toggle language server support
-- [`hard_tabs`](./configuring-gram.md#hard-tabs): Use tabs instead of spaces for indentation
-- [`preferred_line_length`](./configuring-gram.md#preferred-line-length): The recommended maximum line length
+- [`tab_size`](./configuring-gram.md#tab-size): The number of spaces for each
+  indentation level
+- [`formatter`](./configuring-gram.md#formatter): The tool used for code
+  formatting
+- [`format_on_save`](./configuring-gram.md#format-on-save): Whether to
+  automatically format code when saving
+- [`enable_language_server`](./configuring-gram.md#enable-language-server):
+  Toggle language server support
+- [`hard_tabs`](./configuring-gram.md#hard-tabs): Use tabs instead of spaces for
+  indentation
+- [`preferred_line_length`](./configuring-gram.md#preferred-line-length): The
+  recommended maximum line length
 - [`soft_wrap`](./configuring-gram.md#soft-wrap): How to wrap long lines of code
-- [`show_completions_on_input`](./configuring-gram.md#show-completions-on-input): Whether or not to show completions as you type
-- [`show_completion_documentation`](./configuring-gram.md#show-completion-documentation): Whether to display inline and alongside documentation for items in the completions menu
-- [`colorize_brackets`](./configuring-gram.md#colorize-brackets): Whether to use tree-sitter bracket queries to detect and colorize the brackets in the editor (also known as "rainbow brackets")
+- [`show_completions_on_input`](./configuring-gram.md#show-completions-on-input):
+  Whether or not to show completions as you type
+- [`show_completion_documentation`](./configuring-gram.md#show-completion-documentation):
+  Whether to display inline and alongside documentation for items in the
+  completions menu
+- [`colorize_brackets`](./configuring-gram.md#colorize-brackets): Whether to use
+  tree-sitter bracket queries to detect and colorize the brackets in the editor
+  (also known as "rainbow brackets")
 
 ## File Associations
 
-Gram automatically detects file types based on their extensions, but you can customize these associations.
+Gram automatically detects file types based on their extensions, but you can
+customize these associations.
 
-To set up custom file associations, use the [`file_types`](./configuring-gram.md#file-types) setting in your `settings.jsonc`:
+To set up custom file associations, use the
+[`file_types`](./configuring-gram.md#file-types) setting in your
+`settings.jsonc`:
 
-```jsonc
+```json
 "file_types": {
   "C++": ["c"],
   "TOML": ["MyLockFile"],
@@ -80,11 +96,13 @@ This configuration tells Gram to:
 - Recognize files named "MyLockFile" as TOML
 - Apply Dockerfile syntax to any file starting with "Dockerfile"
 
-You can use glob patterns for more flexible matching, allowing you to handle complex naming conventions in your projects.
+You can use glob patterns for more flexible matching, allowing you to handle
+complex naming conventions in your projects.
 
 ## Working with Language Servers
 
-Language servers provide capabilities like auto-completion, go-to-definition, and real-time error checking.
+Language servers provide capabilities like auto-completion, go-to-definition,
+and real-time error checking.
 
 ### What are Language Servers?
 
@@ -113,7 +131,9 @@ Gram simplifies language server management for users:
 2. Storage Location:
 
    - macOS: `~/Library/Application Support/Gram/languages`
-   - Linux: `$XDG_DATA_HOME/gram/languages`, `$FLATPAK_XDG_DATA_HOME/gram/languages`, or `$HOME/.local/share/gram/languages`
+   - Linux: `$XDG_DATA_HOME/gram/languages`,
+     `$FLATPAK_XDG_DATA_HOME/gram/languages`, or
+     `$HOME/.local/share/gram/languages`
 
 ### Choosing Language Servers
 
@@ -124,7 +144,7 @@ which language servers are used and in what order.
 
 Specify preferences using the `language_servers` setting:
 
-```jsonc
+```json
   "languages": {
     "PHP": {
       "language_servers": ["intelephense", "!phpactor", "!phptools", "..."]
@@ -144,7 +164,8 @@ Some language servers need to be configured with a current "toolchain", which is
 an installation of a specific version of a programming language compiler or/and
 interpreter, which can possibly include a full set of dependencies of a project.
 
-An example of what Gram considers a toolchain is a virtual environment in Python.
+An example of what Gram considers a toolchain is a virtual environment in
+Python.
 
 Not all languages in Gram support toolchain discovery and selection, but for
 those that do, you can specify the toolchain from a toolchain picker (via
@@ -156,7 +177,7 @@ those that do, you can specify the toolchain from a toolchain picker (via
 Custom configuration options for language servers are configured using the `lsp`
 section of `settings.jsonc`:
 
-```jsonc
+```json
   "lsp": {
     "rust-analyzer": {
       "initialization_options": {
@@ -185,7 +206,7 @@ Suppose you want to configure the following settings for TypeScript:
 
 Here's how you would structure these settings in `settings.jsonc`:
 
-```jsonc
+```json
 "lsp": {
   "typescript-language-server": {
     "initialization_options": {
@@ -215,7 +236,7 @@ be restarted for changes to be applied.
 
 For example, rust-analyzer and clangd are configured this way.
 
-```jsonc
+```json
   "lsp": {
     "rust-analyzer": {
       "initialization_options": {
@@ -229,7 +250,7 @@ For example, rust-analyzer and clangd are configured this way.
 
 Most language servers use settings that can be updated without restarting.
 
-```jsonc
+```json
 "lsp": {
   "tailwindcss-language-server": {
     "settings": {
@@ -242,13 +263,15 @@ Most language servers use settings that can be updated without restarting.
 ```
 
 Some language servers allow configuring how the language server binary is
-launched. Language servers are automatically downloaded or launched if found in your path.
+launched. Language servers are automatically downloaded or launched if found in
+your path.
 
 TODO: This should be opt in.
 
-If you wish to specify an explicit alternate binary you can specify that in settings:
+If you wish to specify an explicit alternate binary you can specify that in
+settings:
 
-```jsonc
+```json
   "lsp": {
     "rust-analyzer": {
       "binary": {
@@ -268,7 +291,7 @@ If you wish to specify an explicit alternate binary you can specify that in sett
 
 You can toggle language server support globally or per-language:
 
-```jsonc
+```json
   "languages": {
     "Markdown": {
       "enable_language_server": false
@@ -286,10 +309,10 @@ project directory.
 ### Configuring Formatters
 
 Gram supports both built-in and external formatters. See
-[`formatter`](./configuring-gram.md#formatter) docs for more.
-Configure formatters globally or per-language in `settings.jsonc`:
+[`formatter`](./configuring-gram.md#formatter) docs for more. Configure
+formatters globally or per-language in `settings.jsonc`:
 
-```jsonc
+```json
 "languages": {
   "JavaScript": {
     "formatter": {
@@ -307,11 +330,12 @@ Configure formatters globally or per-language in `settings.jsonc`:
 }
 ```
 
-This example uses Prettier for JavaScript and the language server's formatter for Rust, both set to format on save.
+This example uses Prettier for JavaScript and the language server's formatter
+for Rust, both set to format on save.
 
 To disable formatting for a specific language:
 
-```jsonc
+```json
 "languages": {
   "Markdown": {
     "format_on_save": "off"
@@ -325,7 +349,7 @@ Linting is typically handled by language servers.
 
 Many language servers allow you to configure linting rules:
 
-```jsonc
+```json
 "lsp": {
   "eslint": {
     "settings": {
@@ -337,11 +361,12 @@ Many language servers allow you to configure linting rules:
 }
 ```
 
-This configuration sets up ESLint to organize imports on save for JavaScript files.
+This configuration sets up ESLint to organize imports on save for JavaScript
+files.
 
 To run linter fixes automatically on save:
 
-```jsonc
+```json
 "languages": {
   "JavaScript": {
     "formatter": {
@@ -356,7 +381,7 @@ To run linter fixes automatically on save:
 Here's an example that uses Prettier for formatting and ESLint for linting
 JavaScript files automatically on save:
 
-```jsonc
+```json
 "languages": {
   "JavaScript": {
     "formatter": [
@@ -379,19 +404,23 @@ JavaScript files automatically on save:
 
 If you encounter issues with formatting or linting:
 
-1. Check the editor log file for error messages (Use the command palette: `gram: open log`)
-2. Ensure external tools (formatters, linters) are correctly installed and in your PATH.
-3. Verify configurations in both Gram settings and language-specific config files (e.g., `.eslintrc`, `.prettierrc`)
+1. Check the editor log file for error messages (Use the command palette:
+   `gram: open log`)
+2. Ensure external tools (formatters, linters) are correctly installed and in
+   your PATH.
+3. Verify configurations in both Gram settings and language-specific config
+   files (e.g., `.eslintrc`, `.prettierrc`)
 
 ## Syntax Highlighting and Themes
 
 ### Customizing Syntax Highlighting
 
-Gram uses Tree-sitter grammars for syntax highlighting. Override the default highlighting using the `theme_overrides` setting.
+Gram uses Tree-sitter grammars for syntax highlighting. Override the default
+highlighting using the `theme_overrides` setting.
 
 This example makes comments italic and changes the color of strings:
 
-```jsonc
+```json
 "theme_overrides": {
   "One Dark": {
     "syntax": {
@@ -413,7 +442,7 @@ To change the editor theme:
 1. Use the theme selector ({#kb theme_selector::Toggle})
 2. Or set it in `settings.jsonc`:
 
-```jsonc
+```json
 "theme": {
   "mode": "dark",
   "dark": "One Dark",
@@ -421,22 +450,25 @@ To change the editor theme:
 }
 ```
 
-Create custom themes by creating a JSON file in `~/.config/gram/themes/`. Gram will automatically detect and make available any themes in this directory.
+Create custom themes by creating a JSON file in `~/.config/gram/themes/`. Gram
+will automatically detect and make available any themes in this directory.
 
 ### Using Theme Extensions
 
 Gram supports theme extensions. Find the URL for the theme you want to install
 and install it from the Extensions panel ({#kb gram::Extensions}).
 
-To create your own theme extension, refer to the [Developing Theme Extensions](./extensions/themes.md) guide.
+To create your own theme extension, refer to the
+[Developing Theme Extensions](./extensions/themes.md) guide.
 
 ## Using Language Server Features
 
 ### Inlay Hints
 
-Inlay hints provide additional information inline in code, such as parameter names or inferred types. Configure inlay hints in `settings.jsonc`:
+Inlay hints provide additional information inline in code, such as parameter
+names or inferred types. Configure inlay hints in `settings.jsonc`:
 
-```jsonc
+```json
 "inlay_hints": {
   "enabled": true,
   "show_type_hints": true,
@@ -445,11 +477,14 @@ Inlay hints provide additional information inline in code, such as parameter nam
 }
 ```
 
-For language-specific inlay hint settings, refer to the documentation for each language.
+For language-specific inlay hint settings, refer to the documentation for each
+language.
 
 ### Code Actions
 
-Code actions provide quick fixes and refactoring options. Access code actions using the `editor: Toggle Code Actions` command or by clicking the lightbulb icon that appears next to the cursor when actions are available.
+Code actions provide quick fixes and refactoring options. Access code actions
+using the `editor: Toggle Code Actions` command or by clicking the lightbulb
+icon that appears next to the cursor when actions are available.
 
 ### Go To Definition and References
 
@@ -467,26 +502,35 @@ To rename a symbol across a project:
 2. Use the `editor: Rename Symbol` command (<kbd>f2|f2</kbd>)
 3. Enter the new name and press Enter
 
-These features depend on the capabilities of the language server for each language.
+These features depend on the capabilities of the language server for each
+language.
 
-When renaming a symbol that spans multiple files, Gram will open a preview in
-a multibuffer. Here you can review all the changes before applying them. To
+When renaming a symbol that spans multiple files, Gram will open a preview in a
+multibuffer. Here you can review all the changes before applying them. To
 confirm the rename, simply save the multibuffer. If you decide not to proceed
 with the rename, you can undo the changes or close the multibuffer without
 saving.
 
 ### Hover Information
 
-Use the `editor: Hover` command to display information about the symbol under the cursor. This often includes type information, documentation, and links to relevant resources.
+Use the `editor: Hover` command to display information about the symbol under
+the cursor. This often includes type information, documentation, and links to
+relevant resources.
 
 ### Workspace Symbol Search
 
-The `workspace: Open Symbol` command allows you to search for symbols (functions, classes, variables) across your entire project. This is useful for quickly navigating large codebases.
+The `workspace: Open Symbol` command allows you to search for symbols
+(functions, classes, variables) across your entire project. This is useful for
+quickly navigating large codebases.
 
 ### Code Completion
 
-Gram provides code completion suggestions as you type. You can manually trigger completion with the `editor: Show Completions` command. Use <kbd>tab|tab</kbd> or <kbd>enter|enter</kbd> to accept suggestions.
+Gram provides code completion suggestions as you type. You can manually trigger
+completion with the `editor: Show Completions` command. Use <kbd>tab|tab</kbd>
+or <kbd>enter|enter</kbd> to accept suggestions.
 
 ### Diagnostics
 
-Language servers provide real-time diagnostics (errors, warnings, hints) as you code. View all diagnostics for your project using the `diagnostics: Toggle` command.
+Language servers provide real-time diagnostics (errors, warnings, hints) as you
+code. View all diagnostics for your project using the `diagnostics: Toggle`
+command.

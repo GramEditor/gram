@@ -5,7 +5,8 @@ R support is available via multiple R Gram extensions:
 - [ocsmit/zed-r](https://github.com/ocsmit/zed-r)
 
   - Tree-sitter: [r-lib/tree-sitter-r](https://github.com/r-lib/tree-sitter-r)
-  - Language-Server: [REditorSupport/languageserver](https://github.com/REditorSupport/languageserver)
+  - Language-Server:
+    [REditorSupport/languageserver](https://github.com/REditorSupport/languageserver)
 
 - [posit-dev/air](https://github.com/posit-dev/air/tree/main/editors/zed)
   - Formatter: [posit-dev/air](https://posit-dev.github.io/air/)
@@ -20,13 +21,21 @@ install.packages("languageserver")
 install.packages("lintr")
 ```
 
-3. Install the [R](https://github.com/ocsmit/zed-r) extension through Gram's extensions manager for basic R language support (syntax highlighting, tree-sitter support) and for [REditorSupport/languageserver](https://github.com/REditorSupport/languageserver) support.
+3. Install the [R](https://github.com/ocsmit/zed-r) extension through Gram's
+   extensions manager for basic R language support (syntax highlighting,
+   tree-sitter support) and for
+   [REditorSupport/languageserver](https://github.com/REditorSupport/languageserver)
+   support.
 
-4. Install the [Air](https://posit-dev.github.io/air/) extension through Gram's extensions manager for R code formatting via Air.
+4. Install the [Air](https://posit-dev.github.io/air/) extension through Gram's
+   extensions manager for R code formatting via Air.
 
 ## Linting
 
-`REditorSupport/languageserver` bundles support for [r-lib/lintr](https://github.com/r-lib/lintr) as a linter. This can be configured via the use of a `.lintr` inside your project (or in your home directory for global defaults).
+`REditorSupport/languageserver` bundles support for
+[r-lib/lintr](https://github.com/r-lib/lintr) as a linter. This can be
+configured via the use of a `.lintr` inside your project (or in your home
+directory for global defaults).
 
 ```r
 linters: linters_with_defaults(
@@ -46,19 +55,26 @@ Or exclude it from linting anything,
 exclusions: list(".")
 ```
 
-See [Using lintr](https://lintr.r-lib.org/articles/lintr.html) for a complete list of options,
+See [Using lintr](https://lintr.r-lib.org/articles/lintr.html) for a complete
+list of options,
 
 ## Formatting
 
 ### Air
 
-[Air](https://posit-dev.github.io/air/) provides code formatting for R, including support for format-on-save. The [Air documentation for Gram](https://posit-dev.github.io/air/editor-zed.html) contains the most up-to-date advice for running Air in Gram.
+[Air](https://posit-dev.github.io/air/) provides code formatting for R,
+including support for format-on-save. The
+[Air documentation for Gram](https://posit-dev.github.io/air/editor-zed.html)
+contains the most up-to-date advice for running Air in Gram.
 
-Ensure that you have installed both the [ocsmit/zed-r](https://github.com/ocsmit/zed-r) extension (for general R language awareness in Gram) and the [Air](https://posit-dev.github.io/air/) extension.
+Ensure that you have installed both the
+[ocsmit/zed-r](https://github.com/ocsmit/zed-r) extension (for general R
+language awareness in Gram) and the [Air](https://posit-dev.github.io/air/)
+extension.
 
 Enable Air in your `settings.json`:
 
-```jsonc
+```json
 {
   "languages": {
     "R": {
@@ -68,9 +84,10 @@ Enable Air in your `settings.json`:
 }
 ```
 
-If you use the `"r_language_server"` from `REditorSupport/languageserver`, but would still like to use Air for formatting, use the following configuration:
+If you use the `"r_language_server"` from `REditorSupport/languageserver`, but
+would still like to use Air for formatting, use the following configuration:
 
-```jsonc
+```json
 {
   "languages": {
     "R": {
@@ -81,13 +98,18 @@ If you use the `"r_language_server"` from `REditorSupport/languageserver`, but w
 }
 ```
 
-Note that `"air"` must come first in this list, otherwise [r-lib/styler](https://github.com/r-lib/styler) will be invoked via `"r_language_server"`.
+Note that `"air"` must come first in this list, otherwise
+[r-lib/styler](https://github.com/r-lib/styler) will be invoked via
+`"r_language_server"`.
 
-`"r_language_server"` provides on-type-formatting that differs from Air's formatting rules. To avoid this entirely and let Air be fully in charge of formatting your R files, also set `"use_on_type_format": false` as shown above.
+`"r_language_server"` provides on-type-formatting that differs from Air's
+formatting rules. To avoid this entirely and let Air be fully in charge of
+formatting your R files, also set `"use_on_type_format": false` as shown above.
 
 #### Configuring Air
 
-Air is minimally configurable via an `air.toml` file placed in the root directory of your project:
+Air is minimally configurable via an `air.toml` file placed in the root
+directory of your project:
 
 ```toml
 [format]
@@ -95,11 +117,15 @@ line-width = 80
 indent-width = 2
 ```
 
-For more details, refer to the Air documentation about [configuration](https://posit-dev.github.io/air/configuration.html).
+For more details, refer to the Air documentation about
+[configuration](https://posit-dev.github.io/air/configuration.html).
 
 ### Styler
 
-`REditorSupport/languageserver` bundles support for [r-lib/styler](https://github.com/r-lib/styler) as a formatter. See [Customizing Styler](https://cran.r-project.org/web/packages/styler/vignettes/customizing_styler.html) for more information on how to customize its behavior.
+`REditorSupport/languageserver` bundles support for
+[r-lib/styler](https://github.com/r-lib/styler) as a formatter. See
+[Customizing Styler](https://cran.r-project.org/web/packages/styler/vignettes/customizing_styler.html)
+for more information on how to customize its behavior.
 
 <!--
 TBD: Get this working
@@ -110,7 +136,7 @@ You can configure the [R languageserver settings](https://github.com/REditorSupp
 
 For example to disable Lintr linting and suppress code snippet suggestions (both enabled by default):
 
-```jsonc
+```json
 {
   "lsp": {
     "r_language_server": {

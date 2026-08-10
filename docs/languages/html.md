@@ -13,7 +13,7 @@ There is language server support available from two different servers:
 By default, the Microsoft language server is disabled and SuperHTML enabled. To
 switch language server, add the following to your `settings.jsonc`:
 
-```jsonc
+```json
 {
   "languages": {
     "HTML": {
@@ -23,14 +23,14 @@ switch language server, add the following to your `settings.jsonc`:
 }
 ```
 
-
 ## Formatting
 
 By default Gram uses [Prettier](https://prettier.io/) for formatting HTML.
 
-You can disable `format_on_save` by adding the following to your Gram `settings.jsonc`:
+You can disable `format_on_save` by adding the following to your Gram
+`settings.jsonc`:
 
-```jsonc
+```json
   "languages": {
     "HTML": {
       "format_on_save": "off",
@@ -38,13 +38,16 @@ You can disable `format_on_save` by adding the following to your Gram `settings.
   }
 ```
 
-You can still trigger formatting manually with {#kb editor::Format} or by opening the Command Palette ({#kb command_palette::Toggle}) and selecting "Format Document".
+You can still trigger formatting manually with {#kb editor::Format} or by
+opening the Command Palette ({#kb command_palette::Toggle}) and selecting
+"Format Document".
 
 ### LSP Formatting
 
-To use the language server auto-formatting instead of Prettier, add the following to your Gram settings:
+To use the language server auto-formatting instead of Prettier, add the
+following to your Gram settings:
 
-```jsonc
+```json
   "languages": {
     "HTML": {
       "formatter": "language_server",
@@ -52,9 +55,11 @@ To use the language server auto-formatting instead of Prettier, add the followin
   }
 ```
 
-You can customize various [formatting options](https://code.visualstudio.com/docs/languages/html#_formatting) for `vscode-html-language-server` via your Gram `settings.json`:
+You can customize various
+[formatting options](https://code.visualstudio.com/docs/languages/html#_formatting)
+for `vscode-html-language-server` via your Gram `settings.json`:
 
-```jsonc
+```json
   "lsp": {
     "vscode-html-language-server": {
       "settings": {

@@ -1,14 +1,18 @@
 # Deno
 
-Deno support is available through the [Deno extension](https://github.com/zed-extensions/deno).
+Deno support is available through the
+[Deno extension](https://github.com/zed-extensions/deno).
 
-- Language server: [Deno Language Server](https://docs.deno.com/runtime/manual/advanced/language_server/overview/)
+- Language server:
+  [Deno Language Server](https://docs.deno.com/runtime/manual/advanced/language_server/overview/)
 
 ## Deno Configuration
 
-To use the Deno Language Server with TypeScript and TSX files, you will likely wish to disable the default language servers and enable deno by adding the following to your `settings.jsonc`:
+To use the Deno Language Server with TypeScript and TSX files, you will likely
+wish to disable the default language servers and enable deno by adding the
+following to your `settings.jsonc`:
 
-```jsonc
+```json
 {
   "lsp": {
     "deno": {
@@ -51,13 +55,15 @@ To use the Deno Language Server with TypeScript and TSX files, you will likely w
 }
 ```
 
-See [Configuring supported languages](../configuring-languages.md) in the Gram documentation for more information.
+See [Configuring supported languages](../configuring-languages.md) in the Gram
+documentation for more information.
 
 ## Configuration completion
 
-To get completions for `deno.json` or `package.json` you can add the following to your `settings.jsonc`: (More info here ./json.md)
+To get completions for `deno.json` or `package.json` you can add the following
+to your `settings.jsonc`: (More info here ./json.md)
 
-```jsonc
+```json
 "lsp": {
     "json-language-server": {
       "settings": {

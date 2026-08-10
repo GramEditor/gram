@@ -4,9 +4,11 @@ GPUI is designed for keyboard-first interactivity.
 
 To expose functionality to the mouse, you render a button with a click handler.
 
-To expose functionality to the keyboard, you bind an _action_ in a _key context_.
+To expose functionality to the keyboard, you bind an _action_ in a _key
+context_.
 
-Actions are similar to framework-level events like `MouseDown`, `KeyDown`, etc, but you can define them yourself:
+Actions are similar to framework-level events like `MouseDown`, `KeyDown`, etc,
+but you can define them yourself:
 
 ```rust
 mod menu {
@@ -18,7 +20,8 @@ mod menu {
 }
 ```
 
-Actions are frequently unit structs, for which we have a macro. The above could also be written:
+Actions are frequently unit structs, for which we have a macro. The above could
+also be written:
 
 ```rust
 mod menu {
@@ -55,7 +58,8 @@ impl Render for Menu {
 }
 ```
 
-In order to bind keys to actions, you need to declare a _key context_ for part of the element tree by calling `key_context`.
+In order to bind keys to actions, you need to declare a _key context_ for part
+of the element tree by calling `key_context`.
 
 ```rust
 impl Render for Menu {
@@ -73,7 +77,8 @@ impl Render for Menu {
 }
 ```
 
-Now you can target your context in the keymap. Note how actions are identified in the keymap by their fully-qualified type name.
+Now you can target your context in the keymap. Note how actions are identified
+in the keymap by their fully-qualified type name.
 
 ```json
 {
@@ -85,7 +90,8 @@ Now you can target your context in the keymap. Note how actions are identified i
 }
 ```
 
-If you had opted for the more complex type definition, you'd provide the serialized representation of the action alongside the name:
+If you had opted for the more complex type definition, you'd provide the
+serialized representation of the action alongside the name:
 
 ```json
 {

@@ -18,8 +18,8 @@ with Gram — influences which environment variables Gram can use.
 
 ### Launched from the CLI
 
-If Gram is opened via the CLI (`gram`), it will inherit the environment variables
-from the surrounding shell session.
+If Gram is opened via the CLI (`gram`), it will inherit the environment
+variables from the surrounding shell session.
 
 That means if you do
 
@@ -90,7 +90,8 @@ order of precedence (low to high):
 
 ### Look-up of language servers
 
-For some languages the language server adapters lookup the binary in the user's `$PATH`. Examples:
+For some languages the language server adapters lookup the binary in the user's
+`$PATH`. Examples:
 
 - Go
 - Zig

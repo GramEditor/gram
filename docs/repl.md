@@ -2,11 +2,15 @@
 
 ## Getting started
 
-Bring the power of [Jupyter kernels](https://docs.jupyter.org/en/latest/projects/kernels.html) to your editor! The built-in REPL for Gram allows you to run code interactively in your editor similarly to a notebook with your own text files.
+Bring the power of
+[Jupyter kernels](https://docs.jupyter.org/en/latest/projects/kernels.html) to
+your editor! The built-in REPL for Gram allows you to run code interactively in
+your editor similarly to a notebook with your own text files.
 
 ## Installation
 
-Gram supports running code in multiple languages. To get started, you need to install a kernel for the language you want to use.
+Gram supports running code in multiple languages. To get started, you need to
+install a kernel for the language you want to use.
 
 **Currently supported languages:**
 
@@ -17,21 +21,33 @@ Gram supports running code in multiple languages. To get started, you need to in
 - [Julia](#julia)
 - [Scala (Almond)](#scala)
 
-Once installed, you can start using the REPL in the respective language files, or other places those languages are supported, such as Markdown. If you recently added the kernels, run the `repl: refresh kernelspecs` command to make them available in the editor.
+Once installed, you can start using the REPL in the respective language files,
+or other places those languages are supported, such as Markdown. If you recently
+added the kernels, run the `repl: refresh kernelspecs` command to make them
+available in the editor.
 
 ## Using the REPL
 
-To start the REPL, open a file with the language you want to use and use the `repl: run` command (defaults to `ctrl-shift-enter` on macOS) to run a block, selection, or line. You can also click on the REPL icon in the toolbar.
+To start the REPL, open a file with the language you want to use and use the
+`repl: run` command (defaults to `ctrl-shift-enter` on macOS) to run a block,
+selection, or line. You can also click on the REPL icon in the toolbar.
 
-The `repl: run` command will be executed on your selection(s), and the result will be displayed below the selection.
+The `repl: run` command will be executed on your selection(s), and the result
+will be displayed below the selection.
 
-Outputs can be cleared with the `repl: clear outputs` command, or from the REPL menu in the toolbar.
+Outputs can be cleared with the `repl: clear outputs` command, or from the REPL
+menu in the toolbar.
 
 ### Cell mode
 
-Gram supports [notebooks as scripts](https://jupytext.readthedocs.io/en/latest/formats-scripts.html) using the `# %%` cell separator in Python and `// %%` in TypeScript. This allows you to write code in a single file and run it as if it were a notebook, cell by cell.
+Gram supports
+[notebooks as scripts](https://jupytext.readthedocs.io/en/latest/formats-scripts.html)
+using the `# %%` cell separator in Python and `// %%` in TypeScript. This allows
+you to write code in a single file and run it as if it were a notebook, cell by
+cell.
 
-The `repl: run` command will run each block of code between the `# %%` markers as a separate cell.
+The `repl: run` command will run each block of code between the `# %%` markers
+as a separate cell.
 
 ```python
 # %% Cell 1
@@ -53,7 +69,9 @@ style.use('ggplot')
 
 <div class="warning">
 
-On macOS, your system Python will _not_ work. Either set up [pyenv](https://github.com/pyenv/pyenv?tab=readme-ov-file#installation) or use a virtual environment.
+On macOS, your system Python will _not_ work. Either set up
+[pyenv](https://github.com/pyenv/pyenv?tab=readme-ov-file#installation) or use a
+virtual environment.
 
 </div>
 
@@ -82,7 +100,9 @@ python -m ipykernel install --user --name myenv --display-name "Python (myenv)"
 
 ### R (Ark Kernel) {#r-ark}
 
-Install [Ark](https://github.com/posit-dev/ark/releases) by downloading the release for your operating system. For example, for macOS just unpack `ark` binary and put it into `/usr/local/bin`. Then run:
+Install [Ark](https://github.com/posit-dev/ark/releases) by downloading the
+release for your operating system. For example, for macOS just unpack `ark`
+binary and put it into `/usr/local/bin`. Then run:
 
 ```sh
 ark --install
@@ -99,7 +119,8 @@ TBD: Improve R REPL (Ark Kernel) instructions
 
 ### TypeScript: Deno {#typescript-deno}
 
-- [Install Deno](https://docs.deno.com/runtime/manual/getting_started/installation/) and then install the Deno jupyter kernel:
+- [Install Deno](https://docs.deno.com/runtime/manual/getting_started/installation/)
+  and then install the Deno jupyter kernel:
 
 ```sh
 deno jupyter --install
@@ -111,7 +132,8 @@ TBD: Improve R REPL (Ark Kernel) instructions
 
 ### Julia
 
-- Download and install Julia from the [official website](https://julialang.org/downloads/).
+- Download and install Julia from the
+  [official website](https://julialang.org/downloads/).
 - Install the Julia Extension for Gram (search for `Julia` in Gram Extensions)
 
 <!--
@@ -120,19 +142,22 @@ TBD: Improve Julia REPL instructions
 
 ### Scala
 
-- [Install Scala](https://www.scala-lang.org/download/) with `cs setup` (Coursier):
+- [Install Scala](https://www.scala-lang.org/download/) with `cs setup`
+  (Coursier):
   - `brew install coursier/formulas/coursier && cs setup`
-- REPL (Almond) [setup instructions](https://almond.sh/docs/quick-start-install):
+- REPL (Almond)
+  [setup instructions](https://almond.sh/docs/quick-start-install):
   - `brew install --cask temurin` (Eclipse foundation official OpenJDK binaries)
   - `brew install coursier/formulas/coursier && cs setup`
   - `coursier launch --use-bootstrap almond -- --install`
 
 ## Changing which kernel is used per language {#changing-kernels}
 
-Gram automatically detects the available kernels on your system. If you need to configure a different default kernel for a
-language, you can assign a kernel for any supported language in your `settings.json`.
+Gram automatically detects the available kernels on your system. If you need to
+configure a different default kernel for a language, you can assign a kernel for
+any supported language in your `settings.json`.
 
-```jsonc
+```json
 {
   "jupyter": {
     "kernel_selections": {
@@ -147,9 +172,11 @@ language, you can assign a kernel for any supported language in your `settings.j
 
 ## Debugging Kernelspecs
 
-Available kernels are shown via the `repl: sessions` command. To refresh the kernels you can run, use the `repl: refresh kernelspecs` command.
+Available kernels are shown via the `repl: sessions` command. To refresh the
+kernels you can run, use the `repl: refresh kernelspecs` command.
 
-If you have `jupyter` installed, you can run `jupyter kernelspec list` to see the available kernels.
+If you have `jupyter` installed, you can run `jupyter kernelspec list` to see
+the available kernels.
 
 ```sh
 $ jupyter kernelspec list
@@ -163,4 +190,7 @@ Available kernels:
   rust                  /Users/z/Library/Jupyter/kernels/rust
 ```
 
-> Note: Gram makes best effort usage of `sys.prefix` and `CONDA_PREFIX` to find kernels in Python environments. If you want explicitly control run `python -m ipykernel install --user --name myenv --display-name "Python (myenv)"` to install the kernel directly while in the environment.
+> Note: Gram makes best effort usage of `sys.prefix` and `CONDA_PREFIX` to find
+> kernels in Python environments. If you want explicitly control run
+> `python -m ipykernel install --user --name myenv --display-name "Python (myenv)"`
+> to install the kernel directly while in the environment.

@@ -1,15 +1,19 @@
 # Svelte
 
-Svelte support is available through the [Svelte extension](https://github.com/zed-extensions/svelte).
+Svelte support is available through the
+[Svelte extension](https://github.com/zed-extensions/svelte).
 
-- Tree-sitter: [tree-sitter-grammars/tree-sitter-svelte](https://github.com/tree-sitter-grammars/tree-sitter-svelte)
-- Language Server: [sveltejs/language-tools](https://github.com/sveltejs/language-tools)
+- Tree-sitter:
+  [tree-sitter-grammars/tree-sitter-svelte](https://github.com/tree-sitter-grammars/tree-sitter-svelte)
+- Language Server:
+  [sveltejs/language-tools](https://github.com/sveltejs/language-tools)
 
 ## Extra theme styling configuration
 
-You can modify how certain styles, such as directives and modifiers, appear in attributes:
+You can modify how certain styles, such as directives and modifiers, appear in
+attributes:
 
-```jsonc
+```json
 "syntax": {
   // Styling for directives (e.g., `class:foo` or `on:click`) (the `on` or `class` part of the attribute).
   "attribute.function": {
@@ -24,9 +28,10 @@ You can modify how certain styles, such as directives and modifiers, appear in a
 
 ## Inlay Hints
 
-When inlay hints is enabled in Gram, to make the language server send them back, Gram sets the following initialization options:
+When inlay hints is enabled in Gram, to make the language server send them back,
+Gram sets the following initialization options:
 
-```jsonc
+```json
 "inlayHints": {
   "parameterNames": {
     "enabled": "all",
@@ -53,7 +58,7 @@ When inlay hints is enabled in Gram, to make the language server send them back,
 
 To override these settings, use the following:
 
-```jsonc
+```json
 "lsp": {
   "svelte-language-server": {
     "initialization_options": {
@@ -70,4 +75,6 @@ To override these settings, use the following:
 }
 ```
 
-See [the TypeScript language server `package.json`](https://github.com/microsoft/vscode/blob/main/extensions/typescript-language-features/package.json) for more information.
+See
+[the TypeScript language server `package.json`](https://github.com/microsoft/vscode/blob/main/extensions/typescript-language-features/package.json)
+for more information.

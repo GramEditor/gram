@@ -57,9 +57,9 @@ components installed in case of a Visual Studio installation:
     "Microsoft.VisualStudio.ComponentGroup.WebToolsExtensions.CMake",
     "Microsoft.VisualStudio.Component.VC.CMake.Project",
     "Microsoft.VisualStudio.Component.Windows11SDK.26100",
-    "Microsoft.VisualStudio.Component.VC.Runtimes.x86.x64.Spectre"
+    "Microsoft.VisualStudio.Component.VC.Runtimes.x86.x64.Spectre",
   ],
-  "extensions": []
+  "extensions": [],
 }
 ```
 
@@ -83,9 +83,9 @@ Or if in case of just Build Tools, the following components:
     "Microsoft.VisualStudio.Component.VC.CoreIde",
     "Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core",
     "Microsoft.VisualStudio.Workload.VCTools",
-    "Microsoft.VisualStudio.Component.VC.Runtimes.x86.x64.Spectre"
+    "Microsoft.VisualStudio.Component.VC.Runtimes.x86.x64.Spectre",
   ],
-  "extensions": []
+  "extensions": [],
 }
 ```
 

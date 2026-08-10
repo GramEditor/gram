@@ -24,7 +24,7 @@ sql-formatter --version
 
 3. Configure Gram to automatically format SQL with `sql-formatter`:
 
-```jsonc
+```json
   "languages": {
     "SQL": {
       "formatter": {
@@ -37,15 +37,19 @@ sql-formatter --version
   },
 ```
 
-Substitute your preferred [SQL Dialect] for `mysql` above (`duckdb`, `hive`, `mariadb`, `postgresql`, `redshift`, `snowflake`, `sqlite`, `spark`, etc).
+Substitute your preferred [SQL Dialect] for `mysql` above (`duckdb`, `hive`,
+`mariadb`, `postgresql`, `redshift`, `snowflake`, `sqlite`, `spark`, etc).
 
-You can add this to Gram project settings (`.gram/settings.json`) or via your Gram user settings (`~/.config/gram/settings.json`).
+You can add this to Gram project settings (`.gram/settings.json`) or via your
+Gram user settings (`~/.config/gram/settings.json`).
 
 ### Advanced Formatting
 
-Sql-formatter also allows more precise control by providing [sql-formatter configuration options](https://github.com/sql-formatter-org/sql-formatter#configuration-options). To provide these, create a `.sql-formatter.json` file in your project:
+Sql-formatter also allows more precise control by providing
+[sql-formatter configuration options](https://github.com/sql-formatter-org/sql-formatter#configuration-options).
+To provide these, create a `.sql-formatter.json` file in your project:
 
-```jsonc
+```json
 {
   "language": "postgresql",
   "tabWidth": 2,
@@ -54,9 +58,10 @@ Sql-formatter also allows more precise control by providing [sql-formatter confi
 }
 ```
 
-When using a `.sql-formatter.json` file you can use a more simplified set of Gram settings since the language need not be specified inline:
+When using a `.sql-formatter.json` file you can use a more simplified set of
+Gram settings since the language need not be specified inline:
 
-```jsonc
+```json
   "languages": {
     "SQL": {
       "formatter": {

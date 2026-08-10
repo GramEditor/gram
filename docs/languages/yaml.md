@@ -2,14 +2,19 @@
 
 YAML support is available natively in Gram.
 
-- Tree-sitter: [zed-industries/tree-sitter-yaml](https://github.com/zed-industries/tree-sitter-yaml)
-- Language Server: [redhat-developer/yaml-language-server](https://github.com/redhat-developer/yaml-language-server)
+- Tree-sitter:
+  [zed-industries/tree-sitter-yaml](https://github.com/zed-industries/tree-sitter-yaml)
+- Language Server:
+  [redhat-developer/yaml-language-server](https://github.com/redhat-developer/yaml-language-server)
 
 ## Configuration
 
-You can configure various [yaml-language-server settings](https://github.com/redhat-developer/yaml-language-server?tab=readme-ov-file#language-server-settings) by adding them to your Gram `settings.jsonc` in a `yaml-language-server` block under the `lsp` key. For example:
+You can configure various
+[yaml-language-server settings](https://github.com/redhat-developer/yaml-language-server?tab=readme-ov-file#language-server-settings)
+by adding them to your Gram `settings.jsonc` in a `yaml-language-server` block
+under the `lsp` key. For example:
 
-```jsonc
+```json
   "lsp": {
     "yaml-language-server": {
       "settings": {
@@ -28,7 +33,8 @@ You can configure various [yaml-language-server settings](https://github.com/red
   }
 ```
 
-Note, settings keys must be nested, so `yaml.keyOrdering` becomes `{"yaml": { "keyOrdering": true }}`.
+Note, settings keys must be nested, so `yaml.keyOrdering` becomes
+`{"yaml": { "keyOrdering": true }}`.
 
 ## Formatting
 
@@ -36,9 +42,11 @@ By default, Gram uses Prettier for formatting YAML files.
 
 ### Prettier Formatting
 
-You can customize the formatting behavior of Prettier. For example to use single-quotes in yaml files add the following to your `.prettierrc` configuration file:
+You can customize the formatting behavior of Prettier. For example to use
+single-quotes in yaml files add the following to your `.prettierrc`
+configuration file:
 
-```jsonc
+```json
 {
   "overrides": [
     {
@@ -53,9 +61,10 @@ You can customize the formatting behavior of Prettier. For example to use single
 
 ### yaml-language-server Formatting
 
-To use `yaml-language-server` instead of Prettier for YAML formatting, add the following to your Gram `settings.json`:
+To use `yaml-language-server` instead of Prettier for YAML formatting, add the
+following to your Gram `settings.json`:
 
-```jsonc
+```json
   "languages": {
     "YAML": {
       "formatter": "language_server"
@@ -65,9 +74,14 @@ To use `yaml-language-server` instead of Prettier for YAML formatting, add the f
 
 ## Schemas
 
-By default yaml-language-server will attempt to determine the correct schema for a given yaml file and retrieve the appropriate JSON Schema from [Json Schema Store](https://schemastore.org/).
+By default yaml-language-server will attempt to determine the correct schema for
+a given yaml file and retrieve the appropriate JSON Schema from
+[Json Schema Store](https://schemastore.org/).
 
-You can override any auto-detected schema via the `schemas` settings key (demonstrated above) or by providing an [inlined schema](https://github.com/redhat-developer/yaml-language-server#using-inlined-schema) reference via a modeline comment at the top of your yaml file:
+You can override any auto-detected schema via the `schemas` settings key
+(demonstrated above) or by providing an
+[inlined schema](https://github.com/redhat-developer/yaml-language-server#using-inlined-schema)
+reference via a modeline comment at the top of your yaml file:
 
 ```yaml
 # yaml-language-server: $schema=https://www.schemastore.org/github-action.json
@@ -77,9 +91,10 @@ on:
     types: [opened]
 ```
 
-You can disable the automatic detection and retrieval of schemas from the JSON Schema if desired:
+You can disable the automatic detection and retrieval of schemas from the JSON
+Schema if desired:
 
-```jsonc
+```json
   "lsp": {
     "yaml-language-server": {
       "settings": {
@@ -95,11 +110,15 @@ You can disable the automatic detection and retrieval of schemas from the JSON S
 
 ## Custom Tags
 
-Yaml-language-server supports [custom tags](https://github.com/redhat-developer/yaml-language-server#adding-custom-tags) which can be used to inject custom application functionality at runtime into your yaml files.
+Yaml-language-server supports
+[custom tags](https://github.com/redhat-developer/yaml-language-server#adding-custom-tags)
+which can be used to inject custom application functionality at runtime into
+your yaml files.
 
-For example Amazon CloudFormation YAML uses a number of custom tags, to support these you can add the following to your settings.json:
+For example Amazon CloudFormation YAML uses a number of custom tags, to support
+these you can add the following to your settings.json:
 
-```jsonc
+```json
   "lsp": {
     "yaml-language-server": {
       "settings": {

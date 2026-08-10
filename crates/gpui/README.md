@@ -12,7 +12,7 @@ Add the following to your `Cargo.toml`:
 gpui = { version = "*" }
 ```
 
- - [Ownership and data flow](_ownership_and_data_flow)
+- [Ownership and data flow](_ownership_and_data_flow)
 
 Everything in GPUI starts with an `Application`. Create one with
 `Application::new()`, and pass a callback to `Application::run()`. Inside this
@@ -25,19 +25,26 @@ GPUI has various system dependencies that it needs in order to work.
 
 #### macOS
 
-On macOS, GPUI uses Metal for rendering. In order to use Metal, you need to do the following:
+On macOS, GPUI uses Metal for rendering. In order to use Metal, you need to do
+the following:
 
-- Install [Xcode](https://apps.apple.com/us/app/xcode/id497799835?mt=12) from the macOS App Store, or from the [Apple Developer](https://developer.apple.com/download/all/) website. Note this requires a developer account.
+- Install [Xcode](https://apps.apple.com/us/app/xcode/id497799835?mt=12) from
+  the macOS App Store, or from the
+  [Apple Developer](https://developer.apple.com/download/all/) website. Note
+  this requires a developer account.
 
-> Ensure you launch Xcode after installing, and install the macOS components, which is the default option.
+> Ensure you launch Xcode after installing, and install the macOS components,
+> which is the default option.
 
-- Install [Xcode command line tools](https://developer.apple.com/xcode/resources/)
+- Install
+  [Xcode command line tools](https://developer.apple.com/xcode/resources/)
 
   ```sh
   xcode-select --install
   ```
 
-- Ensure that the Xcode command line tools are using your newly installed copy of Xcode:
+- Ensure that the Xcode command line tools are using your newly installed copy
+  of Xcode:
 
   ```sh
   sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
@@ -45,7 +52,9 @@ On macOS, GPUI uses Metal for rendering. In order to use Metal, you need to do t
 
 ## Big Picture
 
-GPUI offers three different [registers](<https://en.wikipedia.org/wiki/Register_(sociolinguistics)>) depending on your needs:
+GPUI offers three different
+[registers](<https://en.wikipedia.org/wiki/Register_(sociolinguistics)>)
+depending on your needs:
 
 - State management and communication with `Entity`'s. Whenever you need to store
   application state that communicates between different parts of your

@@ -4,7 +4,8 @@ This crate lets you write extensions for Gram in Rust.
 
 ## Extension Manifest
 
-You'll need an `extension.toml` file at the root of your extension directory, with the following structure:
+You'll need an `extension.toml` file at the root of your extension directory,
+with the following structure:
 
 ```toml
 id = "my-extension"
@@ -31,7 +32,8 @@ crate-type = ["cdylib"]
 
 ## Implementing an Extension
 
-To define your extension, create a type that implements the `Extension` trait, and register it.
+To define your extension, create a type that implements the `Extension` trait,
+and register it.
 
 ```rust
 use zed_extension_api as gram;
@@ -51,27 +53,30 @@ gram::register_extension!(MyExtension);
 
 To run your extension in Gram as you're developing it:
 
-- Make sure you have [Rust installed](https://www.rust-lang.org/learn/get-started)
+- Make sure you have
+  [Rust installed](https://www.rust-lang.org/learn/get-started)
 - Have the `wasm32-wasip2` target installed (`rustup target add wasm32-wasip2`)
-- Open the extensions view using the `gram: extensions` action in the command palette.
+- Open the extensions view using the `gram: extensions` action in the command
+  palette.
 - Click the `Install Dev Extension` button in the top right
 - Choose the path to your extension directory.
 
 ## Compatible Gram versions
 
-Extensions created using newer versions of the Gram extension API won't be compatible with older versions of Gram.
+Extensions created using newer versions of the Gram extension API won't be
+compatible with older versions of Gram.
 
 Here is the compatibility of the `zed_extension_api` with versions of Gram:
 
 | Gram version | `zed_extension_api` version |
-| ----------- | --------------------------- |
-| `0.192.x`   | `0.0.1` - `0.6.0`           |
-| `0.186.x`   | `0.0.1` - `0.5.0`           |
-| `0.184.x`   | `0.0.1` - `0.4.0`           |
-| `0.178.x`   | `0.0.1` - `0.3.0`           |
-| `0.162.x`   | `0.0.1` - `0.2.0`           |
-| `0.149.x`   | `0.0.1` - `0.1.0`           |
-| `0.131.x`   | `0.0.1` - `0.0.6`           |
-| `0.130.x`   | `0.0.1` - `0.0.5`           |
-| `0.129.x`   | `0.0.1` - `0.0.4`           |
-| `0.128.x`   | `0.0.1`                     |
+| ------------ | --------------------------- |
+| `0.192.x`    | `0.0.1` - `0.6.0`           |
+| `0.186.x`    | `0.0.1` - `0.5.0`           |
+| `0.184.x`    | `0.0.1` - `0.4.0`           |
+| `0.178.x`    | `0.0.1` - `0.3.0`           |
+| `0.162.x`    | `0.0.1` - `0.2.0`           |
+| `0.149.x`    | `0.0.1` - `0.1.0`           |
+| `0.131.x`    | `0.0.1` - `0.0.6`           |
+| `0.130.x`    | `0.0.1` - `0.0.5`           |
+| `0.129.x`    | `0.0.1` - `0.0.4`           |
+| `0.128.x`    | `0.0.1`                     |

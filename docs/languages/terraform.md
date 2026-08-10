@@ -1,9 +1,12 @@
 # Terraform
 
-Terraform support is available through the [Terraform extension](https://github.com/zed-extensions/terraform).
+Terraform support is available through the
+[Terraform extension](https://github.com/zed-extensions/terraform).
 
-- Tree-sitter: [MichaHoffmann/tree-sitter-hcl](https://github.com/MichaHoffmann/tree-sitter-hcl)
-- Language Server: [hashicorp/terraform-ls](https://github.com/hashicorp/terraform-ls)
+- Tree-sitter:
+  [MichaHoffmann/tree-sitter-hcl](https://github.com/MichaHoffmann/tree-sitter-hcl)
+- Language Server:
+  [hashicorp/terraform-ls](https://github.com/hashicorp/terraform-ls)
 
 ## Configuration
 
@@ -13,7 +16,7 @@ TBD: Add example using `rootModulePaths` to match upstream example https://githu
 
 The Terraform language server can be configured in your `settings.jsonc`, e.g.:
 
-```jsonc
+```json
 {
   "lsp": {
     "terraform-ls": {
@@ -27,4 +30,5 @@ The Terraform language server can be configured in your `settings.jsonc`, e.g.:
 }
 ```
 
-See the [full list of server settings here](https://github.com/hashicorp/terraform-ls/blob/main/docs/SETTINGS.md).
+See the
+[full list of server settings here](https://github.com/hashicorp/terraform-ls/blob/main/docs/SETTINGS.md).

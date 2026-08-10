@@ -2,15 +2,19 @@
 
 Go support is available natively in Gram.
 
-- Tree-sitter: [tree-sitter/tree-sitter-go](https://github.com/tree-sitter/tree-sitter-go)
-- Language Server: [golang/tools/tree/master/gopls](https://github.com/golang/tools/tree/master/gopls)
+- Tree-sitter:
+  [tree-sitter/tree-sitter-go](https://github.com/tree-sitter/tree-sitter-go)
+- Language Server:
+  [golang/tools/tree/master/gopls](https://github.com/golang/tools/tree/master/gopls)
 - Debug Adapter: [delve](https://github.com/go-delve/delve)
 
 ## Setup
 
-We recommend installing gopls via go's package manager and not via Homebrew or your Linux distribution's package manager.
+We recommend installing gopls via go's package manager and not via Homebrew or
+your Linux distribution's package manager.
 
-1. Make sure you have uninstalled any version of gopls you have installed via your package manager:
+1. Make sure you have uninstalled any version of gopls you have installed via
+   your package manager:
 
 ```sh
 # MacOS homebrew
@@ -35,13 +39,14 @@ which gopls
 gopls version
 ```
 
-If `gopls` is not found you will likely need to add `export PATH="$PATH:$HOME/go/bin"` to your `.zshrc` / `.bash_profile`
+If `gopls` is not found you will likely need to add
+`export PATH="$PATH:$HOME/go/bin"` to your `.zshrc` / `.bash_profile`
 
 ## Inlay Hints
 
 Gram sets the following initialization options for inlay hints:
 
-```jsonc
+```json
 "hints": {
     "assignVariableTypes": true,
     "compositeLiteralFields": true,
@@ -53,11 +58,12 @@ Gram sets the following initialization options for inlay hints:
 }
 ```
 
-to make the language server send back inlay hints when Gram has them enabled in the settings.
+to make the language server send back inlay hints when Gram has them enabled in
+the settings.
 
 Use
 
-```jsonc
+```json
 "lsp": {
     "gopls": {
         "initialization_options": {
@@ -71,19 +77,25 @@ Use
 
 to override these settings.
 
-See [gopls inlayHints documentation](https://github.com/golang/tools/blob/master/gopls/doc/inlayHints.md) for more information.
+See
+[gopls inlayHints documentation](https://github.com/golang/tools/blob/master/gopls/doc/inlayHints.md)
+for more information.
 
 ## Debugging
 
-Gram supports zero-configuration debugging of Go tests and entry points (`func main`) using Delve. Run {#action debugger::Start} ({#kb debugger::Start}) to see a contextual list of these preconfigured debug tasks.
+Gram supports zero-configuration debugging of Go tests and entry points
+(`func main`) using Delve. Run {#action debugger::Start} ({#kb debugger::Start})
+to see a contextual list of these preconfigured debug tasks.
 
-For more control, you can add debug configurations to `.gram/debug.jsonc`. See below for examples.
+For more control, you can add debug configurations to `.gram/debug.jsonc`. See
+below for examples.
 
 - [Delve configuration documentation](https://github.com/go-delve/delve/blob/master/Documentation/api/dap/README.md#launch-and-attach-configurations)
 
 ### Debug Go Packages
 
-To debug a specific package, you can do so by setting the Delve mode to "debug". In this case "program" should be set to the package name.
+To debug a specific package, you can do so by setting the Delve mode to "debug".
+In this case "program" should be set to the package name.
 
 ```json [debug]
 [
@@ -109,8 +121,10 @@ To debug a specific package, you can do so by setting the Delve mode to "debug".
 
 ### Debug Go Tests
 
-To debug the tests for a package, set the Delve mode to "test".
-The "program" is still the package name, and you can use the "buildFlags" to do things like set tags, and the "args" to set args on the test binary. (See `go help testflags` for more information on doing that).
+To debug the tests for a package, set the Delve mode to "test". The "program" is
+still the package name, and you can use the "buildFlags" to do things like set
+tags, and the "args" to set args on the test binary. (See `go help testflags`
+for more information on doing that).
 
 ```json [debug]
 [
@@ -129,8 +143,9 @@ The "program" is still the package name, and you can use the "buildFlags" to do 
 
 ### Build and debug separately
 
-If you need to build your application with a specific command, you can use the "exec" mode of Delve. In this case "program" should point to an executable,
-and the "build" command should build that.
+If you need to build your application with a specific command, you can use the
+"exec" mode of Delve. In this case "program" should point to an executable, and
+the "build" command should build that.
 
 ```json [debug]
 [
@@ -160,7 +175,9 @@ and the "build" command should build that.
 
 ### Attaching to an existing instance of Delve
 
-You might find yourself needing to connect to an existing instance of Delve that's not necessarily running on your machine; in such case, you can use `tcp_arguments` to instrument Gram's connection to Delve.
+You might find yourself needing to connect to an existing instance of Delve
+that's not necessarily running on your machine; in such case, you can use
+`tcp_arguments` to instrument Gram's connection to Delve.
 
 ```json [debug]
 [
@@ -179,20 +196,24 @@ You might find yourself needing to connect to an existing instance of Delve that
 ]
 ```
 
-In such case Gram won't spawn a new instance of Delve, as it opts to use an existing one. The consequence of this is that _there will be no terminal_ in Gram; you have to interact with the Delve instance directly, as it handles stdin/stdout of the debuggee.
+In such case Gram won't spawn a new instance of Delve, as it opts to use an
+existing one. The consequence of this is that _there will be no terminal_ in
+Gram; you have to interact with the Delve instance directly, as it handles
+stdin/stdout of the debuggee.
 
 ## Go Mod
 
-- Tree-sitter: [camdencheek/tree-sitter-go-mod](https://github.com/camdencheek/tree-sitter-go-mod)
+- Tree-sitter:
+  [camdencheek/tree-sitter-go-mod](https://github.com/camdencheek/tree-sitter-go-mod)
 - Language Server: N/A
 
 ## Go Sum
 
-- Tree-sitter: [amaanq/tree-sitter-go-sum](https://github.com/amaanq/tree-sitter-go-sum)
+- Tree-sitter:
+  [amaanq/tree-sitter-go-sum](https://github.com/amaanq/tree-sitter-go-sum)
 - Language Server: N/A
 
 ## Go Work
 
-- Tree-sitter:
-  [tree-sitter-go-work](https://github.com/d1y/tree-sitter-go-work)
+- Tree-sitter: [tree-sitter-go-work](https://github.com/d1y/tree-sitter-go-work)
 - Language Server: N/A

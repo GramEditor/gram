@@ -11,4 +11,3 @@ Odin is the C alternative for the Joy of Programming.
 - [Documentation](https://odin-lang.org/docs/)
 - [Tree Sitter](https://github.com/tree-sitter-grammars/tree-sitter-odin)
 - [Language Server (ols)](https://github.com/DanielGavin/ols)
-

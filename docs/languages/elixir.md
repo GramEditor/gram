@@ -1,6 +1,7 @@
 # Elixir
 
-Elixir support is available through the [Elixir extension](https://github.com/zed-extensions/elixir).
+Elixir support is available through the
+[Elixir extension](https://github.com/zed-extensions/elixir).
 
 - Tree-sitter:
   - [elixir-lang/tree-sitter-elixir](https://github.com/elixir-lang/tree-sitter-elixir)
@@ -13,7 +14,8 @@ Elixir support is available through the [Elixir extension](https://github.com/ze
 
 ## Choosing a language server
 
-The Elixir extension offers language server support for `expert`, `elixir-ls`, `next-ls`, and `lexical`.
+The Elixir extension offers language server support for `expert`, `elixir-ls`,
+`next-ls`, and `lexical`.
 
 `elixir-ls` is enabled by default.
 
@@ -21,7 +23,7 @@ The Elixir extension offers language server support for `expert`, `elixir-ls`, `
 
 To switch to `expert`, add the following to your `settings.jsonc`:
 
-```jsonc
+```json
   "languages": {
     "Elixir": {
       "language_servers": ["expert", "!elixir-ls", "!next-ls", "!lexical", "..."]
@@ -36,7 +38,7 @@ To switch to `expert`, add the following to your `settings.jsonc`:
 
 To switch to `next-ls`, add the following to your `settings.jsonc`:
 
-```jsonc
+```json
   "languages": {
     "Elixir": {
       "language_servers": ["next-ls", "!expert", "!elixir-ls", "!lexical", "..."]
@@ -51,7 +53,7 @@ To switch to `next-ls`, add the following to your `settings.jsonc`:
 
 To switch to `lexical`, add the following to your `settings.jsonc`:
 
-```jsonc
+```json
   "languages": {
     "Elixir": {
       "language_servers": ["lexical", "!expert", "!elixir-ls", "!next-ls", "..."]
@@ -78,13 +80,20 @@ brew install elixir-ls
 
 3. Restart Gram
 
-> If `elixir-ls` is not running in an elixir project, check the error log via the command palette action `gram: open log`. If you find an error message mentioning: `invalid LSP message header "Shall I install Hex? (if running non-interactively, use \"mix local.hex --force\") [Yn]`, you might need to install [`Hex`](https://hex.pm). You run `elixir-ls` from the command line and accept the prompt to install `Hex`.
+> If `elixir-ls` is not running in an elixir project, check the error log via
+> the command palette action `gram: open log`. If you find an error message
+> mentioning:
+> `invalid LSP message header "Shall I install Hex? (if running non-interactively, use \"mix local.hex --force\") [Yn]`,
+> you might need to install [`Hex`](https://hex.pm). You run `elixir-ls` from
+> the command line and accept the prompt to install `Hex`.
 
 ### Formatting with Mix
 
-If you prefer to format your code with [Mix](https://hexdocs.pm/mix/Mix.html), use the following snippet in your `settings.jsonc` file to configure it as an external formatter. Formatting will occur on file save.
+If you prefer to format your code with [Mix](https://hexdocs.pm/mix/Mix.html),
+use the following snippet in your `settings.jsonc` file to configure it as an
+external formatter. Formatting will occur on file save.
 
-```jsonc
+```json
 {
   "languages": {
     "Elixir": {
@@ -102,11 +111,12 @@ If you prefer to format your code with [Mix](https://hexdocs.pm/mix/Mix.html), u
 
 ### Additional workspace configuration options
 
-You can pass additional elixir-ls workspace configuration options via lsp settings in `settings.jsonc`.
+You can pass additional elixir-ls workspace configuration options via lsp
+settings in `settings.jsonc`.
 
 The following example disables dialyzer:
 
-```jsonc
+```json
   "lsp": {
     "elixir-ls": {
       "settings": {
@@ -116,10 +126,15 @@ The following example disables dialyzer:
   }
 ```
 
-See [ElixirLS configuration settings](https://github.com/elixir-lsp/elixir-ls#elixirls-configuration-settings) for more options.
+See
+[ElixirLS configuration settings](https://github.com/elixir-lsp/elixir-ls#elixirls-configuration-settings)
+for more options.
 
 ### HEEx
 
-Gram also supports HEEx templates. HEEx is a mix of [EEx](https://hexdocs.pm/eex/1.12.3/EEx.html) (Embedded Elixir) and HTML, and is used in Phoenix LiveView applications.
+Gram also supports HEEx templates. HEEx is a mix of
+[EEx](https://hexdocs.pm/eex/1.12.3/EEx.html) (Embedded Elixir) and HTML, and is
+used in Phoenix LiveView applications.
 
-- Tree-sitter: [phoenixframework/tree-sitter-heex](https://github.com/phoenixframework/tree-sitter-heex)
+- Tree-sitter:
+  [phoenixframework/tree-sitter-heex](https://github.com/phoenixframework/tree-sitter-heex)

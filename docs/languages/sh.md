@@ -2,13 +2,16 @@
 
 Shell Scripts (bash, zsh, dash, sh) are supported natively by Gram.
 
-- Tree-sitter: [tree-sitter/tree-sitter-bash](https://github.com/tree-sitter/tree-sitter-bash)
+- Tree-sitter:
+  [tree-sitter/tree-sitter-bash](https://github.com/tree-sitter/tree-sitter-bash)
 
 ## Settings
 
-You can configure various settings for Shell Scripts in your Gram User Settings (`~/.config/gram/settings.json`) or Gram Project Settings (`.gram/settings.json`):
+You can configure various settings for Shell Scripts in your Gram User Settings
+(`~/.config/gram/settings.json`) or Gram Project Settings
+(`.gram/settings.json`):
 
-```jsonc
+```json
   "languages": {
     "Shell Script": {
       "tab_size": 2,
@@ -19,7 +22,8 @@ You can configure various settings for Shell Scripts in your Gram User Settings 
 
 ### Formatting
 
-Gram supports auto-formatting Shell Scripts using external tools like [`shfmt`](https://github.com/mvdan/sh).
+Gram supports auto-formatting Shell Scripts using external tools like
+[`shfmt`](https://github.com/mvdan/sh).
 
 1. Install `shfmt`:
 
@@ -41,7 +45,7 @@ shfmt --version
 
 3. Configure Gram to automatically format Shell Scripts with `shfmt` on save:
 
-```jsonc
+```json
   "languages": {
     "Shell Script": {
       "format_on_save": "on",
