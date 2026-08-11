@@ -1,6 +1,6 @@
 //! # panel
 use editor::{Editor, EditorElement, EditorStyle};
-use gpui::{Entity, TextStyle, actions};
+use gpui::{AbsoluteLength, Entity, TextStyle, actions};
 use settings::Settings;
 use theme::ThemeSettings;
 use ui::{Tab, prelude::*};
@@ -74,23 +74,19 @@ pub fn panel_filled_icon_button(id: impl Into<SharedString>, icon: IconName) -> 
 }
 
 pub fn panel_editor_container(_window: &mut Window, cx: &mut App) -> Div {
-    v_flex()
-        .size_full()
-        .gap(px(8.))
-        .p_2()
-        .bg(cx.theme().colors().editor_background)
+    v_flex().size_full().bg(cx.theme().colors().editor_background)
 }
 
 pub fn panel_editor_style(monospace: bool, window: &Window, cx: &App) -> EditorStyle {
     let settings = ThemeSettings::get_global(cx);
 
-    let font_size = TextSize::Small.rems(cx).to_pixels(window.rem_size());
-
-    let (font_family, font_fallbacks, font_features, font_weight, line_height) = if monospace {
+    let (font_family, font_fallbacks, font_features, font_size, font_weight, line_height) = if monospace {
+        let font_size = settings.buffer_font_size(cx);
         (
             settings.buffer_font.family.clone(),
             settings.buffer_font.fallbacks.clone(),
             settings.buffer_font.features.clone(),
+            AbsoluteLength::from(font_size),
             settings.buffer_font.weight,
             font_size * settings.buffer_line_height.value(),
         )
@@ -99,6 +95,7 @@ pub fn panel_editor_style(monospace: bool, window: &Window, cx: &App) -> EditorS
             settings.ui_font.family.clone(),
             settings.ui_font.fallbacks.clone(),
             settings.ui_font.features.clone(),
+            AbsoluteLength::from(TextSize::Small.rems(cx)),
             settings.ui_font.weight,
             window.line_height(),
         )
@@ -112,7 +109,7 @@ pub fn panel_editor_style(monospace: bool, window: &Window, cx: &App) -> EditorS
             font_family,
             font_fallbacks,
             font_features,
-            font_size: TextSize::Small.rems(cx).into(),
+            font_size,
             font_weight,
             line_height: line_height.into(),
             ..Default::default()

@@ -834,6 +834,11 @@
     ///
     /// Default: false
     "tree_view": false,
+    // Whether to show the number of added and deleted lines for each entry,
+    // and the total for the repository.
+    //
+    // Default: true
+    "diff_stats": true,
     "scrollbar": {
       // When to show the scrollbar in the git panel.
       //

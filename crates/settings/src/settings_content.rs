@@ -368,6 +368,12 @@ pub struct GitPanelSettingsContent {
     ///
     /// Default: false
     pub tree_view: Option<bool>,
+
+    /// Whether to show the number of added and deleted lines for each entry,
+    /// and the total for the repository.
+    ///
+    /// Default: true
+    pub diff_stats: Option<bool>,
 }
 
 #[derive(

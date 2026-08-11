@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Added
 
 - Add `Toggle` actions to all the side panels (#389) by @ycna07
+- Show added and deleted line counts per entry and in total in the git panel,
+  behind the `git_panel.diff_stats` setting (zed#49519) (zed#58018)
+- Add a branch picker filter for all, local, or remote branches (zed#60857)
+- Add `git::ToggleFillCommitEditor` to expand the commit editor to fill the
+  git panel, bound to `alt-shift-escape` (zed#55043) (zed#55565) (zed#60368)
+  (zed#59901)
 
 ## Changed
 
@@ -28,6 +34,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix multiple menus entries on some Linux distributions (#394) by @koru
 - Fix Gentoo packaging parse errors (#397) by @koru
 - Use cfg_select where reasonable (#387) by @ltdk
+- Fix stale git status entries left behind when a directory is moved or removed
+  (zed#59934)
+- Reload git state when a watcher rescan covers a repository (zed#61541)
+- Render file names in the git panel on a single line (zed#60862)
+- Avoid dropping git repositories during watcher rescans (zed#59976)
+- Refresh git state after committing, so the panel no longer lists the
+  committed files until the next reload
+- Enable the commit button when the editor is empty and a commit message is
+  suggested
+- Refresh git state after resetting, fetching and pulling, so the panel and
+  the ahead/behind counts stay current (zed#60590)
+- Use `buffer_font_size` for the commit message editor instead of the smaller
+  UI font, and lay the commit container out so it holds up at larger font
+  sizes (zed#55233) (zed#60331)
+- Size the commit modal from the buffer font it renders in, rather than the
+  narrower UI font, so it fits the commit message
+- Canonicalize the placement of ambiguous diff hunks, fixing hunks that
+  rendered as staged while git had them unstaged (zed#60584)
+- Stop Discard Tracked Changes from also discarding unstaged files
+  (zed#61608)
+- Use a specific label and prompt when reverting a deleted file, rather than
+  saying "restore" for modified files too (zed#61554)
+- Stop git panel keybindings from intercepting typing in the branch and
+  repository selectors (zed#61282)
+- Align the commit button back to the right of the commit editor footer
+- Pass `.` rather than an empty pathspec when collecting diff stats for the
+  repository root, which git rejects
 
 ## [3.2.0] - 2026-07-27
 

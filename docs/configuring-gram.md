@@ -4738,6 +4738,8 @@ support within Gram.
     "fallback_branch_name": "main",
     "sort_by_path": false,
     "collapse_untracked_diff": false,
+    "tree_view": false,
+    "diff_stats": true,
     "scrollbar": {
       "show": null,
     },
@@ -4757,6 +4759,9 @@ support within Gram.
   default)
 - `collapse_untracked_diff`: Whether to collapse untracked files in the diff
   panel
+- `tree_view`: Whether to show entries as a tree rather than a flat list
+- `diff_stats`: Whether to show the number of added and deleted lines for each
+  entry, and the total for the repository
 - `scrollbar`: When to show the scrollbar in the git panel
 
 ## Git Hosting Providers

@@ -2813,7 +2813,7 @@ impl BackgroundScannerState {
         self.snapshot.check_invariants(false);
     }
 
-    fn remove_path(&mut self, path: &RelPath, watcher: &dyn Watcher) {
+    fn remove_path(&mut self, path: &RelPath, prune_repositories: bool, watcher: &dyn Watcher) {
         log::trace!("background scanner removing path {path:?}");
         let mut new_entries;
         let removed_entries;
@@ -2863,9 +2863,11 @@ impl BackgroundScannerState {
         self.snapshot
             .entries_by_id
             .edit(removed_ids.iter().map(|&id| Edit::Remove(id)).collect(), ());
-        self.snapshot
-            .git_repositories
-            .retain(|id, _| removed_ids.binary_search(id).is_err());
+        if prune_repositories {
+            self.snapshot
+                .git_repositories
+                .retain(|id, _| removed_ids.binary_search(id).is_err());
+        }
 
         for removed_dir_abs_path in removed_dir_abs_paths {
             watcher.remove(&removed_dir_abs_path).log_err();
@@ -2944,11 +2946,17 @@ impl BackgroundScannerState {
 
         let work_directory_id = work_dir_entry.id;
 
+        let git_dir_scan_id = self
+            .snapshot
+            .git_repositories
+            .get(&work_directory_id)
+            .map_or(0, |existing_repository| existing_repository.git_dir_scan_id);
+
         let local_repository = LocalRepositoryEntry {
             work_directory_id,
             work_directory,
             work_directory_abs_path: work_directory_abs_path.as_path().into(),
-            git_dir_scan_id: 0,
+            git_dir_scan_id,
             dot_git_abs_path,
             common_dir_abs_path,
             repository_dir_abs_path,
@@ -3943,6 +3951,23 @@ impl BackgroundScanner {
                     }
                 }
 
+                if matches!(event.kind, Some(fs::PathEventKind::Rescan)) {
+                    for repository in snapshot.git_repositories.values() {
+                        let affected_by_rescan = [
+                            &repository.dot_git_abs_path,
+                            &repository.common_dir_abs_path,
+                            &repository.repository_dir_abs_path,
+                        ]
+                        .iter()
+                        .any(|git_dir_abs_path| git_dir_abs_path.starts_with(abs_path.as_path()));
+                        let dot_git_abs_path = repository.dot_git_abs_path.to_path_buf();
+                        if affected_by_rescan && !dot_git_abs_paths.contains(&dot_git_abs_path) {
+                            log::debug!("reloading git repo at {dot_git_abs_path:?} due to rescan of {abs_path:?}");
+                            dot_git_abs_paths.push(dot_git_abs_path);
+                        }
+                    }
+                }
+
                 if let Some((dot_git_abs_path, path_in_git_dir)) = dot_git_paths {
                     if skipped_files_in_dot_git
                         .iter()
@@ -4317,7 +4342,10 @@ impl BackgroundScanner {
 
             if self.settings.is_path_excluded(&child_path) {
                 log::debug!("skipping excluded child entry {child_path:?}");
-                self.state.lock().await.remove_path(&child_path, self.watcher.as_ref());
+                self.state
+                    .lock()
+                    .await
+                    .remove_path(&child_path, true, self.watcher.as_ref());
                 continue;
             }
 
@@ -4497,8 +4525,9 @@ impl BackgroundScanner {
         // refreshed. Do this before adding any new entries, so that renames can be
         // detected regardless of the order of the paths.
         for (path, metadata) in relative_paths.iter().zip(metadata.iter()) {
-            if matches!(metadata, Ok(None)) || doing_recursive_update {
-                state.remove_path(path, self.watcher.as_ref());
+            let path_was_removed = matches!(metadata, Ok(None));
+            if path_was_removed || doing_recursive_update {
+                state.remove_path(path, path_was_removed, self.watcher.as_ref());
             }
         }
 
@@ -4884,7 +4913,9 @@ impl BackgroundScanner {
                     .is_some()
             });
 
-            if exists_in_snapshot || matches!(self.fs.metadata(&entry.dot_git_abs_path).await, Ok(Some(_))) {
+            let dot_git_present = !matches!(self.fs.metadata(&entry.dot_git_abs_path).await, Ok(None));
+
+            if exists_in_snapshot || dot_git_present {
                 ids_to_preserve.insert(work_directory_id);
             }
         }

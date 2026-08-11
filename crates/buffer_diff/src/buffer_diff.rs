@@ -865,7 +865,8 @@ fn compute_hunks(
 
         let input = InternedInput::new(lines(diff_base.as_ref()), lines(buffer_text.as_str()));
         let mut sink = HunkSink::new(&diff_base, &diff_base_rope, &buffer, diff_options.as_ref());
-        let diff = Diff::compute(Algorithm::Histogram, &input);
+        let mut diff = Diff::compute(Algorithm::Histogram, &input);
+        diff.postprocess_lines(&input);
         diff.hunks()
             .for_each(|hunk| sink.process_change(hunk.before, hunk.after));
         let hunks = sink.finish();
@@ -1579,6 +1580,65 @@ mod tests {
             &buffer,
             &diff_base,
             &[],
+        );
+    }
+
+    #[gpui::test]
+    async fn test_ambiguous_hunk_placement_is_canonical(cx: &mut gpui::TestAppContext) {
+        let committed_contents = concat!(
+            "function is_empty(str)\n",
+            "    assert(type(str) == string)\n",
+            "    return str == nil or str == \"\"\n",
+            "end\n",
+            "\n",
+            "function string:starts_with(str)\n",
+            "    return self:sub(1, #str) == str\n",
+            "end\n",
+            "\n",
+            "function table:append(other)\n",
+            "    for _, val in ipairs(other) do table.insert(self, val) end\n",
+            "end\n",
+            "\n",
+            "function table:contains(elem)\n",
+            "    assert(type(self) == \"table\")\n",
+            "\n",
+            "    for _, val in ipairs(self) do\n",
+            "        if val == elem then return true end\n",
+            "    end\n",
+            "    return false\n",
+            "end\n",
+            "\n",
+            "function table:keys()\n",
+            "    local keys = {}\n",
+            "    return keys\n",
+            "end\n",
+        )
+        .to_string();
+
+        let file_contents = concat!(
+            "function table:append(other)\n",
+            "    for _, val in ipairs(other) do table.insert(self, val) end\n",
+            "end\n",
+            "\n",
+            "function table:keys()\n",
+            "    local keys = {}\n",
+            "    return keys\n",
+            "end\n",
+        )
+        .to_string();
+
+        let buffer = Buffer::new(ReplicaId::LOCAL, BufferId::new(1).unwrap(), file_contents);
+        let diff = BufferDiffSnapshot::new_sync(buffer.clone(), committed_contents.clone(), cx);
+
+        let rows = diff
+            .hunks_intersecting_range(Anchor::min_max_range_for_buffer(buffer.remote_id()), &buffer)
+            .map(|hunk| (hunk.range.start.row, hunk.range.end.row))
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            rows,
+            vec![(0, 0), (4, 4)],
+            "ambiguous deletions must anchor at their canonical rows, matching git"
         );
     }
 
