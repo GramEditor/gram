@@ -1628,7 +1628,7 @@ mod tests {
         .to_string();
 
         let buffer = Buffer::new(ReplicaId::LOCAL, BufferId::new(1).unwrap(), file_contents);
-        let diff = BufferDiffSnapshot::new_sync(buffer.clone(), committed_contents.clone(), cx);
+        let diff = BufferDiffSnapshot::new_sync(buffer.clone(), committed_contents, cx);
 
         let rows = diff
             .hunks_intersecting_range(Anchor::min_max_range_for_buffer(buffer.remote_id()), &buffer)
