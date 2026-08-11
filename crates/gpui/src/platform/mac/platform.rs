@@ -329,10 +329,12 @@ impl MacPlatform {
 
         let text_system: Arc<dyn PlatformTextSystem> = if headless {
             Arc::new(crate::NoopTextSystem::new())
-        } else if cfg!(feature = "font-kit") {
-            Arc::new(crate::CosmicTextSystem::new("System Font"))
         } else {
-            Arc::new(crate::NoopTextSystem::new())
+            #[cfg(feature = "font-kit")]
+            let text_system = Arc::new(crate::CosmicTextSystem::new("System Font"));
+            #[cfg(not(feature = "font-kit"))]
+            let text_system = Arc::new(crate::NoopTextSystem::new());
+            text_system
         };
 
         let keyboard_layout = MacKeyboardLayout::new();
