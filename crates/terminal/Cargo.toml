@@ -43,11 +43,7 @@ util_macros.workspace = true
 windows.workspace = true
 
 [features]
-test-support = [
-  "collections/test-support",
-  "gpui/test-support",
-  "settings/test-support",
-]
+test-support = ["collections/test-support", "gpui/test-support", "settings/test-support"]
 
 [lints]
 workspace = true

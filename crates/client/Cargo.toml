@@ -18,7 +18,7 @@ futures.workspace = true
 gpui.workspace = true
 http_client.workspace = true
 http_client_tls.workspace = true
-httparse = "1.10"
+httparse = "1.10.1"
 log.workspace = true
 parking_lot.workspace = true
 postage.workspace = true
@@ -28,7 +28,7 @@ settings.workspace = true
 thiserror.workspace = true
 time.workspace = true
 tokio.workspace = true
-tokio-socks = { version = "0.5.2", default-features = false, features = ["futures-io"] }
+tokio-socks = { version = "0.5.3", default-features = false, features = ["futures-io"] }
 url.workspace = true
 util.workspace = true
 
@@ -40,10 +40,10 @@ settings = { workspace = true, features = ["test-support"] }
 util = { workspace = true, features = ["test-support"] }
 
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
-tokio-native-tls = "0.3"
+tokio-native-tls = "0.3.1"
 
 [target.'cfg(not(any(target_os = "windows", target_os = "macos")))'.dependencies]
-rustls-pki-types = "1.12"
+rustls-pki-types = "1.15.1"
 tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12"] }
 
 [features]

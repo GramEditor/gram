@@ -41,7 +41,7 @@ settings.workspace = true
 task.workspace = true
 text.workspace = true
 theme.workspace = true
-tokio = { version = "1.15", features = ["full"], optional = true }
+tokio = { version = "1.53.1", features = ["full"], optional = true }
 ui.workspace = true
 util.workspace = true
 util_macros.workspace = true

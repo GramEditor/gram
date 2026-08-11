@@ -62,15 +62,7 @@ tempfile.workspace = true
 zlog.workspace = true
 
 [features]
-test-support = [
-  "db/test-support",
-  "fs/test-support",
-  "gpui/test-support",
-  "http_client/test-support",
-  "project/test-support",
-  "session/test-support",
-  "settings/test-support",
-]
+test-support = ["db/test-support", "fs/test-support", "gpui/test-support", "http_client/test-support", "project/test-support", "session/test-support", "settings/test-support"]
 
 [lints]
 workspace = true
