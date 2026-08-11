@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Align the commit button back to the right of the commit editor footer
 - Pass `.` rather than an empty pathspec when collecting diff stats for the
   repository root, which git rejects
+- Don't create text system or wgpu context if headless (#361)
 
 ## [3.2.0] - 2026-07-27
 

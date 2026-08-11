@@ -299,7 +299,7 @@ pub(crate) struct MacPlatformState {
     background_executor: BackgroundExecutor,
     foreground_executor: ForegroundExecutor,
     text_system: Arc<dyn PlatformTextSystem>,
-    pub renderer_context: WgpuContext,
+    pub renderer_context: Option<WgpuContext>,
     headless: bool,
     general_pasteboard: Pasteboard,
     find_pasteboard: Pasteboard,
@@ -327,11 +327,13 @@ impl MacPlatform {
     pub(crate) fn new(headless: bool) -> Self {
         let dispatcher = Arc::new(MacDispatcher);
 
-        #[cfg(feature = "font-kit")]
-        let text_system = Arc::new(crate::CosmicTextSystem::new("System Font"));
-
-        #[cfg(not(feature = "font-kit"))]
-        let text_system = Arc::new(crate::NoopTextSystem::new());
+        let text_system: Arc<dyn PlatformTextSystem> = if headless {
+            Arc::new(crate::NoopTextSystem::new())
+        } else if cfg!(feature = "font-kit") {
+            Arc::new(crate::CosmicTextSystem::new("System Font"))
+        } else {
+            Arc::new(crate::NoopTextSystem::new())
+        };
 
         let keyboard_layout = MacKeyboardLayout::new();
         let keyboard_mapper = Rc::new(MacKeyboardMapper::new(keyboard_layout.id()));
@@ -341,7 +343,11 @@ impl MacPlatform {
             text_system,
             background_executor: BackgroundExecutor::new(dispatcher.clone()),
             foreground_executor: ForegroundExecutor::new(dispatcher),
-            renderer_context: WgpuContext::new().context("Unable to init GPU context").unwrap(),
+            renderer_context: if headless {
+                None
+            } else {
+                Some(WgpuContext::new().context("Unable to init GPU context").unwrap())
+            },
             general_pasteboard: Pasteboard::general(),
             find_pasteboard: Pasteboard::find(),
             reopen: None,
@@ -589,13 +595,12 @@ impl Platform for MacPlatform {
         } else {
             state.finish_launching = Some(on_finish_launching);
             drop(state);
+
+            let app = NSApplication::sharedApplication(mtm);
+            let app_delegate = GPUIAppDelegate::new(mtm, self);
+            app.setDelegate(Some(ProtocolObject::from_ref(&*app_delegate)));
+            app.run();
         }
-
-        let app = NSApplication::sharedApplication(mtm);
-        let app_delegate = GPUIAppDelegate::new(mtm, self);
-        app.setDelegate(Some(ProtocolObject::from_ref(&*app_delegate)));
-
-        app.run();
     }
 
     fn quit(&self) {
@@ -701,7 +706,7 @@ impl Platform for MacPlatform {
             handle,
             options,
             state.foreground_executor.clone(),
-            &state.renderer_context,
+            state.renderer_context.as_ref().unwrap(),
         );
         Ok(Box::new(window))
     }
