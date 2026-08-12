@@ -1,13 +1,17 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
 name: CI
 
 on:
   push:
     branches:
-      - "main"
-      - "test/*"
-      - "test-gh/*"
+      - main
+      - test/*
+      - test-gh/*
     tags:
       - "*"
+
+permissions:
+  contents: write
 
 env:
   CARGO_TERM_COLOR: always
@@ -16,7 +20,7 @@ env:
 
 jobs:
   test:
-    name: test (${{ matrix.os }})
+    name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -29,8 +33,7 @@ jobs:
 
       - uses: taiki-e/install-action@3235f8901fd37ffed0052b276cec25a362fb82e9
         with:
-          tool: |
-            cargo-nextest
+          tool: cargo-nextest
 
       - name: Fix Microslop # https://github.com/microsoft/python-environment-tools/issues/171
         if: runner.os == 'Windows'
@@ -42,8 +45,7 @@ jobs:
 
       - name: Update cargo path
         if: runner.os == 'macOS'
-        run: |
-          echo "/Users/runner/.cargo/bin" >> $GITHUB_PATH
+        run: echo "/Users/runner/.cargo/bin" >> $GITHUB_PATH
 
       - name: Run nextest
         if: runner.os == 'Linux'
@@ -59,3 +61,99 @@ jobs:
           MAKEOPTS: "-j2 -l2"
           CARGO_BUILD_JOBS: "2"
         run: cargo-nextest nextest run --workspace --no-fail-fast --success-output never --show-progress none
+
+  build-linux:
+    name: Build Linux (${{ matrix.arch }})
+    if:
+      github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test/') || startsWith(github.ref,
+      'refs/heads/test-gh/')
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+            artifact_name: linux-x86_64
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+            artifact_name: linux-aarch64
+    env:
+      CC: clang
+      CXX: clang++
+      CC_x86_64_unknown_linux_musl: musl-gcc
+      CC_aarch64_unknown_linux_musl: musl-gcc
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: ./script/prepare-ci release
+
+      - name: Flatpak dependencies
+        run: ./script/flatpak/deps
+
+      - name: Bundle Flatpak
+        run: ./script/flatpak/bundle-flatpak
+
+      - name: Copy artifacts
+        shell: bash
+        run: |
+          find target -name '*.gz'
+          if [[ $GITHUB_REF_TYPE == "tag" ]]; then
+            version=${{ github.ref_name }}
+          else
+            version=$GITHUB_SHA
+          fi
+          mkdir artifacts
+          cp target/release/gram-linux-${{ matrix.arch }}.tar.gz "artifacts/gram-linux-${{ matrix.arch }}-${version}.tar.gz"
+          cp target/gram-remote-server-linux-${{ matrix.arch }}.gz "artifacts/gram-remote-server-linux-${{ matrix.arch }}-${version}.gz"
+          cp target/release/app.liten.Gram.flatpak "artifacts/app.liten.Gram-${{ matrix.arch }}-${version}.flatpak"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: artifacts/*
+
+  build-windows:
+    name: Build Windows
+    if:
+      github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test/') || startsWith(github.ref,
+      'refs/heads/test-gh/')
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - build: windows
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: windows-x64
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Fix Microslop # https://github.com/microsoft/python-environment-tools/issues/171
+        run: git config --global core.longpaths true
+
+      - name: Bundle Windows
+        run: script/bundle-windows.ps1 -Architecture x86_64
+        shell: pwsh
+
+      - name: List
+        shell: bash
+        run: |
+          ls -la target/*
+
+      - name: Upload Gram
+        uses: actions/upload-artifact@v7
+        with:
+          name: Gram-${{ matrix.artifact_name }}-${{ matrix.target }}.exe
+          path: target/Gram-x86_64.exe
+          if-no-files-found: error
+
+      - name: Upload remote-server
+        uses: actions/upload-artifact@v7
+        with:
+          name: gram-remote-server-${{ matrix.artifact_name}}-${{ matrix.target }}.zip
+          path: target/gram-remote-server-windows-x86_64.zip
+          if-no-files-found: warn
