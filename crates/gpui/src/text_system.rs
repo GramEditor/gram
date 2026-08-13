@@ -4,11 +4,11 @@ mod line;
 mod line_layout;
 mod line_wrapper;
 
-#[cfg(feature = "font-kit")]
+#[cfg(feature = "cosmic-text")]
 #[cfg(any(target_os = "macos", target_os = "linux", target_os = "freebsd"))]
 mod cosmic_text_system;
 
-#[cfg(feature = "font-kit")]
+#[cfg(feature = "cosmic-text")]
 #[cfg(any(target_os = "macos", target_os = "linux", target_os = "freebsd"))]
 pub use cosmic_text_system::*;
 

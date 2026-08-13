@@ -330,9 +330,9 @@ impl MacPlatform {
         let text_system: Arc<dyn PlatformTextSystem> = if headless {
             Arc::new(crate::NoopTextSystem::new())
         } else {
-            #[cfg(feature = "font-kit")]
+            #[cfg(feature = "cosmic-text")]
             let text_system = Arc::new(crate::CosmicTextSystem::new("System Font"));
-            #[cfg(not(feature = "font-kit"))]
+            #[cfg(not(feature = "cosmic-text"))]
             let text_system = Arc::new(crate::NoopTextSystem::new());
             text_system
         };

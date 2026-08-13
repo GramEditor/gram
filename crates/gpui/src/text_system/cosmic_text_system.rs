@@ -582,28 +582,6 @@ impl CosmicTextSystemState {
     }
 }
 
-#[cfg(feature = "font-kit")]
-fn find_best_match(font: &Font, candidates: &[FontId], state: &CosmicTextSystemState) -> Result<usize> {
-    let candidate_properties = candidates
-        .iter()
-        .map(|font_id| {
-            let database_id = state.loaded_font(*font_id).font.id();
-            let face_info = state
-                .font_system
-                .db()
-                .face(database_id)
-                .context("font face not found in database")?;
-            Ok(face_info_into_properties(face_info))
-        })
-        .collect::<Result<SmallVec<[_; 4]>>>()?;
-
-    let ix = font_kit::matching::find_best_match(&candidate_properties, &font_into_properties(font))
-        .context("requested font family contains no font matching the other parameters")?;
-
-    Ok(ix)
-}
-
-#[cfg(not(feature = "font-kit"))]
 fn find_best_match(font: &Font, candidates: &[FontId], state: &CosmicTextSystemState) -> Result<usize> {
     if candidates.is_empty() {
         anyhow::bail!("requested font family contains no font matching the other parameters");
@@ -764,42 +742,6 @@ fn cosmic_font_features(features: &FontFeatures) -> Result<CosmicFontFeatures> {
         result.set(tag, feature.1);
     }
     Ok(result)
-}
-
-#[cfg(feature = "font-kit")]
-fn font_into_properties(font: &gpui::Font) -> font_kit::properties::Properties {
-    font_kit::properties::Properties {
-        style: match font.style {
-            gpui::FontStyle::Normal => font_kit::properties::Style::Normal,
-            gpui::FontStyle::Italic => font_kit::properties::Style::Italic,
-            gpui::FontStyle::Oblique => font_kit::properties::Style::Oblique,
-        },
-        weight: font_kit::properties::Weight(font.weight.0),
-        stretch: Default::default(),
-    }
-}
-
-#[cfg(feature = "font-kit")]
-fn face_info_into_properties(face_info: &cosmic_text::fontdb::FaceInfo) -> font_kit::properties::Properties {
-    font_kit::properties::Properties {
-        style: match face_info.style {
-            cosmic_text::Style::Normal => font_kit::properties::Style::Normal,
-            cosmic_text::Style::Italic => font_kit::properties::Style::Italic,
-            cosmic_text::Style::Oblique => font_kit::properties::Style::Oblique,
-        },
-        weight: font_kit::properties::Weight(face_info.weight.0.into()),
-        stretch: match face_info.stretch {
-            cosmic_text::Stretch::Condensed => font_kit::properties::Stretch::CONDENSED,
-            cosmic_text::Stretch::Expanded => font_kit::properties::Stretch::EXPANDED,
-            cosmic_text::Stretch::ExtraCondensed => font_kit::properties::Stretch::EXTRA_CONDENSED,
-            cosmic_text::Stretch::ExtraExpanded => font_kit::properties::Stretch::EXTRA_EXPANDED,
-            cosmic_text::Stretch::Normal => font_kit::properties::Stretch::NORMAL,
-            cosmic_text::Stretch::SemiCondensed => font_kit::properties::Stretch::SEMI_CONDENSED,
-            cosmic_text::Stretch::SemiExpanded => font_kit::properties::Stretch::SEMI_EXPANDED,
-            cosmic_text::Stretch::UltraCondensed => font_kit::properties::Stretch::ULTRA_CONDENSED,
-            cosmic_text::Stretch::UltraExpanded => font_kit::properties::Stretch::ULTRA_EXPANDED,
-        },
-    }
 }
 
 fn check_is_known_emoji_font(postscript_name: &str) -> bool {

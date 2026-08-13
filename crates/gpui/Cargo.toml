@@ -150,8 +150,6 @@ ashpd = { workspace = true, optional = true }
 calloop = "0.14.3"
 cosmic-text = { version = "0.19.0", optional = true }
 filedescriptor = { version = "0.8.3", optional = true }
-# WARNING: If you change this, you must also publish a new version of zed-font-kit to crates.io
-font-kit = { package = "zed-font-kit", git = "https://github.com/zed-industries/font-kit", rev = "110523127440aefb11ce0cf280ae7c5071337ec5", version = "0.14.1-zed", features = ["source-fontconfig-dlopen"], optional = true }
 open = { version = "5.4.1", optional = true }
 swash = "0.2.10"
 wgpu = { workspace = true, optional = true }
@@ -180,8 +178,6 @@ block2.workspace = true
 bytemuck = { version = "1.25.2" }
 cosmic-text = { version = "0.19.0", optional = true }
 dispatch2.workspace = true
-# WARNING: If you change this, you must also publish a new version of zed-font-kit to crates.io
-font-kit = { package = "zed-font-kit", git = "https://github.com/zed-industries/font-kit", rev = "110523127440aefb11ce0cf280ae7c5071337ec5", version = "0.14.1-zed", optional = true }
 foreign-types = "0.5.0"
 log.workspace = true
 objc2.workspace = true
@@ -211,7 +207,7 @@ embed-resource = "3.0.11"
 windows-registry = "0.5.3"
 
 [features]
-default = ["font-kit", "wayland", "windows-manifest", "x11"]
+default = ["cosmic-text", "wayland", "windows-manifest", "x11"]
 inspector = ["gpui_macros/inspector"]
 leak-detection = ["backtrace"]
 test-support = ["collections/test-support", "http_client/test-support", "leak-detection", "rand", "util/test-support", "wayland", "x11"]
@@ -222,7 +218,7 @@ wayland = [
   "calloop-wayland-source",
   "cosmic-text",
   "filedescriptor",
-  "font-kit",
+  "cosmic-text",
   "open",
   "wayland-backend",
   "wayland-client",
@@ -234,7 +230,7 @@ wayland = [
   "xkbcommon"
 ]
 windows-manifest = []
-x11 = ["as-raw-xcb-connection", "ashpd", "bytemuck", "cosmic-text", "filedescriptor", "font-kit", "open", "wgpu", "x11rb", "xim", "xkbcommon"]
+x11 = ["as-raw-xcb-connection", "ashpd", "bytemuck", "cosmic-text", "filedescriptor", "cosmic-text", "open", "wgpu", "x11rb", "xim", "xkbcommon"]
 
 [lints]
 workspace = true
