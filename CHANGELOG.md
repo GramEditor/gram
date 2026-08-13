@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
 
 - Remove avatar fetching from git crate (#388)
+- Use cosmic-text instead of font-kit for font selection
 - Remove use of private MacOS APIs and drop support for MacOS < 12 (zed#56315)
 - Tweaked ferra theme colors (#391) (#399) by @BillyDM
 
