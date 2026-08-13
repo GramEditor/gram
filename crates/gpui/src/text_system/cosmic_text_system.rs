@@ -341,14 +341,22 @@ impl CosmicTextSystemState {
             params.subpixel_variant.y as f32 / SUBPIXEL_VARIANTS_Y as f32 / params.scale_factor,
         );
 
+        let variable_width = font_ref.variations().find_by_tag(swash::Tag::from_be_bytes(*b"wght"));
+
         let mut scaler = self
             .swash_scale_context
             .builder_with_id(font_ref, [params.font_id.0 as u64, 0])
             .size(pixel_size * params.scale_factor)
-            .normalized_coords(iter::empty::<NormalizedCoord>())
-            .variations(&[("wght", loaded_font.weight.0 as f32)])
-            .hint(true)
-            .build();
+            .hint(true);
+        if let Some(variation) = variable_width {
+            scaler = scaler.normalized_coords(font_ref.variations().normalized_coords([(
+                swash::Tag::from_be_bytes(*b"wght"),
+                f32::from(loaded_font.weight.0).clamp(variation.min_value(), variation.max_value()),
+            )]));
+        } else {
+            scaler = scaler.normalized_coords(iter::empty::<NormalizedCoord>());
+        }
+        let mut scaler = scaler.build();
 
         let sources: &[Source] = if params.is_emoji {
             &[
