@@ -263,8 +263,8 @@ impl CosmicTextSystemState {
                 family: SharedString::from(fallback_name.clone()),
                 features: features.clone(),
                 fallbacks: None,
-                weight: weight.clone(),
-                style: style.clone(),
+                weight: *weight,
+                style: *style,
             };
             match self.font_id(&fallback_font) {
                 Ok(fallback_id) => {
