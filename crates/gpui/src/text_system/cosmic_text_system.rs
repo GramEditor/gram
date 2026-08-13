@@ -13,7 +13,7 @@ use gpui::{
 use itertools::Itertools;
 use parking_lot::RwLock;
 use smallvec::SmallVec;
-use std::{borrow::Cow, iter, sync::Arc};
+use std::{borrow::Cow, sync::Arc};
 use swash::{
     NormalizedCoord,
     scale::{Render, ScaleContext, Source, StrikeWith},
@@ -30,6 +30,7 @@ pub struct CosmicTextSystem(RwLock<CosmicTextSystemState>);
 struct FontKey {
     family: SharedString,
     weight: FontWeight,
+    style: FontStyle,
     features: FontFeatures,
     fallbacks: Option<FontFallbacks>,
 }
@@ -48,6 +49,7 @@ struct CosmicTextSystemState {
 struct LoadedFont {
     font: Arc<CosmicTextFont>,
     weight: cosmic_text::Weight,
+    coords: SmallVec<[NormalizedCoord; 2]>,
     features: CosmicFontFeatures,
     is_known_emoji_font: bool,
     fallbacks: Arc<[(FontId, SharedString)]>,
@@ -93,7 +95,11 @@ impl PlatformTextSystem for CosmicTextSystem {
     }
 
     fn font_metrics(&self, font_id: FontId) -> FontMetrics {
-        let metrics = self.0.read().loaded_font(font_id).font.as_swash().metrics(&[]);
+        let metrics = {
+            let lock = self.0.read();
+            let loaded_font = lock.loaded_font(font_id);
+            loaded_font.font.as_swash().metrics(&loaded_font.coords)
+        };
 
         FontMetrics {
             units_per_em: metrics.units_per_em as u32,
@@ -113,7 +119,10 @@ impl PlatformTextSystem for CosmicTextSystem {
 
     fn typographic_bounds(&self, font_id: FontId, glyph_id: GlyphId) -> Result<Bounds<f32>> {
         let lock = self.0.read();
-        let glyph_metrics = lock.loaded_font(font_id).font.as_swash().glyph_metrics(&[]);
+        let glyph_metrics = {
+            let loaded_font = lock.loaded_font(font_id);
+            loaded_font.font.as_swash().glyph_metrics(&loaded_font.coords)
+        };
         let glyph_id = glyph_id.0 as u16;
         Ok(Bounds {
             origin: point(0.0, 0.0),
@@ -178,6 +187,7 @@ impl CosmicTextSystemState {
         let key = FontKey {
             family: font.family.clone(),
             weight: font.weight,
+            style: font.style,
             features: font.features.clone(),
             fallbacks: font.fallbacks.clone(),
         };
@@ -226,9 +236,11 @@ impl CosmicTextSystemState {
         let fallbacks =
             self.create_fallback_chain(&font.features, &font.weight, &font.style, font.fallbacks.as_ref())?;
         let font_id = FontId(self.loaded_fonts.len());
+        let coords = calculate_coords(&cosmic_font, weight);
         self.loaded_fonts.push(LoadedFont {
             font: cosmic_font,
             weight,
+            coords,
             features: cosmic_font_features(&font.features)?,
             is_known_emoji_font: check_is_known_emoji_font(&postscript_name),
             fallbacks,
@@ -273,7 +285,10 @@ impl CosmicTextSystemState {
     }
 
     fn advance(&self, font_id: FontId, glyph_id: GlyphId) -> Result<Size<f32>> {
-        let glyph_metrics = self.loaded_font(font_id).font.as_swash().glyph_metrics(&[]);
+        let glyph_metrics = {
+            let loaded_font = self.loaded_font(font_id);
+            loaded_font.font.as_swash().glyph_metrics(&loaded_font.coords)
+        };
         Ok(Size {
             width: glyph_metrics.advance_width(glyph_id.0 as u16),
             height: glyph_metrics.advance_height(glyph_id.0 as u16),
@@ -339,22 +354,13 @@ impl CosmicTextSystemState {
             params.subpixel_variant.y as f32 / SUBPIXEL_VARIANTS_Y as f32 / params.scale_factor,
         );
 
-        let variable_width = font_ref.variations().find_by_tag(swash::Tag::from_be_bytes(*b"wght"));
-
         let mut scaler = self
             .swash_scale_context
             .builder_with_id(font_ref, [params.font_id.0 as u64, 0])
             .size(pixel_size * params.scale_factor)
-            .hint(true);
-        if let Some(variation) = variable_width {
-            scaler = scaler.normalized_coords(font_ref.variations().normalized_coords([(
-                swash::Tag::from_be_bytes(*b"wght"),
-                f32::from(loaded_font.weight.0).clamp(variation.min_value(), variation.max_value()),
-            )]));
-        } else {
-            scaler = scaler.normalized_coords(iter::empty::<NormalizedCoord>());
-        }
-        let mut scaler = scaler.build();
+            .hint(true)
+            .normalized_coords(loaded_font.coords.iter())
+            .build();
 
         let sources: &[Source] = if params.is_emoji {
             &[
@@ -408,11 +414,13 @@ impl CosmicTextSystemState {
                 .face(id)
                 .context("fallback font face not found in cosmic-text database")?;
 
+            let coords = calculate_coords(&font, weight);
             let font_id = FontId(self.loaded_fonts.len());
             self.loaded_fonts.push(LoadedFont {
                 font,
                 features: CosmicFontFeatures::new(),
-                weight: face.weight,
+                weight,
+                coords,
                 is_known_emoji_font: check_is_known_emoji_font(&face.post_script_name),
                 fallbacks: Arc::from(Vec::new()),
             });
@@ -443,7 +451,7 @@ impl CosmicTextSystemState {
             let primary_family_name: SharedString = first_family.0.clone().into();
             let primary_stretch = face.stretch;
             let primary_style = face.style;
-            let primary_weight = face.weight;
+            let primary_weight = loaded_font.weight;
             let primary_features = loaded_font.features.clone();
             let fallback_chain = Arc::clone(&loaded_font.fallbacks);
 
@@ -700,6 +708,23 @@ fn cosmic_font_features(features: &FontFeatures) -> Result<CosmicFontFeatures> {
 fn check_is_known_emoji_font(postscript_name: &str) -> bool {
     // TODO: Include other common emoji fonts
     matches!(postscript_name, "NotoColorEmoji" | "AppleColorEmoji")
+}
+
+fn calculate_coords(font: &CosmicTextFont, weight: cosmic_text::Weight) -> SmallVec<[NormalizedCoord; 2]> {
+    let font_ref = font.as_swash();
+    let tag = swash::Tag::from_be_bytes(*b"wght");
+    let variable_width = font_ref.variations().find_by_tag(tag);
+    if let Some(variation) = variable_width {
+        font_ref
+            .variations()
+            .normalized_coords([(
+                tag,
+                f32::from(weight.0).clamp(variation.min_value(), variation.max_value()),
+            )])
+            .collect()
+    } else {
+        SmallVec::new()
+    }
 }
 
 #[cfg(test)]
