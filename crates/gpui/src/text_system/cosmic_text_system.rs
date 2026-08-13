@@ -191,16 +191,14 @@ impl CosmicTextSystemState {
         Ok(())
     }
 
-    #[profiling::function]
-    fn load_family(
+    // FIXME: This whole thing is so convoluted, what the hell is going on here...
+    fn create_fallback_chain(
         &mut self,
-        name: &str,
         features: &FontFeatures,
         weight: &FontWeight,
         fallbacks: Option<&FontFallbacks>,
-    ) -> Result<SmallVec<[FontId; 4]>> {
-        // FIXME: This whole thing is so convoluted, what the hell is going on here...
-        let fallbacks: Arc<[(FontId, SharedString)]> = match fallbacks {
+    ) -> Result<Arc<[(FontId, SharedString)]>> {
+        match fallbacks {
             Some(fallbacks) if !fallbacks.fallback_list().is_empty() => {
                 let mut chain: Vec<(FontId, SharedString)> = Vec::new();
                 for fallback_name in fallbacks.fallback_list() {
@@ -227,11 +225,21 @@ impl CosmicTextSystemState {
                         chain.push((fb_id, SharedString::from(family.0.clone())));
                     }
                 }
-                Arc::from(chain)
+                Ok(Arc::from(chain))
             }
-            _ => Arc::from(Vec::new()),
-        };
+            _ => Ok(Arc::from(Vec::new())),
+        }
+    }
 
+    #[profiling::function]
+    fn load_family(
+        &mut self,
+        name: &str,
+        features: &FontFeatures,
+        weight: &FontWeight,
+        fallbacks: Option<&FontFallbacks>,
+    ) -> Result<SmallVec<[FontId; 4]>> {
+        let fallbacks = self.create_fallback_chain(features, weight, fallbacks)?;
         let name = gpui::font_name_with_fallbacks(name, &self.system_font_fallback);
 
         let families = self
