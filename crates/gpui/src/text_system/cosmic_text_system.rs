@@ -213,13 +213,9 @@ impl CosmicTextSystemState {
 
         let cosmic_font = self.font_system.get_font(id, weight).context("font for id")?;
 
-        let postscript_name = self
-            .font_system
-            .db()
-            .face(id)
-            .context("faceinfo from db")?
-            .post_script_name
-            .clone();
+        let face_info = self.font_system.db().face(id).context("faceinfo from db")?;
+        let postscript_name = face_info.post_script_name.clone();
+        let face_weight = face_info.weight;
 
         // HACK: To let the storybook run and render Windows caption icons. We should actually do better font fallback.
         let allowed_bad_font_names = [
@@ -237,6 +233,7 @@ impl CosmicTextSystemState {
             self.create_fallback_chain(&font.features, &font.weight, &font.style, font.fallbacks.as_ref())?;
         let font_id = FontId(self.loaded_fonts.len());
         let coords = calculate_coords(&cosmic_font, weight);
+        let weight = calculate_weight(&cosmic_font, face_weight, weight);
         self.loaded_fonts.push(LoadedFont {
             font: cosmic_font,
             weight,
@@ -724,6 +721,21 @@ fn calculate_coords(font: &CosmicTextFont, weight: cosmic_text::Weight) -> Small
             .collect()
     } else {
         SmallVec::new()
+    }
+}
+
+fn calculate_weight(
+    font: &CosmicTextFont,
+    face_weight: cosmic_text::Weight,
+    requested: cosmic_text::Weight,
+) -> cosmic_text::Weight {
+    let font_ref = font.as_swash();
+    let tag = swash::Tag::from_be_bytes(*b"wght");
+    let variable_width = font_ref.variations().find_by_tag(tag);
+    if let Some(variation) = variable_width {
+        cosmic_text::Weight(f32::from(requested.0).clamp(variation.min_value(), variation.max_value()) as u16)
+    } else {
+        face_weight
     }
 }
 
