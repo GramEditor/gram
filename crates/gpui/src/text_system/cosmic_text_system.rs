@@ -34,17 +34,6 @@ struct FontKey {
     fallbacks: Option<FontFallbacks>,
 }
 
-impl FontKey {
-    fn new(family: SharedString, weight: FontWeight, features: FontFeatures, fallbacks: Option<FontFallbacks>) -> Self {
-        Self {
-            family,
-            weight,
-            features,
-            fallbacks,
-        }
-    }
-}
-
 struct CosmicTextSystemState {
     font_system: FontSystem,
     scratch: ShapeBuffer,
@@ -101,12 +90,12 @@ impl PlatformTextSystem for CosmicTextSystem {
 
     fn font_id(&self, font: &Font) -> Result<FontId> {
         let mut state = self.0.write();
-        let key = FontKey::new(
-            font.family.clone(),
-            font.weight,
-            font.features.clone(),
-            font.fallbacks.clone(),
-        );
+        let key = FontKey {
+            family: font.family.clone(),
+            weight: font.weight,
+            features: font.features.clone(),
+            fallbacks: font.fallbacks.clone(),
+        };
         let candidates = if let Some(font_ids) = state.font_ids_by_family_cache.get(&key) {
             font_ids.as_slice()
         } else {
@@ -215,12 +204,12 @@ impl CosmicTextSystemState {
             Some(fallbacks) if !fallbacks.fallback_list().is_empty() => {
                 let mut chain: Vec<(FontId, SharedString)> = Vec::new();
                 for fallback_name in fallbacks.fallback_list() {
-                    let fb_key = FontKey::new(
-                        SharedString::from(fallback_name.clone()),
-                        *weight,
-                        features.clone(),
-                        None,
-                    );
+                    let fb_key = FontKey {
+                        family: SharedString::from(fallback_name.clone()),
+                        weight: *weight,
+                        features: features.clone(),
+                        fallbacks: None,
+                    };
                     let fb_ids = if let Some(cached) = self.font_ids_by_family_cache.get(&fb_key) {
                         cached.clone()
                     } else {
