@@ -1,4 +1,4 @@
-<!-- prettier-ignore-start -->
+<!-- dprint-ignore-start -->
 
 # Changelog
 
@@ -469,4 +469,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - First release
 - Website: <https://gram.liten.app>
 
-<!-- prettier-ignore-end -->
+<!-- dprint-ignore-end -->
