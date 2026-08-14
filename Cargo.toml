@@ -47,7 +47,6 @@ members = [
   "crates/gpui_macros",
   "crates/gpui_tokio",
   "crates/gram",
-  "crates/html_to_markdown",
   "crates/http_client",
   "crates/http_client_tls",
   "crates/icons",
@@ -200,7 +199,6 @@ gpui = { path = "crates/gpui", default-features = false }
 gpui_macros = { path = "crates/gpui_macros" }
 gpui_tokio = { path = "crates/gpui_tokio" }
 gram = { path = "crates/gram" }
-html_to_markdown = { path = "crates/html_to_markdown" }
 http_client = { path = "crates/http_client" }
 http_client_tls = { path = "crates/http_client_tls" }
 icons = { path = "crates/icons" }

@@ -4262,18 +4262,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "html_to_markdown"
-version = "3.2.0"
-dependencies = [
- "anyhow",
- "html5ever",
- "indoc",
- "markup5ever_rcdom",
- "pretty_assertions",
- "regex",
-]
-
-[[package]]
 name = "http"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
