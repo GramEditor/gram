@@ -41,8 +41,8 @@ use gpui::{
     InteractiveElement, IntoElement, IsZero, Length, Modifiers, ModifiersChangedEvent, MouseButton, MouseClickEvent,
     MouseDownEvent, MouseMoveEvent, MousePressureEvent, MouseUpEvent, PaintQuad, ParentElement, Pixels, PressureStage,
     ScrollHandle, ScrollWheelEvent, ShapedLine, SharedString, Size, StatefulInteractiveElement, Style, Styled,
-    TextAlign, TextRun, TextStyleRefinement, WeakEntity, Window, anchored, deferred, div, fill, linear_color_stop,
-    linear_gradient, outline, point, px, quad, relative, size, solid_background, transparent_black,
+    TextAlign, TextRun, TextStyle, TextStyleRefinement, WeakEntity, Window, anchored, deferred, div, fill,
+    linear_color_stop, linear_gradient, outline, point, px, quad, relative, size, solid_background, transparent_black,
 };
 use itertools::Itertools;
 use language::{IndentGuideSettings, language_settings::ShowWhitespaceSetting};
@@ -2353,7 +2353,9 @@ impl EditorElement {
             .update(cx, |blame, cx| blame.blame_for_rows(&[*row_info], cx).next())
             .flatten()?;
 
-        let mut element = render_inline_blame_entry(entry.clone(), &self.style, cx)?;
+        let mut text_style = self.style.text.clone();
+        text_style.line_height = line_height.into();
+        let mut element = render_inline_blame_entry(entry.clone(), &text_style, cx)?;
 
         let start_y = content_origin.y + line_height * ((display_row.as_f64() - scroll_position.y) as f32);
 
@@ -7199,9 +7201,9 @@ fn prepaint_gutter_button(
     button
 }
 
-fn render_inline_blame_entry(blame_entry: BlameEntry, style: &EditorStyle, cx: &mut App) -> Option<AnyElement> {
+fn render_inline_blame_entry(blame_entry: BlameEntry, style: &TextStyle, cx: &mut App) -> Option<AnyElement> {
     let renderer = cx.global::<GlobalBlameRenderer>().0.clone();
-    renderer.render_inline_blame_entry(&style.text, blame_entry, cx)
+    renderer.render_inline_blame_entry(style, blame_entry, cx)
 }
 
 fn render_blame_entry_popover(
@@ -8658,7 +8660,9 @@ impl Element for EditorElement {
                                     blame.blame_for_rows(&[row_infos], cx).next()
                                 })
                                 .flatten()?;
-                            let mut element = render_inline_blame_entry(blame_entry, style, cx)?;
+                            let mut text_style = style.text.clone();
+                            text_style.line_height = line_height.into();
+                            let mut element = render_inline_blame_entry(blame_entry, &text_style, cx)?;
                             let inline_blame_padding =
                                 ProjectSettings::get_global(cx).git.inline_blame.padding as f32 * em_advance;
                             Some(
