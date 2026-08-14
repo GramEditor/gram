@@ -1,10 +1,12 @@
-name: test (linux amd64)
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
+name: CI
 
 on:
   push:
     branches:
-      - "main"
-      - "test/*"
+      - main
+      - test/*
+      - test-fj/*
     tags:
       - "*"
 
@@ -14,13 +16,14 @@ env:
   CARGO_INCREMENTAL: "0"
 
 jobs:
-  test-amd64:
+  test:
+    name: Test
+    if: github.ref_type == 'branch'
     runs-on: rust-22.04-amd64
     env:
       CC: clang
       CXX: clang++
       CC_x86_64_unknown_linux_musl: musl-gcc
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,3 +46,106 @@ jobs:
 
       - name: Cargo nextest
         run: cargo nextest run --workspace --success-output never --show-progress none
+
+  build:
+    name: Build and Release
+    if:
+      github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test/') || startsWith(github.ref,
+      'refs/heads/test-fj/')
+    runs-on: rust-22.04-amd64
+    env:
+      CC: clang
+      CXX: clang++
+      CC_x86_64_unknown_linux_musl: musl-gcc
+      GRAM_RPM_COMPRESSION: gzip
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache build
+        uses: actions/cache@v3
+        id: cache-gram-build
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-gram-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install dependencies
+        run: ./script/prepare-ci release
+
+      - name: Bundle Linux
+        run: ./script/bundle-linux --tarball --deb --rpm
+
+      - name: Set artifact name
+        id: set_artifact_name
+        shell: bash
+        run: |
+          version="-dev"
+          debversion="dev"
+          if [[ $FORGEJO_REF_TYPE == "tag" ]]; then
+            version=-$FORGEJO_REF_NAME
+            debversion=$FORGEJO_REF_NAME
+          elif [[ $FORGEJO_REF_TYPE == "branch" ]]; then
+            version="-$FORGEJO_SHA"
+            debversion="$FORGEJO_SHA"
+          fi
+          find target -name '*.gz'
+          rpm_name="$(find target -name '*.rpm' | head -1)"
+          rpm_base="$(basename $rpm_name)"
+          deb_name="$(find target -name '*.deb' | head -1)"
+          echo "deb: $deb_name"
+          mv target/release/gram-linux-x86_64.tar.gz "./gram-linux-x86_64${version}.tar.gz"
+          mv target/gram-remote-server-linux-x86_64.gz "./gram-remote-server-linux-x86_64${version}.gz"
+          mv $deb_name "./gram_${debversion}-1_x86_64.deb"
+          mv $rpm_name "./gram_${debversion}-1_x86_64.rpm"
+          echo "tarball_amd64=gram-linux-x86_64${version}.tar.gz" >> $FORGEJO_OUTPUT
+          echo "remote_server_amd64=gram-remote-server-linux-x86_64${version}.gz" >> $FORGEJO_OUTPUT
+          echo "deb_amd64=gram_${debversion}-1_x86_64.deb" >> $FORGEJO_OUTPUT
+          echo "rpm_amd64=gram_${debversion}-1_x86_64.rpm" >> $FORGEJO_OUTPUT
+
+      - name: Upload tarball
+        uses: forgejo/upload-artifact@v4
+        with:
+          name: ${{ steps.set_artifact_name.outputs.tarball_amd64 }}
+          path: ${{ steps.set_artifact_name.outputs.tarball_amd64 }}
+          compression-level: 0
+
+      - name: Upload remote-server
+        uses: forgejo/upload-artifact@v4
+        with:
+          name: ${{ steps.set_artifact_name.outputs.remote_server_amd64 }}
+          path: ${{ steps.set_artifact_name.outputs.remote_server_amd64 }}
+          compression-level: 0
+
+      - name: Upload DEB
+        uses: forgejo/upload-artifact@v4
+        with:
+          name: ${{ steps.set_artifact_name.outputs.deb_amd64 }}
+          path: ${{ steps.set_artifact_name.outputs.deb_amd64 }}
+          compression-level: 0
+
+      - name: Upload RPM
+        uses: forgejo/upload-artifact@v4
+        with:
+          name: ${{ steps.set_artifact_name.outputs.rpm_amd64 }}
+          path: ${{ steps.set_artifact_name.outputs.rpm_amd64 }}
+          compression-level: 0
+
+      - name: Publish DEB to package registry
+        if: github.ref_type == 'tag'
+        run: |
+          curl --user krig:${{ secrets.CODEBERG_PACKAGE_TOKEN }} \
+               --upload-file ${{ steps.set_artifact_name.outputs.deb_amd64 }} \
+               https://codeberg.org/api/packages/GramEditor/debian/pool/gram/release/upload
+
+      - name: Publish RPM to package registry
+        if: github.ref_type == 'tag'
+        run: |
+          curl --user krig:${{ secrets.CODEBERG_PACKAGE_TOKEN }} \
+               --upload-file ${{ steps.set_artifact_name.outputs.rpm_amd64 }} \
+               https://codeberg.org/api/packages/GramEditor/rpm/upload
