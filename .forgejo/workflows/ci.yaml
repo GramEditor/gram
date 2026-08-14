@@ -16,8 +16,8 @@ env:
   CARGO_INCREMENTAL: "0"
 
 jobs:
-  test:
-    name: Test
+  build:
+    name: Build
     if: github.ref_type == 'branch'
     runs-on: rust-22.04-amd64
     env:
@@ -47,8 +47,8 @@ jobs:
       - name: Cargo nextest
         run: cargo nextest run --workspace --success-output never --show-progress none
 
-  build:
-    name: Build and Release
+  release:
+    name: Release
     if:
       github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test/') || startsWith(github.ref,
       'refs/heads/test-fj/')

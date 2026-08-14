@@ -19,8 +19,8 @@ env:
   CARGO_INCREMENTAL: "0"
 
 jobs:
-  test:
-    name: Test (${{ matrix.os }})
+  build:
+    name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
