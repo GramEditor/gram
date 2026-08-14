@@ -1,6 +1,4 @@
-use gpui::{
-    DefiniteLength, FontStyle, FontWeight, HighlightStyle, SharedString, StrikethroughStyle, UnderlineStyle, px,
-};
+use gpui::{FontStyle, FontWeight, HighlightStyle, SharedString, StrikethroughStyle, UnderlineStyle, px};
 use language::HighlightId;
 use std::{fmt::Display, ops::Range, path::PathBuf};
 use urlencoding;
@@ -139,8 +137,6 @@ pub enum ParsedMarkdownTableAlignment {
 #[derive(Debug)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct ParsedMarkdownTableColumn {
-    pub col_span: usize,
-    pub row_span: usize,
     pub is_header: bool,
     pub children: MarkdownParagraph,
     pub alignment: ParsedMarkdownTableAlignment,
@@ -332,8 +328,6 @@ pub struct Image {
     pub link: Link,
     pub source_range: Range<usize>,
     pub alt_text: Option<SharedString>,
-    pub width: Option<DefiniteLength>,
-    pub height: Option<DefiniteLength>,
 }
 
 impl Image {
@@ -347,20 +341,10 @@ impl Image {
             source_range,
             link,
             alt_text: None,
-            width: None,
-            height: None,
         })
     }
 
     pub fn set_alt_text(&mut self, alt_text: SharedString) {
         self.alt_text = Some(alt_text);
-    }
-
-    pub fn set_width(&mut self, width: DefiniteLength) {
-        self.width = Some(width);
-    }
-
-    pub fn set_height(&mut self, height: DefiniteLength) {
-        self.height = Some(height);
     }
 }

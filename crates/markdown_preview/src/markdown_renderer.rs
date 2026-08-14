@@ -576,7 +576,7 @@ impl gpui::RenderOnce for MarkdownCheckbox {
 fn calculate_table_columns_count(rows: &Vec<ParsedMarkdownTableRow>) -> usize {
     let mut actual_column_count = 0;
     for row in rows {
-        actual_column_count = actual_column_count.max(row.columns.iter().map(|column| column.col_span).sum::<usize>());
+        actual_column_count = actual_column_count.max(row.columns.len());
     }
     actual_column_count
 }
@@ -613,8 +613,8 @@ fn render_markdown_table(parsed: &ParsedMarkdownTable, cx: &mut RenderContext) -
             };
 
             let cell_element = container
-                .col_span(cell.col_span.min(max_column_count - col_idx) as u16)
-                .row_span(cell.row_span.min(total_rows - row_idx) as u16)
+                .col_span(1)
+                .row_span(1)
                 .children(render_markdown_text(&cell.children, cx))
                 .px_2()
                 .py_1()
@@ -622,21 +622,16 @@ fn render_markdown_table(parsed: &ParsedMarkdownTable, cx: &mut RenderContext) -
                 .when(row_idx > 0, |this| this.border_t_1())
                 .border_color(cx.border_color)
                 .when(cell.is_header, |this| this.bg(cx.title_bar_background_color))
-                .when(cell.row_span > 1, |this| this.justify_center())
                 .when(row_idx % 2 == 1, |this| this.bg(cx.panel_background_color));
 
             cells.push(cell_element);
 
             // Mark grid positions as occupied for row-spanning cells
-            for r in 0..cell.row_span {
-                for c in 0..cell.col_span {
-                    if row_idx + r < total_rows && col_idx + c < max_column_count {
-                        grid_occupied[row_idx + r][col_idx + c] = true;
-                    }
-                }
+            if row_idx < total_rows && col_idx < max_column_count {
+                grid_occupied[row_idx][col_idx] = true;
             }
 
-            col_idx += cell.col_span;
+            col_idx += 1;
         }
 
         // Fill remaining columns with empty cells if needed
@@ -952,16 +947,10 @@ fn render_markdown_image(image: &Image, cx: &mut RenderContext) -> AnyElement {
     div()
         .id(element_id)
         .cursor_pointer()
-        .child(
-            img(ImageSource::Resource(image_resource))
-                .max_w_full()
-                .with_fallback({
-                    let alt_text = image.alt_text.clone();
-                    move || div().children(alt_text.clone()).into_any_element()
-                })
-                .when_some(image.height, |this, height| this.h(height))
-                .when_some(image.width, |this, width| this.w(width)),
-        )
+        .child(img(ImageSource::Resource(image_resource)).max_w_full().with_fallback({
+            let alt_text = image.alt_text.clone();
+            move || div().children(alt_text.clone()).into_any_element()
+        }))
         .tooltip({
             let link = image.link.clone();
             let alt_text = image.alt_text.clone();
@@ -1087,142 +1076,6 @@ fn list_item_prefix(order: usize, ordered: bool, depth: usize) -> String {
 mod tests {
     use super::*;
     use crate::markdown_elements::ParsedMarkdownMermaidDiagramContents;
-    use crate::markdown_elements::ParsedMarkdownTableColumn;
-    use crate::markdown_elements::ParsedMarkdownText;
-
-    fn text(text: &str) -> MarkdownParagraphChunk {
-        MarkdownParagraphChunk::Text(ParsedMarkdownText {
-            source_range: 0..text.len(),
-            contents: SharedString::new(text),
-            highlights: Default::default(),
-            regions: Default::default(),
-        })
-    }
-
-    fn column(col_span: usize, row_span: usize, children: Vec<MarkdownParagraphChunk>) -> ParsedMarkdownTableColumn {
-        ParsedMarkdownTableColumn {
-            col_span,
-            row_span,
-            is_header: false,
-            children,
-            alignment: ParsedMarkdownTableAlignment::None,
-        }
-    }
-
-    fn column_with_row_span(
-        col_span: usize,
-        row_span: usize,
-        children: Vec<MarkdownParagraphChunk>,
-    ) -> ParsedMarkdownTableColumn {
-        ParsedMarkdownTableColumn {
-            col_span,
-            row_span,
-            is_header: false,
-            children,
-            alignment: ParsedMarkdownTableAlignment::None,
-        }
-    }
-
-    #[test]
-    fn test_calculate_table_columns_count() {
-        assert_eq!(0, calculate_table_columns_count(&vec![]));
-
-        assert_eq!(
-            1,
-            calculate_table_columns_count(&vec![ParsedMarkdownTableRow::with_columns(vec![column(
-                1,
-                1,
-                vec![text("column1")]
-            )])])
-        );
-
-        assert_eq!(
-            2,
-            calculate_table_columns_count(&vec![ParsedMarkdownTableRow::with_columns(vec![
-                column(1, 1, vec![text("column1")]),
-                column(1, 1, vec![text("column2")]),
-            ])])
-        );
-
-        assert_eq!(
-            2,
-            calculate_table_columns_count(&vec![ParsedMarkdownTableRow::with_columns(vec![column(
-                2,
-                1,
-                vec![text("column1")]
-            )])])
-        );
-
-        assert_eq!(
-            3,
-            calculate_table_columns_count(&vec![ParsedMarkdownTableRow::with_columns(vec![
-                column(1, 1, vec![text("column1")]),
-                column(2, 1, vec![text("column2")]),
-            ])])
-        );
-
-        assert_eq!(
-            2,
-            calculate_table_columns_count(&vec![
-                ParsedMarkdownTableRow::with_columns(vec![
-                    column(1, 1, vec![text("column1")]),
-                    column(1, 1, vec![text("column2")]),
-                ]),
-                ParsedMarkdownTableRow::with_columns(vec![column(1, 1, vec![text("column1")]),])
-            ])
-        );
-
-        assert_eq!(
-            3,
-            calculate_table_columns_count(&vec![
-                ParsedMarkdownTableRow::with_columns(vec![
-                    column(1, 1, vec![text("column1")]),
-                    column(1, 1, vec![text("column2")]),
-                ]),
-                ParsedMarkdownTableRow::with_columns(vec![column(3, 3, vec![text("column1")]),])
-            ])
-        );
-    }
-
-    #[test]
-    fn test_row_span_support() {
-        assert_eq!(
-            3,
-            calculate_table_columns_count(&vec![
-                ParsedMarkdownTableRow::with_columns(vec![
-                    column_with_row_span(1, 2, vec![text("spans 2 rows")]),
-                    column(1, 1, vec![text("column2")]),
-                    column(1, 1, vec![text("column3")]),
-                ]),
-                ParsedMarkdownTableRow::with_columns(vec![
-                    // First column is covered by row span from above
-                    column(1, 1, vec![text("column2 row2")]),
-                    column(1, 1, vec![text("column3 row2")]),
-                ])
-            ])
-        );
-
-        assert_eq!(
-            4,
-            calculate_table_columns_count(&vec![
-                ParsedMarkdownTableRow::with_columns(vec![
-                    column_with_row_span(1, 3, vec![text("spans 3 rows")]),
-                    column_with_row_span(2, 1, vec![text("spans 2 cols")]),
-                    column(1, 1, vec![text("column4")]),
-                ]),
-                ParsedMarkdownTableRow::with_columns(vec![
-                    // First column covered by row span
-                    column(1, 1, vec![text("column2")]),
-                    column(1, 1, vec![text("column3")]),
-                    column(1, 1, vec![text("column4")]),
-                ]),
-                ParsedMarkdownTableRow::with_columns(vec![
-                    // First column still covered by row span
-                    column(3, 1, vec![text("spans 3 cols")]),
-                ])
-            ])
-        );
-    }
 
     #[test]
     fn test_list_item_prefix() {

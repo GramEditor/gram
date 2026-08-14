@@ -451,8 +451,6 @@ impl<'a> MarkdownParser<'a> {
                     self.cursor += 1;
                     let cell_contents = self.parse_text(false, Some(source_range));
                     row_columns.push(ParsedMarkdownTableColumn {
-                        col_span: 1,
-                        row_span: 1,
                         is_header: in_header,
                         children: cell_contents,
                         alignment: column_alignments.get(row_columns.len()).copied().unwrap_or_default(),
@@ -956,8 +954,6 @@ mod tests {
                         url: "https://blog.logrocket.com/wp-content/uploads/2024/04/exploring-zed-open-source-code-editor-rust-2.png".to_string(),
                     },
                     alt_text: Some("test".into()),
-                    height: None,
-                    width: None,
                 },)
             );
     }
@@ -979,8 +975,6 @@ mod tests {
                     url: "http://example.com/foo.png".to_string(),
                 },
                 alt_text: None,
-                height: None,
-                width: None,
             },)
         );
     }
@@ -1000,8 +994,6 @@ mod tests {
                     url: "http://example.com/foo.png".to_string(),
                 },
                 alt_text: Some("foo bar baz".into()),
-                height: None,
-                width: None,
             }),],
         );
     }
@@ -1024,8 +1016,6 @@ mod tests {
                         url: "http://example.com/foo.png".to_string(),
                     },
                     alt_text: Some("foo".into()),
-                    height: None,
-                    width: None,
                 }),
                 MarkdownParagraphChunk::Text(ParsedMarkdownText {
                     source_range: 0..81,
@@ -1039,8 +1029,6 @@ mod tests {
                         url: "http://example.com/bar.png".to_string(),
                     },
                     alt_text: Some("bar".into()),
-                    height: None,
-                    width: None,
                 })
             ]
         );
@@ -1059,8 +1047,8 @@ Some other content
             0..48,
             None,
             vec![row(vec![
-                column(1, 1, true, text("Header 1", 1..11), ParsedMarkdownTableAlignment::None),
-                column(1, 1, true, text("Header 2", 12..22), ParsedMarkdownTableAlignment::None),
+                column(true, text("Header 1", 1..11), ParsedMarkdownTableAlignment::None),
+                column(true, text("Header 2", 12..22), ParsedMarkdownTableAlignment::None),
             ])],
             vec![],
         );
@@ -1083,17 +1071,17 @@ Some other content
             0..95,
             None,
             vec![row(vec![
-                column(1, 1, true, text("Header 1", 1..11), ParsedMarkdownTableAlignment::None),
-                column(1, 1, true, text("Header 2", 12..22), ParsedMarkdownTableAlignment::None),
+                column(true, text("Header 1", 1..11), ParsedMarkdownTableAlignment::None),
+                column(true, text("Header 2", 12..22), ParsedMarkdownTableAlignment::None),
             ])],
             vec![
                 row(vec![
-                    column(1, 1, false, text("Cell 1", 49..59), ParsedMarkdownTableAlignment::None),
-                    column(1, 1, false, text("Cell 2", 60..70), ParsedMarkdownTableAlignment::None),
+                    column(false, text("Cell 1", 49..59), ParsedMarkdownTableAlignment::None),
+                    column(false, text("Cell 2", 60..70), ParsedMarkdownTableAlignment::None),
                 ]),
                 row(vec![
-                    column(1, 1, false, text("Cell 3", 73..83), ParsedMarkdownTableAlignment::None),
-                    column(1, 1, false, text("Cell 4", 84..94), ParsedMarkdownTableAlignment::None),
+                    column(false, text("Cell 3", 73..83), ParsedMarkdownTableAlignment::None),
+                    column(false, text("Cell 4", 84..94), ParsedMarkdownTableAlignment::None),
                 ]),
             ],
         );
@@ -1577,15 +1565,11 @@ fn main() {
     }
 
     fn column(
-        col_span: usize,
-        row_span: usize,
         is_header: bool,
         children: MarkdownParagraph,
         alignment: ParsedMarkdownTableAlignment,
     ) -> ParsedMarkdownTableColumn {
         ParsedMarkdownTableColumn {
-            col_span,
-            row_span,
             is_header,
             children,
             alignment,
