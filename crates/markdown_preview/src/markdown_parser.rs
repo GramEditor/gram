@@ -181,6 +181,11 @@ impl<'a> MarkdownParser<'a> {
                         Some(vec![ParsedMarkdownElement::CodeBlock(code_block)])
                     }
                 }
+                Tag::HtmlBlock => {
+                    self.cursor += 1;
+                    let text = self.parse_text(false, Some(source_range));
+                    Some(vec![ParsedMarkdownElement::Paragraph(text)])
+                }
                 _ => None,
             },
             Event::Rule => {
@@ -230,9 +235,13 @@ impl<'a> MarkdownParser<'a> {
                     text.push('\n');
                 }
 
-                // We want to ignore any inline HTML tags in the text but keep
-                // the text between them
-                Event::InlineHtml(_) => {}
+                Event::InlineHtml(t) => {
+                    text.push_str(t.as_ref());
+                }
+
+                Event::Html(t) => {
+                    text.push_str(t.as_ref());
+                }
 
                 Event::Text(t) => {
                     text.push_str(t.as_ref());
