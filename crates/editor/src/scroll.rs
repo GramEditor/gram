@@ -12,7 +12,7 @@ use crate::{
 };
 pub use autoscroll::{Autoscroll, AutoscrollStrategy};
 use core::fmt::Debug;
-use gpui::{Along, App, Axis, Context, Pixels, Task, Window, ease_out_cubic, point, px};
+use gpui::{Along, App, Axis, Context, Pixels, Task, Window, point, px};
 use language::language_settings::{AllLanguageSettings, SoftWrap};
 use language::{Bias, Point};
 pub use scroll_amount::ScrollAmount;
@@ -32,9 +32,9 @@ pub struct WasScrolled(pub(crate) bool);
 
 #[derive(Clone, Copy, Debug)]
 pub struct ScrollAnimation {
-    pub start_position: gpui::Point<ScrollOffset>,
-    pub target_position: gpui::Point<ScrollOffset>,
-    pub start_time: Instant,
+    pub current: gpui::Point<ScrollOffset>,
+    pub target: gpui::Point<ScrollOffset>,
+    pub updated_at: Instant,
 }
 
 pub type ScrollOffset = f64;
@@ -239,30 +239,16 @@ impl ScrollManager {
         self.scroll_animation.as_ref()
     }
 
-    pub fn start_animation(
-        &mut self,
-        current_position: gpui::Point<ScrollOffset>,
-        target_position: gpui::Point<ScrollOffset>,
-    ) {
-        let start_position = if let Some(animation) = &self.scroll_animation {
-            let elapsed = animation.start_time.elapsed().as_secs_f32();
-            let duration = self.scroll_animation_duration.as_secs_f32();
-            let progress = (elapsed / duration).min(1.0);
-            let eased = ease_out_cubic(progress);
-
-            gpui::Point::new(
-                animation.start_position.x + (animation.target_position.x - animation.start_position.x) * eased as f64,
-                animation.start_position.y + (animation.target_position.y - animation.start_position.y) * eased as f64,
-            )
+    pub fn start_animation(&mut self, current: gpui::Point<ScrollOffset>, target: gpui::Point<ScrollOffset>) {
+        if let Some(animation) = self.scroll_animation.as_mut() {
+            animation.target = target;
         } else {
-            current_position
-        };
-
-        self.scroll_animation = Some(ScrollAnimation {
-            start_position,
-            target_position,
-            start_time: Instant::now(),
-        });
+            self.scroll_animation = Some(ScrollAnimation {
+                current,
+                target,
+                updated_at: Instant::now(),
+            });
+        }
     }
 
     pub fn cancel_animation(&mut self) {
@@ -270,40 +256,26 @@ impl ScrollManager {
     }
 
     pub fn update_animation(&mut self) -> Option<gpui::Point<ScrollOffset>> {
-        let Some(animation) = self.scroll_animation else {
-            return None;
-        };
+        let animation = self.scroll_animation.as_mut()?;
+        let current = animation.current;
+        let target = animation.target;
 
-        let progress = {
-            let elapsed = animation.start_time.elapsed().as_secs_f32();
-            let duration = self.scroll_animation_duration.as_secs_f32();
-            (elapsed / duration).min(1.0)
-        };
-
-        let eased_progress = ease_out_cubic(progress);
-
-        let start = animation.start_position;
-        let target = animation.target_position;
-
-        let current_x = start.x + (target.x - start.x) * eased_progress as f64;
-        let current_y = start.y + (target.y - start.y) * eased_progress as f64;
-        let interpolated_position = point(current_x, current_y);
-
-        if progress >= 1.0 {
+        const EPSILON: f64 = 0.001;
+        let delta_x = target.x - current.x;
+        let delta_y = target.y - current.y;
+        if delta_x.abs() < EPSILON && delta_y.abs() < EPSILON {
             self.cancel_animation();
-
-            Some(target)
-        } else {
-            Some(interpolated_position)
+            return Some(target);
         }
-    }
 
-    pub fn animation_progress(&self) -> Option<f32> {
-        self.scroll_animation.as_ref().map(|animation| {
-            let elapsed = animation.start_time.elapsed().as_secs_f32();
-            let duration = self.scroll_animation_duration.as_secs_f32();
-            (elapsed / duration).min(1.0)
-        })
+        let now = Instant::now();
+        let dt = now.duration_since(animation.updated_at).as_secs_f64();
+        let speed = 3.0 / self.scroll_animation_duration.as_secs_f64();
+        let decay = if dt > 0.0 { 1.0 - (-speed * dt).exp() } else { 1.0 };
+        animation.updated_at = now;
+        animation.current.x += delta_x * decay;
+        animation.current.y += delta_y * decay;
+        Some(animation.current)
     }
 
     fn set_scroll_position(

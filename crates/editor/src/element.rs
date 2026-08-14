@@ -6853,7 +6853,7 @@ impl EditorElement {
                         let base_scroll_position = editor
                             .scroll_manager
                             .scroll_animation()
-                            .map(|a| a.target_position)
+                            .map(|a| a.target)
                             .unwrap_or(current_scroll_position);
 
                         let x = (base_scroll_position.x * ScrollPixelOffset::from(max_glyph_advance)
@@ -8203,6 +8203,7 @@ impl Element for EditorElement {
 
                         if let Some(target) = editor.scroll_manager.update_animation() {
                             editor.set_scroll_position_internal(target, true, false, window, cx);
+                            snapshot.scroll_anchor = editor.scroll_manager.anchor();
                             window.request_animation_frame();
                         }
 
