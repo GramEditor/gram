@@ -920,7 +920,10 @@ mod tests {
 
         assert_eq!(
             parsed.children,
-            vec![p("This is a paragraph with an inline HTML tag.", 0..63),],
+            vec![p(
+                "This is a paragraph with an inline HTML <sometag>tag</sometag>.",
+                0..63
+            ),],
         );
     }
 
@@ -1279,7 +1282,10 @@ Some other content
                 0..67,
                 1,
                 Unordered,
-                vec![p("This is a list item with an inline HTML tag.", 4..44),],
+                vec![p(
+                    "This is a list item with an inline HTML <sometag>tag</sometag>.",
+                    4..44
+                ),],
             ),],
         );
     }
