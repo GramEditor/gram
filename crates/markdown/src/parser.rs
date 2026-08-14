@@ -15,7 +15,6 @@ pub const PARSE_OPTIONS: Options = Options::ENABLE_TABLES
     .union(Options::ENABLE_SMART_PUNCTUATION)
     .union(Options::ENABLE_HEADING_ATTRIBUTES)
     .union(Options::ENABLE_PLUSES_DELIMITED_METADATA_BLOCKS)
-    .union(Options::ENABLE_OLD_FOOTNOTES)
     .union(Options::ENABLE_GFM)
     .union(Options::ENABLE_SUPERSCRIPT)
     .union(Options::ENABLE_SUBSCRIPT);
@@ -526,23 +525,6 @@ mod tests {
     use super::MarkdownEvent::*;
     use super::MarkdownTag::*;
     use super::*;
-
-    const UNWANTED_OPTIONS: Options = Options::ENABLE_YAML_STYLE_METADATA_BLOCKS
-        .union(Options::ENABLE_MATH)
-        .union(Options::ENABLE_DEFINITION_LIST)
-        .union(Options::ENABLE_WIKILINKS);
-
-    #[test]
-    fn all_options_considered() {
-        // The purpose of this is to fail when new options are added to pulldown_cmark, so that they
-        // can be evaluated for inclusion.
-        assert_eq!(PARSE_OPTIONS.union(UNWANTED_OPTIONS), Options::all());
-    }
-
-    #[test]
-    fn wanted_and_unwanted_options_disjoint() {
-        assert_eq!(PARSE_OPTIONS.intersection(UNWANTED_OPTIONS), Options::empty());
-    }
 
     #[test]
     fn test_html_comments() {

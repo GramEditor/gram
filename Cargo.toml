@@ -350,7 +350,6 @@ hashbrown = "0.16.1"
 heck = "0.5.0"
 heed = { version = "0.21.0", features = ["read-txn-no-tls", "serde", "serde-bincode", "serde-json"] }
 hex = "0.4.3"
-html5ever = "0.38.0"
 http = "1.5.0"
 http-body = "1.1.0"
 human_bytes = "0.4.3"
@@ -374,7 +373,6 @@ linkify = "0.11.0"
 log = { version = "0.4.33", features = ["kv_unstable_serde", "serde"] }
 lsp-types = { git = "https://github.com/zed-industries/lsp-types", rev = "b71ab4eeb27d9758be8092020a46fe33fbca4e33" }
 mach2 = "0.6.0"
-markup5ever_rcdom = "0.38.0"
 mermaid-rs-renderer = "0.2.2"
 metal = "0.29"
 minidumper = "0.10.1"
