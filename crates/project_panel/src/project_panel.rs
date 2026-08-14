@@ -470,14 +470,10 @@ pub fn init(cx: &mut App) {
                     let project = workspace.project().read(cx);
                     let worktree = project.worktree_for_id(selection.worktree_id, cx)?;
                     let entry = worktree.read(cx).entry_for_id(selection.entry_id)?;
-                    if entry.is_file() {
-                        Some(ProjectPath {
-                            worktree_id: selection.worktree_id,
-                            path: entry.path.clone(),
-                        })
-                    } else {
-                        None
-                    }
+                    Some(ProjectPath {
+                        worktree_id: selection.worktree_id,
+                        path: entry.path.clone(),
+                    })
                 });
 
                 if let Some(project_path) = maybe_project_path {
@@ -1063,7 +1059,7 @@ impl ProjectPanel {
                 is_root && (cfg!(target_os = "windows") || (settings.hide_root && visible_worktrees_count == 1));
             let should_show_compare = !is_dir && self.file_abs_paths_to_diff(cx).is_some();
 
-            let has_git_repo = !is_dir && {
+            let has_git_repo = {
                 let project_path = project::ProjectPath {
                     worktree_id,
                     path: entry.path.clone(),
@@ -1124,10 +1120,10 @@ impl ProjectPanel {
                                     .action("Restore File", Box::new(git::RestoreFile { skip_prompt: false }))
                             })
                             .when(has_git_repo, |menu| {
-                                menu.separator().action("View File History", Box::new(git::FileHistory))
-                            })
-                            .when(is_dir, |menu| {
-                                menu.separator().action("Git History", Box::new(git::FileHistory))
+                                menu.separator().action(
+                                    if is_dir { "Directory History" } else { "File History" },
+                                    Box::new(git::FileHistory),
+                                )
                             })
                             .when(!should_hide_rename, |menu| {
                                 menu.separator().action("Rename", Box::new(Rename))

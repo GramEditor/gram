@@ -434,18 +434,18 @@ impl GitRepository for FakeGitRepository {
         })
     }
 
-    fn file_history(&self, path: RepoPath) -> BoxFuture<'_, Result<git::repository::FileHistory>> {
-        self.file_history_paginated(path, 0, None)
+    fn commit_history(&self, path: Option<RepoPath>) -> BoxFuture<'_, Result<git::repository::CommitHistory>> {
+        self.commit_history_paginated(path, 0, None)
     }
 
-    fn file_history_paginated(
+    fn commit_history_paginated(
         &self,
-        path: RepoPath,
+        path: Option<RepoPath>,
         _skip: usize,
         _limit: Option<usize>,
-    ) -> BoxFuture<'_, Result<git::repository::FileHistory>> {
+    ) -> BoxFuture<'_, Result<git::repository::CommitHistory>> {
         async move {
-            Ok(git::repository::FileHistory {
+            Ok(git::repository::CommitHistory {
                 entries: Vec::new(),
                 path,
             })

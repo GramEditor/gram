@@ -520,6 +520,7 @@ impl GitStore {
         client.add_entity_request_handler(Self::handle_show);
         client.add_entity_request_handler(Self::handle_load_commit_diff);
         client.add_entity_request_handler(Self::handle_file_history);
+        client.add_entity_request_handler(Self::handle_commit_history);
         client.add_entity_request_handler(Self::handle_checkout_files);
         client.add_entity_request_handler(Self::handle_open_commit_message_buffer);
         client.add_entity_request_handler(Self::handle_set_index_text);
@@ -1017,26 +1018,26 @@ impl GitStore {
         })
     }
 
-    pub fn file_history(
+    pub fn commit_history(
         &self,
         repo: &Entity<Repository>,
-        path: RepoPath,
+        path: Option<RepoPath>,
         cx: &mut App,
-    ) -> Task<Result<git::repository::FileHistory>> {
-        let rx = repo.update(cx, |repo, _| repo.file_history(path));
+    ) -> Task<Result<git::repository::CommitHistory>> {
+        let rx = repo.update(cx, |repo, _| repo.commit_history(path));
 
         cx.spawn(|_: &mut AsyncApp| async move { rx.await? })
     }
 
-    pub fn file_history_paginated(
+    pub fn commit_history_paginated(
         &self,
         repo: &Entity<Repository>,
-        path: RepoPath,
+        path: Option<RepoPath>,
         skip: usize,
         limit: Option<usize>,
         cx: &mut App,
-    ) -> Task<Result<git::repository::FileHistory>> {
-        let rx = repo.update(cx, |repo, _| repo.file_history_paginated(path, skip, limit));
+    ) -> Task<Result<git::repository::CommitHistory>> {
+        let rx = repo.update(cx, |repo, _| repo.commit_history_paginated(path, skip, limit));
 
         cx.spawn(|_: &mut AsyncApp| async move { rx.await? })
     }
@@ -2244,7 +2245,7 @@ impl GitStore {
 
         let file_history = repository_handle
             .update(&mut cx, |repository_handle, _| {
-                repository_handle.file_history_paginated(path, skip, limit)
+                repository_handle.commit_history_paginated(Some(path), skip, limit)
             })?
             .await??;
 
@@ -2261,7 +2262,45 @@ impl GitStore {
                     author_email: entry.author_email.to_string(),
                 })
                 .collect(),
-            path: file_history.path.to_proto(),
+            path: file_history.path.unwrap().to_proto(),
+        })
+    }
+
+    async fn handle_commit_history(
+        this: Entity<Self>,
+        envelope: TypedEnvelope<proto::GitCommitHistory>,
+        mut cx: AsyncApp,
+    ) -> Result<proto::GitCommitHistoryResponse> {
+        let repository_id = RepositoryId::from_proto(envelope.payload.repository_id);
+        let repository_handle = Self::repository_for_request(&this, repository_id, &mut cx)?;
+        let path = if let Some(path) = envelope.payload.path {
+            Some(RepoPath::from_proto(&path)?)
+        } else {
+            None
+        };
+        let skip = envelope.payload.skip as usize;
+        let limit = envelope.payload.limit.map(|l| l as usize);
+
+        let commit_history = repository_handle
+            .update(&mut cx, |repository_handle, _| {
+                repository_handle.commit_history_paginated(path, skip, limit)
+            })?
+            .await??;
+
+        Ok(proto::GitCommitHistoryResponse {
+            entries: commit_history
+                .entries
+                .into_iter()
+                .map(|entry| proto::FileHistoryEntry {
+                    sha: entry.sha.to_string(),
+                    subject: entry.subject.to_string(),
+                    message: entry.message.to_string(),
+                    commit_timestamp: entry.commit_timestamp,
+                    author_name: entry.author_name.to_string(),
+                    author_email: entry.author_email.to_string(),
+                })
+                .collect(),
+            path: commit_history.path.map(|path| path.to_proto()),
         })
     }
 
@@ -3883,37 +3922,40 @@ impl Repository {
         })
     }
 
-    pub fn file_history(&mut self, path: RepoPath) -> oneshot::Receiver<Result<git::repository::FileHistory>> {
-        self.file_history_paginated(path, 0, None)
+    pub fn commit_history(
+        &mut self,
+        path: Option<RepoPath>,
+    ) -> oneshot::Receiver<Result<git::repository::CommitHistory>> {
+        self.commit_history_paginated(path, 0, None)
     }
 
-    pub fn file_history_paginated(
+    pub fn commit_history_paginated(
         &mut self,
-        path: RepoPath,
+        path: Option<RepoPath>,
         skip: usize,
         limit: Option<usize>,
-    ) -> oneshot::Receiver<Result<git::repository::FileHistory>> {
+    ) -> oneshot::Receiver<Result<git::repository::CommitHistory>> {
         let id = self.id;
         self.send_job(None, move |git_repo, _cx| async move {
             match git_repo {
                 RepositoryState::Local(LocalRepositoryState { backend, .. }) => {
-                    backend.file_history_paginated(path, skip, limit).await
+                    backend.commit_history_paginated(path, skip, limit).await
                 }
                 RepositoryState::Remote(RemoteRepositoryState { client, project_id }) => {
                     let response = client
-                        .request(proto::GitFileHistory {
+                        .request(proto::GitCommitHistory {
                             project_id: project_id.0,
                             repository_id: id.to_proto(),
-                            path: path.to_proto(),
+                            path: path.map(|path| path.to_proto()),
                             skip: skip as u64,
                             limit: limit.map(|l| l as u64),
                         })
                         .await?;
-                    Ok(git::repository::FileHistory {
+                    Ok(git::repository::CommitHistory {
                         entries: response
                             .entries
                             .into_iter()
-                            .map(|entry| git::repository::FileHistoryEntry {
+                            .map(|entry| git::repository::CommitHistoryEntry {
                                 sha: entry.sha.into(),
                                 subject: entry.subject.into(),
                                 message: entry.message.into(),
@@ -3922,7 +3964,11 @@ impl Repository {
                                 author_email: entry.author_email.into(),
                             })
                             .collect(),
-                        path: RepoPath::from_proto(&response.path)?,
+                        path: if let Some(path) = response.path.as_ref() {
+                            Some(RepoPath::from_proto(path)?)
+                        } else {
+                            None
+                        },
                     })
                 }
             }

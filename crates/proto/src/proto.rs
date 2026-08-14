@@ -275,7 +275,9 @@ messages!(
     (RemoteStarted, Background),
     (GitGetWorktrees, Background),
     (GitWorktreesResponse, Background),
-    (GitCreateWorktree, Background)
+    (GitCreateWorktree, Background),
+    (GitCommitHistory, Background),
+    (GitCommitHistoryResponse, Background)
 );
 
 request_messages!(
@@ -422,7 +424,8 @@ request_messages!(
     (GetProcesses, GetProcessesResponse),
     (RemoteStarted, Ack),
     (GitGetWorktrees, GitWorktreesResponse),
-    (GitCreateWorktree, Ack)
+    (GitCreateWorktree, Ack),
+    (GitCommitHistory, GitCommitHistoryResponse)
 );
 
 lsp_messages!(
@@ -549,6 +552,7 @@ entity_messages!(
     GetProcesses,
     CancelLanguageServerWork,
     RegisterBufferWithLanguageServers,
+    GitCommitHistory,
     GitShow,
     GitFileHistory,
     GitReset,

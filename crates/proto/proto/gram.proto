@@ -367,7 +367,10 @@ message Envelope {
         GitCreateRemote git_create_remote = 402;
         GitRemoveRemote git_remove_remote = 403;
         RescanDirectory rescan_directory = 404;
-        RescanDirectoryResponse rescan_directory_response = 405; // current max
+        RescanDirectoryResponse rescan_directory_response = 405;
+
+        GitCommitHistory git_commit_history = 406;
+        GitCommitHistoryResponse git_commit_history_response = 407; // current max
     }
 
     reserved 87 to 88, 396;

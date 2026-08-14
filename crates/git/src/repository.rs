@@ -396,7 +396,7 @@ pub struct CommitDetails {
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct FileHistoryEntry {
+pub struct CommitHistoryEntry {
     pub sha: SharedString,
     pub subject: SharedString,
     pub message: SharedString,
@@ -406,9 +406,9 @@ pub struct FileHistoryEntry {
 }
 
 #[derive(Debug, Clone)]
-pub struct FileHistory {
-    pub entries: Vec<FileHistoryEntry>,
-    pub path: RepoPath,
+pub struct CommitHistory {
+    pub entries: Vec<CommitHistoryEntry>,
+    pub path: Option<RepoPath>,
 }
 
 #[derive(Debug)]
@@ -706,13 +706,13 @@ pub trait GitRepository: Send + Sync {
 
     fn load_commit(&self, commit: String, cx: AsyncApp) -> BoxFuture<'_, Result<CommitDiff>>;
     fn blame(&self, path: RepoPath, content: Rope) -> BoxFuture<'_, Result<crate::blame::Blame>>;
-    fn file_history(&self, path: RepoPath) -> BoxFuture<'_, Result<FileHistory>>;
-    fn file_history_paginated(
+    fn commit_history(&self, path: Option<RepoPath>) -> BoxFuture<'_, Result<CommitHistory>>;
+    fn commit_history_paginated(
         &self,
-        path: RepoPath,
+        path: Option<RepoPath>,
         skip: usize,
         limit: Option<usize>,
-    ) -> BoxFuture<'_, Result<FileHistory>>;
+    ) -> BoxFuture<'_, Result<CommitHistory>>;
 
     /// Returns the absolute path to the repository. For worktrees, this will be the path to the
     /// worktree's gitdir within the main repository (typically `.git/worktrees/<name>`).
@@ -1711,17 +1711,18 @@ impl GitRepository for RealGitRepository {
             .boxed()
     }
 
-    fn file_history(&self, path: RepoPath) -> BoxFuture<'_, Result<FileHistory>> {
-        self.file_history_paginated(path, 0, None)
+    fn commit_history(&self, path: Option<RepoPath>) -> BoxFuture<'_, Result<CommitHistory>> {
+        self.commit_history_paginated(path, 0, None)
     }
 
-    fn file_history_paginated(
+    fn commit_history_paginated(
         &self,
-        path: RepoPath,
+        path: Option<RepoPath>,
         skip: usize,
         limit: Option<usize>,
-    ) -> BoxFuture<'_, Result<FileHistory>> {
+    ) -> BoxFuture<'_, Result<CommitHistory>> {
         let git = self.git_binary_in_worktree();
+        let working_directory = self.working_directory().ok();
         self.executor
             .spawn(async move {
                 let git = git?;
@@ -1734,7 +1735,21 @@ impl GitRepository for RealGitRepository {
                     commit_delimiter
                 );
 
-                let mut args = vec!["--no-optional-locks", "log", "--follow", &format_string];
+                let is_dir = if let Some(path) = path.as_ref()
+                    && let Some(parent) = working_directory
+                {
+                    parent.join(path.as_std_path()).is_dir()
+                } else {
+                    false
+                };
+
+                let mut args = vec!["--no-optional-locks", "log", &format_string];
+
+                if path.is_some() && !is_dir {
+                    args.push("--follow");
+                } else if path.is_none() {
+                    args.push("--first-parent");
+                }
 
                 let skip_str;
                 let limit_str;
@@ -1749,9 +1764,12 @@ impl GitRepository for RealGitRepository {
                     args.push(&limit_str);
                 }
 
-                args.push("--");
+                if let Some(path) = &path {
+                    args.push("--");
+                    args.push(path.as_pathspec());
+                }
 
-                let output = git.build_command(&args).arg(path.as_unix_str()).output().await?;
+                let output = git.build_command(&args).output().await?;
 
                 if !output.status.success() {
                     let stderr = String::from_utf8_lossy(&output.stderr);
@@ -1776,7 +1794,7 @@ impl GitRepository for RealGitRepository {
                         let author_name = fields[4].trim().to_string().into();
                         let author_email = fields[5].trim().to_string().into();
 
-                        entries.push(FileHistoryEntry {
+                        entries.push(CommitHistoryEntry {
                             sha,
                             subject,
                             message,
@@ -1787,7 +1805,7 @@ impl GitRepository for RealGitRepository {
                     }
                 }
 
-                Ok(FileHistory { entries, path })
+                Ok(CommitHistory { entries, path })
             })
             .boxed()
     }

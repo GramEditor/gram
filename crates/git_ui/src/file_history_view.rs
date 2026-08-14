@@ -1,5 +1,5 @@
 use anyhow::Result;
-use git::repository::{FileHistory, FileHistoryEntry, RepoPath};
+use git::repository::{CommitHistory, CommitHistoryEntry, RepoPath};
 use gpui::{
     AnyElement, AnyEntity, App, Context, Entity, EventEmitter, FocusHandle, Focusable, IntoElement, Render,
     ScrollStrategy, Task, UniformListScrollHandle, WeakEntity, Window, actions, uniform_list,
@@ -33,7 +33,7 @@ pub fn init(cx: &mut App) {
 const PAGE_SIZE: usize = 50;
 
 pub struct FileHistoryView {
-    history: FileHistory,
+    history: CommitHistory,
     repository: WeakEntity<Repository>,
     git_store: WeakEntity<GitStore>,
     workspace: WeakEntity<Workspace>,
@@ -56,7 +56,7 @@ impl FileHistoryView {
         let file_history_task = git_store
             .update(cx, |git_store, cx| {
                 repo.upgrade()
-                    .map(|repo| git_store.file_history_paginated(&repo, path.clone(), 0, Some(PAGE_SIZE), cx))
+                    .map(|repo| git_store.commit_history_paginated(&repo, Some(path.clone()), 0, Some(PAGE_SIZE), cx))
             })
             .ok()
             .flatten();
@@ -82,7 +82,7 @@ impl FileHistoryView {
                         pane.update(cx, |pane, cx| {
                             let ix = pane.items().position(|item| {
                                 let view = item.downcast::<FileHistoryView>();
-                                view.is_some_and(|v| v.read(cx).history.path == path)
+                                view.is_some_and(|v| v.read(cx).history.path.as_ref() == Some(&path))
                             });
                             if let Some(ix) = ix {
                                 pane.activate_item(ix, true, true, window, cx);
@@ -97,7 +97,7 @@ impl FileHistoryView {
     }
 
     fn new(
-        history: FileHistory,
+        history: CommitHistory,
         git_store: WeakEntity<GitStore>,
         repository: Entity<Repository>,
         workspace: WeakEntity<Workspace>,
@@ -138,7 +138,7 @@ impl FileHistoryView {
             let file_history_task = git_store
                 .update(cx, |git_store, cx| {
                     repo.upgrade()
-                        .map(|repo| git_store.file_history_paginated(&repo, path, current_count, Some(PAGE_SIZE), cx))
+                        .map(|repo| git_store.commit_history_paginated(&repo, path, current_count, Some(PAGE_SIZE), cx))
                 })
                 .ok()
                 .flatten();
@@ -227,7 +227,7 @@ impl FileHistoryView {
                 repo.downgrade(),
                 self.workspace.clone(),
                 None,
-                Some(self.history.path.clone()),
+                self.history.path.clone(),
                 window,
                 cx,
             );
@@ -237,7 +237,7 @@ impl FileHistoryView {
     fn render_commit_entry(
         &self,
         ix: usize,
-        entry: &FileHistoryEntry,
+        entry: &CommitHistoryEntry,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> AnyElement {
@@ -315,6 +315,16 @@ impl FileHistoryView {
             }))
             .into_any_element()
     }
+
+    fn title(&self) -> SharedString {
+        if let Some(path) = self.history.path.as_ref()
+            && !path.is_empty()
+        {
+            path.as_unix_str().to_string().into()
+        } else {
+            "Git History".into()
+        }
+    }
 }
 
 impl EventEmitter<ItemEvent> for FileHistoryView {}
@@ -327,7 +337,6 @@ impl Focusable for FileHistoryView {
 
 impl Render for FileHistoryView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let _file_name = self.history.path.file_name().unwrap_or("File");
         let entry_count = self.history.entries.len();
 
         v_flex()
@@ -349,11 +358,7 @@ impl Render for FileHistoryView {
                     .justify_between()
                     .border_b_1()
                     .border_color(cx.theme().colors().border_variant)
-                    .child(
-                        Label::new(self.history.path.as_unix_str().to_string())
-                            .color(Color::Muted)
-                            .buffer_font(cx),
-                    )
+                    .child(Label::new(self.title()).color(Color::Muted).buffer_font(cx))
                     .child(
                         h_flex()
                             .gap_1p5()
@@ -416,17 +421,25 @@ impl Item for FileHistoryView {
     }
 
     fn tab_content_text(&self, _detail: usize, _cx: &App) -> SharedString {
-        let file_name = self
-            .history
-            .path
-            .file_name()
-            .map(|name| name.to_string())
-            .unwrap_or_else(|| "File".to_string());
-        format!("History: {}", file_name).into()
+        self.title()
     }
 
     fn tab_tooltip_text(&self, _cx: &App) -> Option<SharedString> {
-        Some(format!("Git history for {}", self.history.path.as_unix_str()).into())
+        Some(
+            format!(
+                "Git history for {}",
+                self.history
+                    .path
+                    .as_ref()
+                    .map(|path| if !path.is_empty() {
+                        path.as_unix_str()
+                    } else {
+                        "project"
+                    })
+                    .unwrap_or("project")
+            )
+            .into(),
+        )
     }
 
     fn tab_icon(&self, _window: &Window, _cx: &App) -> Option<Icon> {

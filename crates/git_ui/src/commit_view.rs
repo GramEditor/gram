@@ -111,7 +111,7 @@ impl CommitView {
 
                 // Filter to specific file if requested
                 if let Some(ref filter_path) = file_filter {
-                    commit_diff.files.retain(|f| &f.path == filter_path);
+                    commit_diff.files.retain(|f| f.path.starts_with(filter_path));
                 }
 
                 let repo = repo.upgrade()?;
