@@ -2,13 +2,13 @@ use crate::{
     commit_tooltip::{CommitAvatar, CommitTooltip},
     commit_view::CommitView,
 };
-use editor::{BlameRenderer, Editor, hover_markdown_style};
+use editor::{BlameRenderer, Editor};
 use git::{blame::BlameEntry, commit::ParsedCommitMessage, repository::CommitSummary};
 use gpui::{
     ClipboardItem, Entity, Hsla, MouseButton, ScrollHandle, Subscription, TextStyle, TextStyleRefinement,
     UnderlineStyle, WeakEntity, prelude::*,
 };
-use markdown::{Markdown, MarkdownElement};
+use markdown::{Markdown, MarkdownElement, style::MarkdownStyle};
 use project::{git_store::Repository, project_settings::ProjectSettings};
 use settings::Settings as _;
 use theme::ThemeSettings;
@@ -181,7 +181,7 @@ impl BlameRenderer for GitBlameRenderer {
         );
         let link_color = cx.theme().colors().text_accent;
         let markdown_style = {
-            let mut style = hover_markdown_style(window, cx);
+            let mut style = MarkdownStyle::hover(window, cx);
             style.link.refine(&TextStyleRefinement {
                 color: Some(link_color),
                 underline: Some(UnderlineStyle {

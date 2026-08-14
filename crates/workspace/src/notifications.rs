@@ -4,7 +4,7 @@ use gpui::{
     AnyView, App, AppContext as _, AsyncWindowContext, ClickEvent, Context, DismissEvent, Entity, EventEmitter,
     FocusHandle, Focusable, PromptLevel, Render, ScrollHandle, Task, TextStyleRefinement, UnderlineStyle, svg,
 };
-use markdown::{Markdown, MarkdownElement, MarkdownStyle};
+use markdown::{Markdown, MarkdownElement, style::MarkdownStyle};
 use parking_lot::Mutex;
 use settings::Settings;
 use theme::ThemeSettings;

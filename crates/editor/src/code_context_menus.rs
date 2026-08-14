@@ -8,6 +8,7 @@ use itertools::Itertools;
 use language::CodeLabel;
 use language::{Buffer, LanguageName, LanguageRegistry};
 use lsp::CompletionItemTag;
+use markdown::style::MarkdownStyle;
 use markdown::{Markdown, MarkdownElement};
 use multi_buffer::{Anchor, ExcerptId};
 use ordered_float::OrderedFloat;
@@ -30,7 +31,7 @@ use task::ResolvedTask;
 use ui::{Color, IntoElement, ListItem, Pixels, Popover, ScrollAxes, Scrollbars, Styled, WithScrollbar, prelude::*};
 use util::ResultExt;
 
-use crate::hover_popover::{hover_markdown_style, open_markdown_url};
+use crate::hover_popover::open_markdown_url;
 use crate::{
     CodeActionProvider, CompletionId, CompletionProvider, DisplayRow, Editor, EditorStyle, ResolvedTasks,
     actions::{ConfirmCodeAction, ConfirmCompletion},
@@ -1001,7 +1002,7 @@ impl CompletionsMenu {
 
     fn render_markdown(markdown: Entity<Markdown>, window: &mut Window, cx: &mut Context<Editor>) -> Div {
         div().child(
-            MarkdownElement::new(markdown, hover_markdown_style(window, cx))
+            MarkdownElement::new(markdown, MarkdownStyle::hover(window, cx))
                 .code_block_renderer(markdown::CodeBlockRenderer::Default {
                     copy_button: false,
                     copy_button_on_hover: false,

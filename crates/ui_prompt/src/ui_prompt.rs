@@ -2,7 +2,7 @@ use gpui::{
     App, Entity, EventEmitter, FocusHandle, Focusable, PromptButton, PromptHandle, PromptLevel, PromptResponse,
     RenderablePromptHandle, SharedString, TextStyleRefinement, Window, div, prelude::*,
 };
-use markdown::{Markdown, MarkdownElement, MarkdownStyle};
+use markdown::{Markdown, MarkdownElement, style::MarkdownStyle};
 use settings::{Settings, SettingsStore};
 use theme::ThemeSettings;
 use ui::{FluentBuilder, TintColor, prelude::*};

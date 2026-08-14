@@ -55,7 +55,6 @@ pub use editor_settings::{
 };
 pub use element::{CursorLayout, EditorElement, HighlightedRange, HighlightedRangeLine, PointForPosition};
 pub use git::blame::BlameRenderer;
-pub use hover_popover::hover_markdown_style;
 pub use inlays::Inlay;
 pub use items::MAX_TAB_TITLE_LEN;
 pub use lsp::CompletionContext;

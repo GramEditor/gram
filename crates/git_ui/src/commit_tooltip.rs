@@ -1,5 +1,4 @@
 use crate::commit_view::CommitView;
-use editor::hover_markdown_style;
 use git::blame::BlameEntry;
 use git::commit::ParsedCommitMessage;
 use git::repository::CommitSummary;
@@ -7,7 +6,7 @@ use gpui::{
     Element, Entity, MouseButton, ParentElement, Render, ScrollHandle, StatefulInteractiveElement, WeakEntity,
     prelude::*,
 };
-use markdown::{Markdown, MarkdownElement};
+use markdown::{Markdown, MarkdownElement, style::MarkdownStyle};
 use project::git_store::Repository;
 use settings::Settings;
 use theme::ThemeSettings;
@@ -135,10 +134,7 @@ impl Render for CommitTooltip {
             local_offset,
             time_format::TimestampFormat::MediumAbsolute,
         );
-        let markdown_style = {
-            let style = hover_markdown_style(window, cx);
-            style
-        };
+        let markdown_style = MarkdownStyle::hover(window, cx);
 
         let message = self
             .commit

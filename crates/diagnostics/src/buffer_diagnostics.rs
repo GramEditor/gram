@@ -514,10 +514,12 @@ impl BufferDiagnosticsEditor {
                             *block_id,
                             cx,
                             move |cx| {
+                                use markdown::style::MarkdownStyle;
+
                                 markdown::MarkdownElement::rendered_text(
                                     markdown.clone(),
                                     cx,
-                                    editor::hover_popover::diagnostics_markdown_style,
+                                    MarkdownStyle::diagnostics,
                                 )
                             },
                         );

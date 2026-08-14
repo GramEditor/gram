@@ -3,12 +3,11 @@ use std::{ops::Range, sync::Arc};
 use editor::{
     Anchor, Editor, EditorSnapshot, ToOffset,
     display_map::{BlockContext, BlockPlacement, BlockProperties, BlockStyle},
-    hover_popover::diagnostics_markdown_style,
 };
 use gpui::{AppContext, Entity, Focusable, WeakEntity};
 use language::{BufferId, Diagnostic, DiagnosticEntryRef, LanguageRegistry};
 use lsp::DiagnosticSeverity;
-use markdown::{Markdown, MarkdownElement};
+use markdown::{Markdown, MarkdownElement, style::MarkdownStyle};
 use settings::Settings;
 use text::{AnchorRangeExt, Point};
 use theme::ThemeSettings;
@@ -186,7 +185,7 @@ impl DiagnosticBlock {
             .border_color(border_color)
             .max_w(max_width)
             .child(
-                MarkdownElement::new(self.markdown.clone(), diagnostics_markdown_style(bcx.window, cx))
+                MarkdownElement::new(self.markdown.clone(), MarkdownStyle::diagnostics(bcx.window, cx))
                     .code_block_renderer(markdown::CodeBlockRenderer::Default {
                         copy_button: false,
                         copy_button_on_hover: false,

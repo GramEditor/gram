@@ -1,5 +1,6 @@
 pub mod parser;
 mod path_range;
+pub mod style;
 
 use base64::Engine as _;
 use futures::FutureExt as _;
@@ -37,6 +38,7 @@ use ui::{ScrollAxes, Scrollbars, WithScrollbar, prelude::*};
 use util::ResultExt;
 
 use crate::parser::CodeBlockKind;
+use crate::style::MarkdownStyle;
 
 /// A callback function that can be used to customize the style of links based on the destination URL.
 /// If the callback returns `None`, the default link style will be used.
@@ -51,51 +53,6 @@ pub struct HeadingLevelStyles {
     pub h4: Option<TextStyleRefinement>,
     pub h5: Option<TextStyleRefinement>,
     pub h6: Option<TextStyleRefinement>,
-}
-
-#[derive(Clone)]
-pub struct MarkdownStyle {
-    pub base_text_style: TextStyle,
-    pub container_style: StyleRefinement,
-    pub code_block: StyleRefinement,
-    pub code_block_overflow_x_scroll: bool,
-    pub inline_code: TextStyleRefinement,
-    pub block_quote: TextStyleRefinement,
-    pub link: TextStyleRefinement,
-    pub link_callback: Option<LinkStyleCallback>,
-    pub rule_color: Hsla,
-    pub block_quote_border_color: Hsla,
-    pub syntax: Arc<SyntaxTheme>,
-    pub selection_background_color: Hsla,
-    pub heading: StyleRefinement,
-    pub heading_level_styles: Option<HeadingLevelStyles>,
-    pub height_is_multiple_of_line_height: bool,
-    pub prevent_mouse_interaction: bool,
-    pub table_columns_min_size: bool,
-}
-
-impl Default for MarkdownStyle {
-    fn default() -> Self {
-        Self {
-            base_text_style: Default::default(),
-            container_style: Default::default(),
-            code_block: Default::default(),
-            code_block_overflow_x_scroll: false,
-            inline_code: Default::default(),
-            block_quote: Default::default(),
-            link: Default::default(),
-            link_callback: None,
-            rule_color: Default::default(),
-            block_quote_border_color: Default::default(),
-            syntax: Arc::new(SyntaxTheme::default()),
-            selection_background_color: Default::default(),
-            heading: Default::default(),
-            heading_level_styles: None,
-            height_is_multiple_of_line_height: false,
-            prevent_mouse_interaction: false,
-            table_columns_min_size: false,
-        }
-    }
 }
 
 pub struct Markdown {

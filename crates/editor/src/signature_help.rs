@@ -1,11 +1,12 @@
 use crate::actions::ShowSignatureHelp;
 use crate::hover_popover::open_markdown_url;
-use crate::{BufferOffset, Editor, EditorSettings, ToggleAutoSignatureHelp, hover_markdown_style};
+use crate::{BufferOffset, Editor, EditorSettings, ToggleAutoSignatureHelp};
 use gpui::{
     App, Context, Entity, HighlightStyle, MouseButton, ScrollHandle, Size, StyledText, Task, TextStyle, Window,
     combine_highlights,
 };
 use language::BufferSnapshot;
+use markdown::style::MarkdownStyle;
 use markdown::{Markdown, MarkdownElement};
 use multi_buffer::{Anchor, MultiBufferOffset, ToOffset};
 use settings::Settings;
@@ -329,7 +330,7 @@ impl SignatureHelpPopover {
                     .when_some(signature.parameter_documentation.clone(), |this, param_doc| {
                         this.child(div().h_px().bg(cx.theme().colors().border_variant).my_1())
                             .child(
-                                MarkdownElement::new(param_doc, hover_markdown_style(window, cx))
+                                MarkdownElement::new(param_doc, MarkdownStyle::hover(window, cx))
                                     .code_block_renderer(markdown::CodeBlockRenderer::Default {
                                         copy_button: false,
                                         border: false,
@@ -341,7 +342,7 @@ impl SignatureHelpPopover {
                     .when_some(signature.documentation.clone(), |this, description| {
                         this.child(div().h_px().bg(cx.theme().colors().border_variant).my_1())
                             .child(
-                                MarkdownElement::new(description, hover_markdown_style(window, cx))
+                                MarkdownElement::new(description, MarkdownStyle::hover(window, cx))
                                     .code_block_renderer(markdown::CodeBlockRenderer::Default {
                                         copy_button: false,
                                         border: false,

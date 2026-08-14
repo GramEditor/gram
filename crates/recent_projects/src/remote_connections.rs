@@ -14,7 +14,7 @@ use gpui::{
 };
 
 use language::{CursorShape, Point};
-use markdown::{Markdown, MarkdownElement, MarkdownStyle};
+use markdown::{Markdown, MarkdownElement, style::MarkdownStyle};
 use remote::{ConnectionIdentifier, RemoteClient, RemoteConnection, RemoteConnectionOptions, SshConnectionOptions};
 pub use settings::SshConnection;
 use settings::{ExtendingVec, RegisterSetting, Settings, WslConnection};

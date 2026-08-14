@@ -9,7 +9,7 @@ use workspace::notifications::NotifyTaskExt;
 use std::sync::Arc;
 
 use gpui::{Entity, EventEmitter, Global, Task, TextStyle, TextStyleRefinement};
-use markdown::{Markdown, MarkdownElement, MarkdownStyle};
+use markdown::{Markdown, MarkdownElement, style::MarkdownStyle};
 use theme::ThemeSettings;
 use ui::prelude::*;
 use workspace::item::ItemHandle;
