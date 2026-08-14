@@ -40,9 +40,9 @@ use gpui::{
     ElementInputHandler, Entity, Focusable as _, FontId, GlobalElementId, Hitbox, HitboxBehavior, Hsla,
     InteractiveElement, IntoElement, IsZero, Length, Modifiers, ModifiersChangedEvent, MouseButton, MouseClickEvent,
     MouseDownEvent, MouseMoveEvent, MousePressureEvent, MouseUpEvent, PaintQuad, ParentElement, Pixels, PressureStage,
-    ScrollDelta, ScrollHandle, ScrollWheelEvent, ShapedLine, SharedString, Size, StatefulInteractiveElement, Style,
-    Styled, TextAlign, TextRun, TextStyleRefinement, WeakEntity, Window, anchored, deferred, div, fill,
-    linear_color_stop, linear_gradient, outline, point, px, quad, relative, size, solid_background, transparent_black,
+    ScrollHandle, ScrollWheelEvent, ShapedLine, SharedString, Size, StatefulInteractiveElement, Style, Styled,
+    TextAlign, TextRun, TextStyleRefinement, WeakEntity, Window, anchored, deferred, div, fill, linear_color_stop,
+    linear_gradient, outline, point, px, quad, relative, size, solid_background, transparent_black,
 };
 use itertools::Itertools;
 use language::{IndentGuideSettings, language_settings::ShowWhitespaceSetting};
@@ -6810,7 +6810,7 @@ impl EditorElement {
             let position_map = layout.position_map.clone();
             let editor = self.editor.clone();
             let hitbox = layout.hitbox.clone();
-            let mut delta = ScrollDelta::default();
+            let mut last_position: Option<gpui::Point<ScrollOffset>> = None;
 
             // Set a minimum scroll_sensitivity of 0.01 to make sure the user doesn't
             // accidentally turn off their scrolling.
@@ -6829,13 +6829,12 @@ impl EditorElement {
                 };
 
                 if phase == DispatchPhase::Bubble && hitbox.should_handle_scroll(window) {
-                    delta = delta.coalesce(event.delta);
                     editor.update(cx, |editor, cx| {
                         let position_map: &PositionMap = &position_map;
 
                         let line_height = position_map.line_height;
                         let max_glyph_advance = position_map.em_advance;
-                        let (delta, axis) = match delta {
+                        let (delta, axis) = match event.delta {
                             gpui::ScrollDelta::Pixels(mut pixels) => {
                                 //Trackpad
                                 let axis = position_map.snapshot.ongoing_scroll.filter(&mut pixels);
@@ -6849,12 +6848,12 @@ impl EditorElement {
                             }
                         };
 
-                        let current_scroll_position = position_map.snapshot.scroll_position();
                         let base_scroll_position = editor
                             .scroll_manager
                             .scroll_animation()
                             .map(|a| a.target)
-                            .unwrap_or(current_scroll_position);
+                            .or(last_position)
+                            .unwrap_or_else(|| position_map.snapshot.scroll_position());
 
                         let x = (base_scroll_position.x * ScrollPixelOffset::from(max_glyph_advance)
                             - ScrollPixelOffset::from(delta.x * scroll_sensitivity))
@@ -6869,6 +6868,7 @@ impl EditorElement {
                         }
 
                         if scroll_position != base_scroll_position {
+                            last_position = Some(scroll_position);
                             editor.scroll(scroll_position, axis, window, cx);
                             cx.stop_propagation();
                         } else if y < 0. {
