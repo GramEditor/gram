@@ -79,10 +79,8 @@ popd
 
 export GRAM_BUNDLE=true
 
-cargo_bundle_version=$(cargo -q bundle --help 2>&1 | head -n 1 || echo "")
-
 if [[ "$do_build" = "true" ]]; then
-    cargo install cargo-bundle --git https://github.com/zed-industries/cargo-bundle.git --branch zed-deploy
+    cargo install --version 0.11.0 cargo-bundle
 fi
 
 # Deal with versions of macOS that don't include libstdc++ headers
@@ -129,7 +127,7 @@ sed \
     "s/package.metadata.bundle-${channel}/package.metadata.bundle/" \
     Cargo.toml
 
-app_path=$(cargo bundle ${build_flag} --target "$target_triple" --select-workspace-root | xargs)
+app_path=$(cargo bundle ${build_flag} --target "$target_triple" --format osx | xargs)
 
 mv Cargo.toml.backup Cargo.toml
 popd
