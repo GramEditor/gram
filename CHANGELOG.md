@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `git::ToggleFillCommitEditor` to expand the commit editor to fill the
   git panel, bound to `alt-shift-escape` (zed#55043) (zed#55565) (zed#60368)
   (zed#59901)
-- Add git history views for folders and whole repository, not just files.
+- Add git history views, both for folders and the current state
 - Add action `git:show history`
 
 ## Changed
@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use cosmic-text instead of font-kit for font selection
 - Remove use of private MacOS APIs and drop support for MacOS < 12 (zed#56315)
 - Tweaked ferra theme colors (#391) (#399) by @BillyDM
+- Make clicking the last commit in the git panel open the history view
+- Open commits in an adjacent split and preview tab from the history view
 
 ## Fixed
 
