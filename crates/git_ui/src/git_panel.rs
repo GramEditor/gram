@@ -1,7 +1,6 @@
 use crate::askpass_modal::AskPassModal;
 use crate::commit_modal::CommitModal;
 use crate::commit_tooltip::CommitTooltip;
-use crate::commit_view::CommitView;
 use crate::project_diff::{self, Diff, ProjectDiff};
 use crate::remote_output::{self, RemoteAction, SuccessMessage};
 use crate::{branch_picker, picker_prompt, render_remote_button};
@@ -1156,6 +1155,24 @@ impl GitPanel {
                 })
                 .ok();
             self.focus_handle.focus(window, cx);
+
+            Some(())
+        });
+    }
+
+    fn open_history(&self, window: &mut Window, cx: &mut App) {
+        maybe!({
+            let active_repo = self.active_repository.as_ref()?;
+            let git_store = self.project.read(cx).git_store();
+
+            FileHistoryView::open(
+                None,
+                git_store.downgrade(),
+                active_repo.downgrade(),
+                self.workspace.clone(),
+                window,
+                cx,
+            );
 
             Some(())
         });
@@ -3669,7 +3686,6 @@ impl GitPanel {
         let active_repository = self.active_repository.as_ref()?;
         let branch = active_repository.read(cx).branch.as_ref()?;
         let commit = branch.most_recent_commit.as_ref()?.clone();
-        let workspace = self.workspace.clone();
         let this = cx.entity();
 
         Some(
@@ -3688,21 +3704,7 @@ impl GitPanel {
                         .rounded_sm()
                         .hover(|s| s.bg(cx.theme().colors().element_hover))
                         .child(Label::new(commit.subject.clone()).size(LabelSize::Small).truncate())
-                        .on_click({
-                            let commit = commit.clone();
-                            let repo = active_repository.downgrade();
-                            move |_, window, cx| {
-                                CommitView::open(
-                                    commit.sha.to_string(),
-                                    repo.clone(),
-                                    workspace.clone(),
-                                    None,
-                                    None,
-                                    window,
-                                    cx,
-                                );
-                            }
-                        })
+                        .on_click(cx.listener(|this, _, window, cx| this.open_history(window, cx)))
                         .hoverable_tooltip({
                             let repo = active_repository.clone();
                             move |window, cx| {
