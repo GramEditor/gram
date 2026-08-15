@@ -1169,7 +1169,7 @@ impl GitPanel {
             let git_store = self.project.read(cx).git_store();
 
             FileHistoryView::open(
-                repo_path,
+                Some(repo_path),
                 git_store.downgrade(),
                 active_repo.downgrade(),
                 self.workspace.clone(),

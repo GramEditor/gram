@@ -228,7 +228,7 @@ pub fn init(cx: &mut App) {
                 return;
             };
             file_history_view::FileHistoryView::open(
-                repo_path,
+                Some(repo_path),
                 git_store.downgrade(),
                 repo.downgrade(),
                 workspace.weak_handle(),

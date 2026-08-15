@@ -20,12 +20,11 @@ use workspace::{
 
 use crate::commit_view::CommitView;
 
-actions!(git, [ViewCommitFromHistory, LoadMoreHistory]);
+actions!(git, [ShowHistory]);
 
 pub fn init(cx: &mut App) {
     cx.observe_new(|workspace: &mut Workspace, _window, _cx| {
-        workspace.register_action(|_workspace, _: &ViewCommitFromHistory, _window, _cx| {});
-        workspace.register_action(|_workspace, _: &LoadMoreHistory, _window, _cx| {});
+        workspace.register_action(FileHistoryView::show_history);
     })
     .detach();
 }
@@ -45,8 +44,23 @@ pub struct FileHistoryView {
 }
 
 impl FileHistoryView {
+    pub fn show_history(workspace: &mut Workspace, _: &ShowHistory, window: &mut Window, cx: &mut Context<Workspace>) {
+        let project = workspace.project();
+        let git_store = project.read(cx).git_store();
+        if let Some(repo) = git_store.read(cx).active_repository() {
+            Self::open(
+                None,
+                git_store.downgrade(),
+                repo.downgrade(),
+                workspace.weak_handle(),
+                window,
+                cx,
+            );
+        }
+    }
+
     pub fn open(
-        path: RepoPath,
+        path: Option<RepoPath>,
         git_store: WeakEntity<GitStore>,
         repo: WeakEntity<Repository>,
         workspace: WeakEntity<Workspace>,
@@ -56,7 +70,7 @@ impl FileHistoryView {
         let file_history_task = git_store
             .update(cx, |git_store, cx| {
                 repo.upgrade()
-                    .map(|repo| git_store.commit_history_paginated(&repo, Some(path.clone()), 0, Some(PAGE_SIZE), cx))
+                    .map(|repo| git_store.commit_history_paginated(&repo, path.clone(), 0, Some(PAGE_SIZE), cx))
             })
             .ok()
             .flatten();
@@ -82,7 +96,7 @@ impl FileHistoryView {
                         pane.update(cx, |pane, cx| {
                             let ix = pane.items().position(|item| {
                                 let view = item.downcast::<FileHistoryView>();
-                                view.is_some_and(|v| v.read(cx).history.path.as_ref() == Some(&path))
+                                view.is_some_and(|v| v.read(cx).history.path == path)
                             });
                             if let Some(ix) = ix {
                                 pane.activate_item(ix, true, true, window, cx);

@@ -484,7 +484,7 @@ pub fn init(cx: &mut App) {
                         .repository_and_path_for_project_path(&project_path, cx)
                     {
                         git_ui::file_history_view::FileHistoryView::open(
-                            repo_path,
+                            Some(repo_path),
                             git_store.downgrade(),
                             repo.downgrade(),
                             workspace.weak_handle(),
@@ -514,7 +514,7 @@ pub fn init(cx: &mut App) {
                     .repository_and_path_for_project_path(&project_path, cx)
                 {
                     git_ui::file_history_view::FileHistoryView::open(
-                        repo_path,
+                        Some(repo_path),
                         git_store.downgrade(),
                         repo.downgrade(),
                         workspace.weak_handle(),
