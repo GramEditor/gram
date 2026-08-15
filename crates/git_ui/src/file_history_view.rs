@@ -242,6 +242,7 @@ impl FileHistoryView {
                 self.workspace.clone(),
                 None,
                 self.history.path.clone(),
+                crate::commit_view::OpenMode::Preview,
                 window,
                 cx,
             );

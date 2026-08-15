@@ -88,6 +88,11 @@ impl Addon for CommitDiffAddon {
 const COMMIT_MESSAGE_SORT_PREFIX: u64 = 0;
 const FILE_NAMESPACE_SORT_PREFIX: u64 = 1;
 
+pub enum OpenMode {
+    Full,
+    Preview,
+}
+
 impl CommitView {
     pub fn open(
         commit_sha: String,
@@ -95,6 +100,7 @@ impl CommitView {
         workspace: WeakEntity<Workspace>,
         stash: Option<usize>,
         file_filter: Option<RepoPath>,
+        mode: OpenMode,
         window: &mut Window,
         cx: &mut App,
     ) {
@@ -102,6 +108,10 @@ impl CommitView {
             .update(cx, |repo, _| repo.load_commit_diff(commit_sha.clone()))
             .ok();
         let commit_details = repo.update(cx, |repo, _| repo.show(commit_sha.clone())).ok();
+        let Some(workspace_entity) = workspace.upgrade() else {
+            return;
+        };
+        let current_pane = workspace_entity.read(cx).active_pane().downgrade();
 
         window
             .spawn(cx, async move |cx| {
@@ -123,18 +133,54 @@ impl CommitView {
                             CommitView::new(commit_details, commit_diff, repo, project.clone(), stash, window, cx)
                         });
 
-                        let pane = workspace.active_pane();
-                        pane.update(cx, |pane, cx| {
-                            let ix = pane.items().position(|item| {
-                                let commit_view = item.downcast::<CommitView>();
-                                commit_view.is_some_and(|view| view.read(cx).commit.sha == commit_sha)
+                        let (pane, activate_pane, focus_item) = match mode {
+                            OpenMode::Full => (current_pane.clone(), true, true),
+                            OpenMode::Preview => (workspace.adjacent_pane(window, cx).downgrade(), false, false),
+                        };
+
+                        if let Some(pane) = pane.upgrade() {
+                            pane.update(cx, |pane, cx| {
+                                let ix = pane.items().position(|item| {
+                                    let commit_view = item.downcast::<CommitView>();
+                                    commit_view.is_some_and(|view| view.read(cx).commit.sha == commit_sha)
+                                });
+
+                                if let Some(ix) = ix {
+                                    match mode {
+                                        OpenMode::Full => {
+                                            if let Some(item) = pane.item_for_index(ix) {
+                                                pane.unpreview_item_if_preview(item.item_id());
+                                            }
+                                        }
+                                        OpenMode::Preview => (),
+                                    };
+                                    pane.activate_item(ix, activate_pane, focus_item, window, cx);
+                                } else {
+                                    let replace = match mode {
+                                        OpenMode::Full => None,
+                                        OpenMode::Preview => {
+                                            pane.replace_preview_item_id(commit_view.item_id(), window, cx)
+                                        }
+                                    };
+                                    pane.add_item(
+                                        Box::new(commit_view),
+                                        activate_pane,
+                                        focus_item,
+                                        replace,
+                                        window,
+                                        cx,
+                                    );
+                                }
                             });
-                            if let Some(ix) = ix {
-                                pane.activate_item(ix, true, true, window, cx);
-                            } else {
-                                pane.add_item(Box::new(commit_view), true, true, None, window, cx);
+                        }
+                        if let Some(pane) = current_pane.upgrade() {
+                            match mode {
+                                OpenMode::Full => {}
+                                OpenMode::Preview => {
+                                    pane.update(cx, |pane, cx| pane.focus_active_item(window, cx));
+                                }
                             }
-                        })
+                        }
                     })
                     .log_err()
             })
@@ -860,7 +906,9 @@ impl Item for CommitView {
 
     fn tab_content(&self, params: TabContentParams, _window: &Window, cx: &App) -> AnyElement {
         Label::new(self.tab_content_text(params.detail.unwrap_or_default(), cx))
-            .color(if params.selected { Color::Default } else { Color::Muted })
+            .single_line()
+            .color(params.text_color())
+            .when(params.preview, |this| this.italic())
             .into_any_element()
     }
 
@@ -885,6 +933,10 @@ impl Item for CommitView {
                     .into_any_element()
             }
         }))))
+    }
+
+    fn preserve_preview(&self, _cx: &App) -> bool {
+        true
     }
 
     fn to_item_events(event: &EditorEvent, f: impl FnMut(ItemEvent)) {

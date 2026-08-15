@@ -281,6 +281,7 @@ impl StashListDelegate {
             self.workspace.clone(),
             Some(stash_index),
             None,
+            crate::commit_view::OpenMode::Full,
             window,
             cx,
         );

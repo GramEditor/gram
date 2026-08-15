@@ -821,6 +821,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                                 workspace.weak_handle(),
                                 None,
                                 None,
+                                git_ui::commit_view::OpenMode::Full,
                                 window,
                                 cx,
                             );

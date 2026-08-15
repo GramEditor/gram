@@ -241,6 +241,7 @@ impl Render for CommitTooltip {
                                                         workspace.clone(),
                                                         None,
                                                         None,
+                                                        crate::commit_view::OpenMode::Full,
                                                         window,
                                                         cx,
                                                     );

@@ -943,6 +943,7 @@ impl GitGraph {
                                                     workspace.downgrade(),
                                                     None,
                                                     None,
+                                                    git_ui::commit_view::OpenMode::Full,
                                                     window,
                                                     cx,
                                                 );

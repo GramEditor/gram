@@ -92,6 +92,7 @@ impl BlameRenderer for GitBlameRenderer {
                                     workspace.clone(),
                                     None,
                                     None,
+                                    crate::commit_view::OpenMode::Full,
                                     window,
                                     cx,
                                 )
@@ -290,6 +291,7 @@ impl BlameRenderer for GitBlameRenderer {
                                                             workspace.clone(),
                                                             None,
                                                             None,
+                                                            crate::commit_view::OpenMode::Full,
                                                             window,
                                                             cx,
                                                         );
@@ -323,6 +325,7 @@ impl BlameRenderer for GitBlameRenderer {
             workspace,
             None,
             None,
+            crate::commit_view::OpenMode::Full,
             window,
             cx,
         )
