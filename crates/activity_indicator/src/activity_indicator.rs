@@ -14,21 +14,13 @@ use project::{
 };
 use proto::{ServerBinaryStatus, status_update::Status};
 use smallvec::SmallVec;
-use std::{
-    cmp::Reverse,
-    collections::HashSet,
-    fmt::Write,
-    sync::Arc,
-    time::{Duration, Instant},
-};
+use std::{cmp::Reverse, collections::HashSet, fmt::Write, sync::Arc};
 use ui::{ButtonLike, CommonAnimationExt, ContextMenu, PopoverMenu, PopoverMenuHandle, Tooltip, prelude::*};
 use util::truncate_and_trailoff;
 use workspace::{
     StatusBarSettings, StatusItemView, Workspace,
     item::{ItemHandle, Settings},
 };
-
-const GIT_OPERATION_DELAY: Duration = Duration::from_millis(0);
 
 actions!(
     activity_indicator,
@@ -385,9 +377,7 @@ impl ActivityIndicator {
             .map(|r| r.read(cx))
             .and_then(Repository::current_job);
         // Show any long-running git command
-        if let Some(job_info) = current_job
-            && Instant::now() - job_info.start >= GIT_OPERATION_DELAY
-        {
+        if let Some(job_info) = current_job {
             return Some(Content {
                 icon: Some(
                     Icon::new(IconName::ArrowCircle)
@@ -402,20 +392,18 @@ impl ActivityIndicator {
         }
 
         // Show any long-running fs command
-        for fs_job in &self.fs_jobs {
-            if Instant::now().duration_since(fs_job.start) >= GIT_OPERATION_DELAY {
-                return Some(Content {
-                    icon: Some(
-                        Icon::new(IconName::ArrowCircle)
-                            .size(icon_size.icon_size())
-                            .with_rotate_animation(2)
-                            .into_any_element(),
-                    ),
-                    message: fs_job.message.clone().into(),
-                    on_click: None,
-                    tooltip_message: None,
-                });
-            }
+        if let Some(fs_job) = self.fs_jobs.first() {
+            return Some(Content {
+                icon: Some(
+                    Icon::new(IconName::ArrowCircle)
+                        .size(icon_size.icon_size())
+                        .with_rotate_animation(2)
+                        .into_any_element(),
+                ),
+                message: fs_job.message.clone().into(),
+                on_click: None,
+                tooltip_message: None,
+            });
         }
 
         // Show any language server installation info.
