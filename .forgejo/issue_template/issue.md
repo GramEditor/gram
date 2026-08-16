@@ -7,14 +7,18 @@ labels:
   - bug
 ---
 
-Wiki: https://codeberg.org/GramEditor/gram/wiki/Feature-Requests
+Wiki: https://codeberg.org/GramEditor/gram/wiki
 Docs: https://gram-editor.com/docs/
 Chat: https://slidge.im/gram/#/guest?join=gram@rooms.slidge.im
 
-This issue tracker is mainly for tracking and dealing with bugs.
+This issue tracker is mainly for tracking and dealing with bugs. There is no big
+team working on Gram so don't be surprised if issues and feature requests end up
+sitting around without much movement.
 
-- If you want to make a feature request or have an idea for improvements, please
-  create a page on the Wiki instead of opening an issue.
+- If you want to make a feature request or have an idea for improvements, feel
+  free to do so. We tried to steer people to the Wiki for such things but
+  creating an issue is probably an easier way to track them long term. Be
+  prepared to wait unless you are interested in working on the feature yourself :)
 
 - If you have a question about how the software works or how to configure it,
   check the wiki guides or the documentation, or join the chatroom and ask there
@@ -39,11 +43,9 @@ If your issue really is a bug that you've found:
   Contributions to improve the workflows for both Forgejo and Github are welcome.
 
 
-For any other issues, try to investigate the problem before creating an issue.
-This is a code editor, you as a user of this editor is presumably a coder. Don't
-let your preconceived notions about what you are capable of limit you in
-familiarising yourself with your tools. Everyone benefits if you become able to
-resolve the issues you encounter yourself.
+For any other issues, try to investigate the problem before creating an issue
+and try to provide relevant information (see the documentation for details on
+how to get logs from the editor, but also tell us which OS, version and
+distribution you are on).
 
 Thank you <3
-/ one grumpy toad with limited time on this earth
