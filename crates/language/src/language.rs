@@ -663,9 +663,11 @@ where
             }
 
             if !binary_options.allow_binary_download {
+                let name = self.name();
                 return (
                     Err(anyhow::anyhow!(
-                        "Download disabled for this language server, check the configuration"
+                        "Download disabled for language server '{}', check the configuration",
+                        name.0
                     )),
                     None,
                 );
