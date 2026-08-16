@@ -5,8 +5,5 @@ contact_links:
     url: https://slidge.im/gram/#/guest?join=gram@rooms.slidge.im
     about: XMPP chat room for Gram
   - name: Docs
-    url: https://gram-editor.com/docs/
-    about: Project Documentation
-  - name: Wiki
-    url: https://codeberg.org/GramEditor/gram/wiki/
-    about: Project Wiki
+    url: https://gram-editor.com/docs
+    about: Documentation
