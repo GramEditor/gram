@@ -16,7 +16,7 @@ configuration or extensions should be necessary, and the editor should not try
 to push anything potentially malicious, distracting or confusing at them. In my
 opinion, both `VS Code` and `Zed` fail in this regard.
 
-  <img src="./assets/images/docs_editor.png" alt="" align="center"/>
+<img src="./assets/images/docs_editor.png" alt="" align="center"/>
 
 </div>
 
@@ -130,20 +130,20 @@ dependencies.
 ## Why the name Gram?
 
 ```asciidoc
-    ████             ██████
-   ██  ███           ██  ██
-   ████████████████████████
-   █████████████████████████
-  ██████░░░░░░░░░░░░██████████
-  ████░░░█████████░░░██████████
-  ███░░░█░░░░░░░░░█░░████████████
- █████░░░░░░░░░░░░░░██████████████
- ██████░░░░░░░░░░░░███████████████
- ████████░░░░░░░░░████████████████
- █████████████████████████████████
-   █████████   ██████████ ███████
-       ████   ████████    █████
-              ████
+   ████             ██████
+  ██  ███           ██  ██
+  ████████████████████████
+  █████████████████████████
+ ██████░░░░░░░░░░░░██████████
+ ████░░░█████████░░░██████████
+ ███░░░█░░░░░░░░░█░░████████████
+█████░░░░░░░░░░░░░░██████████████
+██████░░░░░░░░░░░░███████████████
+████████░░░░░░░░░████████████████
+█████████████████████████████████
+  █████████   ██████████ ███████
+      ████   ████████    █████
+             ████
 ```
 
 **Gram** is an old norse/swedish word meaning "ill-tempered" or grumpy. It is

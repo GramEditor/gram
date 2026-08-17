@@ -56,12 +56,12 @@ action from the command palette or by adding `format_on_save` to your Gram
 settings:
 
 ```json
-  "languages": {
-    "C": {
-      "format_on_save": "on",
-      "tab_size": 2
-    }
+"languages": {
+  "C": {
+    "format_on_save": "on",
+    "tab_size": 2
   }
+}
 ```
 
 ## Compile Commands

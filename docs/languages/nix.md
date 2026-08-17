@@ -9,21 +9,21 @@ There is support for two different language servers: `nil` and `nixd`.
 To only enable `nil`:
 
 ```json
-  "languages": {
-    "Nix": {
-      "language_servers": ["nil", "!nixd", "..."]
-    },
-  }
+"languages": {
+  "Nix": {
+    "language_servers": ["nil", "!nixd", "..."]
+  },
+}
 ```
 
 To only enable `nixd`:
 
 ```json
-  "languages": {
-    "Nix": {
-      "language_servers": ["!nil", "nixd", "..."]
-    },
-  }
+"languages": {
+  "Nix": {
+    "language_servers": ["!nil", "nixd", "..."]
+  },
+}
 ```
 
 ## Configuration
@@ -43,7 +43,7 @@ For more details, see the
     "nixd": {
       "settings": {
         "diagnostic": {
-          "suppress": [ "sema-extra-with" ]
+          "suppress": ["sema-extra-with"]
         }
       }
     }
@@ -61,8 +61,8 @@ For more details, see the
   "lsp": {
     "nil": {
       "settings": {
-         "diagnostics": {
-          "ignored": [ "unused_binding" ]
+        "diagnostics": {
+          "ignored": ["unused_binding"]
         }
       }
     }

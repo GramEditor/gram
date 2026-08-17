@@ -60,10 +60,7 @@ implementing `dap_config_to_scenario` as well.
 
 ```rust
 impl gram::Extension for MyExtension {
-    fn dap_config_to_scenario(
-        &mut self,
-        _adapter_name: DebugConfig,
-    ) -> Result<DebugScenario, String>;
+    fn dap_config_to_scenario(&mut self, _adapter_name: DebugConfig) -> Result<DebugScenario, String>;
 }
 ```
 
@@ -124,11 +121,7 @@ execute `run_dap_locator` after a build task is finished successfully.
 
 ```rust
 impl gram::Extension for MyExtension {
-    fn run_dap_locator(
-        &mut self,
-        _locator_name: String,
-        _build_task: TaskTemplate,
-    ) -> Result<DebugRequest, String>;
+    fn run_dap_locator(&mut self, _locator_name: String, _build_task: TaskTemplate) -> Result<DebugRequest, String>;
 }
 ```
 

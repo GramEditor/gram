@@ -1317,7 +1317,7 @@ or
 
 **Options**
 
-1.  Activate the tab that was open previously:
+1. Activate the tab that was open previously:
 
 ```json
 {
@@ -1349,7 +1349,7 @@ or
 
 **Options**
 
-1.  Show it just upon hovering the tab:
+1. Show it just upon hovering the tab:
 
 ```json
 {
@@ -1703,12 +1703,12 @@ from a filename. Your formatter should only read from standard input and should
 not read or write files directly.
 
 ```json
-  "formatter": {
-    "external": {
-      "command": "prettier",
-      "arguments": ["--stdin-filepath", "{buffer_path}"]
-    }
+"formatter": {
+  "external": {
+    "command": "prettier",
+    "arguments": ["--stdin-filepath", "{buffer_path}"]
   }
+}
 ```
 
 4. Or to use code actions provided by the connected language servers, use
@@ -2500,7 +2500,6 @@ modifiers are `false` or not all the modifiers are pressed.
   "path": "~",
   "hour_format": "hour12"
 }
-
 ```
 
 ### Path
@@ -2818,7 +2817,7 @@ Configuration object for defining settings profiles. Example:
 - Description: Preview tabs allow you to open files in preview mode, where they
   close automatically when you switch to another file unless you explicitly pin
   them. This is useful for quickly viewing files without cluttering your
-  workspace. Preview tabs display their file names in italics. \
+  workspace. Preview tabs display their file names in italics.\
   There are several ways to convert a preview tab into a regular tab:
 
   - Double-clicking on the file
@@ -3317,7 +3316,7 @@ Non-negative `integer` values
 - Description: When enabled, automatically adjusts search case sensitivity based
   on your query. If your search query contains any uppercase letters, the search
   becomes case-sensitive; if it contains only lowercase letters, the search
-  becomes case-insensitive. \
+  becomes case-insensitive.\
   This applies to both in-file searches and project-wide searches.
 - Setting: `use_smartcase_search`
 - Default: `false`
@@ -3924,7 +3923,7 @@ See Buffer Font Features
 }
 ```
 
-3.  Use a custom line height.
+3. Use a custom line height.
 
 ```json
 {

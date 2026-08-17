@@ -12,7 +12,7 @@ recognized as XML just add them to
 [file_types](../configuring-gram.md#file-types) in your Gram settings:
 
 ```json
-  "file_types": {
-    "XML": ["rdf", "gpx", "kml"]
-  }
+"file_types": {
+  "XML": ["rdf", "gpx", "kml"]
+}
 ```
