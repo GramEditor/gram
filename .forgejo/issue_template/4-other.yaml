@@ -2,7 +2,7 @@
 name: "4: Other"
 about: "Other questions or something unrelated."
 title: "other: "
-# TODO: create new label
+labels: ["other"]
 body:
   - type: markdown
     attributes:
