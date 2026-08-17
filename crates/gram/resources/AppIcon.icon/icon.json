@@ -1,270 +1,270 @@
 {
-  "fill" : {
-    "automatic-gradient" : "display-p3:0.82812,0.92139,0.78320,1.00000"
+  "fill": {
+    "automatic-gradient": "display-p3:0.82812,0.92139,0.78320,1.00000"
   },
-  "groups" : [
+  "groups": [
     {
-      "blur-material" : null,
-      "layers" : [
+      "blur-material": null,
+      "layers": [
         {
-          "fill-specializations" : [
+          "fill-specializations": [
             {
-              "value" : "automatic"
+              "value": "automatic"
             },
             {
-              "appearance" : "dark",
-              "value" : "none"
+              "appearance": "dark",
+              "value": "none"
             }
           ],
-          "glass" : true,
-          "image-name" : "1.svg",
-          "name" : "1"
+          "glass": true,
+          "image-name": "1.svg",
+          "name": "1"
         },
         {
-          "glass" : false,
-          "image-name" : "2.svg",
-          "name" : "2"
+          "glass": false,
+          "image-name": "2.svg",
+          "name": "2"
         },
         {
-          "glass" : true,
-          "hidden-specializations" : [
+          "glass": true,
+          "hidden-specializations": [
             {
-              "idiom" : "square",
-              "value" : false
+              "idiom": "square",
+              "value": false
             }
           ],
-          "image-name" : "3.svg",
-          "name" : "3"
+          "image-name": "3.svg",
+          "name": "3"
         }
       ],
-      "lighting" : "individual",
-      "position-specializations" : [
+      "lighting": "individual",
+      "position-specializations": [
         {
-          "value" : {
-            "scale" : 6,
-            "translation-in-points" : [
+          "value": {
+            "scale": 6,
+            "translation-in-points": [
               0,
               30
             ]
           }
         },
         {
-          "idiom" : "square",
-          "value" : {
-            "scale" : 6.5,
-            "translation-in-points" : [
+          "idiom": "square",
+          "value": {
+            "scale": 6.5,
+            "translation-in-points": [
               0,
               20
             ]
           }
         },
         {
-          "idiom" : "watchOS",
-          "value" : {
-            "scale" : 6.5,
-            "translation-in-points" : [
+          "idiom": "watchOS",
+          "value": {
+            "scale": 6.5,
+            "translation-in-points": [
               0,
               -25
             ]
           }
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
       },
-      "specular" : true,
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.5
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.5
       }
     },
     {
-      "blur-material" : 0.5,
-      "layers" : [
+      "blur-material": 0.5,
+      "layers": [
         {
-          "image-name" : "4.svg",
-          "name" : "4"
+          "image-name": "4.svg",
+          "name": "4"
         }
       ],
-      "position-specializations" : [
+      "position-specializations": [
         {
-          "value" : {
-            "scale" : 6,
-            "translation-in-points" : [
+          "value": {
+            "scale": 6,
+            "translation-in-points": [
               0,
               30
             ]
           }
         },
         {
-          "idiom" : "square",
-          "value" : {
-            "scale" : 6.5,
-            "translation-in-points" : [
+          "idiom": "square",
+          "value": {
+            "scale": 6.5,
+            "translation-in-points": [
               0,
               20
             ]
           }
         },
         {
-          "idiom" : "watchOS",
-          "value" : {
-            "scale" : 6.5,
-            "translation-in-points" : [
+          "idiom": "watchOS",
+          "value": {
+            "scale": 6.5,
+            "translation-in-points": [
               0,
               -25
             ]
           }
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
       },
-      "specular" : true,
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.7
+      "specular": true,
+      "translucency": {
+        "enabled": true,
+        "value": 0.7
       }
     },
     {
-      "layers" : [
+      "layers": [
         {
-          "glass" : true,
-          "image-name" : "5.svg",
-          "name" : "5",
-          "position" : {
-            "scale" : 1,
-            "translation-in-points" : [
+          "glass": true,
+          "image-name": "5.svg",
+          "name": "5",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
               0,
               0
             ]
           }
         },
         {
-          "glass" : false,
-          "image-name" : "6.svg",
-          "name" : "6",
-          "position" : {
-            "scale" : 1,
-            "translation-in-points" : [
+          "glass": false,
+          "image-name": "6.svg",
+          "name": "6",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
               0,
               0
             ]
           }
         }
       ],
-      "lighting-specializations" : [
+      "lighting-specializations": [
         {
-          "value" : "individual"
+          "value": "individual"
         },
         {
-          "appearance" : "dark",
-          "value" : "combined"
+          "appearance": "dark",
+          "value": "combined"
         }
       ],
-      "position-specializations" : [
+      "position-specializations": [
         {
-          "value" : {
-            "scale" : 6,
-            "translation-in-points" : [
+          "value": {
+            "scale": 6,
+            "translation-in-points": [
               0,
               30
             ]
           }
         },
         {
-          "idiom" : "square",
-          "value" : {
-            "scale" : 6.5,
-            "translation-in-points" : [
+          "idiom": "square",
+          "value": {
+            "scale": 6.5,
+            "translation-in-points": [
               0,
               20
             ]
           }
         },
         {
-          "idiom" : "watchOS",
-          "value" : {
-            "scale" : 6.5,
-            "translation-in-points" : [
+          "idiom": "watchOS",
+          "value": {
+            "scale": 6.5,
+            "translation-in-points": [
               0,
               -25
             ]
           }
         }
       ],
-      "shadow" : {
-        "kind" : "neutral",
-        "opacity" : 0.5
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.5
       },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.4
+      "translucency": {
+        "enabled": true,
+        "value": 0.4
       }
     },
     {
-      "layers" : [
+      "layers": [
         {
-          "image-name" : "7.svg",
-          "name" : "7"
+          "image-name": "7.svg",
+          "name": "7"
         }
       ],
-      "lighting-specializations" : [
+      "lighting-specializations": [
         {
-          "value" : "combined"
+          "value": "combined"
         },
         {
-          "appearance" : "dark",
-          "value" : "individual"
+          "appearance": "dark",
+          "value": "individual"
         }
       ],
-      "position-specializations" : [
+      "position-specializations": [
         {
-          "value" : {
-            "scale" : 6,
-            "translation-in-points" : [
+          "value": {
+            "scale": 6,
+            "translation-in-points": [
               0,
               30
             ]
           }
         },
         {
-          "idiom" : "square",
-          "value" : {
-            "scale" : 6.5,
-            "translation-in-points" : [
+          "idiom": "square",
+          "value": {
+            "scale": 6.5,
+            "translation-in-points": [
               0,
               20
             ]
           }
         },
         {
-          "idiom" : "watchOS",
-          "value" : {
-            "scale" : 6.5,
-            "translation-in-points" : [
+          "idiom": "watchOS",
+          "value": {
+            "scale": 6.5,
+            "translation-in-points": [
               0,
               -25
             ]
           }
         }
       ],
-      "shadow" : {
-        "kind" : "layer-color",
-        "opacity" : 0.5
+      "shadow": {
+        "kind": "layer-color",
+        "opacity": 0.5
       },
-      "translucency" : {
-        "enabled" : true,
-        "value" : 0.5
+      "translucency": {
+        "enabled": true,
+        "value": 0.5
       }
     }
   ],
-  "supported-platforms" : {
-    "circles" : [
+  "supported-platforms": {
+    "circles": [
       "watchOS"
     ],
-    "squares" : "shared"
+    "squares": "shared"
   }
 }

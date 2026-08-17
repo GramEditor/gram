@@ -13,7 +13,7 @@ Haskell support is available through the
 Recommended method to
 [install haskell-language-server](https://haskell-language-server.readthedocs.io/en/latest/installation.html)
 (HLS) is via [ghcup](https://www.haskell.org/ghcup/install/)
-(`curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh `):
+(`curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh`):
 
 ```sh
 ghcup install hls

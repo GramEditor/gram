@@ -360,13 +360,13 @@ a comment with the language name.
 # sql
 query = "SELECT * FROM users"
 
-#sql
+# sql
 query = """
     SELECT *
     FROM users
 """
 
-result = func( #sql
+result = func(  # sql
     "SELECT * FROM users"
 )
 ```

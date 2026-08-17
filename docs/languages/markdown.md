@@ -36,11 +36,11 @@ format by enabling [`format_on_save`](../configuring-gram.md#format-on-save) in
 your settings.json:
 
 ```json
-  "languages": {
-    "Markdown": {
-      "format_on_save": "on"
-    }
-  },
+"languages": {
+  "Markdown": {
+    "format_on_save": "on"
+  }
+},
 ```
 
 ### Trailing Whitespace
@@ -50,9 +50,9 @@ invisible trailing whitespace being converted to `<br />` in Markdown files you
 can disable this behavior with:
 
 ```json
-  "languages": {
-    "Markdown": {
-      "remove_trailing_whitespace_on_save": false
-    }
-  },
+"languages": {
+  "Markdown": {
+    "remove_trailing_whitespace_on_save": false
+  }
+},
 ```

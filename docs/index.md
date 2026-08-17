@@ -158,8 +158,8 @@ No more AI. I used to have a milder version of this statement here before, which
 I wrote early on when I wasn't really aware of "vibe-coding" as such and was
 mostly annoyed purely at the chatbox / autocomplete version of AI. That was bad
 enough, but I really am not a fan of what that has become (in March 2026 when I
-am writing this). I have copied this policy from the [Zig language project Code
-of Conduct][zig-coc]:
+am writing this). I have copied this policy from the
+[Zig language project Code of Conduct][zig-coc]:
 
 > No LLMs for issues.
 >
