@@ -1,6 +1,8 @@
 {
   "$schema": "https://dprint.dev/schemas/v0.json",
+  "incremental": false,
   "json": {
+    // TODO: configure JSON
   },
   "markdown": {
     "lineWidth": 80,
@@ -17,19 +19,42 @@
   "markup": {
   },
   "yaml": {
-    "braceSpacing": false
+    "braceSpacing": false,
+    "quotes": "preferDouble",
+  },
+  "exec": {
+    "cwd": "${configDir}",
+    "commands": [{
+      "command": "rustfmt --config imports_granularity=item --config group_imports=StdExternalCrate",
+      "exts": ["rs"],
+      "cacheKeyFiles": [
+        "rust-toolchain.toml",
+        "rustfmt.toml"
+      ]
+    }]
+  },
+  // TODO: add Tombi using "exec": https://github.com/dprint/dprint-plugin-exec
+  "markup": {
   },
   "excludes": [
     "**/*.lock",
-    ".forgejo/**",
+    "**/.forgejo/**",
+    "*.hbs",
+    // TODO: test SVG and XML formatting
+    "*.svg",
+    "*.xml",
+    ".git",
+    "target",
     "crates/vim/test_data/**",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "pull_request_template.md"
   ],
   "plugins": [
     "https://plugins.dprint.dev/json-0.23.0.wasm",
     "https://plugins.dprint.dev/markdown-0.22.1.wasm",
     "https://plugins.dprint.dev/ruff-0.8.3.wasm",
     "https://plugins.dprint.dev/g-plane/markup_fmt-v0.27.3.wasm",
-    "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.6.0.wasm"
+    "https://plugins.dprint.dev/g-plane/pretty_yaml-v0.6.0.wasm",
+    "https://plugins.dprint.dev/exec-0.7.3.json@a7898d5f1897e77bff474cec3d948c3ec3a7f455e32de2cc60c8adb9a5dd24aa"
   ]
 }
