@@ -27,11 +27,11 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
         with:
           fetch-depth: 0
 
-      - uses: taiki-e/install-action@3235f8901fd37ffed0052b276cec25a362fb82e9
+      - uses: taiki-e/install-action@b6b84cf49ebfe0176417bdce007c624f0db37f20 # v2.86.2
         with:
           tool: cargo-nextest
 
@@ -47,20 +47,22 @@ jobs:
         if: runner.os == 'macOS'
         run: echo "/Users/runner/.cargo/bin" >> $GITHUB_PATH
 
-      - name: Run nextest
-        if: runner.os == 'Linux'
-        run: cargo-nextest nextest run --workspace --no-fail-fast --success-output never --show-progress none
+      - name: Cache build
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-gram-dev-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run nextest
-        if: runner.os == 'macOS'
-        run: cargo-nextest nextest run --workspace --no-fail-fast --success-output never --show-progress none
-
-      - name: Run nextest
-        if: runner.os == 'Windows'
         env:
-          MAKEOPTS: "-j2 -l2"
-          CARGO_BUILD_JOBS: "2"
-        run: cargo-nextest nextest run --workspace --no-fail-fast --success-output never --show-progress none
+          MAKEOPTS: ${{ runner.os == 'Windows' && '-j2 -l2' || '' }}
+          CARGO_BUILD_JOBS: ${{ runner.os == 'Windows' && '2' || '' }}
+        run: cargo nextest run --workspace --no-fail-fast --success-output never --show-progress none
 
   build-linux:
     name: Build Linux (${{ matrix.arch }})
@@ -83,9 +85,20 @@ jobs:
       CC_x86_64_unknown_linux_musl: musl-gcc
       CC_aarch64_unknown_linux_musl: musl-gcc
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
         with:
           fetch-depth: 0
+
+      - name: Cache build
+        uses: actions/cache@3edfce9056124e459a23f683a21433670d47daca # v6.1.0
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-gram-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install dependencies
         run: ./script/prepare-ci release
@@ -100,18 +113,19 @@ jobs:
         shell: bash
         run: |
           find target -name '*.gz'
-          if [[ $GITHUB_REF_TYPE == "tag" ]]; then
-            version=${{ github.ref_name }}
+          version="-dev"
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            version="-$GITHUB_REF_NAME"
           else
-            version=$GITHUB_SHA
+            version="-$GITHUB_SHA"
           fi
           mkdir artifacts
-          cp target/release/gram-linux-${{ matrix.arch }}.tar.gz "artifacts/gram-linux-${{ matrix.arch }}-${version}.tar.gz"
-          cp target/gram-remote-server-linux-${{ matrix.arch }}.gz "artifacts/gram-remote-server-linux-${{ matrix.arch }}-${version}.gz"
-          cp target/release/app.liten.Gram.flatpak "artifacts/app.liten.Gram-${{ matrix.arch }}-${version}.flatpak"
+          cp "target/release/gram-linux-${{ matrix.arch }}.tar.gz" "artifacts/gram-linux-${{ matrix.arch }}${version}.tar.gz"
+          cp "target/gram-remote-server-linux-${{ matrix.arch }}.gz" "artifacts/gram-remote-server-linux-${{ matrix.arch }}${version}.gz"
+          cp "target/release/app.liten.Gram.flatpak" "artifacts/app.liten.Gram-${{ matrix.arch }}${version}.flatpak"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ matrix.artifact_name }}
           path: artifacts/*
@@ -130,10 +144,21 @@ jobs:
             target: x86_64-pc-windows-msvc
             artifact_name: windows-x64
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
 
       - name: Fix Microslop # https://github.com/microsoft/python-environment-tools/issues/171
         run: git config --global core.longpaths true
+
+      - name: Cache build
+        uses: actions/cache@3edfce9056124e459a23f683a21433670d47daca # v6.1.0
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-gram-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Bundle Windows
         run: script/bundle-windows.ps1 -Architecture x86_64
@@ -145,14 +170,14 @@ jobs:
           ls -la target/*
 
       - name: Upload Gram
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Gram-${{ matrix.artifact_name }}-${{ matrix.target }}.exe
           path: target/Gram-x86_64.exe
           if-no-files-found: error
 
       - name: Upload remote-server
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: gram-remote-server-${{ matrix.artifact_name}}-${{ matrix.target }}.zip
           path: target/gram-remote-server-windows-x86_64.zip
