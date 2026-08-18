@@ -47,16 +47,8 @@ jobs:
         if: runner.os == 'macOS'
         run: echo "/Users/runner/.cargo/bin" >> $GITHUB_PATH
 
-      - name: Cache build
-        uses: actions/cache@v6
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-gram-dev-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2.9.3
 
       - name: Run nextest
         env:
@@ -89,16 +81,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Cache build
-        uses: actions/cache@3edfce9056124e459a23f683a21433670d47daca # v6.1.0
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-gram-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2.9.3
 
       - name: Install dependencies
         run: ./script/prepare-ci release
@@ -149,16 +133,8 @@ jobs:
       - name: Fix Microslop # https://github.com/microsoft/python-environment-tools/issues/171
         run: git config --global core.longpaths true
 
-      - name: Cache build
-        uses: actions/cache@3edfce9056124e459a23f683a21433670d47daca # v6.1.0
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-gram-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2.9.3
 
       - name: Bundle Windows
         run: script/bundle-windows.ps1 -Architecture x86_64
