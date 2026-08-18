@@ -23,13 +23,13 @@ fish_indent --version
 2. Configure Gram to automatically format fish code with `fish_indent`:
 
 ```json
-"languages": {
-  "Fish": {
-    "formatter": {
-      "external": {
-        "command": "fish_indent"
+  "languages": {
+    "Fish": {
+      "formatter": {
+        "external": {
+          "command": "fish_indent"
+        }
       }
     }
-  }
-},
+  },
 ```

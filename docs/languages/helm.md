@@ -13,16 +13,16 @@ Enable Helm language for Helm files by editing your `.gram/settings.jsonc` and
 adding:
 
 ```json
-"file_types": {
-  "Helm": [
-    "**/templates/**/*.tpl",
-    "**/templates/**/*.yaml",
-    "**/templates/**/*.yml",
-    "**/helmfile.d/**/*.yaml",
-    "**/helmfile.d/**/*.yml",
-    "**/values*.yaml"
-  ]
-}
+  "file_types": {
+    "Helm": [
+      "**/templates/**/*.tpl",
+      "**/templates/**/*.yaml",
+      "**/templates/**/*.yml",
+      "**/helmfile.d/**/*.yaml",
+      "**/helmfile.d/**/*.yml",
+      "**/values*.yaml"
+    ]
+  }
 ```
 
 This will also mark values.yaml files as the type helm, since helm-ls supports

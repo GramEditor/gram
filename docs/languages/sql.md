@@ -25,16 +25,16 @@ sql-formatter --version
 3. Configure Gram to automatically format SQL with `sql-formatter`:
 
 ```json
-"languages": {
-  "SQL": {
-    "formatter": {
-      "external": {
-        "command": "sql-formatter",
-        "arguments": ["--language", "mysql"]
+  "languages": {
+    "SQL": {
+      "formatter": {
+        "external": {
+          "command": "sql-formatter",
+          "arguments": ["--language", "mysql"]
+        }
       }
     }
-  }
-},
+  },
 ```
 
 Substitute your preferred [SQL Dialect] for `mysql` above (`duckdb`, `hive`,
@@ -62,13 +62,13 @@ When using a `.sql-formatter.json` file you can use a more simplified set of
 Gram settings since the language need not be specified inline:
 
 ```json
-"languages": {
-  "SQL": {
-    "formatter": {
-      "external": {
-        "command": "sql-formatter"
+  "languages": {
+    "SQL": {
+      "formatter": {
+        "external": {
+          "command": "sql-formatter"
+        }
       }
     }
-  }
-},
+  },
 ```

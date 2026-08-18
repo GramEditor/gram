@@ -53,8 +53,8 @@ the following:
 ## Big Picture
 
 GPUI offers three different
-[registers](https://en.wikipedia.org/wiki/Register_(sociolinguistics)) depending
-on your needs:
+[registers](<https://en.wikipedia.org/wiki/Register_(sociolinguistics)>)
+depending on your needs:
 
 - State management and communication with `Entity`'s. Whenever you need to store
   application state that communicates between different parts of your

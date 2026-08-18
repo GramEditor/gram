@@ -115,16 +115,16 @@ To disable this behavior use:
 ### Titlebar
 
 ```json
-// Control which items are shown/hidden in the title bar
-"title_bar": {
-  "show": true,                   // Show/hide the title bar itself
-  "show_branch_icon": false,      // Show/hide branch icon beside branch switcher
-  "show_branch_name": true,       // Show/hide branch name
-  "show_project_items": true,     // Show/hide project host and name
-  "show_onboarding_banner": true, // Show/hide onboarding banners
-  "show_user_picture": true,      // Show/hide user avatar
-  "show_menus": false             // Show/hide menus
-},
+  // Control which items are shown/hidden in the title bar
+  "title_bar": {
+    "show": true,                   // Show/hide the title bar itself
+    "show_branch_icon": false,      // Show/hide branch icon beside branch switcher
+    "show_branch_name": true,       // Show/hide branch name
+    "show_project_items": true,     // Show/hide project host and name
+    "show_onboarding_banner": true, // Show/hide onboarding banners
+    "show_user_picture": true,      // Show/hide user avatar
+    "show_menus": false             // Show/hide menus
+  },
 ```
 
 ## Workspace
@@ -243,28 +243,28 @@ TBD: Centered layout related settings
 ### Git Blame {#editor-blame}
 
 ```json
-"git": {
-  "inline_blame": {
-    "enabled": true,             // Show/hide inline blame
-    "delay_ms": 0,                  // Show after delay (ms)
-    "min_column": 0,             // Minimum column to inline display blame
-    "padding": 7,                // Padding between code and inline blame (em)
-    "show_commit_summary": false // Show/hide commit summary
-  },
-  "hunk_style": "staged_hollow"  // staged_hollow, unstaged_hollow
-}
+  "git": {
+    "inline_blame": {
+      "enabled": true,             // Show/hide inline blame
+      "delay_ms": 0,                  // Show after delay (ms)
+      "min_column": 0,             // Minimum column to inline display blame
+      "padding": 7,                // Padding between code and inline blame (em)
+      "show_commit_summary": false // Show/hide commit summary
+    },
+    "hunk_style": "staged_hollow"  // staged_hollow, unstaged_hollow
+  }
 ```
 
 ### Editor Toolbar
 
 ```json
-// Editor toolbar related settings
-"toolbar": {
-  "breadcrumbs": true, // Whether to show breadcrumbs.
-  "quick_actions": true, // Whether to show quick action buttons.
-  "selections_menu": true, // Whether to show the Selections menu
-  "code_actions": false // Whether to show code action buttons
-}
+  // Editor toolbar related settings
+  "toolbar": {
+    "breadcrumbs": true, // Whether to show breadcrumbs.
+    "quick_actions": true, // Whether to show quick action buttons.
+    "selections_menu": true, // Whether to show the Selections menu
+    "code_actions": false // Whether to show code action buttons
+  }
 ```
 
 ### Editor Scrollbar and Minimap {#editor-scrollbar}
@@ -333,30 +333,30 @@ TBD: Centered layout related settings
 ### Status Bar
 
 ```json
-"status_bar": {
-  // Show/hide a button that displays the active buffer's language.
-  // Clicking the button brings up the language selector.
-  // Defaults to true.
-  "active_language_button": true,
-  // Show/hide a button that displays the cursor's position.
-  // Clicking the button brings up an input for jumping to a line and column.
-  // Defaults to true.
-  "cursor_position_button": true,
-  // Show/hide a button that displays the buffer's line-ending mode.
-  // Clicking the button brings up the line-ending selector.
-  // Defaults to false.
-  "line_endings_button": false,
-  // Show/hide a button that displays the buffer's character encoding.
-  // If set to "non_utf8", the button is hidden only for UTF-8 without BOM.
-  // Defaults to "non_utf8".
-  "active_encoding_button": "non_utf8"
-},
-"global_lsp_settings": {
-  // Show/hide the LSP button in the status bar.
-  // Activity from the LSP is still shown.
-  // Button is not shown if "enable_language_server" if false.
-  "button": true
-},
+  "status_bar": {
+    // Show/hide a button that displays the active buffer's language.
+    // Clicking the button brings up the language selector.
+    // Defaults to true.
+    "active_language_button": true,
+    // Show/hide a button that displays the cursor's position.
+    // Clicking the button brings up an input for jumping to a line and column.
+    // Defaults to true.
+    "cursor_position_button": true,
+    // Show/hide a button that displays the buffer's line-ending mode.
+    // Clicking the button brings up the line-ending selector.
+    // Defaults to false.
+    "line_endings_button": false,
+    // Show/hide a button that displays the buffer's character encoding.
+    // If set to "non_utf8", the button is hidden only for UTF-8 without BOM.
+    // Defaults to "non_utf8".
+    "active_encoding_button": "non_utf8"
+  },
+  "global_lsp_settings": {
+    // Show/hide the LSP button in the status bar.
+    // Activity from the LSP is still shown.
+    // Button is not shown if "enable_language_server" if false.
+    "button": true
+  },
 ```
 
 ### Multibuffer
@@ -436,13 +436,13 @@ TBD: Centered layout related settings
 ## File Finder
 
 ```json
-// File Finder Settings
-"file_finder": {
-  "file_icons": true,         // Show/hide file icons
-  "modal_max_width": "small", // Horizontal size: small, medium, large, xlarge, full
-  "git_status": true,         // Show the git status for each entry
-  "include_ignored": null     // gitignored files in results: true, false, null
-},
+  // File Finder Settings
+  "file_finder": {
+    "file_icons": true,         // Show/hide file icons
+    "modal_max_width": "small", // Horizontal size: small, medium, large, xlarge, full
+    "git_status": true,         // Show the git status for each entry
+    "include_ignored": null     // gitignored files in results: true, false, null
+  },
 ```
 
 ## Project Panel
@@ -452,36 +452,36 @@ The project panel can be shown/hidden using {#action project_panel::ToggleFocus}
 pane::RevealInProjectPanel}).
 
 ```json
-// Project Panel Settings
-"project_panel": {
-  "button": true,                 // Show/hide button in the status bar
-  "default_width": 240,           // Default panel width
-  "dock": "left",                 // Position of the dock (left, right)
-  "entry_spacing": "comfortable", // Vertical spacing (comfortable, standard)
-  "file_icons": true,             // Show/hide file icons
-  "folder_icons": true,           // Show/hide folder icons
-  "git_status": true,             // Indicate new/updated files
-  "indent_size": 20,              // Pixels for each successive indent
-  "auto_reveal_entries": true,    // Show file in panel when activating its buffer
-  "auto_fold_dirs": true,         // Fold dirs with single subdir
-  "sticky_scroll": true,          // Stick parent directories at top of the project panel.
-  "drag_and_drop": true,          // Whether drag and drop is enabled
-  "scrollbar": {                  // Project panel scrollbar settings
-    "show": null                  // Show/hide: (auto, system, always, never)
-  },
-  "show_diagnostics": "all",      //
-  // Settings related to indent guides in the project panel.
-  "indent_guides": {
-    // When to show indent guides in the project panel. (always, never)
-    "show": "always"
-  },
-  // Sort order for entries (directories_first, mixed, files_first)
-  "sort_mode": "directories_first",
-  // Whether to hide the root entry when only one folder is open in the window.
-  "hide_root": false,
-  // Whether to hide the hidden entries in the project panel.
-  "hide_hidden": false
-}
+  // Project Panel Settings
+  "project_panel": {
+    "button": true,                 // Show/hide button in the status bar
+    "default_width": 240,           // Default panel width
+    "dock": "left",                 // Position of the dock (left, right)
+    "entry_spacing": "comfortable", // Vertical spacing (comfortable, standard)
+    "file_icons": true,             // Show/hide file icons
+    "folder_icons": true,           // Show/hide folder icons
+    "git_status": true,             // Indicate new/updated files
+    "indent_size": 20,              // Pixels for each successive indent
+    "auto_reveal_entries": true,    // Show file in panel when activating its buffer
+    "auto_fold_dirs": true,         // Fold dirs with single subdir
+    "sticky_scroll": true,          // Stick parent directories at top of the project panel.
+    "drag_and_drop": true,          // Whether drag and drop is enabled
+    "scrollbar": {                  // Project panel scrollbar settings
+      "show": null                  // Show/hide: (auto, system, always, never)
+    },
+    "show_diagnostics": "all",      //
+    // Settings related to indent guides in the project panel.
+    "indent_guides": {
+      // When to show indent guides in the project panel. (always, never)
+      "show": "always"
+    },
+    // Sort order for entries (directories_first, mixed, files_first)
+    "sort_mode": "directories_first",
+    // Whether to hide the root entry when only one folder is open in the window.
+    "hide_root": false,
+    // Whether to hide the hidden entries in the project panel.
+    "hide_hidden": false
+  }
 ```
 
 ## Terminal Panel

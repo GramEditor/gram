@@ -145,11 +145,11 @@ which language servers are used and in what order.
 Specify preferences using the `language_servers` setting:
 
 ```json
-"languages": {
-  "PHP": {
-    "language_servers": ["intelephense", "!phpactor", "!phptools", "..."]
+  "languages": {
+    "PHP": {
+      "language_servers": ["intelephense", "!phpactor", "!phptools", "..."]
+    }
   }
-}
 ```
 
 In this example:
@@ -178,15 +178,15 @@ Custom configuration options for language servers are configured using the `lsp`
 section of `settings.jsonc`:
 
 ```json
-"lsp": {
-  "rust-analyzer": {
-    "initialization_options": {
-      "check": {
-        "command": "clippy"
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "check": {
+          "command": "clippy"
+        }
       }
     }
   }
-}
 ```
 
 This example configures the Rust Analyzer to use Clippy for additional linting
@@ -237,13 +237,13 @@ be restarted for changes to be applied.
 For example, rust-analyzer and clangd are configured this way.
 
 ```json
-"lsp": {
-  "rust-analyzer": {
-    "initialization_options": {
-      "checkOnSave": false
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "checkOnSave": false
+      }
     }
   }
-}
 ```
 
 - [Configuration Request](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_configuration)
@@ -272,19 +272,19 @@ If you wish to specify an explicit alternate binary you can specify that in
 settings:
 
 ```json
-"lsp": {
-  "rust-analyzer": {
-    "binary": {
-      // Whether to fetch the binary from the internet, or attempt to find locally.
-      "ignore_system_version": false,
-      "path": "/path/to/langserver/bin",
-      "arguments": ["--option", "value"],
-      "env": {
-        "FOO": "BAR"
+  "lsp": {
+    "rust-analyzer": {
+      "binary": {
+        // Whether to fetch the binary from the internet, or attempt to find locally.
+        "ignore_system_version": false,
+        "path": "/path/to/langserver/bin",
+        "arguments": ["--option", "value"],
+        "env": {
+          "FOO": "BAR"
+        }
       }
     }
   }
-}
 ```
 
 ### Enabling or Disabling Language Servers
@@ -292,11 +292,11 @@ settings:
 You can toggle language server support globally or per-language:
 
 ```json
-"languages": {
-  "Markdown": {
-    "enable_language_server": false
+  "languages": {
+    "Markdown": {
+      "enable_language_server": false
+    }
   }
-}
 ```
 
 This disables the language server for Markdown files, which can be useful for

@@ -24,14 +24,14 @@ The Elixir extension offers language server support for `expert`, `elixir-ls`,
 To switch to `expert`, add the following to your `settings.jsonc`:
 
 ```json
-"languages": {
-  "Elixir": {
-    "language_servers": ["expert", "!elixir-ls", "!next-ls", "!lexical", "..."]
-  },
-  "HEEX": {
-    "language_servers": ["expert", "!elixir-ls", "!next-ls", "!lexical", "..."]
+  "languages": {
+    "Elixir": {
+      "language_servers": ["expert", "!elixir-ls", "!next-ls", "!lexical", "..."]
+    },
+    "HEEX": {
+      "language_servers": ["expert", "!elixir-ls", "!next-ls", "!lexical", "..."]
+    }
   }
-}
 ```
 
 ### Next LS
@@ -39,14 +39,14 @@ To switch to `expert`, add the following to your `settings.jsonc`:
 To switch to `next-ls`, add the following to your `settings.jsonc`:
 
 ```json
-"languages": {
-  "Elixir": {
-    "language_servers": ["next-ls", "!expert", "!elixir-ls", "!lexical", "..."]
-  },
-  "HEEX": {
-    "language_servers": ["next-ls", "!expert", "!elixir-ls", "!lexical", "..."]
+  "languages": {
+    "Elixir": {
+      "language_servers": ["next-ls", "!expert", "!elixir-ls", "!lexical", "..."]
+    },
+    "HEEX": {
+      "language_servers": ["next-ls", "!expert", "!elixir-ls", "!lexical", "..."]
+    }
   }
-}
 ```
 
 ### Lexical
@@ -54,14 +54,14 @@ To switch to `next-ls`, add the following to your `settings.jsonc`:
 To switch to `lexical`, add the following to your `settings.jsonc`:
 
 ```json
-"languages": {
-  "Elixir": {
-    "language_servers": ["lexical", "!expert", "!elixir-ls", "!next-ls", "..."]
-  },
-  "HEEX": {
-    "language_servers": ["lexical", "!expert", "!elixir-ls", "!next-ls", "..."]
+  "languages": {
+    "Elixir": {
+      "language_servers": ["lexical", "!expert", "!elixir-ls", "!next-ls", "..."]
+    },
+    "HEEX": {
+      "language_servers": ["lexical", "!expert", "!elixir-ls", "!next-ls", "..."]
+    }
   }
-}
 ```
 
 ## Setting up `elixir-ls`
@@ -117,13 +117,13 @@ settings in `settings.jsonc`.
 The following example disables dialyzer:
 
 ```json
-"lsp": {
-  "elixir-ls": {
-    "settings": {
-      "dialyzerEnabled": false
+  "lsp": {
+    "elixir-ls": {
+      "settings": {
+        "dialyzerEnabled": false
+      }
     }
   }
-}
 ```
 
 See

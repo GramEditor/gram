@@ -16,14 +16,14 @@ follow the
 and add this to your Gram `settings.json`:
 
 ```json
-"languages": {
-  "Nim": {
-    "formatter": {
-      "external": {
-        "command": "nph",
-        "arguments": ["-"]
+  "languages": {
+    "Nim": {
+      "formatter": {
+        "external": {
+          "command": "nph",
+          "arguments": ["-"]
+        }
       }
     }
   }
-}
 ```

@@ -18,7 +18,7 @@ Diff files. To recognize other extensions, add them to `file_types` in your Gram
 `settings.jsonc`:
 
 ```json
-"file_types": {
-  "Diff": ["dif"]
-},
+  "file_types": {
+    "Diff": ["dif"]
+  },
 ```

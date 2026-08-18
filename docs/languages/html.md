@@ -31,11 +31,11 @@ You can disable `format_on_save` by adding the following to your Gram
 `settings.jsonc`:
 
 ```json
-"languages": {
-  "HTML": {
-    "format_on_save": "off",
+  "languages": {
+    "HTML": {
+      "format_on_save": "off",
+    }
   }
-}
 ```
 
 You can still trigger formatting manually with {#kb editor::Format} or by
@@ -48,11 +48,11 @@ To use the language server auto-formatting instead of Prettier, add the
 following to your Gram settings:
 
 ```json
-"languages": {
-  "HTML": {
-    "formatter": "language_server",
+  "languages": {
+    "HTML": {
+      "formatter": "language_server",
+    }
   }
-}
 ```
 
 You can customize various
@@ -60,22 +60,22 @@ You can customize various
 for `vscode-html-language-server` via your Gram `settings.json`:
 
 ```json
-"lsp": {
-  "vscode-html-language-server": {
-    "settings": {
-      "html": {
-        "format": {
-          // Indent under <html> and <head> (default: false)
-          "indentInnerHtml": true,
-          // Disable formatting inside <svg> or <script>
-          "contentUnformatted": "svg,script",
-          // Add an extra newline before <div> and <p>
-          "extraLiners": "div,p"
+  "lsp": {
+    "vscode-html-language-server": {
+      "settings": {
+        "html": {
+          "format": {
+            // Indent under <html> and <head> (default: false)
+            "indentInnerHtml": true,
+            // Disable formatting inside <svg> or <script>
+            "contentUnformatted": "svg,script",
+            // Add an extra newline before <div> and <p>
+            "extraLiners": "div,p"
+          }
         }
       }
     }
   }
-}
 ```
 
 ## See also

@@ -113,12 +113,12 @@ pressed.
 A few examples:
 
 ```json
-"bindings": {
-  "cmd-k cmd-s": "gram::OpenKeymap", // matches ⌘-k then ⌘-s
-  "space e": "editor::Complete", // type space then e
-  "ç": "editor::Complete", // matches ⌥-c
-  "shift shift": "file_finder::Toggle", // matches pressing and releasing shift twice
-}
+ "bindings": {
+   "cmd-k cmd-s": "gram::OpenKeymap", // matches ⌘-k then ⌘-s
+   "space e": "editor::Complete", // type space then e
+   "ç": "editor::Complete", // matches ⌥-c
+   "shift shift": "file_finder::Toggle", // matches pressing and releasing shift twice
+ }
 ```
 
 The `shift-` modifier can only be used in combination with a letter to indicate

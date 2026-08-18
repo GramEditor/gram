@@ -12,12 +12,12 @@ You can configure various settings for Shell Scripts in your Gram User Settings
 (`.gram/settings.json`):
 
 ```json
-"languages": {
-  "Shell Script": {
-    "tab_size": 2,
-    "hard_tabs": false
+  "languages": {
+    "Shell Script": {
+      "tab_size": 2,
+      "hard_tabs": false
+    }
   }
-}
 ```
 
 ### Formatting
@@ -46,18 +46,18 @@ shfmt --version
 3. Configure Gram to automatically format Shell Scripts with `shfmt` on save:
 
 ```json
-"languages": {
-  "Shell Script": {
-    "format_on_save": "on",
-    "formatter": {
-      "external": {
-        "command": "shfmt",
-        // Change `--indent 2` to match your preferred tab_size
-        "arguments": ["--filename", "{buffer_path}", "--indent", "2"]
+  "languages": {
+    "Shell Script": {
+      "format_on_save": "on",
+      "formatter": {
+        "external": {
+          "command": "shfmt",
+          // Change `--indent 2` to match your preferred tab_size
+          "arguments": ["--filename", "{buffer_path}", "--indent", "2"]
+        }
       }
     }
   }
-}
 ```
 
 ## See also:

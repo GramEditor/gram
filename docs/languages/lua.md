@@ -111,16 +111,16 @@ Gram
 1. Add the following to your Gram settings.jsonc:
 
 ```json
-"languages": {
-  "Lua": {
-    "inlay_hints": {
-      "enabled": true,
-      "show_type_hints": true,
-      "show_parameter_hints": true,
-      "show_other_hints": true
+  "languages": {
+    "Lua": {
+      "inlay_hints": {
+        "enabled": true,
+        "show_type_hints": true,
+        "show_parameter_hints": true,
+        "show_other_hints": true
+      }
     }
   }
-}
 ```
 
 2. Add `"hint.enable": true` to your `.luarc.json`.

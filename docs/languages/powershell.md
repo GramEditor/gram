@@ -39,11 +39,11 @@ If want to use a specific binary, you can specify in your that in your Gram
 settings.json:
 
 ```json
-"lsp": {
-  "powershell-es": {
-    "binary": {
-      "path": "/path/to/PowerShellEditorServices"
+  "lsp": {
+    "powershell-es": {
+      "binary": {
+        "path": "/path/to/PowerShellEditorServices"
+      }
     }
   }
-}
 ```

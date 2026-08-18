@@ -44,7 +44,7 @@ Prettier will also be used for TypeScript files by default. To disable this:
     "TypeScript": {
       "prettier": { "allowed": false },
     },
-    // ...
+    //...
   },
 }
 ```

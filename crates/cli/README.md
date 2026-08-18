@@ -12,5 +12,5 @@ cargo build -p gram
 And then building and running the `cli` crate with the following parameters:
 
 ```
-cargo run -p cli -- --gram ./target/debug/gram.exe
+ cargo run -p cli -- --gram ./target/debug/gram.exe
 ```

@@ -36,14 +36,14 @@ cargo install stylua --features lua52,lua53,lua54,luau
 Then add the following to your Gram `settings.json`:
 
 ```json
-"languages": {
-  "Luau": {
-    "formatter": {
-      "external": {
-        "command": "stylua",
-        "arguments": ["-"]
+  "languages": {
+    "Luau": {
+      "formatter": {
+        "external": {
+          "command": "stylua",
+          "arguments": ["-"]
+        }
       }
     }
   }
-}
 ```

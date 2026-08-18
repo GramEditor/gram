@@ -67,16 +67,16 @@ Or you can have gram directly invoke `clang-format` by specifying it as a
 formatter in your settings:
 
 ```json
-"languages": {
-  "Proto": {
-    "format_on_save": "on",
-    "tab_size": 4,
-    "formatter": {
-      "external": {
-        "command": "clang-format",
-        "arguments": ["-style={IndentWidth: 4, ColumnLimit: 0}"]
+  "languages": {
+    "Proto": {
+      "format_on_save": "on",
+      "tab_size": 4,
+      "formatter": {
+        "external": {
+          "command": "clang-format",
+          "arguments": ["-style={IndentWidth: 4, ColumnLimit: 0}"]
+        }
       }
-    }
-  },
-}
+    },
+  }
 ```
