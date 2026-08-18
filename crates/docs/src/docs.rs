@@ -46,7 +46,7 @@ impl EventEmitter<EditorEvent> for DocumentationView {}
 
 impl Render for DocumentationView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let current = self.current.to_string();
+        let current = self.current.clone();
         let settings = ThemeSettings::get_global(cx);
         let buffer_size = settings.buffer_font_size(cx);
         let line_height = (2 * buffer_size).round();
@@ -69,115 +69,14 @@ impl Render for DocumentationView {
             .p_4()
             .gap_2()
             .bg(theme.colors().editor_background)
-            .child(
-                v_flex().gap_2().child(
-                    h_flex()
-                        .gap_4()
-                        .child(
-                            IconButton::new("doc-view-toc", IconName::Library)
-                                .tooltip(Tooltip::text("Table of Contents"))
-                                .on_click(move |_, window, cx| {
-                                    open_doc_url("gram://docs/index.md".into(), window, cx);
-                                }),
-                        )
-                        .child(
-                            IconButton::new("doc-view-search", IconName::MagnifyingGlass)
-                                .tooltip(Tooltip::text("Search Documentation"))
-                                .on_click(move |_, window, cx| {
-                                    open_search(window, cx);
-                                }),
-                        )
-                        .child(
-                            IconButton::new("doc-view-back", IconName::ArrowLeft)
-                                .disabled(self.back.is_empty())
-                                .tooltip(Tooltip::text("Back"))
-                                .on_click(cx.listener(move |this, _, window, cx| {
-                                    this.go_back(window, cx);
-                                })),
-                        )
-                        .child(
-                            IconButton::new("doc-view-forward", IconName::ArrowRight)
-                                .disabled(self.forward.is_empty())
-                                .tooltip(Tooltip::text("Forward"))
-                                .on_click(cx.listener(move |this, _, window, cx| {
-                                    this.go_forward(window, cx);
-                                })),
-                        ),
-                ),
-            )
+            .child(self.render_toolbar(window, cx))
             .child(div().flex_grow().map(|this| {
                 let current = current.clone();
                 this.child(
                     list(
                         self.list_state.clone(),
                         cx.processor(move |this, ix, window, cx| {
-                            let Some(contents) = &this.contents else {
-                                return div().into_any();
-                            };
-
-                            let current = current.clone();
-                            let mut render_cx =
-                                RenderContext::new(Some(this.workspace.clone()), &this.mermaid_state, window, cx)
-                                    .with_link_clicked_callback(move |link: Link, window, cx| match link {
-                                        Link::Web { url } => open_doc_url(url.into(), window, cx),
-                                        Link::Path { path, .. } => {
-                                            let from = if let Some(base) = Path::new(&current).parent() {
-                                                let path = path.to_str().unwrap().to_string();
-                                                if path.starts_with("../") {
-                                                    Path::new(".").join(
-                                                        base.parent().unwrap().join(path.strip_prefix("../").unwrap()),
-                                                    )
-                                                } else if path.starts_with("./") {
-                                                    base.join(path.strip_prefix("./").unwrap())
-                                                } else {
-                                                    base.join(path.as_str())
-                                                }
-                                            } else {
-                                                path
-                                            };
-
-                                            open_doc_url(
-                                                SharedString::from(from.to_str().unwrap().to_string()),
-                                                window,
-                                                cx,
-                                            )
-                                        }
-                                    });
-
-                            let block = contents.children.get(ix).unwrap();
-                            let rendered_block = render_markdown_block(block, &mut render_cx);
-                            let selected_block = this.selected_block;
-                            let scaled_rems = render_cx.scaled_rems(1.0);
-
-                            let should_apply_padding =
-                                Self::should_apply_padding_between(block, contents.children.get(ix + 1));
-
-                            div()
-                                .id(ix)
-                                .when(should_apply_padding, |this| this.pb(render_cx.scaled_rems(0.75)))
-                                .group("markdown-block")
-                                .map(move |container| {
-                                    let indicator = div()
-                                        .h_full()
-                                        .w(px(4.0))
-                                        .when(ix == selected_block, |this| this.bg(cx.theme().colors().border))
-                                        .group_hover("markdown-block", |s| {
-                                            if ix == selected_block {
-                                                s
-                                            } else {
-                                                s.bg(cx.theme().colors().border_variant)
-                                            }
-                                        })
-                                        .rounded_xs();
-
-                                    container.child(
-                                        div()
-                                            .relative()
-                                            .child(div().pl(scaled_rems).child(rendered_block))
-                                            .child(indicator.absolute().left_0().top_0()),
-                                    )
-                                })
-                                .into_any()
+                            this.render_markdown_block(current.clone(), ix, window, cx)
                         }),
                     )
                     .size_full(),
@@ -224,6 +123,111 @@ pub fn open_doc_url(url: SharedString, window: &mut Window, cx: &mut App) {
 }
 
 impl DocumentationView {
+    fn render_toolbar(&self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        v_flex().gap_2().child(
+            h_flex()
+                .gap_4()
+                .child(
+                    IconButton::new("doc-view-toc", IconName::Library)
+                        .tooltip(Tooltip::text("Table of Contents"))
+                        .on_click(move |_, window, cx| {
+                            open_doc_url("gram://docs/index.md".into(), window, cx);
+                        }),
+                )
+                .child(
+                    IconButton::new("doc-view-search", IconName::MagnifyingGlass)
+                        .tooltip(Tooltip::text("Search Documentation"))
+                        .on_click(move |_, window, cx| {
+                            open_search(window, cx);
+                        }),
+                )
+                .child(
+                    IconButton::new("doc-view-back", IconName::ArrowLeft)
+                        .disabled(self.back.is_empty())
+                        .tooltip(Tooltip::text("Back"))
+                        .on_click(cx.listener(move |this, _, window, cx| {
+                            this.go_back(window, cx);
+                        })),
+                )
+                .child(
+                    IconButton::new("doc-view-forward", IconName::ArrowRight)
+                        .disabled(self.forward.is_empty())
+                        .tooltip(Tooltip::text("Forward"))
+                        .on_click(cx.listener(move |this, _, window, cx| {
+                            this.go_forward(window, cx);
+                        })),
+                ),
+        )
+    }
+
+    fn render_markdown_block(
+        &mut self,
+        current: SharedString,
+        ix: usize,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let Some(contents) = &self.contents else {
+            return div().into_any();
+        };
+
+        let current = current.clone();
+        let mut render_cx = RenderContext::new(Some(self.workspace.clone()), &self.mermaid_state, window, cx)
+            .with_link_clicked_callback(move |link: Link, window, cx| match link {
+                Link::Web { url } => open_doc_url(url.into(), window, cx),
+                Link::Path { path, .. } => {
+                    let from = if let Some(base) = Path::new(current.as_str()).parent() {
+                        let path = path.to_str().unwrap().to_string();
+                        if path.starts_with("../") {
+                            Path::new(".").join(base.parent().unwrap().join(path.strip_prefix("../").unwrap()))
+                        } else if path.starts_with("./") {
+                            base.join(path.strip_prefix("./").unwrap())
+                        } else {
+                            base.join(path.as_str())
+                        }
+                    } else {
+                        path
+                    };
+
+                    open_doc_url(SharedString::from(from.to_str().unwrap().to_string()), window, cx)
+                }
+            });
+
+        let block = contents.children.get(ix).unwrap();
+        let rendered_block = render_markdown_block(block, &mut render_cx);
+        let selected_block = self.selected_block;
+        let scaled_rems = render_cx.scaled_rems(1.0);
+
+        let should_apply_padding = Self::should_apply_padding_between(block, contents.children.get(ix + 1));
+
+        div()
+            .id(ix)
+            .when(should_apply_padding, |this| this.pb(render_cx.scaled_rems(0.75)))
+            .group("markdown-block")
+            .map(move |container| {
+                let indicator = div()
+                    .h_full()
+                    .w(px(4.0))
+                    .when(ix == selected_block, |this| this.bg(cx.theme().colors().border))
+                    .group_hover("markdown-block", |s| {
+                        if ix == selected_block {
+                            s
+                        } else {
+                            s.bg(cx.theme().colors().border_variant)
+                        }
+                    })
+                    .rounded_xs();
+
+                container.child(
+                    div()
+                        .relative()
+                        .child(div().pl(scaled_rems).child(rendered_block))
+                        .child(indicator.absolute().left_0().top_0()),
+                )
+            })
+            .into_any()
+    }
+
     pub fn register(workspace: &mut Workspace, _window: Option<&mut Window>, _cx: &mut Context<Workspace>) {
         workspace
             .register_action(move |workspace, _: &OpenDocs, window, cx| {
@@ -299,12 +303,12 @@ impl DocumentationView {
             }
 
             let parsing_task = cx.background_spawn(async move {
-                if text.contains("{#") {
-                    let text = preprocess_text(&text, actions);
-                    parse_markdown(&text, Some(PathBuf::new()), Some(language_registry)).await
+                let text: SharedString = if text.contains("{#") {
+                    preprocess_text(&text, actions).into()
                 } else {
-                    parse_markdown(&text, Some(PathBuf::new()), Some(language_registry)).await
-                }
+                    text
+                };
+                parse_markdown(&text, Some(PathBuf::new()), Some(language_registry)).await
             });
             let contents = parsing_task.await;
             view.update(cx, move |view, cx| {
