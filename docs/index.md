@@ -1,23 +1,39 @@
 # Documentation
 
-Gram is a **hard fork** of the Zed editor, with the following list (incomplete)
-of changes:
+Gram is a source code editor and an IDE. It has a lot of features but is also
+very much a work in progress. It is a community project, although the community
+right now consists of one grumpy toad in its spare time and a small but
+dedicated group of contributors (much love to them). The project hopes to move
+slowly but steadily in the direction of stability, reliability and respect.
 
-- All AI integration has been removed
-- All Telemetry has been removed
-- All collaboration integration has been removed
-- No proprietary server component
-- No auto updates
-- No license agreement on installation
-- Only install language servers when [explicitly allowed](./language-servers.md)
-- Integrated documentation viewer
-- Support for more languages built in
-- More syntax highlighting themes built in
-- Extensions are installed from source only
-- Partial support for Wasm extensions (due to AI removal)
-- Added [SuperTab](./supertab.md)
+It has a lot of things going for it:
 
-For more details on the motivation behind this fork, read the
+- It mostly works today. I use it every day to write code.
+- Decent performance.
+- Cross-platform support for Mac, Linux, FreeBSD and Windows.
+- Remote development over SSH.
+- Integrated debugger support via the `DAP` protocol.
+- Jupyter Notebook support (REPL mode).
+- Built in git support.
+- Pretty decent Vim and Helix modal editing modes.
+- Partial/limited support for Zed Wasm extensions.
+- No AI integration or monetization scheme.
+- No telemetry or proprietary server component.
+- No video or audio chat.
+- No involuntary auto updates.
+- Tries not to install anything without explicit permission.
+- Integrated documentation.
+- Built in support for a lot of languages and language servers.
+- Lots of builtin themes.
+
+This project did not start with a vision of the perfect editor, but as a
+reaction against what was and still is happening to the world of software
+development, the world at large and to editors like VS Code, Zed and Vim. Its
+core philosophy is that writing code by hand with care is good and righteous,
+and aims to be a good tool for doing just that.
+
+Gram started as a **hard fork** of the Zed editor. For more details on the
+background and motivation behind this fork, read the
 [Mission Statement](./mission.md).
 
 ### Migrating

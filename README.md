@@ -3,18 +3,46 @@
 
 # [Gram](https://gram-editor.com)
 
-**Gram** is a powerful and modern code editor. It features solid performance and
-is highly configurable, yet comes with batteries included out of the box. Gram
-supports many popular programming languages and file formats, and can use `Zed`
-extensions to support additional languages. Other features include built-in
-documentation, debugger support via the `DAP` protocol, source control using
-`git` and more. **Gram** started as a fork of the `Zed Editor`.
+Gram is a source code editor and an IDE. It has a lot of features but is also
+very much a work in progress. It is a community project, although the community
+right now consists of one grumpy toad in its spare time and a small but
+dedicated group of contributors (much love to them). The project hopes to move
+slowly but steadily in the direction of stability, reliability and respect.
 
-My hope is that **Gram** will be an editor that someone who is learning
+It has a lot of things going for it:
+
+- It mostly works today. I use it every day to write code.
+- Decent performance.
+- Cross-platform support for Mac, Linux, FreeBSD and Windows.
+- Remote development over SSH.
+- Integrated debugger support via the `DAP` protocol.
+- Jupyter Notebook support (REPL mode).
+- Built in git support.
+- Pretty decent Vim and Helix modal editing modes.
+- Partial/limited support for Zed Wasm extensions.
+- No AI integration or monetization scheme.
+- No telemetry or proprietary server component.
+- No video or audio chat.
+- No involuntary auto updates.
+- Tries not to install anything without explicit permission.
+- Integrated documentation.
+- Built in support for a lot of languages and language servers.
+- Lots of builtin themes.
+
+This project did not start with a vision of the perfect editor, but as a
+reaction against what was and still is happening to the world of software
+development, the world at large and to editors like VS Code, Zed and Vim. Its
+core philosophy is that writing code by hand with care is good and righteous,
+and aims to be a good tool for doing just that.
+
+Gram started as a **hard fork** of the Zed editor. For more details on the
+background and motivation behind this fork, read the
+[Mission Statement](./mission.md).
+
+My goal is that **Gram** will be an editor that someone who is learning
 programming for the first time can download, install and use out of the box. No
 configuration or extensions should be necessary, and the editor should not try
-to push anything potentially malicious, distracting or confusing at them. In my
-opinion, both `VS Code` and `Zed` fail in this regard.
+to push anything potentially malicious, distracting or confusing at them.
 
   <img src="./assets/images/docs_editor.png" alt="" align="center"/>
 
@@ -29,10 +57,9 @@ opinion, both `VS Code` and `Zed` fail in this regard.
 
 This project is first and foremost a source code editor. It aims to be a fast,
 reliable and hackable tool for developers to use, reuse, share and modify. It
-will _never_ contain, support or condone any of the following "features" that
-_permeate_ the Zed Editor: AI, Telemetry, Proprietary server components,
-third-party service integrations, Contributor Licenses, Terms of Service or
-subscription fees.
+will _never_ contain, support or condone any of the following "features": AI,
+Telemetry, Proprietary server components, third-party service integrations,
+Contributor Licenses, Terms of Service or subscription fees.
 
 We promise:
 
