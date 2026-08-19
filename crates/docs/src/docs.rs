@@ -171,7 +171,6 @@ impl DocumentationView {
             return div().into_any();
         };
 
-        let current = current.clone();
         let mut render_cx = RenderContext::new(Some(self.workspace.clone()), &self.mermaid_state, window, cx)
             .with_link_clicked_callback(move |link: Link, window, cx| match link {
                 Link::Web { url } => open_doc_url(url.into(), window, cx),
