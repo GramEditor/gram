@@ -4,7 +4,7 @@ If you believe you have identified an exploitable security vulnerability in
 Gram, please email me at k@ziran.se or reach out via some other private channel.
 
 Once Codeberg has support for private issues, that will also hopefully be an
-option (see [forgejo#142](https://codeberg.org/forgejo/forgejo/issues/142).
+option (see [forgejo#142](https://codeberg.org/forgejo/forgejo/issues/142)).
 
 Don't open a public issue if publishing the issue before a fix has been released
 could expose people to undue risk, but also keep in mind that this is a small
