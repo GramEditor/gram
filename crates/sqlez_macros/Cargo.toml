@@ -13,7 +13,6 @@ proc-macro = true
 
 [dependencies]
 sqlez.workspace = true
-sqlformat.workspace = true
 syn.workspace = true
 
 [lints]

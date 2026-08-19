@@ -1,4 +1,4 @@
-use proc_macro::{Delimiter, Span, TokenStream, TokenTree};
+use proc_macro::{Delimiter, Literal, Span, TokenStream, TokenTree};
 use syn::Error;
 
 #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
@@ -15,6 +15,7 @@ static SQLITE: std::sync::LazyLock<sqlez::thread_safe_connection::ThreadSafeConn
 #[proc_macro]
 pub fn sql(tokens: TokenStream) -> TokenStream {
     let (spans, sql) = make_sql(tokens);
+    let sql = sql.trim();
 
     #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
     let error = SQLITE.sql_has_syntax_error(sql.trim());
@@ -22,24 +23,18 @@ pub fn sql(tokens: TokenStream) -> TokenStream {
     #[cfg(any(target_os = "linux", target_os = "freebsd"))]
     let error: Option<(String, usize)> = None;
 
-    let formatted_sql = sqlformat::format(&sql, &sqlformat::QueryParams::None, Default::default());
-
     if let Some((error, error_offset)) = error {
-        create_error(spans, error_offset, error, &formatted_sql)
+        let error_span = spans
+            .into_iter()
+            .skip_while(|(offset, _)| offset <= &error_offset)
+            .map(|(_, span)| span)
+            .next()
+            .unwrap_or_else(Span::call_site);
+        let error_text = format!("Sql Error: {}\nFor Query: {}", error, sql);
+        TokenStream::from(Error::new(error_span.into(), error_text).into_compile_error())
     } else {
-        format!("r#\"{}\"#", formatted_sql).parse().unwrap()
+        TokenStream::from(TokenTree::Literal(Literal::string(sql)))
     }
-}
-
-fn create_error(spans: Vec<(usize, Span)>, error_offset: usize, error: String, formatted_sql: &String) -> TokenStream {
-    let error_span = spans
-        .into_iter()
-        .skip_while(|(offset, _)| offset <= &error_offset)
-        .map(|(_, span)| span)
-        .next()
-        .unwrap_or_else(Span::call_site);
-    let error_text = format!("Sql Error: {}\nFor Query: {}", error, formatted_sql);
-    TokenStream::from(Error::new(error_span.into(), error_text).into_compile_error())
 }
 
 fn make_sql(tokens: TokenStream) -> (Vec<(usize, Span)>, String) {

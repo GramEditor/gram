@@ -10023,7 +10023,6 @@ name = "sqlez_macros"
 version = "3.2.0"
 dependencies = [
  "sqlez",
- "sqlformat",
  "syn 2.0.119",
 ]
 

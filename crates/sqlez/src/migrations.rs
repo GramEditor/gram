@@ -55,29 +55,25 @@ impl Connection {
 
             let mut did_migrate = false;
             for (index, migration) in migrations.iter().enumerate() {
-                let migration = sqlformat::format(migration, &sqlformat::QueryParams::None, Default::default());
+                let migration_cmp: String = migration.split_whitespace().collect();
                 if let Some((_, _, completed_migration)) = completed_migrations.get(index) {
-                    // Reformat completed migrations with the current `sqlformat` version, so that past migrations stored
-                    // conform to the new formatting rules.
-                    let completed_migration =
-                        sqlformat::format(completed_migration, &sqlformat::QueryParams::None, Default::default());
-                    if completed_migration == migration {
-                        // Migration already run. Continue
+                    let completed_cmp: String = completed_migration.split_whitespace().collect();
+                    if completed_cmp == migration_cmp {
                         continue;
-                    } else {
-                        anyhow::bail!(formatdoc! {"
-                            Migration changed for {domain} at step {index}
-
-                            Stored migration:
-                            {completed_migration}
-
-                            Proposed migration:
-                            {migration}"});
                     }
+                    anyhow::bail!(formatdoc! {"
+                        Migration changed for {domain} at step {index}
+
+                        Stored migration:
+                        {completed_migration}
+
+                        Proposed migration:
+                        {migration}"});
                 }
 
-                self.eager_exec(&migration)?;
+                self.eager_exec(migration)?;
                 did_migrate = true;
+                let migration = sqlformat::format(migration, &sqlformat::QueryParams::None, Default::default());
                 store_completed_migration((domain, index, migration))?;
             }
 
