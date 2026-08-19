@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add git history views, both for folders and the current state
 - Add action `git:show history`
 
+## Removed
+
+- Removed (partial) HTML support from the Markdown preview
+
 ## Changed
 
 - Remove avatar fetching from git crate (#388)
@@ -67,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pass `.` rather than an empty pathspec when collecting diff stats for the
   repository root, which git rejects
 - Don't create text system or wgpu context if headless (#361)
+- Improved smooth scrolling support
 
 ## [3.2.0] - 2026-07-27
 
