@@ -12,13 +12,13 @@ path = "src/client.rs"
 
 [dependencies]
 anyhow.workspace = true
-async-tungstenite = { workspace = true, features = ["tokio", "tokio-rustls-manual-roots"] }
+async-tungstenite.workspace = true
 base64.workspace = true
 futures.workspace = true
 gpui.workspace = true
 http_client.workspace = true
 http_client_tls.workspace = true
-httparse = "1.10.1"
+httparse.workspace = true
 log.workspace = true
 parking_lot.workspace = true
 postage.workspace = true
@@ -27,7 +27,7 @@ serde.workspace = true
 settings.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
-tokio-socks = { version = "0.5.3", default-features = false, features = ["futures-io"] }
+tokio-socks.workspace = true
 url.workspace = true
 util.workspace = true
 
@@ -39,11 +39,11 @@ settings = { workspace = true, features = ["test-support"] }
 util = { workspace = true, features = ["test-support"] }
 
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
-tokio-native-tls = "0.3.1"
+tokio-native-tls.workspace = true
 
 [target.'cfg(not(any(target_os = "windows", target_os = "macos")))'.dependencies]
-rustls-pki-types = "1.15.1"
-tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12"] }
+rustls-pki-types.workspace = true
+tokio-rustls.workspace = true
 
 [features]
 test-support = ["gpui/test-support", "rpc/test-support"]

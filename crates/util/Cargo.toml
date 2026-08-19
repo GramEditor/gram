@@ -17,7 +17,7 @@ async-fs.workspace = true
 async_zip.workspace = true
 collections.workspace = true
 dirs.workspace = true
-dunce = "1.0"
+dunce.workspace = true
 futures.workspace = true
 futures-lite.workspace = true
 globset.workspace = true
@@ -48,12 +48,12 @@ util_macros.workspace = true
 mach2.workspace = true
 
 [target.'cfg(unix)'.dependencies]
-command-fds = "0.3.1"
+command-fds.workspace = true
 libc.workspace = true
 nix = { workspace = true, features = ["user"] }
 
 [target.'cfg(windows)'.dependencies]
-tendril = "0.4.3"
+tendril.workspace = true
 
 [features]
 test-support = ["rand", "util_macros"]

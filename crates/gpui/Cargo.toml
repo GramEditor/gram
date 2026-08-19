@@ -83,15 +83,15 @@ path = "examples/mouse_pressure.rs"
 
 [dependencies]
 anyhow.workspace = true
-async-task = "4.7.1"
+async-task.workspace = true
 backtrace = { workspace = true, optional = true }
 bitflags = { workspace = true, optional = true }
-bytemuck = { version = "1", optional = true }
+bytemuck = { workspace = true, optional = true }
 circular-buffer.workspace = true
 collections.workspace = true
 ctor.workspace = true
 derive_more.workspace = true
-etagere = "0.3.0"
+etagere.workspace = true
 futures.workspace = true
 gpui_macros.workspace = true
 http_client.workspace = true
@@ -100,79 +100,79 @@ inventory.workspace = true
 itertools.workspace = true
 libc.workspace = true
 log.workspace = true
-lyon = "1.0.19"
-num_cpus = "1.17.0"
-parking = "2.2.1"
+lyon.workspace = true
+num_cpus.workspace = true
+parking.workspace = true
 parking_lot.workspace = true
-pin-project = "1.1.13"
+pin-project.workspace = true
 postage.workspace = true
 profiling.workspace = true
 rand = { workspace = true, optional = true }
-raw-window-handle = "0.6.2"
+raw-window-handle.workspace = true
 refineable.workspace = true
-resvg = { version = "0.47.0", default-features = false, features = ["memmap-fonts", "system-fonts", "text"] }
+resvg = { workspace = true, default-features = false, features = ["memmap-fonts", "system-fonts", "text"] }
 schemars.workspace = true
-seahash = "4.1.0"
+seahash.workspace = true
 semver.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 slotmap.workspace = true
 smallvec.workspace = true
 smol.workspace = true
-spin = "0.10.1"
+spin.workspace = true
 stacksafe.workspace = true
 strum.workspace = true
 sum_tree.workspace = true
-taffy = "0.11.0"
+taffy.workspace = true
 thiserror.workspace = true
 unicode-segmentation.workspace = true
 url.workspace = true
-usvg = { version = "0.47.0", default-features = false, features = ["text"] }
+usvg = { workspace = true, default-features = false, features = ["text"] }
 util.workspace = true
 util_macros.workspace = true
 uuid.workspace = true
-waker-fn = "1.2.0"
+waker-fn.workspace = true
 
 [dev-dependencies]
 env_logger.workspace = true
-lyon = { version = "1.0.19", features = ["extra"] }
+lyon.workspace = true
 reqwest_client.workspace = true
 
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 # Always used
-flume = "0.11.1"
+flume.workspace = true
 
 # Used in both windowing options
 ashpd = { workspace = true, optional = true }
-calloop = "0.14.3"
-cosmic-text = { version = "0.19.0", optional = true }
-filedescriptor = { version = "0.8.3", optional = true }
-open = { version = "5.4.1", optional = true }
-swash = "0.2.10"
+calloop.workspace = true
+cosmic-text = { workspace = true, optional = true }
+filedescriptor = { workspace = true, optional = true }
+open = { workspace = true, optional = true }
+swash.workspace = true
 wgpu = { workspace = true, optional = true }
-xkbcommon = { version = "0.8.0", features = ["wayland", "x11"], optional = true }
+xkbcommon = { workspace = true, optional = true }
 
 # Wayland
-calloop-wayland-source = { version = "0.4.1", optional = true }
-wayland-backend = { version = "0.3.16", features = ["client_system", "dlopen"], optional = true }
-wayland-client = { version = "0.31.15", optional = true }
-wayland-cursor = { version = "0.31.14", optional = true }
-wayland-protocols = { version = "0.31.2", features = ["client", "staging", "unstable"], optional = true }
-wayland-protocols-plasma = { version = "0.2.0", features = ["client"], optional = true }
-wayland-protocols-wlr = { version = "0.3.12", features = ["client"], optional = true }
+calloop-wayland-source = { workspace = true, optional = true }
+wayland-backend = { workspace = true, optional = true }
+wayland-client = { workspace = true, optional = true }
+wayland-cursor = { workspace = true, optional = true }
+wayland-protocols = { workspace = true, optional = true }
+wayland-protocols-plasma = { workspace = true, optional = true }
+wayland-protocols-wlr = { workspace = true, optional = true }
 
 # X11
-as-raw-xcb-connection = { version = "1.0.1", optional = true }
-x11rb = { version = "0.13.2", features = ["allow-unsafe-code", "cursor", "randr", "resource_manager", "sync", "xinput", "xkb"], optional = true }
+as-raw-xcb-connection = { workspace = true, optional = true }
+x11rb = { workspace = true, optional = true }
 # WARNING: If you change this, you must also publish a new version of zed-xim to crates.io
 xim = { package = "zed-xim", git = "https://github.com/zed-industries/xim-rs.git", rev = "16f35a2c881b815a2b6cdfd6687988e84f8447d8", version = "0.4.0-zed", features = ["x11rb-client", "x11rb-xcb", "std"], optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 block2.workspace = true
-bytemuck = { version = "1.25.2" }
-cosmic-text = { version = "0.19.0", optional = true }
+bytemuck.workspace = true
+cosmic-text = { workspace = true, optional = true }
 dispatch2.workspace = true
-foreign-types = "0.5.0"
+foreign-types.workspace = true
 log.workspace = true
 objc2.workspace = true
 objc2-app-kit.workspace = true
@@ -181,20 +181,20 @@ objc2-core-foundation.workspace = true
 objc2-core-graphics.workspace = true
 objc2-foundation.workspace = true
 objc2-quartz-core.workspace = true
-swash = "0.2.10"
-wgpu = { workspace = true }
+swash.workspace = true
+wgpu.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
-flume = "0.11.1"
+flume.workspace = true
 rand.workspace = true
 windows.workspace = true
 windows-core.workspace = true
-windows-numerics = "0.2.0"
-windows-registry = "0.5.3"
+windows-numerics.workspace = true
+windows-registry.workspace = true
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
-embed-resource = "3.0.11"
-windows-registry = "0.5.3"
+embed-resource.workspace = true
+windows-registry.workspace = true
 
 [features]
 default = ["cosmic-text", "wayland", "windows-manifest", "x11"]

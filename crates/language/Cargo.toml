@@ -15,7 +15,7 @@ anyhow.workspace = true
 async-trait.workspace = true
 clock.workspace = true
 collections.workspace = true
-diffy = "0.5"
+diffy.workspace = true
 ec4rs.workspace = true
 encoding_rs.workspace = true
 fs.workspace = true
@@ -50,7 +50,7 @@ tree-sitter-md = { workspace = true, optional = true }
 tree-sitter-python = { workspace = true, optional = true }
 tree-sitter-rust = { workspace = true, optional = true }
 tree-sitter-typescript = { workspace = true, optional = true }
-unicase = "2.6"
+unicase.workspace = true
 util.workspace = true
 watch.workspace = true
 zlog.workspace = true

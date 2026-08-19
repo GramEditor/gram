@@ -12,7 +12,7 @@ path = "src/settings_ui.rs"
 [dependencies]
 anyhow.workspace = true
 app_actions.workspace = true
-bm25 = "2.3.2"
+bm25.workspace = true
 editor.workspace = true
 fs.workspace = true
 fuzzy.workspace = true

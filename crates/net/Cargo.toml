@@ -17,7 +17,7 @@ smol.workspace = true
 tempfile.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
-async-io = "2.4"
+async-io.workspace = true
 windows.workspace = true
 
 [lints]

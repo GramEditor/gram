@@ -19,7 +19,7 @@ anyhow.workspace = true
 askpass.workspace = true
 clap.workspace = true
 collections.workspace = true
-ipc-channel = "0.19.0"
+ipc-channel.workspace = true
 parking_lot.workspace = true
 paths.workspace = true
 rayon.workspace = true
@@ -39,7 +39,7 @@ fork.workspace = true
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2-core-foundation.workspace = true
 objc2-core-services.workspace = true
-plist = "1.10.0"
+plist.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows.workspace = true

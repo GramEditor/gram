@@ -292,44 +292,59 @@ alacritty_terminal = { git = "https://github.com/alacritty/alacritty", rev = "48
 any_vec = "0.15.0"
 anyhow = "1.0.104"
 arrayvec = { version = "0.7.8", features = ["serde", "std"] }
+as-raw-xcb-connection = "1.0.1"
 ashpd = { version = "0.13.13", default-features = false, features = ["async-io", "file_chooser", "notification", "open_uri", "settings", "trash"] }
 async-compat = "0.2.5"
 async-compression = { version = "0.4.43", features = ["futures-io", "gzip"] }
 async-dispatcher = "0.1.2"
 async-fs = "2.2.0"
+async-io = "2.4"
 async-lock = "3.4.2"
 async-pipe = { git = "https://github.com/zed-industries/async-pipe-rs", rev = "82d00a04211cf4e1236029aa03e6b6ce2a74c553" }
 async-recursion = "1.1.1"
 async-tar = "0.5.1"
 async-task = "4.7.1"
 async-trait = "0.1.91"
-async-tungstenite = "0.35.0"
+async-tungstenite = { version = "0.35.0", features = ["tokio", "tokio-runtime", "tokio-rustls-manual-roots"] }
 async_zip = { version = "0.0.18", features = ["deflate", "deflate64"] }
 backtrace = "0.3.76"
 base64 = "0.22.1"
 bitcode = { version = "0.6.9", features = ["derive", "serde", "std"] }
 bitflags = "2.13.1"
 block2 = "0.6.2"
+bm25 = "2.3.2"
+bytemuck = "1.25.2"
 bytes = "1.12.1"
+calloop = "0.14.3"
+calloop-wayland-source = "0.4.1"
 chardetng = "1.0.0"
 chrono = { version = "0.4.45", features = ["clock", "oldtime", "serde", "std", "wasmbind"] }
 circular-buffer = "1.2.0"
 clap = { version = "4.6.6", features = ["color", "derive", "error-context", "help", "std", "suggestions", "usage", "wrap_help"] }
+command-fds = "0.3.1"
 convert_case = "0.11.0"
+cosmic-text = "0.19.0"
 crash-handler = "0.7.0"
 criterion = { version = "0.8.2", features = ["cargo_bench_support", "html_reports", "plotters", "rayon"] }
 ctor = "0.12.0"
 dap-types = { git = "https://github.com/zed-industries/dap-types", rev = "1b461b310481d01e02b2603c16d7144b926339f8" }
 derive_more = { version = "2.1.1", features = ["full", "std"] }
+diffy = "0.5"
 dirs = "6.0.0"
 dispatch2 = "0.3.1"
 documented = "0.9.2"
 dotenvy = "0.15.7"
+dunce = "1.0"
 ec4rs = "1.2.0"
+embed-resource = "3.0.11"
 encoding_rs = "0.8.35"
 env_logger = "0.11.11"
+etagere = "0.3.0"
 exec = "0.3.1"
 fancy-regex = "0.18.0"
+filedescriptor = "0.8.3"
+flume = "0.11.1"
+foreign-types = "0.5.0"
 fork = "0.7.0"
 futures = "0.3.33"
 futures-lite = "2.6.1"
@@ -338,6 +353,7 @@ heck = "0.5.0"
 hex = "0.4.3"
 http = "1.5.0"
 http-body = "1.1.0"
+httparse = "1.10.1"
 human_bytes = "0.4.3"
 ignore = "0.4.33"
 image = "0.25.10"
@@ -345,6 +361,7 @@ imara-diff = "0.2.0"
 indexmap = { version = "2.14.0", features = ["serde", "std"] }
 indoc = "2.0.7"
 inventory = "0.3.24"
+ipc-channel = "0.19.0"
 is_executable = "1.0.6"
 itertools = "0.14.0"
 json_dotpath = "1.1.0"
@@ -355,14 +372,18 @@ libsqlite3-sys = { version = "0.37.0", features = ["bundled", "min_sqlite_versio
 linkify = "0.11.0"
 log = { version = "0.4.33", features = ["kv_unstable_serde", "serde"] }
 lsp-types = { git = "https://github.com/zed-industries/lsp-types", rev = "b71ab4eeb27d9758be8092020a46fe33fbca4e33" }
+lyon = { version = "1.0.19", features = ["extra"] }
 mach2 = "0.6.0"
 mermaid-rs-renderer = "0.2.2"
+mimalloc = "0.1"
 minidumper = "0.10.1"
 moka = { version = "0.12.15", features = ["sync"] }
 nbformat = "1.2.2"
 nix = "0.31.3"
 notify = "9.0.0-rc.3"
 num-format = "0.4.4"
+num_cpus = "1.17.0"
+nvim-rs = { git = "https://github.com/KillTheMule/nvim-rs", rev = "764dd270c642f77f10f3e19d05cc178a6cbe69f3", features = ["use_tokio"] }
 objc2 = "0.6.4"
 objc2-app-kit = "0.3.2"
 objc2-color-sync = "0.3.2"
@@ -374,6 +395,7 @@ objc2-quartz-core = "0.3.2"
 open = "5.4.1"
 ordered-float = "5.3.0"
 palette = { version = "0.7.7", default-features = false, features = ["std"] }
+parking = "2.2.1"
 parking_lot = "0.12.5"
 parse_int = "0.9.0"
 pciid-parser = "0.8.1"
@@ -384,6 +406,8 @@ pet-fs = { git = "https://github.com/microsoft/python-environment-tools.git", re
 pet-poetry = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
 pet-reporter = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
 pet-virtualenv = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
+pin-project = "1.1.13"
+plist = "1.10.0"
 postage = { version = "0.5.0", features = ["blocking", "futures-traits", "logging"] }
 pretty_assertions = { version = "1.4.1", features = ["std", "unstable"] }
 proc-macro2 = "1.0.107"
@@ -394,16 +418,19 @@ protobuf-src = "2.1.1"
 pulldown-cmark = { version = "0.13.4", default-features = false }
 quote = "1.0.47"
 rand = "0.10.2"
+raw-window-handle = "0.6.2"
 rayon = "1.12.0"
 regex = "1.13.1"
-
+resvg = { version = "0.47.0", default-features = false, features = ["memmap-fonts", "system-fonts", "text"] }
 rsa = "0.9.10"
 runtimelib = { version = "1.6.0", default-features = false, features = ["async-dispatcher-runtime", "aws-lc-rs"] }
-rust-embed = { version = "8.12.0", features = ["include-exclude"] }
+rust-embed = { version = "8.12.0", features = ["include-exclude", "debug-embed"] }
 rustc-hash = "2.1.3"
 rustls = { version = "0.23.43" }
+rustls-pki-types = "1.15.1"
 rustls-platform-verifier = "0.7.0"
 schemars = { version = "1.2.2", features = ["derive", "indexmap2", "smol_str03", "std"] }
+seahash = "4.1.0"
 semver = { version = "1.0.28", features = ["serde", "std"] }
 serde = { version = "1.0.229", features = ["derive", "rc", "std"] }
 serde_json = { version = "1.0.151", features = ["preserve_order", "raw_value", "std"] }
@@ -417,20 +444,29 @@ simplelog = "0.12.2"
 slotmap = "1.1.1"
 smallvec = { version = "1.15.2", features = ["const_new", "union"] }
 smol = "2.0.2"
+spin = "0.10.1"
 sqlformat = "0.2.6"
 stacksafe = "1.0.3"
 streaming-iterator = "0.1.9"
 strsim = "0.11.1"
 strum = { version = "0.28.0", features = ["derive", "std"] }
+swash = "0.2.10"
 syn = { version = "2.0.119", features = ["clone-impls", "derive", "extra-traits", "full", "parsing", "printing", "proc-macro", "visit-mut"] }
 sys-locale = "0.3.2"
 sysinfo = "0.38.4"
+taffy = "0.11.0"
 take-until = "0.2.0"
 tempfile = "3.27.0"
+tendril = "0.4.3"
 thiserror = "2.0.19"
+thread_local = "1.1.4"
 time = { version = "0.3.55", features = ["formatting", "local-offset", "macros", "parsing", "serde", "serde-well-known", "std"] }
-tokio = "1.53.1"
+tokio = { version = "1.53.1", features = ["full", "macros", "rt", "rt-multi-thread"] }
+tokio-native-tls = "0.3.1"
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12"] }
+tokio-socks = { version = "0.5.3", default-features = false, features = ["futures-io"] }
 toml = "1.1.4"
+tracing = { version = "0.1.44", features = ["log"] }
 trash = "5.2.6"
 tree-sitter = { version = "0.26.11", features = ["std", "wasm"] }
 tree-sitter-bash = "0.25.1"
@@ -474,16 +510,31 @@ unicode-segmentation = "1.13.3"
 unindent = "0.2.4"
 url = "2.5.8"
 urlencoding = "2.1.3"
+usvg = { version = "0.47.0", default-features = false, features = ["text"] }
 uuid = { version = "1.24.0", features = ["serde", "std", "v4", "v5", "v7"] }
+vscode_theme = "0.2.0"
+waker-fn = "1.2.0"
 walkdir = "2.5.0"
 wasm-encoder = "0.221.3"
 wasmparser = "0.221.3"
 wasmtime = { version = "36.0.13", default-features = false, features = ["async", "component-model", "cranelift", "demangle", "incremental-cache", "parallel-compilation", "runtime"] }
 wasmtime-wasi = "36.0.13"
 wax = "0.7.0"
+wayland-backend = { version = "0.3.16", features = ["client_system", "dlopen"] }
+wayland-client = "0.31.15"
+wayland-cursor = "0.31.14"
+wayland-protocols = { version = "0.31.2", features = ["client", "staging", "unstable"] }
+wayland-protocols-plasma = { version = "0.2.0", features = ["client"] }
+wayland-protocols-wlr = { version = "0.3.12", features = ["client"] }
 wgpu = "30.0.0"
 which = "8.0.5"
 windows-core = "0.61.2"
+windows-numerics = "0.2.0"
+windows-registry = "0.5.3"
+winresource = "0.1.31"
+wit-bindgen = "0.57"
+x11rb = { version = "0.13.2", features = ["allow-unsafe-code", "cursor", "randr", "resource_manager", "sync", "xinput", "xkb"] }
+xkbcommon = { version = "0.8.0", features = ["wayland", "x11"] }
 zeroize = "1.9.0"
 zstd = "0.13.3"
 

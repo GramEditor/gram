@@ -12,7 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 anyhow.workspace = true
-clap = { workspace = true, features = ["derive"] }
+clap.workspace = true
 env_logger.workspace = true
 extension.workspace = true
 fs.workspace = true
@@ -23,7 +23,7 @@ reqwest_client.workspace = true
 rpc.workspace = true
 serde_json.workspace = true
 theme.workspace = true
-tokio = { workspace = true, features = ["full"] }
+tokio.workspace = true
 toml.workspace = true
 tree-sitter.workspace = true
 wasmtime.workspace = true
