@@ -51,9 +51,14 @@ jobs:
         uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2.9.3
 
       - name: Run nextest
+        if: runner.os == 'Windows'
         env:
-          MAKEOPTS: ${{ runner.os == 'Windows' && '-j2 -l2' || '' }}
-          CARGO_BUILD_JOBS: ${{ runner.os == 'Windows' && '2' || '' }}
+          MAKEOPTS: "-j2 -l2"
+          CARGO_BUILD_JOBS: "2"
+        run: cargo nextest run --workspace --no-fail-fast --success-output never --show-progress none
+
+      - name: Run nextest
+        if: runner.os != 'Windows'
         run: cargo nextest run --workspace --no-fail-fast --success-output never --show-progress none
 
   build-linux:
