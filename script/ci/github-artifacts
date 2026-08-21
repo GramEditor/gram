@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+arch="${ARCH:?ARCH environment variable is not set}"
+version="-dev"
+if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+  version="-$GITHUB_REF_NAME"
+else
+  version="-$GITHUB_SHA"
+fi
+
+mkdir -p artifacts
+cp "target/release/gram-linux-${arch}.tar.gz" "artifacts/gram-linux-${arch}${version}.tar.gz"
+cp "target/gram-remote-server-linux-${arch}.gz" "artifacts/gram-remote-server-linux-${arch}${version}.gz"
+cp "target/release/app.liten.Gram.flatpak" "artifacts/app.liten.Gram-${arch}${version}.flatpak"

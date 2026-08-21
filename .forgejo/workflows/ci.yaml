@@ -2,36 +2,53 @@
 name: CI
 
 on:
+  workflow_dispatch:
+    inputs:
+      skip_rust_build:
+        type: boolean
+        default: false
   push:
     branches:
       - main
       - test/*
       - test-fj/*
+      - test-release/*
+      - test-release-fj/*
     tags:
       - "*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: "1"
   CARGO_INCREMENTAL: "0"
+  RUSTUP_MAX_RETRIES: "10"
+  CARGO_NET_RETRY: "10"
 
 jobs:
   build:
     name: Build
-    if: github.ref_type == 'branch'
+    if: github.ref_type == 'branch' && !startsWith(github.ref, 'refs/heads/test-release') && !inputs.skip_rust_build
     runs-on: rust-22.04-amd64
     env:
       CC: clang
       CXX: clang++
       CC_x86_64_unknown_linux_musl: musl-gcc
     steps:
-      - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
+      - name: Checkout repo
+        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Cache build
         uses: actions/cache@3edfce9056124e459a23f683a21433670d47daca # v6.1.0
-        id: cache-gram-build
         with:
           path: |
             ~/.cargo/bin/
@@ -40,6 +57,7 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-gram-dev-cargo-${{ hashFiles('**/Cargo.lock') }}
+          lookup-only: true
 
       - name: Install dependencies
         run: ./script/prepare-ci ci
@@ -49,23 +67,23 @@ jobs:
 
   release:
     name: Release
-    if:
-      github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test/') || startsWith(github.ref,
-      'refs/heads/test-fj/')
+    if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release') || inputs.skip_rust_build
     runs-on: rust-22.04-amd64
+    environment: release
     env:
       CC: clang
       CXX: clang++
       CC_x86_64_unknown_linux_musl: musl-gcc
       GRAM_RPM_COMPRESSION: gzip
     steps:
-      - uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
+      - name: Checkout repo
+        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Cache build
         uses: actions/cache@3edfce9056124e459a23f683a21433670d47daca # v6.1.0
-        id: cache-gram-build
         with:
           path: |
             ~/.cargo/bin/
@@ -73,79 +91,79 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-gram-cargo-${{ hashFiles('**/Cargo.lock') }}
+            distdir/
+          key: ${{ runner.os }}-gram-release-cargo-${{ hashFiles('**/Cargo.lock') }}
+          lookup-only: true
 
       - name: Install dependencies
+        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
         run: ./script/prepare-ci release
 
       - name: Bundle Linux
+        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
         run: ./script/bundle-linux --tarball --deb --rpm
 
       - name: Set artifact name
+        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
         id: set_artifact_name
         shell: bash
-        run: |
-          version="-dev"
-          debversion="dev"
-          if [[ "$FORGEJO_REF_TYPE" == "tag" ]]; then
-            version="-$FORGEJO_REF_NAME"
-            debversion="$FORGEJO_REF_NAME"
-          elif [[ "$FORGEJO_REF_TYPE" == "branch" ]]; then
-            version="-$FORGEJO_SHA"
-            debversion="$FORGEJO_SHA"
-          fi
-          find target -name '*.gz'
-          rpm_name="$(find target -name '*.rpm' | head -1)"
-          rpm_base="$(basename "$rpm_name")"
-          deb_name="$(find target -name '*.deb' | head -1)"
-          echo "deb: $deb_name"
-          mv "target/release/gram-linux-x86_64.tar.gz" "./gram-linux-x86_64${version}.tar.gz"
-          mv "target/gram-remote-server-linux-x86_64.gz" "./gram-remote-server-linux-x86_64${version}.gz"
-          mv "$deb_name" "./gram_${debversion}-1_x86_64.deb"
-          mv "$rpm_name" "./gram_${debversion}-1_x86_64.rpm"
-          echo "tarball_amd64=gram-linux-x86_64${version}.tar.gz" >> "$FORGEJO_OUTPUT"
-          echo "remote_server_amd64=gram-remote-server-linux-x86_64${version}.gz" >> "$FORGEJO_OUTPUT"
-          echo "deb_amd64=gram_${debversion}-1_x86_64.deb" >> "$FORGEJO_OUTPUT"
-          echo "rpm_amd64=gram_${debversion}-1_x86_64.rpm" >> "$FORGEJO_OUTPUT"
+        run: ./script/ci/artifact-name
+
+      - name: Prepare pycargoebuild
+        run: ./script/prepare-pycargoebuild
+
+      - name: Generate crate-dist
+        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
+        id: gen_crate_dist
+        shell: bash
+        run: ./script/ci/generate-crates
 
       - name: Upload tarball
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
+        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
         with:
           name: ${{ steps.set_artifact_name.outputs.tarball_amd64 }}
           path: ${{ steps.set_artifact_name.outputs.tarball_amd64 }}
           compression-level: 0
 
-      - name: Upload remote-server
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - name: Upload remote server
+        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
+        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
         with:
           name: ${{ steps.set_artifact_name.outputs.remote_server_amd64 }}
           path: ${{ steps.set_artifact_name.outputs.remote_server_amd64 }}
           compression-level: 0
 
+      - name: Upload crate-dist
+        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
+        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
+        with:
+          name: ${{ steps.gen_crate_dist.outputs.name }}
+          path: ${{ steps.gen_crate_dist.outputs.name }}
+          compression-level: 0
+
       - name: Upload DEB
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
+        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
         with:
           name: ${{ steps.set_artifact_name.outputs.deb_amd64 }}
           path: ${{ steps.set_artifact_name.outputs.deb_amd64 }}
           compression-level: 0
 
       - name: Upload RPM
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
+        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
         with:
           name: ${{ steps.set_artifact_name.outputs.rpm_amd64 }}
           path: ${{ steps.set_artifact_name.outputs.rpm_amd64 }}
           compression-level: 0
 
-      - name: Publish DEB to package registry
+      - name: Publish packages
         if: github.ref_type == 'tag'
-        run: |
-          curl --user krig:${{ secrets.CODEBERG_PACKAGE_TOKEN }} \
-               --upload-file ${{ steps.set_artifact_name.outputs.deb_amd64 }} \
-               https://codeberg.org/api/packages/GramEditor/debian/pool/gram/release/upload
-
-      - name: Publish RPM to package registry
-        if: github.ref_type == 'tag'
-        run: |
-          curl --user krig:${{ secrets.CODEBERG_PACKAGE_TOKEN }} \
-               --upload-file ${{ steps.set_artifact_name.outputs.rpm_amd64 }} \
-               https://codeberg.org/api/packages/GramEditor/rpm/upload
+        env:
+          DEB_FILE: ${{ steps.set_artifact_name.outputs.deb_amd64 }}
+          RPM_FILE: ${{ steps.set_artifact_name.outputs.rpm_amd64 }}
+          CRATE_FILE: ${{ steps.gen_crate_dist.outputs.name }}
+          REF_NAME: ${{ github.ref_name }}
+          TOKEN: ${{ secrets.CODEBERG_PACKAGE_TOKEN }}
+        run: ./script/ci/publish-packages
