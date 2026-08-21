@@ -25,12 +25,12 @@ jobs:
       CXX: clang++
       CC_x86_64_unknown_linux_musl: musl-gcc
     steps:
-      - uses: actions/checkout@v4
+      - uses: forgejo/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Cache build
-        uses: actions/cache@v3
+        uses: forgejo/cache@3edfce9056124e459a23f683a21433670d47daca # v6.1.0
         id: cache-gram-build
         with:
           path: |
@@ -45,7 +45,7 @@ jobs:
         run: ./script/prepare-ci ci
 
       - name: Cargo nextest
-        run: cargo nextest run --workspace --success-output never --show-progress none
+        run: cargo nextest run --workspace --no-fail-fast --success-output never --show-progress none
 
   release:
     name: Release
@@ -59,12 +59,12 @@ jobs:
       CC_x86_64_unknown_linux_musl: musl-gcc
       GRAM_RPM_COMPRESSION: gzip
     steps:
-      - uses: actions/checkout@v4
+      - uses: forgejo/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Cache build
-        uses: actions/cache@v3
+        uses: forgejo/cache@3edfce9056124e459a23f683a21433670d47daca # v6.1.0
         id: cache-gram-build
         with:
           path: |
@@ -87,50 +87,50 @@ jobs:
         run: |
           version="-dev"
           debversion="dev"
-          if [[ $FORGEJO_REF_TYPE == "tag" ]]; then
-            version=-$FORGEJO_REF_NAME
-            debversion=$FORGEJO_REF_NAME
-          elif [[ $FORGEJO_REF_TYPE == "branch" ]]; then
+          if [[ "$FORGEJO_REF_TYPE" == "tag" ]]; then
+            version="-$FORGEJO_REF_NAME"
+            debversion="$FORGEJO_REF_NAME"
+          elif [[ "$FORGEJO_REF_TYPE" == "branch" ]]; then
             version="-$FORGEJO_SHA"
             debversion="$FORGEJO_SHA"
           fi
           find target -name '*.gz'
           rpm_name="$(find target -name '*.rpm' | head -1)"
-          rpm_base="$(basename $rpm_name)"
+          rpm_base="$(basename "$rpm_name")"
           deb_name="$(find target -name '*.deb' | head -1)"
           echo "deb: $deb_name"
-          mv target/release/gram-linux-x86_64.tar.gz "./gram-linux-x86_64${version}.tar.gz"
-          mv target/gram-remote-server-linux-x86_64.gz "./gram-remote-server-linux-x86_64${version}.gz"
-          mv $deb_name "./gram_${debversion}-1_x86_64.deb"
-          mv $rpm_name "./gram_${debversion}-1_x86_64.rpm"
-          echo "tarball_amd64=gram-linux-x86_64${version}.tar.gz" >> $FORGEJO_OUTPUT
-          echo "remote_server_amd64=gram-remote-server-linux-x86_64${version}.gz" >> $FORGEJO_OUTPUT
-          echo "deb_amd64=gram_${debversion}-1_x86_64.deb" >> $FORGEJO_OUTPUT
-          echo "rpm_amd64=gram_${debversion}-1_x86_64.rpm" >> $FORGEJO_OUTPUT
+          mv "target/release/gram-linux-x86_64.tar.gz" "./gram-linux-x86_64${version}.tar.gz"
+          mv "target/gram-remote-server-linux-x86_64.gz" "./gram-remote-server-linux-x86_64${version}.gz"
+          mv "$deb_name" "./gram_${debversion}-1_x86_64.deb"
+          mv "$rpm_name" "./gram_${debversion}-1_x86_64.rpm"
+          echo "tarball_amd64=gram-linux-x86_64${version}.tar.gz" >> "$FORGEJO_OUTPUT"
+          echo "remote_server_amd64=gram-remote-server-linux-x86_64${version}.gz" >> "$FORGEJO_OUTPUT"
+          echo "deb_amd64=gram_${debversion}-1_x86_64.deb" >> "$FORGEJO_OUTPUT"
+          echo "rpm_amd64=gram_${debversion}-1_x86_64.rpm" >> "$FORGEJO_OUTPUT"
 
       - name: Upload tarball
-        uses: forgejo/upload-artifact@v4
+        uses: forgejo/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.set_artifact_name.outputs.tarball_amd64 }}
           path: ${{ steps.set_artifact_name.outputs.tarball_amd64 }}
           compression-level: 0
 
       - name: Upload remote-server
-        uses: forgejo/upload-artifact@v4
+        uses: forgejo/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.set_artifact_name.outputs.remote_server_amd64 }}
           path: ${{ steps.set_artifact_name.outputs.remote_server_amd64 }}
           compression-level: 0
 
       - name: Upload DEB
-        uses: forgejo/upload-artifact@v4
+        uses: forgejo/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.set_artifact_name.outputs.deb_amd64 }}
           path: ${{ steps.set_artifact_name.outputs.deb_amd64 }}
           compression-level: 0
 
       - name: Upload RPM
-        uses: forgejo/upload-artifact@v4
+        uses: forgejo/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ steps.set_artifact_name.outputs.rpm_amd64 }}
           path: ${{ steps.set_artifact_name.outputs.rpm_amd64 }}
