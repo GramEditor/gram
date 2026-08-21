@@ -31,24 +31,24 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: taiki-e/install-action@b6b84cf49ebfe0176417bdce007c624f0db37f20 # v2.86.2
-        with:
-          tool: cargo-nextest
-
       - name: Fix Microslop # https://github.com/microsoft/python-environment-tools/issues/171
         if: runner.os == 'Windows'
         run: git config --global core.longpaths true
-
-      - name: Install dependencies
-        if: runner.os == 'Linux'
-        run: ./script/prepare-ci ci
 
       - name: Update cargo path
         if: runner.os == 'macOS'
         run: echo "/Users/runner/.cargo/bin" >> $GITHUB_PATH
 
+      - uses: taiki-e/install-action@b6b84cf49ebfe0176417bdce007c624f0db37f20 # v2.86.2
+        with:
+          tool: cargo-nextest
+
       - name: Cache Rust build
         uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2.9.3
+
+      - name: Install dependencies
+        if: runner.os == 'Linux'
+        run: ./script/prepare-ci ci
 
       - name: Run nextest
         if: runner.os == 'Windows'
@@ -71,7 +71,7 @@ jobs:
       matrix:
         include:
           - arch: x86_64
-            runner: ubuntu-24.04
+            runner: ubuntu-latest # v24.04
             artifact_name: linux-x86_64
           - arch: aarch64
             runner: ubuntu-24.04-arm
