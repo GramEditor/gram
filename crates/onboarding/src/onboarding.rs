@@ -93,7 +93,7 @@ pub fn init(cx: &mut App) {
                     if let Some(existing) = existing {
                         workspace.activate_item(&existing, true, true, window, cx);
                     } else {
-                        let settings_page = cx.new(|cx| WelcomePage::new(workspace.weak_handle(), false, window, cx));
+                        let settings_page = cx.new(|cx| WelcomePage::new(workspace.weak_handle(), window, cx));
                         workspace.add_item_to_active_pane(Box::new(settings_page), None, true, window, cx)
                     }
                 })
@@ -326,7 +326,7 @@ fn go_to_welcome_page(cx: &mut App) {
             if let Some(idx) = idx {
                 pane.activate_item(idx, true, true, window, cx);
             } else {
-                let item = Box::new(cx.new(|cx| WelcomePage::new(workspace.weak_handle(), false, window, cx)));
+                let item = Box::new(cx.new(|cx| WelcomePage::new(workspace.weak_handle(), window, cx)));
                 pane.add_item(item, true, true, Some(onboarding_idx), window, cx);
             }
 

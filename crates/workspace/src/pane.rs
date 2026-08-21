@@ -3627,9 +3627,8 @@ impl Render for Pane {
                             } else {
                                 if self.welcome_page.is_none() {
                                     let workspace = self.workspace.clone();
-                                    self.welcome_page = Some(
-                                        cx.new(|cx| crate::welcome::WelcomePage::new(workspace, true, window, cx)),
-                                    );
+                                    self.welcome_page =
+                                        Some(cx.new(|cx| crate::welcome::WelcomePage::new(workspace, window, cx)));
                                 }
                                 placeholder.child(self.welcome_page.clone().unwrap())
                             }

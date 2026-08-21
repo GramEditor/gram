@@ -195,41 +195,32 @@ impl<const COLS: usize> Section<COLS> {
 pub struct WelcomePage {
     workspace: WeakEntity<Workspace>,
     focus_handle: FocusHandle,
-    fallback_to_recent_projects: bool,
     recent_workspaces: Option<Vec<(WorkspaceId, SerializedWorkspaceLocation, PathList)>>,
 }
 
 impl WelcomePage {
-    pub fn new(
-        workspace: WeakEntity<Workspace>,
-        fallback_to_recent_projects: bool,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> Self {
+    pub fn new(workspace: WeakEntity<Workspace>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let focus_handle = cx.focus_handle();
         cx.on_focus(&focus_handle, window, |_, _, cx| cx.notify()).detach();
 
-        if fallback_to_recent_projects {
-            cx.spawn_in(window, async move |this: WeakEntity<Self>, cx| {
-                let workspaces = WORKSPACE_DB
-                    .recent_workspaces_on_disk()
-                    .await
-                    .log_err()
-                    .unwrap_or_default();
+        cx.spawn_in(window, async move |this: WeakEntity<Self>, cx| {
+            let workspaces = WORKSPACE_DB
+                .recent_workspaces_on_disk()
+                .await
+                .log_err()
+                .unwrap_or_default();
 
-                this.update(cx, |this, cx| {
-                    this.recent_workspaces = Some(workspaces);
-                    cx.notify();
-                })
-                .ok();
+            this.update(cx, |this, cx| {
+                this.recent_workspaces = Some(workspaces);
+                cx.notify();
             })
-            .detach();
-        }
+            .ok();
+        })
+        .detach();
 
         WelcomePage {
             workspace,
             focus_handle,
-            fallback_to_recent_projects,
             recent_workspaces: None,
         }
     }
@@ -245,32 +236,32 @@ impl WelcomePage {
     }
 
     fn open_recent_project(&mut self, action: &OpenRecentProject, window: &mut Window, cx: &mut Context<Self>) {
-        if let Some(recent_workspaces) = &self.recent_workspaces {
-            if let Some((_workspace_id, location, paths)) = recent_workspaces.get(action.index) {
-                let paths = paths.clone();
-                let location = location.clone();
-                let is_local = matches!(location, SerializedWorkspaceLocation::Local);
-                let workspace = self.workspace.clone();
+        if let Some(recent_workspaces) = &self.recent_workspaces
+            && let Some((_workspace_id, location, paths)) = recent_workspaces.get(action.index)
+        {
+            let paths = paths.clone();
+            let location = location.clone();
+            let is_local = matches!(location, SerializedWorkspaceLocation::Local);
+            let workspace = self.workspace.clone();
 
-                if is_local {
-                    let paths = paths.paths().to_vec();
-                    cx.spawn_in(window, async move |_, cx| {
-                        let _ = workspace.update_in(cx, |workspace, window, cx| {
-                            workspace.open_workspace_for_paths(true, paths, window, cx).detach();
-                        });
+            if is_local {
+                let paths = paths.paths().to_vec();
+                cx.spawn_in(window, async move |_, cx| {
+                    workspace.update_in(cx, |workspace, window, cx| {
+                        workspace
+                            .open_workspace_for_paths(true, paths, window, cx)
+                            .detach_and_log_err(cx);
                     })
-                    .detach();
-                } else {
-                    window.dispatch_action(OpenRecent::default().boxed_clone(), cx);
-                }
+                })
+                .detach_and_log_err(cx);
             } else {
-                log::info!(
-                    "open_recent_project: no recent workspace with index {} found",
-                    action.index
-                );
+                window.dispatch_action(OpenRecent::default().boxed_clone(), cx);
             }
         } else {
-            log::info!("open_recent_project: recent_workspaces was None");
+            log::info!(
+                "open_recent_project: no recent workspace with index {} found",
+                action.index
+            );
         }
     }
 
@@ -290,11 +281,9 @@ impl WelcomePage {
         let (icon, title) = match location {
             SerializedWorkspaceLocation::Local => {
                 let path = paths.paths().first().map(|p| p.as_path());
-                let name = path
-                    .and_then(|p| p.file_name())
-                    .map(|n| n.to_string_lossy().to_string())
-                    .unwrap_or_else(|| "Untitled".to_string());
-                (IconName::Folder, name)
+                path.and_then(|p| p.file_name())
+                    .map(|n| (IconName::Folder, SharedString::from(n.to_string_lossy().to_string())))
+                    .unwrap_or_else(|| (IconName::Warning, SharedString::from("Untitled")))
             }
             SerializedWorkspaceLocation::Remote(options) => {
                 let display_name = options.display_name();
@@ -304,10 +293,10 @@ impl WelcomePage {
                         options
                             .nickname
                             .as_ref()
-                            .map(|nick| nick.into())
-                            .unwrap_or_else(|| display_name.clone()),
+                            .map(|nick| SharedString::from(nick))
+                            .unwrap_or_else(|| SharedString::from(display_name)),
                     ),
-                    RemoteConnectionOptions::Wsl(_) => (IconName::ServerCrash, display_name),
+                    RemoteConnectionOptions::Wsl(_) => (IconName::ServerCrash, SharedString::from(display_name)),
                 }
             }
         };
@@ -332,7 +321,7 @@ impl Render for WelcomePage {
             .map(|(index, (_, loc, paths))| self.render_recent_project(index, loc, paths))
             .collect::<Vec<_>>();
 
-        let second_section = if self.fallback_to_recent_projects && !recent_projects.is_empty() {
+        let second_section = if !recent_projects.is_empty() {
             self.render_recent_project_section(recent_projects).into_any_element()
         } else {
             second_section
@@ -455,7 +444,7 @@ impl crate::SerializableItem for WelcomePage {
             .ok()
             .is_some_and(|is_open| is_open)
         {
-            Task::ready(Ok(cx.new(|cx| WelcomePage::new(workspace, false, window, cx))))
+            Task::ready(Ok(cx.new(|cx| WelcomePage::new(workspace, window, cx))))
         } else {
             Task::ready(Err(anyhow::anyhow!("No welcome page to deserialize")))
         }
