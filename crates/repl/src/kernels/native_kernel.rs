@@ -398,7 +398,7 @@ async fn read_kernelspec_at(
         anyhow::bail!("Not a directory: {path:?}");
     }
 
-    let expected_kernel_json = path.join("kernel.jsonc");
+    let expected_kernel_json = path.join("kernel.json");
     let spec = fs.load(expected_kernel_json.as_path()).await?;
     let spec = serde_json::from_str::<JupyterKernelspec>(&spec)?;
 
@@ -499,7 +499,7 @@ mod test {
                 },
                 "kernels": {
                     "python": {
-                        "kernel.jsonc": r#"{
+                        "kernel.json": r#"{
                             "display_name": "Python 3",
                             "language": "python",
                             "argv": ["python3", "-m", "ipykernel_launcher", "-f", "{connection_file}"],
@@ -507,7 +507,7 @@ mod test {
                         }"#
                     },
                     "deno": {
-                        "kernel.jsonc": r#"{
+                        "kernel.json": r#"{
                             "display_name": "Deno",
                             "language": "typescript",
                             "argv": ["deno", "run", "--unstable", "--allow-net", "--allow-read", "https://deno.land/std/http/file_server.ts", "{connection_file}"],

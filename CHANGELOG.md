@@ -72,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   repository root, which git rejects
 - Don't create text system or wgpu context if headless (#361)
 - Improved smooth scrolling support
+- Fix incorrect jsonc suffix on jupyter kernels (#365)
 
 ## [3.2.0] - 2026-07-27
 
