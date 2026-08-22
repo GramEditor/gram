@@ -73,6 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Don't create text system or wgpu context if headless (#361)
 - Improved smooth scrolling support
 - Fix incorrect jsonc suffix on jupyter kernels (#365)
+- Fix X11 keyboard state synchronization (zed#53903) (#440)
 
 ## [3.2.0] - 2026-07-27
 
