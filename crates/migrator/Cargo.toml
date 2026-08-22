@@ -22,7 +22,6 @@ tree-sitter-json.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true
-unindent.workspace = true
 
 [lints]
 workspace = true

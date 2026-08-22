@@ -19,7 +19,6 @@ http_client_tls.workspace = true
 log.workspace = true
 regex.workspace = true
 reqwest.workspace = true
-serde.workspace = true
 tokio = { workspace = true, features = ["rt", "rt-multi-thread"] }
 
 [features]

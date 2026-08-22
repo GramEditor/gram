@@ -171,7 +171,6 @@ command_palette = { path = "crates/command_palette" }
 command_palette_hooks = { path = "crates/command_palette_hooks" }
 component = { path = "crates/component" }
 crashes = { path = "crates/crashes" }
-crossbeam = "0.8.4"
 dap = { path = "crates/dap" }
 dap_adapters = { path = "crates/dap_adapters" }
 db = { path = "crates/db" }
@@ -198,7 +197,6 @@ go_to_line = { path = "crates/go_to_line" }
 gpui = { path = "crates/gpui", default-features = false }
 gpui_macros = { path = "crates/gpui_macros" }
 gpui_tokio = { path = "crates/gpui_tokio" }
-gram = { path = "crates/gram" }
 http_client = { path = "crates/http_client" }
 http_client_tls = { path = "crates/http_client_tls" }
 icons = { path = "crates/icons" }
@@ -232,8 +230,6 @@ panel = { path = "crates/panel" }
 paths = { path = "crates/paths" }
 perf = { path = "tooling/perf" }
 picker = { path = "crates/picker" }
-plugin = { path = "crates/plugin" }
-plugin_macros = { path = "crates/plugin_macros" }
 prettier = { path = "crates/prettier" }
 project = { path = "crates/project" }
 project_panel = { path = "crates/project_panel" }
@@ -244,12 +240,10 @@ recent_projects = { path = "crates/recent_projects" }
 refineable = { path = "crates/refineable" }
 release_channel = { path = "crates/release_channel" }
 remote = { path = "crates/remote" }
-remote_server = { path = "crates/remote_server" }
 repl = { path = "crates/repl" }
 reqwest_client = { path = "crates/reqwest_client" }
 rope = { path = "crates/rope" }
 rpc = { path = "crates/rpc" }
-scheduler = { path = "crates/scheduler" }
 search = { path = "crates/search" }
 session = { path = "crates/session" }
 settings = { path = "crates/settings" }
@@ -263,7 +257,6 @@ snippets_ui = { path = "crates/snippets_ui" }
 sqlez = { path = "crates/sqlez" }
 sqlez_macros = { path = "crates/sqlez_macros" }
 story = { path = "crates/story" }
-streaming_diff = { path = "crates/streaming_diff" }
 sum_tree = { path = "crates/sum_tree" }
 svg_preview = { path = "crates/svg_preview" }
 system_specs = { path = "crates/system_specs" }
@@ -275,7 +268,6 @@ terminal_view = { path = "crates/terminal_view" }
 text = { path = "crates/text" }
 theme = { path = "crates/theme" }
 theme_extension = { path = "crates/theme_extension" }
-theme_importer = { path = "crates/theme_importer" }
 theme_selector = { path = "crates/theme_selector" }
 time_format = { path = "crates/time_format" }
 title_bar = { path = "crates/title_bar" }
@@ -318,7 +310,6 @@ base64 = "0.22.1"
 bitcode = { version = "0.6.9", features = ["derive", "serde", "std"] }
 bitflags = "2.13.1"
 block2 = "0.6.2"
-brotli = "8.0.2"
 bytes = "1.12.1"
 chardetng = "1.0.0"
 chrono = { version = "0.4.45", features = ["clock", "oldtime", "serde", "std", "wasmbind"] }
@@ -329,7 +320,6 @@ crash-handler = "0.7.0"
 criterion = { version = "0.8.2", features = ["cargo_bench_support", "html_reports", "plotters", "rayon"] }
 ctor = "0.12.0"
 dap-types = { git = "https://github.com/zed-industries/dap-types", rev = "1b461b310481d01e02b2603c16d7144b926339f8" }
-dashmap = "6.1"
 derive_more = { version = "2.1.1", features = ["full", "std"] }
 dirs = "6.0.0"
 dispatch2 = "0.3.1"
@@ -342,18 +332,13 @@ exec = "0.3.1"
 fancy-regex = "0.18.0"
 fork = "0.7.0"
 futures = "0.3.33"
-futures-batch = "0.6.1"
 futures-lite = "2.6.1"
 globset = "0.4.20"
-handlebars = "4.3"
-hashbrown = "0.16.1"
 heck = "0.5.0"
-heed = { version = "0.21.0", features = ["read-txn-no-tls", "serde", "serde-bincode", "serde-json"] }
 hex = "0.4.3"
 http = "1.5.0"
 http-body = "1.1.0"
 human_bytes = "0.4.3"
-hyper = "1.9"
 ignore = "0.4.33"
 image = "0.25.10"
 imara-diff = "0.2.0"
@@ -363,10 +348,8 @@ inventory = "0.3.24"
 is_executable = "1.0.6"
 itertools = "0.14.0"
 json_dotpath = "1.1.0"
-jsonschema = "0.37.0"
 jupyter-protocol = "1.5.0"
 jupyter-websocket-client = "1.1.0"
-kdl = "6.5.0"
 libc = "0.2.189"
 libsqlite3-sys = { version = "0.37.0", features = ["bundled", "min_sqlite_version_3_34_1"] }
 linkify = "0.11.0"
@@ -374,17 +357,12 @@ log = { version = "0.4.33", features = ["kv_unstable_serde", "serde"] }
 lsp-types = { git = "https://github.com/zed-industries/lsp-types", rev = "b71ab4eeb27d9758be8092020a46fe33fbca4e33" }
 mach2 = "0.6.0"
 mermaid-rs-renderer = "0.2.2"
-metal = "0.29"
 minidumper = "0.10.1"
 moka = { version = "0.12.15", features = ["sync"] }
-# Keep these in sync
-naga = { version = "30.0.0", features = ["wgsl-in"] }
-nanoid = "0.4"
 nbformat = "1.2.2"
 nix = "0.31.3"
 notify = "9.0.0-rc.3"
 num-format = "0.4.4"
-num-traits = "0.2"
 objc2 = "0.6.4"
 objc2-app-kit = "0.3.2"
 objc2-color-sync = "0.3.2"
@@ -392,15 +370,12 @@ objc2-core-foundation = "0.3.2"
 objc2-core-graphics = "0.3.2"
 objc2-core-services = "0.3.2"
 objc2-foundation = "0.3.2"
-objc2-metal = "0.3"
 objc2-quartz-core = "0.3.2"
 open = "5.4.1"
 ordered-float = "5.3.0"
 palette = { version = "0.7.7", default-features = false, features = ["std"] }
 parking_lot = "0.12.5"
 parse_int = "0.9.0"
-partial-json-fixer = "0.5.3"
-pathdiff = "0.2"
 pciid-parser = "0.8.1"
 pet = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
 pet-conda = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
@@ -415,13 +390,11 @@ proc-macro2 = "1.0.107"
 profiling = "1.0.18"
 prost = "0.14.4"
 prost-build = "0.14.4"
-prost-types = "0.14.3"
 protobuf-src = "2.1.1"
 pulldown-cmark = { version = "0.13.4", default-features = false }
 quote = "1.0.47"
 rand = "0.10.2"
 rayon = "1.12.0"
-ref-cast = "1.0.25"
 regex = "1.13.1"
 
 rsa = "0.9.10"
@@ -433,16 +406,13 @@ rustls-platform-verifier = "0.7.0"
 schemars = { version = "1.2.2", features = ["derive", "indexmap2", "smol_str03", "std"] }
 semver = { version = "1.0.28", features = ["serde", "std"] }
 serde = { version = "1.0.229", features = ["derive", "rc", "std"] }
-serde_derive = "1.0.221"
 serde_json = { version = "1.0.151", features = ["preserve_order", "raw_value", "std"] }
 serde_json_lenient = { version = "0.2.4", features = ["preserve_order", "raw_value", "std"] }
 serde_path_to_error = "0.1.20"
 serde_repr = "0.1.21"
-serde_urlencoded = "0.7"
 sha2 = "0.10.9"
 shellexpand = "3.1.2"
 shlex = "1.3.0"
-similar = "2.6"
 simplelog = "0.12.2"
 slotmap = "1.1.1"
 smallvec = { version = "1.15.2", features = ["const_new", "union"] }
@@ -452,7 +422,6 @@ stacksafe = "1.0.3"
 streaming-iterator = "0.1.9"
 strsim = "0.11.1"
 strum = { version = "0.28.0", features = ["derive", "std"] }
-subtle = "2.5.0"
 syn = { version = "2.0.119", features = ["clone-impls", "derive", "extra-traits", "full", "parsing", "printing", "proc-macro", "visit-mut"] }
 sys-locale = "0.3.2"
 sysinfo = "0.38.4"
@@ -515,8 +484,6 @@ wax = "0.7.0"
 wgpu = "30.0.0"
 which = "8.0.5"
 windows-core = "0.61.2"
-wit-component = "0.221"
-yawc = "0.2.5"
 zeroize = "1.9.0"
 zstd = "0.13.3"
 
@@ -603,9 +570,6 @@ type_complexity = "allow"
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "allow" }
-
-[workspace.metadata.cargo-machete]
-ignored = ["bindgen", "cbindgen", "prost_build", "serde", "component", "documented", "sea-orm-macros"]
 
 [patch.crates-io]
 async-task = { git = "https://github.com/smol-rs/async-task.git", rev = "b4486cd71e4e94fbda54ce6302444de14f4d190e" }

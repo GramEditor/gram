@@ -779,26 +779,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bindgen"
-version = "0.72.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "993776b509cfb49c750f11b8f07a46fa23e0a1386ffc01fb1e7d343efc387895"
-dependencies = [
- "bitflags 2.13.1",
- "cexpr",
- "clang-sys",
- "itertools 0.13.0",
- "log",
- "prettyplease",
- "proc-macro2",
- "quote",
- "regex",
- "rustc-hash 2.1.3",
- "shlex 1.3.0",
- "syn 2.0.119",
-]
-
-[[package]]
 name = "bit-set"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1193,24 +1173,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37b2a672a2cb129a2e41c10b1224bb368f9f37a2b16b612598138befd7b37eb5"
 
 [[package]]
-name = "cbindgen"
-version = "0.29.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ecb53484c9c167ba674026b656d8a27d7657a58e6066aa902bfb1a4aa00ae20"
-dependencies = [
- "heck",
- "indexmap",
- "log",
- "proc-macro2",
- "quote",
- "serde",
- "serde_json",
- "syn 2.0.119",
- "tempfile",
- "toml 0.9.12+spec-1.1.0",
-]
-
-[[package]]
 name = "cc"
 version = "1.2.67"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1220,15 +1182,6 @@ dependencies = [
  "jobserver",
  "libc",
  "shlex 2.0.1",
-]
-
-[[package]]
-name = "cexpr"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6fac387a98bb7c37292057cffc56d62ecb629900026402633ae9160df93a8766"
-dependencies = [
- "nom 7.1.3",
 ]
 
 [[package]]
@@ -1311,17 +1264,6 @@ name = "circular-buffer"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14c638459986b83c2b885179bd4ea6a2cbb05697b001501a56adb3a3d230803b"
-
-[[package]]
-name = "clang-sys"
-version = "1.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "157a8ba7b480713b56f4c09fd13fc3e0a22a5dfab8097ba61cbc5feef950788a"
-dependencies = [
- "glob",
- "libc",
- "libloading",
-]
 
 [[package]]
 name = "clap"
@@ -1409,7 +1351,6 @@ dependencies = [
  "serde",
  "settings",
  "thiserror 2.0.19",
- "time",
  "tokio",
  "tokio-native-tls",
  "tokio-rustls",
@@ -1502,7 +1443,6 @@ version = "3.2.0"
 dependencies = [
  "anyhow",
  "app_actions",
- "collections",
  "command_palette_hooks",
  "db",
  "editor",
@@ -2113,7 +2053,6 @@ dependencies = [
  "log",
  "node_runtime",
  "paths",
- "serde",
  "serde_json",
  "settings",
  "smol",
@@ -2382,7 +2321,6 @@ version = "3.2.0"
 dependencies = [
  "anyhow",
  "collections",
- "component",
  "ctor",
  "editor",
  "gpui",
@@ -2395,7 +2333,6 @@ dependencies = [
  "pretty_assertions",
  "project",
  "rand 0.10.2",
- "serde",
  "serde_json",
  "settings",
  "text",
@@ -2504,13 +2441,11 @@ dependencies = [
  "anyhow",
  "app_actions",
  "assets",
- "component",
  "editor",
  "gpui",
  "language",
  "markdown_preview",
  "regex",
- "serde",
  "settings",
  "theme",
  "ui",
@@ -2633,7 +2568,6 @@ dependencies = [
  "task",
  "text",
  "theme",
- "time",
  "tree-sitter-bash",
  "tree-sitter-c",
  "tree-sitter-html",
@@ -2972,7 +2906,6 @@ dependencies = [
  "log",
  "reqwest_client",
  "rpc",
- "serde",
  "serde_json",
  "theme",
  "tokio",
@@ -3155,7 +3088,6 @@ name = "file_icons"
 version = "3.2.0"
 dependencies = [
  "gpui",
- "serde",
  "theme",
  "util",
 ]
@@ -3371,7 +3303,6 @@ dependencies = [
  "smol",
  "tempfile",
  "text",
- "time",
  "trash",
  "util",
  "windows 0.61.3",
@@ -3703,8 +3634,6 @@ dependencies = [
  "indoc",
  "pretty_assertions",
  "regex",
- "serde",
- "serde_json",
  "settings",
  "url",
  "urlencoding",
@@ -3842,7 +3771,6 @@ dependencies = [
  "menu",
  "project",
  "rope",
- "serde",
  "serde_json",
  "settings",
  "text",
@@ -3886,13 +3814,11 @@ dependencies = [
  "ashpd",
  "async-task",
  "backtrace",
- "bindgen",
  "bitflags 2.13.1",
  "block2",
  "bytemuck",
  "calloop",
  "calloop-wayland-source",
- "cbindgen",
  "circular-buffer",
  "collections",
  "cosmic-text",
@@ -3925,7 +3851,6 @@ dependencies = [
  "open",
  "parking",
  "parking_lot",
- "pathfinder_geometry",
  "pin-project",
  "postage",
  "profiling",
@@ -4066,7 +3991,6 @@ dependencies = [
  "paths",
  "picker",
  "pretty_assertions",
- "profiling",
  "project",
  "project_panel",
  "project_symbols",
@@ -4094,13 +4018,11 @@ dependencies = [
  "sysinfo",
  "system_specs",
  "tab_switcher",
- "task",
  "tasks_ui",
  "terminal_view",
  "theme",
  "theme_extension",
  "theme_selector",
- "time",
  "title_bar",
  "toolchain_selector",
  "tree-sitter-md",
@@ -4608,7 +4530,6 @@ dependencies = [
  "language",
  "log",
  "project",
- "serde",
  "settings",
  "theme",
  "ui",
@@ -4974,7 +4895,6 @@ dependencies = [
  "editor",
  "gpui",
  "log",
- "serde",
  "settings",
  "shellexpand",
  "workspace",
@@ -5025,7 +4945,6 @@ dependencies = [
  "paths",
  "project",
  "schemars",
- "serde",
  "serde_json",
  "settings",
  "snippet_provider",
@@ -5077,7 +4996,6 @@ dependencies = [
  "app_actions",
  "collections",
  "command_palette",
- "component",
  "db",
  "editor",
  "fs",
@@ -5092,7 +5010,6 @@ dependencies = [
  "paths",
  "project",
  "search",
- "serde",
  "serde_json",
  "settings",
  "tempfile",
@@ -5246,7 +5163,6 @@ dependencies = [
  "async-trait",
  "collections",
  "extension",
- "fs",
  "futures 0.3.33",
  "gpui",
  "language",
@@ -5337,7 +5253,6 @@ dependencies = [
  "pretty_assertions",
  "project",
  "regex",
- "rope",
  "rust-embed",
  "semver",
  "serde",
@@ -5851,7 +5766,6 @@ dependencies = [
  "streaming-iterator",
  "tree-sitter",
  "tree-sitter-json",
- "unindent",
 ]
 
 [[package]]
@@ -6697,7 +6611,6 @@ dependencies = [
  "app_actions",
  "component",
  "db",
- "documented",
  "fs",
  "fuzzy",
  "gpui",
@@ -6980,25 +6893,6 @@ name = "pastey"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35fb2e5f958ec131621fdd531e9fc186ed768cbe395337403ae56c17a74c68ec"
-
-[[package]]
-name = "pathfinder_geometry"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b7b7e7b4ea703700ce73ebf128e1450eb69c3a8329199ffbfb9b2a0418e5ad3"
-dependencies = [
- "log",
- "pathfinder_simd",
-]
-
-[[package]]
-name = "pathfinder_simd"
-version = "0.5.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4500030c302e4af1d423f36f3b958d1aecb6c04184356ed5a833bf6b60435777"
-dependencies = [
- "rustc_version",
-]
 
 [[package]]
 name = "paths"
@@ -8526,11 +8420,9 @@ dependencies = [
  "picker",
  "project",
  "remote",
- "serde",
  "serde_json",
  "settings",
  "smol",
- "task",
  "theme",
  "ui",
  "util",
@@ -8716,7 +8608,6 @@ dependencies = [
  "reqwest_client",
  "rpc",
  "rust-embed",
- "serde",
  "serde_json",
  "settings",
  "shellexpand",
@@ -8769,7 +8660,6 @@ dependencies = [
  "project",
  "proto",
  "runtimelib",
- "serde",
  "serde_json",
  "settings",
  "smol",
@@ -8796,7 +8686,6 @@ dependencies = [
  "http_client_tls",
  "log",
  "regex",
- "serde",
  "tokio",
  "zed-reqwest",
 ]
@@ -9265,7 +9154,6 @@ dependencies = [
  "clap",
  "env_logger 0.11.11",
  "schemars",
- "serde",
  "serde_json",
  "settings",
  "theme",
@@ -10523,7 +10411,6 @@ dependencies = [
  "menu",
  "picker",
  "project",
- "serde",
  "serde_json",
  "task",
  "tree-sitter-rust",
@@ -10728,7 +10615,6 @@ dependencies = [
  "gpui",
  "log",
  "picker",
- "serde",
  "settings",
  "theme",
  "ui",
@@ -13058,7 +12944,6 @@ version = "3.2.0"
 dependencies = [
  "command_palette",
  "gpui",
- "serde",
  "settings",
  "theme",
  "ui",
@@ -13920,7 +13805,6 @@ dependencies = [
  "pretty_assertions",
  "rand 0.10.2",
  "rpc",
- "serde",
  "serde_json",
  "settings",
  "smallvec",

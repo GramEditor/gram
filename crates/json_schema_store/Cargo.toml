@@ -18,7 +18,6 @@ language.workspace = true
 paths.workspace = true
 project.workspace = true
 schemars.workspace = true
-serde.workspace = true
 serde_json.workspace = true
 settings.workspace = true
 snippet_provider.workspace = true

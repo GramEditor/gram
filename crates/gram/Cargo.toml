@@ -23,9 +23,6 @@ osx_minimum_system_version = "10.15.7"
 osx_info_plist_exts = ["resources/info/*"]
 osx_url_schemes = ["gram"]
 
-[package.metadata.cargo-machete]
-ignored = ["profiling", "zstd", "winresource"]
-
 [package.metadata.deb]
 name = "gram"
 maintainer = "Kristoffer Grönlund <k@ziran.se>"
@@ -138,7 +135,6 @@ outline_panel.workspace = true
 parking_lot.workspace = true
 paths.workspace = true
 picker.workspace = true
-profiling.workspace = true
 project.workspace = true
 project_panel.workspace = true
 project_symbols.workspace = true
@@ -164,13 +160,11 @@ snippets_ui.workspace = true
 svg_preview.workspace = true
 sysinfo.workspace = true
 tab_switcher.workspace = true
-task.workspace = true
 tasks_ui.workspace = true
 terminal_view.workspace = true
 theme.workspace = true
 theme_extension.workspace = true
 theme_selector.workspace = true
-time.workspace = true
 title_bar.workspace = true
 toolchain_selector.workspace = true
 ui.workspace = true

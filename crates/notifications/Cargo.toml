@@ -27,3 +27,6 @@ test-support = [
 
 [lints]
 workspace = true
+
+[package.metadata.cargo-shear]
+ignored = ["component"]

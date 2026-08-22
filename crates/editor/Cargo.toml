@@ -62,7 +62,6 @@ sum_tree.workspace = true
 task.workspace = true
 text.workspace = true
 theme.workspace = true
-time.workspace = true
 tree-sitter-c = { workspace = true, optional = true }
 tree-sitter-html = { workspace = true, optional = true }
 tree-sitter-python = { workspace = true, optional = true }

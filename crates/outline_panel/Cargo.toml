@@ -6,9 +6,6 @@ repository.workspace = true
 license = "GPL-3.0-or-later"
 publish.workspace = true
 
-[package.metadata.cargo-machete]
-ignored = ["log"]
-
 [lib]
 doctest = false
 path = "src/outline_panel.rs"
@@ -46,3 +43,6 @@ search = { workspace = true, features = ["test-support"] }
 
 [lints]
 workspace = true
+
+[package.metadata.cargo-shear]
+ignored = ["log"]

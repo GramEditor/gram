@@ -7,9 +7,6 @@ repository.workspace = true
 license = "GPL-3.0-or-later"
 publish.workspace = true
 
-[package.metadata.cargo-machete]
-ignored = ["rust-embed"]
-
 [lib]
 doctest = false
 path = "src/remote_server.rs"
@@ -51,7 +48,6 @@ remote.workspace = true
 reqwest_client.workspace = true
 rpc.workspace = true
 rust-embed = { workspace = true, features = ["debug-embed"], optional = true }
-serde.workspace = true
 serde_json.workspace = true
 settings.workspace = true
 shellexpand.workspace = true

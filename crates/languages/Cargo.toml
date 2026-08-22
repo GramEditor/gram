@@ -34,7 +34,6 @@ pet-reporter.workspace = true
 pet-virtualenv.workspace = true
 project.workspace = true
 regex.workspace = true
-rope.workspace = true
 rust-embed.workspace = true
 semver.workspace = true
 serde.workspace = true

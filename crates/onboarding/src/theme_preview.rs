@@ -5,7 +5,7 @@ use std::{
     sync::{Arc, LazyLock, OnceLock},
 };
 use theme::{Theme, ThemeColors, ThemeRegistry};
-use ui::{IntoElement, RenderOnce, component_prelude::Documented, prelude::*, utils::inner_corner_radius};
+use ui::{IntoElement, RenderOnce, prelude::*, utils::inner_corner_radius};
 
 #[derive(Clone, PartialEq)]
 pub enum ThemePreviewStyle {
@@ -14,9 +14,7 @@ pub enum ThemePreviewStyle {
     SideBySide(Arc<Theme>),
 }
 
-/// Shows a preview of a theme as an abstract illustration
-/// of a thumbnail-sized editor.
-#[derive(IntoElement, RegisterComponent, Documented)]
+#[derive(IntoElement, RegisterComponent)]
 pub struct ThemePreviewTile {
     theme: Arc<Theme>,
     seed: f32,
@@ -295,7 +293,7 @@ impl Component for ThemePreviewTile {
     }
 
     fn description() -> Option<&'static str> {
-        Some(Self::DOCS)
+        Some("Shows a preview of a theme as an abstract illustration of a thumbnail-sized editor.")
     }
 
     fn preview(_window: &mut Window, cx: &mut App) -> Option<AnyElement> {

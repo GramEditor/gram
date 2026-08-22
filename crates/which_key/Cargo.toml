@@ -13,7 +13,6 @@ path = "src/which_key.rs"
 [dependencies]
 command_palette.workspace = true
 gpui.workspace = true
-serde.workspace = true
 settings.workspace = true
 theme.workspace = true
 ui.workspace = true

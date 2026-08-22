@@ -14,7 +14,6 @@ anyhow.workspace = true
 app_actions.workspace = true
 component.workspace = true
 db.workspace = true
-documented.workspace = true
 fs.workspace = true
 fuzzy.workspace = true
 gpui.workspace = true
@@ -40,3 +39,6 @@ default = []
 
 [lints]
 workspace = true
+
+[package.metadata.cargo-shear]
+ignored = ["component"]
