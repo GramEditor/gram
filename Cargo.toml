@@ -424,7 +424,7 @@ regex = "1.13.1"
 resvg = { version = "0.47.0", default-features = false, features = ["memmap-fonts", "system-fonts", "text"] }
 rsa = "0.9.10"
 runtimelib = { version = "1.6.0", default-features = false, features = ["async-dispatcher-runtime", "aws-lc-rs"] }
-rust-embed = { version = "8.12.0", features = ["include-exclude", "debug-embed"] }
+rust-embed = { version = "8.12.0", features = ["include-exclude"] }
 rustc-hash = "2.1.3"
 rustls = { version = "0.23.43" }
 rustls-pki-types = "1.15.1"
@@ -526,7 +526,7 @@ wayland-cursor = "0.31.14"
 wayland-protocols = { version = "0.31.2", features = ["client", "staging", "unstable"] }
 wayland-protocols-plasma = { version = "0.2.0", features = ["client"] }
 wayland-protocols-wlr = { version = "0.3.12", features = ["client"] }
-wgpu = "30.0.0"
+wgpu = "30.0.1"
 which = "8.0.5"
 windows-core = "0.61.2"
 windows-numerics = "0.2.0"

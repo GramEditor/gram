@@ -47,7 +47,6 @@ release_channel.workspace = true
 remote.workspace = true
 reqwest_client.workspace = true
 rpc.workspace = true
-rust-embed = { workspace = true, features = ["debug-embed"], optional = true }
 serde_json.workspace = true
 settings.workspace = true
 shellexpand.workspace = true
@@ -82,7 +81,6 @@ libc.workspace = true
 
 [features]
 default = []
-debug-embed = ["dep:rust-embed"]
 test-support = ["fs/test-support"]
 
 [lints]
