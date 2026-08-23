@@ -23,12 +23,12 @@ use git::status::GitSummary;
 use git_ui;
 use git_ui::file_diff_view::FileDiffView;
 use gpui::{
-    Action, AnyElement, App, AsyncWindowContext, Bounds, ClipboardItem, Context, CursorStyle, DismissEvent, Div,
-    DragMoveEvent, Entity, EventEmitter, ExternalPaths, FocusHandle, Focusable, Hsla, InteractiveElement, KeyContext,
-    ListHorizontalSizingBehavior, ListSizingBehavior, Modifiers, ModifiersChangedEvent, MouseButton, MouseDownEvent,
-    ParentElement, Pixels, Point, PromptLevel, Render, ScrollStrategy, Stateful, Styled, Subscription, Task,
-    UniformListScrollHandle, WeakEntity, Window, actions, anchored, deferred, div, hsla, linear_color_stop,
-    linear_gradient, point, px, size, transparent_white, uniform_list,
+    Action, AnyElement, App, AsyncWindowContext, Bounds, ClipboardEntry as GpuiClipboardEntry, ClipboardItem, Context,
+    CursorStyle, DismissEvent, Div, DragMoveEvent, Entity, EventEmitter, ExternalPaths, FocusHandle, Focusable, Hsla,
+    InteractiveElement, KeyContext, ListHorizontalSizingBehavior, ListSizingBehavior, Modifiers, ModifiersChangedEvent,
+    MouseButton, MouseDownEvent, ParentElement, Pixels, Point, PromptLevel, Render, ScrollStrategy, Stateful, Styled,
+    Subscription, Task, UniformListScrollHandle, WeakEntity, Window, actions, anchored, deferred, div, hsla,
+    linear_color_stop, linear_gradient, point, px, size, transparent_white, uniform_list,
 };
 use language::DiagnosticSeverity;
 use menu::{Confirm, SelectFirst, SelectLast, SelectNext, SelectPrevious};
@@ -590,6 +590,22 @@ fn get_item_color(is_sticky: bool, cx: &App) -> ItemColors {
         focused: colors.panel_focused_border,
         drag_over: colors.drop_target_background,
     }
+}
+
+async fn prompt_replace(filename: &str, cx: &mut AsyncWindowContext) -> Result<bool> {
+    let prompt_message = format!(
+        concat!(
+            "A file or folder with name {} ",
+            "already exists in the destination folder. ",
+            "Do you want to replace it?"
+        ),
+        filename
+    );
+    let answer = cx
+        .update(|window, cx| window.prompt(PromptLevel::Info, &prompt_message, None, &["Replace", "Cancel"], cx))?
+        .await?;
+
+    Ok(answer == 0)
 }
 
 impl ProjectPanel {
@@ -2670,6 +2686,29 @@ impl ProjectPanel {
 
     fn paste(&mut self, _: &Paste, window: &mut Window, cx: &mut Context<Self>) {
         maybe!({
+            if let Some(item) = cx.read_from_clipboard() {
+                let mut handled = false;
+                for entry in item.into_entries() {
+                    handled |= match entry {
+                        GpuiClipboardEntry::Image(image) => {
+                            let filename = format!("image{}", image.format.extension());
+                            let filepath = RelPath::unix(&filename).unwrap();
+                            self.copy_external_data(filepath, image.bytes, window, cx);
+                            true
+                        }
+                        GpuiClipboardEntry::ExternalPaths(paths) => {
+                            let (_, entry) = self.selected_sub_entry(cx)?;
+                            self.copy_external_files(paths.paths(), entry.id, window, cx);
+                            true
+                        }
+                        _ => false,
+                    };
+                }
+                if handled {
+                    return None;
+                }
+            };
+
             let (worktree, entry) = self.selected_entry_handle(cx)?;
             let entry = entry.clone();
             let worktree_id = worktree.read(cx).id();
@@ -3451,7 +3490,7 @@ impl ProjectPanel {
         });
     }
 
-    fn drop_external_files(
+    fn copy_external_files(
         &mut self,
         paths: &[PathBuf],
         entry_id: ProjectEntryId,
@@ -3489,23 +3528,8 @@ impl ProjectPanel {
         cx.spawn_in(window, async move |this, cx| {
             async move {
                 for (filename, original_path) in &paths_to_replace {
-                    let prompt_message = format!(
-                        concat!(
-                            "A file or folder with name {} ",
-                            "already exists in the destination folder. ",
-                            "Do you want to replace it?"
-                        ),
-                        filename
-                    );
-                    let answer = cx
-                        .update(|window, cx| {
-                            window.prompt(PromptLevel::Info, &prompt_message, None, &["Replace", "Cancel"], cx)
-                        })?
-                        .await?;
-
-                    if answer == 1
-                        && let Some(item_idx) = paths.iter().position(|p| p == original_path)
-                    {
+                    let answer = prompt_replace(filename, cx).await?;
+                    if !answer && let Some(item_idx) = paths.iter().position(|p| p == original_path) {
                         paths.remove(item_idx);
                     }
                 }
@@ -3519,17 +3543,66 @@ impl ProjectPanel {
                 })?;
 
                 let opened_entries = task.await.with_context(|| "failed to copy external paths")?;
-                this.update(cx, |this, cx| {
-                    if open_file_after_drop && !opened_entries.is_empty() {
+                this.update_in(cx, |this, window, cx| {
+                    if !opened_entries.is_empty() {
                         let settings = ProjectPanelSettings::get_global(cx);
                         if settings.auto_open.should_open_on_drop() {
-                            this.open_entry(opened_entries[0], true, false, cx);
+                            if open_file_after_drop {
+                                this.open_entry(opened_entries[0], true, false, cx);
+                            } else {
+                                this.expand_to_selection(cx);
+                                this.update_visible_entries(None, false, false, window, cx);
+                                cx.notify();
+                            }
                         }
                     }
                 })
             }
-            .log_err()
             .await
+            .with_context(|| "failed to copy external files")
+            .log_err()
+        })
+        .detach();
+    }
+
+    fn copy_external_data(
+        &mut self,
+        filename: &RelPath,
+        content: Vec<u8>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let Some((worktree, path, needs_replace, filename)) = maybe!({
+            let (worktree, entry) = self.selected_entry_handle(cx)?;
+            let path = if entry.is_dir() {
+                entry.path.join(&filename)
+            } else {
+                entry.path.parent()?.join(&filename)
+            };
+            let filename = path.file_name()?.to_string();
+            let needs_replace = worktree.read(cx).entry_for_path(&path).is_some();
+            Some((worktree, path, needs_replace, filename))
+        }) else {
+            return;
+        };
+
+        cx.spawn_in(window, async move |this, cx| {
+            async move {
+                if needs_replace && !prompt_replace(&filename, cx).await? {
+                    return anyhow::Ok(());
+                }
+                let task = worktree.update(cx, |worktree, cx| worktree.create_entry(path, false, Some(content), cx))?;
+                if let CreatedEntry::Included(entry) = task.await? {
+                    this.update(cx, |this, cx| {
+                        this.open_entry(entry.id, true, false, cx);
+                        cx.notify();
+                    })?;
+                };
+                anyhow::Ok(())
+            }
+            .await
+            .with_context(|| "failed to create file from raw data")
+            .log_err();
         })
         .detach();
     }
@@ -4342,7 +4415,7 @@ impl ProjectPanel {
                     move |this, external_paths: &ExternalPaths, window, cx| {
                         this.drag_target_entry = None;
                         this.hover_scroll_task.take();
-                        this.drop_external_files(external_paths.paths(), entry_id, window, cx);
+                        this.copy_external_files(external_paths.paths(), entry_id, window, cx);
                         cx.stop_propagation();
                     },
                 ))
@@ -5554,7 +5627,7 @@ impl Render for ProjectPanel {
                                     this.drag_target_entry = None;
                                     this.hover_scroll_task.take();
                                     if let Some(entry_id) = this.state.last_worktree_root_id {
-                                        this.drop_external_files(external_paths.paths(), entry_id, window, cx);
+                                        this.copy_external_files(external_paths.paths(), entry_id, window, cx);
                                     }
                                     cx.stop_propagation();
                                 }))

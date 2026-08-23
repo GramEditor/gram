@@ -2181,7 +2181,7 @@ async fn test_auto_open_on_drop_when_enabled(cx: &mut gpui::TestAppContext) {
 
     let root_entry = find_project_entry(&panel, "root", cx).unwrap();
     panel.update_in(cx, |panel, window, cx| {
-        panel.drop_external_files(std::slice::from_ref(&external_path), root_entry, window, cx);
+        panel.copy_external_files(std::slice::from_ref(&external_path), root_entry, window, cx);
     });
     cx.executor().run_until_parked();
 
@@ -2215,7 +2215,7 @@ async fn test_auto_open_on_drop_when_disabled(cx: &mut gpui::TestAppContext) {
 
     let root_entry = find_project_entry(&panel, "root", cx).unwrap();
     panel.update_in(cx, |panel, window, cx| {
-        panel.drop_external_files(std::slice::from_ref(&external_path), root_entry, window, cx);
+        panel.copy_external_files(std::slice::from_ref(&external_path), root_entry, window, cx);
     });
     cx.executor().run_until_parked();
 

@@ -1668,6 +1668,20 @@ impl ImageFormat {
             _ => None,
         }
     }
+
+    /// Returns the standard extension for the ImageFormat
+    pub fn extension(self) -> &'static str {
+        match self {
+            ImageFormat::Png => ".png",
+            ImageFormat::Jpeg => ".jpeg",
+            ImageFormat::Webp => ".webp",
+            ImageFormat::Gif => ".gif",
+            ImageFormat::Svg => ".svg",
+            ImageFormat::Bmp => ".bmp",
+            ImageFormat::Tiff => ".tiff",
+            ImageFormat::Ico => ".ico",
+        }
+    }
 }
 
 /// An image, with a format and certain bytes
