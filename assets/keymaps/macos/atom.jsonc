@@ -83,7 +83,7 @@
   {
     "context": "ProjectPanel && not_editing",
     "bindings": {
-      "ctrl-shift-c": "project_panel::CopyPath",
+      "ctrl-shift-c": "workspace::CopyPath",
       "ctrl-[": "project_panel::CollapseSelectedEntry",
       "ctrl-b": "project_panel::CollapseSelectedEntry",
       "ctrl-]": "project_panel::ExpandSelectedEntry",

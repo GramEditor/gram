@@ -370,7 +370,7 @@
       "ctrl-shift-space": "editor::ShowWordCompletions",
       "ctrl-.": "editor::ToggleCodeActions",
       "ctrl-k r": "editor::RevealInFileManager",
-      "ctrl-k p": "editor::CopyPath",
+      "ctrl-k p": "workspace::CopyPath",
       "ctrl-\\": "pane::SplitRight",
       "ctrl-alt-shift-c": "editor::DisplayCursorNames",
       "alt-.": "editor::GoToHunk",
@@ -411,7 +411,7 @@
       // Change to open path modal for existing remote connection by setting the parameter
       // "alt-ctrl-shift-o": "["projects::OpenRemote", { "from_existing_connection": true }]",
       "alt-ctrl-shift-o": ["projects::OpenRemote", { "from_existing_connection": false, "create_new_window": false }],
-      "alt-ctrl-shift-b": "branches::OpenRecent",
+      "alt-ctrl-shift-b": "git::Branch",
       "alt-shift-enter": "toast::RunAction",
       "ctrl-~": "workspace::NewTerminal",
       "save": "workspace::Save",
@@ -497,7 +497,7 @@
   {
     "context": "Workspace && debugger_running",
     "bindings": {
-      "f5": "gram::NoAction",
+      "f5": null,
     },
   },
   {
@@ -627,8 +627,8 @@
       "escape": "menu::Cancel",
       "left": "outline_panel::CollapseSelectedEntry",
       "right": "outline_panel::ExpandSelectedEntry",
-      "alt-copy": "outline_panel::CopyPath",
-      "ctrl-alt-c": "outline_panel::CopyPath",
+      "alt-copy": "workspace::CopyPath",
+      "ctrl-alt-c": "workspace::CopyPath",
       "alt-shift-copy": "workspace::CopyRelativePath",
       "alt-ctrl-shift-c": "workspace::CopyRelativePath",
       "alt-ctrl-r": "outline_panel::RevealInFileManager",
@@ -657,8 +657,8 @@
       "paste": "project_panel::Paste",
       "shift-insert": "project_panel::Paste",
       "ctrl-v": "project_panel::Paste",
-      "alt-copy": "project_panel::CopyPath",
-      "ctrl-alt-c": "project_panel::CopyPath",
+      "alt-copy": "workspace::CopyPath",
+      "ctrl-alt-c": "workspace::CopyPath",
       "alt-shift-copy": "workspace::CopyRelativePath",
       "alt-ctrl-shift-c": "workspace::CopyRelativePath",
       "enter": "project_panel::Rename",

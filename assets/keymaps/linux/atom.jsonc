@@ -81,7 +81,7 @@
   {
     "context": "ProjectPanel && not_editing",
     "bindings": {
-      "ctrl-shift-c": "project_panel::CopyPath", // tree-view:copy-full-path
+      "ctrl-shift-c": "workspace::CopyPath", // tree-view:copy-full-path
       "ctrl-[": "project_panel::CollapseSelectedEntry", // tree-view:collapse-directory
       "ctrl-b": "project_panel::CollapseSelectedEntry", // tree-view:collapse-directory
       "ctrl-]": "project_panel::ExpandSelectedEntry", // tree-view:expand-item

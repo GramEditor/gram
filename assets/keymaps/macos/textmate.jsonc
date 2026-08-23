@@ -75,7 +75,7 @@
       "return": "project_panel::Rename",
       "cmd-c": "project_panel::Copy",
       "cmd-v": "project_panel::Paste",
-      "cmd-alt-c": "project_panel::CopyPath"
+      "cmd-alt-c": "workspace::CopyPath"
     }
   },
   {

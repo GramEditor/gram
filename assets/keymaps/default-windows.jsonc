@@ -362,7 +362,7 @@
       "ctrl-shift-space": "editor::ShowWordCompletions",
       "ctrl-.": "editor::ToggleCodeActions",
       "ctrl-k r": "editor::RevealInFileManager",
-      "ctrl-k p": "editor::CopyPath",
+      "ctrl-k p": "workspace::CopyPath",
       "ctrl-\\": "pane::SplitRight",
       "alt-.": "editor::GoToHunk",
       "alt-,": "editor::GoToPreviousHunk",
@@ -402,7 +402,7 @@
       // Change to open path modal for existing remote connection by setting the parameter
       // "ctrl-shift-alt-o": "["projects::OpenRemote", { "from_existing_connection": true }]",
       "ctrl-shift-alt-o": ["projects::OpenRemote", { "from_existing_connection": false, "create_new_window": false }],
-      "shift-alt-b": "branches::OpenRecent",
+      "shift-alt-b": "git::Branch",
       "shift-alt-enter": "toast::RunAction",
       "ctrl-shift-`": "workspace::NewTerminal",
       "ctrl-s": "workspace::Save",
@@ -479,7 +479,7 @@
     "context": "Workspace && debugger_running",
     "use_key_equivalents": true,
     "bindings": {
-      "f5": "gram::NoAction",
+      "f5": null,
     },
   },
   {
@@ -619,7 +619,7 @@
     "bindings": {
       "left": "outline_panel::CollapseSelectedEntry",
       "right": "outline_panel::ExpandSelectedEntry",
-      "shift-alt-c": "outline_panel::CopyPath",
+      "shift-alt-c": "workspace::CopyPath",
       "ctrl-shift-alt-c": "workspace::CopyRelativePath",
       "ctrl-alt-r": "outline_panel::RevealInFileManager",
       "space": "outline_panel::OpenSelectedEntry",
@@ -643,7 +643,7 @@
       "ctrl-c": "project_panel::Copy",
       "shift-insert": "project_panel::Paste",
       "ctrl-v": "project_panel::Paste",
-      "shift-alt-c": "project_panel::CopyPath",
+      "shift-alt-c": "workspace::CopyPath",
       "ctrl-k ctrl-shift-c": "workspace::CopyRelativePath",
       "enter": "project_panel::Rename",
       "f2": "project_panel::Rename",
