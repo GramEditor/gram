@@ -13,12 +13,9 @@ path = "src/client.rs"
 [dependencies]
 anyhow.workspace = true
 async-tungstenite.workspace = true
-base64.workspace = true
 futures.workspace = true
 gpui.workspace = true
 http_client.workspace = true
-http_client_tls.workspace = true
-httparse.workspace = true
 log.workspace = true
 parking_lot.workspace = true
 postage.workspace = true
@@ -26,8 +23,6 @@ rpc = { workspace = true, features = ["gpui"] }
 serde.workspace = true
 settings.workspace = true
 thiserror.workspace = true
-tokio.workspace = true
-tokio-socks.workspace = true
 url.workspace = true
 util.workspace = true
 
@@ -37,13 +32,6 @@ http_client = { workspace = true, features = ["test-support"] }
 rpc = { workspace = true, features = ["test-support"] }
 settings = { workspace = true, features = ["test-support"] }
 util = { workspace = true, features = ["test-support"] }
-
-[target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
-tokio-native-tls.workspace = true
-
-[target.'cfg(not(any(target_os = "windows", target_os = "macos")))'.dependencies]
-rustls-pki-types.workspace = true
-tokio-rustls.workspace = true
 
 [features]
 test-support = ["gpui/test-support", "rpc/test-support"]
