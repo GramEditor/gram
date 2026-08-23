@@ -117,7 +117,7 @@ jobs:
 
       - name: Release
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
-        uses: forgejo/release@585a6614e80a6bcfc429b956ae34831889cabb78 # v2.13.4
+        uses: actions/forgejo-release@585a6614e80a6bcfc429b956ae34831889cabb78 # v2.13.4
         with:
           direction: upload
           repo: ${{ github.repository }}
