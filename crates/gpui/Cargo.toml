@@ -208,7 +208,6 @@ wayland = [
   "calloop-wayland-source",
   "cosmic-text",
   "filedescriptor",
-  "cosmic-text",
   "open",
   "wayland-backend",
   "wayland-client",
@@ -220,7 +219,7 @@ wayland = [
   "xkbcommon"
 ]
 windows-manifest = []
-x11 = ["as-raw-xcb-connection", "ashpd", "bytemuck", "cosmic-text", "filedescriptor", "cosmic-text", "open", "wgpu", "x11rb", "xim", "xkbcommon"]
+x11 = ["as-raw-xcb-connection", "ashpd", "bytemuck", "cosmic-text", "filedescriptor", "open", "wgpu", "x11rb", "xim", "xkbcommon"]
 
 [lints]
 workspace = true

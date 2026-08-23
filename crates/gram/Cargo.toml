@@ -54,7 +54,7 @@ assets = [
   { source = "resources/gram.desktop", dest = "/usr/share/applications/app.liten.Gram.desktop", mode = "644" },
   { source = "resources/app.liten.Gram.svg", dest = "/usr/share/icons/hicolor/scalable/apps/app.liten.Gram.svg", mode = "644" },
   { source = "resources/app.liten.Gram-symbolic.svg", dest = "/usr/share/icons/hicolor/symbolic/apps/app.liten.Gram-symbolic.svg", mode = "644" },
-  { source = "assets/licenses.md", dest = "/usr/share/doc/gram/licenses.md", mode = "644", doc = true },
+  { source = "assets/licenses.md", dest = "/usr/share/doc/gram/licenses.md", mode = "644", doc = true }
 ]
 
 [lib]
