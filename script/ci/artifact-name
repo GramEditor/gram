@@ -20,9 +20,10 @@ if [[ -z "$rpm_name" || -z "$deb_name" ]]; then
   exit 1
 fi
 
+mkdir -p release
+cp "target/release/gram-linux-x86_64.tar.gz" "release/gram-linux-x86_64${version}.tar.gz"
+cp "target/gram-remote-server-linux-x86_64.gz" "release/gram-remote-server-linux-x86_64${version}.gz"
 echo "deb: $deb_name"
-mv "target/release/gram-linux-x86_64.tar.gz" "./gram-linux-x86_64${version}.tar.gz"
-mv "target/gram-remote-server-linux-x86_64.gz" "./gram-remote-server-linux-x86_64${version}.gz"
 mv "$deb_name" "./gram_${debversion}-1_x86_64.deb"
 mv "$rpm_name" "./gram_${debversion}-1_x86_64.rpm"
 

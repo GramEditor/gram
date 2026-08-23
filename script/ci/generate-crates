@@ -8,8 +8,12 @@ else
   version="-$FORGEJO_SHA"
 fi
 
-mkdir -p distdir
+mkdir -p release
 cd crates/gram
-pycargoebuild -c --features --no-config --no-license --no-manifest --distdir ../../distdir --crate-tarball-path "../../gram${version}-crates.tar.xz" .
+pycargoebuild -c --features --no-config --no-license --no-manifest --distdir ../../release --crate-tarball-path "../../gram${version}-crates.tar.xz" .
 cd ../..
+
+# check. remove if ok
+cp "gram${version}-crates.tar.xz" "release/gram${version}-crates.tar.xz"
+
 echo "name=gram${version}-crates.tar.xz" >> "$FORGEJO_OUTPUT"

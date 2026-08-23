@@ -96,11 +96,11 @@ jobs:
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
         run: ./script/prepare-ci release
 
-      - name: Bundle Linux
+      - name: Bundle
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
         run: ./script/bundle-linux --tarball --deb --rpm
 
-      - name: Set artifact name
+      - name: Prepare artifact names
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
         id: set_artifact_name
         shell: bash
@@ -115,47 +115,17 @@ jobs:
         shell: bash
         run: ./script/ci/generate-crates
 
-      - name: Upload tarball
+      - name: Release
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
-        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
+        uses: forgejo/release@585a6614e80a6bcfc429b956ae34831889cabb78 # v2.13.4
         with:
-          name: ${{ steps.set_artifact_name.outputs.tarball_amd64 }}
-          path: ${{ steps.set_artifact_name.outputs.tarball_amd64 }}
-          compression-level: 0
+          direction: upload
+          repo: ${{ github.repository }}
+          token: ${{ secrets.CODEBERG_PACKAGE_TOKEN }}
+          tag: ${{ github.ref_name }}
+          release-dir: release
 
-      - name: Upload remote server
-        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
-        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
-        with:
-          name: ${{ steps.set_artifact_name.outputs.remote_server_amd64 }}
-          path: ${{ steps.set_artifact_name.outputs.remote_server_amd64 }}
-          compression-level: 0
-
-      - name: Upload crate-dist
-        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
-        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
-        with:
-          name: ${{ steps.gen_crate_dist.outputs.name }}
-          path: ${{ steps.gen_crate_dist.outputs.name }}
-          compression-level: 0
-
-      - name: Upload DEB
-        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
-        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
-        with:
-          name: ${{ steps.set_artifact_name.outputs.deb_amd64 }}
-          path: ${{ steps.set_artifact_name.outputs.deb_amd64 }}
-          compression-level: 0
-
-      - name: Upload RPM
-        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
-        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
-        with:
-          name: ${{ steps.set_artifact_name.outputs.rpm_amd64 }}
-          path: ${{ steps.set_artifact_name.outputs.rpm_amd64 }}
-          compression-level: 0
-
-      - name: Publish packages
+      - name: Publish
         if: github.ref_type == 'tag'
         env:
           DEB_FILE: ${{ steps.set_artifact_name.outputs.deb_amd64 }}
