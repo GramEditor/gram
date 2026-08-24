@@ -1532,6 +1532,14 @@ impl ClipboardItem {
         }
     }
 
+    /// Create a new ClipboardItem::ExternalPaths with the given paths
+    pub fn new_external_paths(paths: &[PathBuf]) -> Self {
+        let ex_paths = crate::ExternalPaths(paths.into());
+        Self {
+            entries: vec![ClipboardEntry::ExternalPaths(ex_paths)],
+        }
+    }
+
     /// Concatenates together all the ClipboardString entries in the item.
     /// Returns None if there were no ClipboardString entries.
     pub fn text(&self) -> Option<String> {
@@ -1683,6 +1691,14 @@ impl ImageFormat {
         }
     }
 }
+
+/// Used for testing image operations
+// Taken from: https://github.com/mathiasbynens/small
+#[cfg(any(test, feature = "test-support"))]
+pub const MINIMAL_BMP: [u8; 30] = [
+    0x42, 0x4D, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1A, 0x00, 0x00, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x01,
+    0x00, 0x01, 0x00, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0xFF, 0x00,
+];
 
 /// An image, with a format and certain bytes
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use objc2::{ClassType, rc::Retained};
 use objc2_app_kit::{
     NSPasteboard, NSPasteboardItem, NSPasteboardName, NSPasteboardNameFind, NSPasteboardType, NSPasteboardTypePNG,
@@ -152,7 +153,10 @@ impl Pasteboard {
             [ClipboardEntry::Image(image)] => {
                 self.write_image(image);
             }
-            [ClipboardEntry::ExternalPaths(_)] => {}
+            [ClipboardEntry::ExternalPaths(paths)] => {
+                // In practice we should never reach here, but we can handle it for completness sake.
+                self.write_paths(paths);
+            }
             _ => {
                 // Agus NB: We're currently only writing string entries to the clipboard when we have more than one.
                 //
@@ -203,9 +207,20 @@ impl Pasteboard {
     fn write_image(&self, image: &Image) {
         self.inner.clearContents();
 
-        let image_type = Into::<UTType>::into(image.format).inner();
-        let image_data = NSData::with_bytes(&image.bytes);
-        self.inner.setData_forType(Some(&image_data), image_type);
+        if image.bytes().len() > 0 {
+            let image_type = Into::<UTType>::into(image.format).inner();
+            let image_data = NSData::with_bytes(&image.bytes);
+            self.inner.setData_forType(Some(&image_data), image_type);
+        }
+    }
+
+    fn write_paths(&self, paths: &crate::ExternalPaths) {
+        self.inner.clearContents();
+
+        let text = paths.0.iter().map(|p| p.to_string_lossy()).join("\n");
+        if text.len() > 0 {
+            self.write_plaintext(&ClipboardString { text, metadata: None });
+        }
     }
 }
 
@@ -275,9 +290,17 @@ impl UTType {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ClipboardEntry, ClipboardItem, ClipboardString};
+    use objc2_app_kit::NSPasteboardTypeFileURL;
+
+    use crate::{ClipboardEntry, ClipboardItem, ClipboardString, MINIMAL_BMP};
 
     use super::*;
+
+    impl SafeNS {
+        fn type_file_url() -> &'static NSPasteboardType {
+            unsafe { NSPasteboardTypeFileURL }
+        }
+    }
 
     #[test]
     fn test_string() {
@@ -303,5 +326,44 @@ mod tests {
             pasteboard.read(),
             Some(ClipboardItem::new_string(text_from_other_app.to_string()))
         );
+    }
+
+    #[test]
+    fn test_paths() {
+        let pasteboard = Pasteboard::unique();
+        assert_eq!(pasteboard.read(), None);
+
+        let paths = [PathBuf::from("/home/ubuntu/a.txt"), PathBuf::from("/etc/hosts.txt")];
+        let item = ClipboardItem::new_external_paths(&paths);
+        pasteboard.write(item);
+        let result = ClipboardItem::new_string("/home/ubuntu/a.txt\n/etc/hosts.txt".to_string());
+        assert_eq!(pasteboard.read(), Some(result));
+
+        let path_from_other_app = "/Users/gram/a.txt";
+        let bytes_data = NSString::from_str(&format!("file://{}", path_from_other_app));
+        pasteboard.inner.setString_forType(&bytes_data, SafeNS::type_file_url());
+        assert_eq!(
+            pasteboard.read(),
+            Some(ClipboardItem::new_external_paths(&[PathBuf::from(path_from_other_app)]))
+        );
+    }
+
+    #[test]
+    fn test_image() {
+        let pasteboard = Pasteboard::unique();
+        assert_eq!(pasteboard.read(), None);
+
+        let image_data: Vec<u8> = MINIMAL_BMP.to_vec();
+        let bytes_data = NSData::from_vec(image_data.clone());
+        let item = ClipboardItem::new_image(&Image::from_bytes(ImageFormat::Bmp, image_data));
+
+        pasteboard.inner.setData_forType(Some(&bytes_data), UTType::bmp().0);
+        assert_eq!(pasteboard.read(), Some(item.clone()));
+
+        pasteboard.write(item.clone());
+        assert_eq!(pasteboard.read(), Some(item));
+
+        pasteboard.write(ClipboardItem::new_image(&Image::empty()));
+        assert_eq!(pasteboard.read(), None);
     }
 }

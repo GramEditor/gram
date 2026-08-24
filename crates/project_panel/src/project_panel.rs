@@ -2616,6 +2616,7 @@ impl ProjectPanel {
     fn cut(&mut self, _: &Cut, _: &mut Window, cx: &mut Context<Self>) {
         let entries = self.disjoint_effective_entries(cx);
         if !entries.is_empty() {
+            self.write_entries_to_clipboard(&entries, cx);
             self.clipboard = Some(ClipboardEntry::Cut(entries));
             cx.notify();
         }
@@ -2624,6 +2625,7 @@ impl ProjectPanel {
     fn copy(&mut self, _: &Copy, _: &mut Window, cx: &mut Context<Self>) {
         let entries = self.disjoint_effective_entries(cx);
         if !entries.is_empty() {
+            self.write_entries_to_clipboard(&entries, cx);
             self.clipboard = Some(ClipboardEntry::Copied(entries));
             cx.notify();
         }
@@ -3488,6 +3490,24 @@ impl ProjectPanel {
                 }
             }
         });
+    }
+
+    fn write_entries_to_clipboard(&mut self, entries: &BTreeSet<SelectedEntry>, cx: &mut Context<Self>) {
+        let project = self.project.read(cx);
+        let text = entries
+            .iter()
+            .filter_map(|e| {
+                let workspace = project.worktree_for_id(e.worktree_id, cx)?;
+                let workspace = workspace.read(cx);
+                let entry = workspace.entry_for_id(e.entry_id)?;
+                Some(entry.path.as_unix_str())
+            })
+            .collect::<Vec<&str>>()
+            .join("\n");
+
+        if text.len() > 0 {
+            cx.write_to_clipboard(ClipboardItem::new_string(text));
+        }
     }
 
     fn copy_external_files(
