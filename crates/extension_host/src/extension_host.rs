@@ -321,8 +321,7 @@ impl ExtensionStore {
         let system_extensions_metadata = this
             .system_installed_dir
             .as_ref()
-            .map(|e| cx.background_executor().block(async { this.fs.metadata(e).await.ok() }))
-            .flatten()
+            .and_then(|e| cx.background_executor().block(async { this.fs.metadata(e).await.ok() }))
             .flatten();
 
         // Normally, there is no need to rebuild the index. But if the index file
@@ -1006,7 +1005,7 @@ impl ExtensionStore {
 
                 let wasm_extension = WasmExtension::load(&extension.path, &extension.manifest, wasm_host.clone(), cx)
                     .await
-                    .with_context(|| format!("Loading extension from {:?}", &extension.path));
+                    .with_context(|| format!("Loading extension from {:?}", extension.path));
 
                 match wasm_extension {
                     Ok(wasm_extension) => {
