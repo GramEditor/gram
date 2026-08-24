@@ -398,13 +398,13 @@ parking = "2.2.1"
 parking_lot = "0.12.5"
 parse_int = "0.9.0"
 pciid-parser = "0.8.1"
-pet = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
-pet-conda = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
-pet-core = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
-pet-fs = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
-pet-poetry = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
-pet-reporter = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
-pet-virtualenv = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "80b4574dc9ce11957f454630f9561ce1d37fa5a1" }
+pet = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
+pet-conda = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
+pet-core = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
+pet-fs = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
+pet-poetry = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
+pet-reporter = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
+pet-virtualenv = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
 pin-project = "1.1.13"
 plist = "1.10.0"
 postage = { version = "0.5.0", features = ["blocking", "futures-traits", "logging"] }
