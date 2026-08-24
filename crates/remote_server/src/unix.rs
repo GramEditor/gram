@@ -317,7 +317,7 @@ fn start_server(
 fn init_paths() -> anyhow::Result<()> {
     for path in [
         paths::config_dir(),
-        paths::extensions_dir(),
+        paths::user_extensions_dir(),
         paths::languages_dir(),
         paths::logs_dir(),
         paths::temp_dir(),

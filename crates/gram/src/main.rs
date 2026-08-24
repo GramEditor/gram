@@ -1052,7 +1052,7 @@ pub(crate) async fn restorable_workspace_locations(
 fn init_paths() -> HashMap<io::ErrorKind, Vec<&'static Path>> {
     [
         paths::config_dir(),
-        paths::extensions_dir(),
+        paths::user_extensions_dir(),
         paths::languages_dir(),
         paths::debug_adapters_dir(),
         paths::database_dir(),

@@ -270,8 +270,7 @@ impl MTime {
         self.0
     }
 
-    /// Temporary method to split out the behavior changes from introduction of this newtype.
-    pub fn bad_is_greater_than(self, other: MTime) -> bool {
+    pub fn is_greater_than(self, other: MTime) -> bool {
         self.0 > other.0
     }
 }

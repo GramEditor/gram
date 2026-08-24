@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (zed#59901)
 - Add git history views, both for folders and the current state
 - Add action `git:show history`
+- Add `GRAM_SYSTEM_EXTENSIONS_DIR` to load system-installed extensions (#459)
 
 ## Removed
 

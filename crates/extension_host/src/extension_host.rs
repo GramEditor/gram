@@ -93,12 +93,13 @@ pub struct ExtensionStore {
     pub http_client: Arc<HttpClientWithUrl>,
     pub reload_tx: UnboundedSender<Option<Arc<str>>>,
     pub reload_complete_senders: Vec<oneshot::Sender<()>>,
-    pub installed_dir: PathBuf,
+    pub system_installed_dir: Option<PathBuf>,
+    pub user_installed_dir: PathBuf,
     pub outstanding_operations: BTreeMap<Arc<str>, ExtensionOperation>,
     pub index_path: PathBuf,
     pub modified_extensions: HashSet<Arc<str>>,
     pub wasm_host: Arc<WasmHost>,
-    pub wasm_extensions: Vec<(Arc<ExtensionManifest>, WasmExtension)>,
+    pub wasm_extensions: Vec<(PathBuf, Arc<ExtensionManifest>, WasmExtension)>,
     pub tasks: Vec<Task<()>>,
     pub remote_clients: Vec<WeakEntity<RemoteClient>>,
     pub ssh_registered_tx: UnboundedSender<()>,
@@ -182,6 +183,7 @@ impl RemoteSyncExtensions {
 
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct ExtensionIndexEntry {
+    pub path: PathBuf,
     pub manifest: Arc<ExtensionManifest>,
     pub dev: bool,
 }
@@ -224,7 +226,8 @@ pub fn init(
 ) {
     let store = cx.new(move |cx| {
         ExtensionStore::new(
-            paths::extensions_dir().clone(),
+            paths::system_extensions_dir().clone(),
+            paths::user_extensions_dir().clone(),
             None,
             extension_host_proxy,
             fs,
@@ -253,7 +256,8 @@ impl ExtensionStore {
     }
 
     pub fn new(
-        extensions_dir: PathBuf,
+        system_extensions_dir: Option<PathBuf>,
+        user_extensions_dir: PathBuf,
         build_dir: Option<PathBuf>,
         extension_host_proxy: Arc<ExtensionHostProxy>,
         fs: Arc<dyn Fs>,
@@ -262,17 +266,18 @@ impl ExtensionStore {
         node_runtime: NodeRuntime,
         cx: &mut Context<Self>,
     ) -> Self {
-        let work_dir = extensions_dir.join("work");
-        let build_dir = build_dir.unwrap_or_else(|| extensions_dir.join("build"));
-        let installed_dir = extensions_dir.join("installed");
-        let index_path = extensions_dir.join("index.json");
+        let work_dir = user_extensions_dir.join("work");
+        let build_dir = build_dir.unwrap_or_else(|| user_extensions_dir.join("build"));
+        let user_installed_dir = user_extensions_dir.join("installed");
+        let index_path = user_extensions_dir.join("index.json");
 
         let (reload_tx, mut reload_rx) = unbounded();
         let (connection_registered_tx, mut connection_registered_rx) = unbounded();
         let mut this = Self {
             proxy: extension_host_proxy.clone(),
             extension_index: Default::default(),
-            installed_dir,
+            system_installed_dir: system_extensions_dir,
+            user_installed_dir,
             index_path,
             builder: Arc::new(ExtensionBuilder::new(builder_client, build_dir)),
             outstanding_operations: Default::default(),
@@ -303,23 +308,39 @@ impl ExtensionStore {
             futures::join!(
                 this.fs.load(&this.index_path),
                 this.fs.metadata(&this.index_path),
-                this.fs.metadata(&this.installed_dir),
+                this.fs.metadata(&this.user_installed_dir),
             )
         });
+
+        let (index_content, index_metadata, extensions_metadata) = (
+            index_content.ok(),
+            index_metadata.ok().flatten(),
+            extensions_metadata.ok().flatten(),
+        );
+
+        let system_extensions_metadata = this
+            .system_installed_dir
+            .as_ref()
+            .map(|e| cx.background_executor().block(async { this.fs.metadata(e).await.ok() }))
+            .flatten()
+            .flatten();
 
         // Normally, there is no need to rebuild the index. But if the index file
         // is invalid or is out-of-date according to the filesystem mtimes, then
         // it must be asynchronously rebuilt.
         let mut extension_index = ExtensionIndex::default();
         let mut extension_index_needs_rebuild = true;
-        if let Ok(index_content) = index_content
+        if let Some(index_content) = index_content
             && let Some(index) = serde_json::from_str(&index_content).log_err()
         {
             extension_index = index;
-            if let (Ok(Some(index_metadata)), Ok(Some(extensions_metadata))) = (index_metadata, extensions_metadata)
-                && index_metadata.mtime.bad_is_greater_than(extensions_metadata.mtime)
+            if let (Some(index_metadata), Some(extensions_metadata)) = (index_metadata, extensions_metadata)
+                && index_metadata.mtime.is_greater_than(extensions_metadata.mtime)
             {
-                extension_index_needs_rebuild = false;
+                extension_index_needs_rebuild = match system_extensions_metadata {
+                    Some(metadata) => !index_metadata.mtime.is_greater_than(metadata.mtime),
+                    None => false,
+                };
             }
         }
 
@@ -332,12 +353,10 @@ impl ExtensionStore {
             reload_future = Some(this.reload(None, cx));
         }
 
-        cx.spawn(async move |this, cx| {
+        cx.spawn(async move |_this, _cx| {
             if let Some(future) = reload_future {
                 future.await;
             }
-            this.update(cx, |this, cx| this.auto_install_extensions(cx)).ok();
-            // this.update(cx, |this, cx| this.check_for_updates(cx)).ok();
         })
         .detach();
 
@@ -396,7 +415,7 @@ impl ExtensionStore {
         this.tasks.push(cx.background_spawn({
             let fs = this.fs.clone();
             let reload_tx = this.reload_tx.clone();
-            let installed_dir = this.installed_dir.clone();
+            let installed_dir = this.user_installed_dir.clone();
             async move {
                 let (mut paths, _) = fs
                     .watch(&installed_dir, FS_WATCH_LATENCY, fs::fs_watcher::WatcherMode::Native)
@@ -437,18 +456,6 @@ impl ExtensionStore {
         }
     }
 
-    /// We don't auto-install any extensions at the moment
-    /// (since we don't want to download anything without
-    /// explicit permission or maintain any central repository)
-    ///
-    /// However, I suspect the auto-installation is how all of
-    /// the directories we need are created in Zed...
-    pub fn auto_install_extensions(&mut self, _cx: &mut Context<Self>) {}
-
-    fn extensions_dir(&self) -> PathBuf {
-        self.installed_dir.clone()
-    }
-
     pub fn outstanding_operations(&self) -> &BTreeMap<Arc<str>, ExtensionOperation> {
         &self.outstanding_operations
     }
@@ -483,8 +490,9 @@ impl ExtensionStore {
     /// extension that provides the theme.
     pub fn path_to_extension_theme(&self, theme_name: &str) -> Option<PathBuf> {
         let entry = self.extension_index.themes.get(theme_name)?;
+        let extension = self.extension_index.extensions.get(entry.extension.as_ref())?;
 
-        Some(self.extensions_dir().join(entry.extension.as_ref()).join(&entry.path))
+        Some(extension.path.join(&entry.path))
     }
 
     /// Returns the names of icon themes provided by extensions.
@@ -499,26 +507,33 @@ impl ExtensionStore {
     /// an extension that provides the icon theme.
     pub fn path_to_extension_icon_theme(&self, icon_theme_name: &str) -> Option<(PathBuf, PathBuf)> {
         let entry = self.extension_index.icon_themes.get(icon_theme_name)?;
+        let extension = self.extension_index.extensions.get(entry.extension.as_ref())?;
 
-        let icon_theme_path = self.extensions_dir().join(entry.extension.as_ref()).join(&entry.path);
-        let icons_root_path = self.extensions_dir().join(entry.extension.as_ref());
-
-        Some((icon_theme_path, icons_root_path))
+        let icon_theme_path = extension.path.join(&entry.path);
+        Some((icon_theme_path, extension.path.clone()))
     }
 
-    pub fn uninstall_extension(&mut self, extension_id: Arc<str>, cx: &mut Context<Self>) -> Task<Result<()>> {
-        let extension_dir = self.installed_dir.join(extension_id.as_ref());
+    pub fn uninstall_extension(&mut self, extension_id: Arc<str>, cx: &mut Context<Self>) -> Result<Task<Result<()>>> {
+        let Some(extension) = self.extension_index.extensions.get(extension_id.as_ref()) else {
+            return Err(anyhow!("Extension not found in index"));
+        };
+        if let Some(system_extensions) = self.system_installed_dir.as_ref()
+            && extension.path.starts_with(system_extensions)
+        {
+            return Err(anyhow!("Cannot uninstall system-installed extensions"));
+        }
+        let extension_dir = extension.path.clone();
         let work_dir = self.wasm_host.work_dir.join(extension_id.as_ref());
         let fs = self.fs.clone();
 
         let extension_manifest = self.extension_manifest_for_id(&extension_id).cloned();
 
         match self.outstanding_operations.entry(extension_id.clone()) {
-            btree_map::Entry::Occupied(_) => return Task::ready(Ok(())),
+            btree_map::Entry::Occupied(_) => return Ok(Task::ready(Ok(()))),
             btree_map::Entry::Vacant(e) => e.insert(ExtensionOperation::Remove),
         };
 
-        cx.spawn(async move |extension_store, cx| {
+        Ok(cx.spawn(async move |extension_store, cx| {
             let _finish = cx.on_drop(&extension_store, {
                 let extension_id = extension_id.clone();
                 move |this, cx| {
@@ -576,15 +591,15 @@ impl ExtensionStore {
             })?;
 
             anyhow::Ok(())
-        })
+        }))
     }
 
-    pub fn install_dev_extension(
+    pub fn install_user_extension(
         &mut self,
         extension_source_path: PathBuf,
         cx: &mut Context<Self>,
     ) -> Task<Result<()>> {
-        let extensions_dir = self.extensions_dir();
+        let extensions_dir = self.user_installed_dir.clone();
         let fs = self.fs.clone();
         let builder = self.builder.clone();
 
@@ -603,7 +618,12 @@ impl ExtensionStore {
                 .ok()
                 .flatten()
             {
-                uninstall_task.await.log_err();
+                match uninstall_task {
+                    Ok(task) => {
+                        task.await.log_err();
+                    }
+                    Err(err) => log::error!("{}", err),
+                }
             }
 
             if !this.update(cx, |this, cx| {
@@ -686,13 +706,21 @@ impl ExtensionStore {
         })
     }
 
-    pub fn rebuild_dev_extension(&mut self, extension_id: Arc<str>, cx: &mut Context<Self>) {
-        let path = self.installed_dir.join(extension_id.as_ref());
+    pub fn rebuild_user_extension(&mut self, extension_id: Arc<str>, cx: &mut Context<Self>) -> Result<()> {
+        let Some(extension) = self.extension_index.extensions.get(extension_id.as_ref()) else {
+            return Err(anyhow!("Extension not found"));
+        };
+        if let Some(system_extensions) = self.system_installed_dir.as_ref()
+            && extension.path.starts_with(system_extensions)
+        {
+            return Err(anyhow!("Cannot rebuild system extensions"));
+        }
+        let path = self.user_installed_dir.join(extension_id.as_ref());
         let builder = self.builder.clone();
         let fs = self.fs.clone();
 
         match self.outstanding_operations.entry(extension_id.clone()) {
-            btree_map::Entry::Occupied(_) => return,
+            btree_map::Entry::Occupied(_) => return Err(anyhow!("Extension already rebuilding")),
             btree_map::Entry::Vacant(e) => e.insert(ExtensionOperation::Upgrade),
         };
 
@@ -718,7 +746,8 @@ impl ExtensionStore {
 
             result
         })
-        .detach_and_log_err(cx)
+        .detach_and_log_err(cx);
+        Ok(())
     }
 
     /// Updates the set of installed extensions.
@@ -844,7 +873,7 @@ impl ExtensionStore {
         }
 
         self.wasm_extensions
-            .retain(|(extension, _)| !extensions_to_unload.contains(&extension.id));
+            .retain(|(_, extension, _)| !extensions_to_unload.contains(&extension.id));
         self.proxy.remove_user_themes(themes_to_remove);
         self.proxy.remove_icon_themes(icon_themes_to_remove);
         self.proxy.remove_languages(&languages_to_remove, &grammars_to_remove);
@@ -859,31 +888,32 @@ impl ExtensionStore {
             };
 
             grammars_to_add.extend(extension.manifest.grammars.keys().map(|grammar_name| {
-                let mut grammar_path = self.installed_dir.clone();
-                grammar_path.extend([extension_id.as_ref(), "grammars"]);
+                let mut grammar_path = extension.path.join("grammars");
                 grammar_path.push(grammar_name.as_ref());
                 grammar_path.set_extension("wasm");
                 (grammar_name.clone(), grammar_path)
             }));
-            themes_to_add.extend(extension.manifest.themes.iter().map(|theme_path| {
-                let mut path = self.installed_dir.clone();
-                path.extend([Path::new(extension_id.as_ref()), theme_path.as_path()]);
-                path
-            }));
-            icon_themes_to_add.extend(extension.manifest.icon_themes.iter().map(|icon_theme_path| {
-                let mut path = self.installed_dir.clone();
-                path.extend([Path::new(extension_id.as_ref()), icon_theme_path.as_path()]);
-
-                let mut icons_root_path = self.installed_dir.clone();
-                icons_root_path.extend([Path::new(extension_id.as_ref())]);
-
-                (path, icons_root_path)
-            }));
-            snippets_to_add.extend(extension.manifest.snippets.iter().map(|snippets_path| {
-                let mut path = self.installed_dir.clone();
-                path.extend([Path::new(extension_id.as_ref()), snippets_path.as_path()]);
-                path
-            }));
+            themes_to_add.extend(
+                extension
+                    .manifest
+                    .themes
+                    .iter()
+                    .map(|theme_path| extension.path.join(theme_path)),
+            );
+            icon_themes_to_add.extend(
+                extension
+                    .manifest
+                    .icon_themes
+                    .iter()
+                    .map(|icon_theme_path| (extension.path.join(icon_theme_path), extension.path.clone())),
+            );
+            snippets_to_add.extend(
+                extension
+                    .manifest
+                    .snippets
+                    .iter()
+                    .map(|snippets_path| extension.path.join(snippets_path)),
+            );
         }
 
         self.proxy.register_grammars(grammars_to_add);
@@ -893,8 +923,10 @@ impl ExtensionStore {
             .filter(|(_, entry)| extensions_to_load.contains(&entry.extension))
             .collect::<Vec<_>>();
         for (language_name, language) in languages_to_add {
-            let mut language_path = self.installed_dir.clone();
-            language_path.extend([Path::new(language.extension.as_ref()), language.path.as_path()]);
+            let Some(extension) = new_index.extensions.get(language.extension.as_ref()) else {
+                continue;
+            };
+            let language_path = extension.path.join(&language.path);
             self.proxy.register_language(
                 language_name.clone(),
                 language.grammar.clone(),
@@ -925,7 +957,6 @@ impl ExtensionStore {
 
         let fs = self.fs.clone();
         let wasm_host = self.wasm_host.clone();
-        let root_dir = self.installed_dir.clone();
         let proxy = self.proxy.clone();
         let extension_entries = extensions_to_load
             .iter()
@@ -973,13 +1004,14 @@ impl ExtensionStore {
                     continue;
                 };
 
-                let extension_path = root_dir.join(extension.manifest.id.as_ref());
-                let wasm_extension = WasmExtension::load(&extension_path, &extension.manifest, wasm_host.clone(), cx)
+                let wasm_extension = WasmExtension::load(&extension.path, &extension.manifest, wasm_host.clone(), cx)
                     .await
-                    .with_context(|| format!("Loading extension from {extension_path:?}"));
+                    .with_context(|| format!("Loading extension from {:?}", &extension.path));
 
                 match wasm_extension {
-                    Ok(wasm_extension) => wasm_extensions.push((extension.manifest.clone(), wasm_extension)),
+                    Ok(wasm_extension) => {
+                        wasm_extensions.push((extension.path.clone(), extension.manifest.clone(), wasm_extension))
+                    }
                     Err(e) => {
                         log::error!("Failed to load extension: {}, {:#}", extension.manifest.id, e);
                         this.update(cx, |_, cx| {
@@ -993,7 +1025,7 @@ impl ExtensionStore {
             this.update(cx, |this, cx| {
                 this.reload_complete_senders.clear();
 
-                for (manifest, wasm_extension) in &wasm_extensions {
+                for (extension_path, manifest, wasm_extension) in &wasm_extensions {
                     let extension = Arc::new(wasm_extension.clone());
 
                     for (language_server_id, language_server_config) in &manifest.language_servers {
@@ -1007,8 +1039,7 @@ impl ExtensionStore {
                     }
 
                     for (debug_adapter, meta) in &manifest.debug_adapters {
-                        let mut path = root_dir.clone();
-                        path.push(Path::new(manifest.id.as_ref()));
+                        let mut path = extension_path.clone();
                         if let Some(schema_path) = &meta.schema_path {
                             path.push(schema_path);
                         } else {
@@ -1044,7 +1075,8 @@ impl ExtensionStore {
     fn rebuild_extension_index(&self, cx: &mut Context<Self>) -> Task<ExtensionIndex> {
         let fs = self.fs.clone();
         let work_dir = self.wasm_host.work_dir.clone();
-        let extensions_dir = self.installed_dir.clone();
+        let system_installed_dir = self.system_installed_dir.clone();
+        let user_installed_dir = self.user_installed_dir.clone();
         let index_path = self.index_path.clone();
         let proxy = self.proxy.clone();
         cx.background_spawn(async move {
@@ -1052,31 +1084,18 @@ impl ExtensionStore {
             let mut index = ExtensionIndex::default();
 
             fs.create_dir(&work_dir).await.log_err();
-            fs.create_dir(&extensions_dir).await.log_err();
+            fs.create_dir(&user_installed_dir).await.log_err();
             log::info!("Rebuilding extension index at {:?}", index_path);
-            log::info!("  from {:?}", extensions_dir);
+            log::info!("  from {:?}", user_installed_dir);
+            if let Some(dir) = system_installed_dir.as_ref() {
+                log::info!("  and {:?}", dir);
+            }
             log::info!("  in {:?}", work_dir);
 
-            let extension_paths = fs.read_dir(&extensions_dir).await;
-            if let Ok(mut extension_paths) = extension_paths {
-                while let Some(extension_dir) = extension_paths.next().await {
-                    let Ok(extension_dir) = extension_dir else {
-                        log::info!("Not ok: {:?}", extension_dir);
-                        continue;
-                    };
-
-                    if extension_dir
-                        .file_name()
-                        .is_some_and(|file_name| file_name == ".DS_Store")
-                    {
-                        continue;
-                    }
-
-                    Self::add_extension_to_index(fs.clone(), extension_dir, &mut index, proxy.clone())
-                        .await
-                        .log_err();
-                }
+            if let Some(dir) = system_installed_dir.as_ref() {
+                Self::add_extensions_from_path(dir, fs.clone(), &mut index, proxy.clone()).await;
             }
+            Self::add_extensions_from_path(&user_installed_dir, fs.clone(), &mut index, proxy.clone()).await;
 
             if let Ok(index_json) = serde_json::to_string_pretty(&index) {
                 fs.save(&index_path, &index_json.as_str().into(), Default::default())
@@ -1088,6 +1107,34 @@ impl ExtensionStore {
             log::info!("rebuilt extension index in {:?}", start_time.elapsed());
             index
         })
+    }
+
+    async fn add_extensions_from_path(
+        path: &PathBuf,
+        fs: Arc<dyn Fs>,
+        index: &mut ExtensionIndex,
+        proxy: Arc<ExtensionHostProxy>,
+    ) {
+        let extension_paths = fs.read_dir(path).await;
+        if let Ok(mut extension_paths) = extension_paths {
+            while let Some(extension_dir) = extension_paths.next().await {
+                let Ok(extension_dir) = extension_dir else {
+                    log::info!("Not ok: {:?}", extension_dir);
+                    continue;
+                };
+
+                if extension_dir
+                    .file_name()
+                    .is_some_and(|file_name| file_name == ".DS_Store")
+                {
+                    continue;
+                }
+
+                Self::add_extension_to_index(fs.clone(), extension_dir, index, proxy.clone())
+                    .await
+                    .log_err();
+            }
+        }
     }
 
     async fn add_extension_to_index(
@@ -1221,6 +1268,7 @@ impl ExtensionStore {
         index.extensions.insert(
             extension_id.clone(),
             ExtensionIndexEntry {
+                path: extension_dir,
                 dev: is_dev,
                 manifest: Arc::new(extension_manifest),
             },
@@ -1236,7 +1284,6 @@ impl ExtensionStore {
         tmp_dir: PathBuf,
         cx: &mut Context<Self>,
     ) -> Task<Result<()>> {
-        let src_dir = self.extensions_dir().join(extension_id.as_ref());
         let Some(loaded_extension) = self.extension_index.extensions.get(&extension_id).cloned() else {
             return Task::ready(Err(anyhow!("extension no longer installed")));
         };
@@ -1245,6 +1292,8 @@ impl ExtensionStore {
             const EXTENSION_TOML: &str = "extension.toml";
             const EXTENSION_WASM: &str = "extension.wasm";
             const CONFIG_TOML: &str = "config.toml";
+
+            let src_dir = &loaded_extension.path;
 
             if is_dev {
                 let manifest_toml = toml::to_string(&loaded_extension.manifest)?;

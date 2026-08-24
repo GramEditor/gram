@@ -243,25 +243,35 @@ pub fn debug_scenarios_file() -> &'static PathBuf {
     DEBUG_SCENARIOS_FILE.get_or_init(|| config_dir().join("debug.jsonc"))
 }
 
-/// Returns the path to the extensions directory.
+/// Returns the path to the user extensions directory.
 ///
-/// This is where installed extensions are stored.
-pub fn extensions_dir() -> &'static PathBuf {
+/// This is where user-installed extensions are stored.
+pub fn user_extensions_dir() -> &'static PathBuf {
     static EXTENSIONS_DIR: OnceLock<PathBuf> = OnceLock::new();
     EXTENSIONS_DIR.get_or_init(|| data_dir().join("extensions"))
 }
 
-/// Returns the path to the extensions directory.
+/// Returns the path to the (optional) system extensions directory.
 ///
+/// This is where system-installed extensions are stored.
+pub fn system_extensions_dir() -> &'static Option<PathBuf> {
+    static SYSTEM_EXTENSIONS_DIR: OnceLock<Option<PathBuf>> = OnceLock::new();
+    SYSTEM_EXTENSIONS_DIR.get_or_init(|| match std::env::var("GRAM_SYSTEM_EXTENSIONS_DIR") {
+        Ok(dir) => Some(dir.into()),
+        Err(_) => match option_env!("GRAM_SYSTEM_EXTENSIONS_DIR") {
+            Some(dir) => Some(dir.into()),
+            None => None,
+        },
+    })
+}
+
 /// This is where installed extensions are stored on a remote.
 pub fn remote_extensions_dir() -> &'static PathBuf {
     static EXTENSIONS_DIR: OnceLock<PathBuf> = OnceLock::new();
     EXTENSIONS_DIR.get_or_init(|| data_dir().join("remote_extensions"))
 }
 
-/// Returns the path to the extensions directory.
-///
-/// This is where installed extensions are stored on a remote.
+/// This is where installed extensions are uploaded on a remote.
 pub fn remote_extensions_uploads_dir() -> &'static PathBuf {
     static UPLOAD_DIR: OnceLock<PathBuf> = OnceLock::new();
     UPLOAD_DIR.get_or_init(|| remote_extensions_dir().join("uploads"))

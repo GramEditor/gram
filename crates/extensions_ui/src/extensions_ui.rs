@@ -1,4 +1,4 @@
-mod components;
+mod extension_card;
 mod extension_suggest;
 
 use app_actions::ExtensionCategoryFilter;
@@ -35,7 +35,7 @@ use workspace::{
     item::{Item, ItemEvent},
 };
 
-use crate::components::ExtensionCard;
+use crate::extension_card::ExtensionCard;
 
 actions!(
     gram,
@@ -238,7 +238,7 @@ pub fn init(cx: &mut App) {
                 window
                     .spawn(cx, async move |cx| {
                         let install_task = store
-                            .update(cx, |store, cx| store.install_dev_extension(extension_path, cx))
+                            .update(cx, |store, cx| store.install_user_extension(extension_path, cx))
                             .ok()?;
 
                         match install_task.await {
@@ -630,10 +630,20 @@ impl ExtensionsPage {
                                     .color(Color::Accent)
                                     .disabled(matches!(status, ExtensionStatus::Upgrading))
                                     .on_click({
+                                        let weak_workspace = self.workspace.clone();
                                         let extension_id = extension.id.clone();
                                         move |_, _, cx| {
                                             ExtensionStore::global(cx).update(cx, |store, cx| {
-                                                store.rebuild_dev_extension(extension_id.clone(), cx)
+                                                match store.rebuild_user_extension(extension_id.clone(), cx) {
+                                                    Ok(_) => (),
+                                                    Err(err) => {
+                                                        if let Some(workspace) = weak_workspace.upgrade() {
+                                                            workspace.update(cx, |workspace, cx| {
+                                                                workspace.show_error(&err.to_string(), cx);
+                                                            });
+                                                        }
+                                                    }
+                                                }
                                             });
                                         }
                                     }),
@@ -643,13 +653,21 @@ impl ExtensionsPage {
                                     .color(Color::Accent)
                                     .disabled(!matches!(status, ExtensionStatus::Installed(..)))
                                     .on_click({
+                                        let weak_workspace = self.workspace.clone();
                                         let extension_id = extension.id.clone();
                                         move |_, _, cx| {
-                                            ExtensionStore::global(cx)
-                                                .update(cx, |store, cx| {
-                                                    store.uninstall_extension(extension_id.clone(), cx)
-                                                })
-                                                .detach_and_log_err(cx);
+                                            ExtensionStore::global(cx).update(cx, |store, cx| {
+                                                match store.uninstall_extension(extension_id.clone(), cx) {
+                                                    Ok(task) => task.detach_and_log_err(cx),
+                                                    Err(err) => {
+                                                        if let Some(workspace) = weak_workspace.upgrade() {
+                                                            workspace.update(cx, |workspace, cx| {
+                                                                workspace.show_error(&err.to_string(), cx);
+                                                            });
+                                                        }
+                                                    }
+                                                }
+                                            });
                                         }
                                     }),
                             ),

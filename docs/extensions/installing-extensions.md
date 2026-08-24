@@ -48,6 +48,16 @@ From the extensions page, click the `Install Local` button (or the {#action
 gram::InstallExtensionFromFolder} action) and select the directory containing
 your extension. You should see the extension begin to install in the status bar.
 
+## System-installed extensions
+
+If Gram is compiled or started with the environment variable
+`GRAM_SYSTEM_EXTENSIONS_DIR` set, it will also look for installed extensions in
+that directory. This way, a Linux distribution can provide packaged extensions
+for Gram that are installed and managed using the system package manager.
+
+System-installed extensions are always enabled and cannot be uninstalled from
+the editor.
+
 ## Installing Extensions From A Git URL
 
 From the extensions page, click the `Install From URL` button (or the {#action
