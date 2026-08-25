@@ -1,5 +1,6 @@
 use anyhow::{Result, anyhow};
-use editor::{Bias, CompletionProvider, Editor, EditorEvent, EditorMode, ExcerptId, MinimapVisibility, MultiBuffer};
+use editor::completion::CompletionProvider;
+use editor::{Bias, Editor, EditorEvent, EditorMode, ExcerptId, MinimapVisibility, MultiBuffer};
 use fuzzy::StringMatch;
 use gpui::{
     AsyncWindowContext, DivInspectorState, Entity, InspectorElementId, IntoElement, StyleRefinement, Task, Window,

@@ -1,6 +1,6 @@
 use collections::HashMap;
 use command_palette;
-use editor::{CompletionProvider, Editor};
+use editor::{Editor, completion::CompletionProvider};
 use fuzzy::StringMatchCandidate;
 use gpui::{Context, Entity, SharedString, Window};
 use language::{self, ToOffset};

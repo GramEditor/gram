@@ -12,7 +12,7 @@ mod ui_components;
 
 use anyhow::{Context as _, anyhow};
 use collections::{HashMap, HashSet};
-use editor::{CompletionProvider, Editor, EditorEvent, EditorMode, SizingBehavior};
+use editor::{Editor, EditorEvent, EditorMode, SizingBehavior, completion::CompletionProvider};
 use fs::Fs;
 use fuzzy::{StringMatch, StringMatchCandidate};
 use gpui::{

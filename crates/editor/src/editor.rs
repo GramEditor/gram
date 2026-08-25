@@ -16,6 +16,7 @@ pub mod blink_manager;
 mod bracket_colorization;
 mod clangd_ext;
 pub mod code_context_menus;
+pub mod completion;
 pub mod display_map;
 mod editor_settings;
 mod element;
@@ -187,6 +188,7 @@ use workspace::{
 
 use crate::{
     code_context_menus::CompletionsMenuSource,
+    completion::CompletionProvider,
     editor_settings::MultiCursorModifier,
     hover_links::{find_url, find_url_from_range},
     inlays::{
@@ -267,6 +269,16 @@ enum DisplayDiffHunk {
 pub enum HideMouseCursorOrigin {
     TypingAction,
     MovementAction,
+}
+
+pub enum TriggerInWords {
+    Yes,
+    No,
+}
+
+pub enum CompletionTrigger {
+    Normal,
+    Supertab,
 }
 
 pub fn init(cx: &mut App) {
@@ -2832,7 +2844,14 @@ impl Editor {
                 };
 
                 if continue_showing {
-                    self.open_or_update_completions_menu(None, None, false, window, cx);
+                    self.open_or_update_completions_menu(
+                        None,
+                        None,
+                        TriggerInWords::No,
+                        CompletionTrigger::Normal,
+                        window,
+                        cx,
+                    );
                 } else {
                     self.hide_context_menu(window, cx);
                 }
@@ -4530,7 +4549,11 @@ impl Editor {
                         ignore_threshold: false,
                     }),
                     None,
-                    trigger_in_words,
+                    match trigger_in_words {
+                        true => TriggerInWords::Yes,
+                        false => TriggerInWords::No,
+                    },
+                    CompletionTrigger::Normal,
                     window,
                     cx,
                 );
@@ -4538,7 +4561,8 @@ impl Editor {
             _ => self.open_or_update_completions_menu(
                 None,
                 Some(text.to_owned()).filter(|x| !x.is_empty()),
-                true,
+                TriggerInWords::Yes,
+                CompletionTrigger::Normal,
                 window,
                 cx,
             ),
@@ -4782,21 +4806,23 @@ impl Editor {
         self.open_or_update_completions_menu(
             Some(CompletionsMenuSource::Words { ignore_threshold: true }),
             None,
-            false,
+            TriggerInWords::No,
+            CompletionTrigger::Normal,
             window,
             cx,
         );
     }
 
     pub fn show_completions(&mut self, _: &ShowCompletions, window: &mut Window, cx: &mut Context<Self>) {
-        self.open_or_update_completions_menu(None, None, false, window, cx);
+        self.open_or_update_completions_menu(None, None, TriggerInWords::No, CompletionTrigger::Normal, window, cx);
     }
 
     fn open_or_update_completions_menu(
         &mut self,
         requested_source: Option<CompletionsMenuSource>,
         trigger: Option<String>,
-        trigger_in_words: bool,
+        trigger_in_words: TriggerInWords,
+        completion_trigger: CompletionTrigger,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
@@ -4840,7 +4866,11 @@ impl Editor {
         let language_settings = language_settings(language.clone(), buffer_snapshot.file(), cx);
         let completion_settings = language_settings.completions.clone();
 
-        if !menu_is_open && trigger.is_some() && !language_settings.show_completions_on_input {
+        if matches!(completion_trigger, CompletionTrigger::Normal)
+            && !menu_is_open
+            && trigger.is_some()
+            && !language_settings.show_completions_on_input
+        {
             return;
         }
 
@@ -4956,7 +4986,13 @@ impl Editor {
 
         let load_provider_completions = provider.as_ref().is_some_and(|provider| {
             trigger.as_ref().is_none_or(|trigger| {
-                provider.is_completion_trigger(&buffer, position.text_anchor, trigger, trigger_in_words, cx)
+                provider.is_completion_trigger(
+                    &buffer,
+                    position.text_anchor,
+                    trigger,
+                    matches!(trigger_in_words, TriggerInWords::Yes),
+                    cx,
+                )
             })
         });
 
@@ -5415,7 +5451,7 @@ impl Editor {
             .as_ref()
             .is_some_and(|confirm| confirm(intent, window, cx));
         if show_new_completions_on_confirm {
-            self.open_or_update_completions_menu(None, None, false, window, cx);
+            self.open_or_update_completions_menu(None, None, TriggerInWords::No, CompletionTrigger::Normal, window, cx);
         }
 
         let provider = self.completion_provider.as_ref()?;
@@ -7623,7 +7659,8 @@ impl Editor {
             self.open_or_update_completions_menu(
                 Some(CompletionsMenuSource::Normal { ignore_threshold: true }),
                 None,
-                false,
+                TriggerInWords::Yes,
+                CompletionTrigger::Supertab,
                 window,
                 cx,
             );
@@ -7670,8 +7707,9 @@ impl Editor {
             if word_end || trigger_end {
                 self.open_or_update_completions_menu(
                     Some(CompletionsMenuSource::Normal { ignore_threshold: true }),
-                    None,
-                    false,
+                    if trigger_end { Some(preceding.to_string()) } else { None },
+                    TriggerInWords::Yes,
+                    CompletionTrigger::Supertab,
                     window,
                     cx,
                 );
@@ -19755,62 +19793,6 @@ pub trait SemanticsProvider {
     ) -> Option<Task<Result<ProjectTransaction>>>;
 }
 
-pub trait CompletionProvider {
-    fn completions(
-        &self,
-        excerpt_id: ExcerptId,
-        buffer: &Entity<Buffer>,
-        buffer_position: text::Anchor,
-        trigger: CompletionContext,
-        window: &mut Window,
-        cx: &mut Context<Editor>,
-    ) -> Task<Result<Vec<CompletionResponse>>>;
-
-    fn resolve_completions(
-        &self,
-        _buffer: Entity<Buffer>,
-        _completion_indices: Vec<usize>,
-        _completions: Rc<RefCell<Box<[Completion]>>>,
-        _cx: &mut Context<Editor>,
-    ) -> Task<Result<bool>> {
-        Task::ready(Ok(false))
-    }
-
-    fn apply_additional_edits_for_completion(
-        &self,
-        _buffer: Entity<Buffer>,
-        _completions: Rc<RefCell<Box<[Completion]>>>,
-        _completion_index: usize,
-        _push_to_history: bool,
-        _cx: &mut Context<Editor>,
-    ) -> Task<Result<Option<language::Transaction>>> {
-        Task::ready(Ok(None))
-    }
-
-    fn is_completion_trigger(
-        &self,
-        buffer: &Entity<Buffer>,
-        position: language::Anchor,
-        text: &str,
-        trigger_in_words: bool,
-        cx: &mut Context<Editor>,
-    ) -> bool;
-
-    fn selection_changed(&self, _mat: Option<&StringMatch>, _window: &mut Window, _cx: &mut App) {}
-
-    fn sort_completions(&self) -> bool {
-        true
-    }
-
-    fn filter_completions(&self) -> bool {
-        true
-    }
-
-    fn show_snippets(&self) -> bool {
-        false
-    }
-}
-
 pub trait CodeActionProvider {
     fn id(&self) -> Arc<str>;
 
@@ -20083,92 +20065,6 @@ fn snippet_completions(
             is_incomplete,
         })
     })
-}
-
-impl CompletionProvider for Entity<Project> {
-    fn completions(
-        &self,
-        _excerpt_id: ExcerptId,
-        buffer: &Entity<Buffer>,
-        buffer_position: text::Anchor,
-        options: CompletionContext,
-        _window: &mut Window,
-        cx: &mut Context<Editor>,
-    ) -> Task<Result<Vec<CompletionResponse>>> {
-        self.update(cx, |project, cx| {
-            let task = project.completions(buffer, buffer_position, options, cx);
-            cx.background_spawn(task)
-        })
-    }
-
-    fn resolve_completions(
-        &self,
-        buffer: Entity<Buffer>,
-        completion_indices: Vec<usize>,
-        completions: Rc<RefCell<Box<[Completion]>>>,
-        cx: &mut Context<Editor>,
-    ) -> Task<Result<bool>> {
-        self.update(cx, |project, cx| {
-            project.lsp_store().update(cx, |lsp_store, cx| {
-                lsp_store.resolve_completions(buffer, completion_indices, completions, cx)
-            })
-        })
-    }
-
-    fn apply_additional_edits_for_completion(
-        &self,
-        buffer: Entity<Buffer>,
-        completions: Rc<RefCell<Box<[Completion]>>>,
-        completion_index: usize,
-        push_to_history: bool,
-        cx: &mut Context<Editor>,
-    ) -> Task<Result<Option<language::Transaction>>> {
-        self.update(cx, |project, cx| {
-            project.lsp_store().update(cx, |lsp_store, cx| {
-                lsp_store.apply_additional_edits_for_completion(
-                    buffer,
-                    completions,
-                    completion_index,
-                    push_to_history,
-                    cx,
-                )
-            })
-        })
-    }
-
-    fn is_completion_trigger(
-        &self,
-        buffer: &Entity<Buffer>,
-        position: language::Anchor,
-        text: &str,
-        trigger_in_words: bool,
-        cx: &mut Context<Editor>,
-    ) -> bool {
-        let mut chars = text.chars();
-        let char = if let Some(char) = chars.next() {
-            char
-        } else {
-            return false;
-        };
-        if chars.next().is_some() {
-            return false;
-        }
-
-        let buffer = buffer.read(cx);
-        let snapshot = buffer.snapshot();
-        let classifier = snapshot
-            .char_classifier_at(position)
-            .scope_context(Some(CharScopeContext::Completion));
-        if trigger_in_words && classifier.is_word(char) {
-            return true;
-        }
-
-        buffer.completion_triggers().contains(text)
-    }
-
-    fn show_snippets(&self) -> bool {
-        true
-    }
 }
 
 impl SemanticsProvider for Entity<Project> {

@@ -1,3 +1,4 @@
+use crate::completion::CompletionProvider;
 use crate::scroll::ScrollAmount;
 use fuzzy::{StringMatch, StringMatchCandidate};
 use gpui::{
@@ -33,7 +34,7 @@ use util::ResultExt;
 
 use crate::hover_popover::open_markdown_url;
 use crate::{
-    CodeActionProvider, CompletionId, CompletionProvider, DisplayRow, Editor, EditorStyle, ResolvedTasks,
+    CodeActionProvider, CompletionId, DisplayRow, Editor, EditorStyle, ResolvedTasks,
     actions::{ConfirmCodeAction, ConfirmCompletion},
     split_words, styled_runs_for_code_label,
 };
