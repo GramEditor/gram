@@ -17,6 +17,7 @@
 *.isl             linguist-vendored
 *.json            linguist-detectable
 *.jsonc           linguist-language=JSON
+*.md              linguist-detectable
 *.plist           linguist-language=XML
 *.prettierignore  linguist-language=Shell
 *.prettierrc      linguist-language=JSON
