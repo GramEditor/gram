@@ -1,5 +1,7 @@
 # Gram on Linux
 
+See also [Repology](https://repology.org/project/gram/versions).
+
 ## Distro Packages
 
 The preferred way to install is via adding a Gram repository file and installing

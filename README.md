@@ -97,7 +97,8 @@ For binary releases, see the
 ### Linux
 
 Linux installation instructions can be found at
-[docs/linux](https://gram-editor.com/docs/linux).
+[docs/linux](https://gram-editor.com/docs/linux). See also
+[Repology](https://repology.org/project/gram/versions).
 
 ### macOS (Homebrew)
 
