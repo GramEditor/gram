@@ -19,9 +19,7 @@ body:
       value: |
         ### New workflow
 
-        We are currently experimenting with a new workflow to manage issues and better understand your problems and needs.
-
-        We are looking forward to your feedback!
+        We are currently experimenting with a new workflow to manage issues and better understand your problems and needs. We are looking forward to your feedback!
   - type: textarea
     id: description
     attributes:
@@ -30,7 +28,3 @@ body:
         Please provide a description of your issue/question here.
     validations:
       required: true
-  - type: markdown
-    attributes:
-      value: |
-        Thank you.
