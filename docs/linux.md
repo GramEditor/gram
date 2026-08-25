@@ -10,7 +10,7 @@ and `.rpm` packages as release assets which can be downloaded at
 
 ### Debian/Ubuntu
 
-```sh
+```bash
 # Add the repository key
 sudo curl https://codeberg.org/api/packages/GramEditor/debian/repository.key -o /etc/apt/keyrings/forgejo-GramEditor.asc
 # Add the repository file
@@ -23,10 +23,8 @@ Requires Debian 12 (Bookworm)/Ubuntu 24.04 (noble) or later.
 
 ### Fedora/RHEL/Rocky/Alma
 
-```sh
-# Add repository file
+```bash
 sudo dnf config-manager addrepo --from-repofile="https://codeberg.org/api/packages/GramEditor/rpm.repo"
-# Install
 sudo dnf install gram
 ```
 
@@ -38,7 +36,7 @@ Requires Fedora 42/RHEL 10.1/Rocky 10.1/Alma 10.1 or later.
 
 ### OpenSUSE
 
-```sh
+```bash
 sudo zypper addrepo https://codeberg.org/api/packages/GramEditor/rpm.repo
 sudo zypper install gram
 ```
@@ -54,7 +52,7 @@ Requires Leap 16 (or Tumbleweed/Slowroll) or later.
 Arch Linux publishes official packages for Gram in their
 [extra](https://archlinux.org/packages/extra/x86_64/gram/) repository.
 
-```sh
+```bash
 sudo pacman -S gram
 ```
 
@@ -72,7 +70,7 @@ repository. Follow the
 [instructions](https://wiki.alpinelinux.org/wiki/Repositories#Using_testing_repository)
 to enable the testing repository, then run
 
-```sh
+```bash
 doas apk add gram@testing
 ```
 
@@ -80,7 +78,7 @@ doas apk add gram@testing
 
 Gentoo provided by Gram's overlay.
 
-```sh
+```bash
 # replace doas if you using sudo
 doas eselect repository add gram git https://codeberg.org/GramEditor/gram-gentoo.git
 doas emerge --sync gram
@@ -90,13 +88,19 @@ doas emerge -av app-editors/gram
 **Note**: For more information about Gentoo package and installation ways go to
 [Gram's overlay repo](https://codeberg.org/GramEditor/gram-gentoo).
 
+### Solus
+
+```bash
+sudo eopkg install gram
+```
+
 ## Flatpak
 
 Gram provides a prebuilt flatpak as a release asset. It can be downloaded from
 at [Gram releases](https://codeberg.org/GramEditor/gram/releases) and installed
 by running:
 
-```sh
+```bash
 flatpak install /path/to/app.liten.Gram-x86_64-${version}.flatpak
 ```
 
@@ -111,14 +115,14 @@ can follow these instructions:
    script.
 2. Run the script.
 
-```sh
+```bash
 ./install.sh
 ```
 
 This will download latest release of Gram and install Gram to `$HOME/.local`. To
 install system-wide, use the `--prefix PREFIX` argument:
 
-```sh
+```bash
 ./install.sh --prefix /usr/local ./gram-linux-x86_64-1.1.0.tar.gz
 ```
 
@@ -206,14 +210,14 @@ device ID of the GPU you wish to have Gram use.
 You can obtain the device ID of your GPU by running `lspci -nn | grep VGA` which
 will output each GPU on one line like:
 
-```sh
+```bash
 08:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA104 [GeForce RTX 3070] [10de:2484] (rev a1)
 ```
 
 where the device ID here is `2484`. This value is in hexadecimal, so to force
 Gram to use this specific GPU you would set the environment variable like so:
 
-```sh
+```bash
 GRAM_DEVICE_ID=0x2484 gram
 ```
 
@@ -236,7 +240,7 @@ Using [vkdevicechooser](https://github.com/jiriks74/vkdevicechooser).
 
 Passing the `--system-specs` flag to Gram like
 
-```sh
+```bash
 gram --system-specs
 ```
 
@@ -246,7 +250,7 @@ The editor log is usually located at `~/.local/share/gram/logs/Gram.log`.
 
 To generate a clean log file for debugging graphics issues, run:
 
-```sh
+```bash
 truncate -s 0 ~/.local/share/gram/logs/Gram.log # Clear the log file
 GRAM_LOG=wgpu=info gram .
 cat ~/.local/share/gram/logs/Gram.log
@@ -255,7 +259,7 @@ cat ~/.local/share/gram/logs/Gram.log
 
 Or, if you have the Gram cli setup, you can do
 
-```sh
+```bash
 GRAM_LOG=wgpu=info /path/to/gram/cli --foreground .
 # copy the output
 ```
@@ -277,7 +281,7 @@ automatically, you have several options:
 
 You can verify if you have `Xft.dpi` set:
 
-```sh
+```bash
 xrdb -query | grep Xft.dpi
 ```
 
@@ -293,13 +297,13 @@ applications that respect this setting.
 
 Edit or create the `~/.Xresources` file:
 
-```sh
+```bash
 vim ~/.Xresources
 ```
 
 Add this line with your desired DPI:
 
-```sh
+```bash
 Xft.dpi: 96
 ```
 
@@ -312,7 +316,7 @@ Common DPI values:
 
 Load the configuration:
 
-```sh
+```bash
 xrdb -merge ~/.Xresources
 ```
 
@@ -323,7 +327,7 @@ Restart Gram for the changes to take effect.
 This Gram-specific environment variable directly sets the scale factor,
 bypassing all automatic detection.
 
-```sh
+```bash
 GPUI_X11_SCALE_FACTOR=1.5 gram
 ```
 
@@ -340,7 +344,7 @@ calculates scaling for all applications that use it.
 
 Add this to your `.xprofile` or `.xinitrc`:
 
-```sh
+```bash
 xrandr --dpi 192
 ```
 
