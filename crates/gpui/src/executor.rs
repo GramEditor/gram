@@ -34,10 +34,6 @@ pub struct ParkingTestGuard {
     _guard: parking_lot::MutexGuard<'static, ()>,
 }
 
-#[cfg(not(target_os = "macos"))]
-#[must_use]
-struct Guard(());
-
 /// A pointer to the executor that is currently running,
 /// for spawning background tasks.
 #[derive(Clone)]
