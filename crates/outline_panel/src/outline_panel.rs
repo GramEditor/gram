@@ -5424,7 +5424,8 @@ mod tests {
     search: aaa «aaa»
 two/
   b.txt
-    search: a «aaa»"#.to_string(),
+    search: a «aaa»"#
+                    .to_string(),
             );
         });
 
@@ -5448,7 +5449,8 @@ two/
   a.txt  <==== selected
 two/
   b.txt
-    search: a «aaa»"#.to_string(),
+    search: a «aaa»"#
+                    .to_string(),
             );
         });
 
@@ -5470,7 +5472,8 @@ two/
                 ),
                 r#"one/
   a.txt
-two/  <==== selected"#.to_string(),
+two/  <==== selected"#
+                    .to_string(),
             );
         });
 
@@ -5493,7 +5496,8 @@ two/  <==== selected"#.to_string(),
   a.txt
 two/  <==== selected
   b.txt
-    search: a «aaa»"#.to_string()
+    search: a «aaa»"#
+                    .to_string()
             );
         });
     }
@@ -5955,7 +5959,8 @@ outline: struct OutlineEntryExcerpt
           search: «static»
     components/
       ErrorBoundary.tsx
-        search: «static»"#.to_string()
+        search: «static»"#
+                    .to_string()
             );
         });
 
@@ -5986,7 +5991,8 @@ outline: struct OutlineEntryExcerpt
     app/(site)/  <==== selected
     components/
       ErrorBoundary.tsx
-        search: «static»"#.to_string()
+        search: «static»"#
+                    .to_string()
             );
         });
 
@@ -6014,7 +6020,8 @@ outline: struct OutlineEntryExcerpt
     app/(site)/
     components/
       ErrorBoundary.tsx
-        search: «static»  <==== selected"#.to_string()
+        search: «static»  <==== selected"#
+                    .to_string()
             );
         });
 
@@ -6045,7 +6052,8 @@ outline: struct OutlineEntryExcerpt
   src/
     app/(site)/
     components/
-      ErrorBoundary.tsx  <==== selected"#.to_string()
+      ErrorBoundary.tsx  <==== selected"#
+                    .to_string()
             );
         });
 
@@ -6077,7 +6085,8 @@ outline: struct OutlineEntryExcerpt
     app/(site)/
     components/
       ErrorBoundary.tsx  <==== selected
-        search: «static»"#.to_string()
+        search: «static»"#
+                    .to_string()
             );
         });
 
@@ -6129,7 +6138,8 @@ outline: struct OutlineEntryExcerpt
           search: «static»
     components/
       ErrorBoundary.tsx  <==== selected
-        search: «static»"#.to_string()
+        search: «static»"#
+                    .to_string()
             );
         });
     }
