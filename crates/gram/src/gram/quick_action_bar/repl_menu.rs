@@ -40,8 +40,7 @@ impl QuickActionBar {
         let is_local_project = editor
             .read(cx)
             .workspace()
-            .map(|workspace| workspace.read(cx).project().read(cx).is_local())
-            .unwrap_or(false);
+            .is_some_and(|workspace| workspace.read(cx).project().read(cx).is_local());
 
         if !is_local_project {
             return None;
@@ -49,15 +48,13 @@ impl QuickActionBar {
 
         let has_nonempty_selection = {
             editor.update(cx, |this, cx| {
-                this.selections
+                if this.selections
                     .count()
-                    .ne(&0)
-                    .then(|| {
+                    .ne(&0) { {
                         let snapshot = this.display_snapshot(cx);
                         let latest = this.selections.newest_display(&snapshot);
                         !latest.is_empty()
-                    })
-                    .unwrap_or_default()
+                    } } else { Default::default() }
             })
         };
 
@@ -77,7 +74,7 @@ impl QuickActionBar {
 
         let id = "repl-menu";
 
-        let element_id = |suffix| ElementId::Name(format!("{}-{}", id, suffix).into());
+        let element_id = |suffix| ElementId::Name(format!("{id}-{suffix}").into());
 
         let editor = editor.downgrade();
         let dropdown_menu = PopoverMenu::new(element_id("menu"))
@@ -288,7 +285,7 @@ impl QuickActionBar {
             SessionSupport::Unsupported => None,
         };
 
-        let current_kernel_name = current_kernelspec.as_ref().map(|spec| spec.name());
+        let current_kernel_name = current_kernelspec.as_ref().map(repl::KernelSpecification::name);
 
         let menu_handle: PopoverMenuHandle<Picker<KernelPickerDelegate>> = PopoverMenuHandle::default();
         KernelSelector::new(
@@ -334,7 +331,7 @@ impl QuickActionBar {
     }
 
     pub fn render_repl_setup(&self, language: &str, cx: &mut Context<Self>) -> Option<AnyElement> {
-        let tooltip: SharedString = SharedString::from(format!("Setup Gram REPL for {}", language));
+        let tooltip: SharedString = SharedString::from(format!("Setup Gram REPL for {language}"));
         Some(
             h_flex()
                 .gap(DynamicSpacing::Base06.rems(cx))
@@ -346,7 +343,7 @@ impl QuickActionBar {
                         .icon_size(ui::IconSize::Small)
                         .icon_color(Color::Muted)
                         .tooltip(Tooltip::text(tooltip))
-                        .on_click(|_, _window, cx| cx.open_url(&format!("{}#installation", GRAM_REPL_DOCUMENTATION))),
+                        .on_click(|_, _window, cx| cx.open_url(&format!("{GRAM_REPL_DOCUMENTATION}#installation"))),
                 )
                 .into_any_element(),
         )
@@ -385,12 +382,12 @@ fn session_state(session: Entity<Session>, cx: &mut App) -> ReplMenuState {
         ..fill_fields()
     };
 
-    let starting = || transitional(format!("{} is starting", kernel_name).into(), true, true);
-    let restarting = || transitional(format!("Restarting {}", kernel_name).into(), true, true);
-    let shutting_down = || transitional(format!("{} is shutting down", kernel_name).into(), false, true);
-    let auto_restarting = || transitional(format!("Auto-restarting {}", kernel_name).into(), true, true);
-    let unknown = || transitional(format!("{} state unknown", kernel_name).into(), false, true);
-    let other = |state: &str| transitional(format!("{} state: {}", kernel_name, state).into(), false, true);
+    let starting = || transitional(format!("{kernel_name} is starting").into(), true, true);
+    let restarting = || transitional(format!("Restarting {kernel_name}").into(), true, true);
+    let shutting_down = || transitional(format!("{kernel_name} is shutting down").into(), false, true);
+    let auto_restarting = || transitional(format!("Auto-restarting {kernel_name}").into(), true, true);
+    let unknown = || transitional(format!("{kernel_name} state unknown").into(), false, true);
+    let other = |state: &str| transitional(format!("{kernel_name} state: {state}").into(), false, true);
 
     let shutdown = || ReplMenuState {
         tooltip: "Nothing running".into(),
@@ -407,13 +404,13 @@ fn session_state(session: Entity<Session>, cx: &mut App) -> ReplMenuState {
         Kernel::Restarting => restarting(),
         Kernel::RunningKernel(kernel) => match &kernel.execution_state() {
             ExecutionState::Idle => ReplMenuState {
-                tooltip: format!("Run code on {} ({})", kernel_name, kernel_language).into(),
+                tooltip: format!("Run code on {kernel_name} ({kernel_language})").into(),
                 indicator: Some(Indicator::dot().color(Color::Success)),
                 status: session.kernel.status(),
                 ..fill_fields()
             },
             ExecutionState::Busy => ReplMenuState {
-                tooltip: format!("Interrupt {} ({})", kernel_name, kernel_language).into(),
+                tooltip: format!("Interrupt {kernel_name} ({kernel_language})").into(),
                 icon_is_animating: true,
                 popover_disabled: false,
                 indicator: None,
@@ -430,7 +427,7 @@ fn session_state(session: Entity<Session>, cx: &mut App) -> ReplMenuState {
         },
         Kernel::StartingKernel(_) => starting(),
         Kernel::ErroredLaunch(e) => ReplMenuState {
-            tooltip: format!("Error with kernel {}: {}", kernel_name, e).into(),
+            tooltip: format!("Error with kernel {kernel_name}: {e}").into(),
             popover_disabled: false,
             indicator: Some(Indicator::dot().color(Color::Error)),
             status: session.kernel.status(),

@@ -203,7 +203,8 @@ pub enum IconName {
 
 impl IconName {
     /// Returns the path to this icon.
-    pub fn path(&self) -> Arc<str> {
+    #[must_use]
+    pub fn path(self) -> Arc<str> {
         let file_stem: &'static str = self.into();
         format!("icons/{file_stem}.svg").into()
     }

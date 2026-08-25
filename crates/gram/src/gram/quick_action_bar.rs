@@ -48,7 +48,7 @@ impl QuickActionBar {
             workspace: workspace.weak_handle(),
         };
         this.apply_settings(cx);
-        cx.observe_global::<SettingsStore>(|this, cx| this.apply_settings(cx))
+        cx.observe_global::<SettingsStore>(Self::apply_settings)
             .detach();
         this
     }
@@ -111,7 +111,7 @@ impl Render for QuickActionBar {
                     let buffer_search_bar = self.buffer_search_bar.clone();
                     move |_, window, cx| {
                         buffer_search_bar.update(cx, |search_bar, cx| {
-                            search_bar.toggle(&buffer_search::Deploy::find(), window, cx)
+                            search_bar.toggle(&buffer_search::Deploy::find(), window, cx);
                         });
                     }
                 },
@@ -305,7 +305,7 @@ impl Render for QuickActionBar {
                                             })
                                             .ok();
                                     }
-                                },)
+                                },);
                             }
 
                             menu = menu.separator();
@@ -353,7 +353,7 @@ impl Render for QuickActionBar {
                                     if !diagnostics_enabled {
                                         inline_diagnostics_item = inline_diagnostics_item.disabled(true).documentation_aside(DocumentationSide::Left, |_|  Label::new("Inline diagnostics are not available until regular diagnostics are enabled.").into_any_element());
                                     }
-                                    menu = menu.item(inline_diagnostics_item)
+                                    menu = menu.item(inline_diagnostics_item);
                                 }
 
                                 menu = menu.separator();
@@ -394,7 +394,7 @@ impl Render for QuickActionBar {
                                                     &editor::actions::ToggleSelectionMenu,
                                                     window,
                                                     cx,
-                                                )
+                                                );
                                             })
                                             .ok();
                                     }
@@ -438,7 +438,7 @@ impl Render for QuickActionBar {
                                                     &editor::actions::ToggleGitBlameInline,
                                                     window,
                                                     cx,
-                                                )
+                                                );
                                             })
                                             .ok();
                                     }
@@ -459,7 +459,7 @@ impl Render for QuickActionBar {
                                                     &git::Blame,
                                                     window,
                                                     cx,
-                                                )
+                                                );
                                             })
                                             .ok();
                                     }
@@ -589,7 +589,7 @@ impl ToolbarItemView for QuickActionBar {
                     inlay_hints_enabled = new_inlay_hints_enabled;
                     supports_inlay_hints = new_supports_inlay_hints;
                     if should_notify {
-                        cx.notify()
+                        cx.notify();
                     }
                 }));
             }

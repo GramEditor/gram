@@ -7,6 +7,7 @@ use syn::{
 };
 
 #[proc_macro_derive(Refineable, attributes(refineable))]
+#[allow(clippy::similar_names)]
 pub fn derive_refineable(input: TokenStream) -> TokenStream {
     let DeriveInput {
         ident,

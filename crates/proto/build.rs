@@ -4,8 +4,14 @@ fn main() {
         std::env::set_var("PROTOC", protobuf_src::protoc());
     }
     let mut build = prost_build::Config::new();
-    build
+    match build
         .type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]")
         .compile_protos(&["proto/gram.proto"], &["proto"])
-        .unwrap();
+    {
+        Ok(()) => (),
+        Err(err) => {
+            eprintln!("{}", err);
+            std::process::exit(1);
+        }
+    }
 }

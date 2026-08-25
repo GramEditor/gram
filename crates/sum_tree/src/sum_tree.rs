@@ -985,7 +985,7 @@ impl<T: KeyedItem> SumTree<T> {
 
         *self = {
             let mut cursor = self.cursor::<T::Key>(cx);
-            let mut new_tree = SumTree::new(cx);
+            let mut new_tree = Self::new(cx);
             let mut buffered_items = Vec::new();
 
             cursor.seek(&T::Key::zero(cx), Bias::Left);
@@ -994,7 +994,7 @@ impl<T: KeyedItem> SumTree<T> {
                 let mut old_item = cursor.item();
 
                 if old_item.as_ref().is_some_and(|old_item| old_item.key() < new_key) {
-                    new_tree.extend(buffered_items.drain(..), cx);
+                    new_tree.extend(std::mem::take(&mut buffered_items), cx);
                     let slice = cursor.slice(&new_key, Bias::Left);
                     new_tree.append(slice, cx);
                     old_item = cursor.item();
@@ -1064,7 +1064,7 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Node::Internal {
+            Self::Internal {
                 height,
                 summary,
                 child_summaries,
@@ -1076,7 +1076,7 @@ where
                 .field("child_summaries", child_summaries)
                 .field("child_trees", child_trees)
                 .finish(),
-            Node::Leaf {
+            Self::Leaf {
                 summary,
                 items,
                 item_summaries,
@@ -1091,49 +1091,48 @@ where
 }
 
 impl<T: Item> Node<T> {
-    fn is_leaf(&self) -> bool {
-        matches!(self, Node::Leaf { .. })
+    const fn is_leaf(&self) -> bool {
+        matches!(self, Self::Leaf { .. })
     }
 
-    fn height(&self) -> u8 {
+    const fn height(&self) -> u8 {
         match self {
-            Node::Internal { height, .. } => *height,
-            Node::Leaf { .. } => 0,
+            Self::Internal { height, .. } => *height,
+            Self::Leaf { .. } => 0,
         }
     }
 
-    fn summary(&self) -> &T::Summary {
+    const fn summary(&self) -> &T::Summary {
         match self {
-            Node::Internal { summary, .. } => summary,
-            Node::Leaf { summary, .. } => summary,
+            Self::Internal { summary, .. } | Self::Leaf { summary, .. } => summary,
         }
     }
 
     fn child_summaries(&self) -> &[T::Summary] {
         match self {
-            Node::Internal { child_summaries, .. } => child_summaries.as_slice(),
-            Node::Leaf { item_summaries, .. } => item_summaries.as_slice(),
+            Self::Internal { child_summaries, .. } => child_summaries.as_slice(),
+            Self::Leaf { item_summaries, .. } => item_summaries.as_slice(),
         }
     }
 
     fn child_trees(&self) -> &ArrayVec<SumTree<T>, { 2 * TREE_BASE }> {
         match self {
-            Node::Internal { child_trees, .. } => child_trees,
-            Node::Leaf { .. } => panic!("Leaf nodes have no child trees"),
+            Self::Internal { child_trees, .. } => child_trees,
+            Self::Leaf { .. } => unreachable!(),
         }
     }
 
     fn items(&self) -> &ArrayVec<T, { 2 * TREE_BASE }> {
         match self {
-            Node::Leaf { items, .. } => items,
-            Node::Internal { .. } => panic!("Internal nodes have no items"),
+            Self::Leaf { items, .. } => items,
+            Self::Internal { .. } => unreachable!(),
         }
     }
 
-    fn is_underflowing(&self) -> bool {
+    const fn is_underflowing(&self) -> bool {
         match self {
-            Node::Internal { child_trees, .. } => child_trees.len() < TREE_BASE,
-            Node::Leaf { items, .. } => items.len() < TREE_BASE,
+            Self::Internal { child_trees, .. } => child_trees.len() < TREE_BASE,
+            Self::Leaf { items, .. } => items.len() < TREE_BASE,
         }
     }
 }
@@ -1147,8 +1146,8 @@ pub enum Edit<T: KeyedItem> {
 impl<T: KeyedItem> Edit<T> {
     fn key(&self) -> T::Key {
         match self {
-            Edit::Insert(item) => item.key(),
-            Edit::Remove(key) => key.clone(),
+            Self::Insert(item) => item.key(),
+            Self::Remove(key) => key.clone(),
         }
     }
 }

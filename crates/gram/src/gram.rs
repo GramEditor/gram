@@ -1,7 +1,7 @@
 mod app_menus;
 pub mod component_preview;
 #[cfg(target_os = "macos")]
-pub(crate) mod mac_only_instance;
+pub mod mac_only_instance;
 mod migrate;
 mod open_listener;
 mod quick_action_bar;
@@ -158,7 +158,7 @@ pub fn init(cx: &mut App) {
                     });
             })
             .ok();
-        };
+        }
     })
     .detach();
     cx.on_action(|_: &OpenLog, cx| {
@@ -348,7 +348,7 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
                     initialize_pane(workspace, pane, window, cx);
                 }
                 workspace::Event::OpenBundledFile { text, title, language } => {
-                    open_bundled_file(workspace, text.clone(), title, language, window, cx)
+                    open_bundled_file(workspace, text.clone(), title, language, window, cx);
                 }
                 _ => {}
             }
@@ -359,12 +359,12 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
         initialize_file_watcher(window, cx);
 
         if let Some(specs) = window.gpu_specs() {
-            log::info!("Using GPU: {:?}", specs);
+            log::info!("Using GPU: {specs:?}");
             show_software_emulation_warning_if_needed(specs.clone(), window, cx);
             if let Some((crash_server, message)) = crashes::CRASH_HANDLER.get().zip(bitcode::serialize(&specs).ok())
                 && let Err(err) = crash_server.send_message(3, message)
             {
-                log::warn!("Failed to store active gpu info for crash reporting: {}", err);
+                log::warn!("Failed to store active gpu info for crash reporting: {err}");
             }
         }
 
@@ -503,7 +503,7 @@ fn show_software_emulation_warning_if_needed(specs: gpui::GpuSpecs, window: &mut
             ("Vulkan", "gram://docs/linux", "gram://docs/linux")
         };
         let message = format!(
-            db::indoc! {r#"
+            db::indoc! {r"
             Gram uses {} for rendering and requires a compatible GPU.
 
             Currently you are using a software emulated GPU ({}) which
@@ -511,7 +511,7 @@ fn show_software_emulation_warning_if_needed(specs: gpui::GpuSpecs, window: &mut
 
             For troubleshooting see: {}
             Set GRAM_ALLOW_EMULATED_GPU=1 env var to permanently override.
-            "#},
+            "},
             graphics_api, specs.device_name, docs_url
         );
         let prompt = window.prompt(
@@ -530,7 +530,7 @@ fn show_software_emulation_warning_if_needed(specs: gpui::GpuSpecs, window: &mut
                 .ok();
             }
         })
-        .detach()
+        .detach();
     }
 }
 
@@ -584,7 +584,7 @@ fn register_actions(app_state: Arc<AppState>, workspace: &mut Workspace, _: &mut
             OpenListener::global(cx).open(RawOpenRequest {
                 urls: vec![action.url.clone()],
                 ..Default::default()
-            })
+            });
         })
         .register_action(|workspace, action: &OpenBrowser, _window, cx| {
             // Parse and validate the URL to ensure it's properly formatted
@@ -631,7 +631,7 @@ fn register_actions(app_state: Arc<AppState>, workspace: &mut Workspace, _: &mut
                     task.await.log_err();
                 }
             })
-            .detach()
+            .detach();
         })
         .register_action(|workspace, action: &app_actions::OpenRemote, window, cx| {
             if !action.from_existing_connection {
@@ -666,7 +666,7 @@ fn register_actions(app_state: Arc<AppState>, workspace: &mut Workspace, _: &mut
                     task.await.log_err();
                 }
             })
-            .detach()
+            .detach();
         })
         .register_action({
             let fs = app_state.fs.clone();
@@ -794,7 +794,7 @@ fn register_actions(app_state: Arc<AppState>, workspace: &mut Workspace, _: &mut
                             ),
                         ),
                         cx,
-                    )
+                    );
                 })?;
                 Ok(())
             })
@@ -890,7 +890,7 @@ fn register_actions(app_state: Arc<AppState>, workspace: &mut Workspace, _: &mut
             move |_, _: &NewFile, _, cx| {
                 if let Some(app_state) = app_state.upgrade() {
                     open_new(Default::default(), app_state, cx, |workspace, window, cx| {
-                        Editor::new_file(workspace, &Default::default(), window, cx)
+                        Editor::new_file(workspace, &Default::default(), window, cx);
                     })
                     .detach();
                 }
@@ -903,9 +903,7 @@ fn register_actions(app_state: Arc<AppState>, workspace: &mut Workspace, _: &mut
     if workspace.project().read(cx).is_via_remote_server() {
         workspace.register_action({
             move |workspace, _: &OpenServerSettings, window, cx| {
-                let open_server_settings = workspace
-                    .project()
-                    .update(cx, |project, cx| project.open_server_settings(cx));
+                let open_server_settings = workspace.project().update(cx, project::Project::open_server_settings);
 
                 cx.spawn_in(window, async move |workspace, cx| {
                     let buffer = open_server_settings.await?;
@@ -964,7 +962,7 @@ fn initialize_pane(workspace: &Workspace, pane: &Entity<Pane>, window: &mut Wind
             toolbar.add_item(commit_view_toolbar, window, cx);
             let image_view_toolbar = cx.new(|_| image_viewer::ImageViewToolbarControls::new());
             toolbar.add_item(image_view_toolbar, window, cx);
-        })
+        });
     });
 }
 
@@ -1024,7 +1022,7 @@ fn open_about(cx: &mut App) {
                     .bg(cx.theme().colors().editor_background)
                     .text_color(cx.theme().colors().text)
                     .p_4()
-                    .when(cfg!(target_os = "macos"), |this| this.pt_10())
+                    .when(cfg!(target_os = "macos"), gpui::Styled::pt_10)
                     .gap_4()
                     .text_center()
                     .justify_between()
@@ -1052,7 +1050,7 @@ fn open_about(cx: &mut App) {
                                             move |_window, cx| {
                                                 let content = match commit.as_ref() {
                                                     Some(commit) => {
-                                                        format!("{}, Commit: {}", headline, commit)
+                                                        format!("{headline}, Commit: {commit}")
                                                     }
                                                     None => headline.clone().into(),
                                                 };
@@ -1139,7 +1137,7 @@ fn open_about(cx: &mut App) {
 
 #[cfg(not(target_os = "windows"))]
 fn install_cli(_: &mut Workspace, _: &install_cli::InstallCliBinary, window: &mut Window, cx: &mut Context<Workspace>) {
-    install_cli::install_cli_binary(window, cx)
+    install_cli::install_cli_binary(window, cx);
 }
 
 static WAITING_QUIT_CONFIRMATION: AtomicBool = AtomicBool::new(false);
@@ -1276,7 +1274,7 @@ fn open_log_file(workspace: &mut Workspace, window: &mut Window, cx: &mut Contex
                             let last_multi_buffer_offset = editor.buffer().read(cx).len(cx);
                             editor.change_selections(Default::default(), window, cx, |s| {
                                 s.select_ranges(Some(last_multi_buffer_offset..last_multi_buffer_offset));
-                            })
+                            });
                         });
 
                         workspace.add_item_to_active_pane(Box::new(editor), None, true, window, cx);
@@ -1291,7 +1289,7 @@ fn open_log_file(workspace: &mut Workspace, window: &mut Window, cx: &mut Contex
 fn notify_settings_errors(result: settings::SettingsParseResult, is_user: bool, cx: &mut App) {
     if let settings::ParseStatus::Failed { error: err } = &result.parse_status {
         let settings_type = if is_user { "user" } else { "global" };
-        log::error!("Failed to load {} settings: {err}", settings_type);
+        log::error!("Failed to load {settings_type} settings: {err}");
     }
 
     let error = match result.parse_status {
@@ -1300,30 +1298,27 @@ fn notify_settings_errors(result: settings::SettingsParseResult, is_user: bool, 
     };
     let id = NotificationId::Named(format!("failed-to-parse-settings-{is_user}").into());
 
-    let showed_parse_error = match error {
-        Some(error) => {
-            if let Some(InvalidSettingsError::LocalSettings { .. }) = error.downcast_ref::<InvalidSettingsError>() {
-                false
-                // Local settings errors are displayed by the projects
-            } else {
-                show_app_notification(id, cx, move |cx| {
-                    cx.new(|cx| {
-                        MessageNotification::new(format!("Invalid user settings file\n{error}"), cx)
-                            .primary_message("Open Settings File")
-                            .primary_icon(IconName::Settings)
-                            .primary_on_click(|window, cx| {
-                                window.dispatch_action(app_actions::OpenSettingsFile.boxed_clone(), cx);
-                                cx.emit(DismissEvent);
-                            })
-                    })
-                });
-                true
-            }
-        }
-        None => {
-            dismiss_app_notification(&id, cx);
+    let showed_parse_error = if let Some(error) = error {
+        if let Some(InvalidSettingsError::LocalSettings { .. }) = error.downcast_ref::<InvalidSettingsError>() {
             false
+            // Local settings errors are displayed by the projects
+        } else {
+            show_app_notification(id, cx, move |cx| {
+                cx.new(|cx| {
+                    MessageNotification::new(format!("Invalid user settings file\n{error}"), cx)
+                        .primary_message("Open Settings File")
+                        .primary_icon(IconName::Settings)
+                        .primary_on_click(|window, cx| {
+                            window.dispatch_action(app_actions::OpenSettingsFile.boxed_clone(), cx);
+                            cx.emit(DismissEvent);
+                        })
+                })
+            });
+            true
         }
+    } else {
+        dismiss_app_notification(&id, cx);
+        false
     };
     let id = NotificationId::Named(format!("failed-to-migrate-settings-{is_user}").into());
 
@@ -1352,7 +1347,7 @@ fn notify_settings_errors(result: settings::SettingsParseResult, is_user: bool, 
                 });
             }
         }
-    };
+    }
 }
 
 pub fn handle_settings_file_changes(
@@ -1510,7 +1505,7 @@ pub fn handle_keymap_file_changes(mut user_keymap_file_rx: mpsc::UnboundedReceiv
                         show_keymap_file_load_error(notification_id.clone(), error_message, cx);
                     }
                     KeymapFileLoadResult::JsonParseFailure { error } => {
-                        show_keymap_file_json_error(notification_id.clone(), &error, cx)
+                        show_keymap_file_json_error(notification_id.clone(), &error, cx);
                     }
                 }
             })
@@ -1545,7 +1540,7 @@ fn show_keymap_file_load_error(notification_id: NotificationId, error_message: M
             cx.emit(DismissEvent);
         },
         cx,
-    )
+    );
 }
 
 fn show_markdown_app_notification<F>(
@@ -1590,7 +1585,7 @@ fn show_markdown_app_notification<F>(
                     .primary_icon(IconName::Settings)
                     .primary_on_click_arc(primary_button_on_click)
                 })
-            })
+            });
         })
         .ok();
     })
@@ -1676,7 +1671,7 @@ fn open_project_settings_file(
         initial_project_settings_content(),
         window,
         cx,
-    )
+    );
 }
 
 fn open_project_tasks_file(
@@ -1691,7 +1686,7 @@ fn open_project_tasks_file(
         initial_tasks_content(),
         window,
         cx,
-    )
+    );
 }
 
 fn open_project_debug_tasks_file(
@@ -1706,7 +1701,7 @@ fn open_project_debug_tasks_file(
         initial_local_debug_tasks_content(),
         window,
         cx,
-    )
+    );
 }
 
 fn open_local_file(
@@ -1785,7 +1780,7 @@ fn open_local_file(
 
         workspace.show_notification(NotificationId::unique::<NoOpenFolders>(), cx, |cx| {
             cx.new(|cx| MessageNotification::new("This project has no folders open.", cx))
-        })
+        });
     }
 }
 
@@ -1871,7 +1866,7 @@ fn open_settings_file(
 ///
 /// This fast path exists to load these themes as soon as possible so the user
 /// doesn't see the default themes while waiting on extensions to load.
-pub(crate) fn eager_load_active_theme_and_icon_theme(fs: Arc<dyn Fs>, cx: &mut App) {
+pub fn eager_load_active_theme_and_icon_theme(fs: Arc<dyn Fs>, cx: &mut App) {
     let extension_store = ExtensionStore::global(cx);
     let theme_registry = ThemeRegistry::global(cx);
     let theme_settings = ThemeSettings::get_global(cx);
@@ -1954,7 +1949,7 @@ pub(crate) fn eager_load_active_theme_and_icon_theme(fs: Arc<dyn Fs>, cx: &mut A
         match reload_target {
             ReloadTarget::Theme => GlobalTheme::reload_theme(cx),
             ReloadTarget::IconTheme => GlobalTheme::reload_icon_theme(cx),
-        };
+        }
     }
 }
 
@@ -2019,7 +2014,7 @@ mod tests {
         let workspace = cx.windows()[0].downcast::<Workspace>().unwrap();
         workspace
             .update(cx, |workspace, _, cx| {
-                assert!(workspace.active_item_as::<Editor>(cx).is_some())
+                assert!(workspace.active_item_as::<Editor>(cx).is_some());
             })
             .unwrap();
     }
@@ -2233,7 +2228,7 @@ mod tests {
         .unwrap();
         assert_eq!(cx.update(|cx| cx.windows().len()), 2);
         let window2 = cx.update(|cx| cx.active_window().unwrap());
-        assert!(window1 != window2);
+        assert_ne!(window1, window2);
         cx.update_window(window1, |_, window, _| window.activate_window())
             .unwrap();
 
@@ -2249,7 +2244,7 @@ mod tests {
         .unwrap();
         assert_eq!(cx.update(|cx| cx.windows().len()), 2);
         // should have opened in window2 because that has dir2 visibly open (window1 has it open, but not in the project panel)
-        assert!(cx.update(|cx| cx.active_window().unwrap()) == window2);
+        assert_eq!(cx.update(|cx| cx.active_window().unwrap()), window2);
     }
 
     #[gpui::test]
@@ -2260,7 +2255,7 @@ mod tests {
         cx.update(|cx| {
             SettingsStore::update_global(cx, |store, cx| {
                 store.update_user_settings(cx, |settings| {
-                    settings.session.get_or_insert_default().restore_unsaved_buffers = Some(false)
+                    settings.session.get_or_insert_default().restore_unsaved_buffers = Some(false);
                 });
             });
         });
@@ -2491,7 +2486,7 @@ mod tests {
         let app_state = init_test(cx);
         cx.update(|cx| {
             open_new(Default::default(), app_state.clone(), cx, |workspace, window, cx| {
-                Editor::new_file(workspace, &Default::default(), window, cx)
+                Editor::new_file(workspace, &Default::default(), window, cx);
             })
         })
         .await
@@ -3176,7 +3171,7 @@ mod tests {
             .update(cx, |_, _, cx| {
                 editor.update(cx, |editor, cx| {
                     assert!(!editor.is_dirty(cx));
-                    assert_eq!(editor.title(cx), "the-new-name.rs")
+                    assert_eq!(editor.title(cx), "the-new-name.rs");
                 });
             })
             .unwrap();
@@ -3214,7 +3209,7 @@ mod tests {
                 editor2.read(cx).buffer().read(cx).as_singleton().unwrap(),
                 editor.read(cx).buffer().read(cx).as_singleton().unwrap()
             );
-        })
+        });
     }
 
     #[gpui::test]
@@ -3271,7 +3266,7 @@ mod tests {
                             .unwrap()
                             .name(),
                         "Rust".into()
-                    )
+                    );
                 });
             })
             .unwrap();
@@ -3419,7 +3414,7 @@ mod tests {
                     editor.change_selections(Default::default(), window, cx, |s| {
                         s.select_display_ranges([
                             DisplayPoint::new(DisplayRow(10), 0)..DisplayPoint::new(DisplayRow(10), 0)
-                        ])
+                        ]);
                     });
                 });
             })
@@ -3446,7 +3441,7 @@ mod tests {
                     editor.change_selections(Default::default(), window, cx, |s| {
                         s.select_display_ranges([
                             DisplayPoint::new(DisplayRow(12), 0)..DisplayPoint::new(DisplayRow(12), 0)
-                        ])
+                        ]);
                     });
                     editor.newline(&Default::default(), window, cx);
                     editor.newline(&Default::default(), window, cx);
@@ -3646,8 +3641,8 @@ mod tests {
                     editor.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
                         s.select_display_ranges([
                             DisplayPoint::new(DisplayRow(15), 0)..DisplayPoint::new(DisplayRow(15), 0)
-                        ])
-                    })
+                        ]);
+                    });
                 });
             })
             .unwrap();
@@ -3658,7 +3653,7 @@ mod tests {
                         editor.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
                             s.select_display_ranges([
                                 DisplayPoint::new(DisplayRow(3), 0)..DisplayPoint::new(DisplayRow(3), 0)
-                            ])
+                            ]);
                         });
                     });
                 })
@@ -3670,8 +3665,8 @@ mod tests {
                         editor.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
                             s.select_display_ranges([
                                 DisplayPoint::new(DisplayRow(13), 0)..DisplayPoint::new(DisplayRow(13), 0)
-                            ])
-                        })
+                            ]);
+                        });
                     });
                 })
                 .unwrap();
@@ -3683,7 +3678,7 @@ mod tests {
                         editor.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
                             s.select_display_ranges([
                                 DisplayPoint::new(DisplayRow(2), 0)..DisplayPoint::new(DisplayRow(14), 0)
-                            ])
+                            ]);
                         });
                         editor.insert("", window, cx);
                     })
@@ -3697,8 +3692,8 @@ mod tests {
                     editor.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
                         s.select_display_ranges([
                             DisplayPoint::new(DisplayRow(1), 0)..DisplayPoint::new(DisplayRow(1), 0)
-                        ])
-                    })
+                        ]);
+                    });
                 });
             })
             .unwrap();
@@ -4169,7 +4164,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_generate_keymap_json_schema_for_registered_actions(cx: &mut gpui::TestAppContext) {
+    fn test_generate_keymap_json_schema_for_registered_actions(cx: &mut gpui::TestAppContext) {
         init_keymap_test(cx);
         cx.update(|cx| {
             // Make sure it doesn't panic.
@@ -4180,7 +4175,7 @@ mod tests {
     /// Checks that action namespaces are the expected set. The purpose of this is to prevent typos
     /// and let you know when introducing a new namespace.
     #[gpui::test]
-    async fn test_action_namespaces(cx: &mut gpui::TestAppContext) {
+    fn test_action_namespaces(cx: &mut gpui::TestAppContext) {
         use itertools::Itertools;
 
         init_keymap_test(cx);
@@ -4287,7 +4282,7 @@ mod tests {
                 all_namespaces,
                 expected_namespaces
                     .into_iter()
-                    .map(|namespace| namespace.to_string())
+                    .map(std::string::ToString::to_string)
                     .sorted()
                     .collect::<Vec<_>>()
             );
@@ -4343,7 +4338,7 @@ mod tests {
 
         let active_editor = active_editor.unwrap();
         assert!(
-            active_editor.read_with(cx, |editor, cx| editor.read_only(cx)),
+            active_editor.read_with(cx, editor::Editor::read_only),
             "Default settings should be readonly"
         );
         assert!(
@@ -4374,7 +4369,7 @@ mod tests {
         cx.run_until_parked();
     }
 
-    pub(crate) fn init_test(cx: &mut TestAppContext) -> Arc<AppState> {
+    pub fn init_test(cx: &mut TestAppContext) -> Arc<AppState> {
         init_test_with_state(cx, cx.update(AppState::test))
     }
 
@@ -4512,7 +4507,7 @@ mod tests {
         let original_settings_str = original_settings.clone();
 
         // Verify settings exist on disk and have expected content
-        eprintln!("Original settings content: {}", original_settings_str);
+        eprintln!("Original settings content: {original_settings_str}");
         assert!(
             original_settings_str.contains("UNIQUEVALUE"),
             "Test setup failed - settings file doesn't contain our marker"
@@ -4535,7 +4530,7 @@ mod tests {
 
         let has_entry = cx.update(|cx| worktree.read(cx).entry_for_path(rel_path(".gram")).is_some());
 
-        eprintln!("Is .gram directory visible in worktree after exclusion: {}", has_entry);
+        eprintln!("Is .gram directory visible in worktree after exclusion: {has_entry}");
 
         // This assertion verifies the test is set up correctly to show the bug
         // If .gram is not excluded, the test will fail here
@@ -4565,12 +4560,12 @@ mod tests {
             .unwrap();
 
         let new_content_str = new_content;
-        eprintln!("New settings content: {}", new_content_str);
+        eprintln!("New settings content: {new_content_str}");
 
         // The bug causes the settings to be overwritten with empty settings
         // So if the unique value is no longer present, the bug has been reproduced
         let bug_exists = !new_content_str.contains("UNIQUEVALUE");
-        eprintln!("Bug reproduced: {}", bug_exists);
+        eprintln!("Bug reproduced: {bug_exists}");
 
         // This assertion should fail if the bug exists - showing the bug is real
         assert!(
@@ -4630,7 +4625,7 @@ mod tests {
                 assert_eq!(
                     project_path.path.as_ref().as_std_path().to_str().unwrap(),
                     path!("document.txt")
-                )
+                );
             });
         }
     }

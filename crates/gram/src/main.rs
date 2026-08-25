@@ -64,7 +64,7 @@ fn files_not_created_on_launch(errors: HashMap<io::ErrorKind, Vec<&Path>>) {
     let message = "Gram failed to launch";
     let error_details = errors
         .into_iter()
-        .flat_map(|(kind, paths)| {
+        .filter_map(|(kind, paths)| {
             #[allow(unused_mut)] // for non-unix platforms
             let mut error_kind_details = match paths.len() {
                 0 => return None,
@@ -108,9 +108,9 @@ fn files_not_created_on_launch(errors: HashMap<io::ErrorKind, Vec<&Path>>) {
                 })
                 .log_err();
         } else {
-            fail_to_open_window(anyhow::anyhow!("{message}: {error_details}"), cx)
+            fail_to_open_window(anyhow::anyhow!("{message}: {error_details}"), cx);
         }
-    })
+    });
 }
 
 fn fail_to_open_window_async(e: anyhow::Error, cx: &mut AsyncApp) {
@@ -156,7 +156,7 @@ fn fail_to_open_window(e: anyhow::Error, _cx: &mut App) {
 pub static STARTUP_TIME: OnceLock<Instant> = OnceLock::new();
 
 pub fn main() {
-    STARTUP_TIME.get_or_init(|| Instant::now());
+    STARTUP_TIME.get_or_init(Instant::now);
 
     #[cfg(unix)]
     util::prevent_root_execution();
@@ -181,7 +181,7 @@ pub fn main() {
         match nc::main(socket) {
             Ok(()) => return,
             Err(err) => {
-                eprintln!("Error: {}", err);
+                eprintln!("Error: {err}");
                 process::exit(1);
             }
         }
@@ -235,9 +235,9 @@ pub fn main() {
     } else {
         let result = zlog::init_output_file(paths::log_file(), Some(paths::old_log_file()));
         if let Err(err) = result {
-            eprintln!("Could not open log file: {}... Defaulting to stdout", err);
+            eprintln!("Could not open log file: {err}... Defaulting to stdout");
             zlog::init_output_stdout();
-        };
+        }
     }
 
     let app_version = AppVersion::load(env!("CARGO_PKG_VERSION"));
@@ -245,7 +245,7 @@ pub fn main() {
         Some(commit_name) => commit_name.to_string(),
         None => match option_env!("RELEASE_VERSION") {
             Some(version) => format!("{version} "),
-            None => "".to_string(),
+            None => String::new(),
         },
     };
     let app_commit_sha = option_env!("GRAM_COMMIT_SHA").map(|commit_sha| AppCommitSha::new(commit_sha.to_string()));
@@ -253,14 +253,14 @@ pub fn main() {
     if args.system_specs {
         let system_specs =
             system_specs::SystemSpecs::new_stateless(app_version, app_commit_sha, *release_channel::RELEASE_CHANNEL);
-        println!("Gram System Specs (from CLI):\n{}", system_specs);
+        println!("Gram System Specs (from CLI):\n{system_specs}");
         return;
     }
 
     rayon::ThreadPoolBuilder::new()
         .num_threads(std::thread::available_parallelism().map_or(1, |n| n.get().div_ceil(2)))
         .stack_size(10 * 1024 * 1024)
-        .thread_name(|ix| format!("RayonWorker{}", ix))
+        .thread_name(|ix| format!("RayonWorker{ix}"))
         .build_global()
         .unwrap();
 
@@ -269,7 +269,7 @@ pub fn main() {
         version_name,
         app_commit_sha
             .as_ref()
-            .map(|sha| sha.short())
+            .map(release_channel::AppCommitSha::short)
             .as_deref()
             .unwrap_or("unknown"),
     );
@@ -289,9 +289,7 @@ pub fn main() {
             binary: "gram".to_string(),
             release_channel: release_channel::RELEASE_CHANNEL_NAME.clone(),
             commit_sha: app_commit_sha
-                .as_ref()
-                .map(|sha| sha.full())
-                .unwrap_or_else(|| "no sha".to_owned()),
+                .as_ref().map_or_else(|| "no sha".to_owned(), release_channel::AppCommitSha::full),
         }))
         .detach();
 
@@ -309,7 +307,7 @@ pub fn main() {
                     !crate::gram::windows_only_instance::handle_single_instance(open_listener.clone(), &args)
                 }
                 target_os = "macos" => {
-                    use gram::mac_only_instance::*;
+                    use gram::mac_only_instance::{ensure_only_instance, IsOnlyInstance};
                     ensure_only_instance() != IsOnlyInstance::Yes
                 }
             }
@@ -328,7 +326,7 @@ pub fn main() {
         None
     };
     if let Some(git_binary_path) = &git_binary_path {
-        log::info!("Using git binary path: {:?}", git_binary_path);
+        log::info!("Using git binary path: {git_binary_path:?}");
     }
 
     let fs = Arc::new(RealFs::new(git_binary_path, app.background_executor()));
@@ -342,16 +340,16 @@ pub fn main() {
     let user_keymap_file_rx = watch_config_file(&app.background_executor(), fs.clone(), paths::keymap_file().clone());
 
     let (shell_env_loaded_tx, shell_env_loaded_rx) = oneshot::channel();
-    if !stdout_is_a_pty() {
+    if stdout_is_a_pty() {
+        drop(shell_env_loaded_tx);
+    } else {
         app.background_executor()
             .spawn(async {
                 #[cfg(unix)]
                 util::load_login_shell_environment().await.log_err();
                 shell_env_loaded_tx.send(()).ok();
             })
-            .detach()
-    } else {
-        drop(shell_env_loaded_tx)
+            .detach();
     }
 
     app.on_open_urls({
@@ -361,7 +359,7 @@ pub fn main() {
                 urls,
                 diff_paths: Vec::new(),
                 ..Default::default()
-            })
+            });
         }
     });
     app.on_reopen(move |cx| {
@@ -370,7 +368,7 @@ pub fn main() {
                 let app_state = app_state;
                 async move |cx| {
                     if let Err(e) = restore_or_create_workspace(app_state, cx).await {
-                        fail_to_open_window_async(e, cx)
+                        fail_to_open_window_async(e, cx);
                     }
                 }
             })
@@ -561,11 +559,11 @@ pub fn main() {
 
         cx.observe_global::<SettingsStore>({
             move |cx| {
-                for &mut window in cx.windows().iter_mut() {
+                for &mut window in &mut cx.windows() {
                     let background_appearance = cx.theme().window_background_appearance();
                     window
                         .update(cx, |_, window, _| {
-                            window.set_background_appearance(background_appearance)
+                            window.set_background_appearance(background_appearance);
                         })
                         .ok();
                 }
@@ -612,7 +610,7 @@ pub fn main() {
         };
 
         if !urls.is_empty() || !diff_paths.is_empty() {
-            open_listener.open(RawOpenRequest { urls, diff_paths, wsl })
+            open_listener.open(RawOpenRequest { urls, diff_paths, wsl });
         }
 
         if let Ok(recv) = open_rx.try_recv()
@@ -624,7 +622,7 @@ pub fn main() {
                 let app_state = app_state.clone();
                 async move |cx| {
                     if let Err(e) = restore_or_create_workspace(app_state, cx).await {
-                        fail_to_open_window_async(e, cx)
+                        fail_to_open_window_async(e, cx);
                     }
                 }
             })
@@ -703,7 +701,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                                 buffer.update(cx, |buffer, cx| {
                                     buffer.set_language(json, cx);
                                     buffer.edit([(0..0, json_schema_content)], None, cx);
-                                    buffer.edit([(0..0, format!("// {} JSON Schema\n", schema_path))], None, cx);
+                                    buffer.edit([(0..0, format!("// {schema_path} JSON Schema\n"))], None, cx);
                                 });
 
                                 workspace.add_item_to_active_pane(
@@ -729,7 +727,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                 cx.spawn(async move |cx| {
                     let workspace = workspace::get_any_active_workspace(app_state, cx.clone()).await?;
                     workspace.update(cx, |_, window, cx| {
-                        window.dispatch_action(Box::new(app_actions::OpenDocsAt { path }), cx)
+                        window.dispatch_action(Box::new(app_actions::OpenDocsAt { path }), cx);
                     })
                 })
                 .detach_and_log_err(cx);
@@ -738,7 +736,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                 cx.spawn(async move |cx| {
                     let workspace = workspace::get_any_active_workspace(app_state, cx.clone()).await?;
                     workspace.update(cx, |_, window, cx| {
-                        window.dispatch_action(Box::new(app_actions::ChangeKeybinding { action }), cx)
+                        window.dispatch_action(Box::new(app_actions::ChangeKeybinding { action }), cx);
                     })
                 })
                 .detach_and_log_err(cx);
@@ -754,7 +752,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
                     workspace.update(cx, |_, window, cx| match setting_path {
                         None => window.dispatch_action(Box::new(app_actions::OpenSettings), cx),
                         Some(setting_path) => {
-                            window.dispatch_action(Box::new(app_actions::OpenSettingsAt { path: setting_path }), cx)
+                            window.dispatch_action(Box::new(app_actions::OpenSettingsAt { path: setting_path }), cx);
                         }
                     })
                 })
@@ -869,7 +867,7 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
             .await?;
             for result in results.into_iter().flatten() {
                 if let Err(err) = result {
-                    log::error!("Error opening path: {err}",);
+                    log::error!("Error opening path: {err}");
                 }
             }
             anyhow::Ok(())
@@ -900,7 +898,7 @@ async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp
                     let app_state = app_state.clone();
                     let task = cx.spawn(async move |cx| {
                         let open_task = cx.update(|cx| {
-                            workspace::open_paths(&paths.paths(), app_state, workspace::OpenOptions::default(), cx)
+                            workspace::open_paths(paths.paths(), app_state, workspace::OpenOptions::default(), cx)
                         })?;
                         open_task.await.map(|_| ())
                     });
@@ -921,7 +919,7 @@ async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp
                     let task = cx.spawn(async move |cx| {
                         recent_projects::open_remote_project(
                             connection_options,
-                            paths.paths().into_iter().map(PathBuf::from).collect(),
+                            paths.paths().iter().map(PathBuf::from).collect(),
                             app_state,
                             workspace::OpenOptions::default(),
                             cx,
@@ -941,7 +939,7 @@ async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp
         let mut error_count = 0;
         for result in results {
             if let Err(e) = result {
-                log::error!("Failed to restore workspace: {}", e);
+                log::error!("Failed to restore workspace: {e}");
                 error_count += 1;
             }
         }
@@ -950,7 +948,7 @@ async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp
             let message = if error_count == 1 {
                 "Failed to restore 1 workspace. Check logs for details.".to_string()
             } else {
-                format!("Failed to restore {} workspaces. Check logs for details.", error_count)
+                format!("Failed to restore {error_count} workspaces. Check logs for details.")
             };
 
             // Try to find an active workspace to show the toast
@@ -961,7 +959,7 @@ async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp
                     {
                         workspace
                             .update(cx, |workspace, _, cx| {
-                                workspace.show_toast(Toast::new(NotificationId::unique::<()>(), message), cx)
+                                workspace.show_toast(Toast::new(NotificationId::unique::<()>(), message), cx);
                             })
                             .ok();
                         return true;
@@ -1012,7 +1010,7 @@ pub(crate) async fn restorable_workspace_locations(
             let session = session_handle.read(cx);
 
             (
-                session.last_session_id().map(|id| id.to_string()),
+                session.last_session_id().map(std::string::ToString::to_string),
                 session.last_session_window_stack(),
             )
         })
@@ -1069,6 +1067,7 @@ fn init_paths() -> HashMap<io::ErrorKind, Vec<&'static Path>> {
     })
 }
 
+#[must_use]
 pub fn stdout_is_a_pty() -> bool {
     std::env::var(FORCE_CLI_MODE_ENV_VAR_NAME).ok().is_none() && io::stdout().is_terminal()
 }
@@ -1203,7 +1202,7 @@ fn load_user_themes_in_background(fs: Arc<dyn fs::Fs>, cx: &mut App) {
                 let themes_dir = paths::themes_dir().as_ref();
                 match fs.metadata(themes_dir).await.ok().flatten().map(|m| m.is_dir) {
                     Some(is_dir) => {
-                        anyhow::ensure!(is_dir, "Themes dir path {themes_dir:?} is not a directory")
+                        anyhow::ensure!(is_dir, "Themes dir path {themes_dir:?} is not a directory");
                     }
                     None => {
                         fs.create_dir(themes_dir)
@@ -1234,17 +1233,17 @@ fn watch_themes(fs: Arc<dyn fs::Fs>, cx: &mut App) {
 
         while let Some(paths) = events.next().await {
             for event in paths {
-                log::info!("Trying to load theme from {:?}", event);
+                log::info!("Trying to load theme from {event:?}");
                 if fs.metadata(&event.path).await.ok().flatten().is_some()
                     && let Some(theme_registry) = cx.update(|cx| ThemeRegistry::global(cx)).log_err()
-                    && let Some(()) = theme_registry.load_user_theme(&event.path, fs.clone()).await.log_err()
+                    && theme_registry.load_user_theme(&event.path, fs.clone()).await.log_err() == Some(())
                 {
                     cx.update(GlobalTheme::reload_theme).log_err();
                 }
             }
         }
     })
-    .detach()
+    .detach();
 }
 
 fn watch_languages(fs: Arc<dyn fs::Fs>, languages: Arc<LanguageRegistry>, cx: &mut App) {

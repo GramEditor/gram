@@ -45,7 +45,7 @@ pub fn init(app_state: Arc<AppState>, cx: &mut App) {
                 .expect("Failed to create component preview")
             });
 
-            workspace.add_item_to_active_pane(Box::new(component_preview), None, true, window, cx)
+            workspace.add_item_to_active_pane(Box::new(component_preview), None, true, window, cx);
         });
     })
     .detach();
@@ -60,13 +60,13 @@ enum PreviewEntry {
 
 impl From<ComponentMetadata> for PreviewEntry {
     fn from(component: ComponentMetadata) -> Self {
-        PreviewEntry::Component(component, None)
+        Self::Component(component, None)
     }
 }
 
 impl From<SharedString> for PreviewEntry {
     fn from(section_header: SharedString) -> Self {
-        PreviewEntry::SectionHeader(section_header)
+        Self::SectionHeader(section_header)
     }
 }
 
@@ -199,7 +199,7 @@ impl ComponentPreview {
             if self.filter_text.is_empty() {
                 scope_groups
                     .entry(component.scope())
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push((component.clone(), None));
                 continue;
             }
@@ -229,7 +229,7 @@ impl ComponentPreview {
                     if !positions.is_empty() {
                         scope_groups
                             .entry(component.scope())
-                            .or_insert_with(Vec::new)
+                            .or_default()
                             .push((component.clone(), Some(positions)));
                         continue;
                     }
@@ -242,7 +242,7 @@ impl ComponentPreview {
             {
                 scope_groups
                     .entry(component.scope())
-                    .or_insert_with(Vec::new)
+                    .or_default()
                     .push((component.clone(), None));
             }
         }
@@ -263,7 +263,7 @@ impl ComponentPreview {
             .cloned()
             .collect();
 
-        scopes.sort_by_key(|s| s.to_string());
+        scopes.sort_by_key(std::string::ToString::to_string);
 
         for scope in scopes {
             if let Some(components) = scope_groups.remove(&scope)
@@ -317,11 +317,11 @@ impl ComponentPreview {
                 .any(|component| component.id() == *component_id);
 
             if !component_still_visible {
-                if !filtered_components.is_empty() {
+                if filtered_components.is_empty() {
+                    self.set_active_page(PreviewPage::AllComponents, cx);
+                } else {
                     let first_component = &filtered_components[0];
                     self.set_active_page(PreviewPage::Component(first_component.id()), cx);
-                } else {
-                    self.set_active_page(PreviewPage::AllComponents, cx);
                 }
             }
         }
@@ -423,7 +423,7 @@ impl ComponentPreview {
                                 .text_xl()
                                 .child(div().child(name))
                                 .when(!matches!(scope, ComponentScope::None), |this| {
-                                    this.child(div().opacity(0.5).child(format!("({})", scope)))
+                                    this.child(div().opacity(0.5).child(format!("({scope})")))
                                 }),
                         )
                         .when_some(description, |this, description| {
@@ -515,7 +515,7 @@ impl ComponentPreview {
                     this.icon(ToastIcon::new(IconName::GitBranchAlt).color(Color::Muted))
                         .action("Open Pull Request", |_, cx| cx.open_url("https://github.com/"))
                 });
-                workspace.toggle_status_toast(status_toast, cx)
+                workspace.toggle_status_toast(status_toast, cx);
             });
         }
     }
@@ -633,7 +633,7 @@ pub struct ActivePageId(pub String);
 
 impl Default for ActivePageId {
     fn default() -> Self {
-        ActivePageId("AllComponents".to_string())
+        Self("AllComponents".to_string())
     }
 }
 
@@ -686,14 +686,14 @@ impl Item for ComponentPreview {
         Task::ready(match self_result {
             Ok(preview) => Some(cx.new(|_cx| preview)),
             Err(e) => {
-                log::error!("Failed to clone component preview: {}", e);
+                log::error!("Failed to clone component preview: {e}");
                 None
             }
         })
     }
 
     fn to_item_events(event: &Self::Event, mut f: impl FnMut(workspace::item::ItemEvent)) {
-        f(*event)
+        f(*event);
     }
 
     fn added_to_workspace(&mut self, workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Self>) {
@@ -750,7 +750,7 @@ impl SerializableItem for ComponentPreview {
             let project = project.clone();
             cx.update(move |window, cx| {
                 Ok(cx.new(|cx| {
-                    ComponentPreview::new(
+                    Self::new(
                         weak_workspace,
                         project,
                         language_registry,
@@ -811,7 +811,7 @@ pub struct ComponentPreviewPage {
 }
 
 impl ComponentPreviewPage {
-    pub fn new(
+    pub const fn new(
         component: ComponentMetadata,
         reset_key: usize,
         // languages: Arc<LanguageRegistry>

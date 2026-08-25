@@ -9,7 +9,7 @@ use sysinfo::System;
 
 use release_channel::ReleaseChannel;
 
-const LOCALHOST: Ipv4Addr = Ipv4Addr::new(127, 0, 0, 1);
+const LOCALHOST: Ipv4Addr = Ipv4Addr::LOCALHOST;
 const CONNECT_TIMEOUT: Duration = Duration::from_millis(10);
 const RECEIVE_TIMEOUT: Duration = Duration::from_millis(35);
 const SEND_TIMEOUT: Duration = Duration::from_millis(20);
@@ -41,7 +41,7 @@ fn address() -> SocketAddr {
         // calculating the port number. This seems unlikely but it doesn't
         // hurt to be safe.
         let max_port = 65535;
-        let max_uid: u32 = max_port - base_port as u32;
+        let max_uid: u32 = max_port - u32::from(base_port);
         let wrapped_uid: u16 = (uid_u32 % max_uid) as u16;
         user_port += wrapped_uid;
     }

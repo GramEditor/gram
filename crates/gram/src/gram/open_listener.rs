@@ -94,12 +94,12 @@ impl OpenRequest {
                     index: action_index.parse()?,
                 });
             } else if let Some(file) = url.strip_prefix("file://") {
-                this.parse_file_path(file)
+                this.parse_file_path(file);
             } else if let Some(file) = url.strip_prefix("gram://file") {
-                this.parse_file_path(file)
+                this.parse_file_path(file);
             } else if let Some(file) = url.strip_prefix("gram://ssh") {
                 let ssh_url = "ssh:/".to_string() + file;
-                this.parse_ssh_file_path(&ssh_url, cx)?
+                this.parse_ssh_file_path(&ssh_url, cx)?;
             } else if let Some(extension_id) = url.strip_prefix("gram://extension/") {
                 this.kind = Some(OpenRequestKind::Extension {
                     extension_id: extension_id.to_string(),
@@ -123,20 +123,20 @@ impl OpenRequest {
                     setting_path: Some(setting_path.to_string()),
                 });
             } else if let Some(path) = url.strip_prefix("gram://docs/") {
-                let path = if path == "" {
+                let path = if path.is_empty() {
                     "index.md".to_string()
                 } else {
                     path.to_string()
                 };
-                this.kind = Some(OpenRequestKind::Docs { path: path.to_string() });
+                this.kind = Some(OpenRequestKind::Docs { path: path.clone() });
             } else if let Some(clone_path) = url.strip_prefix("gram://git/clone") {
-                this.parse_git_clone_url(clone_path)?
+                this.parse_git_clone_url(clone_path)?;
             } else if let Some(commit_path) = url.strip_prefix("gram://git/commit/") {
-                this.parse_git_commit_url(commit_path)?
+                this.parse_git_commit_url(commit_path)?;
             } else if url.starts_with("ssh://") {
-                this.parse_ssh_file_path(&url, cx)?
+                this.parse_ssh_file_path(&url, cx)?;
             } else {
-                log::error!("unhandled url: {}", url);
+                log::error!("unhandled url: {url}");
             }
         }
 
@@ -145,7 +145,7 @@ impl OpenRequest {
 
     fn parse_file_path(&mut self, file: &str) {
         if let Some(decoded) = urlencoding::decode(file).log_err() {
-            self.open_paths.push(decoded.into_owned())
+            self.open_paths.push(decoded.into_owned());
         }
     }
 
@@ -231,7 +231,7 @@ impl Global for OpenListener {}
 impl OpenListener {
     pub fn new() -> (Self, UnboundedReceiver<RawOpenRequest>) {
         let (tx, rx) = mpsc::unbounded();
-        (OpenListener(tx), rx)
+        (Self(tx), rx)
     }
 
     pub fn open(&self, request: RawOpenRequest) {
@@ -328,7 +328,7 @@ pub async fn open_paths_with_positions(
             FileDiffView::open(old_path, new_path, workspace, window, cx)
         }) && let Some(diff_view) = diff_view.await.log_err()
         {
-            items.push(Some(Ok(Box::new(diff_view))))
+            items.push(Some(Ok(Box::new(diff_view))));
         }
     }
 
@@ -390,7 +390,7 @@ pub async fn handle_cli_connection(
                                     .log_err();
                                 responses.send(CliResponse::Exit { status: 1 }).log_err();
                             }
-                        };
+                        }
                     })
                     .log_err();
                     return;
@@ -409,7 +409,7 @@ pub async fn handle_cli_connection(
                 )
                 .await;
 
-                let status = if open_workspace_result.is_err() { 1 } else { 0 };
+                let status = i32::from(open_workspace_result.is_err());
                 responses.send(CliResponse::Exit { status }).log_err();
             }
         }
@@ -492,7 +492,7 @@ async fn open_workspaces(
                     .await;
 
                     if workspace_failed_to_open {
-                        errored = true
+                        errored = true;
                     }
                 }
                 SerializedWorkspaceLocation::Remote(mut connection) => {
@@ -641,8 +641,8 @@ async fn open_local_workspace(
             // waiting for files or workspaces to close.
             let mut timer = background.timer(Duration::from_secs(1)).fuse();
             futures::select_biased! {
-                _ = wait => break,
-                _ = timer => {
+                () = wait => break,
+                () = timer => {
                     if responses.send(CliResponse::Ping).is_err() {
                         break;
                     }
@@ -747,7 +747,7 @@ mod tests {
         let workspace = cx.windows()[0].downcast::<Workspace>().unwrap();
         workspace
             .update(cx, |workspace, _, cx| {
-                assert!(workspace.active_item_as::<Editor>(cx).is_none())
+                assert!(workspace.active_item_as::<Editor>(cx).is_none());
             })
             .unwrap();
 
@@ -844,7 +844,7 @@ mod tests {
         let workspace_1 = cx.windows()[0].downcast::<Workspace>().unwrap();
         workspace_1
             .update(cx, |workspace, _, cx| {
-                assert!(workspace.active_item_as::<Editor>(cx).is_some())
+                assert!(workspace.active_item_as::<Editor>(cx).is_some());
             })
             .unwrap();
 

@@ -76,7 +76,7 @@ impl Parse for Args {
             }
         }
 
-        Ok(Args {
+        Ok(Self {
             seeds,
             max_retries,
             max_iterations,
@@ -98,8 +98,7 @@ pub fn test(args: TokenStream, function: TokenStream) -> TokenStream {
 
     let result = generate_test_function(args, inner_fn, inner_fn_attributes, inner_fn_name, outer_fn_name);
     match result {
-        Ok(tokens) => tokens,
-        Err(tokens) => tokens,
+        Ok(tokens) | Err(tokens) => tokens,
     }
 }
 

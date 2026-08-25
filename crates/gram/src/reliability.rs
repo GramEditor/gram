@@ -33,7 +33,7 @@ fn monitor_hangs(cx: &App) {
                 loop {
                     background_executor.timer(Duration::from_secs(1)).await;
                     match tx.try_send(()) {
-                        Ok(_) => {
+                        Ok(()) => {
                             hang_time = None;
                             hanging = false;
                             continue;
@@ -73,7 +73,7 @@ fn save_hang_trace(
         })
         .collect::<Vec<_>>();
 
-    let trace_path = paths::hang_traces_dir().join(&format!("hang-{}.miniprof", hang_time.format("%Y-%m-%d_%H-%M-%S")));
+    let trace_path = paths::hang_traces_dir().join(format!("hang-{}.miniprof", hang_time.format("%Y-%m-%d_%H-%M-%S")));
 
     let Some(timings) = serde_json::to_string(&thread_timings)
         .context("hang timings serialization")

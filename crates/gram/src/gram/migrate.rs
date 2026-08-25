@@ -15,7 +15,7 @@ use ui::prelude::*;
 use workspace::item::ItemHandle;
 use workspace::{ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView, Workspace};
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum MigrationType {
     Keymap,
     Settings,
@@ -80,7 +80,7 @@ impl MigrationBanner {
                 } else {
                     cx.emit(ToolbarItemEvent::ChangeLocation(ToolbarItemLocation::Hidden));
                     self.reset(cx);
-                };
+                }
             }
         }
     }
@@ -107,9 +107,8 @@ impl MigrationBanner {
         };
 
         let migration_text = format!(
-            "Your {} file uses deprecated settings which can be \
-            automatically updated. A backup will be saved to `{}`",
-            file_type, backup_file_name
+            "Your {file_type} file uses deprecated settings which can be \
+            automatically updated. A backup will be saved to `{backup_file_name}`"
         );
 
         self.markdown = Some(cx.new(|cx| Markdown::new(migration_text.into(), None, None, cx)));
@@ -149,7 +148,7 @@ impl ToolbarItemView for MigrationBanner {
             let fs = <dyn Fs>::global(cx);
             let should_migrate = cx.background_spawn(should_migrate_keymap(fs));
             self.should_migrate_task = Some(cx.spawn_in(window, async move |this, cx| {
-                if let Ok(true) = should_migrate.await {
+                if matches!(should_migrate.await, Ok(true)) {
                     this.update(cx, |this, cx| {
                         this.show(cx);
                     })
@@ -161,7 +160,7 @@ impl ToolbarItemView for MigrationBanner {
             let fs = <dyn Fs>::global(cx);
             let should_migrate = cx.background_spawn(should_migrate_settings(fs));
             self.should_migrate_task = Some(cx.spawn_in(window, async move |this, cx| {
-                if let Ok(true) = should_migrate.await {
+                if matches!(should_migrate.await, Ok(true)) {
                     this.update(cx, |this, cx| {
                         this.show(cx);
                     })
@@ -249,7 +248,7 @@ async fn should_migrate_keymap(fs: Arc<dyn Fs>) -> Result<bool> {
     let old_text = KeymapFile::load_keymap_file(&fs).await?;
     if let Ok(Some(_)) = migrate_keymap(&old_text) {
         return Ok(true);
-    };
+    }
     Ok(false)
 }
 
@@ -257,7 +256,7 @@ async fn should_migrate_settings(fs: Arc<dyn Fs>) -> Result<bool> {
     let old_text = SettingsStore::load_settings(&fs).await?;
     if let Ok(Some(_)) = migrate_settings(&old_text) {
         return Ok(true);
-    };
+    }
     Ok(false)
 }
 
@@ -268,20 +267,20 @@ async fn write_keymap_migration(fs: Arc<dyn Fs>) -> Result<()> {
     };
     let keymap_path = paths::keymap_file().as_path();
     if fs.is_file(keymap_path).await {
-        fs.atomic_write(paths::keymap_backup_file().to_path_buf(), old_text)
+        fs.atomic_write(paths::keymap_backup_file().clone(), old_text)
             .await
             .with_context(|| "Failed to create settings backup in home directory".to_string())?;
         let resolved_path = fs
             .canonicalize(keymap_path)
             .await
-            .with_context(|| format!("Failed to canonicalize keymap path {:?}", keymap_path))?;
+            .with_context(|| format!("Failed to canonicalize keymap path {keymap_path:?}"))?;
         fs.atomic_write(resolved_path.clone(), new_text)
             .await
-            .with_context(|| format!("Failed to write keymap to file {:?}", resolved_path))?;
+            .with_context(|| format!("Failed to write keymap to file {resolved_path:?}"))?;
     } else {
         fs.atomic_write(keymap_path.to_path_buf(), new_text)
             .await
-            .with_context(|| format!("Failed to write keymap to file {:?}", keymap_path))?;
+            .with_context(|| format!("Failed to write keymap to file {keymap_path:?}"))?;
     }
     Ok(())
 }
@@ -293,20 +292,20 @@ async fn write_settings_migration(fs: Arc<dyn Fs>) -> Result<()> {
     };
     let settings_path = paths::settings_file().as_path();
     if fs.is_file(settings_path).await {
-        fs.atomic_write(paths::settings_backup_file().to_path_buf(), old_text)
+        fs.atomic_write(paths::settings_backup_file().clone(), old_text)
             .await
             .with_context(|| "Failed to create settings backup in home directory".to_string())?;
         let resolved_path = fs
             .canonicalize(settings_path)
             .await
-            .with_context(|| format!("Failed to canonicalize settings path {:?}", settings_path))?;
+            .with_context(|| format!("Failed to canonicalize settings path {settings_path:?}"))?;
         fs.atomic_write(resolved_path.clone(), new_text)
             .await
-            .with_context(|| format!("Failed to write settings to file {:?}", resolved_path))?;
+            .with_context(|| format!("Failed to write settings to file {resolved_path:?}"))?;
     } else {
         fs.atomic_write(settings_path.to_path_buf(), new_text)
             .await
-            .with_context(|| format!("Failed to write settings to file {:?}", settings_path))?;
+            .with_context(|| format!("Failed to write settings to file {settings_path:?}"))?;
     }
     Ok(())
 }

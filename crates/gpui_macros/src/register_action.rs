@@ -3,7 +3,7 @@ use proc_macro2::{Ident, TokenStream as TokenStream2};
 use quote::{format_ident, quote};
 use syn::parse_macro_input;
 
-pub(crate) fn register_action(ident: TokenStream) -> TokenStream {
+pub fn register_action(ident: TokenStream) -> TokenStream {
     let name = parse_macro_input!(ident as Ident);
     let registration = generate_register_action(&name);
 
@@ -12,7 +12,7 @@ pub(crate) fn register_action(ident: TokenStream) -> TokenStream {
     })
 }
 
-pub(crate) fn generate_register_action(type_name: &Ident) -> TokenStream2 {
+pub fn generate_register_action(type_name: &Ident) -> TokenStream2 {
     let action_builder_fn_name = format_ident!("__gpui_actions_builder_{}", type_name.to_string().to_lowercase());
 
     quote! {

@@ -216,8 +216,7 @@ pub(crate) fn get_simple_attribute_field(ast: &DeriveInput, name: &'static str) 
             .fields
             .iter()
             .find(|field| field.attrs.iter().any(|attr| attr.path().is_ident(name)))
-            .map(|field| field.ident.clone().unwrap()),
-        syn::Data::Enum(_) => None,
-        syn::Data::Union(_) => None,
+            .and_then(|field| field.ident.clone()),
+        syn::Data::Enum(_) | syn::Data::Union(_) => None,
     }
 }
