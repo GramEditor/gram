@@ -38,7 +38,7 @@
       "build-commands": [
         "install -Dm644 $ICON_SCALABLE /app/share/icons/hicolor/scalable/apps/$APP_ID.svg",
         "install -Dm644 $ICON_SYMBOLIC /app/share/icons/hicolor/symbolic/apps/$APP_ID-symbolic.svg",
-        "envsubst < gram.desktop.in > gram.desktop && install -Dm755 gram.desktop /app/share/applications/$APP_ID.desktop",
+        "envsubst < gram.desktop.in > gram-editor.desktop && install -Dm755 gram-editor.desktop /app/share/applications/$APP_ID.desktop",
         "envsubst < flatpak/gram.metainfo.xml.in > gram.metainfo.xml && install -Dm644 gram.metainfo.xml /app/share/metainfo/$APP_ID.metainfo.xml",
         "sed -i -e '/@release_info@/{r flatpak/release-info/$CHANNEL' -e 'd}' /app/share/metainfo/$APP_ID.metainfo.xml",
         "install -Dm755 bin/gram /app/bin/gram",

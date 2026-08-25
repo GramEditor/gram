@@ -241,8 +241,8 @@ if [ "$DO_TARBALL" = "true" ]; then
     cp "crates/gram/resources/app.liten.Gram-symbolic.svg" "${gram_dir}/share/icons/hicolor/symbolic/apps/app.liten.Gram-symbolic.svg"
 
     mkdir -p "${gram_dir}/share/applications"
-    envsubst <"crates/gram/resources/gram.desktop.in" >"${gram_dir}/share/applications/gram${suffix}.desktop"
-    chmod +x "${gram_dir}/share/applications/gram${suffix}.desktop"
+    envsubst <"crates/gram/resources/gram.desktop.in" >"${gram_dir}/share/applications/gram-editor${suffix}.desktop"
+    chmod +x "${gram_dir}/share/applications/gram-editor${suffix}.desktop"
 
     cp "assets/licenses.md" "${gram_dir}/licenses.md"
 
@@ -258,7 +258,7 @@ fi
 
 # Bundle .deb package
 if [ "$DO_DEB" = "true" ]; then
-    envsubst <"crates/gram/resources/gram.desktop.in" >"crates/gram/resources/gram.desktop"
+    envsubst <"crates/gram/resources/gram.desktop.in" >"crates/gram/resources/gram-editor.desktop"
     CARGO_TARGET_DIR="${target_dir}/${target_triple}" cargo deb -p gram --no-build --compress-type xz
 
     # Bundle AppImage from .deb package
@@ -273,7 +273,7 @@ fi
 
 # Bundle .rpm package
 if [ "$DO_RPM" = "true" ]; then
-    envsubst <"crates/gram/resources/gram.desktop.in" >"crates/gram/resources/gram.desktop"
+    envsubst <"crates/gram/resources/gram.desktop.in" >"crates/gram/resources/gram-editor.desktop"
     cargo generate-rpm -p crates/gram --target-dir "${target_dir}/${target_triple}" --payload-compress "${GRAM_RPM_COMPRESSION:=zstd}"
 fi
 

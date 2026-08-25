@@ -54,7 +54,7 @@ package() {
     install -Dm0755 bin/gram "$pkgdir/usr/bin/gram"
     install -Dm0755 libexec/gram-editor "$pkgdir/usr/lib/gram/gram-editor"
     install -Dm0644 licenses.md "$pkgdir/usr/share/licenses/gram/licenses.md"
-    install -Dm0644 share/applications/gram.desktop "$pkgdir/usr/share/applications/app.liten.Gram.desktop"
+    install -Dm0644 share/applications/gram.desktop "$pkgdir/usr/share/applications/gram-editor.desktop"
     install -Dm0644 share/icons/hicolor/scalable/apps/app.liten.Gram.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/app.liten.Gram.svg"
     install -Dm0644 share/icons/hicolor/symbolic/apps/app.liten.Gram-symbolic.svg "$pkgdir/usr/share/icons/hicolor/symbolic/apps/app.liten.Gram-symbolic.svg"
 }
