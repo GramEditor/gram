@@ -3147,7 +3147,7 @@ mod tests {
     #[gpui::test]
     async fn test_real_git_repository_new_resolves_normal_repository_paths(cx: &mut TestAppContext) {
         disable_git_global_config();
-        cx.executor().allow_parking();
+        let _guard = cx.executor().allow_parking();
 
         let repo_dir = tempfile::tempdir().unwrap();
         git_init_repo(repo_dir.path());
@@ -3167,7 +3167,7 @@ mod tests {
     #[gpui::test]
     async fn test_real_git_repository_new_resolves_linked_worktree_paths(cx: &mut TestAppContext) {
         disable_git_global_config();
-        cx.executor().allow_parking();
+        let _guard = cx.executor().allow_parking();
 
         let temp_dir = tempfile::tempdir().unwrap();
         let repo_dir = temp_dir.path().join("repo");
@@ -3201,7 +3201,7 @@ mod tests {
     #[gpui::test]
     async fn test_real_git_repository_new_supports_bare_repositories(cx: &mut TestAppContext) {
         disable_git_global_config();
-        cx.executor().allow_parking();
+        let _guard = cx.executor().allow_parking();
 
         let temp_dir = tempfile::tempdir().unwrap();
         let repo_dir = temp_dir.path().join("repo.git");
@@ -3263,7 +3263,7 @@ mod tests {
     async fn test_checkpoint_basic(cx: &mut TestAppContext) {
         disable_git_global_config();
 
-        cx.executor().allow_parking();
+        let _guard = cx.executor().allow_parking();
 
         let repo_dir = tempfile::tempdir().unwrap();
 
@@ -3344,7 +3344,7 @@ mod tests {
     async fn test_checkpoint_empty_repo(cx: &mut TestAppContext) {
         disable_git_global_config();
 
-        cx.executor().allow_parking();
+        let _guard = cx.executor().allow_parking();
 
         let repo_dir = tempfile::tempdir().unwrap();
         git_init_repo(repo_dir.path());
@@ -3377,7 +3377,7 @@ mod tests {
     async fn test_compare_checkpoints(cx: &mut TestAppContext) {
         disable_git_global_config();
 
-        cx.executor().allow_parking();
+        let _guard = cx.executor().allow_parking();
 
         let repo_dir = tempfile::tempdir().unwrap();
         git_init_repo(repo_dir.path());
@@ -3409,7 +3409,7 @@ mod tests {
     async fn test_checkpoint_exclude_binary_files(cx: &mut TestAppContext) {
         disable_git_global_config();
 
-        cx.executor().allow_parking();
+        let _guard = cx.executor().allow_parking();
 
         let repo_dir = tempfile::tempdir().unwrap();
         let text_path = repo_dir.path().join("main.rs");

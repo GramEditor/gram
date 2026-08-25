@@ -2400,7 +2400,7 @@ mod tests {
 
     #[gpui::test]
     async fn test_basic_terminal(cx: &mut TestAppContext) {
-        cx.executor().allow_parking();
+        let _guard = cx.executor().allow_parking();
 
         let (completion_tx, completion_rx) = smol::channel::unbounded();
         let (program, args) =
@@ -2450,7 +2450,7 @@ mod tests {
     #[cfg(target_os = "macos")]
     #[gpui::test(iterations = 10)]
     async fn test_terminal_eof(cx: &mut TestAppContext) {
-        cx.executor().allow_parking();
+        let _guard = cx.executor().allow_parking();
 
         let (completion_tx, completion_rx) = smol::channel::unbounded();
         let builder = cx
@@ -2519,7 +2519,7 @@ mod tests {
 
     #[gpui::test(iterations = 10)]
     async fn test_terminal_no_exit_on_spawn_failure(cx: &mut TestAppContext) {
-        cx.executor().allow_parking();
+        let _guard = cx.executor().allow_parking();
 
         let (completion_tx, completion_rx) = smol::channel::unbounded();
         let (program, args) =
@@ -2903,7 +2903,7 @@ mod tests {
                 cx.set_global(settings_store);
             });
 
-            cx.executor().allow_parking();
+            let _guard = cx.executor().allow_parking();
 
             let window = cx.add_empty_window();
             let builder = window

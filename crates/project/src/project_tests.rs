@@ -62,7 +62,7 @@ use worktree::WorktreeModelHandle as _;
 
 #[gpui::test]
 async fn test_block_via_channel(cx: &mut gpui::TestAppContext) {
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
 
     let (tx, mut rx) = futures::channel::mpsc::unbounded();
     let _thread = std::thread::spawn(move || {
@@ -78,7 +78,7 @@ async fn test_block_via_channel(cx: &mut gpui::TestAppContext) {
 
 #[gpui::test]
 async fn test_block_via_smol(cx: &mut gpui::TestAppContext) {
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
 
     let io_task = smol::unblock(move || {
         println!("sleeping on thread {:?}", std::thread::current().id());
@@ -100,7 +100,7 @@ async fn test_block_via_smol(cx: &mut gpui::TestAppContext) {
 #[gpui::test]
 async fn test_symlinks(cx: &mut gpui::TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
 
     let dir = TempTree::new(json!({
         "root": {
@@ -4171,7 +4171,7 @@ async fn test_rescan_and_remote_updates(cx: &mut gpui::TestAppContext) {
     use worktree::WorktreeModelHandle as _;
 
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
 
     let dir = TempTree::new(json!({
         "a": {
@@ -7576,7 +7576,7 @@ async fn test_single_file_diffs(cx: &mut gpui::TestAppContext) {
 async fn test_staging_hunk_preserve_executable_permission(cx: &mut gpui::TestAppContext) {
     use std::os::unix::fs::PermissionsExt;
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
     let committed_contents = "bar\n";
     let file_contents = "baz\n";
     let root = TempTree::new(json!({
@@ -7777,7 +7777,7 @@ async fn test_home_dir_as_git_repository(cx: &mut gpui::TestAppContext) {
 #[gpui::test]
 async fn test_git_repository_status(cx: &mut gpui::TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
 
     let root = TempTree::new(json!({
         "project": {
@@ -7903,7 +7903,7 @@ async fn test_git_repository_status(cx: &mut gpui::TestAppContext) {
 #[ignore]
 async fn test_git_status_postprocessing(cx: &mut gpui::TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
 
     let root = TempTree::new(json!({
         "project": {
@@ -7960,7 +7960,7 @@ async fn test_git_status_postprocessing(cx: &mut gpui::TestAppContext) {
 #[gpui::test]
 async fn test_diff_stats_follow_edits(cx: &mut gpui::TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
 
     let root = TempTree::new(json!({
         "project": {
@@ -8021,7 +8021,7 @@ async fn test_diff_stats_follow_edits(cx: &mut gpui::TestAppContext) {
 #[gpui::test]
 async fn test_git_repository_status_removes_directory_descendants(cx: &mut gpui::TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
 
     let fs = FakeFs::new(cx.background_executor.clone());
     fs.insert_tree(
@@ -8566,7 +8566,7 @@ async fn test_repository_subfolder_git_status(executor: gpui::BackgroundExecutor
 #[gpui::test]
 async fn test_conflicted_cherry_pick(cx: &mut gpui::TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
 
     let root = TempTree::new(json!({
         "project": {
@@ -8703,7 +8703,7 @@ async fn test_update_gitignore(cx: &mut gpui::TestAppContext) {
 #[cfg_attr(target_os = "windows", ignore)]
 async fn test_rename_work_directory(cx: &mut gpui::TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
     let root = TempTree::new(json!({
         "projects": {
             "project1": {
@@ -8774,7 +8774,7 @@ async fn test_rename_work_directory(cx: &mut gpui::TestAppContext) {
 #[cfg_attr(target_os = "windows", ignore)]
 async fn test_file_status(cx: &mut gpui::TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
     const IGNORE_RULE: &str = "**/target";
 
     let root = TempTree::new(json!({
@@ -8951,7 +8951,7 @@ async fn test_file_status(cx: &mut gpui::TestAppContext) {
 #[ignore]
 async fn test_ignored_dirs_events(cx: &mut gpui::TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
 
     const IGNORE_RULE: &str = "**/target";
 

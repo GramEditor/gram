@@ -188,7 +188,7 @@ mod tests {
     /// Test that DB exists but corrupted (causing recreate)
     #[gpui::test]
     async fn test_db_corruption(cx: &mut gpui::TestAppContext) {
-        cx.executor().allow_parking();
+        let _guard = cx.executor().allow_parking();
 
         enum CorruptedDB {}
 
@@ -222,7 +222,7 @@ mod tests {
     /// Test that DB exists but corrupted (causing recreate)
     #[gpui::test(iterations = 30)]
     async fn test_simultaneous_db_corruption(cx: &mut gpui::TestAppContext) {
-        cx.executor().allow_parking();
+        let _guard = cx.executor().allow_parking();
 
         enum CorruptedDB {}
 

@@ -330,7 +330,7 @@ async fn test_symlinks_pointing_outside(cx: &mut TestAppContext) {
 #[cfg(target_os = "macos")]
 #[gpui::test]
 async fn test_renaming_case_only(cx: &mut TestAppContext) {
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
     init_test(cx);
 
     const OLD_NAME: &str = "aaa.rs";
@@ -664,7 +664,7 @@ async fn test_dirs_no_longer_ignored(cx: &mut TestAppContext) {
 #[gpui::test]
 async fn test_write_file(cx: &mut TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
     let dir = TempTree::new(json!({
         ".git": {},
         ".gitignore": "ignored-dir\n",
@@ -727,7 +727,7 @@ async fn test_write_file(cx: &mut TestAppContext) {
 #[gpui::test]
 async fn test_file_scan_inclusions(cx: &mut TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
     let dir = TempTree::new(json!({
         ".gitignore": "**/target\n/node_modules\ntop_level.txt\n",
         "target": {
@@ -798,7 +798,7 @@ async fn test_file_scan_inclusions(cx: &mut TestAppContext) {
 #[gpui::test]
 async fn test_file_scan_exclusions_overrules_inclusions(cx: &mut TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
     let dir = TempTree::new(json!({
         ".gitignore": "**/target\n/node_modules\n",
         "target": {
@@ -856,7 +856,7 @@ async fn test_file_scan_exclusions_overrules_inclusions(cx: &mut TestAppContext)
 #[gpui::test]
 async fn test_file_scan_inclusions_reindexes_on_setting_change(cx: &mut TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
     let dir = TempTree::new(json!({
         ".gitignore": "**/target\n/node_modules/\n",
         "target": {
@@ -936,7 +936,7 @@ async fn test_file_scan_inclusions_reindexes_on_setting_change(cx: &mut TestAppC
 #[gpui::test]
 async fn test_file_scan_exclusions(cx: &mut TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
     let dir = TempTree::new(json!({
         ".gitignore": "**/target\n/node_modules\n",
         "target": {
@@ -1033,7 +1033,7 @@ async fn test_file_scan_exclusions(cx: &mut TestAppContext) {
 #[gpui::test]
 async fn test_hidden_files(cx: &mut TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
     let dir = TempTree::new(json!({
         ".gitignore": "**/target\n",
         ".hidden_file": "content",
@@ -1119,7 +1119,7 @@ async fn test_hidden_files(cx: &mut TestAppContext) {
 #[gpui::test]
 async fn test_fs_events_in_exclusions(cx: &mut TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
     let dir = TempTree::new(json!({
         ".git": {
             "HEAD": "ref: refs/heads/main\n",
@@ -1260,7 +1260,7 @@ async fn test_fs_events_in_exclusions(cx: &mut TestAppContext) {
 #[gpui::test]
 async fn test_fs_events_in_dot_git_worktree(cx: &mut TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
     let dir = TempTree::new(json!({
         ".git": {
             "HEAD": "ref: refs/heads/main\n",
@@ -1354,7 +1354,7 @@ async fn test_create_directory_during_initial_scan(cx: &mut TestAppContext) {
 #[gpui::test]
 async fn test_create_dir_all_on_create_entry(cx: &mut TestAppContext) {
     init_test(cx);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
 
     let fs_fake = FakeFs::new(cx.background_executor.clone());
     fs_fake

@@ -50,7 +50,7 @@ fn init() -> TestAppContext {
     const SEED: u64 = 9999;
     let dispatcher = TestDispatcher::new(StdRng::seed_from_u64(SEED));
     let cx = TestAppContext::build(dispatcher, None);
-    cx.executor().allow_parking();
+    let _guard = cx.executor().allow_parking();
     cx.update(|cx| {
         let store = SettingsStore::test(cx);
         cx.set_global(store);

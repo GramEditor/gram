@@ -16,7 +16,7 @@ mod tests {
 
     #[gpui::test]
     async fn test_watch_config_dir_reloads_tracked_file_on_rescan(cx: &mut TestAppContext) {
-        cx.executor().allow_parking();
+        let _guard = cx.executor().allow_parking();
 
         let fs = FakeFs::new(cx.background_executor.clone());
         let config_dir = PathBuf::from("/root/config");

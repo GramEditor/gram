@@ -25,6 +25,19 @@ use waker_fn::waker_fn;
 #[cfg(any(test, feature = "test-support"))]
 use rand::rngs::StdRng;
 
+// TODO: Remove when MacOS FSEvents issues get fixed
+/// Used to prevent parking behavior in MacOS tests
+/// Should always be assigned to a named variable to prevent early drop
+#[must_use]
+pub struct ParkingTestGuard {
+    #[cfg(all(target_os = "macos", any(test, feature = "test-support")))]
+    _guard: parking_lot::MutexGuard<'static, ()>,
+}
+
+#[cfg(not(target_os = "macos"))]
+#[must_use]
+struct Guard(());
+
 /// A pointer to the executor that is currently running,
 /// for spawning background tasks.
 #[derive(Clone)]
@@ -468,8 +481,16 @@ impl BackgroundExecutor {
     /// This is useful when you are integrating other (non-GPUI) futures, like disk access, that
     /// do take real async time to run.
     #[cfg(any(test, feature = "test-support"))]
-    pub fn allow_parking(&self) {
+    pub fn allow_parking(&self) -> ParkingTestGuard {
         self.dispatcher.as_test().unwrap().allow_parking();
+
+        #[cfg(all(target_os = "macos", any(test, feature = "test-support")))]
+        static PARKING_LOCK: Mutex<()> = Mutex::new(());
+
+        ParkingTestGuard {
+            #[cfg(all(target_os = "macos", any(test, feature = "test-support")))]
+            _guard: PARKING_LOCK.lock(),
+        }
     }
 
     /// undoes the effect of [`Self::allow_parking`].
