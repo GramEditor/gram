@@ -7706,7 +7706,9 @@ impl Editor {
 
             if word_end || trigger_end {
                 self.open_or_update_completions_menu(
-                    Some(CompletionsMenuSource::Normal { ignore_threshold: true }),
+                    Some(CompletionsMenuSource::Normal {
+                        ignore_threshold: !trigger_end,
+                    }),
                     if trigger_end { Some(preceding.to_string()) } else { None },
                     TriggerInWords::Yes,
                     CompletionTrigger::Supertab,
