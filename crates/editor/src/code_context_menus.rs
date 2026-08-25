@@ -1139,6 +1139,7 @@ impl CompletionsMenu {
             WordStartMatch {
                 sort_exact: Reverse<i32>,
                 sort_snippet: Reverse<i32>,
+                sort_prefix: Reverse<u8>,
                 sort_score: Reverse<OrderedFloat<f64>>,
                 sort_positions: Vec<usize>,
                 sort_text: Option<&'a str>,
@@ -1200,9 +1201,27 @@ impl CompletionsMenu {
                     0
                 });
 
+                let sort_prefix = Reverse(if let Some(query) = query {
+                    if completion.label.filter_text().starts_with(query) {
+                        2
+                    } else if completion
+                        .label
+                        .filter_text()
+                        .to_lowercase()
+                        .starts_with(&query.to_lowercase())
+                    {
+                        1
+                    } else {
+                        0
+                    }
+                } else {
+                    0
+                });
+
                 MatchTier::WordStartMatch {
                     sort_exact,
                     sort_snippet,
+                    sort_prefix,
                     sort_score,
                     sort_positions,
                     sort_text,
