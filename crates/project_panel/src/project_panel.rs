@@ -3426,7 +3426,9 @@ impl ProjectPanel {
 
                 if let Some(mut entry) = worktree.entry_for_id(entry_id) {
                     loop {
-                        if let Err(ix) = expanded_dir_ids.binary_search(&entry.id) {
+                        if entry.is_dir()
+                            && let Err(ix) = expanded_dir_ids.binary_search(&entry.id)
+                        {
                             expanded_dir_ids.insert(ix, entry.id);
                         }
 
