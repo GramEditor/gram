@@ -398,13 +398,13 @@ parking = "2.2.1"
 parking_lot = "0.12.5"
 parse_int = "0.9.0"
 pciid-parser = "0.8.1"
-pet = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
-pet-conda = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
-pet-core = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
-pet-fs = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
-pet-poetry = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
-pet-reporter = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
-pet-virtualenv = { git = "https://github.com/microsoft/python-environment-tools.git", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
+pet = { git = "https://github.com/microsoft/python-environment-tools", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
+pet-conda = { git = "https://github.com/microsoft/python-environment-tools", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
+pet-core = { git = "https://github.com/microsoft/python-environment-tools", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
+pet-fs = { git = "https://github.com/microsoft/python-environment-tools", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
+pet-poetry = { git = "https://github.com/microsoft/python-environment-tools", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
+pet-reporter = { git = "https://github.com/microsoft/python-environment-tools", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
+pet-virtualenv = { git = "https://github.com/microsoft/python-environment-tools", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
 pin-project = "1.1.13"
 plist = "1.10.0"
 postage = { version = "0.5.0", features = ["blocking", "futures-traits", "logging"] }
@@ -535,7 +535,7 @@ zstd = "0.13.3"
 
 [workspace.dependencies.reqwest]
 package = "zed-reqwest"
-git = "https://github.com/zed-industries/reqwest.git"
+git = "https://github.com/zed-industries/reqwest"
 rev = "c15662463bda39148ba154100dd44d3fba5873a4"
 version = "0.12.15-zed"
 default-features = false
@@ -622,7 +622,7 @@ unexpected_cfgs = { level = "allow" }
 ignored-paths = ["crates/extension_api/wit/since*/settings.rs"]
 
 [patch.crates-io]
-async-task = { git = "https://github.com/smol-rs/async-task.git", rev = "b4486cd71e4e94fbda54ce6302444de14f4d190e" }
+async-task = { git = "https://github.com/smol-rs/async-task", rev = "b4486cd71e4e94fbda54ce6302444de14f4d190e" }
 calloop = { git = "https://github.com/zed-industries/calloop" }
 protobuf-src = { git = "https://codeberg.org/GramEditor/rust-protobuf-native", rev = "a70e2d9986e931f2b883b661bf8f4471c5398b7e" }
 
