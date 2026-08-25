@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-08-25
+
 ## Added
 
 - Add `Toggle` actions to all the side panels (#389) by @ycna07
@@ -25,12 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Removed
 
 - Removed (partial) HTML support from the Markdown preview
+- Remove avatar fetching from git crate (#388)
+- Remove use of private MacOS APIs and drop support for MacOS < 12 (zed#56315)
 
 ## Changed
 
-- Remove avatar fetching from git crate (#388)
 - Use cosmic-text instead of font-kit for font selection
-- Remove use of private MacOS APIs and drop support for MacOS < 12 (zed#56315)
 - Tweaked ferra theme colors (#391) (#399) by @BillyDM
 - Make clicking the last commit in the git panel open the history view
 - Open commits in an adjacent split and preview tab from the history view
