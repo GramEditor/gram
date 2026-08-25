@@ -1,4 +1,6 @@
+*.ebuild
 *.pyc
+*.tar.xz
 *.wasm
 *.xcodeproj
 **/*.db
