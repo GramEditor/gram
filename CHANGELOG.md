@@ -75,6 +75,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved smooth scrolling support
 - Fix incorrect jsonc suffix on jupyter kernels (#365)
 - Fix X11 keyboard state synchronization (zed#53903) (#440)
+- Fix entry leak in 'expanded_dir_ids' (#463) by @rockisch
+- Improved Supertab completion
+- Replace deprecated commands in default keymaps (#457) by @ltdk
 
 ## [3.2.0] - 2026-07-27
 
