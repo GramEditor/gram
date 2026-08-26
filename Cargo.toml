@@ -622,8 +622,8 @@ unexpected_cfgs = { level = "allow" }
 ignored-paths = ["crates/extension_api/wit/since*/settings.rs"]
 
 [patch.crates-io]
-async-task = { git = "https://github.com/smol-rs/async-task", rev = "b4486cd71e4e94fbda54ce6302444de14f4d190e" }
-calloop = { git = "https://github.com/zed-industries/calloop" }
+async-task = { git = "https://github.com/smol-rs/async-task", rev = "f98b30bb047426104c23b81e1c2fa083b177a567" }
+calloop = { git = "https://github.com/zed-industries/calloop", rev = "eb6b4fd17b9af5ecc226546bdd04185391b3e265" }
 protobuf-src = { git = "https://codeberg.org/GramEditor/rust-protobuf-native", rev = "a70e2d9986e931f2b883b661bf8f4471c5398b7e" }
 
 [profile.dev]
