@@ -51,6 +51,13 @@
       "dockerignore"
     ],
   },
+  "lsp": {
+    "rust-analyzer": {
+      "binary": {
+        "path": "~/.cargo/bin/rust-analyzer"
+      },
+    },
+  },
   "hard_tabs": false,
   "formatter": "auto",
   "remove_trailing_whitespace_on_save": true,

@@ -73,8 +73,25 @@ You can configure which `rust-analyzer` binary Gram should use.
 
 By default, Gram will try to find a `rust-analyzer` in your `$PATH` and try to
 use that. If that binary successfully executes `rust-analyzer --help`, it's
-used. Otherwise, Gram will fall back to installing its own stable
-`rust-analyzer` version and use that.
+used.
+
+To use the binary specified by rustup respecting the project-specific setting in
+`rust-toolchain.toml`, point it to the symlink maintained by rustup:
+
+```json
+{
+  "lsp": {
+    "rust-analyzer": {
+      "binary": {
+        "path": "~/.cargo/bin/rust-analyzer",
+      },
+    },
+  },
+}
+```
+
+You can set the `allow_download` setting for `rust-analyzer` and the editor will
+download and install a recent version automatically for you.
 
 If you want to install pre-release `rust-analyzer` version instead you can
 instruct Gram to do so by setting `pre_release` to `true` in your
