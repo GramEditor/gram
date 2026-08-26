@@ -48,8 +48,7 @@ impl QuickActionBar {
             workspace: workspace.weak_handle(),
         };
         this.apply_settings(cx);
-        cx.observe_global::<SettingsStore>(Self::apply_settings)
-            .detach();
+        cx.observe_global::<SettingsStore>(Self::apply_settings).detach();
         this
     }
 

@@ -48,13 +48,15 @@ impl QuickActionBar {
 
         let has_nonempty_selection = {
             editor.update(cx, |this, cx| {
-                if this.selections
-                    .count()
-                    .ne(&0) { {
+                if this.selections.count().ne(&0) {
+                    {
                         let snapshot = this.display_snapshot(cx);
                         let latest = this.selections.newest_display(&snapshot);
                         !latest.is_empty()
-                    } } else { Default::default() }
+                    }
+                } else {
+                    Default::default()
+                }
             })
         };
 

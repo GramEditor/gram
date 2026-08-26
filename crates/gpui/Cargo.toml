@@ -110,7 +110,7 @@ profiling.workspace = true
 rand = { workspace = true, optional = true }
 raw-window-handle.workspace = true
 refineable.workspace = true
-resvg = { workspace = true, default-features = false, features = ["memmap-fonts", "system-fonts", "text"] }
+resvg.workspace = true
 schemars.workspace = true
 seahash.workspace = true
 semver.workspace = true

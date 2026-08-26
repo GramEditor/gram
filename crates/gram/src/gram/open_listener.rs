@@ -376,8 +376,8 @@ pub async fn handle_cli_connection(
                 user_data_dir: _,
             } => {
                 if !urls.is_empty() {
-                    cx.update(|cx| {
-                        match OpenRequest::parse(RawOpenRequest { urls, diff_paths, wsl }, cx) {
+                    cx.update(
+                        |cx| match OpenRequest::parse(RawOpenRequest { urls, diff_paths, wsl }, cx) {
                             Ok(open_request) => {
                                 handle_open_request(open_request, app_state.clone(), cx);
                                 responses.send(CliResponse::Exit { status: 0 }).log_err();
@@ -390,8 +390,8 @@ pub async fn handle_cli_connection(
                                     .log_err();
                                 responses.send(CliResponse::Exit { status: 1 }).log_err();
                             }
-                        }
-                    })
+                        },
+                    )
                     .log_err();
                     return;
                 }

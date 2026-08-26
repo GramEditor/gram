@@ -289,7 +289,8 @@ pub fn main() {
             binary: "gram".to_string(),
             release_channel: release_channel::RELEASE_CHANNEL_NAME.clone(),
             commit_sha: app_commit_sha
-                .as_ref().map_or_else(|| "no sha".to_owned(), release_channel::AppCommitSha::full),
+                .as_ref()
+                .map_or_else(|| "no sha".to_owned(), release_channel::AppCommitSha::full),
         }))
         .detach();
 
