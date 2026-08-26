@@ -138,7 +138,7 @@ fi
 # fi
 
 # mkdir -p "${gram_dir}/share/applications"
-# envsubst <"crates/gram/resources/gram.desktop.in" >"${gram_dir}/share/applications/gram$suffix.desktop"
+# envsubst <"crates/gram/resources/gram.desktop.in" >"${gram_dir}/share/applications/gram-editor$suffix.desktop"
 # chmod +x "${gram_dir}/share/applications/gram$suffix.desktop"
 
 # Copy generated licenses so they'll end up in archive too
