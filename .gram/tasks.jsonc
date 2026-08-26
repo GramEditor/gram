@@ -1,6 +1,6 @@
 [
   {
-    "label": "clippy",
+    "label": "Clippy",
     "command": "./script/clippy",
     "args": [],
     "allow_concurrent_runs": true,

@@ -14,7 +14,8 @@ The [CONTRIBUTING.md](https://codeberg.org/GramEditor/gram/src/branch/main/CONTR
 <!-- Can be removed for non-Rust changes. -->
 
 - I ran...
-  - [ ] `cargo run --profile dev` to check for issues with app building.
+  - [ ] `cargo run --profile release-fast` to check for issues with app building.
+  - [ ] `cargo nextest run --workspace --no-fail-fast` to check tests passing (optional).
   - [ ] `cargo fmt --all` to check formatting.
   - [ ] `./script/clippy` to check linting.
 
