@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Changes
+
+- Update mermaid renderer to improve layout (#476) by @sbuzzard
+
+## Added
+
+- Add Repology notes in docs (#470) by @koru
+
 ## [3.3.0] - 2026-08-25
 
 ## Added
