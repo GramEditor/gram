@@ -373,7 +373,7 @@ log = { version = "0.4.34", features = ["kv_unstable_serde", "serde"] }
 lsp-types = { git = "https://github.com/zed-industries/lsp-types", rev = "b71ab4eeb27d9758be8092020a46fe33fbca4e33" }
 lyon = { version = "1.0.19", features = ["extra"] }
 mach2 = "0.6.0"
-mermaid-rs-renderer = "0.3.1"
+mermaid-rs-renderer = { version = "0.3.1", default-features = false }
 mimalloc = "0.1.52"
 minidumper = "0.10.1"
 moka = { version = "0.12.16", features = ["sync"] }

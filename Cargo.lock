@@ -5721,17 +5721,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6cb5b469222ce6b9896edf0a969cf68464f5a028ef394fd6643f00bd943df117"
 dependencies = [
  "anyhow",
- "clap",
  "fontdb",
  "json5",
  "once_cell",
  "regex",
- "resvg",
  "serde",
  "serde_json",
  "thiserror 2.0.20",
  "ttf-parser",
- "usvg",
 ]
 
 [[package]]
@@ -8610,15 +8607,12 @@ version = "0.47.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9be183ad6a216aa96f33e4c8033b0988b8b3ea6fd2359d19af5bac4643fd8e81"
 dependencies = [
- "gif",
- "image-webp",
  "log",
  "pico-args",
  "rgb",
  "svgtypes",
  "tiny-skia",
  "usvg",
- "zune-jpeg",
 ]
 
 [[package]]
