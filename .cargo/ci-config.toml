@@ -1,17 +1,16 @@
 # This config is different from config.toml in this directory, as the latter is recognized by Cargo.
-# This file is placed in ./../.cargo/config.toml on CI runs. Cargo then merges Grams .cargo/config.toml with ./../.cargo/config.toml
-# with preference for settings from Grams config.toml.
-# TL;DR: If a value is set in both ci-config.toml and config.toml, config.toml value takes precedence.
+# This file is placed in ./../.cargo/config.toml on CI runs.
+# Cargo then merges Gram's .cargo/config.toml with ./../.cargo/config.toml with preference for settings from Grams config.toml.
+# TLDR: If a value is set in both ci-config.toml and config.toml, config.toml value takes precedence.
 # Arrays are merged together though. See: https://doc.rust-lang.org/cargo/reference/config.html#hierarchical-structure
 
 # -D warnings
 #  = Warnings as errors
-# Use `[target.'cfg(all())']` instead of `[build]` because `[target.'**']` is guaranteed to be cumulative.
-[target.'cfg(all())']
+# Use `[target."cfg(all())"]` instead of `[build]` because `[target."**"]` is guaranteed to be cumulative.
+[target."cfg(all())"]
 rustflags = ["-D", "warnings"]
 
 # Use Mold on Linux, because it's faster than GNU ld and LLD.
-#
 # Don't set this in the default `config.toml` so that developers can opt in to Wild, which
 # is faster than Mold, in their own ~/.cargo/config.toml.
 [target.x86_64-unknown-linux-gnu]
