@@ -355,7 +355,7 @@ http = "1.5.0"
 http-body = "1.1.0"
 human_bytes = "0.4.3"
 ignore = "0.4.33"
-image = "0.25.10"
+image = { version = "0.25.10", default-features = false, features = ["gif", "ico", "jpeg", "png", "webp"] }
 imara-diff = "0.2.0"
 indexmap = { version = "2.14.0", features = ["serde", "std"] }
 indoc = "2.0.7"
@@ -420,10 +420,10 @@ rand = "0.10.2"
 raw-window-handle = "0.6.2"
 rayon = "1.12.0"
 regex = "1.13.1"
-resvg = { version = "0.48.1", features = ["memmap-fonts", "raster-images", "svgz", "system-fonts", "text"] }
+resvg = { version = "0.48.1", default-features = false }
 rsa = "0.9.10"
 runtimelib = { version = "1.6.0", default-features = false, features = ["async-dispatcher-runtime", "aws-lc-rs"] }
-rust-embed = { version = "8.12.0", features = ["include-exclude"] }
+rust-embed = { version = "8.12.0", features = ["include-exclude", "compression", "deterministic-timestamps"] }
 rustc-hash = "2.1.3"
 rustls = { version = "0.23.43" }
 rustls-platform-verifier = "0.7.0"

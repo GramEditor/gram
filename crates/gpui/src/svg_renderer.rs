@@ -35,8 +35,7 @@ impl SvgRenderer {
     /// Creates a new SVG renderer with the provided asset source.
     pub fn new(asset_source: Arc<dyn AssetSource>) -> Self {
         static FONT_DB: LazyLock<Arc<usvg::fontdb::Database>> = LazyLock::new(|| {
-            let mut db = usvg::fontdb::Database::new();
-            db.load_system_fonts();
+            let db = usvg::fontdb::Database::new();
             Arc::new(db)
         });
         let default_font_resolver = usvg::FontResolver::default_font_selector();
