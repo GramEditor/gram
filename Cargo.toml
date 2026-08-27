@@ -150,7 +150,13 @@ default-members = ["crates/gram"]
 [workspace.package]
 version = "3.3.0"
 edition = "2024"
+rust-version = "1.95"
+description = "A code editor for humanoid apes and grumpy toads"
+documentation = "https://gram-editor.com/docs"
+homepage = "https://gram-editor.com"
 repository = "https://codeberg.org/GramEditor/gram"
+license = "GPL-3.0-or-later"
+license-file = "LICENSE-GPL"
 publish = false
 
 [workspace.dependencies]

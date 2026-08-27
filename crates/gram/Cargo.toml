@@ -2,9 +2,13 @@
 name = "gram"
 version.workspace = true
 edition.workspace = true
-description = "What cannot be mended must be transcended."
+rust-version.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+description.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+license.workspace = true
+license-file.workspace = true
 publish.workspace = true
 
 [package.metadata.bundle-dev]
