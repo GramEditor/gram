@@ -629,7 +629,6 @@ protobuf-src = { git = "https://codeberg.org/GramEditor/rust-protobuf-native", r
 [profile.dev]
 opt-level = 1
 debug = "limited"
-split-debuginfo = "unpacked"
 incremental = true
 codegen-units = 16
 
@@ -693,9 +692,12 @@ time_format = { codegen-units = 1 }
 ui_input = { codegen-units = 1 }
 
 [profile.release]
-debug = "limited"
+debug = true
+split-debuginfo = "packed"
+opt-level = 3
+panic = "abort"
 lto = "thin"
-codegen-units = 1
+codegen-units = 4
 
 [profile.release-fast]
 inherits = "release"
