@@ -1,26 +1,19 @@
 [attr]crlf eol=crlf
 [attr]rust text eol=lf whitespace=tab-in-indent,trailing-space,tabwidth=4
-
 * text=auto eol=lf
-
-*.png binary
-*.ico binary
-
-*.bat crlf
-*.ps1 crlf
-
-*.rs             rust diff=rust
-
-# SHELL -> Shell, json -> JSON
 *.entitlements    linguist-language=XML
+*.ico             binary
 *.in              linguist-language=Shell
 *.isl             linguist-vendored
 *.json            linguist-detectable
 *.jsonc           linguist-language=JSON
 *.md              linguist-detectable
 *.plist           linguist-language=XML
+*.png             binary
 *.prettierignore  linguist-language=Shell
 *.prettierrc      linguist-language=JSON
+*.ps1             crlf
+*.rs              rust diff=rust
 *.toml            linguist-detectable
 *.wit             linguist-language=WebAssembly
 *.xml             linguist-detectable
