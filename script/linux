@@ -222,17 +222,20 @@ fi
 emerge=$(command -v emerge || true)
 if [[ -n $emerge ]]; then
     deps=(
-        app-misc/jq
         app-arch/zstd
+        app-misc/jq
         dev-build/cmake
         dev-db/sqlite
+        dev-libs/glib
         dev-libs/openssl
         dev-libs/wayland
         dev-vcs/git
         llvm-core/clang
-        sys-devel/mold
         media-libs/fontconfig
+        media-libs/libva
         media-libs/vulkan-loader
+        sys-apps/xdg-desktop-portal
+        sys-devel/mold
         x11-libs/libxcb
         x11-libs/libxkbcommon
     )
@@ -240,6 +243,5 @@ if [[ -n $emerge ]]; then
     finalize
     exit 0
 fi
-
 echo "Unsupported Linux distribution in script/linux"
 exit 1
