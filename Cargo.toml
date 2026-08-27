@@ -382,7 +382,7 @@ nix = "0.31.3"
 notify = "9.0.0-rc.4"
 num_cpus = "1.17.0"
 num-format = "0.4.4"
-nvim-rs = { git = "https://github.com/KillTheMule/nvim-rs", rev = "764dd270c642f77f10f3e19d05cc178a6cbe69f3", features = ["use_tokio"] }
+nvim-rs = { version = "0.9.2", features = ["use_tokio"] }
 objc2 = "0.6.4"
 objc2-app-kit = "0.3.2"
 objc2-color-sync = "0.3.2"
@@ -653,7 +653,6 @@ cranelift-codegen-meta = { opt-level = 3 }
 cranelift-codegen-shared = { opt-level = 3 }
 minidumper = { opt-level = 3 }
 resvg = { opt-level = 3 }
-rustybuzz = { opt-level = 3 }
 serde_json = { opt-level = 3 }
 taffy = { opt-level = 3 }
 tree-sitter = { opt-level = 3 }
@@ -693,23 +692,11 @@ theme_selector = { codegen-units = 1 }
 time_format = { codegen-units = 1 }
 ui_input = { codegen-units = 1 }
 
-# mirror configuration for crates compiled for the build platform
-# (without this cargo will compile ~400 crates twice)
-[profile.dev.build-override]
-debug = "limited"
-split-debuginfo = "unpacked"
-codegen-units = 16
-
 [profile.release]
 debug = "limited"
 lto = "thin"
 codegen-units = 1
 
-[profile.release.package]
-gram = { codegen-units = 16 }
-
 [profile.release-fast]
 inherits = "release"
-debug = "full"
 lto = false
-codegen-units = 16
