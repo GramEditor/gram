@@ -14,6 +14,7 @@
 *.prettierrc      linguist-language=JSON
 *.ps1             crlf
 *.rs              rust diff=rust
+*.svg             linguist-detectable
 *.toml            linguist-detectable
 *.wit             linguist-language=WebAssembly
 *.xml             linguist-detectable
