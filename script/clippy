@@ -6,4 +6,4 @@ if [[ ! " $* " == *" -p "* && ! " $* " == *" --package "* ]]; then
 fi
 
 set -x
-"${CARGO:-cargo}" clippy "$@" --release --all-targets --all-features
+"${CARGO:-cargo}" clippy "$@" --release --all-targets --all-features -- --deny warnings
