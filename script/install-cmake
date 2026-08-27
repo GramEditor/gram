@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-#
+set -euo pipefail
+
 # This script installs an up-to-date version of CMake.
 #
 # For MacOS use Homebrew to install the latest version.
@@ -14,9 +15,6 @@
 # https://github.com/actions/runner-images/blob/main/images/ubuntu/scripts/build/install-cmake.sh
 #
 # Upstream:  3.30.4 (2024-09-27)
-
-set -euo pipefail
-
 
 if [[ "$(uname -s)" == "darwin" ]]; then
   brew --version >/dev/null \

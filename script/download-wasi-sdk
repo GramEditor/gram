@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Check if ./target/wasi-sdk exists
 if [ ! -d "./target/wasi-sdk" ]; then
     echo "WASI SDK not found, downloading v25..."
 

@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-
 set -euxo pipefail
-shopt -s extglob
 
+shopt -s extglob
 help_info() {
     echo "
 Usage: ${0##*/} [options]

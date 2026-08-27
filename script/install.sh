@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # shellcheck shell=bash
-# Installation script for Linux
 set -eu
 
 err() {

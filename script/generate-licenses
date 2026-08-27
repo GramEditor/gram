@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
 
 CARGO_ABOUT_VERSION="0.9.1"

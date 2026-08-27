@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # Install `mold` official binaries from GitHub Releases.
 #
@@ -9,8 +10,6 @@
 # * support doas for sudo
 # * support redhat systems
 # See: https://github.com/rui314/setup-mold/blob/main/action.yml
-
-set -euo pipefail
 
 MOLD_VERSION="2.34.0"
 

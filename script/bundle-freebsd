@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
-
 set -euxo pipefail
-source script/lib/blob-store.sh
 
-# Function for displaying help info
+source script/lib/blob-store.sh
 help_info() {
     echo "
 Usage: ${0##*/} [options]

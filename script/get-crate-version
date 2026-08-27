@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 set -eu
 
 if [[ $# -ne 1 ]]; then
@@ -8,10 +7,4 @@ if [[ $# -ne 1 ]]; then
 fi
 
 CRATE_NAME=$1
-
-cargo metadata \
-    --no-deps \
-    --format-version=1 \
-    | jq \
-        --raw-output \
-        ".packages[] | select(.name == \"${CRATE_NAME}\") | .version"
+cargo metadata --no-deps --format-version=1 | jq --raw-output ".packages[] | select(.name == \"${CRATE_NAME}\") | .version"

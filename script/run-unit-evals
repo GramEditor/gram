@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 set -euxo pipefail
 
 if [ -n "${UNIT_EVAL_COMMIT:-}" ]; then

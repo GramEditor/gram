@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
 
 RELEASE_CRATES=("cli" "remote_server" "gram")

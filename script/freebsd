@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 set -xeuo pipefail
 
 # if root or if sudo/unavailable, define an empty variable
