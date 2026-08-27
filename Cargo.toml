@@ -142,9 +142,7 @@ members = [
   "crates/worktree",
   "crates/zlog",
   "crates/zlog_settings",
-  # Extensions
   "extensions/test-extension",
-  # Tooling
   "tooling/perf"
 ]
 default-members = ["crates/gram"]
@@ -155,7 +153,6 @@ edition = "2024"
 repository = "https://codeberg.org/GramEditor/gram"
 publish = false
 
-# Workspace member crates
 [workspace.dependencies]
 activity_indicator = { path = "crates/activity_indicator" }
 app_actions = { path = "crates/app_actions" }
@@ -389,7 +386,7 @@ objc2-core-graphics = "0.3.2"
 objc2-core-services = "0.3.2"
 objc2-foundation = "0.3.2"
 objc2-quartz-core = "0.3.2"
-open = "5.4.1"
+open = "5.4.2"
 ordered-float = "5.5.0"
 palette = { version = "0.7.7", default-features = false, features = ["std"] }
 parking = "2.2.1"
@@ -601,14 +598,12 @@ let_underscore_future = "allow"
 # Boolean expressions can be hard to read, requiring only the minimal form gets in the way
 nonminimal_bool = "allow"
 redundant_clone = "deny"
-# Motivation: We use `vec![a..b]` a lot when dealing with ranges in text, so
-# warning on this rule produces a lot of noise.
+# Motivation: We use `vec![a..b]` a lot when dealing with ranges in text, so warning on this rule produces a lot of noise.
 single_range_in_vec_init = "allow"
 # Style rules are not enforced.
 style = { level = "allow", priority = -1 }
 todo = "deny"
-# in Rust it can be very tedious to reduce argument count without
-# running afoul of the borrow checker.
+# in Rust it can be very tedious to reduce argument count without running afoul of the borrow checker.
 too_many_arguments = "allow"
 # Individual rules that have violations in the codebase:
 type_complexity = "allow"
