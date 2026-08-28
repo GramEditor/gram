@@ -335,31 +335,12 @@ pub fn jump_motion(map: &DisplaySnapshot, anchor: Anchor, line: bool) -> (Displa
 
 #[cfg(test)]
 mod test {
-    use crate::test::{NeovimBackedTestContext, VimTestContext};
+    use crate::test::VimTestContext;
     use editor::Editor;
     use gpui::TestAppContext;
     use std::path::Path;
     use util::path;
     use workspace::{CloseActiveItem, OpenOptions};
-
-    #[gpui::test]
-    async fn test_quote_mark(cx: &mut TestAppContext) {
-        let mut cx = NeovimBackedTestContext::new(cx).await;
-
-        cx.set_shared_state("ˇHello, world!").await;
-        cx.simulate_shared_keystrokes("w m o").await;
-        cx.shared_state().await.assert_eq("Helloˇ, world!");
-        cx.simulate_shared_keystrokes("$ ` o").await;
-        cx.shared_state().await.assert_eq("Helloˇ, world!");
-        cx.simulate_shared_keystrokes("` `").await;
-        cx.shared_state().await.assert_eq("Hello, worldˇ!");
-        cx.simulate_shared_keystrokes("` `").await;
-        cx.shared_state().await.assert_eq("Helloˇ, world!");
-        cx.simulate_shared_keystrokes("$ m '").await;
-        cx.shared_state().await.assert_eq("Hello, worldˇ!");
-        cx.simulate_shared_keystrokes("^ ` `").await;
-        cx.shared_state().await.assert_eq("Hello, worldˇ!");
-    }
 
     #[gpui::test]
     async fn test_global_mark_overwrite(cx: &mut TestAppContext) {

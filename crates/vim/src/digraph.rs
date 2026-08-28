@@ -201,27 +201,7 @@ mod test {
     use collections::HashMap;
     use settings::SettingsStore;
 
-    use crate::{
-        state::Mode,
-        test::{NeovimBackedTestContext, VimTestContext},
-    };
-
-    #[gpui::test]
-    async fn test_digraph_insert_mode(cx: &mut gpui::TestAppContext) {
-        let mut cx: NeovimBackedTestContext = NeovimBackedTestContext::new(cx).await;
-
-        cx.set_shared_state("Hellˇo").await;
-        cx.simulate_shared_keystrokes("a ctrl-k o : escape").await;
-        cx.shared_state().await.assert_eq("Helloˇö");
-
-        cx.set_shared_state("Hellˇo").await;
-        cx.simulate_shared_keystrokes("a ctrl-k : o escape").await;
-        cx.shared_state().await.assert_eq("Helloˇö");
-
-        cx.set_shared_state("Hellˇo").await;
-        cx.simulate_shared_keystrokes("i ctrl-k o : escape").await;
-        cx.shared_state().await.assert_eq("Hellˇöo");
-    }
+    use crate::{state::Mode, test::VimTestContext};
 
     #[gpui::test]
     async fn test_digraph_insert_multicursor(cx: &mut gpui::TestAppContext) {
@@ -230,38 +210,6 @@ mod test {
         cx.set_state("Hellˇo wˇorld", Mode::Normal);
         cx.simulate_keystrokes("a ctrl-k o : escape");
         cx.assert_state("Helloˇö woˇörld", Mode::Normal);
-    }
-
-    #[gpui::test]
-    async fn test_digraph_replace(cx: &mut gpui::TestAppContext) {
-        let mut cx: NeovimBackedTestContext = NeovimBackedTestContext::new(cx).await;
-
-        cx.set_shared_state("Hellˇo").await;
-        cx.simulate_shared_keystrokes("r ctrl-k o :").await;
-        cx.shared_state().await.assert_eq("Hellˇö");
-    }
-
-    #[gpui::test]
-    async fn test_digraph_find(cx: &mut gpui::TestAppContext) {
-        let mut cx: NeovimBackedTestContext = NeovimBackedTestContext::new(cx).await;
-
-        cx.set_shared_state("ˇHellö world").await;
-        cx.simulate_shared_keystrokes("f ctrl-k o :").await;
-        cx.shared_state().await.assert_eq("Hellˇö world");
-
-        cx.set_shared_state("ˇHellö world").await;
-        cx.simulate_shared_keystrokes("t ctrl-k o :").await;
-        cx.shared_state().await.assert_eq("Helˇlö world");
-    }
-
-    #[gpui::test]
-    async fn test_digraph_replace_mode(cx: &mut gpui::TestAppContext) {
-        let mut cx: NeovimBackedTestContext = NeovimBackedTestContext::new(cx).await;
-
-        cx.set_shared_state("ˇHello").await;
-        cx.simulate_shared_keystrokes("shift-r ctrl-k a ' ctrl-k e ` ctrl-k i : ctrl-k o ~ ctrl-k u - escape")
-            .await;
-        cx.shared_state().await.assert_eq("áèïõˇū");
     }
 
     #[gpui::test]
@@ -285,52 +233,5 @@ mod test {
         cx.set_state("ˇ", Mode::Normal);
         cx.simulate_keystrokes("a ctrl-k : ) escape");
         cx.assert_state("ˇ👨‍💻", Mode::Normal);
-    }
-
-    #[gpui::test]
-    async fn test_digraph_keymap_conflict(cx: &mut gpui::TestAppContext) {
-        let mut cx: NeovimBackedTestContext = NeovimBackedTestContext::new(cx).await;
-
-        cx.set_shared_state("Hellˇo").await;
-        cx.simulate_shared_keystrokes("a ctrl-k s , escape").await;
-        cx.shared_state().await.assert_eq("Helloˇş");
-    }
-
-    #[gpui::test]
-    async fn test_ctrl_v(cx: &mut gpui::TestAppContext) {
-        let mut cx: NeovimBackedTestContext = NeovimBackedTestContext::new(cx).await;
-
-        cx.set_shared_state("ˇ").await;
-        cx.simulate_shared_keystrokes("i ctrl-v 0 0 0").await;
-        cx.shared_state().await.assert_eq("\x00ˇ");
-
-        cx.simulate_shared_keystrokes("ctrl-v j").await;
-        cx.shared_state().await.assert_eq("\x00jˇ");
-        cx.simulate_shared_keystrokes("ctrl-v x 6 5").await;
-        cx.shared_state().await.assert_eq("\x00jeˇ");
-        cx.simulate_shared_keystrokes("ctrl-v U 1 F 6 4 0 space").await;
-        cx.shared_state().await.assert_eq("\x00je🙀 ˇ");
-    }
-
-    #[gpui::test]
-    async fn test_ctrl_v_escape(cx: &mut gpui::TestAppContext) {
-        let mut cx: NeovimBackedTestContext = NeovimBackedTestContext::new(cx).await;
-        cx.set_shared_state("ˇ").await;
-        cx.simulate_shared_keystrokes("i ctrl-v 9 escape").await;
-        cx.shared_state().await.assert_eq("ˇ\t");
-        cx.simulate_shared_keystrokes("i ctrl-v escape").await;
-        cx.shared_state().await.assert_eq("\x1bˇ\t");
-    }
-
-    #[gpui::test]
-    async fn test_ctrl_v_control(cx: &mut gpui::TestAppContext) {
-        let mut cx: NeovimBackedTestContext = NeovimBackedTestContext::new(cx).await;
-        cx.set_shared_state("ˇ").await;
-        cx.simulate_shared_keystrokes("i ctrl-v ctrl-d").await;
-        cx.shared_state().await.assert_eq("\x04ˇ");
-        cx.simulate_shared_keystrokes("ctrl-v ctrl-j").await;
-        cx.shared_state().await.assert_eq("\x04\x00ˇ");
-        cx.simulate_shared_keystrokes("ctrl-v tab").await;
-        cx.shared_state().await.assert_eq("\x04\x00\x09ˇ");
     }
 }

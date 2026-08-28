@@ -13,8 +13,6 @@ path = "src/vim.rs"
 [dependencies]
 anyhow.workspace = true
 app_actions.workspace = true
-async-compat = { workspace = true, "optional" = true }
-async-trait = { workspace = true, "optional" = true }
 collections.workspace = true
 command_palette.workspace = true
 command_palette_hooks.workspace = true
@@ -29,7 +27,6 @@ language.workspace = true
 log.workspace = true
 menu.workspace = true
 multi_buffer.workspace = true
-nvim-rs = { workspace = true, optional = true }
 picker.workspace = true
 project.workspace = true
 regex.workspace = true
@@ -41,7 +38,6 @@ settings.workspace = true
 task.workspace = true
 text.workspace = true
 theme.workspace = true
-tokio = { workspace = true, optional = true }
 ui.workspace = true
 util.workspace = true
 util_macros.workspace = true
@@ -58,8 +54,6 @@ language = { workspace = true, features = ["test-support"] }
 lsp = { workspace = true, features = ["test-support"] }
 markdown_preview.workspace = true
 outline_panel.workspace = true
-parking_lot.workspace = true
-perf.workspace = true
 project = { workspace = true, features = ["test-support"] }
 project_panel.workspace = true
 release_channel.workspace = true
@@ -67,9 +61,6 @@ settings.workspace = true
 settings_ui.workspace = true
 util = { workspace = true, features = ["test-support"] }
 workspace = { workspace = true, features = ["test-support"] }
-
-[features]
-neovim = ["async-compat", "async-trait", "nvim-rs", "tokio"]
 
 [lints]
 workspace = true

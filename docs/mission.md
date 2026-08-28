@@ -171,11 +171,6 @@ This is the result. Feel free to build it and see if it works for you. There is
 no license agreement or subscription beyond the open source license of the code
 (GPLv3). It is yours now, to do with as you please.
 
-To be honest, I am happy in Neovim. For most projects I still prefer it over
-this editor. Don't expect this project to keep pace with Zed or to be a
-Zed-killer, unless other people take it and keep building from here. This
-project is mainly therapeutic. I had to get it out of my system.
-
 ## Features
 
 - Open: No telemetry, AI or privacy-invading third party integrations.
@@ -211,8 +206,6 @@ As far as I know, these editors are completely free of AI-generated code.
 
 These editors may not be AI free, but I am still OK with recommending them.
 
-- [Neovim](https://neovim.io)
-- [Vim](https://www.vim.org)
 - [Flow Control](https://flow-control.dev) - A TUI-based and very promising
   editor with planned collaboration features.
 - [Helix](https://helix-editor.com)
