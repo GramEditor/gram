@@ -2,6 +2,7 @@
   "languages": {
     "Markdown": {
       "tab_size": 2,
+      "preferred_line_length": 80,
       "formatter": "prettier",
     },
     "TOML": {
