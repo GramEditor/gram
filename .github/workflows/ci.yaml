@@ -27,7 +27,7 @@ env:
 
 jobs:
   build:
-    name: Build (${{ matrix.os }})
+    name: Test (${{ matrix.os }})
     if: github.ref_type == 'branch' && !startsWith(github.ref, 'refs/heads/test-release')
     runs-on: ${{ matrix.os }}
     strategy:
@@ -41,6 +41,10 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Free up space
+        if: runner.os == 'Linux'
+        run: ./script/ci-free-space
+
       - name: Update cargo path
         if: runner.os == 'macOS'
         run: echo "/Users/runner/.cargo/bin" >> $GITHUB_PATH
@@ -49,11 +53,6 @@ jobs:
         uses: taiki-e/install-action@ba47c86ac325773530516bb756137ac718732518 # v2.86.5
         with:
           tool: cargo-nextest
-
-      - name: Cache Rust build
-        uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2.9.3
-        with:
-          lookup-only: true
 
       - name: Install dependencies
         if: runner.os == 'Linux'
@@ -70,8 +69,8 @@ jobs:
         if: runner.os != 'Windows'
         run: cargo nextest run --workspace --no-fail-fast --success-output never --show-progress none
 
-  build-linux:
-    name: Build Linux (${{ matrix.arch }})
+  release-linux:
+    name: Release Linux (${{ matrix.arch }})
     if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -95,11 +94,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Cache Rust build
-        uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2.9.3
-        with:
-          lookup-only: true
-
       - name: Install dependencies
         run: ./script/prepare-ci release
 
@@ -121,8 +115,8 @@ jobs:
           name: ${{ matrix.artifact_name }}
           path: artifacts/*
 
-  build-windows:
-    name: Build Windows
+  release-windows:
+    name: Release Windows
     if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
     runs-on: ${{ matrix.os }}
     strategy:
@@ -138,11 +132,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-
-      - name: Cache Rust build
-        uses: Swatinem/rust-cache@f0d9c3887740aee45f6153b24b3a6b815192ec16 # v2.9.3
-        with:
-          lookup-only: true
 
       - name: Bundle Windows
         shell: pwsh
