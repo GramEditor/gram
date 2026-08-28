@@ -1504,21 +1504,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
-name = "core_maths"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77745e017f5edba1a9c1d854f6f3a52dac8a12dd5af5d2f54aecf61e43d80d30"
-dependencies = [
- "libm",
-]
-
-[[package]]
 name = "cosmic-text"
 version = "0.19.0"
 source = "git+https://codeberg.org/GramEditor/cosmic-text?rev=4649fd872a6099edebd12c97fc08eb578c4a8062#4649fd872a6099edebd12c97fc08eb578c4a8062"
 dependencies = [
  "bitflags 2.13.1",
- "fontdb 0.24.0",
+ "fontdb",
  "harfrust",
  "linebender_resource_handle",
  "log",
@@ -3039,20 +3030,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbc773e24e02d4ddd8395fd30dc147524273a83e54e0f312d986ea30de5f5646"
 dependencies = [
  "roxmltree 0.20.0",
-]
-
-[[package]]
-name = "fontdb"
-version = "0.23.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "457e789b3d1202543297a350643cf459f836cade38934e7a4cf6a39e7cde2905"
-dependencies = [
- "fontconfig-parser",
- "log",
- "memmap2",
- "slotmap",
- "tinyvec",
- "ttf-parser",
 ]
 
 [[package]]
@@ -5552,18 +5529,18 @@ dependencies = [
 [[package]]
 name = "mermaid-rs-renderer"
 version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6cb5b469222ce6b9896edf0a969cf68464f5a028ef394fd6643f00bd943df117"
+source = "git+https://codeberg.org/GramEditor/mermaid-rs-renderer?rev=88d0890b2ea95e02009f183de1c1ea0408d3093d#88d0890b2ea95e02009f183de1c1ea0408d3093d"
 dependencies = [
  "anyhow",
- "fontdb 0.23.0",
+ "fontdb",
  "json5",
  "once_cell",
+ "read-fonts",
  "regex",
  "serde",
  "serde_json",
+ "skrifa",
  "thiserror 2.0.20",
- "ttf-parser",
 ]
 
 [[package]]
@@ -11008,15 +10985,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
-name = "ttf-parser"
-version = "0.25.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2df906b07856748fa3f6e0ad0cbaa047052d4a7dd609e231c4f72cee8c36f31"
-dependencies = [
- "core_maths",
-]
-
-[[package]]
 name = "tungstenite"
 version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11235,7 +11203,7 @@ checksum = "977d0a4abdef933f424a99fe09f95576e089b90aebc6f016a3bc813762493e91"
 dependencies = [
  "base64 0.23.1",
  "data-url",
- "fontdb 0.24.0",
+ "fontdb",
  "harfrust",
  "imagesize",
  "kurbo",
