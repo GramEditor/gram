@@ -325,7 +325,7 @@ circular-buffer = "1.2.1"
 clap = { version = "4.6.6", features = ["color", "derive", "error-context", "help", "std", "suggestions", "usage", "wrap_help"] }
 command-fds = "0.3.3"
 convert_case = "0.11.0"
-cosmic-text = "0.19.0"
+cosmic-text = { git = "https://codeberg.org/GramEditor/cosmic-text", rev = "4649fd872a6099edebd12c97fc08eb578c4a8062" }
 crash-handler = "0.7.0"
 criterion = { version = "0.8.2", features = ["cargo_bench_support", "html_reports", "plotters", "rayon"] }
 ctor = "0.12.0"
