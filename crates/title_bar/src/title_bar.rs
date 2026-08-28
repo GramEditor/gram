@@ -18,8 +18,8 @@ use crate::application_menu::{ActivateDirection, ActivateMenuLeft, ActivateMenuR
 
 use app_actions::{OpenRecent, OpenRemote};
 use gpui::{
-    Action, AnyElement, App, Context, Corner, Element, Entity, Focusable, InteractiveElement, IntoElement, MouseButton,
-    ParentElement, Render, Styled, Subscription, WeakEntity, Window,
+    Action, AnyElement, App, Context, Entity, Focusable, InteractiveElement, IntoElement, MouseButton, ParentElement,
+    Render, Styled, Subscription, WeakEntity, Window,
 };
 use project::{Project, git_store::GitStoreEvent};
 use remote::RemoteConnectionOptions;
@@ -27,8 +27,8 @@ use settings::Settings;
 use theme::ActiveTheme;
 use title_bar_settings::TitleBarSettings;
 use ui::{
-    Button, ButtonLike, ButtonStyle, ContextMenu, Icon, IconName, IconSize, IconWithIndicator, Indicator, PopoverMenu,
-    Tooltip, h_flex, prelude::*,
+    Button, ButtonLike, ButtonStyle, Icon, IconName, IconSize, IconWithIndicator, Indicator, Tooltip, h_flex,
+    prelude::*,
 };
 use workspace::Workspace;
 
@@ -162,15 +162,6 @@ impl Render for TitleBar {
                         })
                 })
                 .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
-                .into_any_element(),
-        );
-
-        children.push(
-            h_flex()
-                .pr_1()
-                .gap_1()
-                .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
-                .child(self.render_app_menu_button(cx))
                 .into_any_element(),
         );
 
@@ -454,31 +445,4 @@ impl TitleBar {
     }
 
     fn window_activation_changed(&mut self, _window: &mut Window, _cx: &mut Context<Self>) {}
-
-    pub fn render_app_menu_button(&mut self, _cx: &mut Context<Self>) -> impl Element {
-        PopoverMenu::new("user-menu")
-            .anchor(Corner::TopRight)
-            .menu(move |window, cx| {
-                ContextMenu::build(window, cx, |menu, _, _cx| {
-                    menu.action("Documentation", app_actions::OpenDocs.boxed_clone())
-                        .separator()
-                        .action("Settings", app_actions::OpenSettings.boxed_clone())
-                        .action("Keymap", Box::new(app_actions::OpenKeymap))
-                        .action("Extensions", app_actions::Extensions::default().boxed_clone())
-                        .action("Themes…", app_actions::theme_selector::Toggle::default().boxed_clone())
-                        .action(
-                            "Icon Themes…",
-                            app_actions::icon_theme_selector::Toggle::default().boxed_clone(),
-                        )
-                })
-                .into()
-            })
-            .map(|this| {
-                this.trigger_with_tooltip(
-                    IconButton::new("user-menu", IconName::Sword).icon_size(IconSize::Small),
-                    Tooltip::text("Toggle User Menu"),
-                )
-            })
-            .anchor(gpui::Corner::TopRight)
-    }
 }

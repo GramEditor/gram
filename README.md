@@ -164,5 +164,3 @@ See: <https://gram-editor.com/credits>.
 **Gram** is an old norse/swedish word meaning "ill-tempered" or grumpy. It is
 also the name of a sword from norse legend which was broken and then re-forged,
 stronger than any other sword, used to kill a dragon.
-
-Also, this also explains the sword icon used in Gram.
