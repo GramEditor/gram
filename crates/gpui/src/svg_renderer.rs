@@ -1,10 +1,13 @@
-use crate::{AssetSource, DevicePixels, IsZero, RenderImage, Result, SharedString, Size, swap_rgba_pa_to_bgra};
+use crate::{
+    AssetSource, DevicePixels, IsZero, RenderImage, Result, SharedString, Size, font_name_with_fallbacks,
+    swap_rgba_pa_to_bgra,
+};
 use image::Frame;
 use resvg::tiny_skia::Pixmap;
 use smallvec::SmallVec;
 use std::{
     hash::Hash,
-    sync::{Arc, LazyLock},
+    sync::{Arc, LazyLock, Mutex},
 };
 
 /// When rendering SVGs, we render them at twice the size to get a higher-quality result.
@@ -34,14 +37,27 @@ pub enum SvgSize {
 impl SvgRenderer {
     /// Creates a new SVG renderer with the provided asset source.
     pub fn new(asset_source: Arc<dyn AssetSource>) -> Self {
-        static FONT_DB: LazyLock<Arc<usvg::fontdb::Database>> = LazyLock::new(|| {
-            let db = usvg::fontdb::Database::new();
-            Arc::new(db)
-        });
+        static FONT_DB: LazyLock<Mutex<Arc<usvg::fontdb::Database>>> = LazyLock::new(|| Mutex::default());
         let default_font_resolver = usvg::FontResolver::default_font_selector();
+        let assets = asset_source.clone();
         let font_resolver = Box::new(move |font: &usvg::Font, db: &mut Arc<usvg::fontdb::Database>| {
             if db.is_empty() {
-                *db = FONT_DB.clone();
+                if let Ok(mut lock) = FONT_DB.lock() {
+                    let mut fontdb = usvg::fontdb::Database::new();
+                    if let Ok(font_paths) = assets.list("fonts") {
+                        for font_path in font_paths {
+                            if font_path.ends_with(".ttf") {
+                                let bytes = assets.load(&font_path).unwrap().unwrap();
+                                fontdb.load_font_data(bytes.into());
+                            }
+                        }
+                        fontdb.set_serif_family(font_name_with_fallbacks(".GramSans", "Fira Sans"));
+                        fontdb.set_sans_serif_family(font_name_with_fallbacks(".GramSans", "Fira Sans"));
+                        fontdb.set_monospace_family(font_name_with_fallbacks(".GramMono", "Myna"));
+                    }
+                    *lock = Arc::new(fontdb);
+                    *db = (*lock).clone();
+                }
             }
             default_font_resolver(font, db)
         });

@@ -421,7 +421,7 @@ rand = "0.10.2"
 raw-window-handle = "0.6.2"
 rayon = "1.12.0"
 regex = "1.13.1"
-resvg = { version = "0.48.1", default-features = false }
+resvg = { version = "0.48.1", default-features = false, features = ["text"]}
 rsa = "0.9.10"
 runtimelib = { version = "1.6.0", default-features = false, features = ["async-dispatcher-runtime", "aws-lc-rs"] }
 rust-embed = { version = "8.12.0", features = ["compression", "deterministic-timestamps", "include-exclude"] }
