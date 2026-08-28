@@ -44,18 +44,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Cache build
-        uses: actions/cache@3edfce9056124e459a23f683a21433670d47daca # v6.1.0
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ${{ runner.os }}-gram-dev-cargo-${{ hashFiles('**/Cargo.lock') }}
-          lookup-only: true
-
       - name: Install dependencies
         run: ./script/prepare-ci ci
 
@@ -78,19 +66,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-
-      - name: Cache build
-        uses: actions/cache@3edfce9056124e459a23f683a21433670d47daca # v6.1.0
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-            distdir/
-          key: ${{ runner.os }}-gram-release-cargo-${{ hashFiles('**/Cargo.lock') }}
-          lookup-only: true
 
       - name: Install dependencies
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
