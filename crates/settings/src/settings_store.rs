@@ -15,6 +15,7 @@ use serde_json::Value;
 use smallvec::SmallVec;
 use std::{
     any::{Any, TypeId, type_name},
+    cell::RefCell,
     fmt::Debug,
     ops::Range,
     path::PathBuf,
@@ -541,40 +542,6 @@ impl SettingsStore {
         }
     }
 
-    pub fn get_overrides_for_field<T>(
-        &self,
-        target_file: SettingsFile,
-        get: fn(&SettingsContent) -> &Option<T>,
-    ) -> Vec<SettingsFile> {
-        let all_files = self.get_all_files();
-        let mut found_file = false;
-        let mut overrides = Vec::new();
-
-        for file in all_files.into_iter().rev() {
-            if !found_file {
-                found_file = file == target_file;
-                continue;
-            }
-
-            if let SettingsFile::Project((wt_id, ref path)) = file
-                && let SettingsFile::Project((target_wt_id, ref target_path)) = target_file
-                && (wt_id != target_wt_id || !target_path.starts_with(path))
-            {
-                // if requesting value from a local file, don't return values from local files in different worktrees
-                continue;
-            }
-
-            let Some(content) = self.get_content_for_file(file.clone()) else {
-                continue;
-            };
-            if get(content).is_some() {
-                overrides.push(file);
-            }
-        }
-
-        overrides
-    }
-
     /// Look for value in the settings.
     /// Returns (file, value).
     /// If `include_target_file` is true
@@ -587,22 +554,25 @@ impl SettingsStore {
         include_target_file: bool,
         pick: fn(&'a SettingsContent) -> Option<T>,
     ) -> (SettingsFile, Option<T>) {
-        for (settings_file, content) in self.get_values_from_file(target_file, include_target_file) {
+        let last: RefCell<Option<T>> = RefCell::new(None);
+        let file = self.get_values_from_file(target_file, include_target_file, &mut |content| {
             if let Some(picked) = pick(content) {
-                return (settings_file, Some(picked));
+                last.replace(Some(picked));
+                return true;
             }
-        }
-        (SettingsFile::Default, None)
+            false
+        });
+        (file, last.into_inner())
     }
 
-    fn get_values_from_file(
-        &self,
+    fn get_values_from_file<'a>(
+        &'a self,
         target_file: SettingsFile,
         include_target_file: bool,
-    ) -> SmallVec<[(SettingsFile, &SettingsContent); 3]> {
+        can_pick: &mut dyn FnMut(&'a SettingsContent) -> bool,
+    ) -> SettingsFile {
         let all_files = self.get_all_files();
         let mut found_file = false;
-        let mut matches = SmallVec::new();
 
         for file in all_files.into_iter() {
             if !found_file && file != SettingsFile::Default {
@@ -626,10 +596,12 @@ impl SettingsStore {
             let Some(content) = self.get_content_for_file(file.clone()) else {
                 continue;
             };
-            matches.push((file, content));
+            if can_pick(content) {
+                return file;
+            }
         }
 
-        matches
+        SettingsFile::Default
     }
 
     #[inline(always)]
@@ -1973,127 +1945,6 @@ mod tests {
             store.get_value(SettingsFile::Project(local_1_child), true, get),
             (SettingsFile::Project(local_1), Some(&1))
         );
-    }
-
-    #[gpui::test]
-    fn test_get_overrides_for_field(cx: &mut App) {
-        let mut store = SettingsStore::new(cx, &test_settings());
-        store.register_setting::<DefaultLanguageSettings>();
-
-        let wt0_root = (WorktreeId::from_usize(0), RelPath::empty().into_arc());
-        let wt0_child1 = (WorktreeId::from_usize(0), rel_path("child1").into_arc());
-        let wt0_child2 = (WorktreeId::from_usize(0), rel_path("child2").into_arc());
-
-        let wt1_root = (WorktreeId::from_usize(1), RelPath::empty().into_arc());
-        let wt1_subdir = (WorktreeId::from_usize(1), rel_path("subdir").into_arc());
-
-        fn get(content: &SettingsContent) -> &Option<u32> {
-            &content.project.all_languages.defaults.preferred_line_length
-        }
-
-        store
-            .set_user_settings(r#"{"preferred_line_length": 100}"#, cx)
-            .unwrap();
-
-        store
-            .set_local_settings(
-                wt0_root.0,
-                wt0_root.1.clone(),
-                LocalSettingsKind::Settings,
-                Some(r#"{"preferred_line_length": 80}"#),
-                cx,
-            )
-            .unwrap();
-        store
-            .set_local_settings(
-                wt0_child1.0,
-                wt0_child1.1.clone(),
-                LocalSettingsKind::Settings,
-                Some(r#"{"preferred_line_length": 120}"#),
-                cx,
-            )
-            .unwrap();
-        store
-            .set_local_settings(
-                wt0_child2.0,
-                wt0_child2.1.clone(),
-                LocalSettingsKind::Settings,
-                Some(r#"{}"#),
-                cx,
-            )
-            .unwrap();
-
-        store
-            .set_local_settings(
-                wt1_root.0,
-                wt1_root.1.clone(),
-                LocalSettingsKind::Settings,
-                Some(r#"{"preferred_line_length": 90}"#),
-                cx,
-            )
-            .unwrap();
-        store
-            .set_local_settings(
-                wt1_subdir.0,
-                wt1_subdir.1.clone(),
-                LocalSettingsKind::Settings,
-                Some(r#"{}"#),
-                cx,
-            )
-            .unwrap();
-
-        let overrides = store.get_overrides_for_field(SettingsFile::Default, get);
-        assert_eq!(
-            overrides,
-            vec![
-                SettingsFile::User,
-                SettingsFile::Project(wt0_root.clone()),
-                SettingsFile::Project(wt0_child1.clone()),
-                SettingsFile::Project(wt1_root.clone()),
-            ]
-        );
-
-        let overrides = store.get_overrides_for_field(SettingsFile::User, get);
-        assert_eq!(
-            overrides,
-            vec![
-                SettingsFile::Project(wt0_root.clone()),
-                SettingsFile::Project(wt0_child1.clone()),
-                SettingsFile::Project(wt1_root.clone()),
-            ]
-        );
-
-        let overrides = store.get_overrides_for_field(SettingsFile::Project(wt0_root), get);
-        assert_eq!(overrides, vec![]);
-
-        let overrides = store.get_overrides_for_field(SettingsFile::Project(wt0_child1.clone()), get);
-        assert_eq!(overrides, vec![]);
-
-        let overrides = store.get_overrides_for_field(SettingsFile::Project(wt0_child2), get);
-        assert_eq!(overrides, vec![]);
-
-        let overrides = store.get_overrides_for_field(SettingsFile::Project(wt1_root), get);
-        assert_eq!(overrides, vec![]);
-
-        let overrides = store.get_overrides_for_field(SettingsFile::Project(wt1_subdir), get);
-        assert_eq!(overrides, vec![]);
-
-        let wt0_deep_child = (WorktreeId::from_usize(0), rel_path("child1/subdir").into_arc());
-        store
-            .set_local_settings(
-                wt0_deep_child.0,
-                wt0_deep_child.1.clone(),
-                LocalSettingsKind::Settings,
-                Some(r#"{"preferred_line_length": 140}"#),
-                cx,
-            )
-            .unwrap();
-
-        let overrides = store.get_overrides_for_field(SettingsFile::Project(wt0_deep_child), get);
-        assert_eq!(overrides, vec![]);
-
-        let overrides = store.get_overrides_for_field(SettingsFile::Project(wt0_child1), get);
-        assert_eq!(overrides, vec![]);
     }
 
     #[test]
