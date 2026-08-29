@@ -81,15 +81,6 @@ jobs:
         shell: bash
         run: ./script/ci/artifact-name
 
-      - name: Prepare pycargoebuild
-        run: ./script/prepare-pycargoebuild
-
-      - name: Generate crate-dist
-        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
-        id: gen_crate_dist
-        shell: bash
-        run: ./script/ci/generate-crates
-
       - name: Upload tarball
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
         uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
@@ -104,14 +95,6 @@ jobs:
         with:
           name: ${{ steps.set_artifact_name.outputs.remote_server_amd64 }}
           path: ${{ steps.set_artifact_name.outputs.remote_server_amd64 }}
-          compression-level: 0
-
-      - name: Upload crate-dist
-        if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
-        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
-        with:
-          name: ${{ steps.gen_crate_dist.outputs.name }}
-          path: ${{ steps.gen_crate_dist.outputs.name }}
           compression-level: 0
 
       - name: Upload DEB
