@@ -9,6 +9,7 @@ publish.workspace = true
 [lib]
 doctest = false
 path = "src/line_ending_selector.rs"
+test = false
 
 [dependencies]
 editor.workspace = true

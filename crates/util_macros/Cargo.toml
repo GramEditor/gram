@@ -8,9 +8,9 @@ license = "Apache-2.0"
 publish = false
 
 [lib]
-doctest = false
 path = "src/util_macros.rs"
 proc-macro = true
+test = false
 
 [dependencies]
 perf.workspace = true

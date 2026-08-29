@@ -10,7 +10,6 @@ categories = ["gui"]
 publish = true
 
 [lib]
-doctest = false
 path = "src/gpui.rs"
 
 [[example]]

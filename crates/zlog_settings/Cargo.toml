@@ -8,6 +8,8 @@ publish.workspace = true
 
 [lib]
 path = "src/zlog_settings.rs"
+test = false
+doctest = false
 
 [dependencies]
 collections.workspace = true

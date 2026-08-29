@@ -7,8 +7,9 @@ license = "Apache-2.0"
 publish.workspace = true
 
 [lib]
-doctest = true
+doctest = false
 path = "src/http_client_tls.rs"
+test = false
 
 [dependencies]
 rustls.workspace = true

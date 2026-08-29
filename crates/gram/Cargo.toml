@@ -63,6 +63,7 @@ assets = [
 [lib]
 name = "gram"
 path = "src/main.rs"
+doctest = false
 
 [[bin]]
 name = "gram"

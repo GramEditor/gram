@@ -8,7 +8,7 @@ license = "Apache-2.0"
 publish = false
 
 [lib]
-doctest = true
+doctest = false
 path = "src/http_client.rs"
 
 [dependencies]

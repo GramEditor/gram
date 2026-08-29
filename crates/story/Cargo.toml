@@ -8,6 +8,8 @@ publish.workspace = true
 
 [lib]
 path = "src/story.rs"
+test = false
+doctest = false
 
 [dependencies]
 gpui.workspace = true

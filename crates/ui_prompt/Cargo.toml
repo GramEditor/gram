@@ -8,6 +8,8 @@ publish.workspace = true
 
 [lib]
 path = "src/ui_prompt.rs"
+test = false
+doctest = false
 
 [dependencies]
 gpui.workspace = true

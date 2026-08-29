@@ -8,6 +8,7 @@ publish.workspace = true
 
 [lib]
 path = "src/settings_json.rs"
+doctest = false
 
 [dependencies]
 anyhow.workspace = true

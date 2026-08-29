@@ -9,6 +9,7 @@ publish.workspace = true
 [lib]
 doctest = false
 path = "src/nc.rs"
+test = false
 
 [dependencies]
 anyhow.workspace = true

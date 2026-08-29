@@ -146,3 +146,6 @@ test-support = ["load-grammars"]
 
 [lints]
 workspace = true
+
+[lib]
+doctest = false

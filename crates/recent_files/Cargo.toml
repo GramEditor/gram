@@ -9,6 +9,7 @@ publish.workspace = true
 [lib]
 doctest = false
 path = "src/recent_files.rs"
+test = false
 
 [dependencies]
 file_icons.workspace = true

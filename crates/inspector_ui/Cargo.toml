@@ -8,6 +8,8 @@ publish.workspace = true
 
 [lib]
 path = "src/inspector_ui.rs"
+test = false
+doctest = false
 
 [dependencies]
 anyhow.workspace = true

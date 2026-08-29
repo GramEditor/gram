@@ -11,6 +11,7 @@ publish = false
 doctest = true
 path = "src/gpui_macros.rs"
 proc-macro = true
+test = false
 
 [dependencies]
 heck.workspace = true

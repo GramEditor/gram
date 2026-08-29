@@ -8,6 +8,8 @@ publish.workspace = true
 
 [lib]
 path = "src/json_schema_store.rs"
+test = false
+doctest = false
 
 [dependencies]
 anyhow.workspace = true

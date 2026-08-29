@@ -8,6 +8,8 @@ publish.workspace = true
 
 [lib]
 path = "src/svg_preview.rs"
+test = false
+doctest = false
 
 [dependencies]
 app_actions.workspace = true

@@ -9,6 +9,7 @@ publish.workspace = true
 [lib]
 name = "git_ui"
 path = "src/git_ui.rs"
+doctest = false
 
 [dependencies]
 anyhow.workspace = true

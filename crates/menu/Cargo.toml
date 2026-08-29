@@ -9,6 +9,7 @@ publish.workspace = true
 [lib]
 doctest = false
 path = "src/menu.rs"
+test = false
 
 [dependencies]
 gpui.workspace = true

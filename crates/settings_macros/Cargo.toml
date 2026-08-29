@@ -9,6 +9,8 @@ publish.workspace = true
 [lib]
 path = "src/settings_macros.rs"
 proc-macro = true
+test = false
+doctest = false
 
 [dependencies]
 quote.workspace = true

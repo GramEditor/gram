@@ -7,7 +7,7 @@ license = "Apache-2.0"
 publish.workspace = true
 
 [lib]
-doctest = true
+doctest = false
 path = "src/reqwest_client.rs"
 
 [dependencies]

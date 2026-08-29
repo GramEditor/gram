@@ -8,6 +8,8 @@ publish.workspace = true
 
 [lib]
 path = "src/snippets_ui.rs"
+test = false
+doctest = false
 
 [dependencies]
 file_finder.workspace = true

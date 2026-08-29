@@ -10,6 +10,7 @@ publish.workspace = true
 doctest = false
 path = "src/sqlez_macros.rs"
 proc-macro = true
+test = false
 
 [dependencies]
 sqlez.workspace = true

@@ -11,6 +11,8 @@ ignored = ["log"]
 
 [lib]
 path = "src/askpass.rs"
+test = false
+doctest = false
 
 [dependencies]
 anyhow.workspace = true

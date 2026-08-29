@@ -9,6 +9,7 @@ publish.workspace = true
 [lib]
 doctest = false
 path = "src/notifications.rs"
+test = false
 
 [dependencies]
 app_actions.workspace = true

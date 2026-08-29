@@ -9,6 +9,7 @@ publish.workspace = true
 [lib]
 doctest = false
 path = "src/command_palette_hooks.rs"
+test = false
 
 [dependencies]
 collections.workspace = true

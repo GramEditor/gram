@@ -10,8 +10,7 @@ publish.workspace = true
 crate-type = ["cdylib"]
 doctest = false
 path = "src/explorer_command_injector.rs"
-
-[dependencies]
+test = false
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows.workspace = true

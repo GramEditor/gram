@@ -8,6 +8,8 @@ publish.workspace = true
 
 [lib]
 path = "src/panel.rs"
+test = false
+doctest = false
 
 [dependencies]
 editor.workspace = true

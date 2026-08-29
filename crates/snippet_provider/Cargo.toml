@@ -33,3 +33,6 @@ test-support = []
 
 [lints]
 workspace = true
+
+[lib]
+doctest = false

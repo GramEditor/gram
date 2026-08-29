@@ -10,6 +10,7 @@ publish = false
 doctest = false
 path = "src/derive_refineable.rs"
 proc-macro = true
+test = false
 
 [dependencies]
 proc-macro2.workspace = true

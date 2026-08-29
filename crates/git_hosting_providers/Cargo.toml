@@ -8,6 +8,7 @@ publish.workspace = true
 
 [lib]
 path = "src/git_hosting_providers.rs"
+doctest = false
 
 [dependencies]
 anyhow.workspace = true

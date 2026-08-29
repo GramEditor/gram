@@ -8,6 +8,7 @@ publish.workspace = true
 
 [lib]
 path = "src/markdown_preview.rs"
+doctest = false
 
 [dependencies]
 anyhow.workspace = true

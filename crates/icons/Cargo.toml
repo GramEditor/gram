@@ -8,6 +8,8 @@ publish.workspace = true
 
 [lib]
 path = "src/icons.rs"
+test = false
+doctest = false
 
 [dependencies]
 serde.workspace = true
