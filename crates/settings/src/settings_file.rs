@@ -5,99 +5,7 @@ use futures::{StreamExt, channel::mpsc};
 use gpui::{App, BackgroundExecutor, ReadGlobal};
 use std::{path::PathBuf, sync::Arc, time::Duration};
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use fs::FakeFs;
-
-    use gpui::TestAppContext;
-    use serde_json::json;
-    use std::path::Path;
-
-    #[gpui::test]
-    async fn test_watch_config_dir_reloads_tracked_file_on_rescan(cx: &mut TestAppContext) {
-        let _guard = cx.executor().allow_parking();
-
-        let fs = FakeFs::new(cx.background_executor.clone());
-        let config_dir = PathBuf::from("/root/config");
-        let settings_path = PathBuf::from("/root/config/settings.json");
-
-        fs.insert_tree(
-            Path::new("/root"),
-            json!({
-                "config": {
-                    "settings.json": "A"
-                }
-            }),
-        )
-        .await;
-
-        let mut rx = watch_config_dir(
-            &cx.background_executor,
-            fs.clone(),
-            config_dir.clone(),
-            HashSet::from_iter([settings_path.clone()]),
-        );
-
-        assert_eq!(rx.next().await.as_deref(), Some("A"));
-        cx.run_until_parked();
-
-        fs.pause_events();
-        fs.insert_file(&settings_path, b"B".to_vec()).await;
-        fs.clear_buffered_events();
-
-        fs.emit_fs_event(&settings_path, Some(PathEventKind::Rescan));
-        fs.unpause_events_and_flush();
-        assert_eq!(rx.next().await.as_deref(), Some("B"));
-
-        fs.pause_events();
-        fs.insert_file(&settings_path, b"A".to_vec()).await;
-        fs.clear_buffered_events();
-
-        fs.emit_fs_event(&config_dir, Some(PathEventKind::Rescan));
-        fs.unpause_events_and_flush();
-        assert_eq!(rx.next().await.as_deref(), Some("A"));
-    }
-}
-
 pub const EMPTY_THEME_NAME: &str = "empty-theme";
-
-#[cfg(any(test, feature = "test-support"))]
-pub fn test_settings() -> String {
-    let mut value = crate::parse_json_with_comments::<serde_json::Value>(crate::default_settings().as_ref()).unwrap();
-    #[cfg(not(target_os = "windows"))]
-    util::merge_non_null_json_value_into(
-        serde_json::json!({
-            "ui_font_family": "Courier",
-            "ui_font_features": {},
-            "ui_font_size": 14,
-            "ui_font_fallback": [],
-            "buffer_font_family": "Courier",
-            "buffer_font_features": {},
-            "buffer_font_size": 14,
-            "buffer_font_fallbacks": [],
-            "theme": EMPTY_THEME_NAME,
-        }),
-        &mut value,
-    );
-    #[cfg(target_os = "windows")]
-    util::merge_non_null_json_value_into(
-        serde_json::json!({
-            "ui_font_family": "Courier New",
-            "ui_font_features": {},
-            "ui_font_size": 14,
-            "ui_font_fallback": [],
-            "buffer_font_family": "Courier New",
-            "buffer_font_features": {},
-            "buffer_font_size": 14,
-            "buffer_font_fallbacks": [],
-            "theme": EMPTY_THEME_NAME,
-        }),
-        &mut value,
-    );
-    value.as_object_mut().unwrap().remove("languages");
-    serde_json::to_string(&value).unwrap()
-}
 
 pub fn watch_config_file(
     executor: &BackgroundExecutor,
@@ -204,4 +112,96 @@ pub fn watch_config_dir(
 
 pub fn update_settings_file(fs: Arc<dyn Fs>, cx: &App, update: Box<dyn FnOnce(&mut SettingsContent, &App)>) {
     SettingsStore::global(cx).update_settings_file(fs, update);
+}
+
+#[cfg(any(test, feature = "test-support"))]
+pub fn test_settings() -> String {
+    let mut value = crate::parse_json_with_comments::<serde_json::Value>(crate::default_settings().as_ref()).unwrap();
+    #[cfg(not(target_os = "windows"))]
+    util::merge_non_null_json_value_into(
+        serde_json::json!({
+            "ui_font_family": "Courier",
+            "ui_font_features": {},
+            "ui_font_size": 14,
+            "ui_font_fallback": [],
+            "buffer_font_family": "Courier",
+            "buffer_font_features": {},
+            "buffer_font_size": 14,
+            "buffer_font_fallbacks": [],
+            "theme": EMPTY_THEME_NAME,
+        }),
+        &mut value,
+    );
+    #[cfg(target_os = "windows")]
+    util::merge_non_null_json_value_into(
+        serde_json::json!({
+            "ui_font_family": "Courier New",
+            "ui_font_features": {},
+            "ui_font_size": 14,
+            "ui_font_fallback": [],
+            "buffer_font_family": "Courier New",
+            "buffer_font_features": {},
+            "buffer_font_size": 14,
+            "buffer_font_fallbacks": [],
+            "theme": EMPTY_THEME_NAME,
+        }),
+        &mut value,
+    );
+    value.as_object_mut().unwrap().remove("languages");
+    serde_json::to_string(&value).unwrap()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use fs::FakeFs;
+
+    use gpui::TestAppContext;
+    use serde_json::json;
+    use std::path::Path;
+
+    #[gpui::test]
+    async fn test_watch_config_dir_reloads_tracked_file_on_rescan(cx: &mut TestAppContext) {
+        let _guard = cx.executor().allow_parking();
+
+        let fs = FakeFs::new(cx.background_executor.clone());
+        let config_dir = PathBuf::from("/root/config");
+        let settings_path = PathBuf::from("/root/config/settings.json");
+
+        fs.insert_tree(
+            Path::new("/root"),
+            json!({
+                "config": {
+                    "settings.json": "A"
+                }
+            }),
+        )
+        .await;
+
+        let mut rx = watch_config_dir(
+            &cx.background_executor,
+            fs.clone(),
+            config_dir.clone(),
+            HashSet::from_iter([settings_path.clone()]),
+        );
+
+        assert_eq!(rx.next().await.as_deref(), Some("A"));
+        cx.run_until_parked();
+
+        fs.pause_events();
+        fs.insert_file(&settings_path, b"B".to_vec()).await;
+        fs.clear_buffered_events();
+
+        fs.emit_fs_event(&settings_path, Some(PathEventKind::Rescan));
+        fs.unpause_events_and_flush();
+        assert_eq!(rx.next().await.as_deref(), Some("B"));
+
+        fs.pause_events();
+        fs.insert_file(&settings_path, b"A".to_vec()).await;
+        fs.clear_buffered_events();
+
+        fs.emit_fs_event(&config_dir, Some(PathEventKind::Rescan));
+        fs.unpause_events_and_flush();
+        assert_eq!(rx.next().await.as_deref(), Some("A"));
+    }
 }
