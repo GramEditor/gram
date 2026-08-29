@@ -20,6 +20,7 @@ askpass.workspace = true
 clap.workspace = true
 collections.workspace = true
 ipc-channel.workspace = true
+mimalloc.workspace = true
 parking_lot.workspace = true
 paths.workspace = true
 rayon.workspace = true
