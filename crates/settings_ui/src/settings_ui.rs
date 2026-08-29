@@ -3377,25 +3377,27 @@ fn render_dropdown<T>(
 where
     T: strum::VariantArray + strum::VariantNames + Copy + PartialEq + Send + Sync + 'static,
 {
-    let variants = || -> &'static [T] { <T as strum::VariantArray>::VARIANTS };
-    let labels = || -> &'static [&'static str] { <T as strum::VariantNames>::VARIANTS };
+    let variants = <T as strum::VariantArray>::VARIANTS;
+    let labels = <T as strum::VariantNames>::VARIANTS;
     let should_do_titlecase = metadata
         .and_then(|metadata| metadata.should_do_titlecase)
         .unwrap_or(true);
 
     let (_, current_value) = SettingsStore::global(cx).get_value(file.to_settings(), true, field.pick);
-    let current_value = current_value.copied().unwrap_or(variants()[0]);
+    let current = current_value
+        .and_then(|value| variants.iter().position(|variant| *variant == *value))
+        .unwrap_or(0);
 
-    EnumVariantDropdown::new("dropdown", current_value, variants(), labels(), {
-        move |value, cx| {
-            if value == current_value {
+    EnumVariantDropdown::new("dropdown", current, labels, {
+        move |index, cx| {
+            if index == current {
                 return;
             }
             update_settings_file(
                 file.clone(),
                 cx,
                 Box::new(move |settings, _cx| {
-                    (field.write)(settings, Some(value));
+                    (field.write)(settings, Some(variants[index]));
                 }),
             )
             .log_err(); // todo(settings_ui) don't log err

@@ -5,34 +5,25 @@ use heck::ToTitleCase as _;
 use ui::{ButtonSize, ContextMenu, DropdownMenu, DropdownStyle, FluentBuilder as _, IconPosition, px};
 
 #[derive(IntoElement)]
-pub struct EnumVariantDropdown<T>
-where
-    T: strum::VariantArray + strum::VariantNames + Copy + PartialEq + Send + Sync + 'static,
-{
+pub struct EnumVariantDropdown {
     id: ElementId,
-    current_value: T,
-    variants: &'static [T],
+    current: usize,
     labels: &'static [&'static str],
     should_do_title_case: bool,
     tab_index: Option<isize>,
-    on_change: Rc<dyn Fn(T, &mut App) + 'static>,
+    on_change: Rc<dyn Fn(usize, &mut App) + 'static>,
 }
 
-impl<T> EnumVariantDropdown<T>
-where
-    T: strum::VariantArray + strum::VariantNames + Copy + PartialEq + Send + Sync + 'static,
-{
+impl EnumVariantDropdown {
     pub fn new(
         id: impl Into<ElementId>,
-        current_value: T,
-        variants: &'static [T],
+        current: usize,
         labels: &'static [&'static str],
-        on_change: impl Fn(T, &mut App) + 'static,
+        on_change: impl Fn(usize, &mut App) + 'static,
     ) -> Self {
         Self {
             id: id.into(),
-            current_value,
-            variants,
+            current,
             labels,
             should_do_title_case: true,
             tab_index: None,
@@ -51,29 +42,26 @@ where
     }
 }
 
-impl<T> RenderOnce for EnumVariantDropdown<T>
-where
-    T: strum::VariantArray + strum::VariantNames + Copy + PartialEq + Send + Sync + 'static,
-{
+impl RenderOnce for EnumVariantDropdown {
     fn render(self, window: &mut ui::Window, cx: &mut ui::App) -> impl gpui::IntoElement {
-        let current_value_label = self.labels[self.variants.iter().position(|v| *v == self.current_value).unwrap()];
+        let current_value_label = self.labels[self.current];
 
         let context_menu = window.use_keyed_state(current_value_label, cx, |window, cx| {
             ContextMenu::new(window, cx, move |mut menu, _, _| {
-                for (&value, &label) in std::iter::zip(self.variants, self.labels) {
+                for (index, &label) in self.labels.iter().enumerate() {
                     let on_change = self.on_change.clone();
-                    let current_value = self.current_value;
+                    let current = self.current;
                     menu = menu.toggleable_entry(
                         if self.should_do_title_case {
                             label.to_title_case()
                         } else {
                             label.to_string()
                         },
-                        value == current_value,
+                        index == current,
                         IconPosition::End,
                         None,
                         move |_, cx| {
-                            on_change(value, cx);
+                            on_change(index, cx);
                         },
                     );
                 }
