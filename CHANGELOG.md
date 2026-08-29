@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Added
 
 - Add Repology notes in docs (#470) by @koru
+- Bundle OpenMoji as emoji fallback (#478)
 
 ## Removed
 
