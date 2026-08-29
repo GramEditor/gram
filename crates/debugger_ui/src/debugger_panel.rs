@@ -1230,9 +1230,13 @@ impl Panel for DebugPanel {
             });
         }
 
-        settings::update_settings_file(self.fs.clone(), cx, move |settings, _| {
-            settings.debugger.get_or_insert_default().dock = Some(position.into());
-        });
+        settings::update_settings_file(
+            self.fs.clone(),
+            cx,
+            Box::new(move |settings, _| {
+                settings.debugger.get_or_insert_default().dock = Some(position.into());
+            }),
+        );
     }
 
     fn size(&self, _window: &Window, _: &App) -> Pixels {

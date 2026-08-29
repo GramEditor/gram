@@ -1552,9 +1552,13 @@ impl Workspace {
 
     pub fn set_bottom_dock_layout(&mut self, layout: BottomDockLayout, window: &mut Window, cx: &mut Context<Self>) {
         let fs = self.project().read(cx).fs();
-        settings::update_settings_file(fs.clone(), cx, move |content, _cx| {
-            content.workspace.bottom_dock_layout = Some(layout);
-        });
+        settings::update_settings_file(
+            fs.clone(),
+            cx,
+            Box::new(move |content, _cx| {
+                content.workspace.bottom_dock_layout = Some(layout);
+            }),
+        );
 
         cx.notify();
         self.serialize_workspace(window, cx);

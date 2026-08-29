@@ -4158,7 +4158,7 @@ impl Project {
         worktree_id: WorktreeId,
         rel_path: Arc<RelPath>,
         cx: &mut App,
-        update: impl 'static + Send + FnOnce(&mut settings::SettingsContent, &App),
+        update: Box<dyn FnOnce(&mut settings::SettingsContent, &App)>,
     ) {
         let Some(worktree) = self.worktree_for_id(worktree_id, cx) else {
             // todo(settings_ui) error?

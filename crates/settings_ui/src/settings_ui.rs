@@ -3247,7 +3247,7 @@ fn update_settings_file(
 
                     project
                         .update(cx, |project, cx| {
-                            project.update_local_settings_file(worktree_id, rel_path, cx, update);
+                            project.update_local_settings_file(worktree_id, rel_path, cx, Box::new(update));
                         })
                         .ok();
                 })
@@ -3258,7 +3258,7 @@ fn update_settings_file(
         }
         SettingsUiFile::User => {
             // todo(settings_ui) error?
-            SettingsStore::global(cx).update_settings_file(<dyn fs::Fs>::global(cx), update);
+            SettingsStore::global(cx).update_settings_file(<dyn fs::Fs>::global(cx), Box::new(update));
             Ok(())
         }
         SettingsUiFile::Server(_) => unimplemented!(),

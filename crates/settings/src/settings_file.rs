@@ -202,10 +202,6 @@ pub fn watch_config_dir(
     rx
 }
 
-pub fn update_settings_file(
-    fs: Arc<dyn Fs>,
-    cx: &App,
-    update: impl 'static + Send + FnOnce(&mut SettingsContent, &App),
-) {
+pub fn update_settings_file(fs: Arc<dyn Fs>, cx: &App, update: Box<dyn FnOnce(&mut SettingsContent, &App)>) {
     SettingsStore::global(cx).update_settings_file(fs, update);
 }

@@ -159,9 +159,11 @@ impl PickerDelegate for BaseKeymapSelectorDelegate {
         if let Some(selection) = self.matches.get(self.selected_index) {
             let base_keymap = BaseKeymap::from_names(&selection.string);
 
-            update_settings_file(self.fs.clone(), cx, move |setting, _| {
-                setting.base_keymap = Some(base_keymap.into())
-            });
+            update_settings_file(
+                self.fs.clone(),
+                cx,
+                Box::new(move |setting, _| setting.base_keymap = Some(base_keymap.into())),
+            );
         }
 
         self.selector

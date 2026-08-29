@@ -172,10 +172,13 @@ impl LspConfigView {
         cx: &mut Context<Self>,
     ) {
         cx.update_global(|store: &mut SettingsStore, cx| {
-            store.update_settings_file(<dyn Fs>::global(cx), move |settings, _cx| {
-                let node = settings.node.get_or_insert_with(Default::default);
-                f(node);
-            });
+            store.update_settings_file(
+                <dyn Fs>::global(cx),
+                Box::new(move |settings, _cx| {
+                    let node = settings.node.get_or_insert_with(Default::default);
+                    f(node);
+                }),
+            );
         });
 
         window.refresh();
@@ -222,17 +225,20 @@ impl LspConfigView {
         F: FnOnce(&mut BinarySettings) -> () + std::marker::Send + 'static,
     {
         cx.update_global(|store: &mut SettingsStore, cx| {
-            store.update_settings_file(<dyn Fs>::global(cx), move |settings, _cx| {
-                let lsp_settings = settings
-                    .project
-                    .lsp
-                    .0
-                    .entry(Arc::from(server_name.0.as_ref()))
-                    .or_insert_with(Default::default);
+            store.update_settings_file(
+                <dyn Fs>::global(cx),
+                Box::new(move |settings, _cx| {
+                    let lsp_settings = settings
+                        .project
+                        .lsp
+                        .0
+                        .entry(Arc::from(server_name.0.as_ref()))
+                        .or_insert_with(Default::default);
 
-                let binary = lsp_settings.binary.get_or_insert_with(Default::default);
-                updater(binary);
-            });
+                    let binary = lsp_settings.binary.get_or_insert_with(Default::default);
+                    updater(binary);
+                }),
+            );
         });
 
         window.refresh();

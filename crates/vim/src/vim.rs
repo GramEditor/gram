@@ -280,23 +280,31 @@ pub fn init(cx: &mut App) {
         workspace.register_action(|workspace, _: &ToggleVimMode, _, cx| {
             let fs = workspace.app_state().fs.clone();
             let currently_enabled = VimModeSetting::get_global(cx).0;
-            update_settings_file(fs, cx, move |setting, _| {
-                setting.vim_mode = Some(!currently_enabled);
-                if let Some(helix_mode) = &mut setting.helix_mode {
-                    *helix_mode = false;
-                }
-            })
+            update_settings_file(
+                fs,
+                cx,
+                Box::new(move |setting, _| {
+                    setting.vim_mode = Some(!currently_enabled);
+                    if let Some(helix_mode) = &mut setting.helix_mode {
+                        *helix_mode = false;
+                    }
+                }),
+            )
         });
 
         workspace.register_action(|workspace, _: &ToggleHelixMode, _, cx| {
             let fs = workspace.app_state().fs.clone();
             let currently_enabled = HelixModeSetting::get_global(cx).0;
-            update_settings_file(fs, cx, move |setting, _| {
-                setting.helix_mode = Some(!currently_enabled);
-                if let Some(vim_mode) = &mut setting.vim_mode {
-                    *vim_mode = false;
-                }
-            })
+            update_settings_file(
+                fs,
+                cx,
+                Box::new(move |setting, _| {
+                    setting.helix_mode = Some(!currently_enabled);
+                    if let Some(vim_mode) = &mut setting.vim_mode {
+                        *vim_mode = false;
+                    }
+                }),
+            )
         });
 
         workspace.register_action(|_, _: &MenuSelectNext, window, cx| {

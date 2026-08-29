@@ -1092,15 +1092,19 @@ impl ExtensionsPage {
         if let Some(workspace) = self.workspace.upgrade() {
             let fs = workspace.read(cx).app_state().fs.clone();
             let selection = *selection;
-            settings::update_settings_file(fs, cx, move |settings, _| {
-                let value = match selection {
-                    ToggleState::Unselected => false,
-                    ToggleState::Selected => true,
-                    _ => return,
-                };
+            settings::update_settings_file(
+                fs,
+                cx,
+                Box::new(move |settings, _| {
+                    let value = match selection {
+                        ToggleState::Unselected => false,
+                        ToggleState::Selected => true,
+                        _ => return,
+                    };
 
-                callback(settings, value)
-            });
+                    callback(settings, value)
+                }),
+            );
         }
     }
 

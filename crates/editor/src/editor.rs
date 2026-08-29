@@ -16625,9 +16625,13 @@ impl Editor {
         };
         let fs = workspace.read(cx).app_state().fs.clone();
         let current_show = TabBarSettings::get_global(cx).show;
-        update_settings_file(fs, cx, move |setting, _| {
-            setting.tab_bar.get_or_insert_default().show = Some(!current_show);
-        });
+        update_settings_file(
+            fs,
+            cx,
+            Box::new(move |setting, _| {
+                setting.tab_bar.get_or_insert_default().show = Some(!current_show);
+            }),
+        );
     }
 
     pub fn toggle_indent_guides(&mut self, _: &ToggleIndentGuides, _: &mut Window, cx: &mut Context<Self>) {

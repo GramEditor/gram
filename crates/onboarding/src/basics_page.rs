@@ -172,32 +172,40 @@ fn render_theme_section(tab_index: &mut isize, cx: &mut App) -> impl IntoElement
 
     fn write_mode_change(mode: ThemeAppearanceMode, cx: &mut App) {
         let fs = <dyn Fs>::global(cx);
-        update_settings_file(fs, cx, move |settings, _cx| {
-            theme::set_mode(settings, mode);
-        });
+        update_settings_file(
+            fs,
+            cx,
+            Box::new(move |settings, _cx| {
+                theme::set_mode(settings, mode);
+            }),
+        );
     }
 
     fn write_theme_change(theme: impl Into<Arc<str>>, theme_mode: ThemeAppearanceMode, cx: &mut App) {
         let fs = <dyn Fs>::global(cx);
         let theme = theme.into();
-        update_settings_file(fs, cx, move |settings, cx| match theme_mode {
-            ThemeAppearanceMode::System => {
-                let (light_theme, dark_theme) =
-                    get_theme_family_themes(&theme).unwrap_or((theme.as_ref(), theme.as_ref()));
+        update_settings_file(
+            fs,
+            cx,
+            Box::new(move |settings, cx| match theme_mode {
+                ThemeAppearanceMode::System => {
+                    let (light_theme, dark_theme) =
+                        get_theme_family_themes(&theme).unwrap_or((theme.as_ref(), theme.as_ref()));
 
-                settings.theme.theme = Some(settings::ThemeSelection::Dynamic {
-                    mode: ThemeAppearanceMode::System,
-                    light: ThemeName(light_theme.into()),
-                    dark: ThemeName(dark_theme.into()),
-                });
-            }
-            ThemeAppearanceMode::Light => {
-                theme::set_theme(settings, theme, Appearance::Light, *SystemAppearance::global(cx))
-            }
-            ThemeAppearanceMode::Dark => {
-                theme::set_theme(settings, theme, Appearance::Dark, *SystemAppearance::global(cx))
-            }
-        });
+                    settings.theme.theme = Some(settings::ThemeSelection::Dynamic {
+                        mode: ThemeAppearanceMode::System,
+                        light: ThemeName(light_theme.into()),
+                        dark: ThemeName(dark_theme.into()),
+                    });
+                }
+                ThemeAppearanceMode::Light => {
+                    theme::set_theme(settings, theme, Appearance::Light, *SystemAppearance::global(cx))
+                }
+                ThemeAppearanceMode::Dark => {
+                    theme::set_theme(settings, theme, Appearance::Dark, *SystemAppearance::global(cx))
+                }
+            }),
+        );
     }
 }
 
@@ -256,9 +264,13 @@ fn render_base_keymap_section(tab_index: &mut isize, cx: &mut App) -> impl IntoE
     fn write_keymap_base(keymap_base: BaseKeymap, cx: &App) {
         let fs = <dyn Fs>::global(cx);
 
-        update_settings_file(fs, cx, move |setting, _| {
-            setting.base_keymap = Some(keymap_base.into());
-        });
+        update_settings_file(
+            fs,
+            cx,
+            Box::new(move |setting, _| {
+                setting.base_keymap = Some(keymap_base.into());
+            }),
+        );
     }
 }
 
@@ -283,12 +295,16 @@ fn render_vim_mode_switch(tab_index: &mut isize, cx: &mut App) -> impl IntoEleme
                         return;
                     }
                 };
-                update_settings_file(fs.clone(), cx, move |setting, _| {
-                    setting.vim_mode = Some(vim_mode);
-                    if vim_mode {
-                        setting.helix_mode = None;
-                    }
-                });
+                update_settings_file(
+                    fs.clone(),
+                    cx,
+                    Box::new(move |setting, _| {
+                        setting.vim_mode = Some(vim_mode);
+                        if vim_mode {
+                            setting.helix_mode = None;
+                        }
+                    }),
+                );
             }
         },
     )
@@ -319,12 +335,16 @@ fn render_helix_mode_switch(tab_index: &mut isize, cx: &mut App) -> impl IntoEle
                         return;
                     }
                 };
-                update_settings_file(fs.clone(), cx, move |setting, _| {
-                    setting.helix_mode = Some(helix_mode);
-                    if helix_mode {
-                        setting.vim_mode = None;
-                    }
-                });
+                update_settings_file(
+                    fs.clone(),
+                    cx,
+                    Box::new(move |setting, _| {
+                        setting.helix_mode = Some(helix_mode);
+                        if helix_mode {
+                            setting.vim_mode = None;
+                        }
+                    }),
+                );
             }
         },
     )

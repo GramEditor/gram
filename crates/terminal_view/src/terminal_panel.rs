@@ -1383,14 +1383,18 @@ impl Panel for TerminalPanel {
     }
 
     fn set_position(&mut self, position: DockPosition, _window: &mut Window, cx: &mut Context<Self>) {
-        settings::update_settings_file(self.fs.clone(), cx, move |settings, _| {
-            let dock = match position {
-                DockPosition::Left => TerminalDockPosition::Left,
-                DockPosition::Bottom => TerminalDockPosition::Bottom,
-                DockPosition::Right => TerminalDockPosition::Right,
-            };
-            settings.terminal.get_or_insert_default().dock = Some(dock);
-        });
+        settings::update_settings_file(
+            self.fs.clone(),
+            cx,
+            Box::new(move |settings, _| {
+                let dock = match position {
+                    DockPosition::Left => TerminalDockPosition::Left,
+                    DockPosition::Bottom => TerminalDockPosition::Bottom,
+                    DockPosition::Right => TerminalDockPosition::Right,
+                };
+                settings.terminal.get_or_insert_default().dock = Some(dock);
+            }),
+        );
     }
 
     fn size(&self, window: &Window, cx: &App) -> Pixels {

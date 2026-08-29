@@ -327,15 +327,19 @@ impl LspAdapter for VtslsLspAdapter {
             });
 
             let _ = cx.update(|cx| {
-                update_settings_file(self.fs.clone(), cx, move |content, _| {
-                    let lsp_settings = content.project.lsp.0.entry(VTSLS_SERVER_NAME.into()).or_default();
+                update_settings_file(
+                    self.fs.clone(),
+                    cx,
+                    Box::new(move |content, _| {
+                        let lsp_settings = content.project.lsp.0.entry(VTSLS_SERVER_NAME.into()).or_default();
 
-                    if let Some(existing) = &mut lsp_settings.settings {
-                        merge_json_value_into(settings, existing);
-                    } else {
-                        lsp_settings.settings = Some(settings);
-                    }
-                });
+                        if let Some(existing) = &mut lsp_settings.settings {
+                            merge_json_value_into(settings, existing);
+                        } else {
+                            lsp_settings.settings = Some(settings);
+                        }
+                    }),
+                );
             });
         }
     }

@@ -147,15 +147,19 @@ impl PickerDelegate for IconThemeSelectorDelegate {
 
         let appearance = Appearance::from(window.appearance());
 
-        update_settings_file(self.fs.clone(), cx, move |settings, _| {
-            // if the setting for panel icons is disabled
-            // by default, enable now
-            let project_panel = settings.project_panel.get_or_insert_with(Default::default);
-            project_panel.file_icons = Some(project_panel.file_icons.unwrap_or(true));
-            project_panel.folder_icons = Some(project_panel.folder_icons.unwrap_or(true));
+        update_settings_file(
+            self.fs.clone(),
+            cx,
+            Box::new(move |settings, _| {
+                // if the setting for panel icons is disabled
+                // by default, enable now
+                let project_panel = settings.project_panel.get_or_insert_with(Default::default);
+                project_panel.file_icons = Some(project_panel.file_icons.unwrap_or(true));
+                project_panel.folder_icons = Some(project_panel.folder_icons.unwrap_or(true));
 
-            theme::set_icon_theme(settings, theme_name, appearance);
-        });
+                theme::set_icon_theme(settings, theme_name, appearance);
+            }),
+        );
 
         self.selector
             .update(cx, |_, cx| {

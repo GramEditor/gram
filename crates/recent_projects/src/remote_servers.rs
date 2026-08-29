@@ -225,7 +225,7 @@ impl ProjectPicker {
                         let fs = app_state.fs.clone();
                         update_settings_file(fs, cx, {
                             let paths = paths.iter().map(|path| path.to_string_lossy().into_owned()).collect();
-                            move |settings, _| match index {
+                            Box::new(move |settings, _| match index {
                                 ServerIndex::Ssh(index) => {
                                     if let Some(server) = settings
                                         .remote
@@ -246,7 +246,7 @@ impl ProjectPicker {
                                         server.projects.insert(SshProject { paths });
                                     };
                                 }
-                            }
+                            })
                         });
                     })
                     .log_err();
@@ -1255,7 +1255,7 @@ impl RemoteServerProjects {
         else {
             return;
         };
-        update_settings_file(fs, cx, move |setting, cx| f(&mut setting.remote, cx));
+        update_settings_file(fs, cx, Box::new(move |setting, cx| f(&mut setting.remote, cx)));
     }
 
     fn delete_ssh_server(&mut self, server: SshServerIndex, cx: &mut Context<Self>) {

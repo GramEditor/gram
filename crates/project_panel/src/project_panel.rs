@@ -402,28 +402,36 @@ pub fn init(cx: &mut App) {
 
         workspace.register_action(|workspace, _: &ToggleHideGitIgnore, _, cx| {
             let fs = workspace.app_state().fs.clone();
-            update_settings_file(fs, cx, move |setting, _| {
-                setting.project_panel.get_or_insert_default().hide_gitignore = Some(
-                    !setting
-                        .project_panel
-                        .get_or_insert_default()
-                        .hide_gitignore
-                        .unwrap_or(false),
-                );
-            })
+            update_settings_file(
+                fs,
+                cx,
+                Box::new(move |setting, _| {
+                    setting.project_panel.get_or_insert_default().hide_gitignore = Some(
+                        !setting
+                            .project_panel
+                            .get_or_insert_default()
+                            .hide_gitignore
+                            .unwrap_or(false),
+                    );
+                }),
+            )
         });
 
         workspace.register_action(|workspace, _: &ToggleHideHidden, _, cx| {
             let fs = workspace.app_state().fs.clone();
-            update_settings_file(fs, cx, move |setting, _| {
-                setting.project_panel.get_or_insert_default().hide_hidden = Some(
-                    !setting
-                        .project_panel
-                        .get_or_insert_default()
-                        .hide_hidden
-                        .unwrap_or(false),
-                );
-            })
+            update_settings_file(
+                fs,
+                cx,
+                Box::new(move |setting, _| {
+                    setting.project_panel.get_or_insert_default().hide_hidden = Some(
+                        !setting
+                            .project_panel
+                            .get_or_insert_default()
+                            .hide_hidden
+                            .unwrap_or(false),
+                    );
+                }),
+            )
         });
 
         workspace.register_action(|workspace, action: &CollapseAllEntries, window, cx| {
@@ -5740,13 +5748,17 @@ impl Panel for ProjectPanel {
     }
 
     fn set_position(&mut self, position: DockPosition, _: &mut Window, cx: &mut Context<Self>) {
-        settings::update_settings_file(self.fs.clone(), cx, move |settings, _| {
-            let dock = match position {
-                DockPosition::Left | DockPosition::Bottom => DockSide::Left,
-                DockPosition::Right => DockSide::Right,
-            };
-            settings.project_panel.get_or_insert_default().dock = Some(dock);
-        });
+        settings::update_settings_file(
+            self.fs.clone(),
+            cx,
+            Box::new(move |settings, _| {
+                let dock = match position {
+                    DockPosition::Left | DockPosition::Bottom => DockSide::Left,
+                    DockPosition::Right => DockSide::Right,
+                };
+                settings.project_panel.get_or_insert_default().dock = Some(dock);
+            }),
+        );
     }
 
     fn size(&self, _: &Window, cx: &App) -> Pixels {

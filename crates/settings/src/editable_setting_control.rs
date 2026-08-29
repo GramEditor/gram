@@ -23,8 +23,12 @@ pub trait EditableSettingControl: RenderOnce {
     fn write(value: Self::Value, cx: &App) {
         let fs = <dyn Fs>::global(cx);
 
-        update_settings_file(fs, cx, move |settings, cx| {
-            Self::apply(settings, value, cx);
-        });
+        update_settings_file(
+            fs,
+            cx,
+            Box::new(move |settings, cx| {
+                Self::apply(settings, value, cx);
+            }),
+        );
     }
 }

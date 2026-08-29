@@ -324,9 +324,13 @@ impl PickerDelegate for ThemeSelectorDelegate {
         let theme_appearance = self.new_theme.appearance;
         let system_appearance = SystemAppearance::global(cx).0;
 
-        update_settings_file(self.fs.clone(), cx, move |settings, _| {
-            theme::set_theme(settings, theme_name, theme_appearance, system_appearance);
-        });
+        update_settings_file(
+            self.fs.clone(),
+            cx,
+            Box::new(move |settings, _| {
+                theme::set_theme(settings, theme_name, theme_appearance, system_appearance);
+            }),
+        );
 
         self.selector
             .update(cx, |_, cx| {
