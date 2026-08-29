@@ -170,22 +170,25 @@ pub fn add_wsl_distro(fs: Arc<dyn project::Fs>, connection_options: &remote::Wsl
 
     let distro_name = SharedString::from(&connection_options.distro_name);
     let user = connection_options.user.clone();
-    SettingsStore::global(cx).update_settings_file(fs, move |setting, _| {
-        let connections = setting.remote.wsl_connections.get_or_insert(Default::default());
+    SettingsStore::global(cx).update_settings_file(
+        fs,
+        Box::new(move |setting, _| {
+            let connections = setting.remote.wsl_connections.get_or_insert(Default::default());
 
-        if !connections
-            .iter()
-            .any(|conn| conn.distro_name == distro_name && conn.user == user)
-        {
-            use std::collections::BTreeSet;
+            if !connections
+                .iter()
+                .any(|conn| conn.distro_name == distro_name && conn.user == user)
+            {
+                use std::collections::BTreeSet;
 
-            connections.push(settings::WslConnection {
-                distro_name,
-                user,
-                projects: BTreeSet::new(),
-            })
-        }
-    });
+                connections.push(settings::WslConnection {
+                    distro_name,
+                    user,
+                    projects: BTreeSet::new(),
+                })
+            }
+        }),
+    );
 }
 
 pub struct RecentProjects {
