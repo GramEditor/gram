@@ -63,6 +63,8 @@ background and motivation behind this fork, read the
   - [Using Debuggers](./development/debuggers.md)
   - [Glossary](./development/glossary.md)
 - [Debugging Crashes](./development/debugging-crashes.md)
+- [Chasing Bloat](./development/bloat.md)
+- [Ownership and Data flow](./development/ownership-and-data-flow.md)
 
 ## Configuration
 
