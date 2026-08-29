@@ -673,8 +673,7 @@ pub fn to_pretty_json(value: &impl Serialize, indent_size: usize, indent_prefix_
 }
 
 pub fn parse_json_with_comments<T: DeserializeOwned>(content: &str) -> Result<T> {
-    let mut deserializer = serde_json_lenient::Deserializer::from_str(content);
-    Ok(serde_path_to_error::deserialize(&mut deserializer)?)
+    Ok(serde_json_lenient::from_str(content)?)
 }
 
 #[cfg(test)]
