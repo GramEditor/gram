@@ -605,6 +605,47 @@ impl SshRemoteConnection {
             return Ok(dst_path);
         }
 
+        let has_pre_built_binary = release_channel == ReleaseChannel::Stable
+            && matches!(self.ssh_platform.os, "linux" | "macos")
+            && matches!(self.ssh_platform.arch, "aarch64" | "x86_64");
+        if has_pre_built_binary {
+            let quote = |v| self.ssh_shell_kind.try_quote(v).context("shell quoting");
+
+            let download_url = format!(
+                "\
+                https://codeberg.org/GramEditor/gram/releases/download/{version}/\
+                gram-remote-server-{}-{}-{version}.gz",
+                self.ssh_platform.os, self.ssh_platform.arch,
+            );
+
+            let quoted_dir = quote(paths::remote_server_dir_relative().as_unix_str())?;
+            let quoted_path = quote(dst_path.as_unix_str())?;
+            let quoted_download_url = quote(&download_url)?;
+            let command = format!(
+                "\
+                mkdir -p {quoted_dir} && \
+                wget -O- {quoted_download_url} | gunzip >{quoted_path} && \
+                chmod +x {quoted_path} && \
+                echo Done.\
+            "
+            );
+            let quoted_command = quote(&command)?;
+
+            let host = self.socket.connection_options.host.to_string();
+            let quoted_host = quote(&host)?;
+            // The space between the colon and the newline in 'the following command: \n\n'
+            // exists in order to work around a bug in Gram's Markdown renderer's selection logic.
+            // Without that space, double-clicking the word 'ssh' selects the phrase
+            // 'command:ssh' even though they're in different Markdown paragraphs.
+            anyhow::bail!(
+                "\
+                Could not find remote server at {0:?}. \
+                You can install the server using the following command:\n\n\
+                ssh {quoted_host} {quoted_command}\n",
+                dst_path.display(self.path_style())
+            );
+        }
+
         anyhow::bail!(
             "Could not find remote server at {:?}",
             dst_path.display(self.path_style())
