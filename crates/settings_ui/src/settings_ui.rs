@@ -209,9 +209,13 @@ impl<T: PartialEq + Clone + Send + Sync + 'static> AnySettingField for SettingFi
             } else {
                 None
             };
-            update_settings_file(current_file.clone(), None, cx, move |settings, _| {
-                (this.write)(settings, value_to_set);
-            })
+            update_settings_file(
+                current_file.clone(),
+                cx,
+                Box::new(move |settings, _| {
+                    (this.write)(settings, value_to_set);
+                }),
+            )
             // todo(settings_ui): Don't log err
             .log_err();
         }));
@@ -3216,9 +3220,8 @@ fn all_projects(cx: &App) -> impl Iterator<Item = Entity<project::Project>> {
 
 fn update_settings_file(
     file: SettingsUiFile,
-    _file_name: Option<&'static str>,
     cx: &mut App,
-    update: impl 'static + Send + FnOnce(&mut SettingsContent, &App),
+    update: Box<dyn FnOnce(&mut SettingsContent, &App)>,
 ) -> Result<()> {
     match file {
         SettingsUiFile::Project((worktree_id, rel_path)) => {
@@ -3247,7 +3250,7 @@ fn update_settings_file(
 
                     project
                         .update(cx, |project, cx| {
-                            project.update_local_settings_file(worktree_id, rel_path, cx, Box::new(update));
+                            project.update_local_settings_file(worktree_id, rel_path, cx, update);
                         })
                         .ok();
                 })
@@ -3258,7 +3261,7 @@ fn update_settings_file(
         }
         SettingsUiFile::User => {
             // todo(settings_ui) error?
-            SettingsStore::global(cx).update_settings_file(<dyn fs::Fs>::global(cx), Box::new(update));
+            SettingsStore::global(cx).update_settings_file(<dyn fs::Fs>::global(cx), update);
             Ok(())
         }
         SettingsUiFile::Server(_) => unimplemented!(),
@@ -3286,9 +3289,13 @@ fn render_text_field<T: From<String> + Into<String> + AsRef<str> + Clone>(
         )
         .on_confirm({
             move |new_text, cx| {
-                update_settings_file(file.clone(), field.json_path, cx, move |settings, _cx| {
-                    (field.write)(settings, new_text.map(Into::into));
-                })
+                update_settings_file(
+                    file.clone(),
+                    cx,
+                    Box::new(move |settings, _cx| {
+                        (field.write)(settings, new_text.map(Into::into));
+                    }),
+                )
                 .log_err(); // todo(settings_ui) don't log err
             }
         })
@@ -3315,9 +3322,13 @@ fn render_toggle_button<B: Into<bool> + From<bool> + Copy>(
         .on_click({
             move |state, _window, cx| {
                 let state = *state == ui::ToggleState::Selected;
-                update_settings_file(file.clone(), field.json_path, cx, move |settings, _cx| {
-                    (field.write)(settings, Some(state.into()));
-                })
+                update_settings_file(
+                    file.clone(),
+                    cx,
+                    Box::new(move |settings, _cx| {
+                        (field.write)(settings, Some(state.into()));
+                    }),
+                )
                 .log_err(); // todo(settings_ui) don't log err
             }
         })
@@ -3345,9 +3356,13 @@ fn render_editable_number_field<T: NumberFieldType + Send + Sync>(
         .on_change({
             move |value, _window, cx| {
                 let value = *value;
-                update_settings_file(file.clone(), field.json_path, cx, move |settings, _cx| {
-                    (field.write)(settings, Some(value));
-                })
+                update_settings_file(
+                    file.clone(),
+                    cx,
+                    Box::new(move |settings, _cx| {
+                        (field.write)(settings, Some(value));
+                    }),
+                )
                 .log_err(); // todo(settings_ui) don't log err
             }
         })
@@ -3378,9 +3393,13 @@ where
             if value == current_value {
                 return;
             }
-            update_settings_file(file.clone(), field.json_path, cx, move |settings, _cx| {
-                (field.write)(settings, Some(value));
-            })
+            update_settings_file(
+                file.clone(),
+                cx,
+                Box::new(move |settings, _cx| {
+                    (field.write)(settings, Some(value));
+                }),
+            )
             .log_err(); // todo(settings_ui) don't log err
         }
     })
@@ -3426,9 +3445,13 @@ fn render_font_picker(
                 font_picker(
                     current_value.clone().into(),
                     move |font_name, cx| {
-                        update_settings_file(file.clone(), field.json_path, cx, move |settings, _cx| {
-                            (field.write)(settings, Some(font_name.into()));
-                        })
+                        update_settings_file(
+                            file.clone(),
+                            cx,
+                            Box::new(move |settings, _cx| {
+                                (field.write)(settings, Some(font_name.into()));
+                            }),
+                        )
                         .log_err(); // todo(settings_ui) don't log err
                     },
                     window,
@@ -3467,9 +3490,13 @@ fn render_theme_picker(
                 theme_picker(
                     current_value,
                     move |theme_name, cx| {
-                        update_settings_file(file.clone(), field.json_path, cx, move |settings, _cx| {
-                            (field.write)(settings, Some(settings::ThemeName(theme_name.into())));
-                        })
+                        update_settings_file(
+                            file.clone(),
+                            cx,
+                            Box::new(move |settings, _cx| {
+                                (field.write)(settings, Some(settings::ThemeName(theme_name.into())));
+                            }),
+                        )
                         .log_err(); // todo(settings_ui) don't log err
                     },
                     window,
@@ -3508,14 +3535,18 @@ fn render_icon_theme_picker(
                 icon_theme_picker(
                     current_value,
                     move |theme_name, cx| {
-                        update_settings_file(file.clone(), field.json_path, cx, move |settings, _cx| {
-                            // if the setting for panel icons is disabled
-                            // by default, enable now
-                            let project_panel = settings.project_panel.get_or_insert_with(Default::default);
-                            project_panel.file_icons = Some(project_panel.file_icons.unwrap_or(true));
-                            project_panel.folder_icons = Some(project_panel.folder_icons.unwrap_or(true));
-                            (field.write)(settings, Some(settings::IconThemeName(theme_name.into())));
-                        })
+                        update_settings_file(
+                            file.clone(),
+                            cx,
+                            Box::new(move |settings, _cx| {
+                                // if the setting for panel icons is disabled
+                                // by default, enable now
+                                let project_panel = settings.project_panel.get_or_insert_with(Default::default);
+                                project_panel.file_icons = Some(project_panel.file_icons.unwrap_or(true));
+                                project_panel.folder_icons = Some(project_panel.folder_icons.unwrap_or(true));
+                                (field.write)(settings, Some(settings::IconThemeName(theme_name.into())));
+                            }),
+                        )
                         .log_err(); // todo(settings_ui) don't log err
                     },
                     window,
