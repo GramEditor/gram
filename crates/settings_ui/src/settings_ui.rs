@@ -174,7 +174,7 @@ impl<T: PartialEq + Clone + Send + Sync + 'static> AnySettingField for SettingFi
     fn file_set_in(&self, file: SettingsUiFile, cx: &App) -> (settings::SettingsFile, bool) {
         let (file, value) = cx
             .global::<SettingsStore>()
-            .get_value_from_file(file.to_settings(), self.pick);
+            .get_value(file.to_settings(), true, self.pick);
         return (file, value.is_some());
     }
 
@@ -203,7 +203,7 @@ impl<T: PartialEq + Clone + Send + Sync + 'static> AnySettingField for SettingFi
             let store = SettingsStore::global(cx);
             let default_value = (this.pick)(store.raw_default_settings());
             let is_set_somewhere_other_than_default =
-                store.get_value_up_to_file(current_file.to_settings(), this.pick).0 != settings::SettingsFile::Default;
+                store.get_value(current_file.to_settings(), false, this.pick).0 != settings::SettingsFile::Default;
             let value_to_set = if is_set_somewhere_other_than_default {
                 default_value.cloned()
             } else {
@@ -896,9 +896,7 @@ impl SettingsPageItem {
                 fields,
             }) => {
                 let file = file.to_settings();
-                let discriminant = SettingsStore::global(cx)
-                    .get_value_from_file(file, *pick_discriminant)
-                    .1;
+                let discriminant = SettingsStore::global(cx).get_value(file, true, *pick_discriminant).1;
 
                 let (discriminant_element, rendered_ok) =
                     render_setting_item_inner(discriminant_setting_item, true, false, cx);
@@ -3275,7 +3273,7 @@ fn render_text_field<T: From<String> + Into<String> + AsRef<str> + Clone>(
     _window: &mut Window,
     cx: &mut App,
 ) -> AnyElement {
-    let (_, initial_text) = SettingsStore::global(cx).get_value_from_file(file.to_settings(), field.pick);
+    let (_, initial_text) = SettingsStore::global(cx).get_value(file.to_settings(), true, field.pick);
     let initial_text = initial_text.filter(|s| !s.as_ref().is_empty());
 
     SettingsInputField::new()
@@ -3309,7 +3307,7 @@ fn render_toggle_button<B: Into<bool> + From<bool> + Copy>(
     _window: &mut Window,
     cx: &mut App,
 ) -> AnyElement {
-    let (_, value) = SettingsStore::global(cx).get_value_from_file(file.to_settings(), field.pick);
+    let (_, value) = SettingsStore::global(cx).get_value(file.to_settings(), true, field.pick);
 
     let toggle_state = if value.copied().map_or(false, Into::into) {
         ToggleState::Selected
@@ -3342,7 +3340,7 @@ fn render_editable_number_field<T: NumberFieldType + Send + Sync>(
     window: &mut Window,
     cx: &mut App,
 ) -> AnyElement {
-    let (_, value) = SettingsStore::global(cx).get_value_from_file(file.to_settings(), field.pick);
+    let (_, value) = SettingsStore::global(cx).get_value(file.to_settings(), true, field.pick);
     let value = value.copied().unwrap_or_else(T::min_value);
 
     let id = field
@@ -3385,7 +3383,7 @@ where
         .and_then(|metadata| metadata.should_do_titlecase)
         .unwrap_or(true);
 
-    let (_, current_value) = SettingsStore::global(cx).get_value_from_file(file.to_settings(), field.pick);
+    let (_, current_value) = SettingsStore::global(cx).get_value(file.to_settings(), true, field.pick);
     let current_value = current_value.copied().unwrap_or(variants()[0]);
 
     EnumVariantDropdown::new("dropdown", current_value, variants(), labels(), {
@@ -3427,7 +3425,7 @@ fn render_font_picker(
     cx: &mut App,
 ) -> AnyElement {
     let current_value = SettingsStore::global(cx)
-        .get_value_from_file(file.to_settings(), field.pick)
+        .get_value(file.to_settings(), true, field.pick)
         .1
         .cloned()
         .unwrap_or_else(|| SharedString::default().into());
@@ -3472,7 +3470,7 @@ fn render_theme_picker(
     _window: &mut Window,
     cx: &mut App,
 ) -> AnyElement {
-    let (_, value) = SettingsStore::global(cx).get_value_from_file(file.to_settings(), field.pick);
+    let (_, value) = SettingsStore::global(cx).get_value(file.to_settings(), true, field.pick);
     let current_value = value
         .cloned()
         .map(|theme_name| theme_name.0.into())
@@ -3517,7 +3515,7 @@ fn render_icon_theme_picker(
     _window: &mut Window,
     cx: &mut App,
 ) -> AnyElement {
-    let (_, value) = SettingsStore::global(cx).get_value_from_file(file.to_settings(), field.pick);
+    let (_, value) = SettingsStore::global(cx).get_value(file.to_settings(), true, field.pick);
     let current_value = value
         .cloned()
         .map(|theme_name| theme_name.0.into())

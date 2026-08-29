@@ -575,40 +575,34 @@ impl SettingsStore {
         overrides
     }
 
-    /// Checks the given file, and files that the passed file overrides for the given field.
-    /// Returns the first file found that contains the value.
-    /// The value will only be None if no file contains the value.
-    /// I.e. if no file contains the value, returns `(File::Default, None)`
-    pub fn get_value_from_file<'a, T: 'a>(
+    /// Look for value in the settings.
+    /// Returns (file, value).
+    /// If `include_target_file` is true
+    /// it returns the value from the passed file,
+    /// if false it returns the overridden value.
+    /// Returns None if the value is not set anywhere.
+    pub fn get_value<'a, T: 'a>(
         &'a self,
         target_file: SettingsFile,
-        pick: fn(&'a SettingsContent) -> Option<T>,
-    ) -> (SettingsFile, Option<T>) {
-        self.get_value_from_file_inner(target_file, pick, true)
-    }
-
-    /// Same as `Self::get_value_from_file` except that it does not include the current file.
-    /// Therefore it returns the value that was potentially overloaded by the target file.
-    pub fn get_value_up_to_file<'a, T: 'a>(
-        &'a self,
-        target_file: SettingsFile,
-        pick: fn(&'a SettingsContent) -> Option<T>,
-    ) -> (SettingsFile, Option<T>) {
-        self.get_value_from_file_inner(target_file, pick, false)
-    }
-
-    fn get_value_from_file_inner<'a, T: 'a>(
-        &'a self,
-        target_file: SettingsFile,
-        pick: fn(&'a SettingsContent) -> Option<T>,
         include_target_file: bool,
+        pick: fn(&'a SettingsContent) -> Option<T>,
     ) -> (SettingsFile, Option<T>) {
-        // todo(settings_ui): Add a metadata field for overriding the "overrides" tag, for contextually different settings
-        //  e.g. disable AI isn't overridden, or a vec that gets extended instead or some such
+        for (settings_file, content) in self.get_values_from_file(target_file, include_target_file) {
+            if let Some(picked) = pick(content) {
+                return (settings_file, Some(picked));
+            }
+        }
+        (SettingsFile::Default, None)
+    }
 
-        // todo(settings_ui) cache all files
+    fn get_values_from_file(
+        &self,
+        target_file: SettingsFile,
+        include_target_file: bool,
+    ) -> SmallVec<[(SettingsFile, &SettingsContent); 3]> {
         let all_files = self.get_all_files();
         let mut found_file = false;
+        let mut matches = SmallVec::new();
 
         for file in all_files.into_iter() {
             if !found_file && file != SettingsFile::Default {
@@ -621,23 +615,21 @@ impl SettingsStore {
                 }
             }
 
+            // Don't return values from local files in different worktrees
             if let SettingsFile::Project((worktree_id, ref path)) = file
                 && let SettingsFile::Project((target_worktree_id, ref target_path)) = target_file
                 && (worktree_id != target_worktree_id || !target_path.starts_with(&path))
             {
-                // if requesting value from a local file, don't return values from local files in different worktrees
                 continue;
             }
 
             let Some(content) = self.get_content_for_file(file.clone()) else {
                 continue;
             };
-            if let Some(value) = pick(content) {
-                return (file, Some(value));
-            }
+            matches.push((file, content));
         }
 
-        (SettingsFile::Default, None)
+        matches
     }
 
     #[inline(always)]
@@ -1830,16 +1822,16 @@ mod tests {
         let default_value = *get(&store.default_settings).unwrap();
 
         assert_eq!(
-            store.get_value_from_file(SettingsFile::Project(local.clone()), get),
+            store.get_value(SettingsFile::Project(local.clone()), true, get),
             (SettingsFile::User, Some(&0))
         );
         assert_eq!(
-            store.get_value_from_file(SettingsFile::User, get),
+            store.get_value(SettingsFile::User, true, get),
             (SettingsFile::User, Some(&0))
         );
         store.set_user_settings(r#"{}"#, cx).unwrap();
         assert_eq!(
-            store.get_value_from_file(SettingsFile::Project(local.clone()), get),
+            store.get_value(SettingsFile::Project(local.clone()), true, get),
             (SettingsFile::Default, Some(&default_value))
         );
         store
@@ -1852,11 +1844,11 @@ mod tests {
             )
             .unwrap();
         assert_eq!(
-            store.get_value_from_file(SettingsFile::Project(local.clone()), get),
+            store.get_value(SettingsFile::Project(local.clone()), true, get),
             (SettingsFile::Project(local), Some(&80))
         );
         assert_eq!(
-            store.get_value_from_file(SettingsFile::User, get),
+            store.get_value(SettingsFile::User, true, get),
             (SettingsFile::Default, Some(&default_value))
         );
     }
@@ -1926,11 +1918,11 @@ mod tests {
 
         // each local child should only inherit from it's parent
         assert_eq!(
-            store.get_value_from_file(SettingsFile::Project(local_2_child), get),
+            store.get_value(SettingsFile::Project(local_2_child), true, get),
             (SettingsFile::Project(local_2), Some(&2))
         );
         assert_eq!(
-            store.get_value_from_file(SettingsFile::Project(local_1_child.clone()), get),
+            store.get_value(SettingsFile::Project(local_1_child.clone()), true, get),
             (SettingsFile::Project(local_1.clone()), Some(&1))
         );
 
@@ -1956,7 +1948,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(
-            store.get_value_from_file(SettingsFile::Project(local_1_adjacent_child.clone()), get),
+            store.get_value(SettingsFile::Project(local_1_adjacent_child.clone()), true, get),
             (SettingsFile::Project(local_1.clone()), Some(&1))
         );
         store
@@ -1978,7 +1970,7 @@ mod tests {
             )
             .unwrap();
         assert_eq!(
-            store.get_value_from_file(SettingsFile::Project(local_1_child), get),
+            store.get_value(SettingsFile::Project(local_1_child), true, get),
             (SettingsFile::Project(local_1), Some(&1))
         );
     }
