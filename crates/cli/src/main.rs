@@ -26,9 +26,6 @@ use util::paths::PathWithPosition;
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
 use std::io::IsTerminal;
 
-#[cfg(any(target_os = "linux", target_os = "freebsd"))]
-use std::os::unix::process::CommandExt;
-
 const URL_PREFIX: [&'static str; 5] = ["gram://", "http://", "https://", "file://", "ssh://"];
 
 struct Detect;
@@ -620,6 +617,7 @@ fn anonymous_fd(path: &str) -> Option<fs::File> {
 
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
 mod linux {
+    use std::os::unix::process::CommandExt as _;
     use std::{
         env,
         ffi::OsString,
@@ -757,6 +755,7 @@ mod linux {
 #[cfg(target_os = "linux")]
 mod flatpak {
     use std::ffi::OsString;
+    use std::os::unix::process::CommandExt as _;
     use std::path::PathBuf;
     use std::process::Command;
     use std::{env, process};
