@@ -26,6 +26,9 @@ use util::paths::PathWithPosition;
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
 use std::io::IsTerminal;
 
+#[cfg(any(target_os = "linux", target_os = "freebsd"))]
+use std::os::unix::process::CommandExt;
+
 const URL_PREFIX: [&'static str; 5] = ["gram://", "http://", "https://", "file://", "ssh://"];
 
 struct Detect;

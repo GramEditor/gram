@@ -1486,13 +1486,10 @@ async fn copy_dir(from: &Path, to: &Path) -> Result<()> {
             continue;
         }
         if filetype.is_symlink() {
-            if !cfg!(windows) {
-                let link_target = read_link(entry.path())?;
-                let target = to.join(entry.file_name());
-                std::os::unix::fs::symlink(link_target, target)?;
-            } else {
-                log::error!("Skipping symlink {:?}", entry.path());
-            }
+            #[cfg(not(target_os = "windows"))]
+            std::os::unix::fs::symlink(read_link(entry.path())?, to.join(entry.file_name()))?;
+            #[cfg(target_os = "windows")]
+            log::error!("Skipping symlink {:?}", entry.path());
         } else if filetype.is_dir() {
             Box::pin(copy_dir(entry.path().as_path(), &to.join(entry.file_name()))).await?;
         } else if filetype.is_file() {
