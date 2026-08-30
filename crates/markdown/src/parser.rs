@@ -335,11 +335,7 @@ pub fn parse_links_only(text: &str) -> Vec<(Range<usize>, MarkdownEvent)> {
         let mut text_start = paragraph_range.start;
         let mut link_end = paragraph_range.start;
 
-        loop {
-            let Some(link) = links.peek() else {
-                break;
-            };
-
+        while let Some(link) = links.peek() {
             if link.start() > paragraph_range.end {
                 break;
             }
