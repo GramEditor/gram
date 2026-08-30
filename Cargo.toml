@@ -699,9 +699,9 @@ codegen-units = 8
 [profile.release]
 opt-level = 3
 split-debuginfo = "packed"
-lto = "fat"
+lto = "thin"
 panic = "abort"
-codegen-units = 1
+codegen-units = 4
 
 [profile.release-fast]
 inherits = "release"
