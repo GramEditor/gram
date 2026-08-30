@@ -306,37 +306,74 @@ pub fn parse_markdown(
 }
 
 pub fn parse_links_only(text: &str) -> Vec<(Range<usize>, MarkdownEvent)> {
+    // Even though we only really care about links,
+    // we still have to split the text into paragraphs.
+    // If we don't, line selection logic breaks,
+    // because the rest of the code assumes that all text
+    // is split up into paragraphs
+
+    let text = text.trim_end();
     let mut events = Vec::new();
     let mut finder = LinkFinder::new();
     finder.kinds(&[linkify::LinkKind::Url]);
-    let mut text_range = Range {
-        start: 0,
-        end: text.len(),
-    };
-    for link in finder.links(text) {
-        let link_range = link.start()..link.end();
 
-        if link_range.start > text_range.start {
-            events.push((text_range.start..link_range.start, MarkdownEvent::Text));
+    let mut links = finder.links(text).into_iter().peekable();
+    let mut index = 0;
+
+    // We use .split('\n') instead of .lines() here because we need
+    // to keep track of how many bytes we've gone through.
+    // .lines() removes information about whether we've passed \r or \r\n.
+    for untrimmed_line in text.split('\n') {
+        let line = untrimmed_line.trim_end();
+        let paragraph_range = index..index + line.len();
+        index += untrimmed_line.len() + 1;
+        if line == "" {
+            continue;
         }
 
-        events.push((
-            link_range.clone(),
-            MarkdownEvent::Start(MarkdownTag::Link {
-                link_type: LinkType::Autolink,
-                dest_url: SharedString::from(link.as_str().to_string()),
-                title: SharedString::default(),
-                id: SharedString::default(),
-            }),
-        ));
-        events.push((link_range.clone(), MarkdownEvent::Text));
-        events.push((link_range.clone(), MarkdownEvent::End(MarkdownTagEnd::Link)));
+        events.push((paragraph_range.clone(), MarkdownEvent::Start(MarkdownTag::Paragraph)));
+        let mut text_start = paragraph_range.start;
+        let mut link_end = paragraph_range.start;
 
-        text_range.start = link_range.end;
-    }
+        loop {
+            let Some(link) = links.peek() else {
+                break;
+            };
 
-    if text_range.end > text_range.start {
-        events.push((text_range, MarkdownEvent::Text));
+            if link.start() > paragraph_range.end {
+                break;
+            }
+
+            if link.start() > text_start {
+                let text_range = text_start..link.start();
+                events.push((text_range.clone(), MarkdownEvent::Text));
+                text_start = link.end();
+            }
+
+            let link_range = link.start()..link.end();
+            events.push((
+                link_range.clone(),
+                MarkdownEvent::Start(MarkdownTag::Link {
+                    link_type: LinkType::Autolink,
+                    dest_url: SharedString::from(link.as_str().to_string()),
+                    title: SharedString::default(),
+                    id: SharedString::default(),
+                }),
+            ));
+            events.push((link_range.clone(), MarkdownEvent::Text));
+            events.push((link_range.clone(), MarkdownEvent::End(MarkdownTagEnd::Link)));
+            link_end = link.end();
+
+            // Consume the link
+            links.next();
+        }
+
+        if link_end < paragraph_range.end {
+            let text_range = link_end..paragraph_range.end;
+            events.push((text_range, MarkdownEvent::Text));
+        }
+
+        events.push((paragraph_range.clone(), MarkdownEvent::End(MarkdownTagEnd::Paragraph)));
     }
 
     events
