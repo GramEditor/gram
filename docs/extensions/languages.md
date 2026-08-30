@@ -221,8 +221,7 @@ This query captures object keys for the outline structure.
 | @context.extra | Captures additional contextual information for the outline item                      |
 | @annotation    | Captures nodes that annotate outline item (doc comments, attributes, decorators)[^1] |
 
-[^1]:
-    These annotations are used by Assistant when generating code modification
+[^1]: These annotations are used by Assistant when generating code modification
     steps.
 
 ### Auto-indentation
@@ -481,7 +480,6 @@ If your language server supports additional languages, you can use
 identifiers:
 
 ```toml
-
 [language-servers.my-language-server]
 name = "Whatever LSP"
 languages = ["JavaScript", "HTML", "CSS"]
