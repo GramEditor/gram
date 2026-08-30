@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add Repology notes in docs (#470) by @koru
 - Bundle OpenMoji as emoji fallback (#478)
+- If a server binary is not found, suggest a command to install it (#485) by @xmort
+- Generate color for each commit author
+- Implement clipboard file and image copy for MacOS (#487) by @rockisch
+- Allow disabling 'auto focus on paste' (#487) by @rockisch
 
 ## Removed
 
@@ -21,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
 
 - Update mermaid renderer to improve layout (#476) by @sbuzzard
+- Clean up formatting in docs (#490) by @koru
 
 ## Fixed
 
