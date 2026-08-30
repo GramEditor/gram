@@ -237,6 +237,7 @@ pub fn init(cx: &mut App) {
                 let workspace_handle = cx.entity().downgrade();
                 window
                     .spawn(cx, async move |cx| {
+                        let path_for_error = extension_path.clone();
                         let install_task = store
                             .update(cx, |store, cx| store.install_user_extension(extension_path, cx))
                             .ok()?;
@@ -244,7 +245,11 @@ pub fn init(cx: &mut App) {
                         match install_task.await {
                             Ok(_) => {}
                             Err(err) => {
-                                log::error!("Failed to install extension: {:?}", err);
+                                log::error!(
+                                    "Failed to install extension (extension_path={:?}): {:?}",
+                                    path_for_error,
+                                    err
+                                );
                                 workspace_handle
                                     .update(cx, |workspace, cx| {
                                         workspace.show_error_with_link(

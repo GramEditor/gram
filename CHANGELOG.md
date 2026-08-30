@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Fixed
 
 - Fix XDG Desktop menu: rename to gram-editor.desktop (#469) (#474) by @koru
+- Fix compiling extensions with symlinks in the source tree (#494)
 
 ## [3.3.0] - 2026-08-25
 

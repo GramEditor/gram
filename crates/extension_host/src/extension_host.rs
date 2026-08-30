@@ -33,7 +33,7 @@ use release_channel::ReleaseChannel;
 use remote::RemoteClient;
 use semver::Version as SemanticVersion;
 use serde::{Deserialize, Serialize};
-use std::fs::{copy, create_dir_all, read_dir};
+use std::fs::{copy, create_dir_all, read_dir, read_link};
 use std::ops::RangeInclusive;
 use std::str::FromStr;
 use std::{
@@ -1485,10 +1485,26 @@ async fn copy_dir(from: &Path, to: &Path) -> Result<()> {
         {
             continue;
         }
-        if filetype.is_dir() {
+        if filetype.is_symlink() {
+            if !cfg!(windows) {
+                let link_target = read_link(entry.path())?;
+                let target = to.join(entry.file_name());
+                std::os::unix::fs::symlink(link_target, target)?;
+            } else {
+                log::error!("Skipping symlink {:?}", entry.path());
+            }
+        } else if filetype.is_dir() {
             Box::pin(copy_dir(entry.path().as_path(), &to.join(entry.file_name()))).await?;
+        } else if filetype.is_file() {
+            let from = entry.path();
+            let target = to.join(entry.file_name());
+            copy(from, target)?;
         } else {
-            copy(entry.path(), to.join(entry.file_name()))?;
+            log::info!(
+                "Not a directory... not a file.. not a symlink: {:?} = {:?}",
+                entry.path(),
+                filetype
+            );
         }
     }
     Ok(())
