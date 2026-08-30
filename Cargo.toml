@@ -338,7 +338,9 @@ documented = "0.9.2"
 dotenvy = "0.15.7"
 dunce = "1.0.5"
 ec4rs = "1.2.0"
-embed-resource = "3.0.11"
+# later versions break the build for `aarch64-pc-windows-gnullvm`
+# https://github.com/nabijaczleweli/rust-embed-resource/commit/d72b4496810f5c2adea9a2647ec1dd9ffa047f7c#commitcomment-194257398
+embed-resource = "=3.0.9"
 encoding_rs = "0.8.35"
 env_logger = "0.11.11"
 etagere = "0.3.0"
