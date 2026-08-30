@@ -25,10 +25,11 @@ use git_ui::file_diff_view::FileDiffView;
 use gpui::{
     Action, AnyElement, App, AsyncWindowContext, Bounds, ClipboardEntry as GpuiClipboardEntry, ClipboardItem, Context,
     CursorStyle, DismissEvent, Div, DragMoveEvent, Entity, EventEmitter, ExternalPaths, FocusHandle, Focusable, Hsla,
-    InteractiveElement, KeyContext, ListHorizontalSizingBehavior, ListSizingBehavior, Modifiers, ModifiersChangedEvent,
-    MouseButton, MouseDownEvent, ParentElement, Pixels, Point, PromptLevel, Render, ScrollStrategy, Stateful, Styled,
-    Subscription, Task, UniformListScrollHandle, WeakEntity, Window, actions, anchored, deferred, div, hsla,
-    linear_color_stop, linear_gradient, point, px, size, transparent_white, uniform_list,
+    Image, InteractiveElement, KeyContext, ListHorizontalSizingBehavior, ListSizingBehavior, Modifiers,
+    ModifiersChangedEvent, MouseButton, MouseDownEvent, ParentElement, Pixels, Point, PromptLevel, Render,
+    ScrollStrategy, Stateful, Styled, Subscription, Task, UniformListScrollHandle, WeakEntity, Window, actions,
+    anchored, deferred, div, hsla, linear_color_stop, linear_gradient, point, px, size, transparent_white,
+    uniform_list,
 };
 use language::DiagnosticSeverity;
 use menu::{Confirm, SelectFirst, SelectLast, SelectNext, SelectPrevious};
@@ -208,6 +209,19 @@ impl EditState {
 enum ClipboardEntry {
     Copied(BTreeSet<SelectedEntry>),
     Cut(BTreeSet<SelectedEntry>),
+}
+
+#[derive(Clone, Debug)]
+enum ExternalClipboardEntry {
+    Image(Image),
+    ExternalPaths(ExternalPaths),
+}
+
+#[derive(Debug)]
+enum PasteTask {
+    Create(Task<Result<CreatedEntry>>),
+    Copy(Task<Result<Option<Entry>>>),
+    CopyExternal(Task<Result<Vec<ProjectEntryId>>>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone)]
@@ -592,7 +606,7 @@ fn get_item_color(is_sticky: bool, cx: &App) -> ItemColors {
     }
 }
 
-async fn prompt_replace(filename: &str, cx: &mut AsyncWindowContext) -> Result<bool> {
+async fn prompt_replace(filename: &str, cx: &mut AsyncWindowContext) -> bool {
     let prompt_message = format!(
         concat!(
             "A file or folder with name {} ",
@@ -601,11 +615,15 @@ async fn prompt_replace(filename: &str, cx: &mut AsyncWindowContext) -> Result<b
         ),
         filename
     );
-    let answer = cx
-        .update(|window, cx| window.prompt(PromptLevel::Info, &prompt_message, None, &["Replace", "Cancel"], cx))?
-        .await?;
+    let Some(task) = cx
+        .update(|window, cx| window.prompt(PromptLevel::Info, &prompt_message, None, &["Replace", "Cancel"], cx))
+        .log_err()
+    else {
+        return false;
+    };
 
-    Ok(answer == 0)
+    let answer = task.await.log_err().unwrap_or(1);
+    answer == 0
 }
 
 impl ProjectPanel {
@@ -2634,177 +2652,258 @@ impl ProjectPanel {
     fn create_paste_path(
         &self,
         source: &SelectedEntry,
-        (worktree, target_entry): (Entity<Worktree>, &Entry),
+        (target_worktree, target_entry): (Entity<Worktree>, &Entry),
         cx: &App,
-    ) -> Option<(Arc<RelPath>, Option<Range<usize>>)> {
+    ) -> Option<Arc<RelPath>> {
         let mut new_path = target_entry.path.to_rel_path_buf();
         // If we're pasting into a file, or a directory into itself, go up one level.
         if target_entry.is_file() || (target_entry.is_dir() && target_entry.id == source.entry_id) {
             new_path.pop();
         }
-        let clipboard_entry_file_name = self
-            .project
-            .read(cx)
-            .path_for_entry(source.entry_id, cx)?
-            .path
-            .file_name()?
-            .to_string();
-        new_path.push(RelPath::unix(&clipboard_entry_file_name).unwrap());
-        let extension = new_path.extension().map(|s| s.to_string());
+
+        let source_path = self.project.read(cx).path_for_entry(source.entry_id, cx)?.path;
+        let file_name = source_path.file_name()?;
+        new_path.push(RelPath::unix(file_name).unwrap());
+
+        let extension = new_path.extension().map(|s| format!(".{}", s));
         let file_name_without_extension = new_path.file_stem()?.to_string();
-        let file_name_len = file_name_without_extension.len();
-        let mut disambiguation_range = None;
-        let mut ix = 0;
-        {
-            let worktree = worktree.read(cx);
-            while worktree.entry_for_path(&new_path).is_some() {
-                new_path.pop();
+        let worktree = target_worktree.read(cx);
 
-                let mut new_file_name = file_name_without_extension.to_string();
-
-                let disambiguation = " copy";
-                let mut disambiguation_len = disambiguation.len();
-
-                new_file_name.push_str(disambiguation);
-
-                if ix > 0 {
-                    let extra_disambiguation = format!(" {}", ix);
-                    disambiguation_len += extra_disambiguation.len();
-                    new_file_name.push_str(&extra_disambiguation);
-                }
-                if let Some(extension) = extension.as_ref() {
-                    new_file_name.push_str(".");
-                    new_file_name.push_str(extension);
-                }
-
-                new_path.push(RelPath::unix(&new_file_name).unwrap());
-
-                disambiguation_range = Some(file_name_len..(file_name_len + disambiguation_len));
-                ix += 1;
+        // Keep appending 'copy', 'copy 1', 'copy 2', etc to name until we find an unused path
+        for ix in 0.. {
+            if worktree.entry_for_path(&new_path).is_none() {
+                break;
             }
+
+            new_path.pop();
+
+            let disambiguation = if ix > 0 { &format!(" copy {}", ix) } else { " copy" };
+            let extension: &str = extension.as_ref().map_or_default(|s| s.as_str());
+            let new_name = format!("{}{}{}", file_name_without_extension, disambiguation, extension);
+
+            new_path.push(RelPath::unix(&new_name).unwrap());
         }
-        Some((new_path.as_rel_path().into(), disambiguation_range))
+        Some(new_path.as_rel_path().into())
     }
 
     fn paste(&mut self, _: &Paste, window: &mut Window, cx: &mut Context<Self>) {
-        maybe!({
-            if let Some(item) = cx.read_from_clipboard() {
-                let mut handled = false;
-                for entry in item.into_entries() {
-                    handled |= match entry {
-                        GpuiClipboardEntry::Image(image) => {
-                            let filename = format!("image{}", image.format.extension());
-                            let filepath = RelPath::unix(&filename).unwrap();
-                            self.copy_external_data(filepath, image.bytes, window, cx);
-                            true
-                        }
-                        GpuiClipboardEntry::ExternalPaths(paths) => {
-                            let (_, entry) = self.selected_sub_entry(cx)?;
-                            self.copy_external_files(paths.paths(), entry.id, window, cx);
-                            true
-                        }
-                        _ => false,
-                    };
-                }
-                if handled {
-                    return None;
-                }
-            };
+        let settings = ProjectPanelSettings::get_global(cx);
+        let should_open = settings.auto_open.should_open_on_paste();
 
-            let (worktree, entry) = self.selected_entry_handle(cx)?;
-            let entry = entry.clone();
-            let worktree_id = worktree.read(cx).id();
-            let clipboard_entries = self
-                .clipboard
-                .as_ref()
-                .filter(|clipboard| !clipboard.items().is_empty())?;
+        // Paste onto the selected dir or the root
+        let Some((target_worktree, target_entry)) = self.selected_target_entry(cx) else {
+            return;
+        };
 
-            enum PasteTask {
-                Rename(Task<Result<CreatedEntry>>),
-                Copy(Task<Result<Option<Entry>>>),
+        // First handle the system clipboard
+        if let Some(item) = cx.read_from_clipboard() {
+            for entry in item.into_entries() {
+                if let Some(entry) = match entry {
+                    GpuiClipboardEntry::Image(image) => Some(ExternalClipboardEntry::Image(image)),
+                    GpuiClipboardEntry::ExternalPaths(paths) => Some(ExternalClipboardEntry::ExternalPaths(paths)),
+                    _ => None,
+                } {
+                    self.paste_external(entry, should_open, target_worktree, target_entry.id, window, cx);
+                    return;
+                }
             }
+        }
 
-            let mut paste_tasks = Vec::new();
-            let mut disambiguation_range = None;
-            let clip_is_cut = clipboard_entries.is_cut();
-            for clipboard_entry in clipboard_entries.items() {
-                let (new_path, new_disambiguation_range) =
-                    self.create_paste_path(clipboard_entry, self.selected_sub_entry(cx)?, cx)?;
-                let clip_entry_id = clipboard_entry.entry_id;
-                let task = if clipboard_entries.is_cut() {
-                    let task = self.project.update(cx, |project, cx| {
-                        project.rename_entry(clip_entry_id, (worktree_id, new_path).into(), cx)
-                    });
-                    PasteTask::Rename(task)
+        // If no system clipboard item can be pasted we check the internal clipboard
+        if let Some(item) = self
+            .clipboard
+            .as_ref()
+            .filter(|clipboard| !clipboard.items().is_empty())
+        {
+            self.paste_internal(item.clone(), should_open, target_worktree, target_entry.id, window, cx);
+            return;
+        }
+    }
+
+    fn paste_internal(
+        &mut self,
+        clipboard_entry: ClipboardEntry,
+        should_open: bool,
+        target_worktree: Entity<Worktree>,
+        target_entry_id: ProjectEntryId,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let clip_is_cut = clipboard_entry.is_cut();
+        let target_worktree_id = target_worktree.read(cx).id();
+        let paste_tasks: Vec<PasteTask> = clipboard_entry
+            .items()
+            .iter()
+            .filter_map(|entry| {
+                let target_entry = target_worktree.read(cx).entry_for_id(target_entry_id)?;
+                let new_path = self.create_paste_path(entry, (target_worktree.clone(), target_entry), cx)?;
+                let task = if clip_is_cut {
+                    PasteTask::Create(self.project.update(cx, |project, cx| {
+                        project.rename_entry(entry.entry_id, (target_worktree_id, new_path).into(), cx)
+                    }))
                 } else {
-                    let task = self.project.update(cx, |project, cx| {
-                        project.copy_entry(clip_entry_id, (worktree_id, new_path).into(), cx)
-                    });
-                    PasteTask::Copy(task)
+                    PasteTask::Copy(self.project.update(cx, |project, cx| {
+                        project.copy_entry(entry.entry_id, (target_worktree_id, new_path).into(), cx)
+                    }))
                 };
-                paste_tasks.push(task);
-                disambiguation_range = new_disambiguation_range.or(disambiguation_range);
+                Some(task)
+            })
+            .collect();
+
+        self.run_paste_tasks(paste_tasks, should_open, target_entry_id, target_worktree, window, cx);
+        if clip_is_cut {
+            // Convert the clipboard cut entry to a copy entry after the first paste.
+            self.clipboard = self.clipboard.take().map(ClipboardEntry::into_copy_entry);
+        }
+    }
+
+    fn paste_external(
+        &mut self,
+        clipboard_entry: ExternalClipboardEntry,
+        should_open: bool,
+        target_worktree: Entity<Worktree>,
+        target_entry_id: ProjectEntryId,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let Some(target_dir) = maybe!({
+            let target_entry = target_worktree.read(cx).entry_for_id(target_entry_id)?;
+            let target_dir = if target_entry.is_dir() {
+                target_entry.path.into_arc()
+            } else {
+                target_entry.path.parent()?.into_arc()
+            };
+            Some(target_dir)
+        }) else {
+            return;
+        };
+
+        let paths = match &clipboard_entry {
+            ExternalClipboardEntry::Image(img) => &[PathBuf::from(format!("image{}", img.format.extension()))],
+            ExternalClipboardEntry::ExternalPaths(paths) => paths.paths(),
+        };
+
+        let worktree = target_worktree.read(cx);
+        let paths = paths
+            .into_iter()
+            .filter_map(|path| {
+                let name = path.file_name()?.to_str()?;
+                let target_path = target_dir.join(RelPath::unix(name).log_err()?);
+                let exists = worktree.entry_for_path(&target_path).is_some();
+                Some((path.as_path().into(), exists.then_some(name.to_owned())))
+            })
+            .collect::<Vec<(Arc<Path>, Option<String>)>>();
+
+        let project = self.project.read(cx);
+        let fs = project.fs().clone();
+        cx.spawn_in(window, async move |this, cx| {
+            let mut result_paths = Vec::with_capacity(paths.len());
+            for (path, name_check) in paths {
+                if let Some(name) = name_check {
+                    // If the file already exists, ask the user to overwrite it
+                    if !prompt_replace(&name, cx).await {
+                        continue;
+                    }
+                }
+                result_paths.push(path);
             }
 
-            let item_count = paste_tasks.len();
+            if result_paths.is_empty() {
+                return anyhow::Ok(());
+            }
 
-            cx.spawn_in(window, async move |project_panel, cx| {
-                let mut last_succeed = None;
-                for task in paste_tasks {
-                    match task {
-                        PasteTask::Rename(task) => {
-                            if let Some(CreatedEntry::Included(entry)) = task.await.notify_async_err(cx) {
-                                last_succeed = Some(entry);
-                            }
+            let task = target_worktree.update(cx, |worktree, cx| match clipboard_entry {
+                ExternalClipboardEntry::Image(image) => {
+                    let target_path = target_dir.join(RelPath::unix(&result_paths[0]).unwrap());
+                    PasteTask::Create(worktree.create_entry(target_path, false, Some(image.bytes), cx))
+                }
+                ExternalClipboardEntry::ExternalPaths(_) => {
+                    PasteTask::CopyExternal(worktree.copy_external_entries(target_dir, result_paths, fs, cx))
+                }
+            })?;
+
+            this.update_in(cx, |this, window, cx| {
+                this.run_paste_tasks(vec![task], should_open, target_entry_id, target_worktree, window, cx);
+            })?;
+            anyhow::Ok(())
+        })
+        .detach();
+    }
+
+    fn paste_external_drop_files(
+        &mut self,
+        paths: ExternalPaths,
+        target_entry_id: ProjectEntryId,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let settings = ProjectPanelSettings::get_global(cx);
+        let should_open = settings.auto_open.should_open_on_drop();
+        if let Some(target_worktree) = self.project.read(cx).worktree_for_entry(target_entry_id, cx) {
+            self.paste_external(
+                ExternalClipboardEntry::ExternalPaths(paths),
+                should_open,
+                target_worktree,
+                target_entry_id,
+                window,
+                cx,
+            );
+        }
+    }
+
+    fn run_paste_tasks(
+        &mut self,
+        paste_tasks: Vec<PasteTask>,
+        should_open: bool,
+        target_entry_id: ProjectEntryId,
+        target_worktree: Entity<Worktree>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        cx.spawn_in(window, async move |this, cx| {
+            let is_individual = paste_tasks.len() == 1;
+            let mut last_succeed = None;
+            for task in paste_tasks {
+                match task {
+                    PasteTask::Create(task) => {
+                        if let Some(CreatedEntry::Included(entry)) = task.await.notify_async_err(cx) {
+                            last_succeed = Some(entry);
                         }
-                        PasteTask::Copy(task) => {
-                            if let Some(Some(entry)) = task.await.notify_async_err(cx) {
-                                last_succeed = Some(entry);
+                    }
+                    PasteTask::Copy(task) => {
+                        if let Some(Some(entry)) = task.await.notify_async_err(cx) {
+                            last_succeed = Some(entry);
+                        }
+                    }
+                    PasteTask::CopyExternal(task) => {
+                        if let Some(entries) = task.await.notify_async_err(cx) {
+                            if let Some(entry_id) = entries.last() {
+                                if let Ok(Some(entry)) = this.read_with(cx, |_this, cx| {
+                                    target_worktree.read(cx).entry_for_id(*entry_id).cloned()
+                                }) {
+                                    last_succeed = Some(entry);
+                                }
                             }
                         }
                     }
                 }
-                // update selection
-                if let Some(entry) = last_succeed {
-                    project_panel
-                        .update_in(cx, |project_panel, window, cx| {
-                            project_panel.state.selection = Some(SelectedEntry {
-                                worktree_id,
-                                entry_id: entry.id,
-                            });
+            }
+            if let Some(entry) = last_succeed {
+                this.update_in(cx, |this, window, cx| {
+                    let target_worktree_id = target_worktree.read(cx).id();
 
-                            if item_count == 1 {
-                                // open entry if not dir, setting is enabled, and only focus if rename is not pending
-                                if !entry.is_dir() {
-                                    let settings = ProjectPanelSettings::get_global(cx);
-                                    if settings.auto_open.should_open_on_paste() {
-                                        project_panel.open_entry(entry.id, disambiguation_range.is_none(), false, cx);
-                                    }
-                                }
-
-                                // if only one entry was pasted and it was disambiguated, open the rename editor
-                                if disambiguation_range.is_some() {
-                                    cx.defer_in(window, |this, window, cx| {
-                                        this.rename_impl(disambiguation_range, window, cx);
-                                    });
-                                }
-                            }
-                        })
-                        .ok();
-                }
-
-                anyhow::Ok(())
-            })
-            .detach_and_log_err(cx);
-
-            if clip_is_cut {
-                // Convert the clipboard cut entry to a copy entry after the first paste.
-                self.clipboard = self.clipboard.take().map(ClipboardEntry::into_copy_entry);
+                    this.expand_entry(target_worktree_id, target_entry_id, cx);
+                    this.update_visible_entries(Some((target_worktree_id, entry.id)), false, true, window, cx);
+                    if should_open && is_individual && !entry.is_dir() {
+                        this.open_entry(entry.id, true, false, cx);
+                    }
+                })
+                .log_err();
             }
 
-            self.expand_entry(worktree_id, entry.id, cx);
-            Some(())
-        });
+            anyhow::Ok(())
+        })
+        .detach_and_log_err(cx);
     }
 
     fn duplicate(&mut self, _: &Duplicate, window: &mut Window, cx: &mut Context<Self>) {
@@ -3156,6 +3255,18 @@ impl ProjectPanel {
         }
         Some((worktree, entry))
     }
+
+    /// Resolves to either 'selected_sub_entry' or to the root entry of the current worktree
+    fn selected_target_entry<'a>(&self, cx: &'a App) -> Option<(Entity<Worktree>, &'a project::Entry)> {
+        self.selected_sub_entry(cx).or_else(|| {
+            let project = self.project.read(cx);
+            let entry_id = self.state.last_worktree_root_id?;
+            let worktree = project.worktree_for_entry(entry_id, cx)?;
+            let entry = worktree.read(cx).entry_for_id(entry_id)?;
+            Some((worktree, entry))
+        })
+    }
+
     fn selected_entry_handle<'a>(&self, cx: &'a App) -> Option<(Entity<Worktree>, &'a project::Entry)> {
         let selection = self.state.selection?;
         let project = self.project.read(cx);
@@ -3510,123 +3621,6 @@ impl ProjectPanel {
         }
     }
 
-    fn copy_external_files(
-        &mut self,
-        paths: &[PathBuf],
-        entry_id: ProjectEntryId,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        let mut paths: Vec<Arc<Path>> = paths.iter().map(|path| Arc::from(path.clone())).collect();
-
-        let open_file_after_drop = paths.len() == 1 && paths[0].is_file();
-
-        let Some((target_directory, worktree, fs)) = maybe!({
-            let project = self.project.read(cx);
-            let fs = project.fs().clone();
-            let worktree = project.worktree_for_entry(entry_id, cx)?;
-            let entry = worktree.read(cx).entry_for_id(entry_id)?;
-            let path = entry.path.clone();
-            let target_directory = if entry.is_dir() { path } else { path.parent()?.into() };
-            Some((target_directory, worktree, fs))
-        }) else {
-            return;
-        };
-
-        let mut paths_to_replace = Vec::new();
-        for path in &paths {
-            if let Some(name) = path.file_name()
-                && let Some(name) = name.to_str()
-            {
-                let target_path = target_directory.join(RelPath::unix(name).unwrap());
-                if worktree.read(cx).entry_for_path(&target_path).is_some() {
-                    paths_to_replace.push((name.to_string(), path.clone()));
-                }
-            }
-        }
-
-        cx.spawn_in(window, async move |this, cx| {
-            async move {
-                for (filename, original_path) in &paths_to_replace {
-                    let answer = prompt_replace(filename, cx).await?;
-                    if !answer && let Some(item_idx) = paths.iter().position(|p| p == original_path) {
-                        paths.remove(item_idx);
-                    }
-                }
-
-                if paths.is_empty() {
-                    return Ok(());
-                }
-
-                let task = worktree.update(cx, |worktree, cx| {
-                    worktree.copy_external_entries(target_directory, paths, fs, cx)
-                })?;
-
-                let opened_entries = task.await.with_context(|| "failed to copy external paths")?;
-                this.update_in(cx, |this, window, cx| {
-                    if !opened_entries.is_empty() {
-                        let settings = ProjectPanelSettings::get_global(cx);
-                        if settings.auto_open.should_open_on_drop() {
-                            if open_file_after_drop {
-                                this.open_entry(opened_entries[0], true, false, cx);
-                            } else {
-                                this.expand_to_selection(cx);
-                                this.update_visible_entries(None, false, false, window, cx);
-                                cx.notify();
-                            }
-                        }
-                    }
-                })
-            }
-            .await
-            .with_context(|| "failed to copy external files")
-            .log_err()
-        })
-        .detach();
-    }
-
-    fn copy_external_data(
-        &mut self,
-        filename: &RelPath,
-        content: Vec<u8>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        let Some((worktree, path, needs_replace, filename)) = maybe!({
-            let (worktree, entry) = self.selected_entry_handle(cx)?;
-            let path = if entry.is_dir() {
-                entry.path.join(&filename)
-            } else {
-                entry.path.parent()?.join(&filename)
-            };
-            let filename = path.file_name()?.to_string();
-            let needs_replace = worktree.read(cx).entry_for_path(&path).is_some();
-            Some((worktree, path, needs_replace, filename))
-        }) else {
-            return;
-        };
-
-        cx.spawn_in(window, async move |this, cx| {
-            async move {
-                if needs_replace && !prompt_replace(&filename, cx).await? {
-                    return anyhow::Ok(());
-                }
-                let task = worktree.update(cx, |worktree, cx| worktree.create_entry(path, false, Some(content), cx))?;
-                if let CreatedEntry::Included(entry) = task.await? {
-                    this.update(cx, |this, cx| {
-                        this.open_entry(entry.id, true, false, cx);
-                        cx.notify();
-                    })?;
-                };
-                anyhow::Ok(())
-            }
-            .await
-            .with_context(|| "failed to create file from raw data")
-            .log_err();
-        })
-        .detach();
-    }
-
     fn refresh_drag_cursor_style(&self, modifiers: &Modifiers, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(existing_cursor) = cx.active_drag_cursor_style() {
             let new_cursor = if Self::is_copy_modifier_set(modifiers) {
@@ -3665,46 +3659,18 @@ impl ProjectPanel {
             let _ = maybe!({
                 let project = self.project.read(cx);
                 let target_worktree = project.worktree_for_entry(target_entry_id, cx)?;
-                let worktree_id = target_worktree.read(cx).id();
-                let target_entry = target_worktree.read(cx).entry_for_id(target_entry_id)?.clone();
 
-                let mut copy_tasks = Vec::new();
-                let mut disambiguation_range = None;
-                for selection in &entries {
-                    let (new_path, new_disambiguation_range) =
-                        self.create_paste_path(selection, (target_worktree.clone(), &target_entry), cx)?;
+                let settings = ProjectPanelSettings::get_global(cx);
+                let should_open = settings.auto_open.should_open_on_paste();
 
-                    let task = self.project.update(cx, |project, cx| {
-                        project.copy_entry(selection.entry_id, (worktree_id, new_path).into(), cx)
-                    });
-                    copy_tasks.push(task);
-                    disambiguation_range = new_disambiguation_range.or(disambiguation_range);
-                }
-
-                let item_count = copy_tasks.len();
-
-                cx.spawn_in(window, async move |project_panel, cx| {
-                    let mut last_succeed = None;
-                    for task in copy_tasks.into_iter() {
-                        if let Some(Some(entry)) = task.await.log_err() {
-                            last_succeed = Some(entry.id);
-                        }
-                    }
-                    // update selection
-                    if let Some(entry_id) = last_succeed {
-                        project_panel
-                            .update_in(cx, |project_panel, window, cx| {
-                                project_panel.state.selection = Some(SelectedEntry { worktree_id, entry_id });
-
-                                // if only one entry was dragged and it was disambiguated, open the rename editor
-                                if item_count == 1 && disambiguation_range.is_some() {
-                                    project_panel.rename_impl(disambiguation_range, window, cx);
-                                }
-                            })
-                            .ok();
-                    }
-                })
-                .detach();
+                self.paste_internal(
+                    ClipboardEntry::Copied(entries),
+                    should_open,
+                    target_worktree,
+                    target_entry_id,
+                    window,
+                    cx,
+                );
                 Some(())
             });
         } else {
@@ -4435,7 +4401,7 @@ impl ProjectPanel {
                     move |this, external_paths: &ExternalPaths, window, cx| {
                         this.drag_target_entry = None;
                         this.hover_scroll_task.take();
-                        this.copy_external_files(external_paths.paths(), entry_id, window, cx);
+                        this.paste_external_drop_files(external_paths.clone(), entry_id, window, cx);
                         cx.stop_propagation();
                     },
                 ))
@@ -5647,7 +5613,7 @@ impl Render for ProjectPanel {
                                     this.drag_target_entry = None;
                                     this.hover_scroll_task.take();
                                     if let Some(entry_id) = this.state.last_worktree_root_id {
-                                        this.copy_external_files(external_paths.paths(), entry_id, window, cx);
+                                        this.paste_external_drop_files(external_paths.clone(), entry_id, window, cx);
                                     }
                                     cx.stop_propagation();
                                 }))

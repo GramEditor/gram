@@ -1,7 +1,7 @@
 use super::*;
 use collections::HashSet;
 use editor::MultiBufferOffset;
-use gpui::{Empty, Entity, TestAppContext, VisualTestContext, WindowHandle};
+use gpui::{Empty, Entity, MINIMAL_BMP, TestAppContext, VisualTestContext, WindowHandle};
 use pretty_assertions::assert_eq;
 use project::FakeFs;
 use serde_json::json;
@@ -1157,7 +1157,7 @@ async fn test_adding_directory_via_file(cx: &mut gpui::TestAppContext) {
 
 #[gpui::test]
 async fn test_copy_paste(cx: &mut gpui::TestAppContext) {
-    init_test(cx);
+    init_test_with_editor(cx);
 
     let fs = FakeFs::new(cx.executor());
     fs.insert_tree(
@@ -1197,50 +1197,23 @@ async fn test_copy_paste(cx: &mut gpui::TestAppContext) {
         panel.paste(&Default::default(), window, cx);
     });
     cx.executor().run_until_parked();
-    panel.update_in(cx, |panel, window, cx| {
-        assert!(panel.filename_editor.read(cx).is_focused(window));
-    });
+    assert!(!cx.has_pending_prompt(), "Should not have a prompt after internal copy");
     assert_eq!(
         visible_entries_as_strings(&panel, 0..50, cx),
         &[
             //
             "v root1",
             "      one.txt",
-            "      [EDITOR: 'one copy.txt']  <== selected  <== marked",
+            "      one copy.txt  <== selected  <== marked",
             "      one.two.txt",
         ]
     );
 
     panel.update_in(cx, |panel, window, cx| {
-        panel.filename_editor.update(cx, |editor, cx| {
-            let file_name_selections = editor.selections.all::<MultiBufferOffset>(&editor.display_snapshot(cx));
-            assert_eq!(
-                file_name_selections.len(),
-                1,
-                "File editing should have a single selection, but got: {file_name_selections:?}"
-            );
-            let file_name_selection = &file_name_selections[0];
-            assert_eq!(
-                file_name_selection.start,
-                MultiBufferOffset("one".len()),
-                "Should select the file name disambiguation after the original file name"
-            );
-            assert_eq!(
-                file_name_selection.end,
-                MultiBufferOffset("one copy".len()),
-                "Should select the file name disambiguation until the extension"
-            );
-        });
-        assert!(panel.confirm_edit(true, window, cx).is_none());
-    });
-
-    panel.update_in(cx, |panel, window, cx| {
         panel.paste(&Default::default(), window, cx);
     });
     cx.executor().run_until_parked();
-    panel.update_in(cx, |panel, window, cx| {
-        assert!(panel.filename_editor.read(cx).is_focused(window));
-    });
+    assert!(!cx.has_pending_prompt(), "Should not have a prompt after internal copy");
     assert_eq!(
         visible_entries_as_strings(&panel, 0..50, cx),
         &[
@@ -1248,7 +1221,7 @@ async fn test_copy_paste(cx: &mut gpui::TestAppContext) {
             "v root1",
             "      one.txt",
             "      one copy.txt",
-            "      [EDITOR: 'one copy 1.txt']  <== selected  <== marked",
+            "      one copy 1.txt  <== selected  <== marked",
             "      one.two.txt",
         ]
     );
@@ -1256,6 +1229,181 @@ async fn test_copy_paste(cx: &mut gpui::TestAppContext) {
     panel.update_in(cx, |panel, window, cx| {
         assert!(panel.confirm_edit(true, window, cx).is_none())
     });
+}
+
+#[gpui::test]
+async fn test_copy_paste_image(cx: &mut gpui::TestAppContext) {
+    init_test_with_editor(cx);
+
+    let fs = FakeFs::new(cx.executor());
+    fs.insert_tree(
+        "/root1",
+        json!({
+            "one.two.txt": "",
+            "one.txt": ""
+        }),
+    )
+    .await;
+
+    let project = Project::test(fs.clone(), ["/root1".as_ref()], cx).await;
+    let workspace = cx.add_window(|window, cx| Workspace::test_new(project.clone(), window, cx));
+    let cx = &mut VisualTestContext::from_window(*workspace, cx);
+    let panel = workspace.update(cx, ProjectPanel::new).unwrap();
+    cx.run_until_parked();
+
+    panel.update_in(cx, |panel, window, cx| {
+        panel.select_next(&Default::default(), window, cx);
+        panel.select_next(&Default::default(), window, cx);
+    });
+
+    assert_eq!(
+        visible_entries_as_strings(&panel, 0..50, cx),
+        &[
+            //
+            "v root1",
+            "      one.txt  <== selected",
+            "      one.two.txt",
+        ]
+    );
+
+    let image = gpui::Image::from_bytes(gpui::ImageFormat::Bmp, MINIMAL_BMP.to_vec());
+    let item = ClipboardItem::new_image(&image);
+
+    panel.update_in(cx, |panel, window, cx| {
+        cx.write_to_clipboard(item);
+        panel.paste(&Default::default(), window, cx);
+    });
+    cx.executor().run_until_parked();
+    assert!(!cx.has_pending_prompt(), "Should not have a prompt after first copy");
+    assert_eq!(
+        visible_entries_as_strings(&panel, 0..50, cx),
+        &[
+            //
+            "v root1",
+            "      image.bmp  <== selected  <== marked",
+            "      one.txt",
+            "      one.two.txt",
+        ]
+    );
+
+    panel.update_in(cx, |panel, window, cx| {
+        panel.select_next(&Default::default(), window, cx);
+        panel.paste(&Default::default(), window, cx);
+    });
+    cx.executor().run_until_parked();
+
+    assert!(cx.has_pending_prompt(), "Should have a prompt after second copy");
+    cx.simulate_prompt_answer("Cancel");
+    cx.executor().run_until_parked();
+
+    assert_eq!(
+        visible_entries_as_strings(&panel, 0..50, cx),
+        &[
+            //
+            "v root1",
+            "      image.bmp  <== marked",
+            "      one.txt  <== selected",
+            "      one.two.txt",
+        ]
+    );
+
+    panel.update_in(cx, |panel, window, cx| {
+        panel.paste(&Default::default(), window, cx);
+    });
+    cx.executor().run_until_parked();
+
+    assert!(cx.has_pending_prompt(), "Should have a prompt after second copy");
+    cx.simulate_prompt_answer("Replace");
+    cx.executor().run_until_parked();
+
+    assert_eq!(
+        visible_entries_as_strings(&panel, 0..50, cx),
+        &[
+            //
+            "v root1",
+            "      image.bmp  <== selected  <== marked",
+            "      one.txt",
+            "      one.two.txt",
+        ]
+    );
+}
+
+#[gpui::test]
+async fn test_copy_paste_external(cx: &mut gpui::TestAppContext) {
+    init_test_with_editor(cx);
+
+    let fs = FakeFs::new(cx.executor());
+    fs.insert_tree(
+        "/root1",
+        json!({
+            "one.two.txt": "",
+            "one.txt": ""
+        }),
+    )
+    .await;
+
+    let project = Project::test(fs.clone(), ["/root1".as_ref()], cx).await;
+    let workspace = cx.add_window(|window, cx| Workspace::test_new(project.clone(), window, cx));
+    let cx = &mut VisualTestContext::from_window(*workspace, cx);
+    let panel = workspace.update(cx, ProjectPanel::new).unwrap();
+    cx.run_until_parked();
+
+    panel.update_in(cx, |panel, window, cx| {
+        panel.select_next(&Default::default(), window, cx);
+        panel.select_next(&Default::default(), window, cx);
+    });
+
+    assert_eq!(
+        visible_entries_as_strings(&panel, 0..50, cx),
+        &[
+            //
+            "v root1",
+            "      one.txt  <== selected",
+            "      one.two.txt",
+        ]
+    );
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let external_path = temp_dir.path().join("external.rs");
+    std::fs::write(&external_path, "// external").unwrap();
+    fs.insert_tree_from_real_fs(temp_dir.path(), temp_dir.path()).await;
+
+    panel.update_in(cx, |panel, window, cx| {
+        cx.write_to_clipboard(ClipboardItem::new_external_paths(&[external_path]));
+        panel.paste(&Default::default(), window, cx);
+    });
+    assert!(!cx.has_pending_prompt(), "Should not have a prompt after first copy");
+    cx.executor().run_until_parked();
+
+    assert_eq!(
+        visible_entries_as_strings(&panel, 0..50, cx),
+        &[
+            //
+            "v root1",
+            "      external.rs  <== selected  <== marked",
+            "      one.txt",
+            "      one.two.txt",
+        ]
+    );
+
+    panel.update_in(cx, |panel, window, cx| {
+        panel.paste(&Default::default(), window, cx);
+    });
+    cx.executor().run_until_parked();
+    assert!(cx.has_pending_prompt(), "Should have a prompt after second copy");
+    cx.simulate_prompt_answer("Replace");
+    cx.executor().run_until_parked();
+
+    assert_eq!(
+        visible_entries_as_strings(&panel, 0..50, cx),
+        &[
+            //
+            "v root1",
+            "      external.rs  <== selected  <== marked",
+            "      one.txt",
+            "      one.two.txt",
+        ]
+    );
 }
 
 #[gpui::test]
@@ -1534,7 +1682,7 @@ async fn test_copy_paste_between_different_worktrees(cx: &mut gpui::TestAppConte
             "      four.txt",
             "      one.txt",
             "      three.txt",
-            "      [EDITOR: 'three copy.txt']  <== selected  <== marked",
+            "      three copy.txt  <== selected  <== marked",
             "      two.txt",
         ]
     );
@@ -1649,7 +1797,7 @@ async fn test_copy_paste_directory(cx: &mut gpui::TestAppContext) {
             //
             "v root",
             "    > a",
-            "    > [EDITOR: 'a copy']  <== selected",
+            "    > a copy  <== selected",
             "    v b",
             "        v a",
             "            v inner_dir",
@@ -1659,31 +1807,6 @@ async fn test_copy_paste_directory(cx: &mut gpui::TestAppContext) {
             "              two.txt"
         ]
     );
-
-    let confirm = panel.update_in(cx, |panel, window, cx| {
-        panel
-            .filename_editor
-            .update(cx, |editor, cx| editor.set_text("c", window, cx));
-        panel.confirm_edit(true, window, cx).unwrap()
-    });
-    assert_eq!(
-        visible_entries_as_strings(&panel, 0..50, cx),
-        &[
-            //
-            "v root",
-            "    > a",
-            "    > [PROCESSING: 'c']  <== selected",
-            "    v b",
-            "        v a",
-            "            v inner_dir",
-            "                  four.txt",
-            "                  three.txt",
-            "              one.txt",
-            "              two.txt"
-        ]
-    );
-
-    confirm.await.unwrap();
 
     panel.update_in(cx, |panel, window, cx| panel.paste(&Default::default(), window, cx));
     cx.executor().run_until_parked();
@@ -1693,6 +1816,11 @@ async fn test_copy_paste_directory(cx: &mut gpui::TestAppContext) {
             //
             "v root",
             "    > a",
+            "    v a copy",
+            "        > a  <== selected",
+            "        > inner_dir",
+            "          one.txt",
+            "          two.txt",
             "    v b",
             "        v a",
             "            v inner_dir",
@@ -1700,11 +1828,6 @@ async fn test_copy_paste_directory(cx: &mut gpui::TestAppContext) {
             "                  three.txt",
             "              one.txt",
             "              two.txt",
-            "    v c",
-            "        > a  <== selected",
-            "        > inner_dir",
-            "          one.txt",
-            "          two.txt",
         ]
     );
 }
@@ -2181,7 +2304,7 @@ async fn test_auto_open_on_drop_when_enabled(cx: &mut gpui::TestAppContext) {
 
     let root_entry = find_project_entry(&panel, "root", cx).unwrap();
     panel.update_in(cx, |panel, window, cx| {
-        panel.copy_external_files(std::slice::from_ref(&external_path), root_entry, window, cx);
+        panel.paste_external_drop_files(ExternalPaths::from_slice(&[external_path]), root_entry, window, cx);
     });
     cx.executor().run_until_parked();
 
@@ -2215,7 +2338,7 @@ async fn test_auto_open_on_drop_when_disabled(cx: &mut gpui::TestAppContext) {
 
     let root_entry = find_project_entry(&panel, "root", cx).unwrap();
     panel.update_in(cx, |panel, window, cx| {
-        panel.copy_external_files(std::slice::from_ref(&external_path), root_entry, window, cx);
+        panel.paste_external_drop_files(ExternalPaths::from_slice(&[external_path]), root_entry, window, cx);
     });
     cx.executor().run_until_parked();
 
@@ -2640,38 +2763,11 @@ async fn test_create_duplicate_items_and_check_history(cx: &mut gpui::TestAppCon
             "v src",
             "    v test",
             "          first.txt",
-            "          [EDITOR: 'first copy.txt']  <== selected  <== marked",
+            "          first copy.txt  <== selected  <== marked",
             "          second.txt",
             "          third.txt"
         ],
     );
-
-    let confirm = panel.update_in(cx, |panel, window, cx| {
-        panel
-            .filename_editor
-            .update(cx, |editor, cx| editor.set_text("fourth.txt", window, cx));
-        panel.confirm_edit(true, window, cx).unwrap()
-    });
-    confirm.await.unwrap();
-    cx.executor().run_until_parked();
-
-    assert_eq!(
-        visible_entries_as_strings(&panel, 0..10, cx),
-        &[
-            "v src",
-            "    v test",
-            "          first.txt",
-            "          fourth.txt  <== selected",
-            "          second.txt",
-            "          third.txt"
-        ],
-        "File list should be different after rename confirmation"
-    );
-
-    panel.update_in(cx, |panel, window, cx| {
-        panel.update_visible_entries(None, false, false, window, cx);
-    });
-    cx.executor().run_until_parked();
 
     select_path(&panel, "src/test/first.txt", cx);
     panel.update_in(cx, |panel, window, cx| panel.open(&Open, window, cx));
@@ -2680,8 +2776,8 @@ async fn test_create_duplicate_items_and_check_history(cx: &mut gpui::TestAppCon
     workspace
         .read_with(cx, |this, cx| {
             assert!(this.recent_navigation_history_iter(cx).any(|(project_path, abs_path)| {
-                project_path.path == Arc::from(rel_path("test/fourth.txt"))
-                    && abs_path == Some(PathBuf::from(path!("/src/test/fourth.txt")))
+                project_path.path == Arc::from(rel_path("test/first copy.txt"))
+                    && abs_path == Some(PathBuf::from(path!("/src/test/first copy.txt")))
             }));
         })
         .unwrap();

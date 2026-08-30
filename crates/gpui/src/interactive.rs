@@ -529,6 +529,11 @@ impl Deref for MouseExitEvent {
 pub struct ExternalPaths(pub(crate) SmallVec<[PathBuf; 2]>);
 
 impl ExternalPaths {
+    /// Create from slice of paths
+    pub fn from_slice(paths: &[PathBuf]) -> Self {
+        Self(paths.into())
+    }
+
     /// Convert this collection of paths into a slice.
     pub fn paths(&self) -> &[PathBuf] {
         &self.0
