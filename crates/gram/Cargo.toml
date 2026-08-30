@@ -127,7 +127,7 @@ markdown.workspace = true
 markdown_preview.workspace = true
 menu.workspace = true
 migrator.workspace = true
-mimalloc.workspace = true
+mimalloc = { workspace = true, optional = true }
 miniprofiler_ui.workspace = true
 nc.workspace = true
 node_runtime.workspace = true

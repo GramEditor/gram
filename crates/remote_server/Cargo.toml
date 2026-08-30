@@ -38,7 +38,6 @@ language_extension.workspace = true
 languages.workspace = true
 log.workspace = true
 lsp.workspace = true
-mimalloc.workspace = true
 node_runtime.workspace = true
 paths.workspace = true
 project.workspace = true

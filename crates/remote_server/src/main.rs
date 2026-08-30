@@ -4,9 +4,6 @@ use clap::Parser;
 use remote_server::Commands;
 use std::path::PathBuf;
 
-#[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
-
 #[derive(Parser)]
 #[command(disable_version_flag = true)]
 struct Cli {

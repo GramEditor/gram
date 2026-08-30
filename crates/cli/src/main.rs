@@ -26,9 +26,6 @@ use util::paths::PathWithPosition;
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
 use std::io::IsTerminal;
 
-#[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
-
 const URL_PREFIX: [&'static str; 5] = ["gram://", "http://", "https://", "file://", "ssh://"];
 
 struct Detect;
