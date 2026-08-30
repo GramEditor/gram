@@ -107,10 +107,7 @@ where
 
     /// Call the given callback for each subscriber to the given emitter.
     /// If the callback returns false, the subscriber is removed.
-    pub fn retain<F>(&self, emitter: &EmitterKey, mut f: F)
-    where
-        F: FnMut(&mut Callback) -> bool,
-    {
+    pub fn retain(&self, emitter: &EmitterKey, mut f: &mut dyn FnMut(&mut Callback) -> bool) {
         let Some(mut subscribers) = self.0.borrow_mut().subscribers.get_mut(emitter).and_then(|s| s.take()) else {
             return;
         };

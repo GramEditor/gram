@@ -680,7 +680,7 @@ impl App {
                     cx.keyboard_mapper = cx.platform.keyboard_mapper();
                     cx.keyboard_layout_observers
                         .clone()
-                        .retain(&(), move |callback| (callback)(cx));
+                        .retain(&(), &mut move |callback| (callback)(cx));
                 }
             }
         }));
@@ -1137,7 +1137,9 @@ impl App {
 
     /// Restarts the application.
     pub fn restart(&mut self) {
-        self.restart_observers.clone().retain(&(), |observer| observer(self));
+        self.restart_observers
+            .clone()
+            .retain(&(), &mut |observer| observer(self));
         self.platform.restart(self.restart_path.take())
     }
 
@@ -1284,17 +1286,19 @@ impl App {
     fn apply_notify_effect(&mut self, emitter: EntityId) {
         self.pending_notifications.remove(&emitter);
 
-        self.observers.clone().retain(&emitter, |handler| handler(self));
+        self.observers.clone().retain(&emitter, &mut |handler| handler(self));
     }
 
     fn apply_emit_effect(&mut self, emitter: EntityId, event_type: TypeId, event: Box<dyn Any>) {
-        self.event_listeners.clone().retain(&emitter, |(stored_type, handler)| {
-            if *stored_type == event_type {
-                handler(event.as_ref(), self)
-            } else {
-                true
-            }
-        });
+        self.event_listeners
+            .clone()
+            .retain(&emitter, &mut |(stored_type, handler)| {
+                if *stored_type == event_type {
+                    handler(event.as_ref(), self)
+                } else {
+                    true
+                }
+            });
     }
 
     fn apply_refresh_effect(&mut self) {
@@ -1310,7 +1314,7 @@ impl App {
         self.pending_global_notifications.remove(&type_id);
         self.global_observers
             .clone()
-            .retain(&type_id, |observer| observer(self));
+            .retain(&type_id, &mut |observer| observer(self));
     }
 
     fn apply_defer_effect(&mut self, callback: Box<dyn FnOnce(&mut Self) + 'static>) {
@@ -1318,7 +1322,7 @@ impl App {
     }
 
     fn apply_entity_created_effect(&mut self, entity: AnyEntity, tid: TypeId, window: Option<WindowId>) {
-        self.new_entity_observers.clone().retain(&tid, |observer| {
+        self.new_entity_observers.clone().retain(&tid, &mut |observer| {
             if let Some(id) = window {
                 self.update_window_id(id, {
                     let entity = entity.clone();
@@ -1349,7 +1353,7 @@ impl App {
                 cx.window_handles.remove(&id);
                 cx.windows.remove(id);
 
-                cx.window_closed_observers.clone().retain(&(), |callback| {
+                cx.window_closed_observers.clone().retain(&(), &mut |callback| {
                     callback(cx);
                     true
                 });

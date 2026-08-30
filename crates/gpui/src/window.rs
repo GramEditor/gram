@@ -1174,7 +1174,7 @@ impl Window {
                         window
                             .activation_observers
                             .clone()
-                            .retain(&(), |callback| callback(window, cx));
+                            .retain(&(), &mut |callback| callback(window, cx));
 
                         window.bounds_changed(cx);
                         window.refresh();
@@ -1579,7 +1579,7 @@ impl Window {
             return;
         };
 
-        cx.keystroke_observers.clone().retain(&(), move |callback| {
+        cx.keystroke_observers.clone().retain(&(), &mut move |callback| {
             (callback)(
                 &KeystrokeEvent {
                     keystroke: key_down_event.keystroke.clone(),
@@ -1602,7 +1602,7 @@ impl Window {
             return;
         };
 
-        cx.keystroke_interceptors.clone().retain(&(), move |callback| {
+        cx.keystroke_interceptors.clone().retain(&(), &mut move |callback| {
             (callback)(
                 &KeystrokeEvent {
                     keystroke: key_down_event.keystroke.clone(),
@@ -1758,7 +1758,9 @@ impl Window {
 
         self.refresh();
 
-        self.bounds_observers.clone().retain(&(), |callback| callback(self, cx));
+        self.bounds_observers
+            .clone()
+            .retain(&(), &mut |callback| callback(self, cx));
     }
 
     /// Returns the bounds of the current window in the global coordinate space, which could span across multiple displays.
@@ -1781,7 +1783,7 @@ impl Window {
 
         self.appearance_observers
             .clone()
-            .retain(&(), |callback| callback(self, cx));
+            .retain(&(), &mut |callback| callback(self, cx));
     }
 
     /// Returns the appearance of the current window.
@@ -2026,7 +2028,7 @@ impl Window {
             if !previous_focus_path.is_empty() && current_focus_path.is_empty() {
                 self.focus_lost_listeners
                     .clone()
-                    .retain(&(), |listener| listener(self, cx));
+                    .retain(&(), &mut |listener| listener(self, cx));
             }
 
             let event = WindowFocusEvent {
@@ -2043,7 +2045,7 @@ impl Window {
             };
             self.focus_listeners
                 .clone()
-                .retain(&(), |listener| listener(&event, self, cx));
+                .retain(&(), &mut |listener| listener(&event, self, cx));
         }
 
         debug_assert!(self.rendered_entity_stack.is_empty());
@@ -3914,7 +3916,7 @@ impl Window {
     pub(crate) fn pending_input_changed(&mut self, cx: &mut App) {
         self.pending_input_observers
             .clone()
-            .retain(&(), |callback| callback(self, cx));
+            .retain(&(), &mut |callback| callback(self, cx));
     }
 
     fn dispatch_key_down_up_event(
