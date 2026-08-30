@@ -1,5 +1,4 @@
 use crate::{CharClassifier, CharKind, CharScopeContext, LanguageScope};
-use anyhow::{Context, anyhow};
 use imara_diff::{
     Algorithm, BasicLineDiffPrinter, Diff, Hunk, InternedInput, Token, UnifiedDiffConfig, sources::lines,
 };
@@ -18,17 +17,6 @@ pub fn unified_diff(old_text: &str, new_text: &str) -> String {
             &input,
         )
         .to_string()
-}
-
-/// Computes a diff between two strings, returning a vector of old and new row
-/// ranges.
-pub fn line_diff(old_text: &str, new_text: &str) -> Vec<(Range<u32>, Range<u32>)> {
-    let mut edits = Vec::new();
-    let input = InternedInput::new(lines(old_text), lines(new_text));
-    diff_internal(&input, |_, _, old_rows, new_rows| {
-        edits.push((old_rows, new_rows));
-    });
-    edits
 }
 
 /// Computes a diff between two strings, returning a vector of edits.
@@ -132,12 +120,6 @@ pub fn text_diff_with_options(old_text: &str, new_text: &str, options: DiffOptio
         }
     });
     edits
-}
-
-pub fn apply_diff_patch(base_text: &str, patch: &str) -> Result<String, anyhow::Error> {
-    let patch = diffy::Patch::from_str(patch).context("Failed to parse patch")?;
-    let result = diffy::apply(base_text, &patch);
-    result.map_err(|err| anyhow!(err))
 }
 
 fn should_perform_word_diff_within_hunk(
@@ -273,13 +255,5 @@ mod tests {
                 (49..49, "ELEVEN\n".into())
             ]
         );
-    }
-
-    #[test]
-    fn test_apply_diff_patch() {
-        let old_text = "one two\nthree four five\nsix seven eight nine\nten\n";
-        let new_text = "one two\nthree FOUR five\nsix SEVEN eight nine\nten\nELEVEN\n";
-        let patch = unified_diff(old_text, new_text);
-        assert_eq!(apply_diff_patch(old_text, &patch).unwrap(), new_text);
     }
 }
