@@ -11,7 +11,7 @@ use project::{
 use std::any::{Any, TypeId};
 
 use time::OffsetDateTime;
-use ui::{Chip, Divider, ListItem, WithScrollbar, prelude::*, render_avatar};
+use ui::{AvatarStyle, Chip, Divider, ListItem, WithScrollbar, prelude::*, render_avatar};
 use util::ResultExt;
 use workspace::{
     Item, Workspace,
@@ -281,6 +281,8 @@ impl FileHistoryView {
             time_format::TimestampFormat::Relative,
         );
 
+        let avatar_style = AvatarStyle::new(&entry.author_email);
+
         ListItem::new(("commit", ix))
             .toggle_state(Some(ix) == self.selected_entry)
             .child(
@@ -310,12 +312,12 @@ impl FileHistoryView {
                         h_flex()
                             .gap_1()
                             .ml_auto()
-                            .child(render_avatar(rems(1.25), window, cx))
+                            .child(render_avatar(&avatar_style, rems(1.25), window, cx))
                             .child(
                                 div().w_full().child(
                                     Label::new(entry.author_name.clone())
                                         .size(LabelSize::Small)
-                                        .color(Color::Muted)
+                                        .color(avatar_style.foreground(Color::Muted))
                                         .truncate(),
                                 ),
                             )
