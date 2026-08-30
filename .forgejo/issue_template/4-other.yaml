@@ -7,24 +7,19 @@ body:
   - type: markdown
     attributes:
       value: |
-        **NOTE: This issue tracker is mainly for tracking and dealing with bugs. There is no big team working on Gram so don't be surprised if issues and feature requests end up sitting around without much movement.**
+        **NOTE:** This issue tracker is mainly for tracking and dealing with bugs. There is no big team working on Gram, so don't be surprised if issues end up sitting around without much movement.
   - type: markdown
     attributes:
       value: |
-        - Please speak English, as this is the language all maintainers can speak and write.
+        - Please speak English, as it is the only language all maintainers can read and write.
+        - Be clear and concise. Overly verbose reports are harder to understand.
         - Be civil, and follow the [Gram Code of Conduct](https://codeberg.org/GramEditor/gram/src/branch/main/CODE_OF_CONDUCT.md).
         - Take a moment to [check that your issue hasn't been reported before](https://codeberg.org/GramEditor/gram/issues).
-  - type: markdown
-    attributes:
-      value: |
-        ### New workflow
-
-        We are currently experimenting with a new workflow to manage issues and better understand your problems and needs. We are looking forward to your feedback!
   - type: textarea
     id: description
     attributes:
       label: Description
       description: |
-        Please provide a description of your issue/question here.
+        Please provide a description of your question or issue here.
     validations:
       required: true
