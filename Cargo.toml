@@ -331,7 +331,6 @@ criterion = { version = "0.8.2", features = ["cargo_bench_support", "html_report
 ctor = "0.12.0"
 dap-types = { git = "https://github.com/zed-industries/dap-types", rev = "1b461b310481d01e02b2603c16d7144b926339f8" }
 derive_more = { version = "2.1.1", features = ["full", "std"] }
-diffy = "0.5.1"
 dirs = "6.0.0"
 dispatch2 = "0.3.1"
 documented = "0.9.2"
@@ -344,7 +343,6 @@ embed-resource = "=3.0.9"
 encoding_rs = "0.8.35"
 env_logger = "0.11.11"
 etagere = "0.3.0"
-exec = "0.3.1"
 fancy-regex = "0.18.0"
 filedescriptor = "0.8.3"
 flume = "0.11.1"

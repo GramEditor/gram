@@ -725,12 +725,12 @@ mod linux {
                     if fork::close_fd().is_err() {
                         eprintln!("failed to close_fd: {}", std::io::Error::last_os_error());
                     }
-                    let mut args: Vec<OsString> = vec![path.as_os_str().to_owned(), OsString::from(ipc_url)];
+                    let mut args: Vec<OsString> = vec![OsString::from(ipc_url)];
                     if let Some(dir) = user_data_dir {
                         args.push(OsString::from("--user-data-dir"));
                         args.push(OsString::from(dir));
                     }
-                    let error = exec::execvp(path.clone(), &args);
+                    let error = std::process::Command::new(path.clone()).args(&args).exec();
                     // if exec succeeded, we never get here.
                     eprintln!("failed to exec {:?}: {}", path, error);
                     process::exit(1)
@@ -779,7 +779,7 @@ mod flatpak {
     /// Restarts outside of the sandbox if currently running within it
     pub fn try_restart_to_host() {
         if let Some(flatpak_dir) = get_flatpak_dir() {
-            let mut args = vec!["/usr/bin/flatpak-spawn".into(), "--host".into()];
+            let mut args = vec!["--host".into()];
             args.append(&mut get_xdg_env_args());
             args.push("--env=GRAM_NO_BUNDLED_UNINSTALL=Please use flatpak to uninstall gram".into());
             args.push(
@@ -802,7 +802,7 @@ mod flatpak {
                 args.push(flatpak_dir.join("libexec").join("gram-editor").into());
             }
 
-            let error = exec::execvp("/usr/bin/flatpak-spawn", args);
+            let error = std::process::Command::new("/usr/bin/flatpak-spawn").args(&args).exec();
             eprintln!("failed restart cli on host: {:?}", error);
             process::exit(1);
         }
