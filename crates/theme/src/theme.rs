@@ -19,6 +19,7 @@ mod schema;
 mod settings;
 mod styles;
 
+use std::fmt::Display;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -421,6 +422,16 @@ pub struct GlobalTheme {
 }
 impl Global for GlobalTheme {}
 
+fn fallback_theme(themes: &Arc<ThemeRegistry>, system_appearance: &SystemAppearance, err: impl Display) -> Arc<Theme> {
+    if themes.extensions_loaded() {
+        log::error!("{}", err);
+    }
+    themes
+        .get(default_theme(**system_appearance))
+        // fallback for tests.
+        .unwrap_or_else(|_| themes.get(DEFAULT_DARK_THEME).unwrap())
+}
+
 impl GlobalTheme {
     fn configured_theme(cx: &mut App) -> Arc<Theme> {
         let themes = ThemeRegistry::default_global(cx);
@@ -431,17 +442,12 @@ impl GlobalTheme {
 
         let theme = match themes.get(&theme_name.0) {
             Ok(theme) => theme,
-            Err(err) => {
-                if themes.extensions_loaded() {
-                    log::error!("{err}");
-                }
-                themes
-                    .get(default_theme(*system_appearance))
-                    // fallback for tests.
-                    .unwrap_or_else(|_| themes.get(DEFAULT_DARK_THEME).unwrap())
-            }
+            Err(err) => fallback_theme(&themes, &system_appearance, err),
         };
-        theme_settings.apply_theme_overrides(theme)
+        match theme_settings.apply_theme_overrides(theme) {
+            Ok(theme) => theme,
+            Err(err) => fallback_theme(&themes, &system_appearance, err),
+        }
     }
 
     /// Reloads the current theme.

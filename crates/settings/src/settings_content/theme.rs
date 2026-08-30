@@ -62,13 +62,13 @@ pub struct ThemeSettingsContent {
     ///
     /// These values will override the ones on the current theme specified in `theme`.
     #[serde(rename = "experimental.theme_overrides")]
-    pub experimental_theme_overrides: Option<ThemeStyleContent>,
+    pub experimental_theme_overrides: Option<serde_json::Value>,
 
     /// Overrides per theme
     ///
     /// These values will override the ones on the specified theme
     #[serde(default)]
-    pub theme_overrides: HashMap<String, ThemeStyleContent>,
+    pub theme_overrides: HashMap<String, serde_json::Value>,
 
     /// Defines window border radius for platforms that use client side decorations.
     #[schemars(range(min = 0.0, max = 20.0))]

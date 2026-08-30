@@ -9,7 +9,7 @@ use refineable::Refineable;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 pub use settings::{FontFamilyName, IconThemeName, ThemeAppearanceMode, ThemeName};
-use settings::{RegisterSetting, Settings, SettingsContent};
+use settings::{RegisterSetting, Settings, SettingsContent, ThemeStyleContent};
 use std::sync::Arc;
 
 const MIN_FONT_SIZE: Pixels = px(6.0);
@@ -106,9 +106,9 @@ pub struct ThemeSettings {
     /// Manual overrides for the active theme.
     ///
     /// Note: This setting is still experimental. See [this tracking issue](https://github.com/zed-industries/zed/issues/18078)
-    pub experimental_theme_overrides: Option<settings::ThemeStyleContent>,
+    pub experimental_theme_overrides: Option<serde_json::Value>,
     /// Manual overrides per theme
-    pub theme_overrides: HashMap<String, settings::ThemeStyleContent>,
+    pub theme_overrides: HashMap<String, serde_json::Value>,
     /// The current icon theme selection.
     pub icon_theme: IconThemeSelection,
     /// The density of the UI.
@@ -474,21 +474,24 @@ impl ThemeSettings {
     }
 
     /// Applies the theme overrides, if there are any, to the current theme.
-    pub fn apply_theme_overrides(&self, mut arc_theme: Arc<Theme>) -> Arc<Theme> {
+    pub fn apply_theme_overrides(&self, mut arc_theme: Arc<Theme>) -> anyhow::Result<Arc<Theme>> {
         // Apply the old overrides setting first, so that the new setting can override those.
-        if let Some(experimental_theme_overrides) = &self.experimental_theme_overrides {
+        if let Some(experimental_theme_overrides) = self.experimental_theme_overrides.as_ref() {
+            let experimental_theme_overrides =
+                serde_json::from_value::<ThemeStyleContent>(experimental_theme_overrides.clone())?;
             let mut theme = (*arc_theme).clone();
-            ThemeSettings::modify_theme(&mut theme, experimental_theme_overrides);
+            ThemeSettings::modify_theme(&mut theme, &experimental_theme_overrides);
             arc_theme = Arc::new(theme);
         }
 
         if let Some(theme_overrides) = self.theme_overrides.get(arc_theme.name.as_ref()) {
+            let theme_overrides = serde_json::from_value::<ThemeStyleContent>(theme_overrides.clone())?;
             let mut theme = (*arc_theme).clone();
-            ThemeSettings::modify_theme(&mut theme, theme_overrides);
+            ThemeSettings::modify_theme(&mut theme, &theme_overrides);
             arc_theme = Arc::new(theme);
         }
 
-        arc_theme
+        Ok(arc_theme)
     }
 
     fn modify_theme(base_theme: &mut Theme, theme_overrides: &settings::ThemeStyleContent) {

@@ -169,7 +169,7 @@ use std::{
 use task::{ResolvedTask, RunnableTag, TaskTemplate, TaskVariables};
 use text::{BufferId, FromAnchor, OffsetUtf16, Rope, ToOffset as _};
 use theme::{
-    AccentColors, ActiveTheme, GlobalTheme, PlayerColor, StatusColors, SyntaxTheme, Theme, ThemeSettings,
+    ActiveTheme, GlobalTheme, PlayerColor, StatusColors, SyntaxTheme, Theme, ThemeSettings,
     observe_buffer_font_size_adjustment,
 };
 use ui::{
@@ -1029,14 +1029,7 @@ pub struct Editor {
     select_next_is_case_sensitive: Option<bool>,
     pub lookup_key: Option<Box<dyn Any + Send + Sync>>,
     applicable_language_settings: HashMap<Option<LanguageName>, LanguageSettings>,
-    accent_data: Option<AccentData>,
     fetched_tree_sitter_chunks: HashMap<ExcerptId, HashSet<Range<BufferRow>>>,
-}
-
-#[derive(Debug, PartialEq)]
-struct AccentData {
-    colors: AccentColors,
-    overrides: Vec<SharedString>,
 }
 
 fn debounce_value(debounce_ms: u64) -> Option<Duration> {
@@ -2120,7 +2113,6 @@ impl Editor {
             lookup_key: None,
             select_next_is_case_sensitive: None,
             applicable_language_settings: HashMap::default(),
-            accent_data: None,
             fetched_tree_sitter_chunks: HashMap::default(),
             number_deleted_lines: false,
         };
@@ -2130,7 +2122,6 @@ impl Editor {
         }
 
         editor.applicable_language_settings = editor.fetch_applicable_language_settings(cx);
-        editor.accent_data = editor.fetch_accent_data(cx);
 
         if let Some(breakpoints) = editor.breakpoint_store.as_ref() {
             editor._subscriptions.push(cx.observe(breakpoints, |_, _, cx| {
@@ -18077,38 +18068,6 @@ impl Editor {
         cx.notify();
     }
 
-    fn fetch_accent_data(&self, cx: &App) -> Option<AccentData> {
-        if !self.mode.is_full() {
-            return None;
-        }
-
-        let theme_settings = theme::ThemeSettings::get_global(cx);
-        let theme = cx.theme();
-        let accent_colors = theme.accents().clone();
-
-        let accent_overrides = theme_settings
-            .theme_overrides
-            .get(theme.name.as_ref())
-            .map(|theme_style| &theme_style.accents)
-            .into_iter()
-            .flatten()
-            .chain(
-                theme_settings
-                    .experimental_theme_overrides
-                    .as_ref()
-                    .map(|overrides| &overrides.accents)
-                    .into_iter()
-                    .flatten(),
-            )
-            .flat_map(|accent| accent.0.clone())
-            .collect();
-
-        Some(AccentData {
-            colors: accent_colors,
-            overrides: accent_overrides,
-        })
-    }
-
     fn fetch_applicable_language_settings(&self, cx: &App) -> HashMap<Option<LanguageName>, LanguageSettings> {
         if !self.mode.is_full() {
             return HashMap::default();
@@ -18131,12 +18090,7 @@ impl Editor {
 
     fn settings_changed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let new_language_settings = self.fetch_applicable_language_settings(cx);
-        let language_settings_changed = new_language_settings != self.applicable_language_settings;
         self.applicable_language_settings = new_language_settings;
-
-        let new_accents = self.fetch_accent_data(cx);
-        let accents_changed = new_accents != self.accent_data;
-        self.accent_data = new_accents;
 
         if self.diagnostics_enabled() {
             let new_severity = EditorSettings::get_global(cx)
@@ -18204,9 +18158,7 @@ impl Editor {
                 }
             }
 
-            if language_settings_changed || accents_changed {
-                self.colorize_brackets(true, cx);
-            }
+            self.colorize_brackets(true, cx);
 
             if let Some(inlay_splice) = self
                 .colors
@@ -18228,11 +18180,7 @@ impl Editor {
             return;
         }
 
-        let new_accents = self.fetch_accent_data(cx);
-        if new_accents != self.accent_data {
-            self.accent_data = new_accents;
-            self.colorize_brackets(true, cx);
-        }
+        self.colorize_brackets(true, cx);
     }
 
     pub fn set_searchable(&mut self, searchable: bool) {

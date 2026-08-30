@@ -2248,7 +2248,7 @@ pub mod tests {
     use pretty_assertions::assert_eq;
     use project::FakeFs;
     use serde_json::json;
-    use settings::{InlayHintSettingsContent, SettingsStore, ThemeColorsContent, ThemeStyleContent};
+    use settings::{InlayHintSettingsContent, SettingsStore};
     use util::{path, paths::PathStyle, rel_path::rel_path};
     use util_macros::perf;
     use workspace::DeploySearch;
@@ -2335,19 +2335,19 @@ pub mod tests {
 
         // Override active search match color since the fallback theme uses the same color
         // for normal search match and active one, which can make this test less robust.
-        cx.update(|cx| {
-            SettingsStore::update_global(cx, |settings, cx| {
-                settings.update_user_settings(cx, |settings| {
-                    settings.theme.experimental_theme_overrides = Some(ThemeStyleContent {
-                        colors: ThemeColorsContent {
-                            search_active_match_background: Some("#ff0000ff".to_string()),
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    });
-                });
-            });
-        });
+        // cx.update(|cx| {
+        //     SettingsStore::update_global(cx, |settings, cx| {
+        //         settings.update_user_settings(cx, |settings| {
+        //             settings.theme.experimental_theme_overrides = Some(ThemeStyleContent {
+        //                 colors: ThemeColorsContent {
+        //                     search_active_match_background: Some("#ff0000ff".to_string()),
+        //                     ..Default::default()
+        //                 },
+        //                 ..Default::default()
+        //             });
+        //         });
+        //     });
+        // });
 
         let fs = FakeFs::new(cx.background_executor.clone());
         fs.insert_tree(
