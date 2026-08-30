@@ -54,6 +54,7 @@ pub struct AutoOpenSettings {
     pub on_create: bool,
     pub on_paste: bool,
     pub on_drop: bool,
+    pub should_focus: bool,
 }
 
 impl AutoOpenSettings {
@@ -70,6 +71,11 @@ impl AutoOpenSettings {
     #[inline]
     pub fn should_open_on_drop(self) -> bool {
         self.on_drop
+    }
+
+    #[inline]
+    pub fn should_focus_on_open(self) -> bool {
+        self.should_focus
     }
 }
 
@@ -114,6 +120,7 @@ impl Settings for ProjectPanelSettings {
                     on_create: auto_open.on_create.unwrap(),
                     on_paste: auto_open.on_paste.unwrap(),
                     on_drop: auto_open.on_drop.unwrap(),
+                    should_focus: auto_open.should_focus.unwrap(),
                 }
             },
             sort_mode: project_panel

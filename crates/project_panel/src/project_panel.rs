@@ -2895,7 +2895,8 @@ impl ProjectPanel {
                     this.expand_entry(target_worktree_id, target_entry_id, cx);
                     this.update_visible_entries(Some((target_worktree_id, entry.id)), false, true, window, cx);
                     if should_open && is_individual && !entry.is_dir() {
-                        this.open_entry(entry.id, true, false, cx);
+                        let settings = ProjectPanelSettings::get_global(cx);
+                        this.open_entry(entry.id, settings.auto_open.should_focus_on_open(), false, cx);
                     }
                 })
                 .log_err();

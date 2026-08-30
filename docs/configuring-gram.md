@@ -4701,6 +4701,7 @@ current list of valid themes names.
 - `on_paste`: Whether to automatically open files after pasting or duplicating
   them.
 - `on_drop`: Whether to automatically open files dropped from external sources.
+- `should_focus`: Whether to focus on files automatically opened.
 
 ## Debugger
 

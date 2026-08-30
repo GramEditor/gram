@@ -4057,6 +4057,21 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                     files: USER,
                 }),
                 SettingsPageItem::SettingItem(SettingItem {
+                    title: "Should Focus",
+                    description: "Whether to focus on files automatically opened.",
+                    field: Box::new(SettingField {
+                        json_path: Some("project_panel.auto_open.should_focus"),
+                        pick: |settings_content| {
+                            settings_content.project_panel.as_ref()?.auto_open.as_ref()?.should_focus.as_ref()
+                        },
+                        write: |settings_content, value| {
+                            settings_content.project_panel.get_or_insert_default().auto_open.get_or_insert_default().should_focus = value;
+                        },
+                    }),
+                    metadata: None,
+                    files: USER,
+                }),
+                SettingsPageItem::SettingItem(SettingItem {
                     title: "Sort Mode",
                     description: "Sort order for entries in the project panel.",
                     field: Box::new(SettingField {

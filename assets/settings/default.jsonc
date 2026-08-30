@@ -750,6 +750,8 @@
       "on_paste": true,
       // Whether to automatically open files dropped from external sources.
       "on_drop": true,
+      // Whether to focus on files automatically opened.
+      "should_focus": true,
     },
   },
   "outline_panel": {
