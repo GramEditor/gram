@@ -37,13 +37,13 @@ fn gram_prompt_renderer(
     let renderer = cx.new({
         |cx| GramPromptRenderer {
             _level: level,
-            message: cx.new(|cx| Markdown::new(SharedString::new(message), None, None, cx)),
+            message: cx.new(|cx| Markdown::new_text(SharedString::new(message), cx)),
             actions: actions.iter().map(|a| a.label().to_string()).collect(),
             focus: cx.focus_handle(),
             active_action_id: 0,
             detail: detail
                 .filter(|text| !text.is_empty())
-                .map(|text| cx.new(|cx| Markdown::new(SharedString::new(text), None, None, cx))),
+                .map(|text| cx.new(|cx| Markdown::new_text(SharedString::new(text), cx))),
         }
     });
 
