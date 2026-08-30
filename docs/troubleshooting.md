@@ -147,8 +147,8 @@ For example:
 ```json
 {
   "file_watcher": {
-    "mode": "poll",  // "native" | "poll"
-    "poll_interval_ms": 2000  // 500-30000ms
+    "mode": "poll", // "native" | "poll"
+    "poll_interval_ms": 2000 // 500-30000ms
   }
 }
 ```

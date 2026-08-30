@@ -45,7 +45,7 @@ will be one excerpt for each matching line across the whole project.
 
 If an appropriate language server is installed, the diagnostics pane can display
 all errors across the project. Open it by clicking on the icon in the status
-bar, or run the {#action diagnostics::Deploy} command` ('cmd-shift-m` on macOS,
+bar, or run the {#action diagnostics::Deploy} command`('cmd-shift-m` on macOS,
 `ctrl-shift-m` on Windows/Linux, or `:clist` in Vim mode).
 
 ## Find References

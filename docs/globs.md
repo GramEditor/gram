@@ -1,9 +1,8 @@
 # Globs
 
-[Glob patterns](<https://en.wikipedia.org/wiki/Glob_(programming)>) is the
-formal name for Unix shell-style path matching wildcards like `*.md` or
-`docs/**/*.md` supported by sh, bash, zsh, etc. A glob is similar but distinct
-from a
+[Glob patterns](https://en.wikipedia.org/wiki/Glob_(programming)) is the formal
+name for Unix shell-style path matching wildcards like `*.md` or `docs/**/*.md`
+supported by sh, bash, zsh, etc. A glob is similar but distinct from a
 [regex (regular expression)](https://en.wikipedia.org/wiki/Regular_expression).
 In Gram these are commonly used when matching filenames.
 
