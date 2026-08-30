@@ -257,7 +257,7 @@ fi
 
 # Bundle .deb package
 if [ "$DO_DEB" = "true" ]; then
-    envsubst <"crates/gram/resources/gram.desktop.in" >"crates/gram/resources/gram-editor.desktop"
+    envsubst <"crates/gram/resources/gram.desktop.in" >"crates/gram/resources/gram.desktop"
     CARGO_TARGET_DIR="${target_dir}/${target_triple}" cargo deb -p gram --no-build --compress-type xz
 
     # Bundle AppImage from .deb package
@@ -272,7 +272,7 @@ fi
 
 # Bundle .rpm package
 if [ "$DO_RPM" = "true" ]; then
-    envsubst <"crates/gram/resources/gram.desktop.in" >"crates/gram/resources/gram-editor.desktop"
+    envsubst <"crates/gram/resources/gram.desktop.in" >"crates/gram/resources/gram.desktop"
     cargo generate-rpm -p crates/gram --target-dir "${target_dir}/${target_triple}" --payload-compress "${GRAM_RPM_COMPRESSION:=zstd}"
 fi
 

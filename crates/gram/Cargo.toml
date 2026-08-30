@@ -34,7 +34,6 @@ license-file = ["../../LICENSE-GPL", "0"]
 depends = "$auto"
 section = "editors"
 priority = "optional"
-
 extended-description = """\
 A code editor for humanoid apes and grumpy toads. \
 Gram is a fork of the Zed editor."""
