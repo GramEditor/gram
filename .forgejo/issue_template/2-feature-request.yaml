@@ -7,19 +7,18 @@ body:
   - type: markdown
     attributes:
       value: |
-        **NOTE: This issue tracker is mainly for tracking and dealing with bugs. There is no big team working on Gram so don't be surprised if issues and feature requests end up sitting around without much movement.**
+        **NOTE:** This issue tracker is mainly for tracking and dealing with bugs. There is no big team working on Gram, so don't be surprised if feature requests end up sitting around without much movement.
+
+        **How you can help:**
+        - **If you have Rust programming skills:** You are probably the best person to implement this. We welcome you to build it yourself and submit a Pull Request. It's often the fastest way to get what you need.
+        - **If this request is about architecture support or packaging:** Just like above, you are probably the one most able to fix this yourself for your specific environment or distro. We are happy to provide guidance or review your work. Contributions to improve workflows for both Forgejo and GitHub are very welcome.
   - type: markdown
     attributes:
       value: |
-        - Please speak English, as this is the language all maintainers can speak and write.
+        - Please speak English, as it is the only language all maintainers can read and write.
+        - Be clear and concise. Overly verbose reports are harder to understand.
         - Be civil, and follow the [Gram Code of Conduct](https://codeberg.org/GramEditor/gram/src/branch/main/CODE_OF_CONDUCT.md).
         - Take a moment to [check that your feature request hasn't been reported before](https://codeberg.org/GramEditor/gram/issues).
-  - type: markdown
-    attributes:
-      value: |
-        ### New workflow
-
-        We are currently experimenting with a new workflow to manage issues and better understand your problems and needs. We are looking forward to your feedback!
   - type: textarea
     id: description
     attributes:
