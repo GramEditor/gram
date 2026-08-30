@@ -79,7 +79,7 @@ async fn capture_unix(
         // Instead of doing "-l -i -c '<command>'"
         // use "-l -e '<command>; exit'" instead
         ShellKind::Nushell => command.arg("-e"),
-        _ => command.args(["+m", "-i", "-c"]),
+        _ => command.args(["-i", "-c"]),
     };
 
     // cd into the directory, triggering directory specific side-effects (asdf, direnv, etc)
@@ -95,7 +95,7 @@ async fn capture_unix(
 
     command.arg(&command_string);
 
-    // super::set_pre_exec_to_start_new_session(&mut command);
+    super::set_pre_exec_to_start_new_session(&mut command);
 
     let (env_output, process_output) = spawn_and_read_fd(command, fd_num).await?;
     let env_output = String::from_utf8_lossy(&env_output);

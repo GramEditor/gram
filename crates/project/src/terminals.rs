@@ -457,8 +457,8 @@ impl Project {
                         Ok(command)
                     }
                 }
-                .map(|process| {
-                    // util::set_pre_exec_to_start_new_session(&mut process);
+                .map(|mut process| {
+                    util::set_pre_exec_to_start_new_session(&mut process);
                     smol::process::Command::from(process)
                 })
             })?

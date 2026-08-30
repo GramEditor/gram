@@ -980,8 +980,8 @@ impl Child {
     }
 
     #[cfg(not(windows))]
-    fn spawn(command: std::process::Command, stdin: Stdio) -> Result<Self> {
-        // util::set_pre_exec_to_start_new_session(&mut command);
+    fn spawn(mut command: std::process::Command, stdin: Stdio) -> Result<Self> {
+        util::set_pre_exec_to_start_new_session(&mut command);
         let mut command = smol::process::Command::from(command);
         let process = command
             .stdin(stdin)
