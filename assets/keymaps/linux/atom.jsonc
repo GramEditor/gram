@@ -23,7 +23,7 @@
       "ctrl-alt-b": "editor::GoToDefinitionSplit", // N/A: From JetBrains
       "ctrl-<": "editor::ScrollCursorCenter", // editor:scroll-to-cursor
       "f3": ["editor::SelectNext", { "replace_newest": true }], // find-and-replace:find-next
-      "shift-f3": ["editor::SelectPrevious", { "replace_newest": true }], //find-and-replace:find-previous
+      "shift-f3": ["editor::SelectPrevious", { "replace_newest": true }], // find-and-replace:find-previous
       "alt-shift-down": ["editor::AddSelectionBelow", { "skip_soft_wrap": true }], // editor:add-selection-below
       "alt-shift-up": ["editor::AddSelectionAbove", { "skip_soft_wrap": true }], // editor:add-selection-above
       "ctrl-j": "editor::JoinLines", // editor:join-lines
@@ -39,7 +39,7 @@
     "context": "BufferSearchBar",
     "bindings": {
       "f3": ["editor::SelectNext", { "replace_newest": true }], // find-and-replace:find-next
-      "shift-f3": ["editor::SelectPrevious", { "replace_newest": true }], //find-and-replace:find-previous
+      "shift-f3": ["editor::SelectPrevious", { "replace_newest": true }], // find-and-replace:find-previous
       "ctrl-f3": "search::SelectNextMatch", // find-and-replace:find-next-selected
       "ctrl-shift-f3": "search::SelectPreviousMatch" // find-and-replace:find-previous-selected
     }
