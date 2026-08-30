@@ -30,6 +30,8 @@ straight-line code and running longer tasks on background threads more.
 
 ## Generic code amplification
 
+AKA. Monomorphization Bloat.
+
 Functions and structs that take generic arguments are compiled as a separate
 copy for each variant in use. I found a couple of tools that help with finding
 flarge functions as well as functions that end up generating a lot of copies:
@@ -40,8 +42,11 @@ flarge functions as well as functions that end up generating a lot of copies:
 `cargo llvm-lines` reveals how much code is generated for each function:
 
 ```sh
-cargo llvm-lines -p settings_ui --release | head -20
+CARGO_PROFILE_RELEASE_LTO=fat cargo llvm-lines --release --sort copies -p gram --bin gram > llvm-lines.txt
 ```
+
+Full LTO so all monomorphizations appear in the same crate, `--sort copies` to
+get the functions with the most variants listed first.
 
 This turned out to be huge: The settings code in particular generates crazy
 amounts of code, and while I have managed to reduce the size a lot just by
