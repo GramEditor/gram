@@ -29,18 +29,16 @@ use objc2_app_kit::{
 };
 use objc2_core_foundation::CGPoint;
 use objc2_foundation::{
-    MainThreadMarker, NSArray, NSCopying, NSDictionary, NSMutableIndexSet, NSNotification,
-    NSObjectNSScriptClassDescription, NSObjectProtocol, NSOperatingSystemVersion, NSPoint, NSProcessInfo, NSRange,
-    NSRect, NSSize, NSString, NSURL, NSUserDefaults, ns_string,
+    MainThreadMarker, NSArray, NSCopying, NSMutableIndexSet, NSNotification, NSObjectNSScriptClassDescription,
+    NSObjectProtocol, NSOperatingSystemVersion, NSPoint, NSProcessInfo, NSRange, NSRect, NSSize, NSString, NSURL,
+    NSUserDefaults, ns_string,
 };
 use objc2_quartz_core::CALayer;
 use parking_lot::Mutex;
 use raw_window_handle as rwh;
-use smallvec::SmallVec;
 use std::{
     cell::{Cell, RefCell},
     ffi::c_void,
-    path::PathBuf,
     ptr::NonNull,
     rc::Rc,
     sync::{Arc, Weak},
@@ -1749,20 +1747,22 @@ fn drag_event_position(
 }
 
 fn external_paths_from_event(dragging_info: &ProtocolObject<dyn NSDraggingInfo>) -> Option<ExternalPaths> {
-    let mut paths = SmallVec::new();
     let pasteboard = dragging_info.draggingPasteboard();
     let classes = NSArray::from_slice(&[NSURL::class()]);
-    let options = NSDictionary::new();
-    let Some(urls) = (unsafe { pasteboard.readObjectsForClasses_options(&classes, Some(&options)) }) else {
-        return None;
-    };
-    for file in urls {
-        if let Some(url) = file.downcast::<NSURL>().ok()
-            && let Some(s) = url.absoluteString()
-        {
-            paths.push(PathBuf::from(s.to_string()))
-        }
-    }
+
+    // SAFETY: NSURL is supported by 'readObjectsForClasses'
+    // https://developer.apple.com/documentation/appkit/nspasteboard/readobjects(forclasses:options:)
+    let objects = unsafe { pasteboard.readObjectsForClasses_options(&classes, None) }?;
+    let paths = objects
+        .into_iter()
+        .filter_map(|object| {
+            let url = object.downcast::<NSURL>().ok()?;
+            if !url.isFileURL() {
+                return None;
+            }
+            url.to_file_path()
+        })
+        .collect();
     Some(ExternalPaths(paths))
 }
 
