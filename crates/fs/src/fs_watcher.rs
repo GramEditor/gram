@@ -672,7 +672,9 @@ fn handle_event(event: Result<notify::Event, notify::Error>) {
 
 pub fn global<T>(f: impl FnOnce(&GlobalWatcher) -> T) -> Result<T> {
     let result = FS_WATCHER_INSTANCE.get_or_init(|| {
-        let config = notify::Config::default().with_event_kinds(EventKindMask::CORE);
+        let config = notify::Config::default()
+            .with_event_kinds(EventKindMask::CORE)
+            .with_fsevent_latency(Duration::from_millis(500));
         notify::RecommendedWatcher::new(handle_event, config).map(|file_watcher| GlobalWatcher {
             state: Mutex::new(WatcherState {
                 watchers: Default::default(),
