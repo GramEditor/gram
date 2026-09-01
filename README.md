@@ -73,9 +73,12 @@ We promise:
 - NO TERMS OF USE
 - NO THIRD PARTY LICENSING AGREEMENTS
 - NO SUBSCRIPTIONS
-- NO AUTOMATIC INSTALLATION OR UPDATES
+- NO AUTOMATIC INSTALLATION OR UPDATES (see note below)
 
 For more thoughts on this topic, see the [mission statement](./docs/mission.md).
+
+> **PSA:** As of version 3.3.0, extensions still can and will do whatever they want, including downloading and running executables.
+> See [bug #507](https://codeberg.org/GramEditor/gram/issues/507) and [this post](https://gram-editor.com/posts/psa-extensions/).
 
 ### AI in Gram
 
