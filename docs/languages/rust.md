@@ -90,7 +90,7 @@ To use the binary specified by rustup respecting the project-specific setting in
 }
 ```
 
-You can set the `allow_download` setting for `rust-analyzer` and the editor will
+You can set the `allow_binary_download` setting for `rust-analyzer` and the editor will
 download and install a recent version automatically for you.
 
 If you want to install pre-release `rust-analyzer` version instead you can
