@@ -192,3 +192,7 @@ The Zed code base contains a lot of AI-generated code. It doesn't need a single
 line more.
 
 [zig-coc]: https://ziglang.org/code-of-conduct/
+
+## SciActive's Human Contribution Policy
+
+Gram adheres to [SciActive's human contribution policy 2 UP](./HUMAN-CONTRIBUTION-POLICY-2-UP.md).

@@ -167,3 +167,9 @@ See: <https://gram-editor.com/credits>.
 **Gram** is an old norse/swedish word meaning "ill-tempered" or grumpy. It is
 also the name of a sword from norse legend which was broken and then re-forged,
 stronger than any other sword, used to kill a dragon.
+
+## SciActive's Human Contribution Policy
+
+Gram adheres to [SciActive's human contribution policy 2 UP](./docs/HUMAN-CONTRIBUTION-POLICY-2-UP.md).
+
+![Seal of Human Authorship](./assets/images/seal_of_human_authorship.svg)
