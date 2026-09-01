@@ -317,7 +317,7 @@ pub fn parse_links_only(text: &str) -> Vec<(Range<usize>, MarkdownEvent)> {
     let mut finder = LinkFinder::new();
     finder.kinds(&[linkify::LinkKind::Url]);
 
-    let mut links = finder.links(text).into_iter().peekable();
+    let mut links = finder.links(text).peekable();
     let mut index = 0;
 
     // We use .split('\n') instead of .lines() here because we need
