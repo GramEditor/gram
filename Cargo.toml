@@ -323,6 +323,7 @@ chardetng = "1.0.0"
 chrono = { version = "0.4.45", features = ["clock", "oldtime", "serde", "std", "wasmbind"] }
 circular-buffer = "2.0.1"
 clap = { version = "4.6.6", features = ["color", "derive", "error-context", "help", "std", "suggestions", "usage", "wrap_help"] }
+codebook-tree-sitter-typst = "0.12.1"
 command-fds = "0.3.3"
 convert_case = "0.11.0"
 cosmic-text = { git = "https://codeberg.org/GramEditor/cosmic-text", rev = "4649fd872a6099edebd12c97fc08eb578c4a8062" }

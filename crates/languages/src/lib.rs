@@ -39,6 +39,7 @@ mod tailwind;
 mod tailwindcss;
 mod toml;
 mod typescript;
+mod typst;
 mod vtsls;
 mod xml;
 mod yaml;
@@ -103,6 +104,7 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
         ("toml", tree_sitter_toml::LANGUAGE),
         ("tsx", tree_sitter_typescript::LANGUAGE_TSX),
         ("typescript", tree_sitter_typescript::LANGUAGE_TYPESCRIPT),
+        ("typst", codebook_tree_sitter_typst::LANGUAGE),
         ("xml", tree_sitter_xml::LANGUAGE_XML),
         ("yaml", tree_sitter_yaml::LANGUAGE),
         ("zig", tree_sitter_zig::LANGUAGE),
@@ -145,6 +147,7 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
     let toml_lsp_adapter = Arc::new(toml::TomlLspAdapter);
     let typescript_context = Arc::new(typescript::TypeScriptContextProvider::new(fs.clone()));
     let typescript_lsp_adapter = Arc::new(typescript::TypeScriptLspAdapter::new(node.clone(), fs.clone()));
+    let typst_lsp_adapter = Arc::new(typst::TypstLspAdapter);
     let vtsls_adapter = Arc::new(vtsls::VtslsLspAdapter::new(node.clone(), fs.clone()));
     let xml_lsp_adapter = Arc::new(xml::XmlLspAdapter);
     let yaml_lsp_adapter = Arc::new(yaml::YamlLspAdapter::new(node));
@@ -305,6 +308,11 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
             name: "typescript",
             adapters: vec![typescript_lsp_adapter.clone(), vtsls_adapter.clone()],
             context: Some(typescript_context.clone()),
+            ..Default::default()
+        },
+        LanguageInfo {
+            name: "typst",
+            adapters: vec![typst_lsp_adapter],
             ..Default::default()
         },
         LanguageInfo {

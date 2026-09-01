@@ -14,6 +14,7 @@ async-tar.workspace = true
 async-trait.workspace = true
 chrono.workspace = true
 collections.workspace = true
+codebook-tree-sitter-typst = { workspace = true, optional = true }
 futures.workspace = true
 globset.workspace = true
 gpui.workspace = true
@@ -83,6 +84,7 @@ url.workspace = true
 util.workspace = true
 
 [dev-dependencies]
+codebook-tree-sitter-typst.workspace = true
 pretty_assertions.workspace = true
 theme = { workspace = true, features = ["test-support"] }
 tree-sitter.workspace = true
@@ -109,6 +111,7 @@ unindent.workspace = true
 
 [features]
 load-grammars = [
+  "codebook-tree-sitter-typst",
   "tree-sitter",
   "tree-sitter-bash",
   "tree-sitter-c",

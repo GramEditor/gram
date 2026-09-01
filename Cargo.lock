@@ -1269,6 +1269,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "codebook-tree-sitter-typst"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f785ad90ce80edd9e8b3d00890af0bc163e9a2c38f03daa18aede98d343d093"
+dependencies = [
+ "cc",
+ "tree-sitter-language",
+]
+
+[[package]]
 name = "codespan-reporting"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4993,6 +5003,7 @@ dependencies = [
  "async-tar",
  "async-trait",
  "chrono",
+ "codebook-tree-sitter-typst",
  "collections",
  "futures",
  "globset",

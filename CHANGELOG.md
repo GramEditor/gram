@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implement clipboard file and image copy for MacOS (#487) by @rockisch
 - Allow disabling 'auto focus on paste' (#487) by @rockisch
 - Handle '#' links in Markdown preview (#514) by @rockisch
+- Language support for Typst via tinymist (#517) by @theDoctor
 
 ## Removed
 

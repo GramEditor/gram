@@ -1,0 +1,22 @@
+[
+	{
+		"label": "Typst: Export File",
+		"command": "typst",
+		"args": ["compile", "\"$GRAM_FILE\""],
+		"hide": "on_success"
+	},
+	{
+		"label": "Typst: Watch File",
+		"command": "typst",
+		"args": ["watch", "\"$GRAM_FILE\""],
+		"reveal": "never",
+		"hide": "always"
+	},
+	{
+		"label": "Typst: Open Preview",
+		"command": "xdg-open",
+		"args": ["http://127.0.0.1:23635/"],
+		"reveal": "never",
+		"hide": "always"
+	}
+]
