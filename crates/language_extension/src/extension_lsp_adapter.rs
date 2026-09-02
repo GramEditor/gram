@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use collections::{HashMap, HashSet};
 use extension::{Extension, ExtensionLanguageServerProxy, WorktreeDelegate};
 use futures::{FutureExt, future::join_all, lock::OwnedMutexGuard};
-use gpui::{App, AppContext, AsyncApp, Task};
+use gpui::{App, AppContext, AsyncApp, SharedString, Task};
 use language::{
     BinaryStatus, CodeLabel, DynLspInstaller, HighlightId, Language, LanguageName, LanguageServerBinaryLocations,
     LspAdapter, LspAdapterDelegate, Toolchain,
@@ -129,6 +129,14 @@ impl ExtensionLspAdapter {
             language_name,
         }
     }
+
+    fn extension_name(&self) -> String {
+        self.extension.manifest().name.clone()
+    }
+
+    fn name(&self) -> SharedString {
+        self.language_server_id.0.clone()
+    }
 }
 
 #[async_trait(?Send)]
@@ -137,12 +145,34 @@ impl DynLspInstaller for ExtensionLspAdapter {
         self: Arc<Self>,
         delegate: Arc<dyn LspAdapterDelegate>,
         _: Option<Toolchain>,
-        _: LanguageServerBinaryOptions,
+        binary_options: LanguageServerBinaryOptions,
         _: OwnedMutexGuard<Option<(bool, LanguageServerBinary)>>,
         _: AsyncApp,
     ) -> LanguageServerBinaryLocations {
         async move {
             let ret = maybe!(async move {
+                if !binary_options.allow_binary_download {
+                    anyhow::bail!(
+                        "Extension '{}' not allowed to download language server '{}'",
+                        self.extension_name(),
+                        self.name(),
+                    );
+                }
+                if !binary_options.allow_path_lookup {
+                    anyhow::bail!(
+                        "Extension '{}' not allowed to look up system-installed language server '{}'",
+                        self.extension_name(),
+                        self.name(),
+                    );
+                }
+                if !binary_options.enable_auto_updates {
+                    anyhow::bail!(
+                        "Extension '{}' not allowed to update language server '{}'",
+                        self.extension_name(),
+                        self.name(),
+                    );
+                }
+
                 let delegate = Arc::new(WorktreeDelegateAdapter(delegate.clone())) as _;
                 let command = self
                     .extension
