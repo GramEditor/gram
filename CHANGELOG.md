@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Update mermaid renderer to improve layout (#476) by @sbuzzard
 - Clean up formatting in docs (#490) by @koru
+- Adopt SciActive's human contribution policy (#495) by @helinos
+  Policy by @hperrin
 
 ## Fixed
 
