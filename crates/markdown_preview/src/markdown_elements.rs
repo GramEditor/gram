@@ -276,6 +276,11 @@ pub enum Link {
         /// The URL of the webpage.
         url: String,
     },
+    /// A link to a fragment in the document
+    Fragment {
+        /// The fragment identifier, including the '#'
+        id: String,
+    },
     /// A link to a path on the filesystem.
     Path {
         /// The path as provided in the Markdown document.
@@ -289,6 +294,9 @@ impl Link {
     pub fn identify(file_location_directory: Option<PathBuf>, text: String) -> Option<Link> {
         if text.starts_with("http") {
             return Some(Link::Web { url: text });
+        }
+        if text.starts_with('#') {
+            return Some(Link::Fragment { id: text });
         }
 
         // URL decode the text to handle spaces and other special characters
@@ -316,6 +324,7 @@ impl Display for Link {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Link::Web { url } => write!(f, "{}", url),
+            Link::Fragment { id } => write!(f, "#{}", id),
             Link::Path { display_path, .. } => write!(f, "{}", display_path.display()),
         }
     }

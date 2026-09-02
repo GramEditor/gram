@@ -174,6 +174,7 @@ impl DocumentationView {
         let mut render_cx = RenderContext::new(Some(self.workspace.clone()), &self.mermaid_state, window, cx)
             .with_link_clicked_callback(move |link: Link, window, cx| match link {
                 Link::Web { url } => open_doc_url(url.into(), window, cx),
+                Link::Fragment { id } => open_doc_url(id.into(), window, cx),
                 Link::Path { path, .. } => {
                     let from = if let Some(base) = Path::new(current.as_str()).parent() {
                         let path = path.to_str().unwrap().to_string();

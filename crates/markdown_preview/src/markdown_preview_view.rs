@@ -18,7 +18,9 @@ use ui::{WithScrollbar, prelude::*};
 use workspace::item::{Item, ItemHandle};
 use workspace::{Pane, Workspace};
 
-use crate::markdown_elements::ParsedMarkdownElement;
+use crate::markdown_elements::{
+    MarkdownParagraphChunk, ParsedMarkdownElement, ParsedMarkdownHeading, ParsedMarkdownText,
+};
 use crate::markdown_renderer::{CheckboxClickedEvent, MermaidState};
 use crate::{
     OpenFollowingPreview, OpenPreview, OpenPreviewToTheSide, ScrollPageDown, ScrollPageUp,
@@ -495,6 +497,26 @@ impl MarkdownPreviewView {
         }
         cx.notify();
     }
+
+    fn scroll_to_heading(&mut self, id: &str, _window: &mut Window, _cx: &mut Context<Self>) {
+        if let Some(contents) = &self.contents {
+            let id = &id[1..];
+            // Fid index of header that matches the ID
+            if let Some((idx, _)) = contents.children.iter().enumerate().find(|(_, child)| match child {
+                ParsedMarkdownElement::Heading(ParsedMarkdownHeading { contents, .. }) => {
+                    contents.iter().any(|content| match content {
+                        MarkdownParagraphChunk::Text(ParsedMarkdownText { contents, .. }) => {
+                            contents.to_lowercase().replace(" ", "-").contains(id)
+                        }
+                        _ => false,
+                    })
+                }
+                _ => false,
+            }) {
+                self.list_state.scroll_to_reveal_item(idx);
+            }
+        }
+    }
 }
 
 impl Focusable for MarkdownPreviewView {
@@ -565,6 +587,10 @@ impl Render for MarkdownPreviewView {
 
                             let mut render_cx =
                                 RenderContext::new(Some(this.workspace.clone()), &this.mermaid_state, window, cx)
+                                    .with_fragment_jump_callback(cx.listener(move |this, id: &str, window, cx| {
+                                        this.scroll_to_heading(id, window, cx);
+                                        cx.notify();
+                                    }))
                                     .with_checkbox_clicked_callback(cx.listener(
                                         move |this, e: &CheckboxClickedEvent, window, cx| {
                                             if let Some(editor) = this.active_editor.as_ref().map(|s| s.editor.clone())

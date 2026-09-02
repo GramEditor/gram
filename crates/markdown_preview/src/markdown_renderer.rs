@@ -43,6 +43,7 @@ impl CheckboxClickedEvent {
 
 type CheckboxClickedCallback = Arc<Box<dyn Fn(&CheckboxClickedEvent, &mut Window, &mut App)>>;
 type LinkClickedCallback = Arc<Box<dyn Fn(Link, &mut Window, &mut App)>>;
+type FragmentJumpCallback = Arc<Box<dyn Fn(&str, &mut Window, &mut App)>>;
 
 type MermaidDiagramCache = HashMap<ParsedMarkdownMermaidDiagramContents, CachedMermaidDiagram>;
 
@@ -181,6 +182,7 @@ pub struct RenderContext<'a> {
     indent: usize,
     checkbox_clicked_callback: Option<CheckboxClickedCallback>,
     link_clicked_callback: Option<LinkClickedCallback>,
+    fragment_jump_callback: Option<FragmentJumpCallback>,
     is_last_child: bool,
     mermaid_state: &'a MermaidState,
 }
@@ -221,6 +223,7 @@ impl<'a> RenderContext<'a> {
             code_span_background_color: theme.colors().editor_document_highlight_read_background,
             checkbox_clicked_callback: None,
             link_clicked_callback: None,
+            fragment_jump_callback: None,
             is_last_child: false,
             mermaid_state,
         }
@@ -236,6 +239,11 @@ impl<'a> RenderContext<'a> {
 
     pub fn with_link_clicked_callback(mut self, callback: impl Fn(Link, &mut Window, &mut App) + 'static) -> Self {
         self.link_clicked_callback = Some(Arc::new(Box::new(callback)));
+        self
+    }
+
+    pub fn with_fragment_jump_callback(mut self, callback: impl Fn(&str, &mut Window, &mut App) + 'static) -> Self {
+        self.fragment_jump_callback = Some(Arc::new(Box::new(callback)));
         self
     }
 
@@ -870,6 +878,7 @@ fn render_markdown_text(parsed_new: &MarkdownParagraph, cx: &mut RenderContext) 
                     }
                 }
                 let link_callback = cx.link_clicked_callback.clone();
+                let jump_cb = cx.fragment_jump_callback.clone();
                 let workspace = workspace_clone.clone();
                 let element = div()
                     .child(
@@ -896,6 +905,11 @@ fn render_markdown_text(parsed_new: &MarkdownParagraph, cx: &mut RenderContext) 
                             } else {
                                 match link {
                                     Link::Web { url } => cx.open_url(url),
+                                    Link::Fragment { id } => {
+                                        if let Some(jump_cb) = &jump_cb {
+                                            jump_cb(&id, window, cx);
+                                        }
+                                    }
                                     Link::Path { path, .. } => {
                                         if let Some(workspace) = &workspace {
                                             _ = workspace.update(cx, |workspace, cx| {
@@ -938,6 +952,7 @@ fn render_markdown_rule(cx: &mut RenderContext) -> AnyElement {
 fn render_markdown_image(image: &Image, cx: &mut RenderContext) -> AnyElement {
     let image_resource = match image.link.clone() {
         Link::Web { url } => Resource::Uri(url.into()),
+        Link::Fragment { id } => Resource::Uri(id.into()),
         Link::Path { path, .. } => Resource::Path(Arc::from(path)),
     };
 
@@ -976,11 +991,17 @@ fn render_markdown_image(image: &Image, cx: &mut RenderContext) -> AnyElement {
         .when_none(&cx.link_clicked_callback, |this| {
             this.on_click({
                 let link = image.link.clone();
+                let jump_cb = cx.fragment_jump_callback.clone();
                 move |_, window, cx| {
                     if window.modifiers().secondary() {
                         log::info!("Not calling the callback, why??");
                         match &link {
                             Link::Web { url } => cx.open_url(url),
+                            Link::Fragment { id } => {
+                                if let Some(jump_cb) = &jump_cb {
+                                    jump_cb(&id, window, cx);
+                                }
+                            }
                             Link::Path { path, .. } => {
                                 if let Some(workspace) = &workspace {
                                     _ = workspace.update(cx, |workspace, cx| {
