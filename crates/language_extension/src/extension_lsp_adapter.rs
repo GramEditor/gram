@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use collections::{HashMap, HashSet};
 use extension::{Extension, ExtensionLanguageServerProxy, WorktreeDelegate};
 use futures::{FutureExt, future::join_all, lock::OwnedMutexGuard};
-use gpui::{App, AppContext, AsyncApp, SharedString, Task};
+use gpui::{App, AppContext, AsyncApp, Task};
 use language::{
     BinaryStatus, CodeLabel, DynLspInstaller, HighlightId, Language, LanguageName, LanguageServerBinaryLocations,
     LspAdapter, LspAdapterDelegate, Toolchain,
@@ -132,10 +132,6 @@ impl ExtensionLspAdapter {
 
     fn extension_name(&self) -> String {
         self.extension.manifest().name.clone()
-    }
-
-    fn name(&self) -> SharedString {
-        self.language_server_id.0.clone()
     }
 }
 
