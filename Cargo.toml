@@ -297,7 +297,7 @@ anyhow = "1.0.104"
 arrayvec = { version = "0.7.8", features = ["serde", "std"] }
 as-raw-xcb-connection = "1.0.1"
 ashpd = { version = "0.13.13", default-features = false, features = ["async-io", "file_chooser", "notification", "open_uri", "settings", "trash"] }
-async-compression = { version = "0.4.43", features = ["futures-io", "gzip"] }
+async-compression = { version = "0.4.44", features = ["futures-io", "gzip"] }
 async-dispatcher = "0.1.2"
 async-fs = "2.2.0"
 async-io = "2.6.0"
@@ -391,7 +391,7 @@ objc2-core-graphics = "0.3.2"
 objc2-core-services = "0.3.2"
 objc2-foundation = "0.3.2"
 objc2-quartz-core = "0.3.2"
-open = "5.4.2"
+open = "5.4.3"
 ordered-float = "5.5.0"
 palette = { version = "0.7.7", default-features = false, features = ["std"] }
 parking = "2.2.1"
@@ -459,9 +459,9 @@ thiserror = "2.0.20"
 thread_local = "1.1.10"
 time = { version = "0.3.55", features = ["formatting", "local-offset", "macros", "parsing", "serde", "serde-well-known", "std"] }
 tokio = { version = "1.53.1", features = ["full", "macros", "rt", "rt-multi-thread"] }
-toml = "1.1.4"
+toml = "1.1.5"
 tracing = { version = "0.1.44", features = ["attributes", "log", "std"] }
-trash = "5.2.6"
+trash = "5.2.7"
 tree-sitter = { version = "0.26.13", features = ["std", "wasm"] }
 tree-sitter-bash = "0.25.1"
 tree-sitter-c = "0.24.2"
