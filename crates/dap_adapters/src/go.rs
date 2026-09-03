@@ -3,6 +3,7 @@ use collections::HashMap;
 use dap::{
     StartDebuggingRequestArguments,
     adapters::{DebugTaskDefinition, DownloadedFileType, TcpArguments, download_adapter_from_github},
+    settings::DapSettings,
 };
 use fs::Fs;
 use gpui::{AsyncApp, SharedString};
@@ -391,6 +392,7 @@ impl DebugAdapter for GoDebugAdapter {
         user_installed_path: Option<PathBuf>,
         user_args: Option<Vec<String>>,
         user_env: Option<HashMap<String, String>>,
+        settings: &DapSettings,
         _cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
         let adapter_path = paths::debug_adapters_dir().join(&Self::ADAPTER_NAME);
@@ -398,10 +400,14 @@ impl DebugAdapter for GoDebugAdapter {
 
         let delve_path = if let Some(path) = user_installed_path {
             path.to_string_lossy().into_owned()
+        } else if settings.ignore_system_version {
+            bail!("No user provided dlv path and ignore_system_version set");
         } else if let Some(path) = delegate.which(OsStr::new("dlv")).await {
             path.to_string_lossy().into_owned()
         } else if delegate.fs().is_file(&dlv_path).await {
             dlv_path.to_string_lossy().into_owned()
+        } else if !settings.allow_binary_download {
+            bail!("No dlv binary found and allow_binary_download not set");
         } else {
             let go = delegate
                 .which(OsStr::new("go"))

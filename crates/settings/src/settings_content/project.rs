@@ -196,6 +196,9 @@ pub struct DapSettingsContent {
     pub binary: Option<String>,
     pub args: Option<Vec<String>>,
     pub env: Option<HashMap<String, String>>,
+    pub ignore_system_version: Option<bool>,
+    pub allow_binary_download: Option<bool>,
+    pub enable_auto_updates: Option<bool>,
 }
 
 #[with_fallible_options]

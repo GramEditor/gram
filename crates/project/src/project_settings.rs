@@ -1,6 +1,6 @@
 use anyhow::Context as _;
 use collections::HashMap;
-use dap::adapters::DebugAdapterName;
+use dap::{adapters::DebugAdapterName, settings::DapSettings};
 use fs::Fs;
 use futures::StreamExt as _;
 use gpui::{AsyncApp, BorrowAppContext, Context, Entity, EventEmitter, Subscription, Task};
@@ -19,8 +19,8 @@ use serde::{Deserialize, Serialize};
 pub use settings::DirenvSettings;
 pub use settings::LspSettings;
 use settings::{
-    DapSettingsContent, InvalidSettingsError, LocalSettingsKind, RegisterSetting, Settings, SettingsLocation,
-    SettingsStore, parse_json_with_comments, watch_config_file,
+    InvalidSettingsError, LocalSettingsKind, RegisterSetting, Settings, SettingsLocation, SettingsStore,
+    parse_json_with_comments, watch_config_file,
 };
 use std::{path::PathBuf, sync::Arc, time::Duration};
 use task::{DebugTaskFile, TaskTemplates, VsCodeDebugTaskFile, VsCodeTaskFile};
@@ -1062,29 +1062,4 @@ pub fn local_settings_kind_to_proto(kind: LocalSettingsKind) -> proto::LocalSett
         LocalSettingsKind::Editorconfig => proto::LocalSettingsKind::Editorconfig,
         LocalSettingsKind::Debug => proto::LocalSettingsKind::Debug,
     }
-}
-
-#[derive(Debug, Clone)]
-pub struct DapSettings {
-    pub binary: DapBinary,
-    pub args: Vec<String>,
-    pub env: HashMap<String, String>,
-}
-
-impl From<DapSettingsContent> for DapSettings {
-    fn from(content: DapSettingsContent) -> Self {
-        DapSettings {
-            binary: content
-                .binary
-                .map_or_else(|| DapBinary::Default, |binary| DapBinary::Custom(binary)),
-            args: content.args.unwrap_or_default(),
-            env: content.env.unwrap_or_default(),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum DapBinary {
-    Default,
-    Custom(String),
 }

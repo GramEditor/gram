@@ -26,6 +26,8 @@ use std::{
 use task::{DebugScenario, GramDebugConfig, TcpArgumentsTemplate};
 use util::{archive::extract_zip, rel_path::RelPath};
 
+use crate::settings::DapSettings;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum DapStatus {
     None,
@@ -328,6 +330,7 @@ pub trait DebugAdapter: 'static + Send + Sync {
         user_installed_path: Option<PathBuf>,
         user_args: Option<Vec<String>>,
         user_env: Option<HashMap<String, String>>,
+        settings: &DapSettings,
         cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary>;
 
@@ -422,6 +425,7 @@ impl DebugAdapter for FakeAdapter {
         _: Option<PathBuf>,
         _: Option<Vec<String>>,
         _: Option<HashMap<String, String>>,
+        _: &DapSettings,
         _: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
         let connection = task_definition.tcp_connection.as_ref().map(|connection| TcpArguments {

@@ -1,6 +1,7 @@
 use crate::*;
 use anyhow::{Context as _, bail};
 use collections::HashMap;
+use dap::settings::DapSettings;
 use dap::{DebugRequest, StartDebuggingRequestArguments, adapters::DebugTaskDefinition};
 use fs::RemoveOptions;
 use futures::{StreamExt, TryStreamExt};
@@ -775,6 +776,7 @@ impl DebugAdapter for PythonDebugAdapter {
         user_installed_path: Option<PathBuf>,
         user_args: Option<Vec<String>>,
         user_env: Option<HashMap<String, String>>,
+        settings: &DapSettings,
         cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
         if let Some(local_path) = &user_installed_path {
@@ -782,6 +784,13 @@ impl DebugAdapter for PythonDebugAdapter {
             return self
                 .get_installed_binary(delegate, config, Some(local_path.clone()), user_args, user_env, None)
                 .await;
+        } else if settings.ignore_system_version {
+            anyhow::bail!("No user-installed debugpy adapter provided and ignore_system_version set");
+        }
+
+        // TODO: Make this more granular
+        if !settings.allow_binary_download {
+            anyhow::bail!("No debugpy adapter found and allow_binary_download not set");
         }
 
         let base_paths = ["cwd", "program", "module"]

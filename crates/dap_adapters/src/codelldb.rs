@@ -3,7 +3,7 @@ use std::{path::PathBuf, sync::OnceLock};
 use anyhow::{Context as _, Result};
 use async_trait::async_trait;
 use collections::HashMap;
-use dap::adapters::DebugTaskDefinition;
+use dap::{adapters::DebugTaskDefinition, settings::DapSettings};
 use futures::StreamExt;
 use gpui::AsyncApp;
 use serde_json::Value;
@@ -321,13 +321,21 @@ impl DebugAdapter for CodeLldbDebugAdapter {
         user_installed_path: Option<PathBuf>,
         user_args: Option<Vec<String>>,
         user_env: Option<HashMap<String, String>>,
+        settings: &DapSettings,
         _: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
+        if user_installed_path.is_none() && settings.ignore_system_version {
+            anyhow::bail!("No user provided codelldb binary and ignore_system_version not set");
+        }
+
         let mut command = user_installed_path
             .map(|p| p.to_string_lossy().into_owned())
             .or(self.path_to_codelldb.get().cloned());
 
         if command.is_none() {
+            if !settings.allow_binary_download {
+                anyhow::bail!("No installed codelldb binary found and allow_binary_download not set");
+            }
             delegate.output_to_console(format!("Checking latest version of {}...", self.name()));
             let adapter_path = paths::debug_adapters_dir().join(&Self::ADAPTER_NAME);
             let version_path = match self.fetch_latest_adapter_version(delegate).await {

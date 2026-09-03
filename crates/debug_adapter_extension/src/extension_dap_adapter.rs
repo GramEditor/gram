@@ -10,6 +10,7 @@ use collections::HashMap;
 use dap::{
     StartDebuggingRequestArgumentsRequest,
     adapters::{DapDelegate, DebugAdapter, DebugAdapterBinary, DebugAdapterName, DebugTaskDefinition},
+    settings::DapSettings,
 };
 use extension::{Extension, WorktreeDelegate};
 use gpui::AsyncApp;
@@ -89,8 +90,21 @@ impl DebugAdapter for ExtensionDapAdapter {
         _user_args: Option<Vec<String>>,
         // TODO support user env in the extension API
         _user_env: Option<HashMap<String, String>>,
+        settings: &DapSettings,
         _cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
+        if user_installed_path.is_none() && settings.ignore_system_version {
+            anyhow::bail!("ignore_system_version set for extension-provided DAP");
+        }
+
+        if !settings.allow_binary_download {
+            anyhow::bail!("allow_binary_download not set for extension-provided DAP");
+        }
+
+        if !settings.enable_auto_updates {
+            anyhow::bail!("enable_auto_updates not set for extension-provided DAP");
+        }
+
         self.extension
             .get_dap_binary(
                 self.debug_adapter_name.clone(),

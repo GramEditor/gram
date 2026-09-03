@@ -1,7 +1,7 @@
 use anyhow::{Context as _, Result, bail};
 use async_trait::async_trait;
 use collections::HashMap;
-use dap::{StartDebuggingRequestArguments, adapters::DebugTaskDefinition};
+use dap::{StartDebuggingRequestArguments, adapters::DebugTaskDefinition, settings::DapSettings};
 use gpui::AsyncApp;
 use std::ffi::OsStr;
 use task::{DebugScenario, GramDebugConfig};
@@ -178,6 +178,7 @@ impl DebugAdapter for GdbDebugAdapter {
         user_installed_path: Option<std::path::PathBuf>,
         user_args: Option<Vec<String>>,
         user_env: Option<HashMap<String, String>>,
+        settings: &DapSettings,
         _: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
         // Try to get gdb_path from config
@@ -194,6 +195,10 @@ impl DebugAdapter for GdbDebugAdapter {
             let user_setting_path = user_installed_path
                 .filter(|p| p.exists())
                 .and_then(|p| p.to_str().map(|s| s.to_string()));
+
+            if user_setting_path.is_none() && settings.ignore_system_version {
+                bail!("No user provided gdb path and ignore_system_version set");
+            }
 
             let gdb_path_result = delegate
                 .which(OsStr::new("gdb"))

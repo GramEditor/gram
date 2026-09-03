@@ -5,10 +5,8 @@ use super::{
     session::{self, Session, SessionStateEvent},
 };
 use crate::{
-    InlayHint, InlayHintLabel, ProjectEnvironment, ResolveState,
-    debugger::session::SessionQuirks,
-    project_settings::{DapBinary, ProjectSettings},
-    worktree_store::WorktreeStore,
+    InlayHint, InlayHintLabel, ProjectEnvironment, ResolveState, debugger::session::SessionQuirks,
+    project_settings::ProjectSettings, worktree_store::WorktreeStore,
 };
 use anyhow::{Context as _, Result, anyhow};
 use async_trait::async_trait;
@@ -19,6 +17,7 @@ use dap::{
     client::SessionId,
     inline_value::VariableLookupKind,
     messages::Message,
+    settings::{DapBinary, DapSettings},
 };
 use fs::{Fs, RemoveOptions};
 use futures::{
@@ -249,13 +248,22 @@ impl DapStore {
                 });
                 let user_args = dap_settings.map(|s| s.args.clone());
                 let user_env = dap_settings.map(|s| s.env.clone());
+                let dap_settings = dap_settings.cloned().unwrap_or(DapSettings::default());
 
                 let delegate = self.delegate(worktree, console, cx);
 
                 let worktree = worktree.clone();
                 cx.spawn(async move |this, cx| {
                     let mut binary = adapter
-                        .get_binary(&delegate, &definition, user_installed_path, user_args, user_env, cx)
+                        .get_binary(
+                            &delegate,
+                            &definition,
+                            user_installed_path,
+                            user_args,
+                            user_env,
+                            &dap_settings,
+                            cx,
+                        )
                         .await?;
 
                     let env = this

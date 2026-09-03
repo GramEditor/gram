@@ -1,6 +1,6 @@
 use anyhow::Context as _;
 use collections::HashMap;
-use dap::{StartDebuggingRequestArguments, adapters::DebugTaskDefinition};
+use dap::{StartDebuggingRequestArguments, adapters::DebugTaskDefinition, settings::DapSettings};
 use gpui::AsyncApp;
 use serde_json::Value;
 use std::{path::PathBuf, sync::OnceLock};
@@ -49,6 +49,7 @@ impl JsDebugAdapter {
         user_installed_path: Option<PathBuf>,
         user_args: Option<Vec<String>>,
         user_env: Option<HashMap<String, String>>,
+        settings: &DapSettings,
         _: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
         let tcp_connection = task_definition.tcp_connection.clone().unwrap_or_default();
@@ -118,6 +119,8 @@ impl JsDebugAdapter {
 
         let adapter_path = if let Some(user_installed_path) = user_installed_path {
             user_installed_path
+        } else if settings.ignore_system_version {
+            anyhow::bail!("User provided DAP binary not found and ignore_system_version set");
         } else {
             let adapter_path = paths::debug_adapters_dir().join(self.name().as_ref());
 
@@ -488,8 +491,12 @@ impl DebugAdapter for JsDebugAdapter {
         user_installed_path: Option<PathBuf>,
         user_args: Option<Vec<String>>,
         user_env: Option<HashMap<String, String>>,
+        settings: &DapSettings,
         cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
+        if !settings.allow_binary_download {
+            anyhow::bail!("js_debug_dap not downloaded: allow_binary_download not set");
+        }
         if self.checked.set(()).is_ok() {
             delegate.output_to_console(format!("Checking latest version of {}...", self.name()));
             if let Some(version) = self.fetch_latest_adapter_version(delegate).await.log_err() {
@@ -505,7 +512,7 @@ impl DebugAdapter for JsDebugAdapter {
             }
         }
 
-        self.get_installed_binary(delegate, config, user_installed_path, user_args, user_env, cx)
+        self.get_installed_binary(delegate, config, user_installed_path, user_args, user_env, settings, cx)
             .await
     }
 
