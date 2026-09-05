@@ -54,6 +54,12 @@ pub enum SshConnectionHost {
     Hostname(String),
 }
 
+enum ServerBinaryStatus {
+    Found,
+    NotExecutable,
+    NotFound,
+}
+
 impl SshConnectionHost {
     pub fn to_bracketed_string(&self) -> String {
         match self {
@@ -568,12 +574,15 @@ impl SshRemoteConnection {
         let binary_name = format!("gram-remote-server-{}-{}", release_channel.dev_name(), version_str);
 
         // is there a valid version in $PATH
-        let binary_path = RelPath::unix(&binary_name).unwrap();
-        if self.try_server_binary(binary_path).await {
-            return Ok(binary_path.into());
+        let relative_binary_path = RelPath::unix(&binary_name).unwrap();
+        if matches!(
+            self.try_server_binary(relative_binary_path).await?,
+            ServerBinaryStatus::Found
+        ) {
+            return Ok(relative_binary_path.into());
         }
 
-        let dst_path = paths::remote_server_dir_relative().join(binary_path);
+        let abs_binary_path = paths::remote_server_dir_relative().join(relative_binary_path);
 
         cfg_select! {
             debug_assertions => {
@@ -590,8 +599,8 @@ impl SshRemoteConnection {
                     );
                     self.upload_local_server_binary(&remote_server_path, &tmp_path, delegate, cx)
                         .await?;
-                    self.extract_server_binary(&dst_path, &tmp_path, delegate, cx).await?;
-                    return Ok(dst_path);
+                    self.extract_server_binary(&abs_binary_path, &tmp_path, delegate, cx).await?;
+                    return Ok(abs_binary_path);
                 }
             },
             _ => {
@@ -601,8 +610,9 @@ impl SshRemoteConnection {
             }
         }
 
-        if self.try_server_binary(&dst_path).await {
-            return Ok(dst_path);
+        let abs_result = self.try_server_binary(&abs_binary_path).await?;
+        if matches!(abs_result, ServerBinaryStatus::Found) {
+            return Ok(abs_binary_path);
         }
 
         let has_pre_built_binary = release_channel == ReleaseChannel::Stable
@@ -619,7 +629,7 @@ impl SshRemoteConnection {
             );
 
             let quoted_dir = quote(paths::remote_server_dir_relative().as_unix_str())?;
-            let quoted_path = quote(dst_path.as_unix_str())?;
+            let quoted_path = quote(abs_binary_path.as_unix_str())?;
             let quoted_download_url = quote(&download_url)?;
             let command = format!(
                 "\
@@ -642,26 +652,48 @@ impl SshRemoteConnection {
                 Could not find remote server at {0:?}. \
                 You can install the server using the following command:\n\n\
                 ssh {quoted_host} {quoted_command}\n",
-                dst_path.display(self.path_style())
+                abs_binary_path.display(self.path_style())
             );
         }
 
-        anyhow::bail!(
-            "Could not find remote server at {:?}",
-            dst_path.display(self.path_style())
-        );
+        match abs_result {
+            ServerBinaryStatus::NotExecutable => {
+                anyhow::bail!(
+                    "Could not run remote server at {:?}: Permission Denied",
+                    abs_binary_path.display(self.path_style())
+                );
+            }
+            ServerBinaryStatus::NotFound => {
+                anyhow::bail!(
+                    "Could not find remote server at {:?}",
+                    abs_binary_path.display(self.path_style())
+                );
+            }
+            ServerBinaryStatus::Found => unreachable!(),
+        }
     }
 
-    async fn try_server_binary(&self, path: &RelPath) -> bool {
-        self.socket
-            .run_command(
-                self.ssh_shell_kind,
-                &path.display(self.path_style()),
-                &["version"],
-                true,
-            )
+    async fn try_server_binary(&self, path: &RelPath) -> Result<ServerBinaryStatus> {
+        let path_str = path.display(self.path_style());
+        let script = format!(
+            "if [ ! -f {path_str} ]; then echo NOT_FOUND; \
+             elif [ ! -x {path_str} ]; then echo NOT_EXECUTABLE; \
+             else {path_str} version; fi"
+        );
+
+        let output = self
+            .socket
+            .run_command(self.ssh_shell_kind, "sh", &["-c", &script], true)
             .await
-            .is_ok()
+            .context("Failed to check remote server binary")?;
+
+        if output.contains("NOT_FOUND") {
+            Ok(ServerBinaryStatus::NotFound)
+        } else if output.contains("NOT_EXECUTABLE") {
+            Ok(ServerBinaryStatus::NotExecutable)
+        } else {
+            Ok(ServerBinaryStatus::Found)
+        }
     }
 
     #[cfg(debug_assertions)]
