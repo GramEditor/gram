@@ -9,6 +9,7 @@
   "typedef"
   "union"
   "volatile"
+  "constexpr"
 ] @keyword
 
 [
