@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow disabling 'auto focus on paste' (#487) by @rockisch
 - Handle '#' links in Markdown preview (#514) by @rockisch
 - Language support for Typst via tinymist (#517) by @theDoctor
+- Add support for C23 keyword 'constexpr' (#522) by @mgrave
 
 ## Removed
 
