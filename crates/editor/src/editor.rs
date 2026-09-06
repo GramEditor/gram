@@ -860,47 +860,134 @@ struct PhantomBreakpointIndicator {
 ///
 /// See the [module level documentation](self) for more information.
 pub struct Editor {
+    // Core & Identity
     focus_handle: FocusHandle,
     last_focused_descendant: Option<WeakFocusHandle>,
-    /// The text buffer being edited
+
     buffer: Entity<MultiBuffer>,
+    /// The text buffer being edited
+    project: Option<Entity<Project>>,
+    workspace: Option<(WeakEntity<Workspace>, Option<WorkspaceId>)>,
+
+    remote_id: Option<ViewId>,
+    mode: EditorMode,
+    searchable: bool,
+    input_enabled: bool,
+    read_only: bool,
+    use_modal_editing: bool,
+    blink_manager: Entity<BlinkManager>,
+
+    // Display Map & Text Rendering
     /// Map of how text in the buffer should be displayed.
     /// Handles soft wraps, folds, fake inlay text insertions, etc.
     pub display_map: Entity<DisplayMap>,
+    /// Presumably the styled hint text shown when the buffer is empty (e.g. "Type a message…").
+    /// (At least it looks like this)
     placeholder_display_map: Option<Entity<DisplayMap>>,
+    soft_wrap_mode_override: Option<language_settings::SoftWrap>,
+    hard_wrap: Option<usize>,
+    folding_newlines: Task<()>,
+    style: Option<EditorStyle>,
+    text_style_refinement: Option<TextStyleRefinement>,
+    gutter_dimensions: GutterDimensions,
+
+    // Selections & Cursors
     pub selections: SelectionsCollection,
-    pub scroll_manager: ScrollManager,
     /// When inline assist editors are linked, they all render cursors because
     /// typing enters text into each of them, even the ones that aren't focused.
     pub(crate) show_cursor_when_unfocused: bool,
-    columnar_selection_state: Option<ColumnarSelectionState>,
-    add_selections_state: Option<AddSelectionsState>,
-    select_next_state: Option<SelectNextState>,
-    select_prev_state: Option<SelectNextState>,
+    show_cursor_names: bool,
+    pub show_local_selections: bool,
+    cursor_shape: CursorShape,
+    /// Whether the cursor is offset one character to the left when something is
+    /// selected (needed for vim visual mode)
+    offset_cursor_left_on_selection: bool,
+    current_line_highlight: Option<CurrentLineHighlight>,
+    pub collapse_matches: bool,
+    selection_mark_mode: bool,
+    selection_drag_state: SelectionDragState,
+    select_next_is_case_sensitive: Option<bool>,
+    // TODO: Refactor this away
+    pixel_position_of_newest_cursor: Option<gpui::Point<Pixels>>,
+
+    columnar_drag: Option<ColumnarSelectionState>,
+    column_expansions: Option<ColumnExpansionState>,
+    forward_matches: Option<SelectNextState>,
+    backward_matches: Option<SelectNextState>,
     selection_history: SelectionHistory,
+
     defer_selection_effects: bool,
     deferred_selection_effects_state: Option<DeferredSelectionEffectsState>,
-    autoclose_regions: Vec<AutocloseRegion>,
-    snippet_stack: InvalidationStack<SnippetState>,
-    select_syntax_node_history: SelectSyntaxNodeHistory,
+
+    // IME = Input Method Editor (text compositing thing)
     ime_transaction: Option<TransactionId>,
+    pending_rename: Option<RenameState>,
+    linked_editing_range_task: Option<Task<Option<()>>>,
+    linked_edit_ranges: linked_editing_ranges::LinkedEditingRanges,
+
+    // Scrolling & Layout
+    pub scroll_manager: ScrollManager,
+    next_scroll_position: NextScrollCursorCenterTopBottom,
+    last_bounds: Option<Bounds<Pixels>>,
+    last_position_map: Option<Rc<PositionMap>>,
+    expect_bounds_change: Option<Bounds<Pixels>>,
+    _scroll_cursor_center_top_bottom_task: Task<()>,
+    post_scroll_update: Task<()>,
+
+    // Diagnostics
     pub diagnostics_max_severity: DiagnosticSeverity,
     active_diagnostics: ActiveDiagnostic,
     show_inline_diagnostics: bool,
     inline_diagnostics_update: Task<()>,
     inline_diagnostics_enabled: bool,
     diagnostics_enabled: bool,
-    word_completions_enabled: bool,
     inline_diagnostics: Vec<(Anchor, InlineDiagnostic)>,
-    soft_wrap_mode_override: Option<language_settings::SoftWrap>,
-    hard_wrap: Option<usize>,
-    project: Option<Entity<Project>>,
+    pull_diagnostics_task: Task<()>,
+    pull_diagnostics_background_task: Task<()>,
+
+    // Completions & Language Features
+    word_completions_enabled: bool,
     semantics_provider: Option<Rc<dyn SemanticsProvider>>,
     completion_provider: Option<Rc<dyn CompletionProvider>>,
-    blink_manager: Entity<BlinkManager>,
-    show_cursor_names: bool,
-    pub show_local_selections: bool,
-    mode: EditorMode,
+    completion_tasks: Vec<(CompletionId, Task<()>)>,
+    next_completion_id: CompletionId,
+    signature_help_state: SignatureHelpState,
+    auto_signature_help: Option<bool>,
+    find_all_references_task_sources: Vec<Anchor>,
+    available_code_actions: Option<(Location, Rc<[AvailableCodeAction]>)>,
+    code_actions_task: Option<Task<Result<()>>>,
+    code_action_providers: Vec<Rc<dyn CodeActionProvider>>,
+    quick_selection_highlight_task: Option<(Range<Anchor>, Task<()>)>,
+    debounced_selection_highlight_task: Option<(Range<Anchor>, Task<()>)>,
+    document_highlights_task: Option<Task<()>>,
+    colors: Option<LspColorData>,
+    refresh_colors_task: Task<()>,
+    inlay_hints: Option<LspInlayHintData>,
+    next_inlay_id: usize,
+    next_color_inlay_id: usize,
+    applicable_language_settings: HashMap<Option<LanguageName>, LanguageSettings>,
+    fetched_tree_sitter_chunks: HashMap<ExcerptId, HashSet<Range<BufferRow>>>,
+    pub lookup_key: Option<Box<dyn Any + Send + Sync>>,
+    inline_value_cache: InlineValueCache,
+
+    // Editing & Autocomplete
+    autoclose_regions: Vec<AutocloseRegion>,
+    snippet_stack: InvalidationStack<SnippetState>,
+    select_syntax_node_history: SelectSyntaxNodeHistory,
+    use_autoclose: bool,
+    use_auto_surround: bool,
+    jsx_tag_auto_close_enabled_in_any_buffer: bool,
+    autoindent_mode: Option<AutoindentMode>,
+
+    // Highlights & Visual State
+    highlight_order: usize,
+    highlighted_rows: HashMap<TypeId, Vec<RowHighlight>>,
+    background_highlights: HashMap<HighlightKey, BackgroundHighlight>,
+    gutter_highlights: HashMap<TypeId, GutterHighlight>,
+    scrollbar_marker_state: ScrollbarMarkerState,
+    active_indent_guides_state: ActiveIndentGuidesState,
+
+    // UI Visibility Options
     show_breadcrumbs: bool,
     show_gutter: bool,
     show_scrollbars: ScrollbarAxes,
@@ -917,119 +1004,75 @@ pub struct Editor {
     show_wrap_guides: Option<bool>,
     show_indent_guides: Option<bool>,
     buffers_with_disabled_indent_guides: HashSet<BufferId>,
-    highlight_order: usize,
-    highlighted_rows: HashMap<TypeId, Vec<RowHighlight>>,
-    background_highlights: HashMap<HighlightKey, BackgroundHighlight>,
-    gutter_highlights: HashMap<TypeId, GutterHighlight>,
-    scrollbar_marker_state: ScrollbarMarkerState,
-    active_indent_guides_state: ActiveIndentGuidesState,
-    nav_history: Option<ItemNavHistory>,
-    context_menu: RefCell<Option<CodeContextMenu>>,
-    context_menu_options: Option<ContextMenuOptions>,
-    mouse_context_menu: Option<MouseContextMenu>,
-    completion_tasks: Vec<(CompletionId, Task<()>)>,
-    inline_blame_popover: Option<InlineBlamePopover>,
-    inline_blame_popover_show_task: Option<Task<()>>,
-    signature_help_state: SignatureHelpState,
-    auto_signature_help: Option<bool>,
-    find_all_references_task_sources: Vec<Anchor>,
-    next_completion_id: CompletionId,
-    available_code_actions: Option<(Location, Rc<[AvailableCodeAction]>)>,
-    code_actions_task: Option<Task<Result<()>>>,
-    quick_selection_highlight_task: Option<(Range<Anchor>, Task<()>)>,
-    debounced_selection_highlight_task: Option<(Range<Anchor>, Task<()>)>,
-    document_highlights_task: Option<Task<()>>,
-    linked_editing_range_task: Option<Task<Option<()>>>,
-    linked_edit_ranges: linked_editing_ranges::LinkedEditingRanges,
-    pending_rename: Option<RenameState>,
-    searchable: bool,
-    cursor_shape: CursorShape,
-    /// Whether the cursor is offset one character to the left when something is
-    /// selected (needed for vim visual mode)
-    cursor_offset_on_selection: bool,
-    current_line_highlight: Option<CurrentLineHighlight>,
-    pub collapse_matches: bool,
-    autoindent_mode: Option<AutoindentMode>,
-    workspace: Option<(WeakEntity<Workspace>, Option<WorkspaceId>)>,
-    input_enabled: bool,
-    use_modal_editing: bool,
-    read_only: bool,
-    remote_id: Option<ViewId>,
-    pub hover_state: HoverState,
-    pending_mouse_down: Option<Rc<RefCell<Option<MouseDownEvent>>>>,
-    prev_pressure_stage: Option<PressureStage>,
-    gutter_hovered: bool,
-    hovered_link_state: Option<HoveredLinkState>,
-    code_action_providers: Vec<Rc<dyn CodeActionProvider>>,
-    next_inlay_id: usize,
-    next_color_inlay_id: usize,
-    _subscriptions: Vec<Subscription>,
-    pixel_position_of_newest_cursor: Option<gpui::Point<Pixels>>,
-    gutter_dimensions: GutterDimensions,
-    style: Option<EditorStyle>,
-    text_style_refinement: Option<TextStyleRefinement>,
-    next_editor_action_id: EditorActionId,
-    editor_actions: Rc<RefCell<BTreeMap<EditorActionId, Box<dyn Fn(&Editor, &mut Window, &mut Context<Self>)>>>>,
-    use_autoclose: bool,
-    use_auto_surround: bool,
-    jsx_tag_auto_close_enabled_in_any_buffer: bool,
+    show_selection_menu: Option<bool>,
+
+    // Git Blame & Diff
     show_git_blame_gutter: bool,
     show_git_blame_inline: bool,
     show_git_blame_inline_delay_task: Option<Task<()>>,
     git_blame_inline_enabled: bool,
-    render_diff_hunk_controls: RenderDiffHunkControlsFn,
-    buffer_serialization: Option<BufferSerialization>,
-    show_selection_menu: Option<bool>,
     blame: Option<Entity<GitBlame>>,
     blame_subscription: Option<Subscription>,
+    render_diff_hunk_controls: RenderDiffHunkControlsFn,
+    buffer_serialization: Option<BufferSerialization>,
+    // Whether we are temporarily displaying a diff other than git's
+    temporary_diff_override: bool,
+    load_diff_task: Option<Shared<Task<()>>>,
+    pub change_list: ChangeList,
+    hovered_diff_hunk_row: Option<DisplayRow>,
+
+    // Context Menu & Hover
+    context_menu: RefCell<Option<CodeContextMenu>>,
+    context_menu_options: Option<ContextMenuOptions>,
+    mouse_context_menu: Option<MouseContextMenu>,
     custom_context_menu: Option<
         Box<
             dyn 'static
                 + Fn(&mut Self, DisplayPoint, &mut Window, &mut Context<Self>) -> Option<Entity<ui::ContextMenu>>,
         >,
     >,
-    last_bounds: Option<Bounds<Pixels>>,
-    last_position_map: Option<Rc<PositionMap>>,
-    expect_bounds_change: Option<Bounds<Pixels>>,
+    pub hover_state: HoverState,
+    hovered_link_state: Option<HoveredLinkState>,
+    gutter_hovered: bool,
+    inline_blame_popover: Option<InlineBlamePopover>,
+    inline_blame_popover_show_task: Option<Task<()>>,
+
+    // Tasks & Runnables
     tasks: BTreeMap<(BufferId, BufferRow), RunnableTasks>,
     tasks_update_task: Option<Task<()>>,
     breakpoint_store: Option<Entity<BreakpointStore>>,
     gutter_breakpoint_indicator: (Option<PhantomBreakpointIndicator>, Option<Task<()>>),
-    hovered_diff_hunk_row: Option<DisplayRow>,
-    pull_diagnostics_task: Task<()>,
-    pull_diagnostics_background_task: Task<()>,
-    in_project_search: bool,
-    previous_search_ranges: Option<Arc<[Range<Anchor>]>>,
+
+    // Navigation & History
+    nav_history: Option<ItemNavHistory>,
     breadcrumb_header: Option<String>,
     focused_block: Option<FocusedBlock>,
-    next_scroll_position: NextScrollCursorCenterTopBottom,
+
+    // Mouse & Input
+    pending_mouse_down: Option<Rc<RefCell<Option<MouseDownEvent>>>>,
+    prev_pressure_stage: Option<PressureStage>,
+    mouse_cursor_hidden: bool,
+    hide_mouse_mode: HideMouseMode,
+
+    // Search
+    in_project_search: bool,
+    previous_search_ranges: Option<Arc<[Range<Anchor>]>>,
+
+    // Addons & Buffers
     addons: HashMap<TypeId, Box<dyn Addon>>,
     registered_buffers: HashMap<BufferId, OpenLspBufferHandle>,
-    load_diff_task: Option<Shared<Task<()>>>,
-    /// Whether we are temporarily displaying a diff other than git's
-    temporary_diff_override: bool,
-    selection_mark_mode: bool,
-    toggle_fold_multiple_buffers: Task<()>,
-    _scroll_cursor_center_top_bottom_task: Task<()>,
-    serialize_selections: Task<()>,
-    serialize_folds: Task<()>,
-    mouse_cursor_hidden: bool,
-    minimap: Option<Entity<Self>>,
-    hide_mouse_mode: HideMouseMode,
-    pub change_list: ChangeList,
-    inline_value_cache: InlineValueCache,
     number_deleted_lines: bool,
 
-    selection_drag_state: SelectionDragState,
-    colors: Option<LspColorData>,
-    post_scroll_update: Task<()>,
-    refresh_colors_task: Task<()>,
-    inlay_hints: Option<LspInlayHintData>,
-    folding_newlines: Task<()>,
-    select_next_is_case_sensitive: Option<bool>,
-    pub lookup_key: Option<Box<dyn Any + Send + Sync>>,
-    applicable_language_settings: HashMap<Option<LanguageName>, LanguageSettings>,
-    fetched_tree_sitter_chunks: HashMap<ExcerptId, HashSet<Range<BufferRow>>>,
+    // Editor Actions
+    next_editor_action_id: EditorActionId,
+    editor_actions: Rc<RefCell<BTreeMap<EditorActionId, Box<dyn Fn(&Editor, &mut Window, &mut Context<Self>)>>>>,
+
+    // Misc
+    _subscriptions: Vec<Subscription>,
+    toggle_fold_multiple_buffers: Task<()>,
+    serialize_selections: Task<()>,
+    serialize_folds: Task<()>,
+    minimap: Option<Entity<Self>>,
 }
 
 fn debounce_value(debounce_ms: u64) -> Option<Duration> {
@@ -1133,7 +1176,7 @@ struct SelectionHistoryEntry {
     selections: Arc<[Selection<Anchor>]>,
     select_next_state: Option<SelectNextState>,
     select_prev_state: Option<SelectNextState>,
-    add_selections_state: Option<AddSelectionsState>,
+    add_selections_state: Option<ColumnExpansionState>,
 }
 
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq)]
@@ -1309,14 +1352,17 @@ struct RowHighlight {
 }
 
 #[derive(Clone, Debug)]
-struct AddSelectionsState {
-    groups: Vec<AddSelectionsGroup>,
+struct ColumnExpansionState {
+    groups: Vec<ColumnExpansionsGroup>,
 }
 
 #[derive(Clone, Debug)]
-struct AddSelectionsGroup {
+struct ColumnExpansionsGroup {
+    /// Which way the group is considered to be facing.
     above: bool,
-    stack: Vec<usize>,
+    /// Selection Ids relevant to that columnar selection group.
+    /// Last Id is always considered to be the extension-point.
+    selection_ids: Vec<usize>,
 }
 
 #[derive(Clone)]
@@ -1936,10 +1982,10 @@ impl Editor {
             placeholder_display_map: None,
             selections,
             scroll_manager: ScrollManager::new(cx),
-            columnar_selection_state: None,
-            add_selections_state: None,
-            select_next_state: None,
-            select_prev_state: None,
+            columnar_drag: None,
+            column_expansions: None,
+            forward_matches: None,
+            backward_matches: None,
             selection_history: SelectionHistory::default(),
             defer_selection_effects: false,
             deferred_selection_effects_state: None,
@@ -2006,7 +2052,7 @@ impl Editor {
             pending_rename: None,
             searchable: !is_minimap,
             cursor_shape: EditorSettings::get_global(cx).cursor_shape.unwrap_or_default(),
-            cursor_offset_on_selection: false,
+            offset_cursor_left_on_selection: false,
             current_line_highlight: None,
             autoindent_mode: Some(AutoindentMode::EachLine),
             collapse_matches: false,
@@ -2659,7 +2705,7 @@ impl Editor {
     }
 
     pub fn set_cursor_offset_on_selection(&mut self, set_cursor_offset_on_selection: bool) {
-        self.cursor_offset_on_selection = set_cursor_offset_on_selection;
+        self.offset_cursor_left_on_selection = set_cursor_offset_on_selection;
     }
 
     pub fn set_current_line_highlight(&mut self, current_line_highlight: Option<CurrentLineHighlight>) {
@@ -2775,10 +2821,10 @@ impl Editor {
         let display_map = self.display_map.update(cx, |display_map, cx| display_map.snapshot(cx));
         let buffer = display_map.buffer_snapshot();
         if self.selections.count() == 1 {
-            self.add_selections_state = None;
+            self.column_expansions = None;
         }
-        self.select_next_state = None;
-        self.select_prev_state = None;
+        self.forward_matches = None;
+        self.backward_matches = None;
         self.select_syntax_node_history.try_clear();
         self.invalidate_autoclose_regions(&selection_anchors, buffer);
         self.snippet_stack.invalidate(&selection_anchors, buffer);
@@ -3064,9 +3110,9 @@ impl Editor {
             old_cursor_position: self.selections.newest_anchor().head(),
             history_entry: SelectionHistoryEntry {
                 selections: self.selections.disjoint_anchors_arc(),
-                select_next_state: self.select_next_state.clone(),
-                select_prev_state: self.select_prev_state.clone(),
-                add_selections_state: self.add_selections_state.clone(),
+                select_next_state: self.forward_matches.clone(),
+                select_prev_state: self.backward_matches.clone(),
+                add_selections_state: self.column_expansions.clone(),
             },
         };
         let (changed, result) = self.selections.change_with(&snapshot, change);
@@ -3394,7 +3440,7 @@ impl Editor {
 
         let tail = self.selections.newest::<Point>(&display_map).tail();
         let selection_anchor = display_map.buffer_snapshot().anchor_before(tail);
-        self.columnar_selection_state = match mode {
+        self.columnar_drag = match mode {
             ColumnarMode::FromMouse => Some(ColumnarSelectionState::FromMouse {
                 selection_tail: selection_anchor,
                 display_point: if reset {
@@ -3427,7 +3473,7 @@ impl Editor {
     ) {
         let display_map = self.display_map.update(cx, |map, cx| map.snapshot(cx));
 
-        if self.columnar_selection_state.is_some() {
+        if self.columnar_drag.is_some() {
             self.select_columns(position, goal_column, &display_map, window, cx);
         } else if let Some(mut pending) = self.selections.pending_anchor().cloned() {
             let buffer = display_map.buffer_snapshot();
@@ -3513,7 +3559,7 @@ impl Editor {
     }
 
     fn end_selection(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        self.columnar_selection_state.take();
+        self.columnar_drag.take();
         if let Some(pending_mode) = self.selections.pending_mode() {
             let selections = self.selections.all::<MultiBufferOffset>(&self.display_snapshot(cx));
             self.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
@@ -3536,7 +3582,7 @@ impl Editor {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let Some(columnar_state) = self.columnar_selection_state.as_ref() else {
+        let Some(columnar_state) = self.columnar_drag.as_ref() else {
             return;
         };
 
@@ -3611,12 +3657,11 @@ impl Editor {
             None => false,
         };
 
-        pending_nonempty_selection
-            || (self.columnar_selection_state.is_some() && self.selections.disjoint_anchors().len() > 1)
+        pending_nonempty_selection || (self.columnar_drag.is_some() && self.selections.disjoint_anchors().len() > 1)
     }
 
     pub fn has_pending_selection(&self) -> bool {
-        self.selections.pending_anchor().is_some() || self.columnar_selection_state.is_some()
+        self.selections.pending_anchor().is_some() || self.columnar_drag.is_some()
     }
 
     pub fn cancel(&mut self, _: &Cancel, window: &mut Window, cx: &mut Context<Self>) {
@@ -11470,145 +11515,173 @@ impl Editor {
         self.hide_mouse_cursor(HideMouseCursorOrigin::MovementAction, cx);
 
         let display_map = self.display_map.update(cx, |map, cx| map.snapshot(cx));
-        let all_selections = self.selections.all::<Point>(&display_map);
         let text_layout_details = self.text_layout_details(window);
-
-        let (mut columnar_selections, new_selections_to_columnarize) = {
-            if let Some(state) = self.add_selections_state.as_ref() {
-                let columnar_selection_ids: HashSet<_> = state
-                    .groups
-                    .iter()
-                    .flat_map(|group| group.stack.iter())
-                    .copied()
-                    .collect();
-
-                all_selections
-                    .into_iter()
-                    .partition(|s| columnar_selection_ids.contains(&s.id))
-            } else {
-                (Vec::new(), all_selections)
-            }
-        };
+        let all_selections = self.selections.all::<Point>(&display_map);
 
         let mut state = self
-            .add_selections_state
+            .column_expansions
             .take()
-            .unwrap_or_else(|| AddSelectionsState { groups: Vec::new() });
+            .unwrap_or_else(|| ColumnExpansionState { groups: Vec::new() });
 
-        for selection in new_selections_to_columnarize {
+        // IDs of selections that are already tracked by column expansion state.
+        let existing_group_selection_ids: HashSet<_> = state
+            .groups
+            .iter()
+            .flat_map(|group| group.selection_ids.iter())
+            .copied()
+            .collect();
+
+        // Split selections into:
+        // - selections already participating in a column-expansion group
+        // - brand new selections that need to become groups first
+        let (mut grouped_selections, fresh_selections): (Vec<_>, Vec<_>) = all_selections
+            .into_iter()
+            .partition(|selection| existing_group_selection_ids.contains(&selection.id));
+
+        // Convert fresh selections into columnar groups,
+        // that we can later operate on.
+        for selection in fresh_selections {
             let range = selection.display_range(&display_map).sorted();
+
             let start_x = display_map.x_for_display_point(range.start, &text_layout_details);
             let end_x = display_map.x_for_display_point(range.end, &text_layout_details);
-            let positions = start_x.min(end_x)..start_x.max(end_x);
-            let mut stack = Vec::new();
+            let column_range = start_x.min(end_x)..start_x.max(end_x);
+
+            let mut selection_ids = Vec::new();
+
             for row in range.start.row().0..=range.end.row().0 {
-                if let Some(selection) = self.selections.build_columnar_selection(
+                if let Some(columnar_selection) = self.selections.build_columnar_selection(
                     &display_map,
                     DisplayRow(row),
-                    &positions,
+                    &column_range,
                     selection.reversed,
                     &text_layout_details,
                 ) {
-                    stack.push(selection.id);
-                    columnar_selections.push(selection);
+                    selection_ids.push(columnar_selection.id);
+                    grouped_selections.push(columnar_selection);
                 }
             }
-            if !stack.is_empty() {
+
+            if !selection_ids.is_empty() {
                 if above {
-                    stack.reverse();
+                    // For "add above", we want the current expansion edge at the end.
+                    selection_ids.reverse();
                 }
-                state.groups.push(AddSelectionsGroup { above, stack });
+
+                state.groups.push(ColumnExpansionsGroup { above, selection_ids });
+            }
+        }
+
+        // the groups we will extend.
+        let mut edge_group_by_selection_id = HashMap::default();
+
+        for group in state.groups.iter_mut() {
+            debug_assert!(!group.selection_ids.is_empty());
+
+            if let Some(edge_id) = group.selection_ids.last() {
+                edge_group_by_selection_id.insert(*edge_id, group);
             }
         }
 
         let mut final_selections = Vec::new();
-        let end_row = if above {
+        let boundary_row = if above {
             DisplayRow(0)
         } else {
             display_map.max_point().row()
         };
 
-        let mut last_added_item_per_group = HashMap::default();
-        for group in state.groups.iter_mut() {
-            if let Some(last_id) = group.stack.last() {
-                last_added_item_per_group.insert(*last_id, group);
+        // - if it's the edge of a group and direction matches, try to extend by one row
+        // - if it's the edge but direction changed, shrink that group's edge marker
+        // - otherwise keep it as-is
+        for selection in grouped_selections {
+            let Some(group) = edge_group_by_selection_id.get_mut(&selection.id) else {
+                // Not an edge selection. Keep it.
+                final_selections.push(selection);
+                continue;
+            };
+
+            if group.above != above {
+                // User switched direction. Meaning the top must be shrunk.
+                group.selection_ids.pop();
+                continue;
             }
-        }
 
-        for selection in columnar_selections {
-            if let Some(group) = last_added_item_per_group.get_mut(&selection.id) {
-                if above == group.above {
-                    let range = selection.display_range(&display_map).sorted();
-                    debug_assert_eq!(range.start.row(), range.end.row());
-                    let mut row = range.start.row();
-                    let positions = if let SelectionGoal::HorizontalRange { start, end } = selection.goal {
-                        Pixels::from(start)..Pixels::from(end)
-                    } else {
-                        let start_x = display_map.x_for_display_point(range.start, &text_layout_details);
-                        let end_x = display_map.x_for_display_point(range.end, &text_layout_details);
-                        start_x.min(end_x)..start_x.max(end_x)
-                    };
+            let range = selection.display_range(&display_map).sorted();
+            debug_assert_eq!(range.start.row(), range.end.row());
 
-                    let mut maybe_new_selection = None;
-                    let direction = if above { -1 } else { 1 };
+            let mut current_row = range.start.row();
 
-                    while row != end_row {
-                        let new_buffer_row = if skip_soft_wrap {
-                            let new_row =
-                                display_map.start_of_relative_buffer_row(DisplayPoint::new(row, 0), direction);
-                            row = new_row.row();
-                            Some(new_row.to_point(&display_map).row)
-                        } else {
-                            if above {
-                                row.0 -= 1;
-                            } else {
-                                row.0 += 1;
-                            }
-                            None
-                        };
+            let visual_column_range = if let SelectionGoal::HorizontalRange { start, end } = selection.goal {
+                // if there is a selection range we want to preserve, we do so.
+                Pixels::from(start)..Pixels::from(end)
+            } else {
+                let start_x = display_map.x_for_display_point(range.start, &text_layout_details);
+                let end_x = display_map.x_for_display_point(range.end, &text_layout_details);
+                start_x.min(end_x)..start_x.max(end_x)
+            };
 
-                        let new_selection = if let Some(buffer_row) = new_buffer_row {
-                            let start_col = selection.start.column;
-                            let end_col = selection.end.column;
-                            let buffer_columns = start_col.min(end_col)..start_col.max(end_col);
+            let direction = if above { -1 } else { 1 };
+            let mut new_selection_to_add = None;
 
-                            self.selections.build_columnar_selection_from_buffer_columns(
-                                &display_map,
-                                buffer_row,
-                                &buffer_columns,
-                                selection.reversed,
-                                &text_layout_details,
-                            )
-                        } else {
-                            self.selections.build_columnar_selection(
-                                &display_map,
-                                row,
-                                &positions,
-                                selection.reversed,
-                                &text_layout_details,
-                            )
-                        };
+            while current_row != boundary_row {
+                let target_buffer_row;
 
-                        if let Some(new_selection) = new_selection {
-                            maybe_new_selection = Some(new_selection);
-                            break;
-                        }
-                    }
-
-                    if let Some(new_selection) = maybe_new_selection {
-                        group.stack.push(new_selection.id);
-                        if above {
-                            final_selections.push(new_selection);
-                            final_selections.push(selection);
-                        } else {
-                            final_selections.push(selection);
-                            final_selections.push(new_selection);
-                        }
-                    } else {
-                        final_selections.push(selection);
-                    }
+                if skip_soft_wrap {
+                    // get the raw position within the buffer
+                    let new_display_row =
+                        display_map.start_of_relative_buffer_row(DisplayPoint::new(current_row, 0), direction);
+                    current_row = new_display_row.row();
+                    target_buffer_row = Some(new_display_row.to_point(&display_map).row)
                 } else {
-                    group.stack.pop();
+                    if above {
+                        current_row.0 -= 1;
+                    } else {
+                        current_row.0 += 1;
+                    }
+                    target_buffer_row = None
+                };
+
+                let candidate = if let Some(buffer_row) = target_buffer_row {
+                    // Move by logical buffer lines
+                    let start_col = selection.start.column;
+                    let end_col = selection.end.column;
+                    let buffer_column_range = start_col.min(end_col)..start_col.max(end_col);
+
+                    self.selections.build_columnar_selection_from_buffer_columns(
+                        &display_map,
+                        buffer_row,
+                        &buffer_column_range,
+                        selection.reversed,
+                        &text_layout_details,
+                    )
+                } else {
+                    // Move by visual lines
+                    self.selections.build_columnar_selection(
+                        &display_map,
+                        current_row,
+                        &visual_column_range,
+                        selection.reversed,
+                        &text_layout_details,
+                    )
+                };
+
+                if let Some(candidate) = candidate {
+                    new_selection_to_add = Some(candidate);
+                    // ensure that we only ever add 1 new row
+                    break;
+                }
+            }
+
+            if let Some(new_selection) = new_selection_to_add {
+                group.selection_ids.push(new_selection.id);
+
+                // Keep selections in display order.
+                if above {
+                    final_selections.push(new_selection);
+                    final_selections.push(selection);
+                } else {
+                    final_selections.push(selection);
+                    final_selections.push(new_selection);
                 }
             } else {
                 final_selections.push(selection);
@@ -11623,18 +11696,16 @@ impl Editor {
             .selections
             .all::<Point>(&display_map)
             .iter()
-            .map(|s| s.id)
+            .map(|selection| selection.id)
             .collect();
-        state.groups.retain_mut(|group| {
-            // selections might get merged above so we remove invalid items from stacks
-            group.stack.retain(|id| final_selection_ids.contains(id));
 
-            // single selection in stack can be treated as initial state
-            group.stack.len() > 1
+        state.groups.retain_mut(|group| {
+            group.selection_ids.retain(|id| final_selection_ids.contains(id));
+            group.selection_ids.len() > 1
         });
 
         if !state.groups.is_empty() {
-            self.add_selections_state = Some(state);
+            self.column_expansions = Some(state);
         }
     }
 
@@ -11720,7 +11791,7 @@ impl Editor {
     ) -> Result<()> {
         let buffer = display_map.buffer_snapshot();
         let mut selections = self.selections.all::<MultiBufferOffset>(&display_map);
-        if let Some(mut select_next_state) = self.select_next_state.take() {
+        if let Some(mut select_next_state) = self.forward_matches.take() {
             let query = &select_next_state.query;
             if !select_next_state.done {
                 let first_selection = selections.iter().min_by_key(|s| s.id).unwrap();
@@ -11772,7 +11843,7 @@ impl Editor {
                 }
             }
 
-            self.select_next_state = Some(select_next_state);
+            self.forward_matches = Some(select_next_state);
         } else {
             let mut only_carets = true;
             let mut same_text_selected = true;
@@ -11832,12 +11903,12 @@ impl Editor {
                         wordwise: true,
                         done: is_empty,
                     };
-                    self.select_next_state = Some(select_state);
+                    self.forward_matches = Some(select_state);
                 } else {
-                    self.select_next_state = None;
+                    self.forward_matches = None;
                 }
             } else if let Some(selected_text) = selected_text {
-                self.select_next_state = Some(SelectNextState {
+                self.forward_matches = Some(SelectNextState {
                     query: self.build_query(&[selected_text], cx)?,
                     wordwise: false,
                     done: false,
@@ -11859,7 +11930,7 @@ impl Editor {
         let display_map = self.display_map.update(cx, |map, cx| map.snapshot(cx));
 
         self.select_next_match_internal(&display_map, false, None, window, cx)?;
-        let Some(select_next_state) = self.select_next_state.as_mut().filter(|state| !state.done) else {
+        let Some(select_next_state) = self.forward_matches.as_mut().filter(|state| !state.done) else {
             return Ok(());
         };
 
@@ -11923,7 +11994,7 @@ impl Editor {
         let display_map = self.display_map.update(cx, |map, cx| map.snapshot(cx));
         let buffer = display_map.buffer_snapshot();
         let mut selections = self.selections.all::<MultiBufferOffset>(&display_map);
-        if let Some(mut select_prev_state) = self.select_prev_state.take() {
+        if let Some(mut select_prev_state) = self.backward_matches.take() {
             let query = &select_prev_state.query;
             if !select_prev_state.done {
                 let first_selection = selections.iter().min_by_key(|s| s.id).unwrap();
@@ -11968,7 +12039,7 @@ impl Editor {
                 }
             }
 
-            self.select_prev_state = Some(select_prev_state);
+            self.backward_matches = Some(select_prev_state);
         } else {
             let mut only_carets = true;
             let mut same_text_selected = true;
@@ -12027,12 +12098,12 @@ impl Editor {
                         wordwise: true,
                         done: is_empty,
                     };
-                    self.select_prev_state = Some(select_state);
+                    self.backward_matches = Some(select_state);
                 } else {
-                    self.select_prev_state = None;
+                    self.backward_matches = None;
                 }
             } else if let Some(selected_text) = selected_text {
-                self.select_prev_state = Some(SelectNextState {
+                self.backward_matches = Some(SelectNextState {
                     query: self.build_query(&[selected_text.chars().rev().collect::<String>()], cx)?,
                     wordwise: false,
                     done: false,
@@ -13213,9 +13284,9 @@ impl Editor {
             });
             self.selection_history.mode = SelectionHistoryMode::Normal;
 
-            self.select_next_state = entry.select_next_state;
-            self.select_prev_state = entry.select_prev_state;
-            self.add_selections_state = entry.add_selections_state;
+            self.forward_matches = entry.select_next_state;
+            self.backward_matches = entry.select_prev_state;
+            self.column_expansions = entry.add_selections_state;
         }
     }
 
@@ -13231,9 +13302,9 @@ impl Editor {
             });
             self.selection_history.mode = SelectionHistoryMode::Normal;
 
-            self.select_next_state = entry.select_next_state;
-            self.select_prev_state = entry.select_prev_state;
-            self.add_selections_state = entry.add_selections_state;
+            self.forward_matches = entry.select_next_state;
+            self.backward_matches = entry.select_prev_state;
+            self.column_expansions = entry.add_selections_state;
         }
     }
 

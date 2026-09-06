@@ -1382,7 +1382,7 @@ impl EditorElement {
                     let layout = SelectionLayout::new(
                         selection,
                         editor.selections.line_mode(),
-                        editor.cursor_offset_on_selection,
+                        editor.offset_cursor_left_on_selection,
                         editor.cursor_shape,
                         &snapshot.display_snapshot,
                         is_newest,
@@ -1429,7 +1429,7 @@ impl EditorElement {
                     let drag_cursor_layout = SelectionLayout::new(
                         drop_cursor.clone(),
                         false,
-                        editor.cursor_offset_on_selection,
+                        editor.offset_cursor_left_on_selection,
                         CursorShape::Bar,
                         &snapshot.display_snapshot,
                         false,
@@ -1442,7 +1442,7 @@ impl EditorElement {
             }
 
             if !editor.is_focused(window) && editor.show_cursor_when_unfocused {
-                let cursor_offset_on_selection = editor.cursor_offset_on_selection;
+                let cursor_offset_on_selection = editor.offset_cursor_left_on_selection;
 
                 let layouts = snapshot
                     .buffer_snapshot()
@@ -8498,7 +8498,7 @@ impl Element for EditorElement {
                             SelectionLayout::new(
                                 newest,
                                 editor.selections.line_mode(),
-                                editor.cursor_offset_on_selection,
+                                editor.offset_cursor_left_on_selection,
                                 editor.cursor_shape,
                                 &snapshot,
                                 true,
@@ -10940,7 +10940,7 @@ mod tests {
 
         window
             .update(cx, |editor, window, cx| {
-                editor.cursor_offset_on_selection = true;
+                editor.offset_cursor_left_on_selection = true;
                 editor.change_selections(SelectionEffects::no_scroll(), window, cx, |s| {
                     s.select_ranges([
                         Point::new(0, 0)..Point::new(1, 0),
