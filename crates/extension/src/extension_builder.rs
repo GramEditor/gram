@@ -5,7 +5,7 @@ use crate::{
 use ::fs::Fs;
 use anyhow::{Context as _, Result, bail};
 use futures::{AsyncReadExt, StreamExt};
-use heck::ToSnakeCase;
+use convert_case::{Case, Casing};
 use http_client::{self, AsyncBody, HttpClient};
 use serde::Deserialize;
 use std::{
@@ -111,7 +111,7 @@ impl ExtensionBuilder {
             })?;
         }
         for (grammar_name, grammar_metadata) in &extension_manifest.grammars {
-            let snake_cased_grammar_name = grammar_name.to_snake_case();
+            let snake_cased_grammar_name = grammar_name.to_case(Case::Snake);
             if grammar_name.as_ref() != snake_cased_grammar_name.as_str() {
                 bail!("grammar name '{grammar_name}' must be written in snake_case: {snake_cased_grammar_name}");
             }

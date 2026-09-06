@@ -19,7 +19,6 @@ collections.workspace = true
 dirs.workspace = true
 dunce.workspace = true
 futures.workspace = true
-futures-lite.workspace = true
 globset.workspace = true
 itertools.workspace = true
 log.workspace = true
