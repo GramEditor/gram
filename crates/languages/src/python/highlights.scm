@@ -13,6 +13,18 @@
 (type (identifier) @type)
 (generic_type (identifier) @type)
 (comment) @comment
+(
+  (comment) @comment.todo
+  (#match? @comment.todo "TODO:")
+)
+(
+  (comment) @comment.note
+  (#match? @comment.note "NOTE:")
+)
+(
+  (comment) @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
+)
 (string) @string
 (escape_sequence) @string.escape
 
@@ -173,10 +185,34 @@
 (class_definition
   body: (block
     . (comment) @comment*
+(
+  (comment) @comment.todo
+  (#match? @comment.todo "TODO:")
+)
+(
+  (comment) @comment.note
+  (#match? @comment.note "NOTE:")
+)
+(
+  (comment) @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
+)
     . (expression_statement (string) @string.doc)+))
 
 (module
   . (comment) @comment*
+(
+  (comment) @comment.todo
+  (#match? @comment.todo "TODO:")
+)
+(
+  (comment) @comment.note
+  (#match? @comment.note "NOTE:")
+)
+(
+  (comment) @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
+)
   . (expression_statement (string) @string.doc)+)
 
 (class_definition

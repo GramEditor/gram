@@ -290,6 +290,30 @@
 ; Comments
 
 (comment) @comment
+(
+  (comment) @comment.todo
+  (#match? @comment.todo "TODO:")
+)
+(
+  (comment) @comment.note
+  (#match? @comment.note "NOTE:")
+)
+(
+  (comment) @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
+)
 
 ((comment) @comment.documentation
+(
+  (comment) @comment.todo
+  (#match? @comment.todo "TODO:")
+)
+(
+  (comment) @comment.note
+  (#match? @comment.note "NOTE:")
+)
+(
+  (comment) @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
+)
   (#match? @comment.documentation "^//(/|!)"))

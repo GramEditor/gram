@@ -37,6 +37,18 @@
 
 (dotdotdot) @comment.discard
 (comment) @comment
+(
+  (comment) @comment.todo
+  (#match? @comment.todo "TODO:")
+)
+(
+  (comment) @comment.note
+  (#match? @comment.note "NOTE:")
+)
+(
+  (comment) @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Functions

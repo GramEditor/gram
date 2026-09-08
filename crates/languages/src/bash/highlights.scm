@@ -36,6 +36,18 @@
 ] @keyword.control
 
 (comment) @comment
+(
+  (comment) @comment.todo
+  (#match? @comment.todo "TODO:")
+)
+(
+  (comment) @comment.note
+  (#match? @comment.note "NOTE:")
+)
+(
+  (comment) @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
+)
 
 (function_definition name: (word) @function)
 (command_name (word) @function)
