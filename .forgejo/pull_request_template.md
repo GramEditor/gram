@@ -3,30 +3,29 @@
 
 ## Checklist
 
-The [CONTRIBUTING.md](https://codeberg.org/GramEditor/gram/src/branch/main/CONTRIBUTING.md) contains information that will be helpful to first time contributors.
+The [CONTRIBUTING.md](https://codeberg.org/GramEditor/gram/src/branch/main/CONTRIBUTING.md) contains helpful information for first-time contributors.
 
 ### Compliance
 
-- [ ] I have read the [Gram Code of Conduct](https://codeberg.org/GramEditor/gram/src/branch/main/CODE_OF_CONDUCT.md) and agree with them.
+- [ ] I have read and agree to the [Gram Code of Conduct](https://codeberg.org/GramEditor/gram/src/branch/main/CODE_OF_CONDUCT.md).
 
-### Tests for Rust changes
+### Rust changes
 
-<!-- Can be removed for non-Rust changes. -->
+<!-- You can skip and remove this section if your changes do not involve Rust code. -->
 
-- I ran...
-  - [ ] `cargo run --profile release-fast` to check for issues with app building.
-  - [ ] `cargo nextest run --workspace --no-fail-fast` to check tests passing (optional).
-  - [ ] `cargo fmt --all` to check formatting.
-  - [ ] `./script/clippy` to check linting.
+- [ ] `cargo check --workspace --all-targets --locked` passes.
+- [ ] `cargo fmt --all -- --check` passes.
+- [ ] `./script/clippy` passes.
+- [ ] `cargo nextest run --workspace --locked` passes (optional).
 
 ### Documentation
 
-- [ ] I created a commit [to the documentation](https://codeberg.org/GramEditor/gram/src/branch/main/docs) to explain to Gram users how to use this change.
-- [ ] I did not document these changes and I do not expect someone else to do it.
+- [ ] I have updated the [documentation](https://codeberg.org/GramEditor/gram/src/branch/main/docs) to reflect this change.
+- [ ] This change does not require documentation updates.
 
 ### Release notes
 
-- [ ] This change will be noticed by a Gram user (feature, bug fix, performance, etc.). I suggest to include a release note for this change.
-- [ ] This change is not visible to a Gram user (refactor, dependency upgrade, etc.). I think there is no need to add a release note for this change.
+- [ ] This change is user-facing (feature, bug fix, performance, etc.). A release note should be added.
+- [ ] This change is internal (refactor, dependency upgrade, CI, etc.). No release note is needed.
 
 <!-- dprint-ignore-end -->
