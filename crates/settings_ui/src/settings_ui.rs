@@ -251,6 +251,7 @@ struct SettingFieldRenderer {
 impl Global for SettingFieldRenderer {}
 
 impl SettingFieldRenderer {
+    #[inline]
     fn add_basic_renderer<T: 'static>(
         &mut self,
         render_control: impl Fn(
