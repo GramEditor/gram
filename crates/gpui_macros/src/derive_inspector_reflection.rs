@@ -1,7 +1,7 @@
 //! Implements `#[derive_inspector_reflection]` macro to provide runtime access to trait methods
 //! that have the shape `fn method(self) -> Self`. This code was generated using Zed Agent with Claude Opus 4.
 
-use heck::ToSnakeCase as _;
+use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::quote;
@@ -87,7 +87,7 @@ fn generate_reflected_trait(trait_item: ItemTrait) -> TokenStream {
 
     // Generate the reflection module name
     let reflection_mod_name = Ident::new(
-        &format!("{}_reflection", trait_name.to_string().to_snake_case()),
+        &format!("{}_reflection", trait_name.to_string().to_case(Case::Snake)),
         trait_name.span(),
     );
 

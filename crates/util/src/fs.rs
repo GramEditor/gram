@@ -1,7 +1,7 @@
 use crate::ResultExt;
 use anyhow::{Result, bail};
 use async_fs as fs;
-use futures_lite::StreamExt;
+use futures::StreamExt;
 use std::path::{Path, PathBuf};
 
 /// Removes all files and directories matching the given predicate

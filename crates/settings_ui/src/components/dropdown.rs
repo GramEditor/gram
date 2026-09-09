@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use gpui::{App, ElementId, IntoElement, RenderOnce};
-use heck::ToTitleCase as _;
+use convert_case::{Case, Casing};
 use ui::{ButtonSize, ContextMenu, DropdownMenu, DropdownStyle, FluentBuilder as _, IconPosition, px};
 
 #[derive(IntoElement)]
@@ -53,7 +53,7 @@ impl RenderOnce for EnumVariantDropdown {
                     let current = self.current;
                     menu = menu.toggleable_entry(
                         if self.should_do_title_case {
-                            label.to_title_case()
+                            label.to_case(Case::Title)
                         } else {
                             label.to_string()
                         },
@@ -72,7 +72,7 @@ impl RenderOnce for EnumVariantDropdown {
         DropdownMenu::new(
             self.id,
             if self.should_do_title_case {
-                current_value_label.to_title_case()
+                current_value_label.to_case(Case::Title)
             } else {
                 current_value_label.to_string()
             },
