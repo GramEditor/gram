@@ -3673,6 +3673,7 @@ dependencies = [
 name = "gpui_macros"
 version = "3.3.0"
 dependencies = [
+ "convert_case 0.11.0",
  "gpui",
  "proc-macro2",
  "quote",
