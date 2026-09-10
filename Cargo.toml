@@ -297,7 +297,7 @@ anyhow = "1.0.104"
 arrayvec = { version = "0.7.8", features = ["serde", "std"] }
 as-raw-xcb-connection = "1.0.1"
 ashpd = { version = "0.13.13", default-features = false, features = ["async-io", "file_chooser", "notification", "open_uri", "settings", "trash"] }
-async-compression = { version = "0.4.44", features = ["futures-io", "gzip"] }
+async-compression = { version = "0.4.46", features = ["futures-io", "gzip"] }
 async-dispatcher = "0.1.2"
 async-fs = "2.2.0"
 async-io = "2.6.0"
@@ -312,7 +312,7 @@ async_zip = { version = "0.0.18", features = ["deflate", "deflate64"] }
 backtrace = "0.3.76"
 base64 = "0.22.1"
 bitcode = { version = "0.6.9", features = ["derive", "serde", "std"] }
-bitflags = "2.13.1"
+bitflags = "2.13.2"
 block2 = "0.6.2"
 bm25 = "2.3.2"
 bytemuck = "1.25.2"
@@ -339,7 +339,7 @@ dotenvy = "0.15.7"
 dunce = "1.0.5"
 ec4rs = "1.2.0"
 embed-resource = "=3.0.9"  # later versions break the build for `aarch64-pc-windows-gnullvm`. See: https://github.com/nabijaczleweli/rust-embed-resource/commit/d72b4496810f5c2adea9a2647ec1dd9ffa047f7c#commitcomment-194257398
-encoding_rs = "0.8.35"
+encoding_rs = "0.8.41"
 env_logger = "0.11.11"
 etagere = "0.3.0"
 fancy-regex = "0.18.0"
@@ -356,7 +356,7 @@ human_bytes = "0.4.3"
 ignore = "0.4.33"
 image = { version = "0.25.10", default-features = false, features = ["gif", "ico", "jpeg", "png", "webp"] }
 imara-diff = "0.2.0"
-indexmap = { version = "2.14.1", features = ["serde", "std"] }
+indexmap = { version = "2.14.2", features = ["serde", "std"] }
 indoc = "2.0.7"
 inventory = "0.3.24"
 ipc-channel = "0.19.0"
@@ -389,7 +389,7 @@ objc2-core-graphics = "0.3.2"
 objc2-core-services = "0.3.2"
 objc2-foundation = "0.3.2"
 objc2-quartz-core = "0.3.2"
-open = "5.4.3"
+open = "5.4.4"
 ordered-float = "5.5.0"
 palette = { version = "0.7.7", default-features = false, features = ["std"] }
 parking = "2.2.1"
@@ -404,7 +404,7 @@ pet-poetry = { git = "https://github.com/microsoft/python-environment-tools", re
 pet-reporter = { git = "https://github.com/microsoft/python-environment-tools", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
 pet-virtualenv = { git = "https://github.com/microsoft/python-environment-tools", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
 pin-project = "1.1.13"
-plist = "1.10.0"
+plist = "1.10.1"
 postage = { version = "0.5.0", features = ["blocking", "futures-traits", "logging"] }
 pretty_assertions = { version = "1.4.1", features = ["std", "unstable"] }
 proc-macro2 = "1.0.107"
@@ -423,7 +423,7 @@ rsa = "0.9.10"
 runtimelib = { version = "1.6.0", default-features = false, features = ["async-dispatcher-runtime", "aws-lc-rs"] }
 rust-embed = { version = "8.12.0", features = ["compression", "deterministic-timestamps", "include-exclude"] }
 rustc-hash = "2.1.3"
-rustls = { version = "0.23.43" }
+rustls = { version = "0.23.44" }
 rustls-platform-verifier = "0.7.0"
 schemars = { version = "1.2.2", features = ["derive", "indexmap2", "smol_str03", "std"] }
 seahash = "4.1.0"
@@ -459,7 +459,7 @@ time = { version = "0.3.55", features = ["formatting", "local-offset", "macros",
 tokio = { version = "1.53.1", features = ["full", "macros", "rt", "rt-multi-thread"] }
 toml = "1.1.5"
 tracing = { version = "0.1.44", features = ["attributes", "log", "std"] }
-trash = "5.2.7"
+trash = "5.2.8"
 tree-sitter = { version = "0.26.13", features = ["std", "wasm"] }
 tree-sitter-bash = "0.25.1"
 tree-sitter-c = "0.24.2"
@@ -503,7 +503,7 @@ unindent = "0.2.4"
 url = "2.5.8"
 urlencoding = "2.1.3"
 usvg = { version = "0.48.1", default-features = false, features = ["text"] }
-uuid = { version = "1.26.0", features = ["serde", "std", "v4", "v5", "v7"] }
+uuid = { version = "1.26.1", features = ["serde", "std", "v4", "v5", "v7"] }
 vscode_theme = "0.2.0"
 waker-fn = "1.2.0"
 walkdir = "2.5.0"
