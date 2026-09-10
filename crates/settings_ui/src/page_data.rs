@@ -4086,7 +4086,10 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                         },
                         json_path: Some("project_panel.sort_mode"),
                     }),
-                    metadata: None,
+                    metadata: Some(Box::new(SettingsFieldMetadata {
+                        should_do_titlecase: Some(false),
+                        ..Default::default()
+                    })),
                     files: USER,
                 }),
                 SettingsPageItem::SectionHeader("Terminal Panel"),

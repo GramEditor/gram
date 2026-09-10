@@ -727,13 +727,15 @@
       "show": "always",
     },
     // Sort order for entries in the project panel.
-    // This setting can take three values:
+    // This setting can take four values:
     //
     // 1. Show directories first, then files:
     //    "directories_first"
-    // 2. Mix directories and files together:
+    // 2. Show directories, then mod.rs files, then everything else:
+    //    "smart_sort"
+    // 3. Mix directories and files together:
     //    "mixed"
-    // 3. Show files first, then directories:
+    // 4. Show files first, then directories:
     //    "files_first"
     "sort_mode": "directories_first",
     // Whether to enable drag-and-drop operations in the project panel.

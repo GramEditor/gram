@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
-use gpui::{App, ElementId, IntoElement, RenderOnce};
 use convert_case::{Case, Casing};
+use gpui::{App, ElementId, IntoElement, RenderOnce};
 use ui::{ButtonSize, ContextMenu, DropdownMenu, DropdownStyle, FluentBuilder as _, IconPosition, px};
 
 #[derive(IntoElement)]

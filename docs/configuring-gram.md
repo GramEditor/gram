@@ -4663,7 +4663,14 @@ current list of valid themes names.
 }
 ```
 
-2. Mix directories and files together
+2. Show directories, then mod.rs files, then everything else
+
+```json
+{
+  "sort_mode": "smart_sort",
+}
+
+3. Mix directories and files together
 
 ```json
 {
@@ -4671,7 +4678,7 @@ current list of valid themes names.
 }
 ```
 
-3. Show files first, then directories
+4. Show files first, then directories
 
 ```json
 {

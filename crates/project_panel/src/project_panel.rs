@@ -5899,7 +5899,12 @@ impl ClipboardEntry {
 
 #[inline]
 fn cmp_directories_first(a: &Entry, b: &Entry) -> cmp::Ordering {
-    util::paths::compare_rel_paths((&a.path, a.is_file()), (&b.path, b.is_file()))
+    util::paths::compare_rel_paths((&a.path, a.is_file()), (&b.path, b.is_file()), false)
+}
+
+#[inline]
+fn cmp_directories_smart(a: &Entry, b: &Entry) -> cmp::Ordering {
+    util::paths::compare_rel_paths((&a.path, a.is_file()), (&b.path, b.is_file()), true)
 }
 
 #[inline]
@@ -5915,6 +5920,7 @@ fn cmp_files_first(a: &Entry, b: &Entry) -> cmp::Ordering {
 #[inline]
 fn cmp_with_mode(a: &Entry, b: &Entry, mode: &settings::ProjectPanelSortMode) -> cmp::Ordering {
     match mode {
+        settings::ProjectPanelSortMode::SmartSort => cmp_directories_smart(a, b),
         settings::ProjectPanelSortMode::DirectoriesFirst => cmp_directories_first(a, b),
         settings::ProjectPanelSortMode::Mixed => cmp_mixed(a, b),
         settings::ProjectPanelSortMode::FilesFirst => cmp_files_first(a, b),

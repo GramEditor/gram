@@ -452,36 +452,36 @@ The project panel can be shown/hidden using {#action project_panel::ToggleFocus}
 pane::RevealInProjectPanel}).
 
 ```json
-// Project Panel Settings
-"project_panel": {
-  "button": true,                 // Show/hide button in the status bar
-  "default_width": 240,           // Default panel width
-  "dock": "left",                 // Position of the dock (left, right)
-  "entry_spacing": "comfortable", // Vertical spacing (comfortable, standard)
-  "file_icons": true,             // Show/hide file icons
-  "folder_icons": true,           // Show/hide folder icons
-  "git_status": true,             // Indicate new/updated files
-  "indent_size": 20,              // Pixels for each successive indent
-  "auto_reveal_entries": true,    // Show file in panel when activating its buffer
-  "auto_fold_dirs": true,         // Fold dirs with single subdir
-  "sticky_scroll": true,          // Stick parent directories at top of the project panel.
-  "drag_and_drop": true,          // Whether drag and drop is enabled
-  "scrollbar": {                  // Project panel scrollbar settings
-    "show": null                  // Show/hide: (auto, system, always, never)
-  },
-  "show_diagnostics": "all",      //
-  // Settings related to indent guides in the project panel.
-  "indent_guides": {
-    // When to show indent guides in the project panel. (always, never)
-    "show": "always"
-  },
-  // Sort order for entries (directories_first, mixed, files_first)
-  "sort_mode": "directories_first",
-  // Whether to hide the root entry when only one folder is open in the window.
-  "hide_root": false,
-  // Whether to hide the hidden entries in the project panel.
-  "hide_hidden": false
-}
+  // Project Panel Settings
+  "project_panel": {
+    "button": true,                 // Show/hide button in the status bar
+    "default_width": 240,           // Default panel width
+    "dock": "left",                 // Position of the dock (left, right)
+    "entry_spacing": "comfortable", // Vertical spacing (comfortable, standard)
+    "file_icons": true,             // Show/hide file icons
+    "folder_icons": true,           // Show/hide folder icons
+    "git_status": true,             // Indicate new/updated files
+    "indent_size": 20,              // Pixels for each successive indent
+    "auto_reveal_entries": true,    // Show file in panel when activating its buffer
+    "auto_fold_dirs": true,         // Fold dirs with single subdir
+    "sticky_scroll": true,          // Stick parent directories at top of the project panel.
+    "drag_and_drop": true,          // Whether drag and drop is enabled
+    "scrollbar": {                  // Project panel scrollbar settings
+      "show": null                  // Show/hide: (auto, system, always, never)
+    },
+    "show_diagnostics": "all",      //
+    // Settings related to indent guides in the project panel.
+    "indent_guides": {
+      // When to show indent guides in the project panel. (always, never)
+      "show": "always"
+    },
+    // Sort order for entries (directories_first, smart_sort, mixed, files_first)
+    "sort_mode": "directories_first",
+    // Whether to hide the root entry when only one folder is open in the window.
+    "hide_root": false,
+    // Whether to hide the hidden entries in the project panel.
+    "hide_hidden": false
+  }
 ```
 
 ## Terminal Panel

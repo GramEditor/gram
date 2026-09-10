@@ -845,10 +845,15 @@ pub enum ProjectPanelEntrySpacing {
 pub enum ProjectPanelSortMode {
     /// Show directories first, then files
     #[default]
+    #[strum(serialize = "Directories first")]
     DirectoriesFirst,
+    /// Show directories, mod.rs files, then every other file
+    #[strum(serialize = "Smart sort")]
+    SmartSort,
     /// Mix directories and files together
     Mixed,
     /// Show files first, then directories
+    #[strum(serialize = "Files first")]
     FilesFirst,
 }
 

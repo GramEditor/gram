@@ -4,8 +4,8 @@ use crate::{
 };
 use ::fs::Fs;
 use anyhow::{Context as _, Result, bail};
-use futures::{AsyncReadExt, StreamExt};
 use convert_case::{Case, Casing};
+use futures::{AsyncReadExt, StreamExt};
 use http_client::{self, AsyncBody, HttpClient};
 use serde::Deserialize;
 use std::{

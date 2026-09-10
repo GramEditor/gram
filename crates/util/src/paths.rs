@@ -1015,7 +1015,11 @@ fn stem_and_extension(filename: &str) -> (Option<&str>, Option<&str>) {
     }
 }
 
-pub fn compare_rel_paths((path_a, a_is_file): (&RelPath, bool), (path_b, b_is_file): (&RelPath, bool)) -> Ordering {
+pub fn compare_rel_paths(
+    (path_a, a_is_file): (&RelPath, bool),
+    (path_b, b_is_file): (&RelPath, bool),
+    mod_rs_first: bool,
+) -> Ordering {
     let mut components_a = path_a.components();
     let mut components_b = path_b.components();
     loop {
@@ -1024,30 +1028,49 @@ pub fn compare_rel_paths((path_a, a_is_file): (&RelPath, bool), (path_b, b_is_fi
                 let a_is_file = a_is_file && components_a.rest().is_empty();
                 let b_is_file = b_is_file && components_b.rest().is_empty();
 
-                let ordering = a_is_file.cmp(&b_is_file).then_with(|| {
-                    let (a_stem, a_extension) = a_is_file.then(|| stem_and_extension(component_a)).unwrap_or_default();
-                    let path_string_a = if a_is_file { a_stem } else { Some(component_a) };
-
-                    let (b_stem, b_extension) = b_is_file.then(|| stem_and_extension(component_b)).unwrap_or_default();
-                    let path_string_b = if b_is_file { b_stem } else { Some(component_b) };
-
-                    let compare_components = match (path_string_a, path_string_b) {
-                        (Some(a), Some(b)) => natural_sort(&a, &b),
-                        (Some(_), None) => Ordering::Greater,
-                        (None, Some(_)) => Ordering::Less,
-                        (None, None) => Ordering::Equal,
-                    };
-
-                    compare_components.then_with(|| {
-                        if a_is_file && b_is_file {
-                            let ext_a = a_extension.unwrap_or_default();
-                            let ext_b = b_extension.unwrap_or_default();
-                            ext_a.cmp(ext_b)
+                let ordering = a_is_file
+                    .cmp(&b_is_file)
+                    .then_with(|| {
+                        if mod_rs_first && a_is_file && b_is_file {
+                            // Sort mod.rs files before other files
+                            if component_a == "mod.rs" && component_b != "mod.rs" {
+                                Ordering::Less
+                            } else if component_a != "mod.rs" && component_b == "mod.rs" {
+                                Ordering::Greater
+                            } else {
+                                // Neither is a mod.rs file
+                                Ordering::Equal
+                            }
                         } else {
                             Ordering::Equal
                         }
                     })
-                });
+                    .then_with(|| {
+                        let (a_stem, a_extension) =
+                            a_is_file.then(|| stem_and_extension(component_a)).unwrap_or_default();
+                        let path_string_a = if a_is_file { a_stem } else { Some(component_a) };
+
+                        let (b_stem, b_extension) =
+                            b_is_file.then(|| stem_and_extension(component_b)).unwrap_or_default();
+                        let path_string_b = if b_is_file { b_stem } else { Some(component_b) };
+
+                        let compare_components = match (path_string_a, path_string_b) {
+                            (Some(a), Some(b)) => natural_sort(&a, &b),
+                            (Some(_), None) => Ordering::Greater,
+                            (None, Some(_)) => Ordering::Less,
+                            (None, None) => Ordering::Equal,
+                        };
+
+                        compare_components.then_with(|| {
+                            if a_is_file && b_is_file {
+                                let ext_a = a_extension.unwrap_or_default();
+                                let ext_b = b_extension.unwrap_or_default();
+                                ext_a.cmp(ext_b)
+                            } else {
+                                Ordering::Equal
+                            }
+                        })
+                    });
 
                 if !ordering.is_eq() {
                     return ordering;
