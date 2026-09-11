@@ -5,6 +5,7 @@
 //! ranges to highlight IDs via Tree-sitter. A file is never assigned a single
 //! language: buffers routinely mix languages (HTML with embedded JS/CSS), so
 //! syntax layers and language servers can both cover arbitrary subranges.
+
 mod buffer;
 mod diagnostic_set;
 mod highlight_map;
@@ -21,33 +22,13 @@ mod toolchain;
 #[cfg(test)]
 pub mod buffer_tests;
 
-pub use crate::language_settings::IndentGuideSettings;
-use crate::language_settings::SoftWrap;
-use anyhow::{Context as _, Result};
-use async_trait::async_trait;
-use collections::{HashMap, HashSet, IndexSet};
-use futures::Future;
-use futures::future::LocalBoxFuture;
-use futures::lock::OwnedMutexGuard;
-use gpui::{App, AsyncApp, Entity, SharedString};
-pub use highlight_map::HighlightMap;
-use http_client::HttpClient;
-pub use language_registry::{LanguageName, LanguageServerStatusUpdate, LoadedLanguage, ServerHealth};
-use lsp::{CodeActionKind, InitializeParams, LanguageServerBinary, LanguageServerBinaryOptions, Uri};
-pub use manifest::{ManifestDelegate, ManifestName, ManifestProvider, ManifestQuery};
-use parking_lot::Mutex;
-use regex::Regex;
-use schemars::{JsonSchema, SchemaGenerator, json_schema};
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
-use serde_json::Value;
-use settings::WorktreeId;
-use smol::future::FutureExt as _;
-use std::num::NonZeroU32;
+// Standard library
 use std::{
     ffi::OsStr,
     fmt::Debug,
     hash::Hash,
     mem,
+    num::NonZeroU32,
     ops::{DerefMut, Range},
     path::{Path, PathBuf},
     str,
@@ -56,27 +37,50 @@ use std::{
         atomic::{AtomicUsize, Ordering::SeqCst},
     },
 };
-use syntax_map::{QueryCursorHandle, SyntaxSnapshot};
-pub use task_context::{ContextLocation, ContextProvider, RunnableRange};
-pub use text_diff::{DiffOptions, text_diff, text_diff_with_options, unified_diff, word_diff_ranges};
+
+// External dependencies
+use anyhow::{Context, Result};
+use async_trait::async_trait;
+use collections::{HashMap, HashSet, IndexSet};
+use futures::{Future, future::LocalBoxFuture, lock::OwnedMutexGuard};
+use gpui::{App, AsyncApp, Entity, SharedString};
+use http_client::HttpClient;
+use lsp::{CodeActionKind, InitializeParams, LanguageServerBinary, LanguageServerBinaryOptions, Uri};
+use parking_lot::Mutex;
+use regex::Regex;
+use schemars::{JsonSchema, SchemaGenerator, json_schema};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
+use serde_json::Value;
+use settings::WorktreeId;
+use smol::future::FutureExt;
 use theme::SyntaxTheme;
+use tree_sitter::{self, Query, QueryCursor, WasmStore, wasmtime};
+use util::{rel_path::RelPath, serde::default_true};
+
+// Internal dependencies
+use crate::language_settings::SoftWrap;
+use syntax_map::SyntaxSnapshot;
+
+// Public exports
+pub use crate::language_settings::IndentGuideSettings;
+pub use buffer::*;
+pub use diagnostic_set::{DiagnosticEntry, DiagnosticEntryRef, DiagnosticGroup};
+pub use highlight_map::HighlightMap;
+pub use language_registry::{
+    AvailableLanguage, BinaryStatus, LanguageName, LanguageNotFound, LanguageQueries, LanguageRegistry,
+    LanguageServerStatusUpdate, LoadedLanguage, QUERY_FILENAME_PREFIXES, ServerHealth,
+};
+pub use lsp::{LanguageServerId, LanguageServerName};
+pub use manifest::{ManifestDelegate, ManifestName, ManifestProvider, ManifestQuery};
+pub use outline::*;
+pub use syntax_map::{OwnedSyntaxLayer, SyntaxLayer, SyntaxMapMatches, ToTreeSitterPoint, TreeSitterOptions};
+pub use task_context::{ContextLocation, ContextProvider, RunnableRange};
+pub use text::{AnchorRangeExt, LineEnding};
+pub use text_diff::{DiffOptions, text_diff, text_diff_with_options, unified_diff, word_diff_ranges};
 pub use toolchain::{
     LanguageToolchainStore, LocalLanguageToolchainStore, Toolchain, ToolchainList, ToolchainLister, ToolchainMetadata,
     ToolchainScope,
 };
-use tree_sitter::{self, Query, QueryCursor, WasmStore, wasmtime};
-use util::rel_path::RelPath;
-use util::serde::default_true;
-
-pub use buffer::*;
-pub use diagnostic_set::{DiagnosticEntry, DiagnosticEntryRef, DiagnosticGroup};
-pub use language_registry::{
-    AvailableLanguage, BinaryStatus, LanguageNotFound, LanguageQueries, LanguageRegistry, QUERY_FILENAME_PREFIXES,
-};
-pub use lsp::{LanguageServerId, LanguageServerName};
-pub use outline::*;
-pub use syntax_map::{OwnedSyntaxLayer, SyntaxLayer, SyntaxMapMatches, ToTreeSitterPoint, TreeSitterOptions};
-pub use text::{AnchorRangeExt, LineEnding};
 pub use tree_sitter::{Node, Parser, Tree, TreeCursor};
 
 static QUERY_CURSORS: Mutex<Vec<QueryCursor>> = Mutex::new(vec![]);
@@ -97,20 +101,12 @@ where
     result
 }
 
-pub fn with_query_cursor<F, R>(func: F) -> R
-where
-    F: FnOnce(&mut QueryCursor) -> R,
-{
-    let mut cursor = QueryCursorHandle::new();
-    func(cursor.deref_mut())
-}
-
 static NEXT_LANGUAGE_ID: AtomicUsize = AtomicUsize::new(0);
 static NEXT_GRAMMAR_ID: AtomicUsize = AtomicUsize::new(0);
 static WASM_ENGINE: LazyLock<wasmtime::Engine> =
     LazyLock::new(|| wasmtime::Engine::new(&wasmtime::Config::new()).expect("Failed to create Wasmtime engine"));
 
-/// A shared grammar for plain text, exposed for reuse by downstream crates.
+/// The built-in plain-text language configuration.
 pub static PLAIN_TEXT: LazyLock<Arc<Language>> = LazyLock::new(|| {
     Arc::new(Language::new(
         LanguageConfig {
@@ -166,6 +162,7 @@ pub static PLAIN_TEXT: LazyLock<Arc<Language>> = LazyLock::new(|| {
     ))
 });
 
+/// Identifies an anchored range within a buffer.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Location {
     pub buffer: Entity<Buffer>,
@@ -176,15 +173,33 @@ type ServerBinaryCache = futures::lock::Mutex<Option<(bool, LanguageServerBinary
 type DownloadableLanguageServerBinary = LocalBoxFuture<'static, Result<LanguageServerBinary>>;
 pub type LanguageServerBinaryLocations =
     LocalBoxFuture<'static, (Result<LanguageServerBinary>, Option<DownloadableLanguageServerBinary>)>;
-/// Represents a Language Server, with certain cached sync properties.
-/// Uses [`LspAdapter`] under the hood, but calls all 'static' methods
-/// once at startup, and caches the results.
+
+/// Wraps an [`LspAdapter`] and caches values that are expected to remain stable
+/// for the adapter's lifetime.
+///
+/// This avoids repeatedly invoking the adapter for server identity, language-ID
+/// mappings, and disk-based diagnostic configuration. Operations that depend on
+/// the current project or environment are still delegated to [`Self::adapter`].
 pub struct CachedLspAdapter {
+    /// The server name captured when this wrapper is created.
     pub name: LanguageServerName,
+
+    /// Diagnostic sources whose results are associated with files on disk,
+    /// rather than only with the current in-memory buffer contents.
     pub disk_based_diagnostic_sources: Vec<String>,
+
+    /// The progress token used to identify updates for disk-based diagnostics,
+    /// when the server exposes one.
     pub disk_based_diagnostics_progress_token: Option<String>,
+
+    /// Maps editor language names to the language identifiers sent to the
+    /// language server for document synchronization.
     language_ids: HashMap<LanguageName, String>,
+
     pub adapter: Arc<dyn LspAdapter>,
+
+    /// Shared state for reusing the resolved server binary and coordinating
+    /// binary lookup or installation across callers.
     cached_binary: Arc<ServerBinaryCache>,
 }
 
@@ -220,7 +235,7 @@ impl CachedLspAdapter {
     }
 
     pub fn name(&self) -> LanguageServerName {
-        self.adapter.name()
+        self.name.clone()
     }
 
     pub async fn get_language_server_command(
@@ -861,13 +876,13 @@ pub struct LanguageMatcher {
 /// The configuration for JSX tag auto-closing.
 #[derive(Clone, Deserialize, JsonSchema, Debug)]
 pub struct JsxTagAutoCloseConfig {
-    /// The name of the node for a opening tag
+    /// The node name for an opening tag.
     pub open_tag_node_name: String,
-    /// The name of the node for an closing tag
+    /// The node name for a closing tag.
     pub close_tag_node_name: String,
-    /// The name of the node for a complete element with children for open and close tags
+    /// The node name for a complete element with children for open and close tags
     pub jsx_element_node_name: String,
-    /// The name of the node found within both opening and closing
+    /// The node name found within both opening and closing
     /// tags that describes the tag name
     pub tag_name_node_name: String,
     /// Alternate Node names for tag names.
@@ -878,7 +893,7 @@ pub struct JsxTagAutoCloseConfig {
     /// Some grammars are smart enough to detect a closing tag
     /// that is not valid i.e. doesn't match it's corresponding
     /// opening tag or does not have a corresponding opening tag
-    /// This should be set to the name of the node for invalid
+    /// This should be set to the node name for invalid
     /// closing tags if the grammar contains such a node, otherwise
     /// detecting already closed tags will not work properly
     #[serde(default)]
@@ -928,16 +943,16 @@ impl<'de> Deserialize<'de> for BlockCommentConfig {
                 end,
                 prefix,
                 tab_size,
-            } => Ok(BlockCommentConfig {
+            } => Ok(Self {
                 start,
                 end,
                 prefix,
                 tab_size,
             }),
-            BlockCommentConfigHelper::Old([start, end]) => Ok(BlockCommentConfig {
+            BlockCommentConfigHelper::Old([start, end]) => Ok(Self {
                 start,
                 end,
-                prefix: "".into(),
+                prefix: Arc::from(""),
                 tab_size: 0,
             }),
         }
@@ -1607,12 +1622,10 @@ impl Language {
                 .map(|ix| {
                     let mut config = BracketsPatternConfig::default();
                     for setting in query.property_settings(ix) {
-                        let setting_key = setting.key.as_ref();
-                        if setting_key == "newline.only" {
-                            config.newline_only = true
-                        }
-                        if setting_key == "rainbow.exclude" {
-                            config.rainbow_exclude = true
+                        match setting.key.as_ref() {
+                            "newline.only" => config.newline_only = true,
+                            "rainbow.exclude" => config.rainbow_exclude = true,
+                            _ => {}
                         }
                     }
                     config
@@ -1697,6 +1710,7 @@ impl Language {
                 }
                 _ => content_capture_ix,
             };
+
             let patterns = (0..query.pattern_count())
                 .map(|ix| {
                     let mut config = InjectionPatternConfig::default();
@@ -1714,20 +1728,22 @@ impl Language {
                     config
                 })
                 .collect();
-            if let Some(content_capture_ix) = content_capture_ix {
-                self.grammar_mut()?.injection_config = Some(InjectionConfig {
-                    query,
-                    language_capture_ix,
-                    content_capture_ix,
-                    patterns,
-                });
-            } else {
+
+            let Some(content_capture_ix) = content_capture_ix else {
                 log::error!(
                     "missing required capture in injections {} TreeSitter query: \
                     content or injection.content",
                     self.config.name,
                 );
-            }
+                return Ok(self);
+            };
+
+            self.grammar_mut()?.injection_config = Some(InjectionConfig {
+                query,
+                language_capture_ix,
+                content_capture_ix,
+                patterns,
+            });
         }
         Ok(self)
     }
@@ -2156,32 +2172,31 @@ impl CodeLabelBuilder {
 
 impl CodeLabel {
     pub fn fallback_for_completion(item: &lsp::CompletionItem, language: Option<&Language>) -> Self {
+        fn highlight_name_for_completion_kind(kind: lsp::CompletionItemKind) -> &'static [&'static str] {
+            use lsp::CompletionItemKind as Kind;
+
+            match kind {
+                Kind::CLASS | Kind::INTERFACE | Kind::STRUCT => &["type"],
+                Kind::CONSTANT => &["constant"],
+                Kind::CONSTRUCTOR => &["constructor"],
+                Kind::ENUM => &["enum", "type"],
+                Kind::ENUM_MEMBER => &["variant", "property"],
+                Kind::FIELD | Kind::PROPERTY => &["property"],
+                Kind::FUNCTION => &["function"],
+                Kind::METHOD => &["function.method", "function"],
+                Kind::OPERATOR => &["operator"],
+                Kind::VARIABLE => &["variable"],
+                Kind::KEYWORD => &["keyword"],
+                _ => &[],
+            }
+        }
+
         let highlight_id = item.kind.and_then(|kind| {
             let grammar = language?.grammar()?;
-            use lsp::CompletionItemKind as Kind;
-            match kind {
-                Kind::CLASS => grammar.highlight_id_for_name("type"),
-                Kind::CONSTANT => grammar.highlight_id_for_name("constant"),
-                Kind::CONSTRUCTOR => grammar.highlight_id_for_name("constructor"),
-                Kind::ENUM => grammar
-                    .highlight_id_for_name("enum")
-                    .or_else(|| grammar.highlight_id_for_name("type")),
-                Kind::ENUM_MEMBER => grammar
-                    .highlight_id_for_name("variant")
-                    .or_else(|| grammar.highlight_id_for_name("property")),
-                Kind::FIELD => grammar.highlight_id_for_name("property"),
-                Kind::FUNCTION => grammar.highlight_id_for_name("function"),
-                Kind::INTERFACE => grammar.highlight_id_for_name("type"),
-                Kind::METHOD => grammar
-                    .highlight_id_for_name("function.method")
-                    .or_else(|| grammar.highlight_id_for_name("function")),
-                Kind::OPERATOR => grammar.highlight_id_for_name("operator"),
-                Kind::PROPERTY => grammar.highlight_id_for_name("property"),
-                Kind::STRUCT => grammar.highlight_id_for_name("type"),
-                Kind::VARIABLE => grammar.highlight_id_for_name("variable"),
-                Kind::KEYWORD => grammar.highlight_id_for_name("keyword"),
-                _ => None,
-            }
+
+            highlight_name_for_completion_kind(kind)
+                .iter()
+                .find_map(|name| grammar.highlight_id_for_name(name))
         });
 
         let label = &item.label;
@@ -2386,13 +2401,13 @@ fn populate_capture_indices(
     expected_prefixes: &[&str],
     captures: &mut [Capture<'_>],
 ) -> bool {
-    let mut found_required_indices = Vec::new();
+    let mut found_required_captures = vec![false; captures.len()];
     'outer: for (ix, name) in query.capture_names().iter().enumerate() {
         for (required_ix, capture) in captures.iter_mut().enumerate() {
             match capture {
                 Capture::Required(capture_name, index) if capture_name == name => {
                     **index = ix as u32;
-                    found_required_indices.push(required_ix);
+                    found_required_captures[required_ix] = true;
                     continue 'outer;
                 }
                 Capture::Optional(capture_name, index) if capture_name == name => {
@@ -2412,14 +2427,15 @@ fn populate_capture_indices(
             );
         }
     }
-    let mut missing_required_captures = Vec::new();
-    for (capture_ix, capture) in captures.iter().enumerate() {
-        if let Capture::Required(capture_name, _) = capture
-            && !found_required_indices.contains(&capture_ix)
-        {
-            missing_required_captures.push(*capture_name);
-        }
-    }
+    let missing_required_captures: Vec<_> = captures
+        .iter()
+        .enumerate()
+        .filter_map(|(capture_ix, capture)| match capture {
+            Capture::Required(name, _) if !found_required_captures[capture_ix] => Some(*name),
+            _ => None,
+        })
+        .collect();
+
     let success = missing_required_captures.is_empty();
     if !success {
         log::error!(

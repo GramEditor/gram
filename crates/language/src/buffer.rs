@@ -1,7 +1,7 @@
 pub mod row_chunk;
 
 use crate::{
-    DebuggerTextObject, LanguageScope, Outline, OutlineConfig, PLAIN_TEXT, RunnableCapture, RunnableTag, TextObject,
+    DebuggerTextObject, LanguageScope, Outline, OutlineConfig, PLAIN_TEXT, RunnableCapture, TextObject,
     TreeSitterOptions,
     diagnostic_set::{DiagnosticEntry, DiagnosticEntryRef, DiagnosticGroup},
     language_settings::{LanguageSettings, language_settings},
@@ -60,6 +60,7 @@ use std::{
     vec,
 };
 use sum_tree::TreeMap;
+use task::RunnableTag;
 use text::operation_queue::OperationQueue;
 use text::*;
 pub use text::{
