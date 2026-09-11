@@ -1,23 +1,10 @@
-//! The `language` crate provides a large chunk of language-related features
-//! (the other big contributors being project and lsp crates that revolve around
-//! LSP features).
+//! Language support for the editor: syntax-highlighting metadata, buffer
+//! outlines, language-server adapters, and per-language configuration.
 //!
-//! This crate:
-//!
-//! - Provides [`Language`], [`Grammar`] and [`LanguageRegistry`] types that
-//!   use Tree-sitter to provide syntax highlighting to the editor; note though
-//!   that `language` doesn't perform the highlighting by itself. It only maps
-//!   ranges in a buffer to colors. Treesitter is also used for buffer outlines
-//!   (lists of symbols in a buffer)
-//!
-//! - Exposes [`LanguageConfig`] that describes how constructs (like brackets or
-//!   line comments) should be handled by the editor for a source file of a
-//!   particular language.
-//!
-//! Notably we do *not* assign a single language to a single file; in real world
-//! a single file can consist of multiple programming languages - HTML is a good
-//! example of that - and `language` crate tends to reflect that status quo in
-//! its API.
+//! Syntax highlighting itself lives elsewhere. This crate only maps buffer
+//! ranges to highlight IDs via Tree-sitter. A file is never assigned a single
+//! language: buffers routinely mix languages (HTML with embedded JS/CSS), so
+//! syntax layers and language servers can both cover arbitrary subranges.
 mod buffer;
 mod diagnostic_set;
 mod highlight_map;
@@ -70,7 +57,6 @@ use std::{
     },
 };
 use syntax_map::{QueryCursorHandle, SyntaxSnapshot};
-use task::RunnableTag;
 pub use task_context::{ContextLocation, ContextProvider, RunnableRange};
 pub use text_diff::{DiffOptions, text_diff, text_diff_with_options, unified_diff, word_diff_ranges};
 use theme::SyntaxTheme;
@@ -82,7 +68,6 @@ use tree_sitter::{self, Query, QueryCursor, WasmStore, wasmtime};
 use util::rel_path::RelPath;
 use util::serde::default_true;
 
-pub use buffer::Operation;
 pub use buffer::*;
 pub use diagnostic_set::{DiagnosticEntry, DiagnosticEntryRef, DiagnosticGroup};
 pub use language_registry::{
@@ -180,13 +165,6 @@ pub static PLAIN_TEXT: LazyLock<Arc<Language>> = LazyLock::new(|| {
         None,
     ))
 });
-
-/// Types that represent a position in a buffer, and can be converted into
-/// an LSP position, to send to a language server.
-pub trait ToLspPosition {
-    /// Converts the value into an LSP position.
-    fn to_lsp_position(self) -> lsp::Position;
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Location {
