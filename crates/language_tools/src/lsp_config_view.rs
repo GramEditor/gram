@@ -1,5 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
+use collections::HashSet;
+use dap::{adapters::DebugAdapterName, registry::DapRegistry, settings::DapSettings};
 use editor::EditorEvent;
 use gpui::{EventEmitter, FocusHandle, Focusable, Global, ScrollHandle, actions};
 use language::{BinaryStatus, LanguageRegistry};
@@ -13,8 +15,7 @@ use proto::{
     status_update::Status,
     update_language_server::Variant::{RegisteredForBuffer, StatusUpdate},
 };
-use settings::{BinarySettings, Settings, SettingsStore};
-use theme::Theme;
+use settings::{BinarySettings, DapSettingsContent, Settings, SettingsStore};
 use ui::{
     ActiveTheme as _, App, Context, IntoElement, Label, LabelSize, Render, Switch, ToggleState, Tooltip, Window,
     WithScrollbar as _, prelude::*,
@@ -245,6 +246,34 @@ impl LspConfigView {
         cx.notify();
     }
 
+    fn update_dap_setting<F>(
+        &mut self,
+        server_name: DebugAdapterName,
+        updater: F,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) where
+        F: FnOnce(&mut DapSettingsContent) -> () + std::marker::Send + 'static,
+    {
+        cx.update_global(|store: &mut SettingsStore, cx| {
+            store.update_settings_file(
+                <dyn Fs>::global(cx),
+                Box::new(move |settings, _cx| {
+                    let dap_settings = settings
+                        .project
+                        .dap
+                        .entry(Arc::from(server_name.0.as_ref()))
+                        .or_insert_with(Default::default);
+
+                    updater(dap_settings);
+                }),
+            );
+        });
+
+        window.refresh();
+        cx.notify();
+    }
+
     fn get_status_info(binary_status: &BinaryStatus) -> (SharedString, Color) {
         match binary_status {
             BinaryStatus::None => ("Running".into(), Color::Success),
@@ -264,6 +293,7 @@ impl LspConfigView {
     fn render_server_header(
         &self,
         server_name: SharedString,
+        icon_name: IconName,
         status_text: SharedString,
         status_color: Color,
     ) -> impl IntoElement {
@@ -272,7 +302,7 @@ impl LspConfigView {
                 .gap_1p5()
                 .items_center()
                 .child(
-                    IconButton::new(format!("status-icon-{}", server_name), IconName::Bot)
+                    IconButton::new(format!("status-icon-{}", server_name), icon_name)
                         .icon_color(status_color)
                         .tooltip(Tooltip::text(status_text)),
                 )
@@ -291,7 +321,7 @@ impl LspConfigView {
         })
     }
 
-    fn render_binary_settings(
+    fn render_lsp_settings(
         &self,
         server_name: &LanguageServerName,
         binary_settings: &settings::BinarySettings,
@@ -413,16 +443,17 @@ impl LspConfigView {
             )
     }
 
-    fn render_node(&self, settings: &NodeBinarySettings, theme: &Arc<Theme>, cx: &Context<Self>) -> impl IntoElement {
+    fn render_node(&self, settings: &NodeBinarySettings, cx: &Context<Self>) -> impl IntoElement {
         v_flex()
             .p_3()
             .gap_2()
             .border_1()
-            .border_color(theme.colors().border)
+            .border_color(cx.theme().colors().border)
             .rounded_md()
-            .bg(theme.colors().element_background)
+            .bg(cx.theme().colors().element_background)
             .child(self.render_server_header(
                 "Node.js".into(),
+                IconName::Cog,
                 settings.path.clone().unwrap_or("Node.js".to_string()).into(),
                 Color::Default,
             ))
@@ -495,17 +526,199 @@ impl LspConfigView {
                     ),
             )
     }
+
+    fn render_all_lsp_settings(&mut self, cx: &mut Context<Self>) -> impl IntoIterator<Item = impl IntoElement> {
+        let global_state = cx.global::<LspConfigState>();
+        let project_settings = ProjectSettings::get_global(cx);
+        let binary_statuses = &global_state.binary_statuses;
+        binary_statuses.iter().map(|(server_name, (status, _message))| {
+            let border_color = cx.theme().colors().border;
+            let element_background = cx.theme().colors().element_background;
+            let server_name = server_name.clone();
+
+            let settings = project_settings
+                .lsp
+                .get(&server_name)
+                .and_then(|lsp| lsp.binary.clone())
+                .unwrap_or_default();
+            let (status_text, status_color) = Self::get_status_info(status);
+            let error_message = if let BinaryStatus::Failed { error } = &status {
+                Some(error.clone())
+            } else {
+                None
+            };
+
+            v_flex()
+                .p_3()
+                .gap_2()
+                .border_1()
+                .border_color(border_color)
+                .rounded_md()
+                .bg(element_background)
+                .child(self.render_server_header(server_name.0.clone(), IconName::Bot, status_text, status_color))
+                .child(
+                    v_flex()
+                        .gap_2()
+                        .child(self.render_lsp_settings(&server_name, &settings, cx)),
+                )
+                .child(Self::render_error_message(&error_message))
+        })
+    }
+
+    fn render_all_dap_settings(
+        &mut self,
+        dap_settings: &Vec<(DebugAdapterName, DapSettings)>,
+        cx: &mut Context<Self>,
+    ) -> impl IntoIterator<Item = impl IntoElement> {
+        dap_settings.iter().map(|(name, settings)| {
+            let border_color = cx.theme().colors().border;
+            let element_background = cx.theme().colors().element_background;
+            let name = name.clone();
+
+            v_flex()
+                .p_3()
+                .gap_2()
+                .border_1()
+                .border_color(border_color)
+                .rounded_md()
+                .bg(element_background)
+                .child(self.render_server_header(
+                    name.0.clone(),
+                    IconName::Debug,
+                    "Debug Adapter".into(),
+                    Color::Default,
+                ))
+                .child(v_flex().gap_2().child(self.render_dap_settings(&name, settings, cx)))
+        })
+    }
+
+    fn render_dap_settings(
+        &self,
+        name: &DebugAdapterName,
+        settings: &DapSettings,
+        cx: &Context<Self>,
+    ) -> impl IntoElement {
+        v_flex()
+            .p_2()
+            .gap_4()
+            .child(
+                h_flex()
+                    .gap_2()
+                    .items_center()
+                    .child(
+                        Switch::new(
+                            format!("dap-allow-binary-download-{}", name.0),
+                            ToggleState::from(settings.allow_binary_download),
+                        )
+                        .on_click({
+                            let name = name.clone();
+                            cx.listener(move |this, _, window, cx| {
+                                this.update_dap_setting(
+                                    name.clone(),
+                                    |settings| {
+                                        settings.allow_binary_download =
+                                            Some(!settings.allow_binary_download.unwrap_or_default());
+                                    },
+                                    window,
+                                    cx,
+                                )
+                            })
+                        }),
+                    )
+                    .child(
+                        v_flex().gap_1p5().child(Label::new("Allow Download")).child(
+                            Label::new("Allow the editor to download a debug adapter binary (if available)")
+                                .size(LabelSize::Small)
+                                .color(Color::Muted),
+                        ),
+                    ),
+            )
+            .child(
+                h_flex()
+                    .gap_2()
+                    .items_center()
+                    .child(
+                        Switch::new(
+                            format!("dap-ignore-system-{}", name.0),
+                            ToggleState::from(settings.ignore_system_version),
+                        )
+                        .on_click({
+                            let server_name = name.clone();
+                            cx.listener(move |this, _, window, cx| {
+                                this.update_dap_setting(
+                                    server_name.clone(),
+                                    |settings| {
+                                        settings.ignore_system_version =
+                                            Some(!settings.ignore_system_version.unwrap_or_default());
+                                    },
+                                    window,
+                                    cx,
+                                )
+                            })
+                        }),
+                    )
+                    .child(
+                        v_flex().gap_1p5().child(Label::new("Ignore System Version")).child(
+                            Label::new("Ignore any debug adapter binary installed system-wide")
+                                .size(LabelSize::Small)
+                                .color(Color::Muted),
+                        ),
+                    ),
+            )
+            .child(
+                h_flex()
+                    .gap_2()
+                    .items_center()
+                    .child(
+                        Switch::new(
+                            format!("dap-auto-update-{}", name.0),
+                            ToggleState::from(settings.enable_auto_updates),
+                        )
+                        .on_click({
+                            let name = name.clone();
+                            cx.listener(move |this, _, window, cx| {
+                                this.update_dap_setting(
+                                    name.clone(),
+                                    |settings| {
+                                        settings.enable_auto_updates =
+                                            Some(!settings.enable_auto_updates.unwrap_or_default());
+                                    },
+                                    window,
+                                    cx,
+                                )
+                            })
+                        }),
+                    )
+                    .child(
+                        v_flex().gap_1p5().child(Label::new("Auto Update")).child(
+                            Label::new("Automatically download new versions of the debug adapter when released")
+                                .size(LabelSize::Small)
+                                .color(Color::Muted),
+                        ),
+                    ),
+            )
+    }
 }
 
 impl Render for LspConfigView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let theme = cx.theme();
-        let border_color = theme.colors().border;
-        let element_background = theme.colors().element_background;
-        let editor_background = theme.colors().editor_background;
-        let global_state = cx.global::<LspConfigState>();
-        let binary_statuses = &global_state.binary_statuses;
+        let editor_background = cx.theme().colors().editor_background;
         let project_settings = ProjectSettings::get_global(cx);
+        let dap_settings: Vec<_> = cx
+            .global::<DapRegistry>()
+            .enumerate_adapters::<HashSet<_>>()
+            .iter()
+            .map(|adapter_name| {
+                (
+                    adapter_name.clone(),
+                    project_settings
+                        .dap
+                        .get(adapter_name)
+                        .cloned()
+                        .unwrap_or(DapSettings::default()),
+                )
+            })
+            .collect();
 
         v_flex()
             .id("LspConfigView")
@@ -525,37 +738,9 @@ impl Render for LspConfigView {
                     .overflow_y_scroll()
                     .track_scroll(&self.scroll_handle)
                     .child(self.render_header())
-                    .child(self.render_node(&project_settings.node, theme, cx))
-                    .children(binary_statuses.iter().map(|(server_name, (status, _message))| {
-                        let server_name = server_name.clone();
-
-                        let binary_settings = project_settings
-                            .lsp
-                            .get(&server_name)
-                            .and_then(|lsp| lsp.binary.clone())
-                            .unwrap_or_default();
-                        let (status_text, status_color) = Self::get_status_info(status);
-                        let error_message = if let BinaryStatus::Failed { error } = &status {
-                            Some(error.clone())
-                        } else {
-                            None
-                        };
-
-                        v_flex()
-                            .p_3()
-                            .gap_2()
-                            .border_1()
-                            .border_color(border_color)
-                            .rounded_md()
-                            .bg(element_background)
-                            .child(self.render_server_header(server_name.0.clone(), status_text, status_color))
-                            .child(v_flex().gap_2().child(self.render_binary_settings(
-                                &server_name,
-                                &binary_settings,
-                                cx,
-                            )))
-                            .child(Self::render_error_message(&error_message))
-                    })),
+                    .child(self.render_node(&project_settings.node, cx))
+                    .children(self.render_all_lsp_settings(cx))
+                    .children(self.render_all_dap_settings(&dap_settings, cx)),
             )
             .vertical_scrollbar_for(&self.scroll_handle, window, cx)
     }
@@ -571,6 +756,6 @@ impl Item for LspConfigView {
     type Event = EditorEvent;
 
     fn tab_content_text(&self, _detail: usize, _cx: &App) -> SharedString {
-        SharedString::from("Language Servers")
+        SharedString::from("Language Servers and Debug Adapters")
     }
 }

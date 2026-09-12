@@ -4985,6 +4985,7 @@ dependencies = [
  "app_actions",
  "collections",
  "command_palette_hooks",
+ "dap",
  "editor",
  "futures",
  "gpui",
