@@ -539,6 +539,8 @@ impl http_client::Host for WasmState {
     ) -> wasmtime::Result<Result<http_client::HttpResponse, String>> {
         maybe!(async {
             let url = &request.url;
+            let url_obj = Url::parse(url)?;
+            self.capability_granter.grant_download_file(&url_obj)?;
             let request = convert_request(&request)?;
             let mut response = self.host.http_client.send(request).await?;
 
@@ -555,9 +557,11 @@ impl http_client::Host for WasmState {
         &mut self,
         request: http_client::HttpRequest,
     ) -> wasmtime::Result<Result<Resource<ExtensionHttpResponseStream>, String>> {
+        let url_obj = Url::parse(&request.url)?;
         let request = convert_request(&request)?;
         let response = self.host.http_client.send(request);
         maybe!(async {
+            self.capability_granter.grant_download_file(&url_obj)?;
             let response = response.await?;
             let stream = Arc::new(Mutex::new(response));
             let resource = self.table.push(stream)?;
@@ -715,6 +719,9 @@ impl github::Host for WasmState {
         options: github::GithubReleaseOptions,
     ) -> wasmtime::Result<Result<github::GithubRelease, String>> {
         maybe!(async {
+            let url = Url::parse(&::http_client::github::releases_url(&repo))?;
+            self.capability_granter.grant_download_file(&url)?;
+
             let release = ::http_client::github::latest_github_release(
                 &repo,
                 options.require_assets,
@@ -734,6 +741,8 @@ impl github::Host for WasmState {
         tag: String,
     ) -> wasmtime::Result<Result<github::GithubRelease, String>> {
         maybe!(async {
+            let url = Url::parse(&::http_client::github::tags_url(&repo, &tag))?;
+            self.capability_granter.grant_download_file(&url)?;
             let release =
                 ::http_client::github::get_release_by_tag_name(&repo, &tag, self.host.http_client.clone()).await?;
             Ok(release.into())
@@ -954,6 +963,8 @@ impl ExtensionImports for WasmState {
     }
 
     async fn make_file_executable(&mut self, path: String) -> wasmtime::Result<Result<(), String>> {
+        self.capability_granter.grant_exec("chmod", &["+x", &path])?;
+
         let path = self
             .host
             .writeable_path_from_extension(&self.manifest.id, Path::new(&path))?;

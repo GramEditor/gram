@@ -16,6 +16,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, OnceLock},
 };
+use url::Url;
 use util::paths::PathStyle;
 use util::rel_path::RelPath;
 use util::{archive::extract_zip, fs::make_file_executable, maybe};
@@ -298,6 +299,8 @@ impl http_client::Host for WasmState {
     ) -> wasmtime::Result<Result<http_client::HttpResponse, String>> {
         maybe!(async {
             let url = &request.url;
+            let url_obj = Url::parse(url)?;
+            self.capability_granter.grant_download_file(&url_obj)?;
             let request = convert_request(&request)?;
             let mut response = self.host.http_client.send(request).await?;
 
@@ -314,9 +317,11 @@ impl http_client::Host for WasmState {
         &mut self,
         request: http_client::HttpRequest,
     ) -> wasmtime::Result<Result<Resource<ExtensionHttpResponseStream>, String>> {
+        let url_obj = Url::parse(&request.url)?;
         let request = convert_request(&request)?;
         let response = self.host.http_client.send(request);
         maybe!(async {
+            self.capability_granter.grant_download_file(&url_obj)?;
             let response = response.await?;
             let stream = Arc::new(Mutex::new(response));
             let resource = self.table.push(stream)?;
@@ -487,6 +492,9 @@ impl ExtensionImports for WasmState {
         file_type: DownloadedFileType,
     ) -> wasmtime::Result<Result<(), String>> {
         maybe!(async {
+            let parsed_url = Url::parse(&url)?;
+            self.capability_granter.grant_download_file(&parsed_url)?;
+
             let path = PathBuf::from(path);
             let extension_work_dir = self.host.work_dir.join(self.manifest.id.as_ref());
 
@@ -543,6 +551,8 @@ impl ExtensionImports for WasmState {
     }
 
     async fn make_file_executable(&mut self, path: String) -> wasmtime::Result<Result<(), String>> {
+        self.capability_granter.grant_exec("chmod", &["+x", &path])?;
+
         let path = self
             .host
             .writeable_path_from_extension(&self.manifest.id, Path::new(&path))?;
