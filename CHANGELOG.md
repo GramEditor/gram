@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add code outline support for diff files (#524) by @jqslr
 - Add smart sort for project panel: mod.rs sorts first (#541) by @patchunwrap 
 - Highlight TODO/NOTE/WARN: comments in builtin languages (#534) by @nitbook
+- Configure debug adapter permissions in language server config view
 
 ## Removed
 
@@ -34,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Clean up formatting in docs (#490) by @koru
 - Adopt SciActive's human contribution policy (#495) by @helinos
   Policy by @hperrin
+- Require download and exec permissions to use extension-provided LSPs
+- Require download and exec permissions to use extension-provided DAPs
 
 ## Fixed
 
