@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix compiling extensions with symlinks in the source tree (#494)
 - Require language servers from extensions to have full permissions before running (#507)
 - Distinguish between errors better for remove server binary (#521) by @nitbook
+- When creating new X11WindowState also change `_NET_WM_NAME` property (#548) by @sir_nacnud 
 
 ## [3.3.0] - 2026-08-25
 
