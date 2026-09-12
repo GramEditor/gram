@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add support for C23 keyword 'constexpr' (#522) by @mgrave
 - Add code outline support for diff files (#524) by @jqslr
 - Add smart sort for project panel: mod.rs sorts first (#541) by @patchunwrap 
+- Highlight TODO/NOTE/WARN: comments in builtin languages (#534) by @nitbook
 
 ## Removed
 
