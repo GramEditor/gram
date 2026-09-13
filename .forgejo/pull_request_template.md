@@ -5,6 +5,12 @@
 
 The [CONTRIBUTING.md](https://codeberg.org/GramEditor/gram/src/branch/main/CONTRIBUTING.md) contains helpful information for first-time contributors.
 
+Note that we require commits to be [signed](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work). You can use either a GPG key or a SSH key to
+sign your commits. Ideally you should add your key to your Codeberg account so that it can verify the commits.
+
+- [Adding an SSH key](https://docs.codeberg.org/security/ssh-key/).
+- [Adding a GPG key](https://docs.codeberg.org/security/gpg-key/).
+
 ### Compliance
 
 - [ ] I have read and agree to the [Gram Code of Conduct](https://codeberg.org/GramEditor/gram/src/branch/main/CODE_OF_CONDUCT.md).
