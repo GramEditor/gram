@@ -403,6 +403,7 @@ pub struct CommitHistoryEntry {
     pub commit_timestamp: i64,
     pub author_name: SharedString,
     pub author_email: SharedString,
+    pub refs: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -1731,7 +1732,7 @@ impl GitRepository for RealGitRepository {
                 let commit_delimiter = concat!("<<COMMIT_END-", "3f8a9c2e-7d4b-4e1a-9f6c-8b5d2a1e4c3f>>",);
 
                 let format_string = format!(
-                    "--pretty=format:%H%x00%s%x00%B%x00%at%x00%an%x00%ae{}",
+                    "--pretty=format:%H%x00%s%x00%B%x00%at%x00%an%x00%ae%x00%(decorate:prefix=,suffix=,separator=%x2C)%x00{}",
                     commit_delimiter
                 );
 
@@ -1786,13 +1787,14 @@ impl GitRepository for RealGitRepository {
                     }
 
                     let fields: Vec<&str> = commit_block.split('\0').collect();
-                    if fields.len() >= 6 {
+                    if fields.len() >= 7 {
                         let sha = fields[0].trim().to_string().into();
                         let subject = fields[1].trim().to_string().into();
                         let message = fields[2].trim().to_string().into();
                         let commit_timestamp = fields[3].trim().parse().unwrap_or(0);
                         let author_name = fields[4].trim().to_string().into();
                         let author_email = fields[5].trim().to_string().into();
+                        let refs: Vec<String> = fields[6].trim().split(',').filter(|s| !s.is_empty()).map(|s| s.to_string()).collect();
 
                         entries.push(CommitHistoryEntry {
                             sha,
@@ -1801,6 +1803,7 @@ impl GitRepository for RealGitRepository {
                             commit_timestamp,
                             author_name,
                             author_email,
+                            refs,
                         });
                     }
                 }

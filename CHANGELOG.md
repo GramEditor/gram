@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add smart sort for project panel: mod.rs sorts first (#541) by @patchunwrap 
 - Highlight TODO/NOTE/WARN: comments in builtin languages (#534) by @nitbook
 - Configure debug adapter permissions in language server config view
+- Add refs information to commit history views
 
 ## Removed
 

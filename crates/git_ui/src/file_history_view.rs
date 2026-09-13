@@ -263,22 +263,21 @@ impl FileHistoryView {
                 let rest = &entry.subject[start + 2..];
                 rest.find(')').and_then(|end| rest[..end].parse::<u32>().ok())
             })
-            .map(|num| format!("#{}", num))
-            .unwrap_or_else(|| {
-                if entry.sha.len() >= 7 {
-                    entry.sha[..7].to_string()
-                } else {
-                    entry.sha.to_string()
-                }
-            });
+            .map(|num| format!("#{}", num));
+
+        let short_sha = if entry.sha.len() >= 8 {
+            entry.sha[..8].to_string()
+        } else {
+            entry.sha.to_string()
+        };
 
         let commit_time =
             OffsetDateTime::from_unix_timestamp(entry.commit_timestamp).unwrap_or_else(|_| OffsetDateTime::UNIX_EPOCH);
-        let relative_timestamp = time_format::format_localized_timestamp(
+        let timestamp = time_format::format_localized_timestamp(
             commit_time,
             OffsetDateTime::now_utc(),
             time::UtcOffset::current_local_offset().unwrap_or(time::UtcOffset::UTC),
-            time_format::TimestampFormat::Relative,
+            time_format::TimestampFormat::Absolute,
         );
 
         let avatar_style = AvatarStyle::new(&entry.author_email);
@@ -292,12 +291,25 @@ impl FileHistoryView {
                     .p_1()
                     .gap_2()
                     .child(
-                        div().min_w(rems(8.)).flex_row().text_right().child(
-                            Label::new(relative_timestamp)
+                        h_flex()
+                            .gap_1()
+                            .min_w(rems(12.))
+                            .child(render_avatar(&avatar_style, rems(1.25), window, cx))
+                            .child(
+                                div().w_full().child(
+                                    Label::new(entry.author_name.clone())
+                                        .size(LabelSize::Small)
+                                        .color(avatar_style.foreground(Color::Muted))
+                                        .truncate(),
+                                ),
+                            ),
+                    )
+                    .child(
+                        div().child(
+                            Label::new(short_sha)
+                                .buffer_font(cx)
                                 .size(LabelSize::Small)
-                                .color(Color::Muted)
-                                .italic()
-                                .truncate(),
+                                .color(Color::Muted),
                         ),
                     )
                     .child(
@@ -308,20 +320,25 @@ impl FileHistoryView {
                                 .truncate(),
                         ),
                     )
+                    .when_some(pr_number, |this, pr| {
+                        this.child(h_flex().child(Chip::new(pr).bg_color(cx.theme().styles.colors.element_selected)))
+                    })
                     .child(
                         h_flex()
                             .gap_1()
                             .ml_auto()
-                            .child(render_avatar(&avatar_style, rems(1.25), window, cx))
+                            .child(h_flex().flex_none().children(entry.refs.iter().map(|s| {
+                                Chip::new(if s.starts_with("HEAD -> ") {
+                                    s.chars().skip(8).take(16).collect::<String>()
+                                } else {
+                                    s.chars().take(16).collect::<String>()
+                                })
+                            })))
                             .child(
-                                div().w_full().child(
-                                    Label::new(entry.author_name.clone())
-                                        .size(LabelSize::Small)
-                                        .color(avatar_style.foreground(Color::Muted))
-                                        .truncate(),
-                                ),
-                            )
-                            .child(h_flex().flex_none().child(Chip::new(pr_number))),
+                                h_flex()
+                                    .text_right()
+                                    .child(Label::new(timestamp).size(LabelSize::Small).color(Color::Muted)),
+                            ),
                     ),
             )
             .on_click(cx.listener(move |this, _, window, cx| {

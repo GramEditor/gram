@@ -3962,6 +3962,7 @@ impl Repository {
                                 commit_timestamp: entry.commit_timestamp,
                                 author_name: entry.author_name.into(),
                                 author_email: entry.author_email.into(),
+                                refs: Vec::default(), // TODO
                             })
                             .collect(),
                         path: if let Some(path) = response.path.as_ref() {
