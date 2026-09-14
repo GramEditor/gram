@@ -40,6 +40,9 @@ commit messages display while typing them in the Git Panel. The default setting
 is `editor_width`, however, `none`, `preferred_line_length`, and `bounded` are
 also options.
 
+To open Git diffs side by side, enable `git_panel.split_diff`. The setting
+defaults to `false`.
+
 #### Example
 
 ```json
@@ -59,6 +62,28 @@ Panel.
 
 All of the changes displayed in the Project Diff behave the same as any other
 multibuffer: they are all editable excerpts of files.
+
+### Side-by-side diffs
+
+When `git_panel.split_diff` is enabled, project, commit and file diffs open with
+the old version on the left and the current version on the right. Matching rows
+are aligned across both panes; inserted and deleted rows are shown with hatched
+padding on the side that has no corresponding text. Scrolling and folds stay in
+sync between the panes.
+
+The view can be toggled for the active diff with the `editor::SplitDiff` and
+`editor::UnsplitDiff` actions. The current version remains the editable side,
+so staging, reverting and saving continue to work as in the regular diff view.
+
+For example, to enable the view by default, add this to `settings.json`:
+
+```json
+{
+  "git_panel": {
+    "split_diff": true
+  }
+}
+```
 
 Stage or unstage each hunk as well as a whole file by hitting the buttons on the
 tab bar or their corresponding keybindings.

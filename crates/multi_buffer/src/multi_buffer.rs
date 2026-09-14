@@ -1188,8 +1188,8 @@ impl MultiBuffer {
         Self {
             snapshot: RefCell::new(self.snapshot.borrow().clone()),
             buffers: buffers,
-            excerpts_by_path: Default::default(),
-            paths_by_excerpt: Default::default(),
+            excerpts_by_path: self.excerpts_by_path.clone(),
+            paths_by_excerpt: self.paths_by_excerpt.clone(),
             diffs: diff_bases,
             subscriptions: Default::default(),
             singleton: self.singleton,

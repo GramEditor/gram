@@ -2,6 +2,7 @@ use anyhow::anyhow;
 use commit_modal::CommitModal;
 use editor::{Editor, actions::DiffClipboardWithSelectionData};
 use project::ProjectPath;
+use settings::Settings as _;
 use ui::{
     Headline, HeadlineSize, Icon, IconName, IconSize, IntoElement, ParentElement, Render, Styled, StyledExt, div,
     h_flex, rems, v_flex,
@@ -42,6 +43,34 @@ pub mod repository_selector;
 pub mod stash_picker;
 pub mod text_diff_view;
 pub mod worktree_picker;
+
+/// Attach an existing editor to its split container and forward its events.
+fn attach_split_editor<T: EventEmitter<editor::EditorEvent> + 'static>(
+    split_editor: &mut Option<Entity<editor::SplittableEditor>>,
+    editor: &Entity<Editor>,
+    workspace: &mut Workspace,
+    window: &mut Window,
+    cx: &mut Context<T>,
+) {
+    if let Some(split) = split_editor {
+        split.update(cx, |split, cx| split.added_to_workspace(workspace, window, cx));
+        return;
+    }
+    let project = workspace.project().clone();
+    let workspace = workspace.weak_handle().upgrade().unwrap();
+    let split = cx.new(|cx| {
+        let mut split = editor::SplittableEditor::from_editor(editor.clone(), project, workspace, window, cx);
+        split.set_split_diff_enabled(
+            git_panel_settings::GitPanelSettings::get_global(cx).split_diff,
+            window,
+            cx,
+        );
+        split
+    });
+    cx.subscribe(&split, |_, _, event: &editor::EditorEvent, cx| cx.emit(event.clone()))
+        .detach();
+    *split_editor = Some(split);
+}
 
 pub fn init(cx: &mut App) {
     editor::set_blame_renderer(blame_ui::GitBlameRenderer, cx);

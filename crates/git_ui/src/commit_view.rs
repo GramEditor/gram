@@ -1,6 +1,7 @@
 use anyhow::{Context as _, Result};
 use buffer_diff::BufferDiff;
 use collections::HashMap;
+use editor::SplittableEditor;
 use editor::display_map::{BlockPlacement, BlockProperties, BlockStyle};
 use editor::{Addon, Editor, EditorEvent, ExcerptRange, MultiBuffer, multibuffer_context_lines};
 use git::repository::{CommitDetails, CommitDiff, RepoPath, is_binary_content};
@@ -57,6 +58,7 @@ pub fn init(cx: &mut App) {
 pub struct CommitView {
     commit: CommitDetails,
     editor: Entity<Editor>,
+    split_editor: Option<Entity<SplittableEditor>>,
     stash: Option<usize>,
     multibuffer: Entity<MultiBuffer>,
     repository: Entity<Repository>,
@@ -94,6 +96,14 @@ pub enum OpenMode {
 }
 
 impl CommitView {
+    fn active_editor(&self, cx: &App) -> Entity<Editor> {
+        self.split_editor
+            .as_ref()
+            .map(|split| split.read(cx).last_selected_editor())
+            .unwrap_or(&self.editor)
+            .clone()
+    }
+
     pub fn open(
         commit_sha: String,
         repo: WeakEntity<Repository>,
@@ -415,6 +425,7 @@ impl CommitView {
         Self {
             commit,
             editor,
+            split_editor: None,
             multibuffer,
             stash,
             repository,
@@ -892,7 +903,7 @@ impl EventEmitter<EditorEvent> for CommitView {}
 
 impl Focusable for CommitView {
     fn focus_handle(&self, cx: &App) -> FocusHandle {
-        self.editor.focus_handle(cx)
+        self.active_editor(cx).focus_handle(cx)
     }
 }
 
@@ -950,19 +961,19 @@ impl Item for CommitView {
         &'a self,
         type_id: TypeId,
         self_handle: &'a Entity<Self>,
-        _: &'a App,
+        cx: &'a App,
     ) -> Option<gpui::AnyEntity> {
         if type_id == TypeId::of::<Self>() {
             Some(self_handle.clone().into())
         } else if type_id == TypeId::of::<Editor>() {
-            Some(self.editor.clone().into())
+            Some(self.active_editor(cx).into())
         } else {
             None
         }
     }
 
-    fn as_searchable(&self, _: &Entity<Self>, _: &App) -> Option<Box<dyn SearchableItemHandle>> {
-        Some(Box::new(self.editor.clone()))
+    fn as_searchable(&self, _: &Entity<Self>, cx: &App) -> Option<Box<dyn SearchableItemHandle>> {
+        Some(Box::new(self.active_editor(cx)))
     }
 
     fn for_each_project_item(&self, cx: &App, f: &mut dyn FnMut(gpui::EntityId, &dyn project::ProjectItem)) {
@@ -988,8 +999,7 @@ impl Item for CommitView {
     }
 
     fn added_to_workspace(&mut self, workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Self>) {
-        self.editor
-            .update(cx, |editor, cx| editor.added_to_workspace(workspace, window, cx));
+        crate::attach_split_editor(&mut self.split_editor, &self.editor, workspace, window, cx);
     }
 
     fn can_split(&self) -> bool {
@@ -1012,17 +1022,23 @@ impl Item for CommitView {
             .map(|addon| addon.file_statuses.clone())
             .unwrap_or_default();
         Task::ready(Some(cx.new(|cx| {
+            let multibuffer = self.multibuffer.update(cx, |buffer, cx| cx.new(|cx| buffer.clone(cx)));
             let editor = cx.new({
                 let file_statuses = file_statuses.clone();
                 |cx| {
-                    let mut editor = self.editor.update(cx, |editor, cx| editor.clone(window, cx));
+                    let mut editor = self.editor.update(cx, |editor, cx| {
+                        editor.clone_with_buffer(multibuffer.clone(), window, cx)
+                    });
                     editor.register_addon(CommitDiffAddon { file_statuses });
                     editor
                 }
             });
-            let multibuffer = editor.read(cx).buffer().clone();
+            // clone_with_buffer copies folds by offsets: keep the same deleted-hunk
+            // visibility until view state has been transferred to the clone.
+            multibuffer.update(cx, |buffer, cx| buffer.set_show_deleted_hunks(true, cx));
             Self {
                 editor,
+                split_editor: None,
                 multibuffer,
                 commit: self.commit.clone(),
                 stash: self.stash,
@@ -1043,7 +1059,14 @@ impl Render for CommitView {
             .bg(cx.theme().colors().editor_background)
             .child(self.render_header(window, cx))
             .when(!self.editor.read(cx).is_empty(cx), |this| {
-                this.child(div().flex_grow().child(self.editor.clone()))
+                this.child(
+                    div().flex_grow().child(
+                        self.split_editor
+                            .as_ref()
+                            .map(|split| split.clone().into_any_element())
+                            .unwrap_or_else(|| self.editor.clone().into_any_element()),
+                    ),
+                )
             })
     }
 }
@@ -1091,4 +1114,133 @@ fn stash_matches_index(sha: &str, stash_index: usize, repo: &Repository) -> bool
         .get(stash_index)
         .map(|entry| entry.oid.to_string() == sha)
         .unwrap_or(false)
+}
+
+#[cfg(test)]
+mod split_tests {
+    use super::*;
+    use git::repository::CommitFile;
+    use project::FakeFs;
+    use settings::SettingsStore;
+    use util::path;
+
+    #[gpui::test]
+    async fn test_split_commit_and_independent_clone(cx: &mut gpui::TestAppContext) {
+        cx.update(|cx| {
+            let store = SettingsStore::test(cx);
+            cx.set_global(store);
+            theme::init(theme::LoadThemes::JustBase, cx);
+            editor::init(cx);
+            crate::init(cx);
+            SettingsStore::update(cx, |store, cx| {
+                store
+                    .set_user_settings(r#"{"git_panel":{"split_diff":true}}"#, cx)
+                    .unwrap();
+            });
+        });
+        let fs = FakeFs::new(cx.executor());
+        fs.insert_tree(path!("/project"), serde_json::json!({".git":{},"file.txt":"new\n"}))
+            .await;
+        let project = Project::test(fs, [path!("/project").as_ref()], cx).await;
+        let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        cx.run_until_parked();
+        let repo = project.read_with(cx, |project, cx| {
+            project.git_store().read(cx).active_repository().unwrap()
+        });
+        let view = cx.new_window_entity(|window, cx| {
+            CommitView::new(
+                CommitDetails {
+                    sha: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".into(),
+                    message: "Example commit".into(),
+                    ..Default::default()
+                },
+                CommitDiff {
+                    files: vec![
+                        CommitFile {
+                            path: RepoPath::new("file.txt").unwrap(),
+                            old_text: Some("old\nhead\nfold start\nfold body\nfold end\ntail\n".into()),
+                            new_text: Some("head\nfold start\nfold body\nfold end\ntail\n".into()),
+                            is_binary: false,
+                        },
+                        CommitFile {
+                            path: RepoPath::new("binary.dat").unwrap(),
+                            old_text: None,
+                            new_text: None,
+                            is_binary: true,
+                        },
+                    ],
+                },
+                repo,
+                project,
+                None,
+                window,
+                cx,
+            )
+        });
+        workspace.update_in(cx, |workspace, window, cx| {
+            view.update(cx, |view, cx| view.added_to_workspace(workspace, window, cx))
+        });
+        for _ in 0..6 {
+            cx.run_until_parked();
+            cx.draw(gpui::point(px(0.), px(0.)), gpui::size(px(1000.), px(700.)), |_, _| {
+                view.clone()
+            });
+        }
+        view.read_with(cx, |view, cx| {
+            assert!(view.split_editor.as_ref().unwrap().read(cx).is_split());
+            assert!(view.editor.read(cx).read_only(cx));
+            assert_eq!(view.multibuffer.read(cx).paths().count(), 3);
+        });
+        view.update_in(cx, |view, window, cx| {
+            view.editor.update(cx, |editor, cx| {
+                let snapshot = editor.buffer().read(cx).snapshot(cx);
+                let (id, buffer, _) = snapshot
+                    .excerpts()
+                    .find(|(_, buffer, _)| buffer.text().starts_with("head\n"))
+                    .unwrap();
+                let range = multi_buffer::Anchor::range_in_buffer(
+                    id,
+                    buffer.anchor_before(Point::new(1, 0))..buffer.anchor_before(Point::new(4, 0)),
+                );
+                editor.fold_ranges(vec![range], false, window, cx);
+            });
+        });
+        let clone = view
+            .update_in(cx, |view, window, cx| view.clone_on_split(None, window, cx))
+            .await
+            .unwrap();
+        clone.update(cx, |view, cx| {
+            view.editor.update(cx, |editor, cx| {
+                let snapshot = editor.display_snapshot(cx);
+                let folded = snapshot
+                    .folds_in_range(multi_buffer::Anchor::min()..multi_buffer::Anchor::max())
+                    .map(|fold| {
+                        snapshot
+                            .buffer_snapshot()
+                            .text_for_range(fold.range.start..fold.range.end)
+                            .collect::<String>()
+                    })
+                    .collect::<Vec<_>>();
+                assert_eq!(folded, vec!["fold start\nfold body\nfold end\n"]);
+            });
+        });
+        workspace.update_in(cx, |workspace, window, cx| {
+            clone.update(cx, |view, cx| view.added_to_workspace(workspace, window, cx))
+        });
+        view.update_in(cx, |view, window, cx| {
+            view.split_editor
+                .as_ref()
+                .unwrap()
+                .update(cx, |split, cx| split.set_split_diff_enabled(false, window, cx));
+        });
+        cx.run_until_parked();
+        cx.update(|_, cx| {
+            let original = view.read(cx);
+            let clone = clone.read(cx);
+            assert_ne!(original.multibuffer, clone.multibuffer);
+            assert_eq!(clone.multibuffer.read(cx).paths().count(), 3);
+            assert!(original.multibuffer.read(cx).snapshot(cx).text().contains("old"));
+            assert!(!clone.multibuffer.read(cx).snapshot(cx).text().contains("old"));
+        });
+    }
 }
