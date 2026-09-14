@@ -11,7 +11,7 @@ use project::{
 use std::any::{Any, TypeId};
 
 use time::OffsetDateTime;
-use ui::{AvatarStyle, Chip, Divider, ListItem, WithScrollbar, prelude::*, render_avatar};
+use ui::{AvatarStyle, Chip, ListItem, WithScrollbar, prelude::*, render_avatar};
 use util::ResultExt;
 use workspace::{
     Item, Workspace,
@@ -386,36 +386,25 @@ impl Render for FileHistoryView {
             .bg(cx.theme().colors().editor_background)
             .child(
                 h_flex()
-                    .h(rems(2.5))
-                    .pl_3()
-                    .pr_2()
+                    .w_full()
+                    .p_0p5()
                     .justify_between()
-                    .border_b_1()
-                    .border_color(cx.theme().colors().border_variant)
-                    .child(Label::new(self.title()).color(Color::Muted).buffer_font(cx))
                     .child(
-                        h_flex()
-                            .gap_1p5()
-                            .child(
-                                Label::new(format!("{} commits", entry_count))
-                                    .size(LabelSize::Small)
-                                    .color(Color::Muted)
-                                    .when(self.has_more, |this| this.mr_1()),
-                            )
-                            .when(self.has_more, |this| {
-                                this.child(Divider::vertical()).child(
-                                    Button::new("load-more", "Load More")
-                                        .disabled(self.loading_more)
-                                        .label_size(LabelSize::Small)
-                                        .icon(IconName::ArrowCircle)
-                                        .icon_size(IconSize::Small)
-                                        .icon_color(Color::Muted)
-                                        .icon_position(IconPosition::Start)
-                                        .on_click(cx.listener(|this, _, window, cx| {
-                                            this.load_more(window, cx);
-                                        })),
-                                )
-                            }),
+                        Label::new(format!("{} commits", entry_count))
+                            .size(LabelSize::Small)
+                            .color(Color::Muted),
+                    )
+                    .child(
+                        Button::new("load-more", "Load More")
+                            .disabled(self.loading_more | !self.has_more)
+                            .label_size(LabelSize::Small)
+                            .icon(IconName::ArrowCircle)
+                            .icon_size(IconSize::Small)
+                            .icon_color(Color::Muted)
+                            .icon_position(IconPosition::Start)
+                            .on_click(cx.listener(|this, _, window, cx| {
+                                this.load_more(window, cx);
+                            })),
                     ),
             )
             .child(
