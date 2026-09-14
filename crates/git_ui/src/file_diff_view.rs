@@ -2,6 +2,7 @@
 
 use anyhow::Result;
 use buffer_diff::BufferDiff;
+use editor::SplittableEditor;
 use editor::{Editor, EditorEvent, MultiBuffer};
 use futures::{FutureExt, select_biased};
 use gpui::{
@@ -27,6 +28,7 @@ use workspace::{
 
 pub struct FileDiffView {
     editor: Entity<Editor>,
+    split_editor: Option<Entity<SplittableEditor>>,
     old_buffer: Entity<Buffer>,
     new_buffer: Entity<Buffer>,
     buffer_changes_tx: watch::Sender<()>,
@@ -36,6 +38,14 @@ pub struct FileDiffView {
 const RECALCULATE_DIFF_DEBOUNCE: Duration = Duration::from_millis(250);
 
 impl FileDiffView {
+    fn active_editor(&self, cx: &App) -> Entity<Editor> {
+        self.split_editor
+            .as_ref()
+            .map(|split| split.read(cx).last_selected_editor())
+            .unwrap_or(&self.editor)
+            .clone()
+    }
+
     pub fn open(
         old_path: PathBuf,
         new_path: PathBuf,
@@ -108,6 +118,7 @@ impl FileDiffView {
 
         Self {
             editor,
+            split_editor: None,
             buffer_changes_tx,
             old_buffer,
             new_buffer,
@@ -180,7 +191,7 @@ impl EventEmitter<EditorEvent> for FileDiffView {}
 
 impl Focusable for FileDiffView {
     fn focus_handle(&self, cx: &App) -> FocusHandle {
-        self.editor.focus_handle(cx)
+        self.active_editor(cx).focus_handle(cx)
     }
 }
 
@@ -237,19 +248,19 @@ impl Item for FileDiffView {
         &'a self,
         type_id: TypeId,
         self_handle: &'a Entity<Self>,
-        _: &'a App,
+        cx: &'a App,
     ) -> Option<gpui::AnyEntity> {
         if type_id == TypeId::of::<Self>() {
             Some(self_handle.clone().into())
         } else if type_id == TypeId::of::<Editor>() {
-            Some(self.editor.clone().into())
+            Some(self.active_editor(cx).into())
         } else {
             None
         }
     }
 
-    fn as_searchable(&self, _: &Entity<Self>, _: &App) -> Option<Box<dyn SearchableItemHandle>> {
-        Some(Box::new(self.editor.clone()))
+    fn as_searchable(&self, _: &Entity<Self>, cx: &App) -> Option<Box<dyn SearchableItemHandle>> {
+        Some(Box::new(self.active_editor(cx)))
     }
 
     fn for_each_project_item(&self, cx: &App, f: &mut dyn FnMut(gpui::EntityId, &dyn project::ProjectItem)) {
@@ -271,12 +282,20 @@ impl Item for FileDiffView {
     }
 
     fn breadcrumbs(&self, theme: &theme::Theme, cx: &App) -> Option<Vec<BreadcrumbText>> {
-        self.editor.breadcrumbs(theme, cx)
+        let active = self.active_editor(cx);
+        let mut breadcrumbs = active.breadcrumbs(theme, cx)?;
+        if active != self.editor {
+            if let Some(first) = breadcrumbs.first_mut()
+                && let Some(path) = self.old_buffer.read(cx).snapshot().resolve_file_path(false, cx)
+            {
+                first.text = path;
+            }
+        }
+        Some(breadcrumbs)
     }
 
     fn added_to_workspace(&mut self, workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Self>) {
-        self.editor
-            .update(cx, |editor, cx| editor.added_to_workspace(workspace, window, cx));
+        crate::attach_split_editor(&mut self.split_editor, &self.editor, workspace, window, cx);
     }
 
     fn can_save(&self, cx: &App) -> bool {
@@ -299,7 +318,10 @@ impl Item for FileDiffView {
 
 impl Render for FileDiffView {
     fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
-        self.editor.clone()
+        self.split_editor
+            .as_ref()
+            .map(|split| split.clone().into_any_element())
+            .unwrap_or_else(|| self.editor.clone().into_any_element())
     }
 }
 
@@ -451,7 +473,23 @@ mod tests {
 
     #[gpui::test]
     async fn test_save_changes_in_diff_view(cx: &mut TestAppContext) {
+        check_save_changes_in_diff_view(false, cx).await;
+    }
+
+    #[gpui::test]
+    async fn test_save_changes_in_split_diff_view(cx: &mut TestAppContext) {
+        check_save_changes_in_diff_view(true, cx).await;
+    }
+
+    async fn check_save_changes_in_diff_view(split: bool, cx: &mut TestAppContext) {
         init_test(cx);
+        cx.update(|cx| {
+            SettingsStore::update(cx, |store, cx| {
+                store
+                    .set_user_settings(&format!(r#"{{"git_panel":{{"split_diff":{split}}}}}"#), cx)
+                    .unwrap();
+            });
+        });
 
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(
@@ -479,6 +517,10 @@ mod tests {
             })
             .await
             .unwrap();
+
+        diff_view.read_with(cx, |view, cx| {
+            assert_eq!(view.split_editor.as_ref().unwrap().read(cx).is_split(), split)
+        });
 
         diff_view.update_in(cx, |diff_view, window, cx| {
             diff_view.editor.update(cx, |editor, cx| {

@@ -534,6 +534,7 @@ non-visual customization options.
     "sort_by_path": false,        // Sort by path (false) or status (true)
     "tree_view": false,           // Tree (true) or flat list (false)
     "diff_stats": true,           // Show added/deleted line counts
+    "split_diff": false,          // Open Git diffs side by side
     "scrollbar": {
       "show": null                // Show/hide: (auto, system, always, never)
     }

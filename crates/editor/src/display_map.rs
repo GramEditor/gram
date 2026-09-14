@@ -170,6 +170,15 @@ pub struct DisplayMap {
 }
 
 impl DisplayMap {
+    /// Changes on font/width updates, but not when text in another excerpt changes.
+    pub(crate) fn wrap_settings_version(&self, cx: &App) -> u64 {
+        self.wrap_map.read(cx).settings_version()
+    }
+
+    pub(crate) fn header_disabled_for_buffer(&self, id: BufferId) -> bool {
+        self.block_map.header_disabled_for_buffer(id)
+    }
+
     pub fn new(
         buffer: Entity<MultiBuffer>,
         font: Font,
@@ -590,7 +599,6 @@ impl DisplayMap {
         language_settings(language, file, cx).tab_size
     }
 
-    #[cfg(test)]
     pub fn is_rewrapping(&self, cx: &gpui::App) -> bool {
         self.wrap_map.read(cx).is_rewrapping()
     }

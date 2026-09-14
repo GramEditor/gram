@@ -20,6 +20,7 @@ pub static CALCULATE_DIFF_TASK: LazyLock<TaskLabel> = LazyLock::new(TaskLabel::n
 pub const MAX_WORD_DIFF_LINE_COUNT: usize = 5;
 
 pub struct BufferDiff {
+    revision: u64,
     pub buffer_id: BufferId,
     inner: BufferDiffInner<Entity<language::Buffer>>,
     // diff of the index vs head
@@ -28,6 +29,7 @@ pub struct BufferDiff {
 
 #[derive(Clone)]
 pub struct BufferDiffSnapshot {
+    revision: u64,
     inner: BufferDiffInner<language::BufferSnapshot>,
     secondary_diff: Option<Box<BufferDiffSnapshot>>,
 }
@@ -186,6 +188,12 @@ impl std::fmt::Debug for BufferDiffInner<language::BufferSnapshot> {
 }
 
 impl BufferDiffSnapshot {
+    /// Changes when a calculated hunk set is installed, even if buffer text did
+    /// not change (e.g. an asynchronous calculation or an index refresh).
+    pub fn revision(&self) -> u64 {
+        self.revision
+    }
+
     #[cfg(test)]
     fn new_sync(buffer: text::BufferSnapshot, diff_base: String, cx: &mut gpui::TestAppContext) -> BufferDiffSnapshot {
         let buffer_diff = cx.new(|cx| BufferDiff::new_with_base_text(&diff_base, &buffer, cx));
@@ -1003,6 +1011,7 @@ impl BufferDiff {
         });
 
         BufferDiff {
+            revision: 0,
             buffer_id: buffer.remote_id(),
             inner: BufferDiffInner {
                 base_text,
@@ -1023,6 +1032,7 @@ impl BufferDiff {
         });
 
         BufferDiff {
+            revision: 0,
             buffer_id: buffer.remote_id(),
             inner: BufferDiffInner {
                 base_text,
@@ -1245,6 +1255,7 @@ impl BufferDiff {
         } else {
             None
         };
+        self.revision += 1;
         state.hunks = new_state.hunks;
         if update.base_text_changed || clear_pending_hunks {
             if let Some((first, last)) = state.pending_hunks.first().zip(state.pending_hunks.last()) {
@@ -1316,6 +1327,7 @@ impl BufferDiff {
 
     pub fn snapshot(&self, cx: &App) -> BufferDiffSnapshot {
         BufferDiffSnapshot {
+            revision: self.revision,
             inner: BufferDiffInner {
                 hunks: self.inner.hunks.clone(),
                 pending_hunks: self.inner.pending_hunks.clone(),

@@ -34,6 +34,7 @@ pub struct WrapMap {
     wrap_width: Option<Pixels>,
     background_task: Option<Task<()>>,
     font_with_size: (Font, Pixels),
+    settings_version: u64,
 }
 
 #[derive(Clone)]
@@ -111,6 +112,7 @@ impl WrapMap {
             let mut this = Self {
                 font_with_size: (font, font_size),
                 wrap_width: None,
+                settings_version: 0,
                 pending_edits: Default::default(),
                 interpolated_edits: Default::default(),
                 edits_since_sync: Default::default(),
@@ -125,7 +127,10 @@ impl WrapMap {
         (handle, snapshot)
     }
 
-    #[cfg(test)]
+    pub(super) fn settings_version(&self) -> u64 {
+        self.settings_version
+    }
+
     pub fn is_rewrapping(&self) -> bool {
         self.background_task.is_some()
     }
@@ -156,7 +161,9 @@ impl WrapMap {
             false
         } else {
             self.font_with_size = font_with_size;
+            self.settings_version += 1;
             self.rewrap(cx);
+            cx.notify();
             true
         }
     }
@@ -167,7 +174,10 @@ impl WrapMap {
         }
 
         self.wrap_width = wrap_width;
+        self.settings_version += 1;
         self.rewrap(cx);
+        // Split layout also needs invalidation when wrapping finished synchronously.
+        cx.notify();
         true
     }
 

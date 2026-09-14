@@ -830,7 +830,9 @@ impl Item for Editor {
                     cx,
                 )
                 .unwrap_or_else(|| {
-                    if multibuffer.is_singleton() {
+                    if let Some(path) = multibuffer.path_for_excerpt(cursor.excerpt_id) {
+                        path.path.display(util::paths::PathStyle::local()).into_owned()
+                    } else if multibuffer.is_singleton() {
                         multibuffer.title(cx).to_string()
                     } else {
                         "untitled".to_string()

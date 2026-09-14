@@ -834,6 +834,8 @@
     //
     // Default: false
     "collapse_untracked_diff": false,
+    // Open diffs side by side by default.
+    "split_diff": false,
     /// Whether to show entries with tree or flat view in the panel
     ///
     /// Default: false
