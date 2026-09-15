@@ -393,6 +393,7 @@ pub struct CommitDetails {
     pub commit_timestamp: i64,
     pub author_email: SharedString,
     pub author_name: SharedString,
+    pub refs: Vec<String>,
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
@@ -1049,14 +1050,14 @@ impl GitRepository for RealGitRepository {
                     .build_command(&[
                         "show",
                         "--no-patch",
-                        "--format=%H%x00%B%x00%at%x00%ae%x00%an%x00",
+                        "--format=%H%x00%B%x00%at%x00%ae%x00%an%x00%(decorate:prefix=,suffix=,separator=%x2C)%x00",
                         &commit,
                     ])
                     .output()
                     .await?;
                 let output = std::str::from_utf8(&output.stdout)?;
                 let fields = output.split('\0').collect::<Vec<_>>();
-                if fields.len() != 6 {
+                if fields.len() != 7 {
                     bail!("unexpected git-show output for {commit:?}: {output:?}")
                 }
                 let sha = fields[0].to_string().into();
@@ -1064,12 +1065,19 @@ impl GitRepository for RealGitRepository {
                 let commit_timestamp = fields[2].parse()?;
                 let author_email = fields[3].to_string().into();
                 let author_name = fields[4].to_string().into();
+                let refs: Vec<String> = fields[5]
+                    .trim()
+                    .split(',')
+                    .filter(|s| !s.is_empty())
+                    .map(|s| s.to_string())
+                    .collect();
                 Ok(CommitDetails {
                     sha,
                     message,
                     commit_timestamp,
                     author_email,
                     author_name,
+                    refs,
                 })
             })
             .boxed()

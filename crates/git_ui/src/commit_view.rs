@@ -24,7 +24,7 @@ use std::{
     sync::Arc,
 };
 use theme::ActiveTheme;
-use ui::{ButtonLike, DiffStat, Tooltip, prelude::*};
+use ui::{ButtonLike, Chip, DiffStat, Tooltip, prelude::*};
 use util::{ResultExt, paths::PathStyle, rel_path::RelPath, truncate_and_trailoff};
 use workspace::item::TabTooltipContent;
 use workspace::{
@@ -486,7 +486,7 @@ impl CommitView {
             commit_date,
             time::OffsetDateTime::now_utc(),
             local_offset,
-            time_format::TimestampFormat::MediumAbsolute,
+            time_format::TimestampFormat::Absolute,
         );
 
         let remote_info = self.remote.as_ref().map(|remote| {
@@ -599,9 +599,10 @@ impl CommitView {
                                 h_flex()
                                     .gap_1p5()
                                     .child(Label::new(date_string).color(Color::Muted).size(LabelSize::Small))
-                                    .child(Label::new("•").color(Color::Ignored).size(LabelSize::Small))
+                                    .child(Icon::new(IconName::Diff).color(Color::Ignored).size(IconSize::XSmall))
                                     .children(commit_diff_stat),
-                            ),
+                            )
+                            .child(h_flex().gap_1p5().children(commit.refs.iter().map(|s| Chip::new(s)))),
                     )
                     .children(remote_info.map(|(provider_name, url)| {
                         let icon = IconName::Forge;
