@@ -47,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Distinguish between errors better for remove server binary (#521) by @nitbook
 - When creating new X11WindowState also change `_NET_WM_NAME` property (#548) by @sir_nacnud 
 - Fix diagnostics batches stopping at paths without a worktree (zed#64017)
+- Raise open file soft limit at startup on Unix (zed#64034)
 
 ## [3.3.0] - 2026-08-25
 

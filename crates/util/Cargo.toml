@@ -49,7 +49,7 @@ mach2.workspace = true
 [target.'cfg(unix)'.dependencies]
 command-fds.workspace = true
 libc.workspace = true
-nix = { workspace = true, features = ["user"] }
+nix = { workspace = true, features = ["resource", "user"] }
 
 [target.'cfg(windows)'.dependencies]
 tendril.workspace = true

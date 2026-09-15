@@ -240,6 +240,34 @@ Error: Running Gram as root or via sudo is unsupported.
 }
 
 #[cfg(unix)]
+pub fn increase_open_file_limit() -> Result<()> {
+    use anyhow::Context as _;
+    use nix::errno::Errno::EINVAL;
+    use nix::sys::resource::{Resource::RLIMIT_NOFILE, getrlimit, setrlimit};
+
+    let target = if cfg!(target_os = "macos") { 10_240 } else { 65_536 };
+    let (soft_limit, hard_limit) = getrlimit(RLIMIT_NOFILE).context("Could not get process resource limits")?;
+    let mut request = target.min(hard_limit);
+
+    while request > soft_limit {
+        match setrlimit(RLIMIT_NOFILE, request, hard_limit) {
+            Ok(_) => {
+                log::info!("Raised process resource soft limit from {soft_limit} to {request}");
+                break;
+            }
+            Err(err) if err == EINVAL && request > soft_limit + 1 => {
+                request = soft_limit + (request - soft_limit) / 2;
+            }
+            Err(err) => {
+                return Err(err).context("EINVAL while setting process resource limit");
+            }
+        }
+    }
+
+    Ok(())
+}
+
+#[cfg(unix)]
 fn load_shell_from_passwd() -> Result<()> {
     let buflen = match unsafe { libc::sysconf(libc::_SC_GETPW_R_SIZE_MAX) } {
         n if n < 0 => 1024,

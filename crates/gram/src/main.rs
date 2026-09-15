@@ -240,6 +240,9 @@ pub fn main() {
         }
     }
 
+    #[cfg(unix)]
+    util::increase_open_file_limit().log_err();
+
     let app_version = AppVersion::load(env!("CARGO_PKG_VERSION"));
     let version_name = match option_env!("GRAM_COMMIT_NAME") {
         Some(commit_name) => commit_name.to_string(),
