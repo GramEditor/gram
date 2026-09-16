@@ -36,8 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Clean up formatting in docs (#490) by @koru
 - Adopt SciActive's human contribution policy (#495) by @helinos
   Policy by @hperrin
-- Require download and exec permissions to use extension-provided LSPs
-- Require download and exec permissions to use extension-provided DAPs
+- Require permission to download or use extension-provided LSPs
+- Require permission to download or use extension-provided DAPs
+- Update Zig tree-sitter queries (#553) by @koru
 
 ## Fixed
 
