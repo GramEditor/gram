@@ -14,6 +14,17 @@ pub struct BinaryOptions {
     pub enable_auto_updates: bool,
 }
 
+impl BinaryOptions {
+    #[allow(unused)]
+    pub fn permissive() -> Self {
+        Self {
+            allow_path_lookup: true,
+            allow_binary_download: true,
+            enable_auto_updates: true,
+        }
+    }
+}
+
 impl From<&LanguageServerBinaryOptions> for BinaryOptions {
     fn from(item: &LanguageServerBinaryOptions) -> Self {
         Self {
@@ -147,6 +158,32 @@ mod tests {
     }
 
     #[test]
+    fn test_grant_binary_options() {
+        let manifest = Arc::new(ExtensionManifest {
+            capabilities: vec![ExtensionCapability::ProcessExec(ProcessExecCapability {
+                command: "ls".to_string(),
+                args: vec!["-la".to_string()],
+            })],
+            ..extension_manifest()
+        });
+        let granter = CapabilityGranter::new(
+            vec![ExtensionCapability::ProcessExec(ProcessExecCapability {
+                command: "*".to_string(),
+                args: vec!["**".to_string()],
+            })],
+            manifest,
+        );
+
+        // It returns an error when the extension host has no granted binary options
+        assert!(granter.grant_exec("ls", &["-la"]).is_err());
+
+        // It succeeds with permissive options
+        granter.set_binary_options(&BinaryOptions::permissive());
+
+        assert!(granter.grant_exec("ls", &["-la"]).is_ok());
+    }
+
+    #[test]
     fn test_grant_exec() {
         let manifest = Arc::new(ExtensionManifest {
             capabilities: vec![ExtensionCapability::ProcessExec(ProcessExecCapability {
@@ -156,8 +193,10 @@ mod tests {
             ..extension_manifest()
         });
 
-        // It returns an error when the extension host has no granted capabilities.
         let granter = CapabilityGranter::new(Vec::new(), manifest.clone());
+        granter.set_binary_options(&BinaryOptions::permissive());
+
+        // It returns an error when the extension host has no granted capabilities.
         assert!(granter.grant_exec("ls", &["-la"]).is_err());
 
         // It succeeds when the extension host has the exact capability.
@@ -168,6 +207,7 @@ mod tests {
             })],
             manifest.clone(),
         );
+        granter.set_binary_options(&BinaryOptions::permissive());
         assert!(granter.grant_exec("ls", &["-la"]).is_ok());
 
         // It succeeds when the extension host has a wildcard capability.
@@ -178,6 +218,7 @@ mod tests {
             })],
             manifest,
         );
+        granter.set_binary_options(&BinaryOptions::permissive());
         assert!(granter.grant_exec("ls", &["-la"]).is_ok());
     }
 }
