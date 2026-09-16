@@ -4,6 +4,7 @@ use crate::capability_granter::CapabilityGranter;
 use crate::{ExtensionManifest, ExtensionSettings};
 use anyhow::{Context as _, Result, anyhow, bail};
 use async_trait::async_trait;
+use dap::settings::DapSettings;
 use dap::{DebugRequest, StartDebuggingRequestArgumentsRequest};
 use extension::{
     CodeLabel, Command, Completion, DebugAdapterBinary, DebugTaskDefinition, ExtensionCapability, ExtensionHostProxy,
@@ -22,7 +23,7 @@ use futures::{
 use gpui::{App, AsyncApp, BackgroundExecutor, Task, Timer};
 use http_client::HttpClient;
 use language::LanguageName;
-use lsp::LanguageServerName;
+use lsp::{LanguageServerBinaryOptions, LanguageServerName};
 use moka::sync::Cache;
 use node_runtime::NodeRuntime;
 use release_channel::ReleaseChannel;
@@ -90,13 +91,14 @@ impl extension::Extension for WasmExtension {
         &self,
         language_server_id: LanguageServerName,
         language_name: LanguageName,
+        binary_options: LanguageServerBinaryOptions,
         worktree: Arc<dyn WorktreeDelegate>,
     ) -> Result<Command> {
         self.call(|extension, store| {
             async move {
                 let resource = store.data_mut().table.push(worktree)?;
                 let command = extension
-                    .call_language_server_command(store, &language_server_id, &language_name, resource)
+                    .call_language_server_command(store, &language_server_id, &language_name, &binary_options, resource)
                     .await?
                     .map_err(|err| store.data().extension_error(err))?;
 
@@ -281,15 +283,17 @@ impl extension::Extension for WasmExtension {
     async fn get_dap_binary(
         &self,
         dap_name: Arc<str>,
+        settings: &DapSettings,
         config: DebugTaskDefinition,
         user_installed_path: Option<PathBuf>,
         worktree: Arc<dyn WorktreeDelegate>,
     ) -> Result<DebugAdapterBinary> {
+        let settings = settings.clone();
         self.call(|extension, store| {
             async move {
                 let resource = store.data_mut().table.push(worktree)?;
                 let dap_binary = extension
-                    .call_get_dap_binary(store, dap_name, config, user_installed_path, resource)
+                    .call_get_dap_binary(store, dap_name, &settings, config, user_installed_path, resource)
                     .await?
                     .map_err(|err| store.data().extension_error(err))?;
                 let dap_binary = dap_binary.try_into()?;

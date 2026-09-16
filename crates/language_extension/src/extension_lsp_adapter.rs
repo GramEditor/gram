@@ -129,10 +129,6 @@ impl ExtensionLspAdapter {
             language_name,
         }
     }
-
-    fn extension_name(&self) -> String {
-        self.extension.manifest().name.clone()
-    }
 }
 
 #[async_trait(?Send)]
@@ -147,32 +143,15 @@ impl DynLspInstaller for ExtensionLspAdapter {
     ) -> LanguageServerBinaryLocations {
         async move {
             let ret = maybe!(async move {
-                if !binary_options.allow_binary_download {
-                    anyhow::bail!(
-                        "Extension '{}' not allowed to download language server '{}'",
-                        self.extension_name(),
-                        self.name(),
-                    );
-                }
-                if !binary_options.allow_path_lookup {
-                    anyhow::bail!(
-                        "Extension '{}' not allowed to look up system-installed language server '{}'",
-                        self.extension_name(),
-                        self.name(),
-                    );
-                }
-                if !binary_options.enable_auto_updates {
-                    anyhow::bail!(
-                        "Extension '{}' not allowed to update language server '{}'",
-                        self.extension_name(),
-                        self.name(),
-                    );
-                }
-
                 let delegate = Arc::new(WorktreeDelegateAdapter(delegate.clone())) as _;
                 let command = self
                     .extension
-                    .language_server_command(self.language_server_id.clone(), self.language_name.clone(), delegate)
+                    .language_server_command(
+                        self.language_server_id.clone(),
+                        self.language_name.clone(),
+                        binary_options,
+                        delegate,
+                    )
                     .await?;
 
                 // on windows, extensions might produce weird paths

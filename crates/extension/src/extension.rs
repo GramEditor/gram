@@ -11,9 +11,11 @@ use std::sync::Arc;
 use ::lsp::LanguageServerName;
 use anyhow::{Context as _, Result, bail};
 use async_trait::async_trait;
+use dap::settings::DapSettings;
 use fs::normalize_path;
 use gpui::{App, Task};
 use language::LanguageName;
+use lsp::LanguageServerBinaryOptions;
 use semver::Version as SemanticVersion;
 use task::{GramDebugConfig, SpawnInTerminal};
 use util::rel_path::RelPath;
@@ -64,6 +66,7 @@ pub trait Extension: Send + Sync + 'static {
         &self,
         language_server_id: LanguageServerName,
         language_name: LanguageName,
+        binary_options: LanguageServerBinaryOptions,
         worktree: Arc<dyn WorktreeDelegate>,
     ) -> Result<Command>;
 
@@ -118,6 +121,7 @@ pub trait Extension: Send + Sync + 'static {
     async fn get_dap_binary(
         &self,
         dap_name: Arc<str>,
+        settings: &DapSettings,
         config: DebugTaskDefinition,
         user_installed_path: Option<PathBuf>,
         worktree: Arc<dyn WorktreeDelegate>,

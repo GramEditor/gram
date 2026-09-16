@@ -70,7 +70,7 @@ pub struct LanguageServerBinary {
 }
 
 /// Configures the search (and installation) of language servers.
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct LanguageServerBinaryOptions {
     /// Whether the adapter should look at the users system
     pub allow_path_lookup: bool,

@@ -331,6 +331,7 @@ impl LanguageServerState {
                                             Box::new(cx.new(|cx| {
                                                 let mut editor = Editor::for_buffer(buffer, None, window, cx);
                                                 editor.set_read_only(true);
+                                                editor.set_soft_wrap();
                                                 editor
                                             })),
                                             None,
@@ -469,6 +470,7 @@ impl LanguageServerState {
                                 .child(Label::new(status_label).size(LabelSize::Small).color(Color::Muted))
                                 .when_some(metadata_label.as_ref(), |submenu, metadata| {
                                     submenu
+                                        .max_w(rems(32.))
                                         .child(Icon::new(IconName::Dash).color(Color::Disabled).size(IconSize::XSmall))
                                         .child(
                                             Label::new(metadata)
