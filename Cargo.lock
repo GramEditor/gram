@@ -9499,15 +9499,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "story"
-version = "3.3.0"
-dependencies = [
- "gpui",
- "itertools 0.14.0",
- "smallvec",
-]
-
-[[package]]
 name = "streaming-iterator"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10314,7 +10305,6 @@ dependencies = [
  "serde",
  "settings",
  "smallvec",
- "story",
  "theme",
  "ui",
  "util",
@@ -11064,7 +11054,6 @@ dependencies = [
  "serde",
  "settings",
  "smallvec",
- "story",
  "strum 0.28.0",
  "theme",
  "ui_macros",

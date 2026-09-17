@@ -39,9 +39,6 @@ mod toggle;
 mod tooltip;
 mod tree_view_item;
 
-#[cfg(feature = "stories")]
-mod stories;
-
 pub use avatar::*;
 pub use banner::*;
 pub use button::*;
@@ -82,6 +79,3 @@ pub use tab_bar::*;
 pub use toggle::*;
 pub use tooltip::*;
 pub use tree_view_item::*;
-
-#[cfg(feature = "stories")]
-pub use stories::*;

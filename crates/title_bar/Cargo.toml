@@ -21,7 +21,6 @@ schemars.workspace = true
 serde.workspace = true
 settings.workspace = true
 smallvec.workspace = true
-story = { workspace = true, optional = true }
 theme.workspace = true
 ui.workspace = true
 util.workspace = true
@@ -39,7 +38,6 @@ windows.workspace = true
 
 [features]
 default = []
-stories = ["dep:story"]
 test-support = [
   "gpui/test-support",
   "project/test-support",

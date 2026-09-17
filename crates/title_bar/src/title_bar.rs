@@ -4,9 +4,6 @@ mod platforms;
 mod system_window_tabs;
 pub mod title_bar_settings;
 
-#[cfg(feature = "stories")]
-mod stories;
-
 use crate::{
     application_menu::{ApplicationMenu, show_menus},
     platform_title_bar::PlatformTitleBar,
@@ -31,9 +28,6 @@ use ui::{
     prelude::*,
 };
 use workspace::Workspace;
-
-#[cfg(feature = "stories")]
-pub use stories::*;
 
 const MAX_PROJECT_NAME_LENGTH: usize = 40;
 const MAX_BRANCH_NAME_LENGTH: usize = 40;

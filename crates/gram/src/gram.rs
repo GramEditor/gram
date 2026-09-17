@@ -4229,7 +4229,7 @@ mod tests {
                     if namespace.is_empty() {
                         actions_without_namespace.push(*action_name);
                     }
-                    if &namespace == "test_only" || &namespace == "stories" {
+                    if &namespace == "test_only" {
                         None
                     } else {
                         Some(namespace)
