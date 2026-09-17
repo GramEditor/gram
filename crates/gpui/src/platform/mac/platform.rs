@@ -54,7 +54,7 @@ define_class!(
     #[unsafe(super(NSResponder))]
     #[name = "GPUIAppDelegate"]
     #[ivars = GPUIAppDelegateIvars]
-        #[thread_kind = MainThreadOnly]
+    #[thread_kind = MainThreadOnly]
     struct GPUIAppDelegate;
 
     unsafe impl NSObjectProtocol for GPUIAppDelegate {}
@@ -83,7 +83,12 @@ define_class!(
             let notification_center = NSNotificationCenter::defaultCenter();
             let name = ns_string!("NSTextInputContextKeyboardSelectionDidChangeNotification");
             unsafe {
-            notification_center.addObserver_selector_name_object(self, sel!(onKeyboardLayoutChange:), Some(name), None)
+                notification_center.addObserver_selector_name_object(
+                    self,
+                    sel!(onKeyboardLayoutChange:),
+                    Some(name),
+                    None,
+                )
             };
 
             let callback = self.platform().0.lock().finish_launching.take();
