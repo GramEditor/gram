@@ -657,7 +657,7 @@ where
                 let name = self.name();
                 return (
                     Err(anyhow::anyhow!(
-                        "Download disabled for language server '{}', check the configuration",
+                        "Download disabled for language server '{}'. Ensure that you have 'Allow npm install' enabled.",
                         name.0
                     )),
                     None,
@@ -694,7 +694,7 @@ where
                         .await
                     {
                         log::info!(
-                            "failed to fetch newest version of language server {:?}. \
+                            "failed to fetch newest npm version of language server {:?}. \
                             error: {:?}, falling back to using {:?}",
                             self.name(),
                             error,

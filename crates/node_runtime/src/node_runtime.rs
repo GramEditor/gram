@@ -180,7 +180,7 @@ impl NodeRuntime {
             // error message.
             Box::new(UnavailableNodeRuntime {
                 error_message: format!(
-                    "No compatible Node.js version found in system path and download disabled. See Language Server Configuration: {}",
+                    "No compatible Node.js version found in system path. Additionally 'Allow npm install' is not enabled. See Language Server Configuration: {}",
                     system_node_error
                 )
                 .into(),
@@ -191,7 +191,7 @@ impl NodeRuntime {
             // TODO: When support is added for setting `options.allow_binary_download`, update this
             // error message.
             Box::new(UnavailableNodeRuntime {
-                error_message: "No Node.js version found and download is disabled. See Language Server Configuration."
+                error_message: "No Node.js version found. Additionally 'Allow npm install' is not enabled. See Language Server Configuration."
                     .to_string()
                     .into(),
             }) as Box<dyn NodeRuntimeTrait>
