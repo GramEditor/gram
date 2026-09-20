@@ -192,7 +192,7 @@ function sign_app_binaries() {
     echo "Downloading git binary"
     download_git "${target_triple}" "${app_path}/Contents/MacOS/git"
 
-    cp crates/gram/contents/"$channel"/embedded.provisionprofile "${app_path}/Contents/"
+    cp crates/gram/contents/embedded.provisionprofile "${app_path}/Contents/"
 
     if [[ $can_code_sign = true ]]; then
         echo "Code signing binaries"
