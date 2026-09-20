@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Require permission to download or use extension-provided LSPs
 - Require permission to download or use extension-provided DAPs
 - Update Zig tree-sitter queries (#553) by @koru
+- Update bundled git version to 2.53.0 (Mac OS)
 
 ## Fixed
 
@@ -49,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When creating new X11WindowState also change `_NET_WM_NAME` property (#548) by @sir_nacnud 
 - Fix diagnostics batches stopping at paths without a worktree (zed#64017)
 - Raise open file soft limit at startup on Unix (zed#64034)
+- Ensure that SoftWrap being set to None does not cause wrapping (#572) by @nitbook
 
 ## [3.3.0] - 2026-08-25
 
