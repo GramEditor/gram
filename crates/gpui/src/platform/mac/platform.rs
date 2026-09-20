@@ -1023,7 +1023,9 @@ impl Platform for MacPlatform {
     fn path_for_auxiliary_executable(&self, name: &str) -> Result<PathBuf> {
         let bundle = NSBundle::mainBundle();
         let name = NSString::from_str(name);
-        let url = bundle.URLForAuxiliaryExecutable(&name).expect("resource not found");
+        let url = bundle
+            .URLForAuxiliaryExecutable(&name)
+            .context("Bundled executable not found")?;
         unsafe { ns_url_to_path(&url) }
     }
 
