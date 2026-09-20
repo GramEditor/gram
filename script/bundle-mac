@@ -137,8 +137,8 @@ if [[ -n "${APPLE_ID:-}" && -n "${APPLE_PASSWORD_GRAM:-}" && -n "${APPLE_TEAM_ID
     can_code_sign=true
 fi
 
-GIT_VERSION="v2.43.3"
-GIT_VERSION_SHA="fa29823"
+GIT_VERSION="v2.53.0"
+GIT_VERSION_SHA="6981a1f"
 
 function download_and_unpack() {
     local url=$1
