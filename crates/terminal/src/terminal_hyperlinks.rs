@@ -786,6 +786,14 @@ mod tests {
             }
 
             #[test]
+            fn issue_570() {
+                // PHP path
+                test_path!(
+                    "ERROR: InvalidArgument - ‹«tests/l👉ib/Sharing/SharingLegacySyncTest.php»:«877»:«29»› - Argument 1 of Test\\Sharing\\SharingLegacySyncTest::assertSyncingWorks expects list<NCU\\Sharing\\Share>, but NCU\\Sharing\\Share provided (see https://psalm.dev/004)"
+                );
+            }
+
+            #[test]
             // <https://github.com/zed-industries/zed/issues/12338>
             fn issue_12338_regex() {
                 // Issue #12338
