@@ -605,10 +605,8 @@ impl CommitView {
                             .child(h_flex().gap_1p5().children(commit.refs.iter().map(|s| Chip::new(s)))),
                     )
                     .children(remote_info.map(|(provider_name, url)| {
-                        let icon = IconName::Forge;
-
                         Button::new("view_on_provider", format!("View on {}", provider_name))
-                            .icon(icon)
+                            .icon(IconName::Forge)
                             .icon_color(Color::Muted)
                             .icon_size(IconSize::Small)
                             .icon_position(IconPosition::Start)

@@ -15,7 +15,7 @@ use ui::{
     App, Color, FluentBuilder, HighlightedLabel, Icon, InteractiveElement, IntoElement, LabelCommon, LabelSize,
     ListItem, ListItemSpacing, ParentElement, Render, SharedString, Styled, Toggleable, Window, h_flex, v_flex,
 };
-use util::ResultExt;
+use util::{ResultExt, paths::PathExt as _};
 use workspace::{ModalView, OpenOptions, WORKSPACE_DB, Workspace};
 
 const PANEL_WIDTH_REMS: f32 = 34.;
@@ -311,10 +311,5 @@ impl PickerDelegate for RecentFilesDelegate {
 }
 
 fn homify(path: &PathBuf) -> String {
-    let mut s = path.to_string_lossy().to_string();
-    let user_home_path = util::paths::home_dir().to_string_lossy();
-    if !user_home_path.is_empty() && s.starts_with(&*user_home_path) {
-        s.replace_range(0..user_home_path.len(), "~");
-    }
-    s
+    path.compact().to_string_lossy().into_owned()
 }

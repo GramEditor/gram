@@ -26,11 +26,11 @@ pub fn home_dir() -> &'static PathBuf {
     HOME_DIR.get_or_init(|| {
         if cfg!(any(test, feature = "test-support")) {
             if cfg!(target_os = "macos") {
-                PathBuf::from("/Users/zed")
+                PathBuf::from("/Users/gram")
             } else if cfg!(target_os = "windows") {
-                PathBuf::from("C:\\Users\\zed")
+                PathBuf::from("C:\\Users\\gram")
             } else {
-                PathBuf::from("/home/zed")
+                PathBuf::from("/home/gram")
             }
         } else {
             dirs::home_dir().expect("failed to determine home directory")
