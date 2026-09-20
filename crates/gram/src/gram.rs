@@ -1,7 +1,5 @@
 mod app_menus;
 pub mod component_preview;
-#[cfg(target_os = "macos")]
-pub mod mac_only_instance;
 mod migrate;
 mod open_listener;
 mod quick_action_bar;

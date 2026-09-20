@@ -311,8 +311,7 @@ pub fn main() {
                     !crate::gram::windows_only_instance::handle_single_instance(open_listener.clone(), &args)
                 }
                 target_os = "macos" => {
-                    use gram::mac_only_instance::{ensure_only_instance, IsOnlyInstance};
-                    ensure_only_instance() != IsOnlyInstance::Yes
+                    false // Checked in platform-specific code
                 }
             }
         };

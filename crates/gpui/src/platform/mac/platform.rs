@@ -18,10 +18,11 @@ use objc2::{
     sel,
 };
 use objc2_app_kit::{
-    NSApplication, NSApplicationActivationPolicy, NSApplicationDelegate, NSApplicationDelegateReply, NSCursor,
-    NSCursorFrameResizeDirections, NSCursorFrameResizePosition, NSDocumentController, NSEventModifierFlags, NSMenu,
-    NSMenuDelegate, NSMenuItem, NSMenuItemValidation, NSModalResponse, NSModalResponseOK, NSOpenPanel, NSResponder,
-    NSSavePanel, NSScroller, NSScrollerStyle, NSVisualEffectState, NSWorkspace,
+    NSApplication, NSApplicationActivationOptions, NSApplicationActivationPolicy, NSApplicationDelegate,
+    NSApplicationDelegateReply, NSCursor, NSCursorFrameResizeDirections, NSCursorFrameResizePosition,
+    NSDocumentController, NSEventModifierFlags, NSMenu, NSMenuDelegate, NSMenuItem, NSMenuItemValidation,
+    NSModalResponse, NSModalResponseOK, NSOpenPanel, NSResponder, NSRunningApplication, NSSavePanel, NSScroller,
+    NSScrollerStyle, NSVisualEffectState, NSWorkspace,
 };
 use objc2_core_foundation::{CFRunLoop, CFString};
 use objc2_foundation::{
@@ -62,6 +63,24 @@ define_class!(
     unsafe impl NSApplicationDelegate for GPUIAppDelegate {
         #[unsafe(method(applicationWillFinishLaunching:))]
         fn will_finish_launching(&self, notification: &NSNotification) {
+            if !matches!(std::env::var("GRAM_STATELESS").as_deref(), Ok("1")) {
+                let bundle_id = ns_string!("app.liten.Gram");
+                let running_apps = NSRunningApplication::runningApplicationsWithBundleIdentifier(bundle_id);
+                let this = NSRunningApplication::currentApplication();
+                if !running_apps.is_empty() {
+                    for running_app in running_apps {
+                        let exe = running_app.executableURL().and_then(|url| url.lastPathComponent()).map(|s| s.to_string()).unwrap_or("".into());
+                        if running_app != this && exe.starts_with("gram") {
+                            log::info!("Application with bundle ID app.liten.Gram already running: {exe}");
+                            #[allow(deprecated)]
+                            running_app.activateWithOptions(NSApplicationActivationOptions::ActivateIgnoringOtherApps);
+                            this.terminate();
+                            return;
+                        }
+                    }
+                }
+            }
+
             let user_defaults = NSUserDefaults::standardUserDefaults();
 
             // The autofill heuristic controller causes slowdown and high CPU usage.
