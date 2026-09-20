@@ -3997,7 +3997,6 @@ mod tests {
             let app_state = AppState::test(cx);
 
             theme::init(theme::LoadThemes::JustBase, cx);
-            client::init(&app_state.client, cx);
             workspace::init(app_state.clone(), cx);
             onboarding::init(cx);
             app_state

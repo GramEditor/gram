@@ -11,7 +11,6 @@ use crate::{
 use anyhow::{Context as _, Result, anyhow, bail};
 use askpass::{AskPassDelegate, EncryptedPassword, IKnowWhatIAmDoingAndIHaveReadTheDocs};
 use buffer_diff::{BufferDiff, BufferDiffEvent};
-use client::ProjectId;
 use collections::HashMap;
 pub use conflict_set::{ConflictRegion, ConflictSet, ConflictSetSnapshot, ConflictSetUpdate};
 use fs::Fs;
@@ -159,7 +158,7 @@ enum GitStoreState {
     Remote {
         upstream_client: AnyProtoClient,
         upstream_project_id: u64,
-        downstream: Option<(AnyProtoClient, ProjectId)>,
+        downstream: Option<(AnyProtoClient, u64)>,
     },
 }
 
@@ -170,7 +169,7 @@ enum DownstreamUpdate {
 
 struct LocalDownstreamState {
     client: AnyProtoClient,
-    project_id: ProjectId,
+    project_id: u64,
     updates_tx: mpsc::UnboundedSender<DownstreamUpdate>,
     _task: Task<Result<()>>,
 }
@@ -377,7 +376,7 @@ impl LocalRepositoryState {
 
 #[derive(Clone)]
 pub struct RemoteRepositoryState {
-    pub project_id: ProjectId,
+    pub project_id: u64,
     pub client: AnyProtoClient,
 }
 
@@ -566,7 +565,7 @@ impl GitStore {
                         client.send(update).log_err();
                     }
                 }
-                *downstream_client = Some((client, ProjectId(project_id)));
+                *downstream_client = Some((client, project_id));
             }
             GitStoreState::Local {
                 downstream: downstream_client,
@@ -581,7 +580,7 @@ impl GitStore {
                 }
                 *downstream_client = Some(LocalDownstreamState {
                     client: client.clone(),
-                    project_id: ProjectId(project_id),
+                    project_id,
                     updates_tx,
                     _task: cx.spawn(async move |this, cx| {
                         cx.background_spawn(async move {
@@ -1007,7 +1006,7 @@ impl GitStore {
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     let response = client
                         .request(proto::BlameBuffer {
-                            project_id: project_id.to_proto(),
+                            project_id,
                             buffer_id: buffer_id.into(),
                             version: serialize_version(&version),
                         })
@@ -1105,7 +1104,7 @@ impl GitStore {
                     RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                         let response = client
                             .request(proto::GetPermalinkToLine {
-                                project_id: project_id.to_proto(),
+                                project_id,
                                 buffer_id: buffer_id.into(),
                                 selection: Some(proto::Range {
                                     start: selection.start as u64,
@@ -1122,7 +1121,7 @@ impl GitStore {
         cx.spawn(|_: &mut AsyncApp| async move { rx.await? })
     }
 
-    fn downstream_client(&self) -> Option<(AnyProtoClient, ProjectId)> {
+    fn downstream_client(&self) -> Option<(AnyProtoClient, u64)> {
         match &self.state {
             GitStoreState::Local {
                 downstream: downstream_client,
@@ -1621,7 +1620,7 @@ impl GitStore {
                         id,
                         Path::new(&update.abs_path).into(),
                         path_style,
-                        ProjectId(update.project_id),
+                        update.project_id,
                         client,
                         git_store,
                         cx,
@@ -1644,7 +1643,7 @@ impl GitStore {
             });
 
             if let Some((client, project_id)) = this.downstream_client() {
-                update.project_id = project_id.to_proto();
+                update.project_id = project_id;
                 client.send(update).log_err();
             }
             Ok(())
@@ -1661,7 +1660,7 @@ impl GitStore {
             let id = RepositoryId::from_proto(update.id);
             this.repositories.remove(&id);
             if let Some((client, project_id)) = this.downstream_client() {
-                update.project_id = project_id.to_proto();
+                update.project_id = project_id;
                 client.send(update).log_err();
             }
             if this.active_repo_id == Some(id) {
@@ -3441,7 +3440,7 @@ impl Repository {
         id: RepositoryId,
         work_directory_abs_path: Arc<Path>,
         path_style: PathStyle,
-        project_id: ProjectId,
+        project_id: u64,
         client: AnyProtoClient,
         git_store: WeakEntity<GitStore>,
         cx: &mut Context<Self>,
@@ -3599,7 +3598,7 @@ impl Repository {
                                 };
                                 client
                                     .send(proto::UpdateDiffBases {
-                                        project_id: project_id.to_proto(),
+                                        project_id: project_id,
                                         buffer_id: buffer_id.to_proto(),
                                         staged_text,
                                         committed_text,
@@ -3741,7 +3740,7 @@ impl Repository {
                 }
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     let request = client.request(proto::OpenCommitMessageBuffer {
-                        project_id: project_id.0,
+                        project_id,
                         repository_id: id.to_proto(),
                     });
                     let response = request.await.context("requesting to open commit buffer")?;
@@ -3812,7 +3811,7 @@ impl Repository {
                                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                                     client
                                         .request(proto::GitCheckoutFiles {
-                                            project_id: project_id.0,
+                                            project_id,
                                             repository_id: id.to_proto(),
                                             commit,
                                             paths: paths.into_iter().map(|p| p.to_proto()).collect(),
@@ -3848,7 +3847,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     client
                         .request(proto::GitReset {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                             commit,
                             mode: match reset_mode {
@@ -3872,7 +3871,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     let resp = client
                         .request(proto::GitShow {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                             commit,
                         })
@@ -3899,7 +3898,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { client, project_id, .. }) => {
                     let response = client
                         .request(proto::LoadCommitDiff {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                             commit,
                         })
@@ -3945,7 +3944,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { client, project_id }) => {
                     let response = client
                         .request(proto::GitCommitHistory {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                             path: path.map(|path| path.to_proto()),
                             skip: skip as u64,
@@ -4305,7 +4304,7 @@ impl Repository {
                                 if stage {
                                     client
                                         .request(proto::Stage {
-                                            project_id: project_id.0,
+                                            project_id,
                                             repository_id: id.to_proto(),
                                             paths: entries.into_iter().map(|repo_path| repo_path.to_proto()).collect(),
                                         })
@@ -4315,7 +4314,7 @@ impl Repository {
                                 } else {
                                     client
                                         .request(proto::Unstage {
-                                            project_id: project_id.0,
+                                            project_id,
                                             repository_id: id.to_proto(),
                                             paths: entries.into_iter().map(|repo_path| repo_path.to_proto()).collect(),
                                         })
@@ -4410,7 +4409,7 @@ impl Repository {
                         RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                             client
                                 .request(proto::Stash {
-                                    project_id: project_id.0,
+                                    project_id,
                                     repository_id: id.to_proto(),
                                     paths: entries.into_iter().map(|repo_path| repo_path.to_proto()).collect(),
                                 })
@@ -4438,7 +4437,7 @@ impl Repository {
                         RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                             client
                                 .request(proto::StashPop {
-                                    project_id: project_id.0,
+                                    project_id,
                                     repository_id: id.to_proto(),
                                     stash_index: index.map(|i| i as u64),
                                 })
@@ -4466,7 +4465,7 @@ impl Repository {
                         RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                             client
                                 .request(proto::StashApply {
-                                    project_id: project_id.0,
+                                    project_id,
                                     repository_id: id.to_proto(),
                                     stash_index: index.map(|i| i as u64),
                                 })
@@ -4522,7 +4521,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     client
                         .request(proto::StashDrop {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                             stash_index: index.map(|i| i as u64),
                         })
@@ -4546,7 +4545,7 @@ impl Repository {
                     RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                         client
                             .request(proto::RunGitHook {
-                                project_id: project_id.0,
+                                project_id,
                                 repository_id: id.to_proto(),
                                 hook: hook.to_proto(),
                             })
@@ -4598,7 +4597,7 @@ impl Repository {
                     let (name, email) = name_and_email.unzip();
                     client
                         .request(proto::Commit {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                             message: String::from(message),
                             name: name.map(String::from),
@@ -4650,7 +4649,7 @@ impl Repository {
 
                     let response = client
                         .request(proto::Fetch {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                             askpass_id,
                             remote: fetch_options.to_proto(),
@@ -4739,7 +4738,7 @@ impl Repository {
                         });
                         let response = client
                             .request(proto::Push {
-                                project_id: project_id.0,
+                                project_id,
                                 repository_id: id.to_proto(),
                                 askpass_id,
                                 branch_name: branch.to_string(),
@@ -4814,7 +4813,7 @@ impl Repository {
                     });
                     let response = client
                         .request(proto::Pull {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                             askpass_id,
                             rebase,
@@ -4869,7 +4868,7 @@ impl Repository {
                     RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                         client
                             .request(proto::SetIndexText {
-                                project_id: project_id.0,
+                                project_id,
                                 repository_id: id.to_proto(),
                                 path: path.to_proto(),
                                 text: content,
@@ -4915,7 +4914,7 @@ impl Repository {
                     RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                         client
                             .request(proto::GitCreateRemote {
-                                project_id: project_id.0,
+                                project_id,
                                 repository_id: id.to_proto(),
                                 remote_name,
                                 remote_url,
@@ -4941,7 +4940,7 @@ impl Repository {
                     RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                         client
                             .request(proto::GitRemoveRemote {
-                                project_id: project_id.0,
+                                project_id,
                                 repository_id: id.to_proto(),
                                 remote_name,
                             })
@@ -4981,7 +4980,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     let response = client
                         .request(proto::GetRemotes {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                             branch_name,
                             is_push,
@@ -5010,7 +5009,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     let response = client
                         .request(proto::GitGetBranches {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                         })
                         .await?;
@@ -5035,7 +5034,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     let response = client
                         .request(proto::GitGetWorktrees {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                         })
                         .await?;
@@ -5067,7 +5066,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     client
                         .request(proto::GitCreateWorktree {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                             name,
                             directory: path.to_string_lossy().to_string(),
@@ -5091,7 +5090,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     let response = client
                         .request(proto::GetDefaultBranch {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                         })
                         .await?;
@@ -5110,7 +5109,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { client, project_id }) => {
                     let response = client
                         .request(proto::GetTreeDiff {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: repository_id.0,
                             is_merge: matches!(diff_type, DiffTreeType::MergeBase { .. }),
                             base: diff_type.base().to_string(),
@@ -5152,7 +5151,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     let response = client
                         .request(proto::GitDiff {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                             diff_type: match diff_type {
                                 DiffType::HeadToIndex => proto::git_diff::DiffType::HeadToIndex.into(),
@@ -5182,7 +5181,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     client
                         .request(proto::GitCreateBranch {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                             branch_name,
                         })
@@ -5206,7 +5205,7 @@ impl Repository {
                     RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                         client
                             .request(proto::GitChangeBranch {
-                                project_id: project_id.0,
+                                project_id,
                                 repository_id: id.to_proto(),
                                 branch_name,
                             })
@@ -5229,7 +5228,7 @@ impl Repository {
                     RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                         client
                             .request(proto::GitDeleteBranch {
-                                project_id: project_id.0,
+                                project_id,
                                 repository_id: id.to_proto(),
                                 branch_name,
                             })
@@ -5254,7 +5253,7 @@ impl Repository {
                     RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                         client
                             .request(proto::GitRenameBranch {
-                                project_id: project_id.0,
+                                project_id,
                                 repository_id: id.to_proto(),
                                 branch,
                                 new_name,
@@ -5276,7 +5275,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     let response = client
                         .request(proto::CheckForPushedCommits {
-                            project_id: project_id.0,
+                            project_id,
                             repository_id: id.to_proto(),
                         })
                         .await?;
@@ -5541,7 +5540,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
                     let response = client
                         .request(proto::OpenUnstagedDiff {
-                            project_id: project_id.to_proto(),
+                            project_id,
                             buffer_id: buffer_id.to_proto(),
                         })
                         .await?;
@@ -5578,7 +5577,7 @@ impl Repository {
 
                     let response = client
                         .request(proto::OpenUncommittedDiff {
-                            project_id: project_id.to_proto(),
+                            project_id,
                             buffer_id: buffer_id.to_proto(),
                         })
                         .await?;
@@ -5605,7 +5604,7 @@ impl Repository {
                 RepositoryState::Remote(RemoteRepositoryState { client, project_id }) => {
                     let response = client
                         .request(proto::GetBlobContent {
-                            project_id: project_id.to_proto(),
+                            project_id,
                             repository_id: repository_id.0,
                             oid: oid.to_string(),
                         })

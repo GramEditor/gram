@@ -24,15 +24,6 @@ use util::ResultExt;
 
 pub use rpc::*;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
-pub struct ProjectId(pub u64);
-
-impl ProjectId {
-    pub fn to_proto(self) -> u64 {
-        self.0
-    }
-}
-
 #[derive(Deserialize, Default, RegisterSetting)]
 pub struct ProxySettings {
     pub proxy: Option<String>,
@@ -66,8 +57,6 @@ impl Settings for ProxySettings {
         }
     }
 }
-
-pub fn init(_client: &Arc<Client>, _cx: &mut App) {}
 
 pub struct Client {
     id: AtomicU64,
@@ -147,18 +136,6 @@ impl Status {
 struct ClientState {
     status: (watch::Sender<Status>, watch::Receiver<Status>),
     _reconnect_task: Option<Task<()>>,
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Credentials {
-    pub user_id: u64,
-    pub access_token: String,
-}
-
-impl Credentials {
-    pub fn authorization_header(&self) -> String {
-        format!("{} {}", self.user_id, self.access_token)
-    }
 }
 
 impl Default for ClientState {

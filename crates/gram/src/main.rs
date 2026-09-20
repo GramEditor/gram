@@ -478,7 +478,6 @@ pub fn main() {
         project::Project::init(&client, cx);
         debugger_ui::init(cx);
         debugger_tools::init(cx);
-        client::init(&client, cx);
 
         let session = cx.background_executor().block(session);
         let app_session = cx.new(|cx| AppSession::new(session, cx));
