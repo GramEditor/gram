@@ -457,6 +457,7 @@ impl SplittableEditor {
             let mut editor = Editor::for_multibuffer(secondary_multibuffer.clone(), Some(project.clone()), window, cx);
             editor.number_deleted_lines = true;
             editor.set_read_only(true);
+            editor.set_show_vertical_scrollbar(false, cx);
             editor.diff_action_delegate = Some(delegate);
             editor.set_delegate_expand_excerpts(true);
             editor.disable_diagnostics(cx);
