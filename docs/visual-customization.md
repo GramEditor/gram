@@ -244,6 +244,7 @@ TBD: Centered layout related settings
 
 ```json
 "git": {
+  "split_diff": false,           // Open diffs side by side
   "inline_blame": {
     "enabled": true,             // Show/hide inline blame
     "delay_ms": 0,                  // Show after delay (ms)
