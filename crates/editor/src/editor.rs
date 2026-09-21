@@ -1634,7 +1634,12 @@ impl Editor {
     }
 
     pub fn clone(&self, window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let mut clone = Self::new(self.mode.clone(), self.buffer.clone(), self.project.clone(), window, cx);
+        self.clone_with_buffer(self.buffer.clone(), window, cx)
+    }
+
+    /// Clone view state onto an independent multibuffer with the same anchors.
+    pub fn clone_with_buffer(&self, buffer: Entity<MultiBuffer>, window: &mut Window, cx: &mut Context<Self>) -> Self {
+        let mut clone = Self::new(self.mode.clone(), buffer, self.project.clone(), window, cx);
         self.display_map.update(cx, |display_map, cx| {
             let snapshot = display_map.snapshot(cx);
             clone.display_map.update(cx, |display_map, cx| {

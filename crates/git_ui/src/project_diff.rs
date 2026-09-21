@@ -30,6 +30,7 @@ use project::{
         Repository,
         branch_diff::{self, BranchDiffEvent, DiffBase},
     },
+    project_settings::ProjectSettings,
 };
 use settings::{Settings, SettingsStore};
 use smol::future::yield_now;
@@ -206,7 +207,7 @@ impl ProjectDiff {
         });
 
         let editor = cx.new(|cx| {
-            let diff_display_editor =
+            let mut diff_display_editor =
                 SplittableEditor::new_unsplit(multibuffer.clone(), project.clone(), workspace.clone(), window, cx);
             diff_display_editor.primary_editor().update(cx, |editor, cx| {
                 editor.disable_diagnostics(cx);
@@ -229,6 +230,7 @@ impl ProjectDiff {
                     }
                 }
             });
+            diff_display_editor.set_split_diff_enabled(ProjectSettings::get_global(cx).git.split_diff, window, cx);
             diff_display_editor
         });
         cx.subscribe_in(&editor, window, Self::handle_editor_event).detach();
@@ -299,11 +301,8 @@ impl ProjectDiff {
     }
 
     pub fn active_path(&self, cx: &App) -> Option<ProjectPath> {
-        let editor = self.editor.read(cx).last_selected_editor().read(cx);
-        let position = editor.selections.newest_anchor().head();
-        let multi_buffer = editor.buffer().read(cx);
-        let (_, buffer, _) = multi_buffer.excerpt_containing(position, cx)?;
-
+        let split = self.editor.read(cx);
+        let buffer = split.active_new_buffer(cx)?;
         let file = buffer.read(cx).file()?;
         Some(ProjectPath {
             worktree_id: file.worktree_id(cx),
@@ -661,7 +660,7 @@ impl Item for ProjectDiff {
 
     fn as_searchable(&self, _: &Entity<Self>, cx: &App) -> Option<Box<dyn SearchableItemHandle>> {
         // TODO(split-diff) SplitEditor should be searchable
-        Some(Box::new(self.editor.read(cx).primary_editor().clone()))
+        Some(Box::new(self.editor.read(cx).last_selected_editor().clone()))
     }
 
     fn for_each_project_item(&self, cx: &App, f: &mut dyn FnMut(gpui::EntityId, &dyn project::ProjectItem)) {
@@ -754,7 +753,7 @@ impl Item for ProjectDiff {
         if type_id == TypeId::of::<Self>() {
             Some(self_handle.clone().into())
         } else if type_id == TypeId::of::<Editor>() {
-            Some(self.editor.read(cx).primary_editor().clone().into())
+            Some(self.editor.read(cx).last_selected_editor().clone().into())
         } else {
             None
         }
@@ -1435,7 +1434,23 @@ mod tests {
 
     #[gpui::test]
     async fn test_save_after_restore(cx: &mut TestAppContext) {
+        check_save_after_restore(false, cx).await;
+    }
+
+    #[gpui::test]
+    async fn test_split_save_after_restore(cx: &mut TestAppContext) {
+        check_save_after_restore(true, cx).await;
+    }
+
+    async fn check_save_after_restore(split: bool, cx: &mut TestAppContext) {
         init_test(cx);
+        cx.update(|cx| {
+            SettingsStore::update(cx, |store, cx| {
+                store
+                    .set_user_settings(&format!(r#"{{"git":{{"split_diff":{split}}}}}"#), cx)
+                    .unwrap();
+            })
+        });
 
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(
@@ -1460,14 +1475,15 @@ mod tests {
         cx.run_until_parked();
 
         let editor = diff.read_with(cx, |diff, cx| diff.editor.read(cx).primary_editor().clone());
+        diff.read_with(cx, |diff, cx| assert_eq!(diff.editor.read(cx).is_split(), split));
         assert_state_with_diff(
             &editor,
             cx,
-            &"
-                - ˇfoo
-                + FOO
-            "
-            .unindent(),
+            &if split {
+                "+ ˇFOO".to_string()
+            } else {
+                "- ˇfoo\n+ FOO".to_string()
+            },
         );
 
         editor
