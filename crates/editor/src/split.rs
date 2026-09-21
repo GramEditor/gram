@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod alignment;
+
 use std::{ops::Range, sync::Arc};
 
 use buffer_diff::BufferDiff;
