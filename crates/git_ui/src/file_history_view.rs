@@ -173,6 +173,57 @@ impl FileHistoryView {
         task.detach();
     }
 
+    fn refresh(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.loading_more {
+            return;
+        }
+
+        self.loading_more = true;
+        cx.notify();
+
+        let limit = self.history.entries.len().max(PAGE_SIZE);
+        let path = self.history.path.clone();
+        let git_store = self.git_store.clone();
+        let repo = self.repository.clone();
+
+        let this = cx.weak_entity();
+        window
+            .spawn(cx, async move |cx| {
+                let history_task = git_store
+                    .update(cx, |git_store, cx| {
+                        repo.upgrade()
+                            .map(|repo| git_store.commit_history_paginated(&repo, path, 0, Some(limit), cx))
+                    })
+                    .ok()
+                    .flatten();
+
+                let new_history = match history_task {
+                    Some(task) => task.await.log_err(),
+                    None => None,
+                };
+
+                this.update(cx, |this, cx| {
+                    this.loading_more = false;
+
+                    if let Some(new_history) = new_history {
+                        let selected_sha = this
+                            .selected_entry
+                            .and_then(|ix| this.history.entries.get(ix))
+                            .map(|entry| entry.sha.clone());
+
+                        this.has_more = new_history.entries.len() >= limit;
+                        this.history.entries = new_history.entries;
+                        this.selected_entry =
+                            selected_sha.and_then(|sha| this.history.entries.iter().position(|e| e.sha == sha));
+                    }
+
+                    cx.notify();
+                })
+                .ok();
+            })
+            .detach();
+    }
+
     fn select_next(&mut self, _: &menu::SelectNext, _: &mut Window, cx: &mut Context<Self>) {
         let entry_count = self.history.entries.len();
         let ix = match self.selected_entry {
@@ -395,16 +446,32 @@ impl Render for FileHistoryView {
                             .color(Color::Muted),
                     )
                     .child(
-                        Button::new("load-more", "Load More")
-                            .disabled(self.loading_more | !self.has_more)
-                            .label_size(LabelSize::Small)
-                            .icon(IconName::ArrowCircle)
-                            .icon_size(IconSize::Small)
-                            .icon_color(Color::Muted)
-                            .icon_position(IconPosition::Start)
-                            .on_click(cx.listener(|this, _, window, cx| {
-                                this.load_more(window, cx);
-                            })),
+                        h_flex()
+                            .gap_1()
+                            .child(
+                                Button::new("refresh", "Refresh")
+                                    .disabled(self.loading_more)
+                                    .label_size(LabelSize::Small)
+                                    .icon(IconName::ArrowCircle)
+                                    .icon_size(IconSize::Small)
+                                    .icon_color(Color::Muted)
+                                    .icon_position(IconPosition::Start)
+                                    .on_click(cx.listener(|this, _, window, cx| {
+                                        this.refresh(window, cx);
+                                    })),
+                            )
+                            .child(
+                                Button::new("load-more", "Load More")
+                                    .disabled(self.loading_more | !self.has_more)
+                                    .label_size(LabelSize::Small)
+                                    .icon(IconName::ArrowCircle)
+                                    .icon_size(IconSize::Small)
+                                    .icon_color(Color::Muted)
+                                    .icon_position(IconPosition::Start)
+                                    .on_click(cx.listener(|this, _, window, cx| {
+                                        this.load_more(window, cx);
+                                    })),
+                            ),
                     ),
             )
             .child(
