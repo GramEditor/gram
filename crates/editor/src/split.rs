@@ -27,6 +27,16 @@ enum DiffSide {
     Old,
 }
 
+impl DiffSide {
+    // Arrays use [new/right, old/left], not visual column order.
+    fn index(self) -> usize {
+        match self {
+            Self::New => 0,
+            Self::Old => 1,
+        }
+    }
+}
+
 /// Stable insertion point in one multibuffer; `below` also covers EOF padding.
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 struct GapKey {
@@ -59,6 +69,8 @@ struct AlignmentState {
     // GPUI defers notifications, so layout changes are reconciled from snapshots
     dirty: bool,
     refresh_excerpts: bool,
+    scroll_source: Option<DiffSide>,
+    fold_source: Option<DiffSide>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Action, Default)]
@@ -127,11 +139,20 @@ impl SplittableEditor {
         self.secondary.is_some()
     }
 
-    fn on_editor_event(&mut self, _side: DiffSide, event: &EditorEvent, cx: &mut Context<Self>) {
+    fn on_editor_event(&mut self, side: DiffSide, event: &EditorEvent, cx: &mut Context<Self>) {
         if self.secondary.is_none() {
             return;
         }
         match event {
+            EditorEvent::FoldsChanged => {
+                self.alignment.fold_source = Some(side);
+                self.alignment.dirty = true;
+                cx.notify();
+            }
+            EditorEvent::ScrollPositionChanged { local: true, .. } => {
+                self.alignment.scroll_source = Some(side);
+                cx.notify();
+            }
             EditorEvent::BufferEdited
             | EditorEvent::ExcerptsEdited { .. }
             | EditorEvent::ExcerptsExpanded { .. }
@@ -140,6 +161,32 @@ impl SplittableEditor {
                 self.alignment.refresh_excerpts = true;
                 self.alignment.dirty = true;
                 cx.notify();
+            }
+            EditorEvent::BufferFoldToggled { ids, folded } => {
+                if let Some(secondary) = &self.secondary {
+                    let (target, mappings) = match side {
+                        DiffSide::New => (secondary.editor.clone(), &secondary.primary_to_secondary),
+                        DiffSide::Old => (self.primary_editor.clone(), &secondary.secondary_to_primary),
+                    };
+                    let snapshot = target.read(cx).buffer().read(cx).snapshot(cx);
+                    let buffers: HashSet<_> = ids
+                        .iter()
+                        .filter_map(|id| mappings.get(id))
+                        .filter_map(|id| snapshot.buffer_for_excerpt(*id))
+                        .map(|buffer| buffer.remote_id())
+                        .collect();
+                    target.update(cx, |editor, cx| {
+                        for id in buffers {
+                            if *folded {
+                                editor.fold_buffer(id, cx);
+                            } else {
+                                editor.unfold_buffer(id, cx);
+                            }
+                        }
+                    });
+                    self.alignment.dirty = true;
+                    cx.notify();
+                }
             }
             _ => {}
         }
@@ -404,6 +451,8 @@ impl SplittableEditor {
         self.secondary = Some(secondary);
         self.alignment.dirty = true;
         self.alignment.refresh_excerpts = true;
+        self.alignment.scroll_source = Some(DiffSide::New);
+        self.alignment.fold_source = Some(DiffSide::New);
 
         let primary_pane = self.panes.first_pane();
         self.panes
@@ -741,6 +790,178 @@ mod tests {
                 }
             });
         }
+    }
+
+    #[gpui::test]
+    async fn test_split_layout_wraps_headers_and_scroll(cx: &mut gpui::TestAppContext) {
+        use super::*;
+        use gpui::px;
+        use util::rel_path::RelPath;
+        init_test(cx);
+        let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
+        let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let primary = cx.new(|_| MultiBuffer::new(Capability::ReadWrite));
+        let split = cx.new_window_entity(|window, cx| {
+            let mut split = SplittableEditor::new_unsplit(primary.clone(), project, workspace, window, cx);
+            split.split(&SplitDiff, window, cx);
+            split
+        });
+        let mut paths = Vec::new();
+        for index in 0..12 {
+            let path = PathKey::with_sort_prefix(index, RelPath::unix(&format!("{index}.txt")).unwrap().into());
+            let buffer = cx.new(|cx| {
+                Buffer::local(
+                    "unchanged long line for different wrap widths\ninsert one\ninsert two\nend\n",
+                    cx,
+                )
+            });
+            let diff = cx.new(|cx| {
+                BufferDiff::new_with_base_text(
+                    "unchanged long line for different wrap widths\nend\n",
+                    &buffer.read(cx).text_snapshot(),
+                    cx,
+                )
+            });
+            split.update(cx, |split, cx| {
+                let end = buffer.read(cx).snapshot().max_point();
+                split.set_excerpts_for_path(path.clone(), buffer, [Point::zero()..end], 0, diff, cx);
+            });
+            paths.push(path);
+        }
+        split.update(cx, |split, cx| {
+            split.primary_editor.update(cx, |editor, cx| {
+                editor.set_wrap_width(Some(px(180.)), cx);
+            });
+            split.secondary.as_ref().unwrap().editor.update(cx, |editor, cx| {
+                editor.set_wrap_width(Some(px(100.)), cx);
+            });
+        });
+        settle_split(&split, cx);
+        let before_builds = split.read_with(cx, |split, _| split.alignment.model_builds.clone());
+        let before_geometry = split.read_with(cx, |split, _| split.alignment.geometry_builds.clone());
+        split.update(cx, |split, _| split.alignment.dirty = true);
+        settle_split(&split, cx);
+        split.read_with(cx, |split, _| {
+            assert_eq!(
+                split.alignment.geometry_builds, before_geometry,
+                "an unchanged snapshot must reuse geometry after deferred notifications"
+            )
+        });
+        split.update(cx, |split, cx| {
+            split.secondary.as_ref().unwrap().editor.update(cx, |editor, cx| {
+                editor.set_wrap_width(Some(px(120.)), cx);
+            });
+        });
+        settle_split(&split, cx);
+        split.read_with(cx, |split, _| {
+            for (id, count) in &before_geometry {
+                assert!(
+                    split.alignment.geometry_builds[id] > *count,
+                    "changing wrap width must invalidate cached geometry"
+                );
+            }
+        });
+        split.update(cx, |split, cx| {
+            split.secondary.as_ref().unwrap().editor.update(cx, |editor, cx| {
+                editor.set_wrap_width(Some(px(100.)), cx);
+            });
+        });
+        settle_split(&split, cx);
+        let before_geometry = split.read_with(cx, |split, _| split.alignment.geometry_builds.clone());
+        split.update(cx, |split, cx| {
+            let buffer = split
+                .primary_multibuffer
+                .read(cx)
+                .buffer_for_path(&paths[0], cx)
+                .unwrap();
+            buffer.update(cx, |buffer, cx| {
+                buffer.edit([(0..0, "prefix ")], None, cx);
+            });
+            let snapshot = buffer.read(cx).text_snapshot();
+            split
+                .primary_multibuffer
+                .read(cx)
+                .diff_for(snapshot.remote_id())
+                .unwrap()
+                .update(cx, |diff, cx| {
+                    diff.recalculate_diff_sync(&snapshot, cx);
+                });
+        });
+        settle_split(&split, cx);
+        split.read_with(cx, |split, cx| {
+            for path in &paths[1..] {
+                let id = split
+                    .primary_multibuffer
+                    .read(cx)
+                    .excerpts_for_path(path)
+                    .next()
+                    .unwrap();
+                assert_eq!(
+                    split.alignment.model_builds[&id], before_builds[&id],
+                    "unchanged file must keep its model"
+                );
+                assert_eq!(
+                    split.alignment.geometry_builds[&id], before_geometry[&id],
+                    "editing another file must not remeasure this excerpt"
+                );
+            }
+        });
+        let blocks = split.update(cx, |split, cx| {
+            let old = split.secondary.as_ref().unwrap();
+            let snapshots = [split.primary_editor.clone(), old.editor.clone()]
+                .map(|e| e.update(cx, |e, cx| e.display_snapshot(cx)));
+            for path in &paths {
+                let new_id = split
+                    .primary_multibuffer
+                    .read(cx)
+                    .excerpts_for_path(path)
+                    .next()
+                    .unwrap();
+                let old_id = old.primary_to_secondary[&new_id];
+                let headers = [0, 1].map(|side| {
+                    let id = [new_id, old_id][side];
+                    snapshots[side]
+                        .blocks_in_range(DisplayRow(0)..DisplayRow(snapshots[side].max_point().row().0 + 1))
+                        .find(|(_, block)| block.id() == BlockId::ExcerptBoundary(id))
+                        .unwrap()
+                        .0
+                });
+                assert_eq!(headers[0], headers[1], "file header: {path:?}");
+                let new_buffer = snapshots[0].buffer_snapshot().buffer_for_excerpt(new_id).unwrap();
+                let old_buffer = snapshots[1].buffer_snapshot().buffer_for_excerpt(old_id).unwrap();
+                let rows = [
+                    Anchor::in_buffer(new_id, new_buffer.anchor_before(Point::new(3, 0)))
+                        .to_display_point(&snapshots[0])
+                        .row(),
+                    Anchor::in_buffer(old_id, old_buffer.anchor_before(Point::new(1, 0)))
+                        .to_display_point(&snapshots[1])
+                        .row(),
+                ];
+                assert_eq!(rows[0], rows[1], "context after insertion: {path:?}");
+            }
+            split.alignment.blocks.clone()
+        });
+        split.update_in(cx, |split, window, cx| {
+            let old = split.secondary.as_ref().unwrap().editor.clone();
+            let before = old.read(cx).selections.disjoint_anchors().to_vec();
+            split.primary_editor.update(cx, |editor, cx| {
+                let mut position = editor.scroll_position(cx);
+                position.y = 37.5;
+                editor.set_scroll_position(position, window, cx);
+            });
+            split.alignment.scroll_source = Some(DiffSide::New);
+            split.update_split_layout(window, cx);
+            let new_y = split.primary_editor.update(cx, |e, cx| e.scroll_position(cx).y);
+            let old_y = old.update(cx, |e, cx| e.scroll_position(cx).y);
+            assert_eq!(new_y, old_y);
+            assert_eq!(before, old.read(cx).selections.disjoint_anchors().to_vec());
+            assert!(
+                split.alignment.blocks == blocks,
+                "scroll must not replace alignment blocks"
+            );
+            split.unsplit(&UnsplitDiff, window, cx);
+            assert!(split.alignment.blocks.iter().all(|blocks| blocks.is_empty()));
+        });
     }
 
     #[gpui::test]

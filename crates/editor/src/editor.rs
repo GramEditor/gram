@@ -2979,6 +2979,7 @@ impl Editor {
     }
 
     fn folds_did_change(&mut self, cx: &mut Context<Self>) {
+        cx.emit(EditorEvent::FoldsChanged);
         use text::ToOffset as _;
         use text::ToPoint as _;
 
@@ -20627,6 +20628,7 @@ pub enum EditorEvent {
         ids: Vec<ExcerptId>,
         removed_buffer_ids: Vec<BufferId>,
     },
+    FoldsChanged,
     BufferFoldToggled {
         ids: Vec<ExcerptId>,
         folded: bool,

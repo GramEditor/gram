@@ -42,6 +42,56 @@ struct AlignmentJob {
 }
 
 impl SplittableEditor {
+    fn sync_folds(&mut self, source: DiffSide, snapshots: &[DisplaySnapshot; 2], cx: &mut Context<Self>) {
+        let source_index = source.index();
+        let target_index = 1 - source_index;
+        let secondary = self.secondary.as_ref().unwrap();
+        let source_snapshot = &snapshots[source_index];
+        let target_snapshot = &snapshots[target_index];
+        let map_anchor = |anchor: Anchor| -> Option<Anchor> {
+            let new_id = if source_index == 0 {
+                anchor.excerpt_id
+            } else {
+                *secondary.secondary_to_primary.get(&anchor.excerpt_id)?
+            };
+            let (key, boundary_pairs) = self.alignment.models.get(&new_id)?;
+            let target_id = if target_index == 0 { new_id } else { key.old_excerpt };
+            let source_buffer = source_snapshot
+                .buffer_snapshot()
+                .buffer_for_excerpt(anchor.excerpt_id)?;
+            let target_buffer = target_snapshot.buffer_snapshot().buffer_for_excerpt(target_id)?;
+            let point = anchor.text_anchor.to_point(source_buffer);
+            let index = boundary_pairs
+                .partition_point(|pair| pair[source_index] < point.row)
+                .min(boundary_pairs.len().checked_sub(1)?);
+            let row = boundary_pairs[index][target_index].min(target_buffer.max_point().row);
+            let point = target_buffer.clip_point(
+                Point::new(row, point.column.min(target_buffer.line_len(row))),
+                Bias::Left,
+            );
+            Some(Anchor::in_buffer(target_id, target_buffer.anchor_before(point)))
+        };
+        let creases = source_snapshot
+            .folds_in_range(Anchor::min()..Anchor::max())
+            .filter_map(|fold| {
+                let range = map_anchor(fold.range.start)?..map_anchor(fold.range.end)?;
+                Some(crate::display_map::Crease::simple(range, fold.placeholder.clone()))
+            })
+            .collect();
+        let target = if target_index == 0 {
+            self.primary_editor.clone()
+        } else {
+            secondary.editor.clone()
+        };
+        target.update(cx, |editor, cx| {
+            editor.display_map.update(cx, |map, cx| {
+                map.unfold_intersecting([Anchor::min()..Anchor::max()], true, cx);
+                map.fold(creases, cx);
+            });
+            cx.notify();
+        });
+    }
+
     pub(super) fn clear_alignment(&mut self, cx: &mut Context<Self>) {
         let editors = [
             Some(self.primary_editor.clone()),
@@ -61,7 +111,7 @@ impl SplittableEditor {
         self.alignment = AlignmentState::default();
     }
 
-    pub(super) fn update_split_layout(&mut self, _window: &mut Window, cx: &mut Context<Self>) {
+    pub(super) fn update_split_layout(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.secondary.is_none() {
             return;
         }
@@ -80,7 +130,29 @@ impl SplittableEditor {
             let Some(desired) = self.alignment_gaps(&snapshots, cx) else {
                 return;
             };
+            if let Some(source) = self.alignment.fold_source.take() {
+                self.sync_folds(source, &snapshots, cx);
+                self.alignment.dirty = true;
+                cx.notify();
+                return;
+            }
             self.apply_padding(&editors, desired, cx);
+            self.alignment
+                .scroll_source
+                .get_or_insert(if self.secondary.as_ref().unwrap().has_latest_selection {
+                    DiffSide::Old
+                } else {
+                    DiffSide::New
+                });
+        }
+        if let Some(source) = self.alignment.scroll_source.take() {
+            let source = source.index();
+            let y = editors[source].update(cx, |editor, cx| editor.scroll_position(cx).y);
+            editors[1 - source].update(cx, |editor, cx| {
+                let mut position = editor.scroll_position(cx);
+                position.y = y;
+                editor.set_scroll_position_internal(position, false, false, window, cx);
+            });
         }
     }
 
