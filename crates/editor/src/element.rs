@@ -3523,8 +3523,8 @@ impl EditorElement {
             .map(|project| project.read(cx).visible_worktrees(cx).count() > 1)
             .unwrap_or_default();
         let file = for_excerpt.buffer.file();
-        let can_open_excerpts = file.is_none_or(|file| file.can_open());
-        let can_open_current_file = is_read_only  // this is meant for the commit view, to jump to the current version of a file
+        let can_open_excerpts = editor.can_open_excerpt_buffer(&for_excerpt.buffer);
+        let can_open_current_file = is_read_only
             && file.is_some_and(|file| {
                 editor
                     .project
@@ -3533,7 +3533,11 @@ impl EditorElement {
                     .is_some_and(|worktree| worktree.read(cx).entry_for_path(file.path()).is_some())
             });
         let path_style = file.map(|file| file.path_style(cx));
-        let relative_path = for_excerpt.buffer.resolve_file_path(include_root, cx);
+        let relative_path = for_excerpt.buffer.resolve_file_path(include_root, cx).or_else(|| {
+            multi_buffer
+                .path_for_excerpt(for_excerpt.id)
+                .map(|path| path.path.display(util::paths::PathStyle::local()).into_owned())
+        });
         let (parent_path, filename) = if let Some(path) = &relative_path {
             if let Some(path_style) = path_style {
                 let (dir, file_name) = path_style.split(path);

@@ -1013,6 +1013,8 @@ pub struct Editor {
     show_selection_menu: Option<bool>,
 
     // Git Blame & Diff
+    /// Routes diff actions from the read-only side of a split diff to its owner.
+    diff_action_delegate: Option<WeakEntity<SplittableEditor>>,
     show_git_blame_gutter: bool,
     show_git_blame_inline: bool,
     show_git_blame_inline_delay_task: Option<Task<()>>,
@@ -2071,6 +2073,7 @@ impl Editor {
             input_enabled: !is_minimap,
             use_modal_editing: full_mode,
             read_only: is_minimap,
+            diff_action_delegate: None,
             use_autoclose: true,
             use_auto_surround: true,
             jsx_tag_auto_close_enabled_in_any_buffer: false,
@@ -8281,6 +8284,19 @@ impl Editor {
         window: &mut Window,
         cx: &mut Context<Editor>,
     ) {
+        if let Some(delegate) = self.diff_action_delegate.clone() {
+            let snapshot = self.buffer.read(cx).snapshot(cx);
+            let ranges = ranges
+                .into_iter()
+                .map(|range| snapshot.anchor_before(range.start)..snapshot.anchor_after(range.end))
+                .collect();
+            window.defer(cx, move |window, cx| {
+                delegate
+                    .update(cx, |split, cx| split.restore_old_ranges(ranges, window, cx))
+                    .ok();
+            });
+            return;
+        }
         let mut revert_changes = HashMap::default();
         let chunk_by = self
             .snapshot(window, cx)
@@ -16114,6 +16130,14 @@ impl Editor {
     ) {
         let snapshot = self.buffer.read(cx).snapshot(cx);
         let ranges: Vec<_> = self.selections.disjoint_anchors().iter().map(|s| s.range()).collect();
+        if let Some(delegate) = self.diff_action_delegate.clone() {
+            cx.defer(move |cx| {
+                delegate
+                    .update(cx, |split, cx| split.stage_old_ranges(None, ranges, cx))
+                    .ok();
+            });
+            return;
+        }
         let stage = self.has_stageable_diff_hunks_in_ranges(&ranges, &snapshot);
         self.stage_or_unstage_diff_hunks(stage, ranges, cx);
     }
@@ -16136,6 +16160,14 @@ impl Editor {
     }
 
     pub fn stage_or_unstage_diff_hunks(&mut self, stage: bool, ranges: Vec<Range<Anchor>>, cx: &mut Context<Self>) {
+        if let Some(delegate) = self.diff_action_delegate.clone() {
+            cx.defer(move |cx| {
+                delegate
+                    .update(cx, |split, cx| split.stage_old_ranges(Some(stage), ranges, cx))
+                    .ok();
+            });
+            return;
+        }
         let task = self.save_buffers_for_ranges_if_needed(&ranges, cx);
         cx.spawn(async move |this, cx| {
             task.await?;
@@ -16625,8 +16657,7 @@ impl Editor {
         self.style.as_ref().unwrap()
     }
 
-    // Called by the element. This method is not designed to be called outside of the editor
-    // element's layout code because it does not notify when rewrapping is computed synchronously.
+    // Called by the element once its layout has determined the available text width.
     pub(crate) fn set_wrap_width(&self, width: Option<Pixels>, cx: &mut App) -> bool {
         if self.is_empty(cx) {
             self.placeholder_display_map
@@ -18266,6 +18297,15 @@ impl Editor {
         self.open_excerpts_common(None, false, window, cx)
     }
 
+    fn can_open_excerpt_buffer(&self, buffer: &language::BufferSnapshot) -> bool {
+        // An empty, fileless base in a split diff has no document to open.
+        // Opening it as a project item would create an unrelated untitled tab.
+        if self.diff_action_delegate.is_some() && buffer.file().is_none() && buffer.is_empty() {
+            return false;
+        }
+        buffer.file().is_none_or(|file| file.can_open())
+    }
+
     fn open_excerpts_common(
         &mut self,
         jump_data: Option<JumpData>,
@@ -18361,7 +18401,7 @@ impl Editor {
             }
         }
 
-        new_selections_by_buffer.retain(|buffer, _| buffer.read(cx).file().is_none_or(|file| file.can_open()));
+        new_selections_by_buffer.retain(|buffer, _| self.can_open_excerpt_buffer(&buffer.read(cx).snapshot()));
 
         if new_selections_by_buffer.is_empty() {
             return;

@@ -7,7 +7,9 @@ use buffer_diff::BufferDiff;
 use collections::{HashMap, HashSet};
 use gpui::{Action, AppContext as _, Entity, EventEmitter, Focusable, NoAction, Subscription, WeakEntity};
 use language::{Buffer, Capability};
-use multi_buffer::{Anchor, ExcerptId, ExcerptRange, ExpandExcerptDirection, MultiBuffer, PathKey};
+use multi_buffer::{
+    Anchor, AnchorRangeExt as _, ExcerptId, ExcerptRange, ExpandExcerptDirection, MultiBuffer, PathKey,
+};
 use project::Project;
 use rope::Point;
 use text::{Bias, OffsetRangeExt as _, ToPoint as _};
@@ -125,6 +127,123 @@ impl SplittableEditor {
         let snapshot = self.primary_multibuffer.read(cx).snapshot(cx);
         let buffer = snapshot.buffer_for_excerpt(id)?;
         self.primary_multibuffer.read(cx).buffer(buffer.remote_id())
+    }
+
+    /// Resolve selections against the authoritative diff, never against filler
+    /// rows or the other editor's cursor. A missing/stale model disables actions.
+    pub fn selected_new_ranges(&self, cx: &App) -> Option<Vec<Range<Anchor>>> {
+        let editor = self.last_selected_editor().read(cx);
+        let ranges = editor.selections.disjoint_anchor_ranges().collect();
+        if self.secondary.as_ref().is_some_and(|s| s.has_latest_selection) {
+            self.map_old_ranges(ranges, cx)
+        } else {
+            Some(ranges)
+        }
+    }
+
+    fn map_old_ranges(&self, ranges: Vec<Range<Anchor>>, cx: &App) -> Option<Vec<Range<Anchor>>> {
+        let secondary = self.secondary.as_ref()?;
+        let old = secondary.multibuffer.read(cx).snapshot(cx);
+        let new = self.primary_multibuffer.read(cx).snapshot(cx);
+        if self.primary_editor.read(cx).read_only(cx) {
+            return None;
+        }
+        let mut result = Vec::new();
+        for (old_buffer, range, old_id) in old.ranges_to_buffer_ranges(ranges.into_iter()) {
+            let new_id = *secondary.secondary_to_primary.get(&old_id)?;
+            let new_buffer = new.buffer_for_excerpt(new_id)?;
+            let diff = new.diff_for_buffer_id(new_buffer.remote_id())?;
+            let (key, _) = self.alignment.models.get(&new_id)?;
+            if key.versions != [new_buffer.version().clone(), old_buffer.version().clone()]
+                || key.diff_revision != Some(diff.revision())
+            {
+                return None;
+            }
+            for hunk in diff.hunks_intersecting_base_text_range(range.start.0..range.end.0, new_buffer) {
+                result.push(Anchor::range_in_buffer(new_id, hunk.buffer_range));
+            }
+        }
+        result.sort_by(|a, b| a.start.cmp(&b.start, &new));
+        result.dedup();
+        Some(result)
+    }
+
+    pub(super) fn stage_old_ranges(
+        &mut self,
+        stage: Option<bool>,
+        old_ranges: Vec<Range<Anchor>>,
+        cx: &mut Context<Self>,
+    ) {
+        let Some(ranges) = self.map_old_ranges(old_ranges.clone(), cx) else {
+            return;
+        };
+        if ranges.is_empty() {
+            return;
+        }
+        let keys = ranges
+            .iter()
+            .filter_map(|range| {
+                self.alignment
+                    .models
+                    .get(&range.start.excerpt_id)
+                    .map(|(key, _)| (range.start.excerpt_id, key.clone()))
+            })
+            .collect::<Vec<_>>();
+        let save = self
+            .primary_editor
+            .update(cx, |editor, cx| editor.save_buffers_for_ranges_if_needed(&ranges, cx));
+        cx.spawn(async move |this, cx| {
+            if let Err(error) = save.await {
+                log::error!("saving split diff before staging: {error:#}");
+                return;
+            }
+            this.update(cx, |this, cx| {
+                if keys
+                    .iter()
+                    .any(|(id, key)| this.alignment.models.get(id).is_none_or(|(current, _)| current != key))
+                {
+                    return;
+                }
+                let Some(ranges) = this.map_old_ranges(old_ranges, cx) else {
+                    return;
+                };
+                this.primary_editor.update(cx, |editor, cx| {
+                    let snapshot = editor.buffer.read(cx).snapshot(cx);
+                    let stage = stage.unwrap_or_else(|| editor.has_stageable_diff_hunks_in_ranges(&ranges, &snapshot));
+                    let mut by_buffer = HashMap::<_, Vec<_>>::default();
+                    for hunk in editor.diff_hunks_in_ranges(&ranges, &snapshot) {
+                        by_buffer.entry(hunk.buffer_id).or_default().push(hunk);
+                    }
+                    for (buffer, hunks) in by_buffer {
+                        editor.do_stage_or_unstage(stage, buffer, hunks.into_iter(), cx);
+                    }
+                });
+            })
+            .ok();
+        })
+        .detach();
+    }
+
+    pub(super) fn restore_old_ranges(
+        &mut self,
+        ranges: Vec<Range<Anchor>>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let Some(ranges) = self.map_old_ranges(ranges, cx) else {
+            return;
+        };
+        if ranges.is_empty() {
+            return;
+        }
+        self.primary_editor.update(cx, |editor, cx| {
+            let snapshot = editor.buffer.read(cx).snapshot(cx);
+            editor.restore_hunks_in_ranges(
+                ranges.into_iter().map(|range| range.to_point(&snapshot)).collect(),
+                window,
+                cx,
+            );
+        });
     }
 
     pub fn set_split_diff_enabled(&mut self, enabled: bool, window: &mut Window, cx: &mut Context<Self>) {
@@ -333,10 +452,12 @@ impl SplittableEditor {
             multibuffer.set_all_diff_hunks_expanded(cx);
             multibuffer
         });
+        let delegate = cx.weak_entity();
         let secondary_editor = cx.new(|cx| {
             let mut editor = Editor::for_multibuffer(secondary_multibuffer.clone(), Some(project.clone()), window, cx);
             editor.number_deleted_lines = true;
             editor.set_read_only(true);
+            editor.diff_action_delegate = Some(delegate);
             editor.set_delegate_expand_excerpts(true);
             editor.disable_diagnostics(cx);
             editor.set_render_diff_hunk_controls(Arc::new(|_, _, _, _, _, _, _, _| gpui::Empty.into_any_element()), cx);
@@ -965,7 +1086,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_split_singleton_shows_base_text(cx: &mut gpui::TestAppContext) {
+    async fn test_split_singleton_deletion_and_stale_action_mapping(cx: &mut gpui::TestAppContext) {
         use super::*;
         init_test(cx);
         let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
@@ -984,6 +1105,41 @@ mod tests {
             split
         });
         settle_split(&split, cx);
+        split.update(cx, |split, cx| {
+            let secondary = split.secondary.as_ref().unwrap();
+            assert!(secondary.editor.read(cx).read_only(cx));
+            let old = secondary.multibuffer.read(cx).snapshot(cx);
+            let selection = old.anchor_before(Point::new(0, 0));
+            let mapped = split.map_old_ranges(vec![selection..selection], cx).unwrap();
+            assert!(!mapped.is_empty(), "deleted-only hunk must be actionable");
+            buffer.update(cx, |buffer, cx| {
+                buffer.edit([(0..0, "new\n")], None, cx);
+            });
+            assert!(
+                split.map_old_ranges(vec![selection..selection], cx).is_none(),
+                "outdated correspondence must not stage/revert another hunk"
+            );
+        });
+    }
+    #[gpui::test]
+    async fn test_split_singleton_shows_base_text(cx: &mut gpui::TestAppContext) {
+        use super::*;
+        init_test(cx);
+        let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
+        let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let buffer = cx.new(|cx| Buffer::local("", cx));
+        let diff =
+            cx.new(|cx| BufferDiff::new_with_base_text("removed\nlines\n", &buffer.read(cx).text_snapshot(), cx));
+        let primary = cx.new(|cx| {
+            let mut primary = MultiBuffer::singleton(buffer.clone(), cx);
+            primary.add_diff(diff.clone(), cx);
+            primary
+        });
+        let split = cx.new_window_entity(|window, cx| {
+            let mut split = SplittableEditor::new_unsplit(primary, project, workspace, window, cx);
+            split.split(&SplitDiff, window, cx);
+            split
+        });
         split.update(cx, |split, cx| {
             let secondary = split.secondary.as_ref().unwrap();
             assert!(secondary.editor.read(cx).read_only(cx));

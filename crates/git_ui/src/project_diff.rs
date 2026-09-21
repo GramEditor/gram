@@ -338,8 +338,13 @@ impl ProjectDiff {
         let prev_next = snapshot.diff_hunks().nth(1).is_some();
         let mut selection = true;
 
-        let mut ranges = editor.selections.disjoint_anchor_ranges().collect::<Vec<_>>();
-        if !ranges.iter().any(|range| range.start != range.end) {
+        let mapped_ranges = self.editor.read(cx).selected_new_ranges(cx);
+        let actions_ready = mapped_ranges.is_some();
+        let mut ranges = mapped_ranges.unwrap_or_default();
+        if !ranges.is_empty()
+            && !ranges.iter().any(|range| range.start != range.end)
+            && self.editor.read(cx).last_selected_editor() == self.editor.read(cx).primary_editor()
+        {
             selection = false;
             if let Some((excerpt_id, _, range)) = self.editor.read(cx).primary_editor().read(cx).active_excerpt(cx) {
                 ranges = vec![multi_buffer::Anchor::range_in_buffer(excerpt_id, range)];
@@ -376,8 +381,8 @@ impl ProjectDiff {
             .ok();
 
         ButtonStates {
-            stage: has_unstaged_hunks,
-            unstage: has_staged_hunks,
+            stage: actions_ready && has_unstaged_hunks,
+            unstage: actions_ready && has_staged_hunks,
             prev_next,
             selection,
             stage_all,
