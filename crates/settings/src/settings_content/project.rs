@@ -216,6 +216,9 @@ pub struct SessionSettingsContent {
 #[with_fallible_options]
 #[derive(Copy, Clone, Debug, PartialEq, Default, Serialize, Deserialize, JsonSchema, MergeFrom)]
 pub struct GitSettings {
+    /// Open repository diffs, commits and file comparisons side by side.
+    /// Default: false
+    pub split_diff: Option<bool>,
     /// Whether or not to show the git gutter.
     ///
     /// Default: tracked_files

@@ -5573,6 +5573,19 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
         SettingsPage {
             title: "Version Control",
             items: vec![
+                SettingsPageItem::SectionHeader("Diffs"),
+                SettingsPageItem::SettingItem(SettingItem {
+                    title: "Side By Side Diff",
+                    description: "Open repository diffs, commits and file comparisons in two panels.",
+                    aliases: None,
+                    field: Box::new(SettingField {
+                        json_path: Some("git.split_diff"),
+                        pick: |content| content.git.as_ref()?.split_diff.as_ref(),
+                        write: |content, value| content.git.get_or_insert_default().split_diff = value,
+                    }),
+                    metadata: None,
+                    files: USER,
+                }),
                 SettingsPageItem::SectionHeader("Git Gutter"),
                 SettingsPageItem::SettingItem(SettingItem {
                     title: "Visibility",

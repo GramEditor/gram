@@ -1141,6 +1141,8 @@
   },
   // Git gutter behavior configuration.
   "git": {
+    // Open diffs side by side by default.
+    "split_diff": false,
     // Control whether the git gutter is shown. May take 2 values:
     // 1. Show the gutter
     //      "git_gutter": "tracked_files"

@@ -229,6 +229,8 @@ impl GoToDiagnosticSeverityFilter {
 
 #[derive(Copy, Clone, Debug)]
 pub struct GitSettings {
+    /// Open repository diffs, commits and file comparisons side by side.
+    pub split_diff: bool,
     /// Whether or not to show the git gutter.
     ///
     /// Default: tracked_files
@@ -423,6 +425,7 @@ impl Settings for ProjectSettings {
                 }
             },
             hunk_style: git.hunk_style.unwrap(),
+            split_diff: git.split_diff.unwrap_or(false),
             path_style: git.path_style.unwrap().into(),
         };
         Self {
