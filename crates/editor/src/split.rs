@@ -21,7 +21,7 @@ use workspace::{ActivePaneDecorator, Item, ItemHandle, Pane, PaneGroup, SplitDir
 use crate::display_map::{
     BlockId, BlockPlacement, BlockProperties, BlockStyle, CustomBlockId, DisplayRow, DisplaySnapshot, ToDisplayPoint,
 };
-use crate::{Editor, EditorEvent};
+use crate::{Editor, EditorEvent, ToggleSplitDiff};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum DiffSide {
@@ -601,6 +601,14 @@ impl SplittableEditor {
         cx.notify();
     }
 
+    fn toggle_split_diff(&mut self, _: &ToggleSplitDiff, window: &mut Window, cx: &mut Context<Self>) {
+        if self.secondary.is_some() {
+            self.unsplit(&UnsplitDiff, window, cx)
+        } else {
+            self.split(&SplitDiff, window, cx)
+        }
+    }
+
     pub fn added_to_workspace(&mut self, workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Self>) {
         self.workspace = workspace.weak_handle();
         self.project = workspace.project().clone();
@@ -708,6 +716,7 @@ impl Render for SplittableEditor {
             .id("splittable-editor")
             .on_action(cx.listener(Self::split))
             .on_action(cx.listener(Self::unsplit))
+            .on_action(cx.listener(Self::toggle_split_diff))
             .size_full()
             .child(inner)
     }

@@ -2,6 +2,7 @@ use anyhow::{Context as _, Result};
 use buffer_diff::BufferDiff;
 use collections::HashMap;
 use editor::SplittableEditor;
+use editor::actions::ToggleSplitDiff;
 use editor::display_map::{BlockPlacement, BlockProperties, BlockStyle};
 use editor::{Addon, Editor, EditorEvent, ExcerptRange, MultiBuffer, multibuffer_context_lines};
 use git::repository::{CommitDetails, CommitDiff, RepoPath, is_binary_content};
@@ -615,14 +616,30 @@ impl CommitView {
                             )
                             .child(h_flex().gap_1p5().children(commit.refs.iter().map(|s| Chip::new(s)))),
                     )
-                    .children(remote_info.map(|(provider_name, url)| {
-                        Button::new("view_on_provider", format!("View on {}", provider_name))
-                            .icon(IconName::Forge)
-                            .icon_color(Color::Muted)
-                            .icon_size(IconSize::Small)
-                            .icon_position(IconPosition::Start)
-                            .on_click(move |_, _, cx| cx.open_url(&url))
-                    })),
+                    .child(
+                        v_flex()
+                            .gap_1()
+                            .justify_end()
+                            .children(remote_info.map(|(provider_name, url)| {
+                                let url = SharedString::from(url);
+                                Button::new("view_on_provider", format!("View on {}", provider_name))
+                                    .icon(IconName::Forge)
+                                    .icon_color(Color::Muted)
+                                    .icon_size(IconSize::Small)
+                                    .icon_position(IconPosition::Start)
+                                    .tooltip(Tooltip::text(url.clone()))
+                                    .on_click(move |_, _, cx| cx.open_url(&url))
+                            }))
+                            .child(
+                                Button::new("toggle_split_diff", "Toggle split")
+                                    .icon(IconName::Split)
+                                    .icon_color(Color::Muted)
+                                    .icon_size(IconSize::Small)
+                                    .icon_position(IconPosition::Start)
+                                    .tooltip(Tooltip::text("Toggle side-by-side diff view"))
+                                    .on_click(|_, window, cx| window.dispatch_action(Box::new(ToggleSplitDiff), cx)),
+                            ),
+                    ),
             )
     }
 

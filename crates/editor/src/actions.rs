@@ -844,6 +844,8 @@ actions!(
         ToggleSelectionMenu,
         /// Toggles soft wrap mode.
         ToggleSoftWrap,
+        /// Toggle split diff view
+        ToggleSplitDiff,
         /// Toggles the tab bar display.
         ToggleTabBar,
         /// Transposes characters around cursor.
