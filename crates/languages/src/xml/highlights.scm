@@ -1,4 +1,3 @@
-;; https://github.com/sweetppro/zed-xml/blob/main/languages/xml/highlights.scm
 ;; XML declaration
 
 "xml" @keyword
