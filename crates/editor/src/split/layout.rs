@@ -2,7 +2,6 @@
 
 use super::*;
 
-#[cfg(test)]
 fn render_padding(height: u32) -> crate::display_map::RenderBlock {
     Arc::new(move |cx| {
         let mut color = cx.editor_style.text.color;
@@ -16,6 +15,8 @@ fn render_padding(height: u32) -> crate::display_map::RenderBlock {
             .into_any_element()
     })
 }
+
+type Checkpoint = ([GapKey; 2], [u32; 2]);
 
 impl SplittableEditor {
     pub(super) fn clear_alignment(&mut self, cx: &mut Context<Self>) {
@@ -43,6 +44,20 @@ impl SplittableEditor {
         }
         if std::mem::take(&mut self.alignment.refresh_excerpts) {
             self.sync_excerpts(cx);
+        }
+        let editors = [
+            self.primary_editor.clone(),
+            self.secondary.as_ref().unwrap().editor.clone(),
+        ];
+        if self.alignment.dirty {
+            let Some(snapshots) = Self::ready_snapshots(&editors, cx) else {
+                return;
+            };
+            self.alignment.dirty = false;
+            let Some(desired) = self.alignment_gaps(&snapshots, cx) else {
+                return;
+            };
+            self.apply_padding(&editors, desired, cx);
         }
     }
 
@@ -104,8 +119,24 @@ impl SplittableEditor {
         }
     }
 
-    #[cfg(test)]
-    pub(super) fn apply_padding(
+    fn ready_snapshots(editors: &[Entity<Editor>; 2], cx: &mut Context<Self>) -> Option<[DisplaySnapshot; 2]> {
+        // Taking a snapshot can itself start wrapping. Check both before and after
+        // so we never combine provisional rows with a completed layout.
+        let is_rewrapping = |cx: &App| {
+            editors
+                .iter()
+                .any(|editor| editor.read(cx).display_map.read(cx).is_rewrapping(cx))
+        };
+        if is_rewrapping(cx) {
+            return None;
+        }
+        let snapshots = editors
+            .each_ref()
+            .map(|editor| editor.update(cx, |editor, cx| editor.display_snapshot(cx)));
+        (!is_rewrapping(cx)).then_some(snapshots)
+    }
+
+    fn apply_padding(
         &mut self,
         editors: &[Entity<Editor>; 2],
         desired: [HashMap<GapKey, u32>; 2],
@@ -172,4 +203,169 @@ impl SplittableEditor {
             });
         }
     }
+
+    fn alignment_gaps(
+        &mut self,
+        snapshots: &[DisplaySnapshot; 2],
+        _cx: &mut Context<Self>,
+    ) -> Option<[HashMap<GapKey, u32>; 2]> {
+        let secondary = self.secondary.as_ref().unwrap();
+        let own_ids = self
+            .alignment
+            .blocks
+            .each_ref()
+            .map(|blocks| blocks.values().map(|(id, _)| *id).collect::<HashSet<_>>());
+        let mut prefixes: [Vec<(u32, u32)>; 2] = Default::default();
+        let mut headers: [HashMap<ExcerptId, u32>; 2] = Default::default();
+        for side in 0..2 {
+            let mut total = 0;
+            for (row, block) in
+                snapshots[side].blocks_in_range(DisplayRow(0)..DisplayRow(snapshots[side].max_point().row().0 + 1))
+            {
+                match block.id() {
+                    BlockId::Custom(id) if own_ids[side].contains(&id) => {
+                        total += block.height();
+                        prefixes[side].push((row.0 + block.height(), total));
+                    }
+                    BlockId::ExcerptBoundary(id) => {
+                        headers[side].insert(id, row.0);
+                    }
+                    BlockId::FoldedBuffer(id) => {
+                        headers[side].insert(id, row.0);
+                    }
+                    BlockId::Custom(_) => {}
+                }
+            }
+        }
+        let intrinsic = |side: usize, row: u32| {
+            let index = prefixes[side].partition_point(|(end, _)| *end <= row);
+            row.saturating_sub(index.checked_sub(1).map_or(0, |i| prefixes[side][i].1))
+        };
+        let old_excerpts = snapshots[1]
+            .buffer_snapshot()
+            .excerpts()
+            .map(|(id, b, r)| (id, (b, r)))
+            .collect::<HashMap<_, _>>();
+        let mut checkpoints = Vec::<Checkpoint>::new();
+        let mut previous_end: Option<[GapKey; 2]> = None;
+        for (new_id, new_buffer, new_range) in snapshots[0].buffer_snapshot().excerpts() {
+            let Some(old_id) = secondary.primary_to_secondary.get(&new_id) else {
+                continue;
+            };
+            let Some((old_buffer, old_range)) = old_excerpts.get(old_id) else {
+                continue;
+            };
+            let ranges = [
+                new_range.context.to_point(new_buffer),
+                old_range.context.to_point(old_buffer),
+            ];
+            let buffers = [new_buffer, *old_buffer];
+            let ids = [new_id, *old_id];
+            let key_at = |side: usize, row: u32| {
+                if row > ranges[side].end.row {
+                    GapKey {
+                        anchor: Anchor::in_buffer(ids[side], buffers[side].anchor_before(ranges[side].end)),
+                        below: true,
+                    }
+                } else {
+                    GapKey {
+                        anchor: Anchor::in_buffer(ids[side], buffers[side].anchor_before(Point::new(row, 0))),
+                        below: false,
+                    }
+                }
+            };
+            if let Some(keys) = previous_end {
+                let rows = [0, 1].map(|side| {
+                    intrinsic(
+                        side,
+                        headers[side].get(&ids[side]).copied().unwrap_or_else(|| {
+                            key_at(side, ranges[side].start.row)
+                                .anchor
+                                .to_display_point(&snapshots[side])
+                                .row()
+                                .0
+                        }),
+                    )
+                });
+                checkpoints.push((keys, rows));
+            }
+            let diff = snapshots[0]
+                .buffer_snapshot()
+                .diff_for_buffer_id(new_buffer.remote_id());
+            let changes = diff
+                .map(|diff| {
+                    diff.hunks(new_buffer)
+                        .map(|hunk| {
+                            let start = hunk.diff_base_byte_range.start.to_point(diff.base_text());
+                            let end = hunk.diff_base_byte_range.end.to_point(diff.base_text());
+                            alignment::Change {
+                                new: hunk.range.start.row..hunk.range.end.row + u32::from(hunk.range.end.column > 0),
+                                old: start.row..end.row + u32::from(end.column > 0),
+                            }
+                        })
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or_default();
+            let boundary_pairs = alignment::boundaries(
+                ranges[0].start.row..ranges[0].end.row + 1,
+                ranges[1].start.row..ranges[1].end.row + 1,
+                &changes,
+            );
+            let origins = [0, 1].map(|side| {
+                intrinsic(
+                    side,
+                    key_at(side, ranges[side].start.row)
+                        .anchor
+                        .to_display_point(&snapshots[side])
+                        .row()
+                        .0,
+                )
+            });
+            let measured = measure_boundaries(&boundary_pairs, snapshots, &key_at, &intrinsic, origins);
+            checkpoints.extend(
+                measured
+                    .iter()
+                    .map(|(keys, rows)| (*keys, [rows[0] + origins[0], rows[1] + origins[1]])),
+            );
+            previous_end = Some([key_at(0, ranges[0].end.row + 1), key_at(1, ranges[1].end.row + 1)]);
+        }
+        let mut result: [HashMap<GapKey, u32>; 2] = Default::default();
+        for ((keys, _), gaps) in checkpoints
+            .iter()
+            .zip(alignment::padding(checkpoints.iter().map(|(_, rows)| *rows)))
+        {
+            for side in 0..2 {
+                if gaps[side] > 0 {
+                    *result[side].entry(keys[side]).or_default() += gaps[side];
+                }
+            }
+        }
+        Some(result)
+    }
+}
+
+fn measure_boundaries(
+    boundary_pairs: &[[u32; 2]],
+    snapshots: &[DisplaySnapshot; 2],
+    key_at: &impl Fn(usize, u32) -> GapKey,
+    intrinsic: &impl Fn(usize, u32) -> u32,
+    origins: [u32; 2],
+) -> Vec<Checkpoint> {
+    let mut checkpoints = Vec::new();
+    for &pair in boundary_pairs {
+        let keys = [key_at(0, pair[0]), key_at(1, pair[1])];
+        let display_rows = [0, 1].map(|side| {
+            let key = keys[side];
+            let row = key.anchor.to_display_point(&snapshots[side]).row().0 + u32::from(key.below);
+            intrinsic(side, row) - origins[side]
+        });
+        let delta = i64::from(display_rows[0]) - i64::from(display_rows[1]);
+        if checkpoints
+            .last()
+            .is_none_or(|(_, previous): &Checkpoint| i64::from(previous[0]) - i64::from(previous[1]) != delta)
+        {
+            checkpoints.push((keys, display_rows));
+        }
+    }
+    checkpoints
 }

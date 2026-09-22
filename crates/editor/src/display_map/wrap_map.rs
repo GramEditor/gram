@@ -125,7 +125,6 @@ impl WrapMap {
         (handle, snapshot)
     }
 
-    #[cfg(test)]
     pub fn is_rewrapping(&self) -> bool {
         self.background_task.is_some()
     }
@@ -157,6 +156,7 @@ impl WrapMap {
         } else {
             self.font_with_size = font_with_size;
             self.rewrap(cx);
+            cx.notify();
             true
         }
     }
@@ -168,6 +168,8 @@ impl WrapMap {
 
         self.wrap_width = wrap_width;
         self.rewrap(cx);
+        // Split layout also needs invalidation when wrapping finished synchronously.
+        cx.notify();
         true
     }
 

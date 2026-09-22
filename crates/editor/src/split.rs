@@ -1,4 +1,3 @@
-#[cfg(test)]
 mod alignment;
 mod layout;
 
@@ -11,15 +10,15 @@ use language::{Buffer, Capability};
 use multi_buffer::{Anchor, ExcerptId, ExcerptRange, ExpandExcerptDirection, MultiBuffer, PathKey};
 use project::Project;
 use rope::Point;
-use text::{Bias, OffsetRangeExt as _};
+use text::{Bias, OffsetRangeExt as _, ToPoint as _};
 use ui::{
     App, Context, InteractiveElement as _, IntoElement as _, ParentElement as _, Render, Styled as _, Window, div,
 };
 use workspace::{ActivePaneDecorator, Item, ItemHandle, Pane, PaneGroup, SplitDirection, Workspace};
 
-use crate::display_map::CustomBlockId;
-#[cfg(test)]
-use crate::display_map::{BlockId, BlockPlacement, BlockProperties, BlockStyle};
+use crate::display_map::{
+    BlockId, BlockPlacement, BlockProperties, BlockStyle, CustomBlockId, DisplayRow, DisplaySnapshot, ToDisplayPoint,
+};
 use crate::{Editor, EditorEvent};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -38,6 +37,8 @@ struct GapKey {
 #[derive(Default)]
 struct AlignmentState {
     blocks: [HashMap<GapKey, (CustomBlockId, u32)>; 2],
+    // GPUI defers notifications, so layout changes are reconciled from snapshots
+    dirty: bool,
     refresh_excerpts: bool,
 }
 
@@ -118,6 +119,7 @@ impl SplittableEditor {
             | EditorEvent::ExcerptsAdded { .. }
             | EditorEvent::ExcerptsRemoved { .. } => {
                 self.alignment.refresh_excerpts = true;
+                self.alignment.dirty = true;
                 cx.notify();
             }
             _ => {}
@@ -197,8 +199,13 @@ impl SplittableEditor {
                     _ => cx.emit(event.clone()),
                 }
             }),
+            cx.observe(&primary_editor.read(cx).display_map.clone(), |this, _, cx| {
+                this.alignment.dirty = true;
+                cx.notify();
+            }),
             cx.observe(&primary_multibuffer, |this, _, cx| {
                 this.alignment.refresh_excerpts = true;
+                this.alignment.dirty = true;
                 cx.notify();
             }),
         ];
@@ -305,31 +312,37 @@ impl SplittableEditor {
             pane
         });
 
-        let subscriptions = vec![cx.subscribe(&secondary_editor, |this, _, event: &EditorEvent, cx| {
-            this.on_editor_event(DiffSide::Old, event, cx);
-            match event {
-                EditorEvent::ExpandExcerptsRequested {
-                    excerpt_ids,
-                    lines,
-                    direction,
-                } => {
-                    if let Some(secondary) = &this.secondary {
-                        let primary_ids: Vec<_> = excerpt_ids
-                            .iter()
-                            .filter_map(|id| secondary.secondary_to_primary.get(id).copied())
-                            .collect();
-                        this.expand_excerpts(primary_ids.into_iter(), *lines, *direction, cx);
+        let subscriptions = vec![
+            cx.subscribe(&secondary_editor, |this, _, event: &EditorEvent, cx| {
+                this.on_editor_event(DiffSide::Old, event, cx);
+                match event {
+                    EditorEvent::ExpandExcerptsRequested {
+                        excerpt_ids,
+                        lines,
+                        direction,
+                    } => {
+                        if let Some(secondary) = &this.secondary {
+                            let primary_ids: Vec<_> = excerpt_ids
+                                .iter()
+                                .filter_map(|id| secondary.secondary_to_primary.get(id).copied())
+                                .collect();
+                            this.expand_excerpts(primary_ids.into_iter(), *lines, *direction, cx);
+                        }
                     }
-                }
-                EditorEvent::SelectionsChanged { local: true } | EditorEvent::FocusedIn => {
-                    if let Some(secondary) = &mut this.secondary {
-                        secondary.has_latest_selection = true;
+                    EditorEvent::SelectionsChanged { local: true } | EditorEvent::FocusedIn => {
+                        if let Some(secondary) = &mut this.secondary {
+                            secondary.has_latest_selection = true;
+                        }
+                        cx.emit(event.clone());
                     }
-                    cx.emit(event.clone());
+                    _ => cx.emit(event.clone()),
                 }
-                _ => cx.emit(event.clone()),
-            }
-        })];
+            }),
+            cx.observe(&secondary_editor.read(cx).display_map.clone(), |this, _, cx| {
+                this.alignment.dirty = true;
+                cx.notify();
+            }),
+        ];
         let mut secondary = SecondaryEditor {
             editor: secondary_editor,
             multibuffer: secondary_multibuffer,
@@ -370,6 +383,7 @@ impl SplittableEditor {
             secondary.secondary_to_primary.insert(secondary_id, primary_id);
         }
         self.secondary = Some(secondary);
+        self.alignment.dirty = true;
         self.alignment.refresh_excerpts = true;
 
         let primary_pane = self.panes.first_pane();
@@ -643,47 +657,68 @@ mod tests {
     async fn test_split_padding_survives_render(cx: &mut gpui::TestAppContext) {
         use super::*;
         use gpui::{point, px, size};
+        use util::rel_path::RelPath;
         init_test(cx);
         let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
         let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let buffer = cx.new(|cx| Buffer::local("before\nafter\n", cx));
-        let primary = cx.new(|cx| MultiBuffer::singleton(buffer, cx));
+        let primary = cx.new(|_| MultiBuffer::new(Capability::ReadWrite));
         let split = cx.new_window_entity(|window, cx| {
             let mut split = SplittableEditor::new_unsplit(primary, project, workspace, window, cx);
             split.split(&SplitDiff, window, cx);
             split
         });
-        for height in [3, 1, 0] {
+        for index in 0..2 {
+            let buffer = cx.new(|cx| Buffer::local("before\ninsert one\ninsert two\ninsert three\nafter\n", cx));
+            let diff =
+                cx.new(|cx| BufferDiff::new_with_base_text("before\nafter\n", &buffer.read(cx).text_snapshot(), cx));
+            let path = PathKey::with_sort_prefix(index, RelPath::unix(&format!("{index}.txt")).unwrap().into());
             split.update(cx, |split, cx| {
-                let editors = [
-                    split.primary_editor.clone(),
-                    split.secondary.as_ref().unwrap().editor.clone(),
-                ];
-                let anchor = editors[0]
-                    .read(cx)
-                    .buffer()
-                    .read(cx)
-                    .snapshot(cx)
-                    .anchor_before(Point::new(1, 0));
-                let mut desired = [HashMap::default(), HashMap::default()];
-                if height > 0 {
-                    desired[0].insert(GapKey { anchor, below: false }, height);
-                }
-                split.apply_padding(&editors, desired, cx);
+                let end = buffer.read(cx).snapshot().max_point();
+                split.set_excerpts_for_path(path, buffer, [Point::zero()..end], 0, diff, cx);
             });
-            for _ in 0..4 {
+        }
+        for width in [1000., 500., 1000.] {
+            for _ in 0..8 {
                 cx.run_until_parked();
-                cx.draw(point(px(0.), px(0.)), size(px(1000.), px(700.)), |_, _| {
+                cx.draw(point(px(0.), px(0.)), size(px(width), px(700.)), |_, _| {
                     split.clone().into_any_element()
                 });
             }
+            cx.run_until_parked();
             split.update(cx, |split, cx| {
-                let snapshot = split
-                    .primary_editor
-                    .update(cx, |editor, cx| editor.display_snapshot(cx));
-                assert_eq!(split.alignment.blocks[0].len(), usize::from(height > 0));
-                for (id, _) in split.alignment.blocks[0].values() {
-                    assert_eq!(snapshot.block_for_id(BlockId::Custom(*id)).unwrap().height(), height);
+                let old = split.secondary.as_ref().unwrap();
+                let snapshots = [split.primary_editor.clone(), old.editor.clone()]
+                    .map(|editor| editor.update(cx, |editor, cx| editor.display_snapshot(cx)));
+                assert!(split.alignment.blocks[1].values().any(|(_, height)| *height == 3));
+                for side in 0..2 {
+                    for (id, expected_height) in split.alignment.blocks[side].values() {
+                        assert_eq!(
+                            snapshots[side].block_for_id(BlockId::Custom(*id)).unwrap().height(),
+                            *expected_height,
+                            "render must preserve the requested padding height"
+                        );
+                    }
+                }
+                for (new_id, old_id) in &old.primary_to_secondary {
+                    let ids = [*new_id, *old_id];
+                    let headers = [0, 1].map(|side| {
+                        snapshots[side]
+                            .blocks_in_range(DisplayRow(0)..DisplayRow(snapshots[side].max_point().row().0 + 1))
+                            .find(|(_, block)| block.id() == BlockId::ExcerptBoundary(ids[side]))
+                            .unwrap()
+                            .0
+                    });
+                    assert_eq!(
+                        headers[0], headers[1],
+                        "next file header must stay aligned after rendering"
+                    );
+                    let rows = [0, 1].map(|side| {
+                        let buffer = snapshots[side].buffer_snapshot().buffer_for_excerpt(ids[side]).unwrap();
+                        Anchor::in_buffer(ids[side], buffer.anchor_before(Point::new([4, 1][side], 0)))
+                            .to_display_point(&snapshots[side])
+                            .row()
+                    });
+                    assert_eq!(rows[0], rows[1], "context after the insertion must stay aligned");
                 }
             });
         }

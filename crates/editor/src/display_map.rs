@@ -594,7 +594,6 @@ impl DisplayMap {
         language_settings(language, file, cx).tab_size
     }
 
-    #[cfg(test)]
     pub fn is_rewrapping(&self, cx: &gpui::App) -> bool {
         self.wrap_map.read(cx).is_rewrapping()
     }
