@@ -8,8 +8,9 @@ extern crate self as gpui;
 
 #[macro_use]
 mod action;
+/// Utilities for animating UI elements.
+pub mod animation;
 mod app;
-
 mod arena;
 mod asset_cache;
 mod assets;

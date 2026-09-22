@@ -141,10 +141,16 @@ impl SplittableEditor {
         if let Some(source) = self.alignment.scroll_source.take() {
             let source = source.index();
             let y = editors[source].update(cx, |editor, cx| editor.scroll_position(cx).y);
+            let mut animation_state = editors[source].read(cx).scroll_animation();
             editors[1 - source].update(cx, |editor, cx| {
                 let mut position = editor.scroll_position(cx);
                 position.y = y;
                 editor.set_scroll_position_internal(position, false, false, window, cx);
+                if let Some(animation) = &mut animation_state {
+                    animation.current.x = position.x;
+                    animation.target.x = position.x;
+                    editor.set_scroll_animation(*animation, false);
+                };
             });
         }
     }
