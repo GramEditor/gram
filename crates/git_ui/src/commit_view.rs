@@ -1139,7 +1139,9 @@ mod split_tests {
             editor::init(cx);
             crate::init(cx);
             SettingsStore::update(cx, |store, cx| {
-                store.set_user_settings(r#"{"git":{"split_diff":true}}"#, cx).unwrap();
+                store
+                    .set_user_settings(r#"{"git":{"split_diff":true},"excerpt_context_lines":5}"#, cx)
+                    .unwrap();
             });
         });
         let fs = FakeFs::new(cx.executor());
@@ -1243,8 +1245,10 @@ mod split_tests {
             let clone = clone.read(cx);
             assert_ne!(original.multibuffer, clone.multibuffer);
             assert_eq!(clone.multibuffer.read(cx).paths().count(), 3);
-            assert!(original.multibuffer.read(cx).snapshot(cx).text().contains("old"));
-            assert!(!clone.multibuffer.read(cx).snapshot(cx).text().contains("old"));
+            let original_text = original.multibuffer.read(cx).snapshot(cx).text();
+            let cloned_text = clone.multibuffer.read(cx).snapshot(cx).text();
+            assert!(original_text.lines().any(|line| line == "old"));
+            assert!(!cloned_text.lines().any(|line| line == "old"));
         });
     }
 }

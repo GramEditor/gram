@@ -1485,9 +1485,9 @@ mod tests {
             &editor,
             cx,
             &if split {
-                "+ ˇFOO".to_string()
+                "+ ˇFOO\n".to_string()
             } else {
-                "- ˇfoo\n+ FOO".to_string()
+                "- ˇfoo\n+ FOO\n".to_string()
             },
         );
 
