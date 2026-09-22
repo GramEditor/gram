@@ -23,3 +23,6 @@ max_line_length = 80
 [*.toml]
 indent_size = 2
 max_line_length = 255
+
+[*.xml]
+indent_size = 2
