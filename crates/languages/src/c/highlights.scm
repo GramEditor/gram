@@ -1,5 +1,6 @@
 [
   "const"
+  "constexpr"
   "enum"
   "extern"
   "inline"
@@ -9,7 +10,6 @@
   "typedef"
   "union"
   "volatile"
-  "constexpr"
 ] @keyword
 
 [
@@ -30,6 +30,8 @@
 [
   "#define"
   "#elif"
+  "#elifdef"
+  "#elifndef"
   "#else"
   "#endif"
   "#if"
@@ -37,7 +39,7 @@
   "#ifndef"
   "#include"
   (preproc_directive)
-] @keyword.directive
+] @keyword.preproc @preproc
 
 [
   "="
@@ -127,19 +129,23 @@
 (identifier) @variable
 
 ((identifier) @constant
- (#match? @constant "^_*[A-Z][A-Z\\d_]*$"))
+  (#match? @constant "^_*[A-Z][A-Z\\d_]*$"))
 
 (call_expression
   function: (identifier) @function)
+
 (call_expression
   function: (field_expression
     field: (field_identifier) @function))
+
 (function_declarator
   declarator: (identifier) @function)
+
 (preproc_function_def
   name: (identifier) @function.special)
 
 (field_identifier) @property
+
 (statement_identifier) @label
 
 [
@@ -150,6 +156,7 @@
 
 ; GNU __attribute__
 (attribute_specifier) @attribute
+
 (attribute_specifier
   (argument_list
     (identifier) @attribute))
@@ -157,5 +164,6 @@
 ; C23 [[attributes]]
 (attribute
   prefix: (identifier) @attribute)
+
 (attribute
   name: (identifier) @attribute)
