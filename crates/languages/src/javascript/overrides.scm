@@ -2,9 +2,16 @@
 
 (string) @string
 
-(template_string (string_fragment) @string)
+(template_string
+  (string_fragment) @string)
 
 (jsx_element) @element
+
+(return_statement
+  (parenthesized_expression) @element)
+
+(arrow_function
+  body: (parenthesized_expression) @element)
 
 [
   (jsx_opening_element)
