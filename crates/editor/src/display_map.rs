@@ -170,6 +170,11 @@ pub struct DisplayMap {
 }
 
 impl DisplayMap {
+    /// Changes on font/width updates, but not when text in another excerpt changes.
+    pub(crate) fn wrap_settings_version(&self, cx: &App) -> u64 {
+        self.wrap_map.read(cx).settings_version()
+    }
+
     pub(crate) fn header_disabled_for_buffer(&self, id: BufferId) -> bool {
         self.block_map.header_disabled_for_buffer(id)
     }

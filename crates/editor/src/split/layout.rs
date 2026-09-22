@@ -18,6 +18,22 @@ fn render_padding(height: u32) -> crate::display_map::RenderBlock {
 
 type Checkpoint = ([GapKey; 2], [u32; 2]);
 
+/// Row offsets from an excerpt's first text row, excluding alignment padding.
+/// Stores the first pair and each change in row delta. Moving the excerpt does
+/// not invalidate the cache.  Folds, inlays and other custom blocks bypass it.
+pub(super) struct CachedGeometry {
+    model: ModelKey,
+    settings: [GeometrySettings; 2],
+    checkpoints: Vec<Checkpoint>,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct GeometrySettings {
+    wrap_revision: u64,
+    tab_size: u32,
+    max_tab_column: u32,
+}
+
 struct AlignmentJob {
     excerpt: ExcerptId,
     key: ModelKey,
@@ -222,6 +238,21 @@ impl SplittableEditor {
             .blocks
             .each_ref()
             .map(|blocks| blocks.values().map(|(id, _)| *id).collect::<HashSet<_>>());
+        let editors = [self.primary_editor.clone(), secondary.editor.clone()];
+        let mut cacheable = snapshots
+            .iter()
+            .all(|snapshot| snapshot.folds_in_range(Anchor::min()..Anchor::max()).next().is_none())
+            && editors
+                .iter()
+                .all(|editor| editor.read(cx).display_map.read(cx).current_inlays().next().is_none());
+        let settings = editors
+            .each_ref()
+            .map(|editor| editor.read(cx).display_map.read(cx).wrap_settings_version(cx));
+        let settings = [0, 1].map(|side| GeometrySettings {
+            wrap_revision: settings[side],
+            tab_size: snapshots[side].tab_snapshot().tab_size.get(),
+            max_tab_column: snapshots[side].tab_snapshot().max_expansion_column,
+        });
         let mut prefixes: [Vec<(u32, u32)>; 2] = Default::default();
         let mut headers: [HashMap<ExcerptId, u32>; 2] = Default::default();
         for side in 0..2 {
@@ -238,11 +269,15 @@ impl SplittableEditor {
                         headers[side].insert(id, row.0);
                     }
                     BlockId::FoldedBuffer(id) => {
+                        cacheable = false;
                         headers[side].insert(id, row.0);
                     }
-                    BlockId::Custom(_) => {}
+                    BlockId::Custom(_) => cacheable = false,
                 }
             }
+        }
+        if !cacheable {
+            self.alignment.geometry.clear();
         }
         let intrinsic = |side: usize, row: u32| {
             let index = prefixes[side].partition_point(|(end, _)| *end <= row);
@@ -332,15 +367,44 @@ impl SplittableEditor {
                         .0,
                 )
             });
-            let measured = measure_boundaries(boundary_pairs, snapshots, &key_at, &intrinsic, origins);
-            checkpoints.extend(
-                measured
-                    .iter()
-                    .map(|(keys, rows)| (*keys, [rows[0] + origins[0], rows[1] + origins[1]])),
-            );
+            let cached = self
+                .alignment
+                .geometry
+                .get(&new_id)
+                .filter(|cached| cached.model == key && cached.settings == settings);
+            if let Some(cached) = cached {
+                checkpoints.extend(
+                    cached
+                        .checkpoints
+                        .iter()
+                        .map(|(keys, rows)| (*keys, [rows[0] + origins[0], rows[1] + origins[1]])),
+                );
+            } else {
+                #[cfg(test)]
+                {
+                    *self.alignment.geometry_builds.entry(new_id).or_default() += 1;
+                }
+                let measured = measure_boundaries(boundary_pairs, snapshots, &key_at, &intrinsic, origins);
+                checkpoints.extend(
+                    measured
+                        .iter()
+                        .map(|(keys, rows)| (*keys, [rows[0] + origins[0], rows[1] + origins[1]])),
+                );
+                if cacheable {
+                    self.alignment.geometry.insert(
+                        new_id,
+                        CachedGeometry {
+                            model: key,
+                            settings,
+                            checkpoints: measured,
+                        },
+                    );
+                }
+            }
             previous_end = Some([key_at(0, ranges[0].end.row + 1), key_at(1, ranges[1].end.row + 1)]);
         }
         self.alignment.models.retain(|id, _| live_ids.contains(id));
+        self.alignment.geometry.retain(|id, _| live_ids.contains(id));
         if !jobs.is_empty() {
             self.schedule_alignment_models(jobs, cx);
             return None;

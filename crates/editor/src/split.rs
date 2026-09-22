@@ -47,6 +47,9 @@ struct ModelKey {
 #[derive(Default)]
 struct AlignmentState {
     models: HashMap<ExcerptId, (ModelKey, Vec<[u32; 2]>)>,
+    geometry: HashMap<ExcerptId, layout::CachedGeometry>,
+    #[cfg(test)]
+    geometry_builds: HashMap<ExcerptId, usize>,
     model_task: Option<gpui::Task<()>>,
     // Only the most recently requested background calculation may be installed.
     generation: u64,
