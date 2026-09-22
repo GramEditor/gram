@@ -9,7 +9,9 @@
   (setext_heading)
   (thematic_break)
 ] @title.markup
-(setext_heading (paragraph) @title.markup)
+
+(setext_heading
+  (paragraph) @title.markup)
 
 [
   (list_marker_plus)
@@ -24,10 +26,17 @@
   (block_continuation)
 ] @punctuation.markup
 
-(pipe_table_header "|" @punctuation.markup)
-(pipe_table_row "|" @punctuation.markup)
-(pipe_table_delimiter_row "|" @punctuation.markup)
-(pipe_table_delimiter_cell "-" @punctuation.markup)
+(pipe_table_header
+  "|" @punctuation.markup)
+
+(pipe_table_row
+  "|" @punctuation.markup)
+
+(pipe_table_delimiter_row
+  "|" @punctuation.markup)
+
+(pipe_table_delimiter_cell
+  "-" @punctuation.markup)
 
 [
   (fenced_code_block_delimiter)
@@ -35,4 +44,5 @@
 ] @punctuation.embedded.markup
 
 (link_reference_definition) @link_text.markup
+
 (link_destination) @link_uri.markup
