@@ -453,6 +453,10 @@ pub struct BlockRows<'a> {
 }
 
 impl BlockMap {
+    pub(super) fn header_disabled_for_buffer(&self, id: BufferId) -> bool {
+        self.buffers_with_disabled_headers.contains(&id)
+    }
+
     pub fn new(wrap_snapshot: WrapSnapshot, buffer_header_height: u32, excerpt_header_height: u32) -> Self {
         let row_count = wrap_snapshot.max_point().row() + WrapRow(1);
         let mut transforms = SumTree::default();

@@ -1,10 +1,11 @@
 #[cfg(test)]
 mod alignment;
+mod layout;
 
 use std::{ops::Range, sync::Arc};
 
 use buffer_diff::BufferDiff;
-use collections::HashMap;
+use collections::{HashMap, HashSet};
 use gpui::{Action, AppContext as _, Entity, EventEmitter, Focusable, NoAction, Subscription, WeakEntity};
 use language::{Buffer, Capability};
 use multi_buffer::{Anchor, ExcerptId, ExcerptRange, ExpandExcerptDirection, MultiBuffer, PathKey};
@@ -17,6 +18,17 @@ use ui::{
 use workspace::{ActivePaneDecorator, Item, ItemHandle, Pane, PaneGroup, SplitDirection, Workspace};
 
 use crate::{Editor, EditorEvent};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum DiffSide {
+    New,
+    Old,
+}
+
+#[derive(Default)]
+struct AlignmentState {
+    refresh_excerpts: bool,
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Action, Default)]
 #[action(namespace = editor)]
@@ -34,6 +46,7 @@ pub struct SplittableEditor {
     panes: PaneGroup,
     workspace: WeakEntity<Workspace>,
     _subscriptions: Vec<Subscription>,
+    alignment: AlignmentState,
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -81,6 +94,23 @@ impl SplittableEditor {
 
     pub fn is_split(&self) -> bool {
         self.secondary.is_some()
+    }
+
+    fn on_editor_event(&mut self, _side: DiffSide, event: &EditorEvent, cx: &mut Context<Self>) {
+        if self.secondary.is_none() {
+            return;
+        }
+        match event {
+            EditorEvent::BufferEdited
+            | EditorEvent::ExcerptsEdited { .. }
+            | EditorEvent::ExcerptsExpanded { .. }
+            | EditorEvent::ExcerptsAdded { .. }
+            | EditorEvent::ExcerptsRemoved { .. } => {
+                self.alignment.refresh_excerpts = true;
+                cx.notify();
+            }
+            _ => {}
+        }
     }
 
     pub fn primary_editor(&self) -> &Entity<Editor> {
@@ -137,21 +167,28 @@ impl SplittableEditor {
         });
         let panes = PaneGroup::new(pane);
         let subscriptions = vec![
-            cx.subscribe(&primary_editor, |this, _, event: &EditorEvent, cx| match event {
-                EditorEvent::ExpandExcerptsRequested {
-                    excerpt_ids,
-                    lines,
-                    direction,
-                } => {
-                    this.expand_excerpts(excerpt_ids.iter().copied(), *lines, *direction, cx);
-                }
-                EditorEvent::SelectionsChanged { local: true } | EditorEvent::FocusedIn => {
-                    if let Some(secondary) = &mut this.secondary {
-                        secondary.has_latest_selection = false;
+            cx.subscribe(&primary_editor, |this, _, event: &EditorEvent, cx| {
+                this.on_editor_event(DiffSide::New, event, cx);
+                match event {
+                    EditorEvent::ExpandExcerptsRequested {
+                        excerpt_ids,
+                        lines,
+                        direction,
+                    } => {
+                        this.expand_excerpts(excerpt_ids.iter().copied(), *lines, *direction, cx);
                     }
-                    cx.emit(event.clone());
+                    EditorEvent::SelectionsChanged { local: true } | EditorEvent::FocusedIn => {
+                        if let Some(secondary) = &mut this.secondary {
+                            secondary.has_latest_selection = false;
+                        }
+                        cx.emit(event.clone());
+                    }
+                    _ => cx.emit(event.clone()),
                 }
-                _ => cx.emit(event.clone()),
+            }),
+            cx.observe(&primary_multibuffer, |this, _, cx| {
+                this.alignment.refresh_excerpts = true;
+                cx.notify();
             }),
         ];
 
@@ -176,6 +213,7 @@ impl SplittableEditor {
             panes,
             workspace: workspace.downgrade(),
             _subscriptions: subscriptions,
+            alignment: AlignmentState::default(),
         }
     }
 
@@ -256,8 +294,9 @@ impl SplittableEditor {
             pane
         });
 
-        let subscriptions = vec![
-            cx.subscribe(&secondary_editor, |this, _, event: &EditorEvent, cx| match event {
+        let subscriptions = vec![cx.subscribe(&secondary_editor, |this, _, event: &EditorEvent, cx| {
+            this.on_editor_event(DiffSide::Old, event, cx);
+            match event {
                 EditorEvent::ExpandExcerptsRequested {
                     excerpt_ids,
                     lines,
@@ -278,8 +317,8 @@ impl SplittableEditor {
                     cx.emit(event.clone());
                 }
                 _ => cx.emit(event.clone()),
-            }),
-        ];
+            }
+        })];
         let mut secondary = SecondaryEditor {
             editor: secondary_editor,
             multibuffer: secondary_multibuffer,
@@ -320,6 +359,7 @@ impl SplittableEditor {
             secondary.secondary_to_primary.insert(secondary_id, primary_id);
         }
         self.secondary = Some(secondary);
+        self.alignment.refresh_excerpts = true;
 
         let primary_pane = self.panes.first_pane();
         self.panes
@@ -329,6 +369,7 @@ impl SplittableEditor {
     }
 
     fn unsplit(&mut self, _: &UnsplitDiff, window: &mut Window, cx: &mut Context<Self>) {
+        self.clear_alignment(cx);
         let Some(secondary) = self.secondary.take() else {
             return;
         };
@@ -439,6 +480,7 @@ impl Focusable for SplittableEditor {
 
 impl Render for SplittableEditor {
     fn render(&mut self, window: &mut ui::Window, cx: &mut ui::Context<Self>) -> impl ui::IntoElement {
+        self.update_split_layout(window, cx);
         let inner = if self.secondary.is_none() {
             self.primary_editor.clone().into_any_element()
         } else if let Some(active) = self.panes.panes().into_iter().next() {
@@ -567,6 +609,8 @@ mod tests {
     use settings::SettingsStore;
     use ui::VisualContext as _;
 
+    use crate::SplittableEditor;
+
     fn init_test(cx: &mut gpui::TestAppContext) {
         cx.update(|cx| {
             let store = SettingsStore::test(cx);
@@ -574,6 +618,14 @@ mod tests {
             theme::init(theme::LoadThemes::JustBase, cx);
             crate::init(cx);
         });
+    }
+
+    fn settle_split(editor: &gpui::Entity<SplittableEditor>, cx: &mut gpui::VisualTestContext) {
+        for _ in 0..8 {
+            cx.run_until_parked();
+            editor.update_in(cx, |editor, window, cx| editor.update_split_layout(window, cx));
+        }
+        cx.run_until_parked();
     }
 
     #[gpui::test]
@@ -595,6 +647,7 @@ mod tests {
             split.split(&SplitDiff, window, cx);
             split
         });
+        settle_split(&split, cx);
         split.update(cx, |split, cx| {
             let secondary = split.secondary.as_ref().unwrap();
             assert!(secondary.editor.read(cx).read_only(cx));

@@ -170,6 +170,10 @@ pub struct DisplayMap {
 }
 
 impl DisplayMap {
+    pub(crate) fn header_disabled_for_buffer(&self, id: BufferId) -> bool {
+        self.block_map.header_disabled_for_buffer(id)
+    }
+
     pub fn new(
         buffer: Entity<MultiBuffer>,
         font: Font,
