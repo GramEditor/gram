@@ -22,9 +22,14 @@ path_suffixes = [
   "zlogin",
   "zprofile",
   ".env",
+  ".mailmap",
   "PKGBUILD",
   "APKBUILD",
-  "ebuild"
+  "ebuild",
+  "eclass",
+  "initd",
+  "start",
+  ".eixrc"
 ]
 modeline_aliases = ["sh", "shell", "shell-script", "zsh"]
 line_comments = ["# "]
