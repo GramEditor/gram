@@ -1,6 +1,34 @@
 name = "ini"
 grammar = "ini"
-path_suffixes = ["ini", "inf", "conf", "cfg", "automount", "mount", "path", "scope", "service", "slice", "socket", "swap", "target", "timer", "container", "volume", "network", "kube", "image", "build", "pod"]
+# For '.editorconfig' we can create new language. See: https://github.com/notpeter/editorconfig-zed
+path_suffixes = [
+  "ini",
+  "inf",
+  "conf",
+  "cfg",
+  "automount",
+  "mount",
+  "path",
+  "scope",
+  "service",
+  "slice",
+  "socket",
+  "swap",
+  "target",
+  "timer",
+  "container",
+  "volume",
+  "network",
+  "kube",
+  "image",
+  "build",
+  "pod",
+  "desktop",
+  "theme",
+  "in",
+  "kvconfig",
+  ".editorconfig"
+]
 line_comments = ["; ", "# "]
 autoclose_before = ":.,=}])>"
 brackets = [
