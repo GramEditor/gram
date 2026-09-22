@@ -96,8 +96,8 @@ use gpui::{
     Focusable, FontId, FontWeight, FutureExt as _, Global, HighlightStyle, Hsla, KeyContext, Modifiers, MouseButton,
     MouseDownEvent, MouseMoveEvent, PaintQuad, ParentElement, Pixels, PressureStage, Render, ScrollHandle,
     SharedString, Size, Styled, Subscription, Task, TextRun, TextStyle, TextStyleRefinement, UTF16Selection,
-    UnderlineStyle, UniformListScrollHandle, WeakEntity, WeakFocusHandle, Window, div, point, prelude::*, px, relative,
-    size,
+    UnderlineStyle, UniformListScrollHandle, WeakEntity, WeakFocusHandle, Window, animation::SmoothAnimation, div,
+    point, prelude::*, px, relative, size,
 };
 use hover_links::{HoverLink, HoveredLinkState, find_file};
 use hover_popover::{HoverState, hide_hover};
@@ -10421,6 +10421,15 @@ impl Editor {
         }
     }
 
+    pub(crate) fn scroll_animation(&self) -> Option<SmoothAnimation> {
+        self.scroll_manager.animation
+    }
+
+    pub(crate) fn set_scroll_animation(&mut self, animation: SmoothAnimation, local: bool) {
+        self.scroll_manager.animation = Some(animation);
+        self.scroll_manager.local = local;
+    }
+
     pub fn finalize_last_transaction(&mut self, cx: &mut Context<Self>) {
         self.buffer
             .update(cx, |buffer, cx| buffer.finalize_last_transaction(cx));
@@ -18223,8 +18232,12 @@ impl Editor {
         {
             let editor_settings = EditorSettings::get_global(cx);
             self.scroll_manager.vertical_scroll_margin = editor_settings.vertical_scroll_margin;
-            self.scroll_manager.scroll_animation_duration =
-                Duration::from_millis(editor_settings.smooth_scroll.duration.0);
+            let duration = Duration::from_millis(editor_settings.smooth_scroll.duration.0);
+            self.scroll_manager.animation_duration = duration;
+            self.scroll_manager
+                .animation
+                .iter_mut()
+                .for_each(|x| x.duration = duration.as_secs_f64());
             self.show_breadcrumbs = editor_settings.toolbar.breadcrumbs;
             self.cursor_shape = editor_settings.cursor_shape.unwrap_or_default();
             self.hide_mouse_mode = editor_settings.hide_mouse.unwrap_or_default();

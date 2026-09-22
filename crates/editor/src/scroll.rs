@@ -12,6 +12,7 @@ use crate::{
 };
 pub use autoscroll::{Autoscroll, AutoscrollStrategy};
 use core::fmt::Debug;
+use gpui::animation::SmoothAnimation;
 use gpui::{Along, App, Axis, Context, Pixels, Task, Window, point, px};
 use language::language_settings::{AllLanguageSettings, SoftWrap};
 use language::{Bias, Point};
@@ -29,13 +30,6 @@ pub const SCROLL_EVENT_SEPARATION: Duration = Duration::from_millis(28);
 const SCROLLBAR_SHOW_INTERVAL: Duration = Duration::from_secs(1);
 
 pub struct WasScrolled(pub(crate) bool);
-
-#[derive(Clone, Copy, Debug)]
-pub struct ScrollAnimation {
-    pub current: gpui::Point<ScrollOffset>,
-    pub target: gpui::Point<ScrollOffset>,
-    pub updated_at: Instant,
-}
 
 pub type ScrollOffset = f64;
 pub type ScrollPixelOffset = f64;
@@ -178,8 +172,9 @@ pub struct ScrollManager {
     visible_column_count: Option<f64>,
     forbid_vertical_scroll: bool,
     minimap_thumb_state: Option<ScrollbarThumbState>,
-    pub(crate) scroll_animation: Option<ScrollAnimation>,
-    pub(crate) scroll_animation_duration: Duration,
+    pub(crate) animation: Option<SmoothAnimation>,
+    pub(crate) animation_duration: Duration,
+    pub(crate) local: bool,
 }
 
 impl ScrollManager {
@@ -199,8 +194,9 @@ impl ScrollManager {
             visible_column_count: None,
             forbid_vertical_scroll: false,
             minimap_thumb_state: None,
-            scroll_animation: None,
-            scroll_animation_duration: Duration::from_millis(editor_settings.smooth_scroll.duration.0),
+            animation: None,
+            animation_duration: Duration::from_millis(editor_settings.smooth_scroll.duration.0),
+            local: true,
         }
     }
 
@@ -235,47 +231,26 @@ impl ScrollManager {
         self.sticky_header_line_count = count;
     }
 
-    pub fn scroll_animation(&self) -> Option<&ScrollAnimation> {
-        self.scroll_animation.as_ref()
-    }
-
     pub fn start_animation(&mut self, current: gpui::Point<ScrollOffset>, target: gpui::Point<ScrollOffset>) {
-        if let Some(animation) = self.scroll_animation.as_mut() {
-            animation.target = target;
+        self.local = true;
+        if let Some(animation) = self.animation.as_mut() {
+            animation.restart(target);
         } else {
-            self.scroll_animation = Some(ScrollAnimation {
-                current,
-                target,
-                updated_at: Instant::now(),
-            });
+            self.animation = Some(SmoothAnimation::new(self.animation_duration, current, target));
         }
     }
 
     pub fn cancel_animation(&mut self) {
-        self.scroll_animation = None;
+        self.animation = None;
     }
 
-    pub fn update_animation(&mut self) -> Option<gpui::Point<ScrollOffset>> {
-        let animation = self.scroll_animation.as_mut()?;
-        let current = animation.current;
-        let target = animation.target;
-
-        const EPSILON: f64 = 0.001;
-        let delta_x = target.x - current.x;
-        let delta_y = target.y - current.y;
-        if delta_x.abs() < EPSILON && delta_y.abs() < EPSILON {
+    pub fn update_animation(&mut self) -> Option<(gpui::Point<ScrollOffset>, bool)> {
+        let animation = self.animation.as_mut()?;
+        let (current, at_target) = animation.update();
+        if at_target {
             self.cancel_animation();
-            return Some(target);
         }
-
-        let now = Instant::now();
-        let dt = now.duration_since(animation.updated_at).as_secs_f64();
-        let speed = 3.0 / self.scroll_animation_duration.as_secs_f64();
-        let decay = if dt > 0.0 { 1.0 - (-speed * dt).exp() } else { 1.0 };
-        animation.updated_at = now;
-        animation.current.x += delta_x * decay;
-        animation.current.y += delta_y * decay;
-        Some(animation.current)
+        Some((current, self.local))
     }
 
     fn set_scroll_position(

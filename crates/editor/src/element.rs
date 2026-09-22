@@ -6856,7 +6856,7 @@ impl EditorElement {
 
                         let base_scroll_position = editor
                             .scroll_manager
-                            .scroll_animation()
+                            .animation
                             .map(|a| a.target)
                             .or(last_position)
                             .unwrap_or_else(|| position_map.snapshot.scroll_position());
@@ -8207,8 +8207,8 @@ impl Element for EditorElement {
                         editor.set_visible_line_count((bounds.size.height / line_height) as f64, window, cx);
                         editor.set_visible_column_count(f64::from(editor_width / em_advance));
 
-                        if let Some(target) = editor.scroll_manager.update_animation() {
-                            editor.set_scroll_position_internal(target, true, false, window, cx);
+                        if let Some((target, local)) = editor.scroll_manager.update_animation() {
+                            editor.set_scroll_position_internal(target, local, false, window, cx);
                             snapshot.scroll_anchor = editor.scroll_manager.anchor();
                             window.request_animation_frame();
                         }
