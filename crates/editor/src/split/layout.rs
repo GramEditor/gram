@@ -18,6 +18,13 @@ fn render_padding(height: u32) -> crate::display_map::RenderBlock {
 
 type Checkpoint = ([GapKey; 2], [u32; 2]);
 
+struct AlignmentJob {
+    excerpt: ExcerptId,
+    key: ModelKey,
+    buffer: language::BufferSnapshot,
+    diff: Option<buffer_diff::BufferDiffSnapshot>,
+}
+
 impl SplittableEditor {
     pub(super) fn clear_alignment(&mut self, cx: &mut Context<Self>) {
         let editors = [
@@ -207,7 +214,7 @@ impl SplittableEditor {
     fn alignment_gaps(
         &mut self,
         snapshots: &[DisplaySnapshot; 2],
-        _cx: &mut Context<Self>,
+        cx: &mut Context<Self>,
     ) -> Option<[HashMap<GapKey, u32>; 2]> {
         let secondary = self.secondary.as_ref().unwrap();
         let own_ids = self
@@ -247,6 +254,8 @@ impl SplittableEditor {
             .map(|(id, b, r)| (id, (b, r)))
             .collect::<HashMap<_, _>>();
         let mut checkpoints = Vec::<Checkpoint>::new();
+        let mut jobs = Vec::new();
+        let mut live_ids = HashSet::default();
         let mut previous_end: Option<[GapKey; 2]> = None;
         for (new_id, new_buffer, new_range) in snapshots[0].buffer_snapshot().excerpts() {
             let Some(old_id) = secondary.primary_to_secondary.get(&new_id) else {
@@ -289,28 +298,30 @@ impl SplittableEditor {
                 });
                 checkpoints.push((keys, rows));
             }
-            let diff = snapshots[0]
-                .buffer_snapshot()
-                .diff_for_buffer_id(new_buffer.remote_id());
-            let changes = diff
-                .map(|diff| {
-                    diff.hunks(new_buffer)
-                        .map(|hunk| {
-                            let start = hunk.diff_base_byte_range.start.to_point(diff.base_text());
-                            let end = hunk.diff_base_byte_range.end.to_point(diff.base_text());
-                            alignment::Change {
-                                new: hunk.range.start.row..hunk.range.end.row + u32::from(hunk.range.end.column > 0),
-                                old: start.row..end.row + u32::from(end.column > 0),
-                            }
-                        })
-                        .collect::<Vec<_>>()
-                })
-                .unwrap_or_default();
-            let boundary_pairs = alignment::boundaries(
-                ranges[0].start.row..ranges[0].end.row + 1,
-                ranges[1].start.row..ranges[1].end.row + 1,
-                &changes,
-            );
+            live_ids.insert(new_id);
+            let key = ModelKey {
+                diff_revision: snapshots[0]
+                    .buffer_snapshot()
+                    .diff_for_buffer_id(new_buffer.remote_id())
+                    .map(|d| d.revision()),
+                versions: [new_buffer.version().clone(), old_buffer.version().clone()],
+                buffers: [new_buffer.remote_id(), old_buffer.remote_id()],
+                ranges: ranges.clone(),
+                old_excerpt: *old_id,
+            };
+            let Some((_, boundary_pairs)) = self.alignment.models.get(&new_id).filter(|(cached, _)| *cached == key)
+            else {
+                jobs.push(AlignmentJob {
+                    excerpt: new_id,
+                    key,
+                    buffer: new_buffer.clone(),
+                    diff: snapshots[0]
+                        .buffer_snapshot()
+                        .diff_for_buffer_id(new_buffer.remote_id())
+                        .cloned(),
+                });
+                continue;
+            };
             let origins = [0, 1].map(|side| {
                 intrinsic(
                     side,
@@ -321,13 +332,18 @@ impl SplittableEditor {
                         .0,
                 )
             });
-            let measured = measure_boundaries(&boundary_pairs, snapshots, &key_at, &intrinsic, origins);
+            let measured = measure_boundaries(boundary_pairs, snapshots, &key_at, &intrinsic, origins);
             checkpoints.extend(
                 measured
                     .iter()
                     .map(|(keys, rows)| (*keys, [rows[0] + origins[0], rows[1] + origins[1]])),
             );
             previous_end = Some([key_at(0, ranges[0].end.row + 1), key_at(1, ranges[1].end.row + 1)]);
+        }
+        self.alignment.models.retain(|id, _| live_ids.contains(id));
+        if !jobs.is_empty() {
+            self.schedule_alignment_models(jobs, cx);
+            return None;
         }
         let mut result: [HashMap<GapKey, u32>; 2] = Default::default();
         for ((keys, _), gaps) in checkpoints
@@ -341,6 +357,65 @@ impl SplittableEditor {
             }
         }
         Some(result)
+    }
+
+    fn schedule_alignment_models(&mut self, jobs: Vec<AlignmentJob>, cx: &mut Context<Self>) {
+        self.alignment.generation += 1;
+        let generation = self.alignment.generation;
+        let task = cx.background_spawn(async move {
+            let mut changes_by_buffer = HashMap::default();
+            jobs.into_iter()
+                .map(
+                    |AlignmentJob {
+                         excerpt: id,
+                         key,
+                         buffer,
+                         diff,
+                     }| {
+                        let changes = changes_by_buffer.entry(buffer.remote_id()).or_insert_with(|| {
+                            diff.map(|diff| {
+                                diff.hunks(&buffer)
+                                    .map(|hunk| {
+                                        let start = hunk.diff_base_byte_range.start.to_point(diff.base_text());
+                                        let end = hunk.diff_base_byte_range.end.to_point(diff.base_text());
+                                        alignment::Change {
+                                            new: hunk.range.start.row
+                                                ..hunk.range.end.row + u32::from(hunk.range.end.column > 0),
+                                            old: start.row..end.row + u32::from(end.column > 0),
+                                        }
+                                    })
+                                    .collect::<Vec<_>>()
+                            })
+                            .unwrap_or_default()
+                        });
+                        let boundary_pairs = alignment::boundaries(
+                            key.ranges[0].start.row..key.ranges[0].end.row + 1,
+                            key.ranges[1].start.row..key.ranges[1].end.row + 1,
+                            &changes,
+                        );
+                        (id, key, boundary_pairs)
+                    },
+                )
+                .collect::<Vec<_>>()
+        });
+        self.alignment.model_task = Some(cx.spawn(async move |this, cx| {
+            let models = task.await;
+            this.update(cx, |this, cx| {
+                if this.alignment.generation != generation || this.secondary.is_none() {
+                    return;
+                }
+                for (id, key, boundary_pairs) in models {
+                    #[cfg(test)]
+                    {
+                        *this.alignment.model_builds.entry(id).or_default() += 1;
+                    }
+                    this.alignment.models.insert(id, (key, boundary_pairs));
+                }
+                this.alignment.dirty = true;
+                cx.notify();
+            })
+            .ok();
+        }));
     }
 }
 

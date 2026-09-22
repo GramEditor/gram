@@ -34,8 +34,24 @@ struct GapKey {
     below: bool,
 }
 
+/// Identity of the logical row mapping. All pairs below use absolute buffer rows.
+#[derive(Clone, PartialEq, Eq)]
+struct ModelKey {
+    diff_revision: Option<u64>,
+    versions: [clock::Global; 2],
+    buffers: [text::BufferId; 2],
+    ranges: [Range<Point>; 2],
+    old_excerpt: ExcerptId,
+}
+
 #[derive(Default)]
 struct AlignmentState {
+    models: HashMap<ExcerptId, (ModelKey, Vec<[u32; 2]>)>,
+    model_task: Option<gpui::Task<()>>,
+    // Only the most recently requested background calculation may be installed.
+    generation: u64,
+    #[cfg(test)]
+    model_builds: HashMap<ExcerptId, usize>,
     blocks: [HashMap<GapKey, (CustomBlockId, u32)>; 2],
     // GPUI defers notifications, so layout changes are reconciled from snapshots
     dirty: bool,
