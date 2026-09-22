@@ -15,14 +15,12 @@
 [
   (addition)
   (new_file)
-] @string
-;; TODO: This should eventually be `@diff.plus` with a fallback of `@string`
+] @string @diff.plus
 
 [
   (deletion)
   (old_file)
-] @keyword
-;; TODO: This should eventually be `@diff.minus` with a fallback of `@keyword`
+] @keyword @diff.minus
 
 (commit) @constant
 
@@ -34,7 +32,7 @@
 
 (mode) @number
 
-([
+[
   ".."
   "+"
   "++"
@@ -44,7 +42,7 @@
   "--"
   "---"
   "----"
-] @punctuation.special)
+] @punctuation.special
 
 [
   (binary_change)
