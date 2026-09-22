@@ -1,6 +1,7 @@
 name = "TSX"
 grammar = "tsx"
 path_suffixes = ["tsx"]
+modeline_aliases = ["typescript-txs"]
 line_comments = ["// "]
 block_comment = { start = "/*", prefix = "* ", end = "*/", tab_size = 1 }
 documentation_comment = { start = "/**", prefix = "* ", end = "*/", tab_size = 1 }
@@ -30,11 +31,11 @@ tag_name_node_name = "identifier"
 tag_name_node_name_alternates = ["member_expression"]
 
 [overrides.default]
-linked_edit_characters = ["."]
+linked_edit_characters = [".", "-"]
 
 [overrides.element]
 line_comments = { remove = true }
-block_comment = { start = "{/*", prefix = "", end = "*/}", tab_size = 0 }
+block_comment = { start = "{/*", prefix = "", end = "*/}", tab_size = 1 }
 opt_into_language_servers = ["emmet-language-server"]
 
 [overrides.string]
