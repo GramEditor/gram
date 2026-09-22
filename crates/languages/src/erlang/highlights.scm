@@ -1,41 +1,40 @@
-;; Copyright (c) Facebook, Inc. and its affiliates.
-;;
-;; Licensed under the Apache License, Version 2.0 (the "License");
-;; you may not use this file except in compliance with the License.
-;; You may obtain a copy of the License at
-;;
-;;     http://www.apache.org/licenses/LICENSE-2.0
-;;
-;; Unless required by applicable law or agreed to in writing, software
-;; distributed under the License is distributed on an "AS IS" BASIS,
-;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-;; See the License for the specific language governing permissions and
-;; limitations under the License.
-;; ---------------------------------------------------------------------
-
-;; Based initially on the contents of https://github.com/WhatsApp/tree-sitter-erlang/issues/2 by @Wilfred
-;; and https://github.com/the-mikedavis/tree-sitter-erlang/blob/main/queries/highlights.scm
-;;
-;; The tests are also based on those in
-;; https://github.com/the-mikedavis/tree-sitter-erlang/tree/main/test/highlight
-;;
-
-;; Last match wins in this file.
-;; As of https://github.com/tree-sitter/tree-sitter/blob/master/CHANGELOG.md#breaking-1
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Primitive types
+; Copyright (c) Facebook, Inc. and its affiliates.
+;
+; Licensed under the Apache License, Version 2.0 (the "License");
+; you may not use this file except in compliance with the License.
+; You may obtain a copy of the License at
+;
+;     http://www.apache.org/licenses/LICENSE-2.0
+;
+; Unless required by applicable law or agreed to in writing, software
+; distributed under the License is distributed on an "AS IS" BASIS,
+; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+; See the License for the specific language governing permissions and
+; limitations under the License.
+; ---------------------------------------------------------------------
+; Based initially on the contents of https://github.com/WhatsApp/tree-sitter-erlang/issues/2 by @Wilfred
+; and https://github.com/the-mikedavis/tree-sitter-erlang/blob/main/queries/highlights.scm
+;
+; The tests are also based on those in
+; https://github.com/the-mikedavis/tree-sitter-erlang/tree/main/test/highlight
+;
+; Last match wins in this file.
+; As of https://github.com/tree-sitter/tree-sitter/blob/master/CHANGELOG.md#breaking-1
+;
+; Primitive types
 (string) @string
+
 (char) @constant
+
 (integer) @number
+
+(float) @number
+
 (var) @variable
+
 (atom) @string.special.symbol
 
-;;; Comments
-((var) @comment.discard
- (#match? @comment.discard "^_"))
-
-(dotdotdot) @comment.discard
+; Comments
 (comment) @comment
 (
   (comment) @comment.todo
@@ -50,100 +49,154 @@
   (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
 )
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Functions
-(fa fun: (atom) @function)
-(type_name name: (atom) @function)
-(call expr: (atom) @function)
-(function_clause name: (atom) @function)
-(internal_fun fun: (atom) @function)
+((var) @comment.discard
+  (#match? @comment.discard "^_"))
 
-;; This is a fudge, we should check that the operator is '/'
-;; But our grammar does not (currently) provide it
-(binary_op_expr lhs: (atom) @function rhs: (integer))
+(dotdotdot) @comment.discard
 
-;; Others
-(remote_module module: (atom) @module)
-(remote fun: (atom) @function)
-(macro_call_expr name: (var) @constant)
-(macro_call_expr name: (var) @keyword.directive args: (_) )
-(macro_call_expr name: (atom) @keyword.directive)
-(record_field_name name: (atom) @property)
-(record_name name: (atom) @type)
+(shebang) @comment
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Attributes
+;
+; Functions
+(fa
+  fun: (atom) @function)
 
-;; module attribute
+(type_name
+  name: (atom) @function)
+
+(call
+  expr: (atom) @function)
+
+(function_clause
+  name: (atom) @function)
+
+(internal_fun
+  fun: (atom) @function)
+
+; This is a fudge, we should check that the operator is '/'
+; But our grammar does not (currently) provide it
+(binary_op_expr
+  lhs: (atom) @function
+  rhs: (integer))
+
+; Others
+(remote_module
+  module: (atom) @module)
+
+(remote
+  fun: (atom) @function)
+
+(macro_call_expr
+  name: (var) @constant)
+
+(macro_call_expr
+  name: (var) @keyword.directive
+  args: (_))
+
+(macro_call_expr
+  name: (atom) @keyword.directive)
+
+(record_field_name
+  name: (atom) @property)
+
+(record_name
+  name: (atom) @type)
+
+;
+; Attributes
+; module attribute
 (module_attribute
   name: (atom) @module)
 
-;; behaviour
-(behaviour_attribute name: (atom) @module)
+; behaviour
+(behaviour_attribute
+  name: (atom) @module)
 
-;; export
-
-;; Import attribute
+; export
+; Import attribute
 (import_attribute
-    module: (atom) @module)
+  module: (atom) @module)
 
-;; export_type
+(import_record_attribute
+  module: (atom) @module
+  records: (import_record_names
+    names: (atom) @type))
 
-;; optional_callbacks
+(export_record_attribute
+  records: (atom) @type)
 
-;; compile
+; export_type
+; optional_callbacks
+; compile
 (compile_options_attribute
-    options: (tuple
-      expr: (atom)
-      expr: (list
-        exprs: (binary_op_expr
-          lhs: (atom)
-          rhs: (integer)))))
+  options: (tuple
+    expr: (atom)
+    expr: (list
+      exprs: (binary_op_expr
+        lhs: (atom)
+        rhs: (integer)))))
 
-;; file attribute
+; file attribute
+; record
+(record_decl
+  name: (atom) @type)
 
-;; record
-(record_decl name: (atom) @type)
-(record_decl name: (macro_call_expr name: (var) @constant))
-(record_field name: (atom) @property)
+(record_decl
+  name: (macro_call_expr
+    name: (var) @constant))
 
-;; type alias
+(record_field
+  name: (atom) @property)
 
-;; opaque
+(qualified_record_name
+  module: (module
+    name: (atom) @module)
+  name: (atom) @type)
 
-;; Spec attribute
-(spec fun: (atom) @function)
+; type alias
+; opaque
+; Spec attribute
 (spec
-  module: (module name: (atom) @module)
   fun: (atom) @function)
 
-;; callback
-(callback fun: (atom) @function)
+(spec
+  module: (module
+    name: (atom) @module)
+  fun: (atom) @function)
 
-;; wild attribute
-(wild_attribute name: (attr_name name: (atom) @keyword))
+; callback
+(callback
+  fun: (atom) @function)
 
-;; fun decl
+; wild attribute
+(wild_attribute
+  name: (attr_name
+    name: (atom) @keyword))
 
-;; include/include_lib
+; fun decl
+; include/include_lib
+; ifdef/ifndef
+(pp_ifdef
+  name: (_) @keyword.directive)
 
-;; ifdef/ifndef
-(pp_ifdef name: (_) @keyword.directive)
-(pp_ifndef name: (_) @keyword.directive)
+(pp_ifndef
+  name: (_) @keyword.directive)
 
-;; define
+; define
 (pp_define
-    lhs: (macro_lhs
-      name: (var) @constant))
+  lhs: (macro_lhs
+    name: (var) @constant))
+
 (pp_define
-    lhs: (macro_lhs
-      name: (_) @keyword.directive
-      args: (var_args args: (var))))
+  lhs: (macro_lhs
+    name: (_) @keyword.directive
+    args: (var_args
+      args: (var))))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Reserved words
-[ "after"
+;
+; Reserved words
+[
+  "after"
   "and"
   "band"
   "begin"
@@ -166,6 +219,7 @@
   "end"
   "endif"
   "export"
+  "export_record"
   "export_type"
   "file"
   "fun"
@@ -173,10 +227,12 @@
   "ifdef"
   "ifndef"
   "import"
+  "import_record"
   "include"
   "include_lib"
   "maybe"
   "module"
+  "nominal"
   "of"
   "opaque"
   "optional_callbacks"
@@ -184,60 +240,82 @@
   "receive"
   "record"
   "spec"
+  "ssr"
   "try"
   "type"
   "undef"
   "unit"
   "when"
-  "xor"] @keyword
+  "where"
+  "xor"
+] @keyword
 
-["andalso" "orelse"] @keyword.operator
+[
+  "andalso"
+  "orelse"
+] @keyword.operator
 
-;; Punctuation
-["," "." ";"] @punctuation.delimiter
-["(" ")" "{" "}" "[" "]" "<<" ">>"] @punctuation.bracket
+; Punctuation
+[
+  ","
+  "."
+  ";"
+] @punctuation.delimiter
 
-;; Operators
-["!"
- "->"
- "<-"
- "#"
- "::"
- "|"
- ":"
- "="
- "||"
+[
+  "("
+  ")"
+  "{"
+  "}"
+  "["
+  "]"
+  "<<"
+  ">>"
+] @punctuation.bracket
 
- "+"
- "-"
- "bnot"
- "not"
-
- "/"
- "*"
- "div"
- "rem"
- "band"
- "and"
-
- "+"
- "-"
- "bor"
- "bxor"
- "bsl"
- "bsr"
- "or"
- "xor"
-
- "++"
- "--"
-
- "=="
- "/="
- "=<"
- "<"
- ">="
- ">"
- "=:="
- "=/="
- ] @operator
+; Operators
+[
+  "!"
+  "->"
+  "<-"
+  "<:-"
+  "<:="
+  "#"
+  "#_"
+  "::"
+  ":>"
+  "|"
+  ":"
+  "="
+  "==>>"
+  "||"
+  "&&"
+  "+"
+  "-"
+  "bnot"
+  "not"
+  "/"
+  "*"
+  "div"
+  "rem"
+  "band"
+  "and"
+  "+"
+  "-"
+  "bor"
+  "bxor"
+  "bsl"
+  "bsr"
+  "or"
+  "xor"
+  "++"
+  "--"
+  "=="
+  "/="
+  "=<"
+  "<"
+  ">="
+  ">"
+  "=:="
+  "=/="
+] @operator
