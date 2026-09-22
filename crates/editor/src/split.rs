@@ -17,6 +17,9 @@ use ui::{
 };
 use workspace::{ActivePaneDecorator, Item, ItemHandle, Pane, PaneGroup, SplitDirection, Workspace};
 
+use crate::display_map::CustomBlockId;
+#[cfg(test)]
+use crate::display_map::{BlockId, BlockPlacement, BlockProperties, BlockStyle};
 use crate::{Editor, EditorEvent};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -25,8 +28,16 @@ enum DiffSide {
     Old,
 }
 
+/// Stable insertion point in one multibuffer; `below` also covers EOF padding.
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+struct GapKey {
+    anchor: Anchor,
+    below: bool,
+}
+
 #[derive(Default)]
 struct AlignmentState {
+    blocks: [HashMap<GapKey, (CustomBlockId, u32)>; 2],
     refresh_excerpts: bool,
 }
 
@@ -626,6 +637,56 @@ mod tests {
             editor.update_in(cx, |editor, window, cx| editor.update_split_layout(window, cx));
         }
         cx.run_until_parked();
+    }
+
+    #[gpui::test]
+    async fn test_split_padding_survives_render(cx: &mut gpui::TestAppContext) {
+        use super::*;
+        use gpui::{point, px, size};
+        init_test(cx);
+        let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
+        let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let buffer = cx.new(|cx| Buffer::local("before\nafter\n", cx));
+        let primary = cx.new(|cx| MultiBuffer::singleton(buffer, cx));
+        let split = cx.new_window_entity(|window, cx| {
+            let mut split = SplittableEditor::new_unsplit(primary, project, workspace, window, cx);
+            split.split(&SplitDiff, window, cx);
+            split
+        });
+        for height in [3, 1, 0] {
+            split.update(cx, |split, cx| {
+                let editors = [
+                    split.primary_editor.clone(),
+                    split.secondary.as_ref().unwrap().editor.clone(),
+                ];
+                let anchor = editors[0]
+                    .read(cx)
+                    .buffer()
+                    .read(cx)
+                    .snapshot(cx)
+                    .anchor_before(Point::new(1, 0));
+                let mut desired = [HashMap::default(), HashMap::default()];
+                if height > 0 {
+                    desired[0].insert(GapKey { anchor, below: false }, height);
+                }
+                split.apply_padding(&editors, desired, cx);
+            });
+            for _ in 0..4 {
+                cx.run_until_parked();
+                cx.draw(point(px(0.), px(0.)), size(px(1000.), px(700.)), |_, _| {
+                    split.clone().into_any_element()
+                });
+            }
+            split.update(cx, |split, cx| {
+                let snapshot = split
+                    .primary_editor
+                    .update(cx, |editor, cx| editor.display_snapshot(cx));
+                assert_eq!(split.alignment.blocks[0].len(), usize::from(height > 0));
+                for (id, _) in split.alignment.blocks[0].values() {
+                    assert_eq!(snapshot.block_for_id(BlockId::Custom(*id)).unwrap().height(), height);
+                }
+            });
+        }
     }
 
     #[gpui::test]

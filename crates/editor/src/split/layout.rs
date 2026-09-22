@@ -2,8 +2,38 @@
 
 use super::*;
 
+#[cfg(test)]
+fn render_padding(height: u32) -> crate::display_map::RenderBlock {
+    Arc::new(move |cx| {
+        let mut color = cx.editor_style.text.color;
+        color.a *= 0.15;
+        div()
+            .w_full()
+            // The editor measures the rendered element and resizes its block.
+            // An Empty element collapses even a multi-line block to one row.
+            .h(cx.line_height * height as f32)
+            .bg(gpui::pattern_slash(color, 1.0, 5.0))
+            .into_any_element()
+    })
+}
+
 impl SplittableEditor {
-    pub(super) fn clear_alignment(&mut self, _cx: &mut Context<Self>) {
+    pub(super) fn clear_alignment(&mut self, cx: &mut Context<Self>) {
+        let editors = [
+            Some(self.primary_editor.clone()),
+            self.secondary.as_ref().map(|s| s.editor.clone()),
+        ];
+        for (side, editor) in editors.into_iter().enumerate() {
+            let ids = self.alignment.blocks[side]
+                .drain()
+                .map(|(_, (id, _))| id)
+                .collect::<HashSet<_>>();
+            if let Some(editor) = editor
+                && !ids.is_empty()
+            {
+                editor.update(cx, |editor, cx| editor.remove_blocks(ids, None, cx));
+            }
+        }
         self.alignment = AlignmentState::default();
     }
 
@@ -69,6 +99,75 @@ impl SplittableEditor {
                 }
                 if folded && !editor.is_buffer_folded(id, cx) {
                     editor.fold_buffer(id, cx);
+                }
+            });
+        }
+    }
+
+    #[cfg(test)]
+    pub(super) fn apply_padding(
+        &mut self,
+        editors: &[Entity<Editor>; 2],
+        desired: [HashMap<GapKey, u32>; 2],
+        cx: &mut Context<Self>,
+    ) {
+        for side in 0..2 {
+            let current = &mut self.alignment.blocks[side];
+            let mut removed = HashSet::default();
+            current.retain(|key, (id, _)| {
+                if desired[side].contains_key(key) {
+                    true
+                } else {
+                    removed.insert(*id);
+                    false
+                }
+            });
+            let mut resized = HashMap::default();
+            let mut added = Vec::new();
+            for (&key, &height) in &desired[side] {
+                if let Some((id, old_height)) = current.get_mut(&key) {
+                    if *old_height != height {
+                        resized.insert(*id, height);
+                        *old_height = height;
+                    }
+                } else {
+                    added.push((key, height));
+                }
+            }
+            editors[side].update(cx, |editor, cx| {
+                if !removed.is_empty() {
+                    editor.remove_blocks(removed, None, cx);
+                }
+                if !resized.is_empty() {
+                    editor.replace_blocks(
+                        resized
+                            .iter()
+                            .map(|(&id, &height)| (id, render_padding(height)))
+                            .collect(),
+                        None,
+                        cx,
+                    );
+                    editor.resize_blocks(resized, None, cx);
+                }
+                if !added.is_empty() {
+                    let ids = editor.insert_blocks(
+                        added.iter().map(|(key, height)| BlockProperties {
+                            placement: if key.below {
+                                BlockPlacement::Below(key.anchor)
+                            } else {
+                                BlockPlacement::Above(key.anchor)
+                            },
+                            height: Some(*height),
+                            style: BlockStyle::Sticky,
+                            render: render_padding(*height),
+                            priority: usize::MAX,
+                        }),
+                        None,
+                        cx,
+                    );
+                    for ((key, height), id) in added.into_iter().zip(ids) {
+                        current.insert(key, (id, height));
+                    }
                 }
             });
         }
