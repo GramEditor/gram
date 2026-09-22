@@ -74,7 +74,7 @@ theme = { workspace = true, features = ["test-support"] }
 unindent.workspace = true
 zlog.workspace = true
 
-[target.'cfg(not(windows))'.dependencies]
+[target."cfg(not(windows))".dependencies]
 crashes.workspace = true
 fork.workspace = true
 libc.workspace = true

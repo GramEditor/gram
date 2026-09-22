@@ -39,7 +39,7 @@ rand.workspace = true
 settings = { workspace = true, features = ["test-support"] }
 util_macros.workspace = true
 
-[target.'cfg(windows)'.dependencies]
+[target."cfg(windows)".dependencies]
 windows.workspace = true
 
 [features]

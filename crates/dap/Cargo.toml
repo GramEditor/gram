@@ -45,7 +45,7 @@ task = { workspace = true, features = ["test-support"] }
 util = { workspace = true, features = ["test-support"] }
 zlog.workspace = true
 
-[target.'cfg(not(windows))'.dependencies]
+[target."cfg(not(windows))".dependencies]
 libc.workspace = true
 
 [features]

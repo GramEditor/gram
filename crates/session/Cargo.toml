@@ -18,9 +18,7 @@ util.workspace = true
 uuid.workspace = true
 
 [features]
-test-support = [
-  "db/test-support",
-]
+test-support = ["db/test-support"]
 
 [lints]
 workspace = true
