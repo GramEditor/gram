@@ -1,5 +1,4 @@
-;; Keywords
-
+; Keywords
 [
   "do"
   "else"
@@ -11,6 +10,7 @@
   "if"
   "in"
   "local"
+  "global"
   "repeat"
   "return"
   "then"
@@ -19,12 +19,11 @@
   (break_statement)
 ] @keyword
 
-;; Operators
-
+; Operators
 [
- "and"
- "not"
- "or"
+  "and"
+  "not"
+  "or"
 ] @keyword.operator
 
 [
@@ -51,8 +50,7 @@
   ".."
 ] @operator
 
-;; Punctuations
-
+; Punctuations
 [
   ";"
   ":"
@@ -60,33 +58,33 @@
   "."
 ] @punctuation.delimiter
 
-;; Brackets
-
+; Brackets
 [
- "("
- ")"
- "["
- "]"
- "{"
- "}"
+  "("
+  ")"
+  "["
+  "]"
+  "{"
+  "}"
 ] @punctuation.bracket
 
-;; Variables
-
+; Variables
 (identifier) @variable
 
 ((identifier) @variable.special
- (#eq? @variable.special "self"))
+  (#eq? @variable.special "self"))
 
 (variable_list
-   attribute: (attribute
-     (["<" ">"] @punctuation.bracket
+  attribute: (attribute
+    ([
+      "<"
+      ">"
+    ] @punctuation.bracket
       (identifier) @attribute)))
 
-;; Constants
-
+; Constants
 ((identifier) @constant
- (#match? @constant "^[A-Z][A-Z_0-9]*$"))
+  (#match? @constant "^[A-Z][A-Z_0-9]*$"))
 
 (vararg_expression) @constant
 
@@ -97,47 +95,49 @@
   (true)
 ] @boolean
 
-;; Tables
+; Tables
+(field
+  name: (identifier) @property)
 
-(field name: (identifier) @property)
-
-(dot_index_expression field: (identifier) @property)
+(dot_index_expression
+  field: (identifier) @property)
 
 (table_constructor
-[
-  "{"
-  "}"
-] @constructor)
+  [
+    "{"
+    "}"
+  ] @constructor)
 
-;; Functions
-
-(parameters (identifier) @parameter)
+; Functions
+(parameters
+  (identifier) @parameter)
 
 (function_call
   name: [
     (identifier) @function
-    (dot_index_expression field: (identifier) @function)
+    (dot_index_expression
+      field: (identifier) @function)
   ])
 
 (function_declaration
   name: [
     (identifier) @function.definition
-    (dot_index_expression field: (identifier) @function.definition)
+    (dot_index_expression
+      field: (identifier) @function.definition)
   ])
 
-(method_index_expression method: (identifier) @function.method)
+(method_index_expression
+  method: (identifier) @function.method)
 
 (function_call
   (identifier) @function.builtin
   (#any-of? @function.builtin
-    ;; built-in functions in Lua 5.1
-    "assert" "collectgarbage" "dofile" "error" "getfenv" "getmetatable" "ipairs"
-    "load" "loadfile" "loadstring" "module" "next" "pairs" "pcall" "print"
-    "rawequal" "rawget" "rawset" "require" "select" "setfenv" "setmetatable"
-    "tonumber" "tostring" "type" "unpack" "xpcall"))
+    ; built-in functions in Lua 5.1
+    "assert" "collectgarbage" "dofile" "error" "getfenv" "getmetatable" "ipairs" "load" "loadfile"
+    "loadstring" "module" "next" "pairs" "pcall" "print" "rawequal" "rawget" "rawset" "require"
+    "select" "setfenv" "setmetatable" "tonumber" "tostring" "type" "unpack" "xpcall"))
 
-;; Others
-
+; Others
 (comment) @comment
 (
   (comment) @comment.todo
@@ -157,4 +157,5 @@
 (number) @number
 
 (string) @string
+
 (escape_sequence) @string.escape
