@@ -1,0 +1,9 @@
+name = "Kdl"
+grammar = "kdl"
+path_suffixes = ["kdl"]
+line_comments = ["// "]
+autoclose_before = ";,=}"
+brackets = [
+  { start = "{", end = "}", close = true, newline = true },
+  { start = "\"", end = "\"", close = true, newline = false, not_in = ["string"] },
+]
