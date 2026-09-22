@@ -11,51 +11,39 @@
   (comment) @comment.warning
   (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
 )
+(subject) @markup.heading
 
-(generated_comment) @comment
+(path) @string.special.path
 
-(title) @markup.heading
+(branch) @string.special.symbol
 
-; (text) @none
-(branch) @markup.link
+(commit) @constant
 
-(change) @keyword
+(item) @markup.link.url
 
-(filepath) @string.special.url
+(header) @tag
 
-(arrow) @punctuation.delimiter
+(comment) @comment
 
-(subject) @markup.heading @spell
+(change
+  kind: "new file" @diff.plus)
 
-(subject
-  (subject_prefix) @function @nospell)
+(change
+  kind: "deleted" @diff.minus)
 
-(prefix
-  (type) @keyword @nospell)
+(change
+  kind: "modified" @diff.delta)
 
-(prefix
-  (scope) @variable.parameter @nospell)
-
-(prefix
-  [
-   "("
-   ")"
-   ":"
-   ] @punctuation.delimiter)
-
-(prefix
-  "!" @punctuation.special)
-
-(message) @spell
+(change
+  kind: "renamed" @diff.delta.moved)
 
 (trailer
-  (token) @label)
+  key: (trailer_key) @variable.other.member
+  value: (trailer_value) @string)
 
-; (trailer (value) @none)
-(breaking_change
-  (token) @comment.error)
-
-(breaking_change
-  (value) @none @spell)
-
-(scissor) @comment
+[
+  ":"
+  "="
+  "->"
+  (scissors)
+] @punctuation.delimiter
