@@ -10,9 +10,9 @@ publish.workspace = true
 ignored = ["log"]
 
 [lib]
+doctest = false
 path = "src/askpass.rs"
 test = false
-doctest = false
 
 [dependencies]
 anyhow.workspace = true

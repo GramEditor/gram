@@ -13,9 +13,9 @@ publish = true
 target = { path = "wit" }
 
 [lib]
+doctest = false
 path = "src/extension_api.rs"
 test = false
-doctest = false
 
 [dependencies]
 serde.workspace = true

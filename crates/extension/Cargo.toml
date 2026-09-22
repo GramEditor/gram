@@ -7,13 +7,14 @@ license = "GPL-3.0-or-later"
 publish.workspace = true
 
 [lib]
-path = "src/extension.rs"
 doctest = false
+path = "src/extension.rs"
 
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
 collections.workspace = true
+convert_case.workspace = true
 dap.workspace = true
 fs.workspace = true
 futures.workspace = true
@@ -33,7 +34,6 @@ util.workspace = true
 wasm-encoder.workspace = true
 wasmparser.workspace = true
 which.workspace = true
-convert_case.workspace = true
 
 [dev-dependencies]
 fs = { workspace = true, "features" = ["test-support"] }

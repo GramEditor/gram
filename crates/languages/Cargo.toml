@@ -6,6 +6,9 @@ repository.workspace = true
 license = "GPL-3.0-or-later"
 publish.workspace = true
 
+[lib]
+doctest = false
+
 [dependencies]
 anyhow.workspace = true
 async-compression.workspace = true
@@ -13,8 +16,8 @@ async-fs.workspace = true
 async-tar.workspace = true
 async-trait.workspace = true
 chrono.workspace = true
-collections.workspace = true
 codebook-tree-sitter-typst = { workspace = true, optional = true }
+collections.workspace = true
 futures.workspace = true
 globset.workspace = true
 gpui.workspace = true
@@ -149,6 +152,3 @@ test-support = ["load-grammars"]
 
 [lints]
 workspace = true
-
-[lib]
-doctest = false

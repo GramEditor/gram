@@ -7,13 +7,14 @@ license = "GPL-3.0-or-later"
 publish.workspace = true
 
 [lib]
-path = "src/settings_ui.rs"
 doctest = false
+path = "src/settings_ui.rs"
 
 [dependencies]
 anyhow.workspace = true
 app_actions.workspace = true
 bm25.workspace = true
+convert_case.workspace = true
 editor.workspace = true
 fs.workspace = true
 fuzzy.workspace = true
@@ -35,7 +36,6 @@ ui.workspace = true
 ui_input.workspace = true
 util.workspace = true
 workspace.workspace = true
-convert_case.workspace = true
 
 [dev-dependencies]
 gpui = { workspace = true, features = ["test-support"] }
