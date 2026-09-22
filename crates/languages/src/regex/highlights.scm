@@ -4,7 +4,6 @@
   "(?"
   "(?:"
   "(?<"
-  "(?P<"
   "(?P="
   "<"
   ">"
@@ -12,8 +11,6 @@
   "]"
   "{"
   "}"
-  "[:"
-  ":]"
 ] @punctuation.bracket.regex
 
 (group_name) @label.regex
@@ -54,13 +51,6 @@
 (character_class
   [
     "^" @operator.regex
-    (class_range "-" @operator.regex)
+    (class_range
+      "-" @operator.regex)
   ])
-
-[
- (class_character)
- (posix_class_name)
-] @constant.character.regex
-
-(pattern_character) @string.regex
-
