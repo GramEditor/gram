@@ -1,6 +1,6 @@
 name = "HTML"
 grammar = "html"
-path_suffixes = ["html", "htm", "shtml"]
+path_suffixes = ["html", "htm", "shtml", "etlua", "xhtml"]
 autoclose_before = ">})"
 block_comment = { start = "<!--", prefix = "", end = "-->", tab_size = 0 }
 wrap_characters = { start_prefix = "<", start_suffix = ">", end_prefix = "</", end_suffix = ">" }
