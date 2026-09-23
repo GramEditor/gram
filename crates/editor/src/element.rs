@@ -3523,6 +3523,14 @@ impl EditorElement {
             .unwrap_or_default();
         let file = for_excerpt.buffer.file();
         let can_open_excerpts = file.is_none_or(|file| file.can_open());
+        let can_open_current_file = is_read_only  // this is meant for the commit view, to jump to the current version of a file
+            && file.is_some_and(|file| {
+                editor
+                    .project
+                    .as_ref()
+                    .and_then(|project| project.read(cx).worktree_for_id(file.worktree_id(cx), cx))
+                    .is_some_and(|worktree| worktree.read(cx).entry_for_path(file.path()).is_some())
+            });
         let path_style = file.map(|file| file.path_style(cx));
         let relative_path = for_excerpt.buffer.resolve_file_path(include_root, cx);
         let (parent_path, filename) = if let Some(path) = &relative_path {
@@ -3680,6 +3688,71 @@ impl EditorElement {
                                         ))
                                     })
                             }))
+                            .when(can_open_current_file && is_selected && relative_path.is_some(), |el| {
+                                el.child(
+                                    Button::new("open-file-button", "Open Current File")
+                                        .style(ButtonStyle::OutlinedGhost)
+                                        .on_click(window.listener_for(&self.editor, {
+                                            let file = file.cloned();
+
+                                            move |editor, _: &ClickEvent, window, cx| {
+                                                let Some(file) = file.clone() else {
+                                                    return;
+                                                };
+                                                let Some(workspace) = editor.workspace() else {
+                                                    return;
+                                                };
+
+                                                let project_path = ProjectPath {
+                                                    path: file.path().clone(),
+                                                    worktree_id: file.worktree_id(cx),
+                                                };
+
+                                                let open_task = workspace.update(cx, |workspace, cx| {
+                                                    workspace.open_path(project_path, None, true, window, cx)
+                                                });
+
+                                                // attempt jump to the focused line number,
+                                                let head_anchor = editor.selections.newest_anchor().head();
+                                                let multibuffer = editor.buffer().read(cx);
+                                                let point = head_anchor
+                                                    .text_anchor
+                                                    .buffer_id
+                                                    .and_then(|buffer_id| multibuffer.buffer(buffer_id))
+                                                    .map(|buffer| {
+                                                        let buffer_snapshot = buffer.read(cx).snapshot();
+                                                        language::ToPoint::to_point(
+                                                            &head_anchor.text_anchor,
+                                                            &buffer_snapshot,
+                                                        )
+                                                    })
+                                                    .unwrap_or_default();
+
+                                                cx.spawn_in(window, async move |_, cx| {
+                                                    let item = open_task.await?;
+
+                                                    if let Some(opened_editor) = item.downcast::<Editor>() {
+                                                        opened_editor.update_in(cx, |editor, window, cx| {
+                                                            let snapshot = editor.buffer().read(cx).snapshot(cx);
+                                                            let point = snapshot.clip_point(point, text::Bias::Left);
+                                                            editor.change_selections(
+                                                                Some(Autoscroll::center()).into(),
+                                                                window,
+                                                                cx,
+                                                                |selections| {
+                                                                    selections.select_ranges([point..point]);
+                                                                },
+                                                            );
+                                                        })?;
+                                                    }
+
+                                                    anyhow::Ok(())
+                                                })
+                                                .detach_and_notify_err(window, cx);
+                                            }
+                                        })),
+                                )
+                            })
                             .when(can_open_excerpts && is_selected && relative_path.is_some(), |el| {
                                 el.child(
                                     Button::new("open-file-button", "Open File")
