@@ -90,6 +90,8 @@ actions!(
         Amend,
         /// Enable the --signoff option.
         Signoff,
+        // Run pre-commit hook.
+        Verify,
         /// Cancels the current git operation.
         Cancel,
         /// Expands the commit message editor.

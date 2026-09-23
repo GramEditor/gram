@@ -327,6 +327,7 @@ impl Upstream {
 pub struct CommitOptions {
     pub amend: bool,
     pub signoff: bool,
+    pub verify: bool,
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]

@@ -1959,6 +1959,7 @@ impl GitStore {
                     CommitOptions {
                         amend: options.amend,
                         signoff: options.signoff,
+                        verify: options.verify,
                     },
                     askpass,
                     cx,
@@ -4569,7 +4570,13 @@ impl Repository {
         let askpass_delegates = self.askpass_delegates.clone();
         let askpass_id = util::post_inc(&mut self.latest_askpass_id);
 
-        let rx = self.run_hook(RunHook::PreCommit, cx);
+        let rx = if options.verify {
+            self.run_hook(RunHook::PreCommit, cx)
+        } else {
+            let (tx, rx) = oneshot::channel();
+            tx.send(Ok(())).ok();
+            rx
+        };
         let git_store = self.git_store.clone();
 
         self.send_job(Some("git commit".into()), move |git_repo, mut cx| async move {
@@ -4604,6 +4611,7 @@ impl Repository {
                             options: Some(proto::commit::CommitOptions {
                                 amend: options.amend,
                                 signoff: options.signoff,
+                                verify: options.verify,
                             }),
                             askpass_id,
                         })
