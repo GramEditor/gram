@@ -38,6 +38,7 @@ db = { workspace = true, features = ["test-support"] }
 
 [features]
 default = []
+test-support = []
 
 [lints]
 workspace = true

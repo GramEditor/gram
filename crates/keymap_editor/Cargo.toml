@@ -47,5 +47,8 @@ gpui = { workspace = true, features = ["test-support"] }
 project = { workspace = true, features = ["test-support"] }
 workspace = { workspace = true, features = ["test-support"] }
 
+[features]
+test-support = []
+
 [lints]
 workspace = true
