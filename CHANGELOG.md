@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Language support for Typst via tinymist (#517) by @theDoctor
 - Add support for C23 keyword 'constexpr' (#522) by @mgrave
 - Add code outline support for diff files (#524) by @jqslr
-- Add smart sort for project panel: mod.rs sorts first (#541) by @patchunwrap 
+- Add smart sort for project panel: mod.rs sorts first (#541) by @patchunwrap
 - Highlight TODO/NOTE/WARN: comments in builtin languages (#534) by @nitbook
 - Configure debug adapter permissions in language server config view
 - Add refs information to commit history views
@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix compiling extensions with symlinks in the source tree (#494)
 - Require language servers from extensions to have full permissions before running (#507)
 - Distinguish between errors better for remove server binary (#521) by @nitbook
-- When creating new X11WindowState also change `_NET_WM_NAME` property (#548) by @sir_nacnud 
+- When creating new X11WindowState also change `_NET_WM_NAME` property (#548) by @sir_nacnud
 - Fix diagnostics batches stopping at paths without a worktree (zed#64017)
 - Raise open file soft limit at startup on Unix (zed#64034)
 - Ensure that SoftWrap being set to None does not cause wrapping (#572) by @nitbook
