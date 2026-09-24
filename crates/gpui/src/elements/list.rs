@@ -1223,7 +1223,7 @@ mod test {
 
         // Paint
         cx.draw(point(px(0.), px(0.)), size(px(100.), px(20.)), |_, cx| {
-            cx.new(|_| TestView(state.clone()))
+            cx.new(|_| TestView(state.clone())).into_any_element()
         });
 
         // Reset
@@ -1258,7 +1258,7 @@ mod test {
 
         // Paint
         cx.draw(point(px(0.), px(0.)), size(px(100.), px(100.)), |_, cx| {
-            cx.new(|_| TestView(state.clone()))
+            cx.new(|_| TestView(state.clone())).into_any_element()
         });
 
         // Test positive distance: start at item 1, move down 30px
@@ -1359,7 +1359,8 @@ mod test {
             offset_in_item: px(40.),
         });
 
-        cx.draw(point(px(0.), px(0.)), size(px(100.), px(200.)), |_, _| view.clone());
+        let view_element = view.clone().into_any_element();
+        cx.draw(point(px(0.), px(0.)), size(px(100.), px(200.)), |_, _| view_element);
 
         let offset = state.logical_scroll_top();
         assert_eq!(offset.item_ix, 2);
@@ -1372,7 +1373,8 @@ mod test {
         item_height.set(50);
         state.remeasure();
 
-        cx.draw(point(px(0.), px(0.)), size(px(100.), px(200.)), |_, _| view);
+        let view_element = view.into_any_element();
+        cx.draw(point(px(0.), px(0.)), size(px(100.), px(200.)), |_, _| view_element);
 
         let offset = state.logical_scroll_top();
         assert_eq!(offset.item_ix, 2);

@@ -926,7 +926,7 @@ impl Vim {
     }
 
     pub fn workspace(&self, window: &mut Window) -> Option<Entity<Workspace>> {
-        window.root::<Workspace>().flatten()
+        window.root::<Workspace>()
     }
 
     pub fn pane(&self, window: &mut Window, cx: &mut Context<Self>) -> Option<Entity<Pane>> {

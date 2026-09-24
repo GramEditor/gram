@@ -807,7 +807,7 @@ impl Render for BufferDiagnosticsEditor {
                             .style(ButtonStyle::Transparent)
                             .tooltip(Tooltip::text("Open File"))
                             .on_click(cx.listener(|buffer_diagnostics, _, window, cx| {
-                                if let Some(workspace) = window.root::<Workspace>().flatten() {
+                                if let Some(workspace) = window.root::<Workspace>() {
                                     workspace.update(cx, |workspace, cx| {
                                         workspace
                                             .open_path(buffer_diagnostics.project_path.clone(), None, true, window, cx)

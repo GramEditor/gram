@@ -4944,7 +4944,7 @@ impl Workspace {
     }
 
     pub fn for_window(window: &mut Window, _: &mut App) -> Option<Entity<Workspace>> {
-        window.root().flatten()
+        window.root()
     }
 
     pub fn zoomed_item(&self) -> Option<&AnyWeakView> {

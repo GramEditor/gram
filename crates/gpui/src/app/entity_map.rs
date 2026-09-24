@@ -270,6 +270,14 @@ impl AnyEntity {
             Err(self)
         }
     }
+
+    /// Cast to Entity<T> directly.
+    pub fn downcast_ref<T: 'static>(&self) -> Option<&Entity<T>> {
+        (TypeId::of::<T>() == self.entity_type).then(|| {
+            // SAFETY: Typechecked using entity_type
+            unsafe { &*(self as *const AnyEntity as *const Entity<T>) }
+        })
+    }
 }
 
 impl Clone for AnyEntity {

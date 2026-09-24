@@ -1420,11 +1420,14 @@ impl Window {
     }
 
     /// Returns the root entity of the window, if it has one.
-    pub fn root<E>(&self) -> Option<Option<Entity<E>>>
+    pub fn root<E>(&self) -> Option<Entity<E>>
     where
         E: 'static + Render,
     {
-        self.root.as_ref().map(|view| view.clone().downcast::<E>().ok())
+        self.root
+            .as_ref()
+            .map(|view| view.downcast_ref::<E>().cloned())
+            .flatten()
     }
 
     /// Obtain a handle to the window that belongs to this context.
@@ -2472,6 +2475,7 @@ impl Window {
     /// Updates the global element offset based on the given offset. This is used to implement
     /// drag handles and other manual painting of elements. This method should only be called during
     /// the prepaint phase of element drawing.
+    #[inline]
     pub fn with_absolute_element_offset<R>(&mut self, offset: Point<Pixels>, f: impl FnOnce(&mut Self) -> R) -> R {
         self.invalidator.debug_assert_prepaint();
         self.element_offset_stack.push(offset);
@@ -3376,6 +3380,7 @@ impl Window {
         self.rendered_entity_stack.last().copied().unwrap()
     }
 
+    #[inline]
     pub(crate) fn with_rendered_view<R>(&mut self, id: EntityId, f: impl FnOnce(&mut Self) -> R) -> R {
         self.rendered_entity_stack.push(id);
         let result = f(self);
@@ -3384,6 +3389,7 @@ impl Window {
     }
 
     /// Executes the provided function with the specified image cache.
+    #[inline]
     pub fn with_image_cache<F, R>(&mut self, image_cache: Option<AnyImageCache>, f: F) -> R
     where
         F: FnOnce(&mut Self) -> R,

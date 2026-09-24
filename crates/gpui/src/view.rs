@@ -25,57 +25,6 @@ struct ViewCacheKey {
     text_style: TextStyle,
 }
 
-impl<V: Render> Element for Entity<V> {
-    type RequestLayoutState = AnyElement;
-    type PrepaintState = ();
-
-    fn id(&self) -> Option<ElementId> {
-        Some(ElementId::View(self.entity_id()))
-    }
-
-    fn source_location(&self) -> Option<&'static std::panic::Location<'static>> {
-        None
-    }
-
-    fn request_layout(
-        &mut self,
-        _id: Option<&GlobalElementId>,
-        _inspector_id: Option<&InspectorElementId>,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> (LayoutId, Self::RequestLayoutState) {
-        let mut element = self.update(cx, |view, cx| view.render(window, cx).into_any_element());
-        let layout_id = window.with_rendered_view(self.entity_id(), |window| element.request_layout(window, cx));
-        (layout_id, element)
-    }
-
-    fn prepaint(
-        &mut self,
-        _id: Option<&GlobalElementId>,
-        _inspector_id: Option<&InspectorElementId>,
-        _: Bounds<Pixels>,
-        element: &mut Self::RequestLayoutState,
-        window: &mut Window,
-        cx: &mut App,
-    ) {
-        window.set_view_id(self.entity_id());
-        window.with_rendered_view(self.entity_id(), |window| element.prepaint(window, cx));
-    }
-
-    fn paint(
-        &mut self,
-        _id: Option<&GlobalElementId>,
-        _inspector_id: Option<&InspectorElementId>,
-        _: Bounds<Pixels>,
-        element: &mut Self::RequestLayoutState,
-        _: &mut Self::PrepaintState,
-        window: &mut Window,
-        cx: &mut App,
-    ) {
-        window.with_rendered_view(self.entity_id(), |window| element.paint(window, cx));
-    }
-}
-
 /// A dynamically-typed handle to a view, which can be downcast to a [Entity] for a specific type.
 #[derive(Clone, Debug)]
 pub struct AnyView {
@@ -132,6 +81,12 @@ impl AnyView {
     /// Gets the entity id of this handle.
     pub fn entity_id(&self) -> EntityId {
         self.entity.entity_id()
+    }
+
+    /// Get a reference to the Entity if type matches
+    #[inline]
+    pub fn downcast_ref<T: 'static>(&self) -> Option<&Entity<T>> {
+        self.entity.downcast_ref::<T>()
     }
 }
 
@@ -285,10 +240,10 @@ impl Element for AnyView {
 }
 
 impl<V: 'static + Render> IntoElement for Entity<V> {
-    type Element = Entity<V>;
+    type Element = AnyView;
 
     fn into_element(self) -> Self::Element {
-        self
+        AnyView::from(self)
     }
 }
 
@@ -345,7 +300,7 @@ mod any_view {
     use crate::{AnyElement, AnyView, App, IntoElement, Render, Window};
 
     pub(crate) fn render<V: 'static + Render>(view: &AnyView, window: &mut Window, cx: &mut App) -> AnyElement {
-        let view = view.clone().downcast::<V>().unwrap();
+        let view = view.downcast_ref::<V>().unwrap();
         view.update(cx, |view, cx| view.render(window, cx).into_any_element())
     }
 }

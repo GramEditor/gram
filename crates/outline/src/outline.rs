@@ -42,7 +42,7 @@ pub fn toggle(editor: Entity<Editor>, _: &app_actions::outline::ToggleOutline, w
         .snapshot(cx)
         .outline(Some(cx.theme().syntax()));
 
-    let workspace = window.root::<Workspace>().flatten();
+    let workspace = window.root::<Workspace>();
     if let Some((workspace, outline)) = workspace.zip(outline) {
         workspace.update(cx, |workspace, cx| {
             workspace.toggle_modal(window, cx, |window, cx| OutlineView::new(outline, editor, window, cx));

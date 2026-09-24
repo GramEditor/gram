@@ -10,7 +10,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use anyhow::{Context as _, Result, anyhow};
+use anyhow::{Context as _, Result};
 use derive_more::{Deref, DerefMut};
 use futures::{
     Future, FutureExt,
@@ -2150,11 +2150,9 @@ impl AppContext for App {
             .expect("attempted to read a window that is already on the stack");
 
         let root_view = window.root.clone().unwrap();
-        let view = root_view
-            .downcast::<T>()
-            .map_err(|_| anyhow!("root view's type has changed"))?;
+        let view = root_view.downcast_ref::<T>().context("root view's type has changed")?;
 
-        Ok(read(view, self))
+        Ok(read(view.clone(), self))
     }
 
     fn background_spawn<R>(&self, future: impl Future<Output = R> + Send + 'static) -> Task<R>

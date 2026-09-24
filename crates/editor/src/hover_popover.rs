@@ -531,7 +531,7 @@ async fn parse_blocks(
 pub fn open_markdown_url(link: SharedString, window: &mut Window, cx: &mut App) {
     if let Ok(uri) = Url::parse(&link)
         && uri.scheme() == "file"
-        && let Some(workspace) = window.root::<Workspace>().flatten()
+        && let Some(workspace) = window.root::<Workspace>()
     {
         workspace.update(cx, |workspace, cx| {
             let task = workspace.open_abs_path(

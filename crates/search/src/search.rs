@@ -196,7 +196,7 @@ pub(crate) fn show_no_more_matches(window: &mut Window, cx: &mut App) {
         struct NotifType();
         let notification_id = NotificationId::unique::<NotifType>();
 
-        let Some(workspace) = window.root::<Workspace>().flatten() else {
+        let Some(workspace) = window.root::<Workspace>() else {
             return;
         };
         workspace.update(cx, |workspace, cx| {
