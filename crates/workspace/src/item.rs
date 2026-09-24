@@ -474,11 +474,12 @@ pub trait WeakItemHandle: Send + Sync {
 
 impl dyn ItemHandle {
     pub fn downcast<V: 'static>(&self) -> Option<Entity<V>> {
-        self.to_any_view().downcast().ok()
+        self.to_any_view().downcast_ref().cloned()
     }
 
     pub fn act_as<V: 'static>(&self, cx: &App) -> Option<Entity<V>> {
-        self.act_as_type(TypeId::of::<V>(), cx).and_then(|t| t.downcast().ok())
+        self.act_as_type(TypeId::of::<V>(), cx)
+            .and_then(|t| t.downcast_ref().cloned())
     }
 }
 

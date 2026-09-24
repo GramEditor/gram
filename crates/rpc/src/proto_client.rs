@@ -330,10 +330,10 @@ impl AnyProtoClient {
             TypeId::of::<M>(),
             entity.into(),
             Arc::new(move |entity, envelope, client, cx| {
-                let entity = entity.downcast::<E>().unwrap();
+                let entity = entity.downcast_ref::<E>().unwrap();
                 let envelope = envelope.into_any().downcast::<TypedEnvelope<M>>().unwrap();
                 let request_id = envelope.message_id();
-                handler(entity, *envelope, cx)
+                handler(entity.clone(), *envelope, cx)
                     .then(move |result| async move {
                         match result {
                             Ok(response) => {
@@ -372,10 +372,10 @@ impl AnyProtoClient {
             entity_type_id,
             entity_id_extractor,
             Arc::new(move |entity, envelope, client, cx| {
-                let entity = entity.downcast::<E>().unwrap();
+                let entity = entity.downcast_ref::<E>().unwrap();
                 let envelope = envelope.into_any().downcast::<TypedEnvelope<M>>().unwrap();
                 let request_id = envelope.message_id();
-                handler(entity, *envelope, cx)
+                handler(entity.clone(), *envelope, cx)
                     .then(move |result| async move {
                         match result {
                             Ok(response) => {
@@ -414,9 +414,9 @@ impl AnyProtoClient {
             entity_type_id,
             entity_id_extractor,
             Arc::new(move |entity, envelope, _, cx| {
-                let entity = entity.downcast::<E>().unwrap();
+                let entity = entity.downcast_ref::<E>().unwrap();
                 let envelope = envelope.into_any().downcast::<TypedEnvelope<M>>().unwrap();
-                handler(entity, *envelope, cx).boxed_local()
+                handler(entity.clone(), *envelope, cx).boxed_local()
             }),
         );
     }

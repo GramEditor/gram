@@ -1552,7 +1552,7 @@ impl App {
             Box::new(
                 move |any_entity: AnyEntity, window: &mut Option<&mut Window>, cx: &mut App| {
                     any_entity
-                        .downcast::<T>()
+                        .downcast_ref::<T>()
                         .unwrap()
                         .update(cx, |entity_state, cx| on_new(entity_state, window.as_deref_mut(), cx))
                 },

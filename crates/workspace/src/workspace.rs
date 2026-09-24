@@ -617,7 +617,7 @@ impl ProjectItemRegistry {
     fn register<T: ProjectItem>(&mut self) {
         self.build_project_item_fns_by_type
             .insert(TypeId::of::<T::Item>(), |item, project, pane, window, cx| {
-                let item = item.downcast().unwrap();
+                let item = item.downcast_ref().unwrap().clone();
                 Box::new(cx.new(|cx| T::for_project_item(project, pane, item, window, cx))) as Box<dyn ItemHandle>
             });
         self.build_project_item_for_path_fns

@@ -300,9 +300,9 @@ impl Client {
         let prev_handler = state.message_handlers.insert(
             message_type_id,
             Arc::new(move |subscriber, envelope, client, cx| {
-                let subscriber = subscriber.downcast::<E>().unwrap();
+                let subscriber = subscriber.downcast_ref::<E>().unwrap();
                 let envelope = envelope.into_any().downcast::<TypedEnvelope<M>>().unwrap();
-                handler(subscriber, *envelope, client, cx).boxed_local()
+                handler(subscriber.clone(), *envelope, client, cx).boxed_local()
             }),
         );
         if prev_handler.is_some() {
