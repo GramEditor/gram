@@ -2,10 +2,10 @@
   (block)
   (switch_expression)
   (initializer_list)
-] @indent.begin
+] @indent
 
 (block
-  "}" @indent.end)
+  "}" @indent)
 
 (_
   "["
@@ -22,4 +22,4 @@
 [
   (comment)
   (multiline_string)
-] @indent.ignore
+] @indent
