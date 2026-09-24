@@ -9576,7 +9576,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand 2.5.0",
- "getrandom 0.4.3",
+ "getrandom 0.3.4",
  "once_cell",
  "rustix 1.1.5",
  "windows-sys 0.61.2",
@@ -10379,8 +10379,8 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter-gitcommit"
-version = "0.5.0"
-source = "git+https://github.com/gbprod/tree-sitter-gitcommit?rev=fae7e726b8ea7f669264887aa8d9d7e9dffa8a5e#fae7e726b8ea7f669264887aa8d9d7e9dffa8a5e"
+version = "0.0.1"
+source = "git+https://github.com/zed-industries/tree-sitter-git-commit?rev=88309716a69dd13ab83443721ba6e0b491d37ee9#88309716a69dd13ab83443721ba6e0b491d37ee9"
 dependencies = [
  "cc",
  "tree-sitter-language",
