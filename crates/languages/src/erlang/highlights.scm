@@ -22,176 +22,268 @@
 ; As of https://github.com/tree-sitter/tree-sitter/blob/master/CHANGELOG.md#breaking-1
 ;
 ; Primitive types
-(string) @string
+(string)
+@string
 
-(char) @constant
+(char)
+@constant
 
-(integer) @number
+(integer)
+@number
 
-(float) @number
+(float)
+@number
 
-(var) @variable
+(var)
+@variable
 
-(atom) @string.special.symbol
+(atom)
+@string.special.symbol
 
 ; Comments
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
 
 ((var) @comment.discard
   (#match? @comment.discard "^_"))
 
-(dotdotdot) @comment.discard
+(dotdotdot)
+@comment.discard
 
-(shebang) @comment
+(shebang)
+@comment
 
 ;
 ; Functions
 (fa
-  fun: (atom) @function)
+  fun:
+  (atom)
+  @function)
 
 (type_name
-  name: (atom) @function)
+  name:
+  (atom)
+  @function)
 
 (call
-  expr: (atom) @function)
+  expr:
+  (atom)
+  @function)
 
 (function_clause
-  name: (atom) @function)
+  name:
+  (atom)
+  @function)
 
 (internal_fun
-  fun: (atom) @function)
+  fun:
+  (atom)
+  @function)
 
 ; This is a fudge, we should check that the operator is '/'
 ; But our grammar does not (currently) provide it
 (binary_op_expr
-  lhs: (atom) @function
-  rhs: (integer))
+  lhs:
+  (atom)
+  @function
+  rhs:
+  (integer))
 
 ; Others
 (remote_module
-  module: (atom) @module)
+  module:
+  (atom)
+  @module)
 
 (remote
-  fun: (atom) @function)
+  fun:
+  (atom)
+  @function)
 
 (macro_call_expr
-  name: (var) @constant)
+  name:
+  (var)
+  @constant)
 
 (macro_call_expr
-  name: (var) @keyword.directive
-  args: (_))
+  name:
+  (var)
+  @keyword.directive
+  args:
+  (_))
 
 (macro_call_expr
-  name: (atom) @keyword.directive)
+  name:
+  (atom)
+  @keyword.directive)
 
 (record_field_name
-  name: (atom) @property)
+  name:
+  (atom)
+  @property)
 
 (record_name
-  name: (atom) @type)
+  name:
+  (atom)
+  @type)
 
 ;
 ; Attributes
 ; module attribute
 (module_attribute
-  name: (atom) @module)
+  name:
+  (atom)
+  @module)
 
 ; behaviour
 (behaviour_attribute
-  name: (atom) @module)
+  name:
+  (atom)
+  @module)
 
 ; export
 ; Import attribute
 (import_attribute
-  module: (atom) @module)
+  module:
+  (atom)
+  @module)
 
 (import_record_attribute
-  module: (atom) @module
-  records: (import_record_names
-    names: (atom) @type))
+  module:
+  (atom)
+  @module
+  records:
+  (import_record_names
+    names:
+    (atom)
+    @type))
 
 (export_record_attribute
-  records: (atom) @type)
+  records:
+  (atom)
+  @type)
 
 ; export_type
 ; optional_callbacks
 ; compile
 (compile_options_attribute
-  options: (tuple
-    expr: (atom)
-    expr: (list
-      exprs: (binary_op_expr
-        lhs: (atom)
-        rhs: (integer)))))
+  options:
+  (tuple
+    expr:
+    (atom)
+    expr:
+    (list
+      exprs:
+      (binary_op_expr
+        lhs:
+        (atom)
+        rhs:
+        (integer)))))
 
 ; file attribute
 ; record
 (record_decl
-  name: (atom) @type)
+  name:
+  (atom)
+  @type)
 
 (record_decl
-  name: (macro_call_expr
-    name: (var) @constant))
+  name:
+  (macro_call_expr
+    name:
+    (var)
+    @constant))
 
 (record_field
-  name: (atom) @property)
+  name:
+  (atom)
+  @property)
 
 (qualified_record_name
-  module: (module
-    name: (atom) @module)
-  name: (atom) @type)
+  module:
+  (module
+    name:
+    (atom)
+    @module)
+  name:
+  (atom)
+  @type)
 
 ; type alias
 ; opaque
 ; Spec attribute
 (spec
-  fun: (atom) @function)
+  fun:
+  (atom)
+  @function)
 
 (spec
-  module: (module
-    name: (atom) @module)
-  fun: (atom) @function)
+  module:
+  (module
+    name:
+    (atom)
+    @module)
+  fun:
+  (atom)
+  @function)
 
 ; callback
 (callback
-  fun: (atom) @function)
+  fun:
+  (atom)
+  @function)
 
 ; wild attribute
 (wild_attribute
-  name: (attr_name
-    name: (atom) @keyword))
+  name:
+  (attr_name
+    name:
+    (atom)
+    @keyword))
 
 ; fun decl
 ; include/include_lib
 ; ifdef/ifndef
 (pp_ifdef
-  name: (_) @keyword.directive)
+  name:
+  (_)
+  @keyword.directive)
 
 (pp_ifndef
-  name: (_) @keyword.directive)
+  name:
+  (_)
+  @keyword.directive)
 
 ; define
 (pp_define
-  lhs: (macro_lhs
-    name: (var) @constant))
+  lhs:
+  (macro_lhs
+    name:
+    (var)
+    @constant))
 
 (pp_define
-  lhs: (macro_lhs
-    name: (_) @keyword.directive
-    args: (var_args
-      args: (var))))
+  lhs:
+  (macro_lhs
+    name:
+    (_)
+    @keyword.directive
+    args:
+    (var_args
+      args:
+      (var))))
 
 ;
 ; Reserved words
@@ -247,20 +339,20 @@
   "unit"
   "when"
   "where"
-  "xor"
-] @keyword
+  "xor"]
+@keyword
 
 [
   "andalso"
-  "orelse"
-] @keyword.operator
+  "orelse"]
+@keyword.operator
 
 ; Punctuation
 [
   ","
   "."
-  ";"
-] @punctuation.delimiter
+  ";"]
+@punctuation.delimiter
 
 [
   "("
@@ -270,8 +362,8 @@
   "["
   "]"
   "<<"
-  ">>"
-] @punctuation.bracket
+  ">>"]
+@punctuation.bracket
 
 ; Operators
 [
@@ -317,5 +409,5 @@
   ">="
   ">"
   "=:="
-  "=/="
-] @operator
+  "=/="]
+@operator

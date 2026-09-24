@@ -1,25 +1,32 @@
 [
   (block)
   (switch_expression)
-  (initializer_list)
-] @indent
+  (initializer_list)]
+@indent
 
 (block
-  "}" @indent)
+  "}"
+  @indent)
 
 (_
   "["
-  "]" @end) @indent
+  "]"
+  @end)
+@indent
 
 (_
   "{"
-  "}" @end) @indent
+  "}"
+  @end)
+@indent
 
 (_
   "("
-  ")" @end) @indent
+  ")"
+  @end)
+@indent
 
 [
   (comment)
-  (multiline_string)
-] @indent
+  (multiline_string)]
+@indent

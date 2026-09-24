@@ -1,3 +1,5 @@
 (_
   "{"
-  "}" @end) @indent
+  "}"
+  @end)
+@indent

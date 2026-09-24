@@ -1,8 +1,11 @@
 ("[" @open
-  "]" @close)
+  "]"
+  @close)
 
 ("{" @open
-  "}" @close)
+  "}"
+  @close)
 
 ("(" @open
-  ")" @close)
+  ")"
+  @close)

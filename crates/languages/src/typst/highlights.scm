@@ -4,84 +4,101 @@
 (branch
   [
     "if"
-    "else"
-  ] @keyword.control.conditional)
+    "else"]
+  @keyword.control.conditional)
 
 (while
-  "while" @keyword.control.repeat)
+  "while"
+  @keyword.control.repeat)
 
 (for
   [
     "for"
-    "in"
-  ] @keyword.control.repeat)
+    "in"]
+  @keyword.control.repeat)
 
 (flow
   [
     "break"
-    "continue"
-  ] @keyword.control)
+    "continue"]
+  @keyword.control)
 
 (return
-  "return" @keyword.control)
+  "return"
+  @keyword.control)
 
 ; DIRECTIVES
 (import
-  "import" @keyword.control.import)
+  "import"
+  @keyword.control.import)
 
-(wildcard) @operator
+(wildcard)
+@operator
 
 (as
-  "as" @keyword.operator)
+  "as"
+  @keyword.operator)
 
 (include
-  "include" @keyword.control.import)
+  "include"
+  @keyword.control.import)
 
 (show
-  "show" @keyword.control)
+  "show"
+  @keyword.control)
 
 (set
-  "set" @keyword.control)
+  "set"
+  @keyword.control)
 
 (let
-  "let" @keyword.storage.type)
+  "let"
+  @keyword.storage.type)
 
 ; OPERATOR
 (in
   [
     "in"
-    "not"
-  ] @keyword.operator)
+    "not"]
+  @keyword.operator)
 
 (context
-  "context" @keyword.control)
+  "context"
+  @keyword.control)
 
 (and
-  "and" @keyword.operator)
+  "and"
+  @keyword.operator)
 
 (or
-  "or" @keyword.operator)
+  "or"
+  @keyword.operator)
 
 (not
-  "not" @keyword.operator)
+  "not"
+  @keyword.operator)
 
 (sign
   [
     "+"
-    "-"
-  ] @operator)
+    "-"]
+  @operator)
 
 (add
-  "+" @operator)
+  "+"
+  @operator)
 
 (sub
-  "-" @operator)
+  "-"
+  @operator)
 
 (mul
-  "*" @operator)
+  "*"
+  @operator)
 
 (div
-  "/" @operator)
+  "/"
+  @operator)
 
 (cmp
   [
@@ -90,120 +107,165 @@
     ">="
     "!="
     "<"
-    ">"
-  ] @operator)
+    ">"]
+  @operator)
 
 ; VALUE
-(ident) @variable
+(ident)
+@variable
 
 (tagged
-  field: (ident) @variable.parameter)
+  field:
+  (ident)
+  @variable.parameter)
 
 (field
-  field: (_) @property)
+  field:
+  (_)
+  @property)
 
 (call
-  item: (ident) @function)
+  item:
+  (ident)
+  @function)
 
 (call
-  item: (field
-    field: (ident) @function.method))
+  item:
+  (field
+    field:
+    (ident)
+    @function.method))
 
 ; RAW
 (raw_blck
-  "```" @punctuation.delimiter @embedded
-  (blob) @text.literal)
+  "```"
+  @punctuation.delimiter
+  @embedded
+  (blob)
+  @text.literal)
 
 (raw_blck
-  lang: (ident) @tag @embedded)
+  lang:
+  (ident)
+  @tag
+  @embedded)
 
 (raw_span
-  "`" @punctuation.delimiter
-  (blob) @text.literal)
+  "`"
+  @punctuation.delimiter
+  (blob)
+  @text.literal)
 
 ; MATH
 [
   (label)
-  (ref)
-] @tag @label
+  (ref)]
+@tag
+@label
 
-(number) @number
+(number)
+@number
 
-(string) @string
+(string)
+@string
 
-(bool) @boolean
+(bool)
+@boolean
 
-(none) @constant.builtin
+(none)
+@constant.builtin
 
-(auto) @constant.builtin
+(auto)
+@constant.builtin
 
 (formula
-  (ident) @constant)
+  (ident)
+  @constant)
 
 (formula
   (field
-    (ident) @constant))
+    (ident)
+    @constant))
 
 (attach
-  (ident) @constant)
+  (ident)
+  @constant)
 
 (attach
   (field
-    (ident) @constant))
+    (ident)
+    @constant))
 
 (fraction
-  (ident) @constant)
+  (ident)
+  @constant)
 
 (attach
   [
     "^"
-    "_"
-  ] @operator)
+    "_"]
+  @operator)
 
 (fraction
-  "/" @operator)
+  "/"
+  @operator)
 
 (fac
-  "!" @operator)
+  "!"
+  @operator)
 
 ; MARKUP
 (item
-  "-" @punctuation.list_marker)
+  "-"
+  @punctuation.list_marker)
 
 (term
   [
     "/"
-    ":"
-  ] @punctuation.list_marker)
+    ":"]
+  @punctuation.list_marker)
 
-(heading) @title
+(heading)
+@title
 
-(url) @tag @link_uri
+(url)
+@tag
+@link_uri
 
-(emph) @emphasis
+(emph)
+@emphasis
 
-(strong) @emphasis.strong
+(strong)
+@emphasis.strong
 
-(symbol) @operator
+(symbol)
+@operator
 
-(shorthand) @constant.builtin @operator
+(shorthand)
+@constant.builtin
+@operator
 
-(quote) @markup.quote
+(quote)
+@markup.quote
 
 (code
-  "#" @punctuation.special)
+  "#"
+  @punctuation.special)
 
 (math
-  "$" @punctuation.special)
+  "$"
+  @punctuation.special)
 
 [
   (align)
-  (linebreak)
-] @punctuation.special
+  (linebreak)]
+@punctuation.special
 
-"end" @operator
+"end"
+@operator
 
-(escape) @string.escape
+(escape)
+@string.escape
 
 [
   "("
@@ -211,32 +273,35 @@
   "{"
   "}"
   "["
-  "]"
-] @punctuation.bracket
+  "]"]
+@punctuation.bracket
 
 [
   ","
   ";"
   ".."
   ":"
-  "sep"
-] @punctuation.delimiter
+  "sep"]
+@punctuation.delimiter
 
-"assign" @punctuation
+"assign"
+@punctuation
 
 (field
-  "." @punctuation)
+  "."
+  @punctuation)
 
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))

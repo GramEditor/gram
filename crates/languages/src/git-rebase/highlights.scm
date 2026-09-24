@@ -8,41 +8,55 @@
 ; * operator - a 'switch' (used in fixup and merge), either -c or -C at time of writing
 
 (((command) @keyword
-  (label) @constant.builtin
-  (message)? @comment)
- (#match? @keyword "^(p|pick|r|reword|e|edit|s|squash|d|drop)$"))
+    (label)
+    @constant.builtin
+    (message)
+    ?
+    @comment)
+  (#match? @keyword "^(p|pick|r|reword|e|edit|s|squash|d|drop)$"))
 
 (((command) @function
-  (label) @constant
-  (message)? @comment)
- (#match? @function "^(l|label|t|reset|u|update-ref)$"))
+    (label)
+    @constant
+    (message)
+    ?
+    @comment)
+  (#match? @function "^(l|label|t|reset|u|update-ref)$"))
 
 ((command) @keyword
- (#match? @keyword "^(x|exec|b|break)$"))
+  (#match? @keyword "^(x|exec|b|break)$"))
 
 (((command) @attribute
-  (label) @constant.builtin
-  (message)? @comment)
- (#match? @attribute "^(f|fixup)$"))
+    (label)
+    @constant.builtin
+    (message)
+    ?
+    @comment)
+  (#match? @attribute "^(f|fixup)$"))
 
 (((command) @keyword
-  (label) @constant.builtin
-  (label) @constant
-  (message) @string)
- (#match? @keyword "^(m|merge)$"))
+    (label)
+    @constant.builtin
+    (label)
+    @constant
+    (message)
+    @string)
+  (#match? @keyword "^(m|merge)$"))
 
-(option) @operator
+(option)
+@operator
 
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))

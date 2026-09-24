@@ -1,4 +1,7 @@
 ; Comments
-(comment)+ @comment.around
+(comment)
++
+@comment.around
 
-(comment) @comment.inside
+(comment)
+@comment.inside

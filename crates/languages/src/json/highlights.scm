@@ -1,41 +1,48 @@
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
 
-(string) @string
+(string)
+@string
 
-(escape_sequence) @string.escape
+(escape_sequence)
+@string.escape
 
 (pair
-  key: (string) @property.json_key)
+  key:
+  (string)
+  @property.json_key)
 
-(number) @number
+(number)
+@number
 
 [
   (true)
-  (false)
-] @boolean
+  (false)]
+@boolean
 
-(null) @constant.builtin
+(null)
+@constant.builtin
 
 [
   ","
-  ":"
-] @punctuation.delimiter
+  ":"]
+@punctuation.delimiter
 
 [
   "{"
   "}"
   "["
-  "]"
-] @punctuation.bracket
+  "]"]
+@punctuation.bracket

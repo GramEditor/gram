@@ -1,11 +1,14 @@
 (list
   .
-  (symbol) @context
+  (symbol)
+  @context
   .
   [
-    (symbol) @name
+    (symbol)
+    @name
     (list
       .
-      (symbol) @name)
-  ]
-  (#match? @context "^define")) @item
+      (symbol)
+      @name)]
+  (#match? @context "^define"))
+@item

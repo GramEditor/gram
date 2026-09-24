@@ -1,7 +1,10 @@
 (node (node_children) @indent)
 
-"}" @indent_end
+"}"
+@indent_end
 
-[ "{" "}" ] @branch
+["{" "}"]
+@branch
 
-[ "(" ")" ] @branch
+["(" ")"]
+@branch

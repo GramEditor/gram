@@ -1,2 +1,4 @@
 (block_mapping_pair
-  value: (flow_node) @redact)
+  value:
+  (flow_node)
+  @redact)

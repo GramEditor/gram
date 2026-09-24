@@ -1,21 +1,28 @@
-(comment) @comment.inclusive
+(comment)
+@comment.inclusive
 
-(string) @string
+(string)
+@string
 
 (template_string
-  (string_fragment) @string)
+  (string_fragment)
+  @string)
 
-(jsx_element) @element
+(jsx_element)
+@element
 
 (return_statement
-  (parenthesized_expression) @element)
+  (parenthesized_expression)
+  @element)
 
 (arrow_function
-  body: (parenthesized_expression) @element)
+  body:
+  (parenthesized_expression)
+  @element)
 
 [
   (jsx_opening_element)
   (jsx_closing_element)
   (jsx_self_closing_element)
-  (jsx_expression)
-] @default
+  (jsx_expression)]
+@default

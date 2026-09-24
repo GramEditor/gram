@@ -1,5 +1,8 @@
-(comment) @annotation
+(comment)
+@annotation
 
 (element
   (start_tag
-    (tag_name) @name)) @item
+    (tag_name)
+    @name))
+@item

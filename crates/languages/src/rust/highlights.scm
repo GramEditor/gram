@@ -1,70 +1,107 @@
-(identifier) @variable
+(identifier)
+@variable
 
-(metavariable) @variable
+(metavariable)
+@variable
 
-(type_identifier) @type
+(type_identifier)
+@type
 
-(fragment_specifier) @type
+(fragment_specifier)
+@type
 
-(primitive_type) @type.builtin
+(primitive_type)
+@type.builtin
 
-(self) @variable.special
+(self)
+@variable.special
 
-(field_identifier) @property
+(field_identifier)
+@property
 
-(shorthand_field_identifier) @property
+(shorthand_field_identifier)
+@property
 
 (trait_item
-  name: (type_identifier) @type.interface)
+  name:
+  (type_identifier)
+  @type.interface)
 
 (impl_item
-  trait: (type_identifier) @type.interface)
+  trait:
+  (type_identifier)
+  @type.interface)
 
 (abstract_type
-  trait: (type_identifier) @type.interface)
+  trait:
+  (type_identifier)
+  @type.interface)
 
 (dynamic_type
-  trait: (type_identifier) @type.interface)
+  trait:
+  (type_identifier)
+  @type.interface)
 
 (trait_bounds
-  (type_identifier) @type.interface)
+  (type_identifier)
+  @type.interface)
 
 (call_expression
-  function: [
-    (identifier) @function
+  function:
+  [
+    (identifier)
+    @function
     (scoped_identifier
-      name: (identifier) @function)
+      name:
+      (identifier)
+      @function)
     (field_expression
-      field: (field_identifier) @function.method)
-  ])
+      field:
+      (field_identifier)
+      @function.method)])
 
 (generic_function
-  function: [
-    (identifier) @function
+  function:
+  [
+    (identifier)
+    @function
     (scoped_identifier
-      name: (identifier) @function)
+      name:
+      (identifier)
+      @function)
     (field_expression
-      field: (field_identifier) @function.method)
-  ])
+      field:
+      (field_identifier)
+      @function.method)])
 
 (function_item
-  name: (identifier) @function.definition)
+  name:
+  (identifier)
+  @function.definition)
 
 (function_signature_item
-  name: (identifier) @function.definition)
+  name:
+  (identifier)
+  @function.definition)
 
 (macro_invocation
-  macro: [
-    (identifier) @function.special
+  macro:
+  [
+    (identifier)
+    @function.special
     (scoped_identifier
-      name: (identifier) @function.special)
-  ])
+      name:
+      (identifier)
+      @function.special)])
 
 (macro_invocation
-  "!" @function.special)
+  "!"
+  @function.special)
 
 (macro_definition
-  name: (identifier) @function.special.definition)
+  name:
+  (identifier)
+  @function.special.definition)
 
 ; Identifier conventions
 ; Assume uppercase names are types/enum-constructors
@@ -77,7 +114,9 @@
 
 ; Ensure enum variants are highlighted correctly regardless of naming convention
 (enum_variant
-  name: (identifier) @type)
+  name:
+  (identifier)
+  @type)
 
 [
   "("
@@ -85,22 +124,25 @@
   "{"
   "}"
   "["
-  "]"
-] @punctuation.bracket
+  "]"]
+@punctuation.bracket
 
 (_
   .
-  "<" @punctuation.bracket
-  ">" @punctuation.bracket)
+  "<"
+  @punctuation.bracket
+  ">"
+  @punctuation.bracket)
 
 [
   "."
   ";"
   ","
-  "::"
-] @punctuation.delimiter
+  "::"]
+@punctuation.delimiter
 
-"#" @punctuation.special
+"#"
+@punctuation.special
 
 [
   "as"
@@ -130,8 +172,8 @@
   "where"
   (crate)
   (mutable_specifier)
-  (super)
-] @keyword
+  (super)]
+@keyword
 
 [
   "await"
@@ -144,38 +186,41 @@
   "match"
   "return"
   "while"
-  "yield"
-] @keyword.control
+  "yield"]
+@keyword.control
 
 (for_expression
-  "for" @keyword.control)
+  "for"
+  @keyword.control)
 
 [
   (string_literal)
   (raw_string_literal)
-  (char_literal)
-] @string
+  (char_literal)]
+@string
 
-(escape_sequence) @string.escape
+(escape_sequence)
+@string.escape
 
 [
   (integer_literal)
-  (float_literal)
-] @number
+  (float_literal)]
+@number
 
-(boolean_literal) @boolean
+(boolean_literal)
+@boolean
 
 [
   (line_comment)
-  (block_comment)
-] @comment
+  (block_comment)]
+@comment
 
 [
   (line_comment
     (doc_comment))
   (block_comment
-    (doc_comment))
-] @comment.doc
+    (doc_comment))]
+@comment.doc
 
 [
   "!="
@@ -213,48 +258,62 @@
   "|"
   "|="
   "||"
-  "?"
-] @operator
+  "?"]
+@operator
 
 ; Avoid highlighting these as operators when used in doc comments.
 (unary_expression
-  "!" @operator)
+  "!"
+  @operator)
 
-operator: "/" @operator
+operator:
+"/"
+@operator
 
 (lifetime
-  "'" @lifetime
-  (identifier) @lifetime)
+  "'"
+  @lifetime
+  (identifier)
+  @lifetime)
 
 (parameter
-  (identifier) @variable.parameter)
+  (identifier)
+  @variable.parameter)
 
 (attribute_item
   (attribute
     [
-      (identifier) @attribute
+      (identifier)
+      @attribute
       (scoped_identifier
-        name: (identifier) @attribute)
+        name:
+        (identifier)
+        @attribute)
       (token_tree
-        (identifier) @attribute
+        (identifier)
+        @attribute
         (#match? @attribute "^[a-z\\d_]*$"))
       (token_tree
-        (identifier) @none
+        (identifier)
+        @none
         "::"
-        (#match? @none "^[a-z\\d_]*$"))
-    ]))
+        (#match? @none "^[a-z\\d_]*$"))]))
 
 (inner_attribute_item
   (attribute
     [
-      (identifier) @attribute
+      (identifier)
+      @attribute
       (scoped_identifier
-        name: (identifier) @attribute)
+        name:
+        (identifier)
+        @attribute)
       (token_tree
-        (identifier) @attribute
+        (identifier)
+        @attribute
         (#match? @attribute "^[a-z\\d_]*$"))
       (token_tree
-        (identifier) @none
+        (identifier)
+        @none
         "::"
-        (#match? @none "^[a-z\\d_]*$"))
-    ]))
+        (#match? @none "^[a-z\\d_]*$"))]))

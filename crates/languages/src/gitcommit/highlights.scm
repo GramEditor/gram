@@ -1,49 +1,69 @@
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
-(subject) @markup.heading
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
+(subject)
+@markup.heading
 
-(path) @string.special.path
+(path)
+@string.special.path
 
-(branch) @string.special.symbol
+(branch)
+@string.special.symbol
 
-(commit) @constant
+(commit)
+@constant
 
-(item) @markup.link.url
+(item)
+@markup.link.url
 
-(header) @tag
+(header)
+@tag
 
-(comment) @comment
-
-(change
-  kind: "new file" @diff.plus)
-
-(change
-  kind: "deleted" @diff.minus)
-
-(change
-  kind: "modified" @diff.delta)
+(comment)
+@comment
 
 (change
-  kind: "renamed" @diff.delta.moved)
+  kind:
+  "new file"
+  @diff.plus)
+
+(change
+  kind:
+  "deleted"
+  @diff.minus)
+
+(change
+  kind:
+  "modified"
+  @diff.delta)
+
+(change
+  kind:
+  "renamed"
+  @diff.delta.moved)
 
 (trailer
-  key: (trailer_key) @variable.other.member
-  value: (trailer_value) @string)
+  key:
+  (trailer_key)
+  @variable.other.member
+  value:
+  (trailer_value)
+  @string)
 
 [
   ":"
   "="
   "->"
-  (scissors)
-] @punctuation.delimiter
+  (scissors)]
+@punctuation.delimiter

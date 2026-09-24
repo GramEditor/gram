@@ -1,25 +1,35 @@
 (array
-  "[" @open
-  "]" @close)
+  "["
+  @open
+  "]"
+  @close)
 
 (inline_table
-  "{" @open
-  "}" @close)
+  "{"
+  @open
+  "}"
+  @close)
 
 (table
-  "[" @open
-  "]" @close
+  "["
+  @open
+  "]"
+  @close
   (#set! rainbow.exclude))
 
 (table_array_element
-  "[[" @open
-  "]]" @close
+  "[["
+  @open
+  "]]"
+  @close
   (#set! rainbow.exclude))
 
 (("\"" @open
-  "\"" @close)
+    "\""
+    @close)
   (#set! rainbow.exclude))
 
 (("'" @open
-  "'" @close)
+    "'"
+    @close)
   (#set! rainbow.exclude))

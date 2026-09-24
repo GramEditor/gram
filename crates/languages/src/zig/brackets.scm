@@ -1,18 +1,25 @@
 ("(" @open
-  ")" @close)
+  ")"
+  @close)
 
 ("[" @open
-  "]" @close)
+  "]"
+  @close)
 
 ("{" @open
-  "}" @close)
+  "}"
+  @close)
 
 ("\"" @open
-  "\"" @close)
+  "\""
+  @close)
 
 (payload
-  "|" @open
-  "|" @close)
+  "|"
+  @open
+  "|"
+  @close)
 
 ("'" @open
-  "'" @close)
+  "'"
+  @close)

@@ -1,9 +1,12 @@
 ("[" @open
-  "]" @close)
+  "]"
+  @close)
 
 ("{" @open
-  "}" @close)
+  "}"
+  @close)
 
 (("\"" @open
-  "\"" @close)
+    "\""
+    @close)
   (#set! rainbow.exclude))

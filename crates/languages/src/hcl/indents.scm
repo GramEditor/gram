@@ -3,11 +3,11 @@
   (block)
   (object)
   (tuple)
-  (function_call)
-] @indent
+  (function_call)]
+@indent
 
 [
   "]"
   "}"
-  ")"
-] @outdent
+  ")"]
+@outdent

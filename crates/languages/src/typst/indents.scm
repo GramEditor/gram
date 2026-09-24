@@ -1,18 +1,26 @@
 (_
   "["
-  "]" @end) @indent
+  "]"
+  @end)
+@indent
 
 (_
   "{"
-  "}" @end) @indent
+  "}"
+  @end)
+@indent
 
 (_
   "("
-  ")" @end) @indent
+  ")"
+  @end)
+@indent
 
 (_
   "$"
-  "$" @end) @indent
+  "$"
+  @end)
+@indent
 
 ((comment) @indent
   (#match? @indent "^/\\*"))

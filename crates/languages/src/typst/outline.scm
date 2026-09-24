@@ -1,6 +1,9 @@
 (section
   (heading
     .
-    _ @context
+    _
+    @context
     .
-    (text) @name)) @item
+    (text)
+    @name))
+@item

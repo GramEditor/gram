@@ -1,23 +1,31 @@
 ("(" @open
-  ")" @close)
+  ")"
+  @close)
 
 ("[" @open
-  "]" @close)
+  "]"
+  @close)
 
 ("{" @open
-  "}" @close)
+  "}"
+  @close)
 
 ("<" @open
-  ">" @close)
+  ">"
+  @close)
 
 (closure_parameters
-  "|" @open
-  "|" @close)
+  "|"
+  @open
+  "|"
+  @close)
 
 (("\"" @open
-  "\"" @close)
+    "\""
+    @close)
   (#set! rainbow.exclude))
 
 (("'" @open
-  "'" @close)
+    "'"
+    @close)
   (#set! rainbow.exclude))

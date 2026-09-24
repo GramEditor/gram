@@ -1,136 +1,222 @@
 (internal_module
-  "namespace" @context
-  name: (_) @name) @item
+  "namespace"
+  @context
+  name:
+  (_)
+  @name)
+@item
 
 (enum_declaration
-  "enum" @context
-  name: (_) @name) @item
+  "enum"
+  @context
+  name:
+  (_)
+  @name)
+@item
 
 (type_alias_declaration
-  "type" @context
-  name: (_) @name) @item
+  "type"
+  @context
+  name:
+  (_)
+  @name)
+@item
 
 (function_declaration
-  "async"? @context
-  "function" @context
-  name: (_) @name
-  parameters: (formal_parameters
-    "(" @context
-    ")" @context)) @item
+  "async"
+  ?
+  @context
+  "function"
+  @context
+  name:
+  (_)
+  @name
+  parameters:
+  (formal_parameters
+    "("
+    @context
+    ")"
+    @context))
+@item
 
 (generator_function_declaration
-  "async"? @context
-  "function" @context
-  "*" @context
-  name: (_) @name
-  parameters: (formal_parameters
-    "(" @context
-    ")" @context)) @item
+  "async"
+  ?
+  @context
+  "function"
+  @context
+  "*"
+  @context
+  name:
+  (_)
+  @name
+  parameters:
+  (formal_parameters
+    "("
+    @context
+    ")"
+    @context))
+@item
 
 (interface_declaration
-  "interface" @context
-  name: (_) @name) @item
+  "interface"
+  @context
+  name:
+  (_)
+  @name)
+@item
 
 (export_statement
   (lexical_declaration
     [
       "let"
-      "const"
-    ] @context
+      "const"]
+    @context
     (variable_declarator
-      name: (identifier) @name) @item))
+      name:
+      (identifier)
+      @name)
+    @item))
 
 ; Exported array destructuring
 (export_statement
   (lexical_declaration
     [
       "let"
-      "const"
-    ] @context
+      "const"]
+    @context
     (variable_declarator
-      name: (array_pattern
+      name:
+      (array_pattern
         [
-          (identifier) @name @item
+          (identifier)
+          @name
+          @item
           (assignment_pattern
-            left: (identifier) @name @item)
+            left:
+            (identifier)
+            @name
+            @item)
           (rest_pattern
-            (identifier) @name @item)
-        ]))))
+            (identifier)
+            @name
+            @item)]))))
 
 ; Exported object destructuring
 (export_statement
   (lexical_declaration
     [
       "let"
-      "const"
-    ] @context
+      "const"]
+    @context
     (variable_declarator
-      name: (object_pattern
+      name:
+      (object_pattern
         [
-          (shorthand_property_identifier_pattern) @name @item
+          (shorthand_property_identifier_pattern)
+          @name
+          @item
           (pair_pattern
-            value: (identifier) @name @item)
+            value:
+            (identifier)
+            @name
+            @item)
           (pair_pattern
-            value: (assignment_pattern
-              left: (identifier) @name @item))
+            value:
+            (assignment_pattern
+              left:
+              (identifier)
+              @name
+              @item))
           (rest_pattern
-            (identifier) @name @item)
-        ]))))
+            (identifier)
+            @name
+            @item)]))))
 
 (program
   (lexical_declaration
     [
       "let"
-      "const"
-    ] @context
+      "const"]
+    @context
     (variable_declarator
-      name: (identifier) @name) @item))
+      name:
+      (identifier)
+      @name)
+    @item))
 
 ; Top-level array destructuring
 (program
   (lexical_declaration
     [
       "let"
-      "const"
-    ] @context
+      "const"]
+    @context
     (variable_declarator
-      name: (array_pattern
+      name:
+      (array_pattern
         [
-          (identifier) @name @item
+          (identifier)
+          @name
+          @item
           (assignment_pattern
-            left: (identifier) @name @item)
+            left:
+            (identifier)
+            @name
+            @item)
           (rest_pattern
-            (identifier) @name @item)
-        ]))))
+            (identifier)
+            @name
+            @item)]))))
 
 ; Top-level object destructuring
 (program
   (lexical_declaration
     [
       "let"
-      "const"
-    ] @context
+      "const"]
+    @context
     (variable_declarator
-      name: (object_pattern
+      name:
+      (object_pattern
         [
-          (shorthand_property_identifier_pattern) @name @item
+          (shorthand_property_identifier_pattern)
+          @name
+          @item
           (pair_pattern
-            value: (identifier) @name @item)
+            value:
+            (identifier)
+            @name
+            @item)
           (pair_pattern
-            value: (assignment_pattern
-              left: (identifier) @name @item))
+            value:
+            (assignment_pattern
+              left:
+              (identifier)
+              @name
+              @item))
           (rest_pattern
-            (identifier) @name @item)
-        ]))))
+            (identifier)
+            @name
+            @item)]))))
 
 (class_declaration
-  "class" @context
-  name: (_) @name) @item
+  "class"
+  @context
+  name:
+  (_)
+  @name)
+@item
 
 (abstract_class_declaration
-  "abstract" @context
-  "class" @context
-  name: (_) @name) @item
+  "abstract"
+  @context
+  "class"
+  @context
+  name:
+  (_)
+  @name)
+@item
 
 ; Method definitions in classes (not in object literals)
 (class_body
@@ -143,12 +229,19 @@
       "readonly"
       "static"
       (override_modifier)
-      (accessibility_modifier)
-    ]* @context
-    name: (_) @name
-    parameters: (formal_parameters
-      "(" @context
-      ")" @context)) @item)
+      (accessibility_modifier)]
+    *
+    @context
+    name:
+    (_)
+    @name
+    parameters:
+    (formal_parameters
+      "("
+      @context
+      ")"
+      @context))
+  @item)
 
 ; Object literal methods (including nested objects)
 (object
@@ -157,12 +250,19 @@
       "get"
       "set"
       "async"
-      "*"
-    ]* @context
-    name: (_) @name
-    parameters: (formal_parameters
-      "(" @context
-      ")" @context)) @item)
+      "*"]
+    *
+    @context
+    name:
+    (_)
+    @name
+    parameters:
+    (formal_parameters
+      "("
+      @context
+      ")"
+      @context))
+  @item)
 
 (public_field_definition
   [
@@ -170,115 +270,166 @@
     "readonly"
     "abstract"
     "static"
-    (accessibility_modifier)
-  ]* @context
-  name: (_) @name) @item
+    (accessibility_modifier)]
+  *
+  @context
+  name:
+  (_)
+  @name)
+@item
 
 ; Add support for (node:test, bun:test and Jest) runnable
 ; Also matches direct modifiers: .skip, .todo, .only, .failing (Jest, Bun, Vitest)
 ((call_expression
-  function: [
-    (identifier) @_name
-    (member_expression
-      object: [
-        (identifier) @_name
-        (member_expression
-          object: (identifier) @_name)
-      ])
-  ] @context
-  (#any-of? @_name "it" "test" "describe" "context" "suite")
-  arguments: (arguments
-    .
+    function:
     [
-      (string
-        (string_fragment) @name)
-      (identifier) @name
-    ]))) @item
+      (identifier)
+      @_name
+      (member_expression
+        object:
+        [
+          (identifier)
+          @_name
+          (member_expression
+            object:
+            (identifier)
+            @_name)])]
+    @context
+    (#any-of? @_name "it" "test" "describe" "context" "suite")
+    arguments:
+    (arguments
+      .
+      [
+        (string
+          (string_fragment)
+          @name)
+        (identifier)
+        @name])))
+@item
 
 ; Parameterized and conditional tests. Docs per runner:
 ;   Jest:   https://jestjs.io/docs/api#testeachtablename-fn-timeout
 ;   Vitest: https://vitest.dev/api/
 ;   Bun:    https://bun.sh/docs/test/writing-tests#test-modifiers
 ((call_expression
-  function: (call_expression
-    function: (member_expression
-      object: [
-        (identifier) @_name
-        (member_expression
-          object: (identifier) @_name)
-      ]
-      property: (property_identifier) @_property)
-    (#any-of? @_name "it" "test" "describe" "context" "suite")
-    (#any-of? @_property
-      ; Jest, Bun, Vitest
-      "each"
-      ; Vitest
-      "skipIf" "runIf"
-      ; Bun
-      "if" "todoIf"))
-  arguments: (arguments
-    .
-    [
-      (string
-        (string_fragment) @name)
-      (identifier) @name
-    ]))) @item
+    function:
+    (call_expression
+      function:
+      (member_expression
+        object:
+        [
+          (identifier)
+          @_name
+          (member_expression
+            object:
+            (identifier)
+            @_name)]
+        property:
+        (property_identifier)
+        @_property)
+      (#any-of? @_name "it" "test" "describe" "context" "suite")
+      (#any-of? @_property
+        ; Jest, Bun, Vitest
+        "each"
+        ; Vitest
+        "skipIf"
+        "runIf"
+        ; Bun
+        "if"
+        "todoIf"))
+    arguments:
+    (arguments
+      .
+      [
+        (string
+          (string_fragment)
+          @name)
+        (identifier)
+        @name])))
+@item
 
 ; Object properties
 (pair
-  key: [
-    (property_identifier) @name
+  key:
+  [
+    (property_identifier)
+    @name
     (string
-      (string_fragment) @name)
-    (number) @name
-    (computed_property_name) @name
-  ]) @item
+      (string_fragment)
+      @name)
+    (number)
+    @name
+    (computed_property_name)
+    @name])
+@item
 
 ; Nested variables in function bodies
 (statement_block
   (lexical_declaration
     [
       "let"
-      "const"
-    ] @context
+      "const"]
+    @context
     (variable_declarator
-      name: (identifier) @name) @item))
+      name:
+      (identifier)
+      @name)
+    @item))
 
 ; Nested array destructuring in functions
 (statement_block
   (lexical_declaration
     [
       "let"
-      "const"
-    ] @context
+      "const"]
+    @context
     (variable_declarator
-      name: (array_pattern
+      name:
+      (array_pattern
         [
-          (identifier) @name @item
+          (identifier)
+          @name
+          @item
           (assignment_pattern
-            left: (identifier) @name @item)
+            left:
+            (identifier)
+            @name
+            @item)
           (rest_pattern
-            (identifier) @name @item)
-        ]))))
+            (identifier)
+            @name
+            @item)]))))
 
 ; Nested object destructuring in functions
 (statement_block
   (lexical_declaration
     [
       "let"
-      "const"
-    ] @context
+      "const"]
+    @context
     (variable_declarator
-      name: (object_pattern
+      name:
+      (object_pattern
         [
-          (shorthand_property_identifier_pattern) @name @item
+          (shorthand_property_identifier_pattern)
+          @name
+          @item
           (pair_pattern
-            value: (identifier) @name @item)
+            value:
+            (identifier)
+            @name
+            @item)
           (pair_pattern
-            value: (assignment_pattern
-              left: (identifier) @name @item))
+            value:
+            (assignment_pattern
+              left:
+              (identifier)
+              @name
+              @item))
           (rest_pattern
-            (identifier) @name @item)
-        ]))))
+            (identifier)
+            @name
+            @item)]))))
 
-(comment) @annotation
+(comment)
+@annotation

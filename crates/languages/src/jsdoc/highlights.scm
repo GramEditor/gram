@@ -1,5 +1,8 @@
-(tag_name) @keyword.jsdoc
+(tag_name)
+@keyword.jsdoc
 
-(type) @type.jsdoc
+(type)
+@type.jsdoc
 
-(identifier) @variable.jsdoc
+(identifier)
+@variable.jsdoc

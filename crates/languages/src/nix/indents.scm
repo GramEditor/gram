@@ -1,20 +1,34 @@
 (formals
-  "}" @end) @indent
+  "}"
+  @end)
+@indent
 
 (indented_string_expression
-  "''" @end) @indent
+  "''"
+  @end)
+@indent
 
 (parenthesized_expression
-  ")" @end) @indent
+  ")"
+  @end)
+@indent
 
 (attrset_expression
-  "}" @end) @indent
+  "}"
+  @end)
+@indent
 
 (let_attrset_expression
-  "}" @end) @indent
+  "}"
+  @end)
+@indent
 
 (rec_attrset_expression
-  "}" @end) @indent
+  "}"
+  @end)
+@indent
 
 (list_expression
-  "]" @end) @indent
+  "]"
+  @end)
+@indent

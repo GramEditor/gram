@@ -1,17 +1,23 @@
-(identifier) @variable
+(identifier)
+@variable
 
 (object_reference
-  (identifier) @type)
+  (identifier)
+  @type)
 
 (cte
-  (identifier) @type)
+  (identifier)
+  @type)
 
 (relation
-  (identifier) @type)
+  (identifier)
+  @type)
 
 (invocation
   (object_reference
-    name: (identifier) @function.call))
+    name:
+    (identifier)
+    @function.call))
 
 [
   (keyword_gist)
@@ -20,43 +26,59 @@
   (keyword_spgist)
   (keyword_gin)
   (keyword_brin)
-  (keyword_array)
-] @function.call
+  (keyword_array)]
+@function.call
 
 (field
-  name: (identifier) @property)
+  name:
+  (identifier)
+  @property)
 
 (column_definition
-  name: (identifier) @property)
+  name:
+  (identifier)
+  @property)
 
 (column
-  name: (identifier) @property)
+  name:
+  (identifier)
+  @property)
 
 (term
-  alias: (identifier) @variable)
+  alias:
+  (identifier)
+  @variable)
 
 (term
-  value: (cast
-    name: (keyword_cast) @function.call
-    parameter: (literal)?))
+  value:
+  (cast
+    name:
+    (keyword_cast)
+    @function.call
+    parameter:
+    (literal)
+    ?))
 
-(literal) @string
+(literal)
+@string
 
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
 
-(marginalia) @comment
+(marginalia)
+@comment
 
 ((literal) @number
   (#match? @number "^[-+]?\\d+$"))
@@ -64,14 +86,16 @@
 ((literal) @number
   (#match? @number "^[-+]?\\d*\\.\\d*$"))
 
-(parameter) @parameter
+(parameter)
+@parameter
 
 [
   (keyword_true)
-  (keyword_false)
-] @boolean
+  (keyword_false)]
+@boolean
 
-(keyword_null) @constant.builtin
+(keyword_null)
+@constant.builtin
 
 [
   (keyword_asc)
@@ -100,8 +124,8 @@
   (keyword_leakproof)
   (keyword_safe)
   (keyword_cost)
-  (keyword_strict)
-] @keyword
+  (keyword_strict)]
+@keyword
 
 [
   (keyword_materialized)
@@ -118,15 +142,15 @@
   (keyword_avro)
   (keyword_jsonfile)
   (keyword_sequencefile)
-  (keyword_volatile)
-] @keyword
+  (keyword_volatile)]
+@keyword
 
 [
   (keyword_case)
   (keyword_when)
   (keyword_then)
-  (keyword_else)
-] @keyword
+  (keyword_else)]
+@keyword
 
 [
   (keyword_select)
@@ -345,8 +369,8 @@
   (keyword_plain)
   (keyword_storage)
   (keyword_compression)
-  (keyword_duplicate)
-] @keyword
+  (keyword_duplicate)]
+@keyword
 
 [
   (keyword_restrict)
@@ -371,8 +395,8 @@
   (keyword_stats)
   (keyword_statistics)
   (keyword_maxvalue)
-  (keyword_minvalue)
-] @keyword
+  (keyword_minvalue)]
+@keyword
 
 [
   (keyword_int)
@@ -423,8 +447,8 @@
   (keyword_geography)
   (keyword_box2d)
   (keyword_box3d)
-  (keyword_interval)
-] @type.builtin
+  (keyword_interval)]
+@type.builtin
 
 [
   (keyword_in)
@@ -436,8 +460,8 @@
   (keyword_do)
   (keyword_union)
   (keyword_except)
-  (keyword_intersect)
-] @keyword.operator
+  (keyword_intersect)]
+@keyword.operator
 
 [
   "+"
@@ -455,16 +479,16 @@
   ">"
   "<>"
   (op_other)
-  (op_unary_other)
-] @operator
+  (op_unary_other)]
+@operator
 
 [
   "("
-  ")"
-] @punctuation.bracket
+  ")"]
+@punctuation.bracket
 
 [
   ";"
   ","
-  "."
-] @punctuation.delimiter
+  "."]
+@punctuation.delimiter

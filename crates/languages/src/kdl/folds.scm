@@ -4,5 +4,5 @@
   (node)
   (node_children)
   (string)
-  (multi_line_comment)
-] @fold
+  (multi_line_comment)]
+@fold

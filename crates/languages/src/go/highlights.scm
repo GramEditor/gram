@@ -1,55 +1,111 @@
-(identifier) @variable
+(identifier)
+@variable
 
-(type_identifier) @type
+(type_identifier)
+@type
 
 (type_spec
-  name: (type_identifier) @type.definition)
+  name:
+  (type_identifier)
+  @type.definition)
 
 ((type_identifier) @type.builtin
   (#any-of? @type.builtin
-    "any" "bool" "byte" "comparable" "complex64" "complex128" "error" "float32" "float64" "int"
-    "int8" "int16" "int32" "int64" "rune" "string" "uint" "uint8" "uint16" "uint32" "uint64"
+    "any"
+    "bool"
+    "byte"
+    "comparable"
+    "complex64"
+    "complex128"
+    "error"
+    "float32"
+    "float64"
+    "int"
+    "int8"
+    "int16"
+    "int32"
+    "int64"
+    "rune"
+    "string"
+    "uint"
+    "uint8"
+    "uint16"
+    "uint32"
+    "uint64"
     "uintptr"))
 
-(field_identifier) @property
+(field_identifier)
+@property
 
-(package_identifier) @namespace
+(package_identifier)
+@namespace
 
-(label_name) @label
+(label_name)
+@label
 
 (keyed_element
   .
   (literal_element
-    (identifier) @property))
+    (identifier)
+    @property))
 
 (call_expression
-  function: (identifier) @function.call)
+  function:
+  (identifier)
+  @function.call)
 
 (call_expression
-  function: (selector_expression
-    field: (field_identifier) @function.method.call))
+  function:
+  (selector_expression
+    field:
+    (field_identifier)
+    @function.method.call))
 
 ((call_expression
-  function: (identifier) @function.builtin)
+    function:
+    (identifier)
+    @function.builtin)
   (#any-of? @function.builtin
-    "append" "cap" "clear" "close" "complex" "copy" "delete" "imag" "len" "make" "max" "min" "new"
-    "panic" "print" "println" "real" "recover"))
+    "append"
+    "cap"
+    "clear"
+    "close"
+    "complex"
+    "copy"
+    "delete"
+    "imag"
+    "len"
+    "make"
+    "max"
+    "min"
+    "new"
+    "panic"
+    "print"
+    "println"
+    "real"
+    "recover"))
 
 (function_declaration
-  name: (identifier) @function)
+  name:
+  (identifier)
+  @function)
 
 (method_declaration
-  name: (field_identifier) @function.method)
+  name:
+  (field_identifier)
+  @function.method)
 
 (method_elem
-  name: (field_identifier) @function.method)
+  name:
+  (field_identifier)
+  @function.method)
 
 [
   ";"
   "."
   ","
-  ":"
-] @punctuation.delimiter
+  ":"]
+@punctuation.delimiter
 
 [
   "("
@@ -57,8 +113,8 @@
   "{"
   "}"
   "["
-  "]"
-] @punctuation.bracket
+  "]"]
+@punctuation.bracket
 
 [
   "--"
@@ -97,8 +153,8 @@
   "|"
   "|="
   "||"
-  "~"
-] @operator
+  "~"]
+@operator
 
 [
   "chan"
@@ -110,8 +166,8 @@
   "package"
   "struct"
   "type"
-  "var"
-] @keyword
+  "var"]
+@keyword
 
 [
   "break"
@@ -128,49 +184,53 @@
   "range"
   "return"
   "select"
-  "switch"
-] @keyword.control
+  "switch"]
+@keyword.control
 
 [
   (interpreted_string_literal)
   (raw_string_literal)
-  (rune_literal)
-] @string
+  (rune_literal)]
+@string
 
-(escape_sequence) @string.escape
+(escape_sequence)
+@string.escape
 
 [
   (int_literal)
   (float_literal)
-  (imaginary_literal)
-] @number
+  (imaginary_literal)]
+@number
 
 (const_spec
-  name: (identifier) @constant)
+  name:
+  (identifier)
+  @constant)
 
 [
   (true)
-  (false)
-] @boolean
+  (false)]
+@boolean
 
 [
   (nil)
-  (iota)
-] @constant.builtin
+  (iota)]
+@constant.builtin
 
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
 
 ; Go directives
 ((comment) @preproc

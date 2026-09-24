@@ -1,27 +1,41 @@
 (_
   "["
-  "]" @end) @indent
+  "]"
+  @end)
+@indent
 
 (_
   "{"
-  "}" @end) @indent
+  "}"
+  @end)
+@indent
 
 (_
   "("
-  ")" @end) @indent
+  ")"
+  @end)
+@indent
 
-(function_definition) @start.function
+(function_definition)
+@start.function
 
-(if_statement) @start.if
+(if_statement)
+@start.if
 
-(elif_clause) @start.elif
+(elif_clause)
+@start.elif
 
-(else_clause) @start.else
+(else_clause)
+@start.else
 
-(for_statement) @start.for
+(for_statement)
+@start.for
 
-(while_statement) @start.while
+(while_statement)
+@start.while
 
-(case_statement) @start.case
+(case_statement)
+@start.case
 
-(case_item) @start.case_item
+(case_item)
+@start.case_item

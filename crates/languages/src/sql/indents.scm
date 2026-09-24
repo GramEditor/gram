@@ -4,25 +4,33 @@
   (column_definitions)
   (case)
   (subquery)
-  (insert)
-] @indent
+  (insert)]
+@indent
 
 (block
-  (keyword_begin)) @indent
+  (keyword_begin))
+@indent
 
 (column_definitions
-  ")" @end) @indent
+  ")"
+  @end)
+@indent
 
 (subquery
-  ")" @end) @indent
+  ")"
+  @end)
+@indent
 
 (cte
-  ")" @end) @indent
+  ")"
+  @end)
+@indent
 
 [
   (keyword_end)
   (keyword_values)
-  (keyword_into)
-] @outdent
+  (keyword_into)]
+@outdent
 
-(keyword_end) @outdent
+(keyword_end)
+@outdent

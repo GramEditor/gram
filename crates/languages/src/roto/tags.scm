@@ -1,14 +1,24 @@
 (function_item
-  name: (identifier) @definition.function)
+  name:
+  (identifier)
+  @definition.function)
 
 (filtermap_item
-  name: (identifier) @definition.function)
+  name:
+  (identifier)
+  @definition.function)
 
 (test_item
-  name: (identifier) @definition.function)
+  name:
+  (identifier)
+  @definition.function)
 
 (record_item
-  name: (identifier) @definition.type)
+  name:
+  (identifier)
+  @definition.type)
 
 (enum_item
-  name: (identifier) @definition.type)
+  name:
+  (identifier)
+  @definition.type)

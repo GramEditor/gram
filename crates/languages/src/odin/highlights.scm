@@ -2,15 +2,15 @@
 
 [
   (calling_convention)
-  (tag)
-] @keyword.directive
+  (tag)]
+@keyword.directive
 
 ; Includes
 
 [
   "import"
-  "package"
-] @keyword.import
+  "package"]
+@keyword.import
 
 ; Keywords
 
@@ -26,24 +26,24 @@
   "auto_cast"
   "map"
   "bit_set"
-  "matrix"
-] @keyword
+  "matrix"]
+@keyword
 
 [
-  "proc"
-] @keyword.function
+  "proc"]
+@keyword.function
 
 [
   "return"
   "or_return"
   "or_break"
-  "or_continue"
-] @keyword.return
+  "or_continue"]
+@keyword.return
 
 [
   "distinct"
-  "dynamic"
-] @keyword.storage
+  "dynamic"]
+@keyword.storage
 
 ; Conditionals
 
@@ -55,17 +55,17 @@
   "case"
   "where"
   "break"
-  (fallthrough_statement)
-] @keyword.conditional
+  (fallthrough_statement)]
+@keyword.conditional
 
 ((ternary_expression
-  [
-    "?"
-    ":"
-    "if"
-    "else"
-    "when"
-  ] @keyword.conditional.ternary)
+    [
+      "?"
+      ":"
+      "if"
+      "else"
+      "when"]
+    @keyword.conditional.ternary)
   (#set! "priority" 105))
 
 ; Repeats
@@ -73,12 +73,13 @@
 [
   "for"
   "do"
-  "continue"
-] @keyword.repeat
+  "continue"]
+@keyword.repeat
 
 ; Variables
 
-(identifier) @variable
+(identifier)
+@variable
 
 ; Namespaces
 
@@ -92,7 +93,7 @@
 
 ; Parameters
 
-(parameter (identifier) @variable.parameter ":" "="? (identifier)? @constant)
+(parameter (identifier) @variable.parameter ":" "=" ? (identifier) ? @constant)
 
 (default_parameter (identifier) @variable.parameter ":=")
 
@@ -113,10 +114,25 @@
 ; Built-in functions
 ((call_expression function: (identifier) @function.builtin)
   (#any-of? @function.builtin
-    "len" "cap" "append" "make" "delete" "new" "free"
-    "size_of" "align_of" "offset_of" "type_of" "type_info_of" "typeid_of"
-    "min" "max" "abs" "clamp"
-    "raw_data" "swizzle"))
+    "len"
+    "cap"
+    "append"
+    "make"
+    "delete"
+    "new"
+    "free"
+    "size_of"
+    "align_of"
+    "offset_of"
+    "type_of"
+    "type_info_of"
+    "typeid_of"
+    "min"
+    "max"
+    "abs"
+    "clamp"
+    "raw_data"
+    "swizzle"))
 
 (call_expression function: (identifier) @function.call)
 
@@ -126,17 +142,69 @@
 
 ((type (identifier) @type.builtin)
   (#any-of? @type.builtin
-    "bool" "byte" "b8" "b16" "b32" "b64"
-    "int" "i8" "i16" "i32" "i64" "i128"
-    "uint" "u8" "u16" "u32" "u64" "u128" "uintptr"
-    "i16le" "i32le" "i64le" "i128le" "u16le" "u32le" "u64le" "u128le"
-    "i16be" "i32be" "i64be" "i128be" "u16be" "u32be" "u64be" "u128be"
-    "float" "double" "f16" "f32" "f64" "f16le" "f32le" "f64le" "f16be" "f32be" "f64be"
-    "complex32" "complex64" "complex128" "complex_float" "complex_double"
-    "quaternion64" "quaternion128" "quaternion256"
-    "rune" "string" "cstring" "rawptr" "typeid" "any"))
+    "bool"
+    "byte"
+    "b8"
+    "b16"
+    "b32"
+    "b64"
+    "int"
+    "i8"
+    "i16"
+    "i32"
+    "i64"
+    "i128"
+    "uint"
+    "u8"
+    "u16"
+    "u32"
+    "u64"
+    "u128"
+    "uintptr"
+    "i16le"
+    "i32le"
+    "i64le"
+    "i128le"
+    "u16le"
+    "u32le"
+    "u64le"
+    "u128le"
+    "i16be"
+    "i32be"
+    "i64be"
+    "i128be"
+    "u16be"
+    "u32be"
+    "u64be"
+    "u128be"
+    "float"
+    "double"
+    "f16"
+    "f32"
+    "f64"
+    "f16le"
+    "f32le"
+    "f64le"
+    "f16be"
+    "f32be"
+    "f64be"
+    "complex32"
+    "complex64"
+    "complex128"
+    "complex_float"
+    "complex_double"
+    "quaternion64"
+    "quaternion128"
+    "quaternion256"
+    "rune"
+    "string"
+    "cstring"
+    "rawptr"
+    "typeid"
+    "any"))
 
-"..." @type.builtin
+"..."
+@type.builtin
 
 (struct_declaration (identifier) @type "::")
 
@@ -166,7 +234,7 @@
 
 (struct_type "{" (identifier) @variable.member)
 
-(struct_field (identifier) @variable.member "="?)
+(struct_field (identifier) @variable.member "=" ?)
 
 (field (identifier) @variable.member)
 
@@ -187,7 +255,7 @@
 
 ; Attributes
 
-(attribute (identifier) @attribute "="?)
+(attribute (identifier) @attribute "=" ?)
 
 ; Labels
 
@@ -195,22 +263,28 @@
 
 ; Literals
 
-(number) @number
+(number)
+@number
 
-(float) @number.float
+(float)
+@number.float
 
-(string) @string
+(string)
+@string
 
-(character) @character
+(character)
+@character
 
-(escape_sequence) @string.escape
+(escape_sequence)
+@string.escape
 
-(boolean) @boolean
+(boolean)
+@boolean
 
 [
   (uninitialized)
-  (nil)
-] @constant.builtin
+  (nil)]
+@constant.builtin
 
 ((identifier) @variable.builtin
   (#any-of? @variable.builtin "context" "self"))
@@ -259,22 +333,25 @@
   "&~="
   "..="
   "..<"
-  "?"
-] @operator
+  "?"]
+@operator
 
 [
   "or_else"
   "in"
-  "not_in"
-] @keyword.operator
+  "not_in"]
+@keyword.operator
 
 ; Punctuation
 
-[ "{" "}" ] @punctuation.bracket
+["{" "}"]
+@punctuation.bracket
 
-[ "(" ")" ] @punctuation.bracket
+["(" ")"]
+@punctuation.bracket
 
-[ "[" "]" ] @punctuation.bracket
+["[" "]"]
+@punctuation.bracket
 
 [
   "::"
@@ -282,22 +359,22 @@
   "."
   ","
   ":"
-  ";"
-] @punctuation.delimiter
-
+  ";"]
+@punctuation.delimiter
 
 [
   "@"
-  "$"
-] @punctuation.special
+  "$"]
+@punctuation.special
 
 ; Comments
 
 [
   (comment)
-  (block_comment)
-] @comment
+  (block_comment)]
+@comment
 
 ; Errors
 
-(ERROR) @error
+(ERROR)
+@error

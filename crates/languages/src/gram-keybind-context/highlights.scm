@@ -1,16 +1,18 @@
-(identifier) @variable
+(identifier)
+@variable
 
 [
   "("
-  ")"
-] @punctuation.bracket
+  ")"]
+@punctuation.bracket
 
 [
   (integer_literal)
-  (float_literal)
-] @number
+  (float_literal)]
+@number
 
-(boolean_literal) @boolean
+(boolean_literal)
+@boolean
 
 [
   "!="
@@ -19,5 +21,5 @@
   ">"
   "&&"
   "||"
-  "!"
-] @operator
+  "!"]
+@operator

@@ -1,4 +1,5 @@
 (pair
   (_)
   "="
-  (_) @redact)
+  (_)
+  @redact)

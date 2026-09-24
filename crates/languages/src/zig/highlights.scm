@@ -1,31 +1,36 @@
 ; Variables
-(identifier) @variable
+(identifier)
+@variable
 
 ; Parameters
 (parameter
-  name: (identifier) @variable.parameter)
+  name:
+  (identifier)
+  @variable.parameter)
 
 ; Types
 (parameter
-  type: (identifier) @type)
+  type:
+  (identifier)
+  @type)
 
 ((identifier) @type
   (#match? @type "^[A-Z_][a-zA-Z0-9_]*"))
 
 (variable_declaration
-  (identifier) @type
+  (identifier)
+  @type
   "="
   [
     (struct_declaration)
     (enum_declaration)
     (union_declaration)
-    (opaque_declaration)
-  ])
+    (opaque_declaration)])
 
 [
   (builtin_type)
-  "anyframe"
-] @type.builtin
+  "anyframe"]
+@type.builtin
 
 ; Constants
 ((identifier) @constant
@@ -34,78 +39,105 @@
 [
   "null"
   "unreachable"
-  "undefined"
-] @constant.builtin
+  "undefined"]
+@constant.builtin
 
 (field_expression
   .
-  member: (identifier) @constant)
+  member:
+  (identifier)
+  @constant)
 
 (enum_declaration
   (container_field
-    type: (identifier) @constant))
+    type:
+    (identifier)
+    @constant))
 
 ; Labels
 (block_label
-  (identifier) @label)
+  (identifier)
+  @label)
 
 (break_label
-  (identifier) @label)
+  (identifier)
+  @label)
 
 ; Fields
 (field_initializer
   .
-  (identifier) @variable.member)
+  (identifier)
+  @variable.member)
 
 (field_expression
   (_)
-  member: (identifier) @property)
+  member:
+  (identifier)
+  @property)
 
 (field_expression
   (_)
-  member: (identifier) @type
+  member:
+  (identifier)
+  @type
   (#match? @type "^[A-Z_][a-zA-Z0-9_]*"))
 
 (container_field
-  name: (identifier) @property)
+  name:
+  (identifier)
+  @property)
 
 (initializer_list
   (assignment_expression
-    left: (field_expression
+    left:
+    (field_expression
       .
-      member: (identifier) @property)))
+      member:
+      (identifier)
+      @property)))
 
 ; Functions
-(builtin_identifier) @function.builtin
+(builtin_identifier)
+@function.builtin
 
 (call_expression
-  function: (identifier) @function.call)
+  function:
+  (identifier)
+  @function.call)
 
 (call_expression
-  function: (field_expression
-    member: (identifier) @function.call))
+  function:
+  (field_expression
+    member:
+    (identifier)
+    @function.call))
 
 (function_declaration
-  name: (identifier) @function.definition)
+  name:
+  (identifier)
+  @function.definition)
 
 ; Modules
 (variable_declaration
-  (identifier) @module
+  (identifier)
+  @module
   (builtin_function
-    (builtin_identifier) @keyword.import
+    (builtin_identifier)
+    @keyword.import
     (#any-of? @keyword.import "@import" "@cImport")))
 
 ; Builtins
 [
   "c"
-  "..."
-] @variable.builtin
+  "..."]
+@variable.builtin
 
 ((identifier) @variable.builtin
   (#eq? @variable.builtin "_"))
 
 (calling_convention
-  (identifier) @variable.builtin)
+  (identifier)
+  @variable.builtin)
 
 ; Keywords
 [
@@ -115,56 +147,58 @@
   "test"
   "error"
   "const"
-  "var"
-] @keyword
+  "var"]
+@keyword
 
 [
   "struct"
   "union"
   "enum"
-  "opaque"
-] @keyword.type
+  "opaque"]
+@keyword.type
 
 [
   "async"
   "await"
   "suspend"
   "nosuspend"
-  "resume"
-] @keyword.coroutine
+  "resume"]
+@keyword.coroutine
 
-"fn" @keyword.function
+"fn"
+@keyword.function
 
 [
   "and"
   "or"
-  "orelse"
-] @keyword.operator
+  "orelse"]
+@keyword.operator
 
-"return" @keyword.return
+"return"
+@keyword.return
 
 [
   "if"
   "else"
-  "switch"
-] @keyword.conditional
+  "switch"]
+@keyword.conditional
 
 [
   "for"
   "while"
   "break"
-  "continue"
-] @keyword.repeat
+  "continue"]
+@keyword.repeat
 
 [
   "usingnamespace"
-  "export"
-] @keyword.import
+  "export"]
+@keyword.import
 
 [
   "try"
-  "catch"
-] @keyword.exception
+  "catch"]
+@keyword.exception
 
 [
   "volatile"
@@ -180,8 +214,8 @@
   "extern"
   "comptime"
   "packed"
-  "threadlocal"
-] @keyword.modifier
+  "threadlocal"]
+@keyword.modifier
 
 ; Operator
 [
@@ -236,25 +270,30 @@
   ".*"
   ".?"
   "?"
-  ".."
-] @operator
+  ".."]
+@operator
 
 ; Literals
-(character) @string
+(character)
+@string
 
 ([
-  (string)
-  (multiline_string)
-] @string
+    (string)
+    (multiline_string)]
+  @string
   (#set! "priority" 95))
 
-(integer) @number
+(integer)
+@number
 
-(float) @number.float
+(float)
+@number.float
 
-(boolean) @boolean
+(boolean)
+@boolean
 
-(escape_sequence) @string.escape
+(escape_sequence)
+@string.escape
 
 ; Punctuation
 [
@@ -263,8 +302,8 @@
   "("
   ")"
   "{"
-  "}"
-] @punctuation.bracket
+  "}"]
+@punctuation.bracket
 
 [
   ";"
@@ -272,38 +311,40 @@
   ","
   ":"
   "=>"
-  "->"
-] @punctuation.delimiter
+  "->"]
+@punctuation.delimiter
 
 (payload
-  "|" @punctuation.bracket)
+  "|"
+  @punctuation.bracket)
 
 ; Comments
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
 
 ((comment) @comment.documentation
-(
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
-(
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
-(
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (
+    (comment)
+    @comment.todo
+    (#match? @comment.todo "TODO:"))
+  (
+    (comment)
+    @comment.note
+    (#match? @comment.note "NOTE:"))
+  (
+    (comment)
+    @comment.warning
+    (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
   (#match? @comment.documentation "^//(/|!)"))

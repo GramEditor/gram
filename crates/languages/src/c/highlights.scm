@@ -9,8 +9,8 @@
   "struct"
   "typedef"
   "union"
-  "volatile"
-] @keyword
+  "volatile"]
+@keyword
 
 [
   "break"
@@ -24,8 +24,8 @@
   "if"
   "return"
   "switch"
-  "while"
-] @keyword.control
+  "while"]
+@keyword.control
 
 [
   "#define"
@@ -38,8 +38,9 @@
   "#ifdef"
   "#ifndef"
   "#include"
-  (preproc_directive)
-] @keyword.preproc @preproc
+  (preproc_directive)]
+@keyword.preproc
+@preproc
 
 [
   "="
@@ -77,14 +78,14 @@
   ">="
   "->"
   "?"
-  ":"
-] @operator
+  ":"]
+@operator
 
 [
   "."
   ";"
-  ","
-] @punctuation.delimiter
+  ","]
+@punctuation.delimiter
 
 [
   "{"
@@ -92,78 +93,100 @@
   "("
   ")"
   "["
-  "]"
-] @punctuation.bracket
+  "]"]
+@punctuation.bracket
 
 [
   (string_literal)
   (system_lib_string)
-  (char_literal)
-] @string
+  (char_literal)]
+@string
 
-(escape_sequence) @string.escape
+(escape_sequence)
+@string.escape
 
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
 
-(number_literal) @number
+(number_literal)
+@number
 
 [
   (true)
-  (false)
-] @boolean
+  (false)]
+@boolean
 
-(null) @constant.builtin
+(null)
+@constant.builtin
 
-(identifier) @variable
+(identifier)
+@variable
 
 ((identifier) @constant
   (#match? @constant "^_*[A-Z][A-Z\\d_]*$"))
 
 (call_expression
-  function: (identifier) @function)
+  function:
+  (identifier)
+  @function)
 
 (call_expression
-  function: (field_expression
-    field: (field_identifier) @function))
+  function:
+  (field_expression
+    field:
+    (field_identifier)
+    @function))
 
 (function_declarator
-  declarator: (identifier) @function)
+  declarator:
+  (identifier)
+  @function)
 
 (preproc_function_def
-  name: (identifier) @function.special)
+  name:
+  (identifier)
+  @function.special)
 
-(field_identifier) @property
+(field_identifier)
+@property
 
-(statement_identifier) @label
+(statement_identifier)
+@label
 
 [
   (type_identifier)
   (primitive_type)
-  (sized_type_specifier)
-] @type
+  (sized_type_specifier)]
+@type
 
 ; GNU __attribute__
-(attribute_specifier) @attribute
+(attribute_specifier)
+@attribute
 
 (attribute_specifier
   (argument_list
-    (identifier) @attribute))
+    (identifier)
+    @attribute))
 
 ; C23 [[attributes]]
 (attribute
-  prefix: (identifier) @attribute)
+  prefix:
+  (identifier)
+  @attribute)
 
 (attribute
-  name: (identifier) @attribute)
+  name:
+  (identifier)
+  @attribute)

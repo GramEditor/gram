@@ -1,32 +1,52 @@
 (if_statement
-  "end" @end) @indent
+  "end"
+  @end)
+@indent
 
 (do_statement
-  "end" @end) @indent
+  "end"
+  @end)
+@indent
 
 (while_statement
-  "end" @end) @indent
+  "end"
+  @end)
+@indent
 
 (for_statement
-  "end" @end) @indent
+  "end"
+  @end)
+@indent
 
 (repeat_statement
-  "until" @end) @indent
+  "until"
+  @end)
+@indent
 
 (function_declaration
-  "end" @end) @indent
+  "end"
+  @end)
+@indent
 
 (function_definition
-  "end" @end) @indent
+  "end"
+  @end)
+@indent
 
 (_
   "["
-  "]" @end) @indent
+  "]"
+  @end)
+@indent
 
 (_
   "{"
-  "}" @end) @indent
+  "}"
+  @end)
+@indent
 
 (_
   "("
-  ")" @end) @indent
+  ")"
+  @end)
+@indent

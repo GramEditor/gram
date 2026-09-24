@@ -1,12 +1,24 @@
 (function_clause
-  body: (_
+  body:
+  (_
     "->"
-    (_)* @function.inside)) @function.around
+    (_)
+    *
+    @function.inside))
+@function.around
 
 (type_alias
-  ty: (_) @class.inside) @class.around
+  ty:
+  (_)
+  @class.inside)
+@class.around
 
 (nominal
-  ty: (_) @class.inside) @class.around
+  ty:
+  (_)
+  @class.inside)
+@class.around
 
-(comment)+ @comment.around
+(comment)
++
+@comment.around

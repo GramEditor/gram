@@ -1,36 +1,44 @@
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
 
 [
   (addition)
-  (new_file)
-] @string @diff.plus
+  (new_file)]
+@string
+@diff.plus
 
 [
   (deletion)
-  (old_file)
-] @keyword @diff.minus
+  (old_file)]
+@keyword
+@diff.minus
 
-(commit) @constant
+(commit)
+@constant
 
-(location) @attribute
+(location)
+@attribute
 
 (command
-  "diff" @function
-  (argument) @variable.parameter)
+  "diff"
+  @function
+  (argument)
+  @variable.parameter)
 
-(mode) @number
+(mode)
+@number
 
 [
   ".."
@@ -41,18 +49,21 @@
   "-"
   "--"
   "---"
-  "----"
-] @punctuation.special
+  "----"]
+@punctuation.special
 
 [
   (binary_change)
   (similarity)
-  (file_change)
-] @label
+  (file_change)]
+@label
 
 (index
-  "index" @keyword)
+  "index"
+  @keyword)
 
 (similarity
-  (score) @number
-  "%" @number)
+  (score)
+  @number
+  "%"
+  @number)

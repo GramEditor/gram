@@ -1,62 +1,78 @@
 ("(" @open
-  ")" @close)
+  ")"
+  @close)
 
 ("[" @open
-  "]" @close)
+  "]"
+  @close)
 
 ("{" @open
-  "}" @close)
+  "}"
+  @close)
 
 (("\"" @open
-  "\"" @close)
+    "\""
+    @close)
   (#set! rainbow.exclude))
 
 (("`" @open
-  "`" @close)
+    "`"
+    @close)
   (#set! rainbow.exclude))
 
 (("do" @open
-  "done" @close)
+    "done"
+    @close)
   (#set! newline.only)
   (#set! rainbow.exclude))
 
 ((case_statement
-  ("in" @open
-    "esac" @close))
+    ("in" @open
+      "esac"
+      @close))
   (#set! newline.only)
   (#set! rainbow.exclude))
 
 ((if_statement
-  (elif_clause
-    "then" @open)
-  (else_clause
-    "else" @close))
+    (elif_clause
+      "then"
+      @open)
+    (else_clause
+      "else"
+      @close))
   (#set! newline.only)
   (#set! rainbow.exclude))
 
 ((if_statement
-  (else_clause
-    "else" @open)
-  "fi" @close)
+    (else_clause
+      "else"
+      @open)
+    "fi"
+    @close)
   (#set! newline.only)
   (#set! rainbow.exclude))
 
 ((if_statement
-  "then" @open
-  (elif_clause
-    "elif" @close))
+    "then"
+    @open
+    (elif_clause
+      "elif"
+      @close))
   (#set! newline.only)
   (#set! rainbow.exclude))
 
 ((if_statement
-  "then" @open
-  (else_clause
-    "else" @close))
+    "then"
+    @open
+    (else_clause
+      "else"
+      @close))
   (#set! newline.only)
   (#set! rainbow.exclude))
 
 ((if_statement
-  ("then" @open
-    "fi" @close))
+    ("then" @open
+      "fi"
+      @close))
   (#set! newline.only)
   (#set! rainbow.exclude))

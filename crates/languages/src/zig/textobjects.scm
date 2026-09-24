@@ -1,14 +1,21 @@
 (function_declaration
-  body: (_
+  body:
+  (_
     "{"
-    (_)* @function.inside
-    "}")) @function.around
+    (_)
+    *
+    @function.inside
+    "}"))
+@function.around
 
 (test_declaration
   (block
     "{"
-    (_)* @function.inside
-    "}")) @function.around
+    (_)
+    *
+    @function.inside
+    "}"))
+@function.around
 
 (variable_declaration
   (struct_declaration
@@ -16,15 +23,22 @@
     "{"
     [
       (_)
-      ","
-    ]* @class.inside
-    "}")) @class.around
+      ","]
+    *
+    @class.inside
+    "}"))
+@class.around
 
 (variable_declaration
   (enum_declaration
     "enum"
     "{"
-    (_)* @class.inside
-    "}")) @class.around
+    (_)
+    *
+    @class.inside
+    "}"))
+@class.around
 
-(comment)+ @comment.around
+(comment)
++
+@comment.around

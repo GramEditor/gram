@@ -5,18 +5,19 @@
   (heredoc_start)
   (heredoc_end)
   (ansi_c_string)
-  (word)
-] @string
+  (word)]
+@string
 
-(variable_name) @variable
+(variable_name)
+@variable
 
 [
   "export"
   "function"
   "unset"
   "local"
-  "declare"
-] @keyword
+  "declare"]
+@keyword
 
 [
   "case"
@@ -32,35 +33,41 @@
   "select"
   "then"
   "until"
-  "while"
-] @keyword.control
+  "while"]
+@keyword.control
 
-(comment) @comment
+(comment)
+@comment
 
 ; Shebang
 ((program
-  .
-  (comment) @keyword.directive)
+    .
+    (comment)
+    @keyword.directive)
   (#match? @keyword.directive "^#![ \t]*/"))
 
 (function_definition
-  name: (word) @function)
+  name:
+  (word)
+  @function)
 
 (command_name
-  (word) @function)
+  (word)
+  @function)
 
 [
   (file_descriptor)
-  (number)
-] @number
+  (number)]
+@number
 
-(regex) @string.regex
+(regex)
+@string.regex
 
 [
   (command_substitution)
   (process_substitution)
-  (expansion)
-] @embedded
+  (expansion)]
+@embedded
 
 [
   "$"
@@ -109,12 +116,14 @@
   "++"
   "--"
   "~"
-  "?"
-] @operator
+  "?"]
+@operator
 
-(test_operator) @keyword.operator
+(test_operator)
+@keyword.operator
 
-";" @punctuation.delimiter
+";"
+@punctuation.delimiter
 
 [
   "("
@@ -122,45 +131,55 @@
   "{"
   "}"
   "["
-  "]"
-] @punctuation.bracket
+  "]"]
+@punctuation.bracket
 
 (test_command
   [
     "[["
-    "]]"
-  ] @punctuation.bracket)
+    "]]"]
+  @punctuation.bracket)
 
 (compound_statement
   [
     "(("
-    "))"
-  ] @punctuation.bracket)
+    "))"]
+  @punctuation.bracket)
 
 (simple_expansion
-  "$" @punctuation.special)
+  "$"
+  @punctuation.special)
 
 (expansion
-  "${" @punctuation.special
-  "}" @punctuation.special) @embedded
+  "${"
+  @punctuation.special
+  "}"
+  @punctuation.special)
+@embedded
 
 (command_substitution
-  "$(" @punctuation.special
-  ")" @punctuation.special)
+  "$("
+  @punctuation.special
+  ")"
+  @punctuation.special)
 
 (arithmetic_expansion
   [
     "$(("
     "$["
     "))"
-    "]"
-  ] @punctuation.special)
+    "]"]
+  @punctuation.special)
 
 ((command
-  (_) @constant)
+    (_)
+    @constant)
   (#match? @constant "^-"))
 
 (case_item
-  value: (_) @string.regex)
+  value:
+  (_)
+  @string.regex)
 
-(special_variable_name) @variable.special
+(special_variable_name)
+@variable.special

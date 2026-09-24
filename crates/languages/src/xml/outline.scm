@@ -1,9 +1,15 @@
 (element
   (STag
-    (Name) @name)) @item
+    (Name)
+    @name))
+@item
 
 (EmptyElemTag
-  (Name) @name) @item
+  (Name)
+  @name)
+@item
 
 (doctypedecl
-  (Name) @name) @item
+  (Name)
+  @name)
+@item

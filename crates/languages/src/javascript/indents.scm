@@ -6,28 +6,42 @@
   (variable_declaration)
   (assignment_expression)
   (if_statement)
-  (for_statement)
-] @indent
+  (for_statement)]
+@indent
 
 (_
   "["
-  "]" @end) @indent
+  "]"
+  @end)
+@indent
 
 (_
   "<"
-  ">" @end) @indent
+  ">"
+  @end)
+@indent
 
 (_
   "{"
-  "}" @end) @indent
+  "}"
+  @end)
+@indent
 
 (_
   "("
-  ")" @end) @indent
+  ")"
+  @end)
+@indent
 
 (jsx_opening_element
-  ">" @end) @indent
+  ">"
+  @end)
+@indent
 
 (jsx_element
-  (jsx_opening_element) @start
-  (jsx_closing_element)? @end) @indent
+  (jsx_opening_element)
+  @start
+  (jsx_closing_element)
+  ?
+  @end)
+@indent

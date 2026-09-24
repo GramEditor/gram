@@ -1,5 +1,8 @@
-(string) @string
+(string)
+@string
 
-(math) @math
+(math)
+@math
 
-(comment) @comment.inclusive
+(comment)
+@comment.inclusive

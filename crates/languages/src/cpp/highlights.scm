@@ -1,126 +1,186 @@
-(identifier) @variable
+(identifier)
+@variable
 
-(field_identifier) @property
+(field_identifier)
+@property
 
-(namespace_identifier) @namespace
+(namespace_identifier)
+@namespace
 
 (concept_definition
-  name: (identifier) @concept)
+  name:
+  (identifier)
+  @concept)
 
 (requires_clause
-  constraint: (template_type
-    name: (type_identifier) @concept))
+  constraint:
+  (template_type
+    name:
+    (type_identifier)
+    @concept))
 
 (module_name
-  (identifier) @module)
+  (identifier)
+  @module)
 
 (module_declaration
-  name: (module_name
-    (identifier) @module))
+  name:
+  (module_name
+    (identifier)
+    @module))
 
 (import_declaration
-  name: (module_name
-    (identifier) @module))
+  name:
+  (module_name
+    (identifier)
+    @module))
 
 (import_declaration
-  partition: (module_partition
+  partition:
+  (module_partition
     (module_name
-      (identifier) @module)))
+      (identifier)
+      @module)))
 
 (call_expression
-  function: (qualified_identifier
-    name: (identifier) @function))
+  function:
+  (qualified_identifier
+    name:
+    (identifier)
+    @function))
 
 (call_expression
   (qualified_identifier
-    (identifier) @function.call))
+    (identifier)
+    @function.call))
 
 (call_expression
   (qualified_identifier
     (qualified_identifier
-      (identifier) @function.call)))
+      (identifier)
+      @function.call)))
 
 (call_expression
   (qualified_identifier
     (qualified_identifier
       (qualified_identifier
-        (identifier) @function.call))))
+        (identifier)
+        @function.call))))
 
 ((qualified_identifier
-  (qualified_identifier
     (qualified_identifier
       (qualified_identifier
-        (identifier) @function.call)))) @_parent
+        (qualified_identifier
+          (identifier)
+          @function.call))))
+  @_parent
   (#has-ancestor? @_parent call_expression))
 
 (call_expression
-  function: (identifier) @function)
+  function:
+  (identifier)
+  @function)
 
 (call_expression
-  function: (field_expression
-    field: (field_identifier) @function))
+  function:
+  (field_expression
+    field:
+    (field_identifier)
+    @function))
 
 (preproc_function_def
-  name: (identifier) @function.special)
+  name:
+  (identifier)
+  @function.special)
 
 (template_function
-  name: (identifier) @function)
+  name:
+  (identifier)
+  @function)
 
 (template_method
-  name: (field_identifier) @function)
+  name:
+  (field_identifier)
+  @function)
 
 (function_declarator
-  declarator: (identifier) @function)
+  declarator:
+  (identifier)
+  @function)
 
 (function_declarator
-  declarator: (qualified_identifier
-    name: (identifier) @function))
+  declarator:
+  (qualified_identifier
+    name:
+    (identifier)
+    @function))
 
 (function_declarator
-  declarator: (field_identifier) @function)
+  declarator:
+  (field_identifier)
+  @function)
 
 (operator_name
-  (identifier)? @operator) @function
+  (identifier)
+  ?
+  @operator)
+@function
 
 (operator_name
-  "<=>" @operator.spaceship)
+  "<=>"
+  @operator.spaceship)
 
 (destructor_name
-  (identifier) @function)
+  (identifier)
+  @function)
 
 ((namespace_identifier) @type
   (#match? @type "^[A-Z]"))
 
-(auto) @type
+(auto)
+@type
 
-(type_identifier) @type
+(type_identifier)
+@type
 
-type: (primitive_type) @type.builtin
+type:
+(primitive_type)
+@type.builtin
 
-(sized_type_specifier) @type.builtin
+(sized_type_specifier)
+@type.builtin
 
 ; GNU __attribute__
-(attribute_specifier) @attribute
+(attribute_specifier)
+@attribute
 
 (attribute_specifier
   (argument_list
-    (identifier) @attribute))
+    (identifier)
+    @attribute))
 
 ; C++11 [[attributes]]
 (attribute
-  prefix: (identifier) @attribute)
+  prefix:
+  (identifier)
+  @attribute)
 
 (attribute
-  name: (identifier) @attribute)
+  name:
+  (identifier)
+  @attribute)
 
 ((identifier) @constant.builtin
   (#match? @constant.builtin "^_*[A-Z][A-Z\\d_]*$"))
 
-(statement_identifier) @label
+(statement_identifier)
+@label
 
-(this) @variable.builtin
+(this)
+@variable.builtin
 
-"static_assert" @function.builtin
+"static_assert"
+@function.builtin
 
 [
   "alignas"
@@ -160,8 +220,8 @@ type: (primitive_type) @type.builtin
   "using"
   "virtual"
   (storage_class_specifier)
-  (type_qualifier)
-] @keyword
+  (type_qualifier)]
+@keyword
 
 [
   "break"
@@ -181,8 +241,8 @@ type: (primitive_type) @type.builtin
   "switch"
   "throw"
   "try"
-  "while"
-] @keyword.control
+  "while"]
+@keyword.control
 
 [
   "#define"
@@ -195,51 +255,55 @@ type: (primitive_type) @type.builtin
   "#ifdef"
   "#ifndef"
   "#include"
-  (preproc_directive)
-] @keyword.preproc @preproc
+  (preproc_directive)]
+@keyword.preproc
+@preproc
 
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
 
 [
   (true)
-  (false)
-] @boolean
+  (false)]
+@boolean
 
 [
   (null)
-  "nullptr"
-] @constant.builtin
+  "nullptr"]
+@constant.builtin
 
-(number_literal) @number
+(number_literal)
+@number
 
 [
   (string_literal)
   (system_lib_string)
   (char_literal)
-  (raw_string_literal)
-] @string
+  (raw_string_literal)]
+@string
 
-(escape_sequence) @string.escape
+(escape_sequence)
+@string.escape
 
 [
   ","
   ":"
   "::"
   ";"
-  (raw_string_delimiter)
-] @punctuation.delimiter
+  (raw_string_delimiter)]
+@punctuation.delimiter
 
 [
   "{"
@@ -247,8 +311,8 @@ type: (primitive_type) @type.builtin
   "("
   ")"
   "["
-  "]"
-] @punctuation.bracket
+  "]"]
+@punctuation.bracket
 
 [
   "."
@@ -299,16 +363,21 @@ type: (primitive_type) @type.builtin
   "or"
   "or_eq"
   "xor"
-  "xor_eq"
-] @operator
+  "xor_eq"]
+@operator
 
-"<=>" @operator.spaceship
+"<=>"
+@operator.spaceship
 
 (binary_expression
-  operator: "<=>" @operator.spaceship)
+  operator:
+  "<=>"
+  @operator.spaceship)
 
 (conditional_expression
-  ":" @operator)
+  ":"
+  @operator)
 
 (user_defined_literal
-  (literal_suffix) @operator)
+  (literal_suffix)
+  @operator)

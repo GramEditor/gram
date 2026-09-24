@@ -1,24 +1,31 @@
 ("(" @open
-  ")" @close)
+  ")"
+  @close)
 
 ("[" @open
-  "]" @close)
+  "]"
+  @close)
 
 ("{" @open
-  "}" @close)
+  "}"
+  @close)
 
 (("\"" @open
-  "\"" @close)
+    "\""
+    @close)
   (#set! rainbow.exclude))
 
 (("`" @open
-  "`" @close)
+    "`"
+    @close)
   (#set! rainbow.exclude))
 
 (("'" @open
-  "'" @close)
+    "'"
+    @close)
   (#set! rainbow.exclude))
 
 (((fenced_code_block_delimiter) @open
-  (fenced_code_block_delimiter) @close)
+    (fenced_code_block_delimiter)
+    @close)
   (#set! rainbow.exclude))

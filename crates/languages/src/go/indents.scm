@@ -1,17 +1,23 @@
 [
   (assignment_statement)
   (call_expression)
-  (selector_expression)
-] @indent
+  (selector_expression)]
+@indent
 
 (_
   "["
-  "]" @end) @indent
+  "]"
+  @end)
+@indent
 
 (_
   "{"
-  "}" @end) @indent
+  "}"
+  @end)
+@indent
 
 (_
   "("
-  ")" @end) @indent
+  ")"
+  @end)
+@indent

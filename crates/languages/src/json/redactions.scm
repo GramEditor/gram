@@ -1,11 +1,17 @@
 (pair
-  value: (number) @redact)
+  value:
+  (number)
+  @redact)
 
 (pair
-  value: (string) @redact)
+  value:
+  (string)
+  @redact)
 
 (array
-  (number) @redact)
+  (number)
+  @redact)
 
 (array
-  (string) @redact)
+  (string)
+  @redact)

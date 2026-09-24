@@ -1,5 +1,9 @@
 (array
-  "]" @end) @indent
+  "]"
+  @end)
+@indent
 
 (object
-  "}" @end) @indent
+  "}"
+  @end)
+@indent

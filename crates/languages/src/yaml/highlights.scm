@@ -1,48 +1,53 @@
-(boolean_scalar) @boolean
+(boolean_scalar)
+@boolean
 
-(null_scalar) @constant.builtin
+(null_scalar)
+@constant.builtin
 
 [
   (double_quote_scalar)
   (single_quote_scalar)
   (block_scalar)
-  (string_scalar)
-] @string
+  (string_scalar)]
+@string
 
-(escape_sequence) @string.escape
+(escape_sequence)
+@string.escape
 
 [
   (integer_scalar)
-  (float_scalar)
-] @number
+  (float_scalar)]
+@number
 
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
 
 [
   (anchor_name)
   (alias_name)
-  (tag)
-] @type
+  (tag)]
+@type
 
-key: (flow_node
+key:
+(flow_node
   [
     (plain_scalar
       (string_scalar))
     (double_quote_scalar)
-    (single_quote_scalar)
-  ] @property)
+    (single_quote_scalar)]
+  @property)
 
 [
   ","
@@ -50,19 +55,19 @@ key: (flow_node
   ":"
   ">"
   "?"
-  "|"
-] @punctuation.delimiter
+  "|"]
+@punctuation.delimiter
 
 [
   "["
   "]"
   "{"
-  "}"
-] @punctuation.bracket
+  "}"]
+@punctuation.bracket
 
 [
   "*"
   "&"
   "---"
-  "..."
-] @punctuation.special
+  "..."]
+@punctuation.special

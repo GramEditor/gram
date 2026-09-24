@@ -1,15 +1,20 @@
 (section_name
-  (text) @type) ; consistency with toml
+  (text) ; consistency with toml
+  @type)
 
-(comment) @comment
+(comment)
+@comment
 
 [
   "["
-  "]"
-] @punctuation.bracket
+  "]"]
+@punctuation.bracket
 
-"=" @operator
+"="
+@operator
 
 (setting
-  (setting_name) @property)
-(setting_value) @string
+  (setting_name)
+  @property)
+(setting_value)
+@string

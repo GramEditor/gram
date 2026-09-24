@@ -1,204 +1,285 @@
 ; Variables
-(identifier) @variable
+(identifier)
+@variable
 
 (call_expression
-  function: (member_expression
-    object: (identifier) @type
+  function:
+  (member_expression
+    object:
+    (identifier)
+    @type
     (#any-of? @type
-      "Promise" "Array" "Object" "Map" "Set" "WeakMap" "WeakSet" "Date" "Error" "TypeError"
-      "RangeError" "SyntaxError" "ReferenceError" "EvalError" "URIError" "RegExp" "Function"
-      "Number" "String" "Boolean" "Symbol" "BigInt" "Proxy" "ArrayBuffer" "DataView")))
+      "Promise"
+      "Array"
+      "Object"
+      "Map"
+      "Set"
+      "WeakMap"
+      "WeakSet"
+      "Date"
+      "Error"
+      "TypeError"
+      "RangeError"
+      "SyntaxError"
+      "ReferenceError"
+      "EvalError"
+      "URIError"
+      "RegExp"
+      "Function"
+      "Number"
+      "String"
+      "Boolean"
+      "Symbol"
+      "BigInt"
+      "Proxy"
+      "ArrayBuffer"
+      "DataView")))
 
 ; Properties
-(property_identifier) @property
+(property_identifier)
+@property
 
-(shorthand_property_identifier) @property
+(shorthand_property_identifier)
+@property
 
-(shorthand_property_identifier_pattern) @property
+(shorthand_property_identifier_pattern)
+@property
 
-(private_property_identifier) @property
+(private_property_identifier)
+@property
 
 ; Function and method calls
 (call_expression
-  function: (identifier) @function)
+  function:
+  (identifier)
+  @function)
 
 (call_expression
-  function: (member_expression
-    property: [
+  function:
+  (member_expression
+    property:
+    [
       (property_identifier)
-      (private_property_identifier)
-    ] @function.method))
+      (private_property_identifier)]
+    @function.method))
 
 (new_expression
-  constructor: (identifier) @type.class)
+  constructor:
+  (identifier)
+  @type.class)
 
 (nested_type_identifier
-  module: (identifier) @type)
+  module:
+  (identifier)
+  @type)
 
 ; Function and method definitions
 (function_expression
-  name: (identifier) @function)
+  name:
+  (identifier)
+  @function)
 
 (function_declaration
-  name: (identifier) @function)
+  name:
+  (identifier)
+  @function)
 
 (method_definition
-  name: [
+  name:
+  [
     (property_identifier)
-    (private_property_identifier)
-  ] @function.method)
+    (private_property_identifier)]
+  @function.method)
 
 (method_definition
-  name: (property_identifier) @constructor
+  name:
+  (property_identifier)
+  @constructor
   (#eq? @constructor "constructor"))
 
 (pair
-  key: [
+  key:
+  [
     (property_identifier)
-    (private_property_identifier)
-  ] @function.method
-  value: [
+    (private_property_identifier)]
+  @function.method
+  value:
+  [
     (function_expression)
-    (arrow_function)
-  ])
+    (arrow_function)])
 
 (assignment_expression
-  left: (member_expression
-    property: [
+  left:
+  (member_expression
+    property:
+    [
       (property_identifier)
-      (private_property_identifier)
-    ] @function.method)
-  right: [
+      (private_property_identifier)]
+    @function.method)
+  right:
+  [
     (function_expression)
-    (arrow_function)
-  ])
+    (arrow_function)])
 
 (variable_declarator
-  name: (identifier) @function
-  value: [
+  name:
+  (identifier)
+  @function
+  value:
+  [
     (function_expression)
-    (arrow_function)
-  ])
+    (arrow_function)])
 
 (assignment_expression
-  left: (identifier) @function
-  right: [
+  left:
+  (identifier)
+  @function
+  right:
+  [
     (function_expression)
-    (arrow_function)
-  ])
+    (arrow_function)])
 
 ; Parameters
 (required_parameter
-  (identifier) @variable.parameter)
+  (identifier)
+  @variable.parameter)
 
 (required_parameter
   (_
     ([
-      (identifier)
+        (identifier)
+        (shorthand_property_identifier_pattern)])
+    @variable.parameter))
+
+(required_parameter
+  (_
+    (object_assignment_pattern
+      left:
       (shorthand_property_identifier_pattern)
-    ]) @variable.parameter))
-
-(required_parameter
-  (_
-    (object_assignment_pattern
-      left: (shorthand_property_identifier_pattern) @variable.parameter)))
+      @variable.parameter)))
 
 (required_parameter
   (_
     (assignment_pattern
-      left: (identifier) @variable.parameter)))
+      left:
+      (identifier)
+      @variable.parameter)))
 
 (optional_parameter
   (_
     (object_assignment_pattern
-      left: (shorthand_property_identifier_pattern) @variable.parameter)))
+      left:
+      (shorthand_property_identifier_pattern)
+      @variable.parameter)))
 
 (optional_parameter
   (_
     (assignment_pattern
-      left: (identifier) @variable.parameter)))
+      left:
+      (identifier)
+      @variable.parameter)))
 
 (optional_parameter
-  (identifier) @variable.parameter)
+  (identifier)
+  @variable.parameter)
 
 (optional_parameter
   (_
     ([
-      (identifier)
-      (shorthand_property_identifier_pattern)
-    ]) @variable.parameter))
+        (identifier)
+        (shorthand_property_identifier_pattern)])
+    @variable.parameter))
 
 (catch_clause
-  parameter: (identifier) @variable.parameter)
+  parameter:
+  (identifier)
+  @variable.parameter)
 
 (index_signature
-  name: (identifier) @variable.parameter)
+  name:
+  (identifier)
+  @variable.parameter)
 
 (arrow_function
-  parameter: (identifier) @variable.parameter)
+  parameter:
+  (identifier)
+  @variable.parameter)
 
 ; Special identifiers
 ;
-(type_identifier) @type
+(type_identifier)
+@type
 
-(predefined_type) @type.builtin
+(predefined_type)
+@type.builtin
 
 (class_declaration
-  (type_identifier) @type.class)
+  (type_identifier)
+  @type.class)
 
 (extends_clause
-  value: (identifier) @type.class)
+  value:
+  (identifier)
+  @type.class)
 
 ([
-  (identifier)
-  (shorthand_property_identifier)
-  (shorthand_property_identifier_pattern)
-] @constant
+    (identifier)
+    (shorthand_property_identifier)
+    (shorthand_property_identifier_pattern)]
+  @constant
   (#match? @constant "^_*[A-Z_][A-Z\\d_]*$"))
 
 ; Literals
-(this) @variable.special
+(this)
+@variable.special
 
-(super) @variable.special
+(super)
+@variable.special
 
 [
   (null)
-  (undefined)
-] @constant.builtin
+  (undefined)]
+@constant.builtin
 
 [
   (true)
-  (false)
-] @boolean
+  (false)]
+@boolean
 
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
 
-(hash_bang_line) @comment
+(hash_bang_line)
+@comment
 
 [
   (string)
-  (template_string)
-] @string
+  (template_string)]
+@string
 
-(escape_sequence) @string.escape
+(escape_sequence)
+@string.escape
 
-(regex) @string.regex
+(regex)
+@string.regex
 
-(regex_flags) @keyword.operator.regex
+(regex_flags)
+@keyword.operator.regex
 
-(number) @number
+(number)
+@number
 
 ; Tokens
 [
@@ -206,8 +287,8 @@
   "?."
   "."
   ","
-  ":"
-] @punctuation.delimiter
+  ":"]
+@punctuation.delimiter
 
 [
   "-"
@@ -254,11 +335,12 @@
   "&&="
   "||="
   "??="
-  "..."
-] @operator
+  "..."]
+@operator
 
 (regex
-  "/" @string.regex)
+  "/"
+  @string.regex)
 
 [
   "("
@@ -266,14 +348,14 @@
   "["
   "]"
   "{"
-  "}"
-] @punctuation.bracket
+  "}"]
+@punctuation.bracket
 
 (ternary_expression
   [
     "?"
-    ":"
-  ] @operator)
+    ":"]
+  @operator)
 
 [
   "abstract"
@@ -304,8 +386,8 @@
   "typeof"
   "using"
   "void"
-  "with"
-] @keyword
+  "with"]
+@keyword
 
 [
   "const"
@@ -315,14 +397,14 @@
   "class"
   "enum"
   "interface"
-  "type"
-] @keyword.declaration
+  "type"]
+@keyword.declaration
 
 [
   "export"
   "from"
-  "import"
-] @keyword.import
+  "import"]
+@keyword.import
 
 [
   "await"
@@ -340,120 +422,227 @@
   "throw"
   "try"
   "while"
-  "yield"
-] @keyword.control
+  "yield"]
+@keyword.control
 
 (switch_default
-  "default" @keyword.control)
+  "default"
+  @keyword.control)
 
 (template_substitution
-  "${" @punctuation.special
-  "}" @punctuation.special) @embedded
+  "${"
+  @punctuation.special
+  "}"
+  @punctuation.special)
+@embedded
 
 (type_arguments
-  "<" @punctuation.bracket
-  ">" @punctuation.bracket)
+  "<"
+  @punctuation.bracket
+  ">"
+  @punctuation.bracket)
 
 (decorator
-  "@" @punctuation.special)
+  "@"
+  @punctuation.special)
 
 ; JSX elements
 (jsx_opening_element
   [
-    (identifier) @type @tag.component.jsx
+    (identifier)
+    @type
+    @tag.component.jsx
     (member_expression
-      object: (identifier) @type @tag.component.jsx
-      property: (property_identifier) @type @tag.component.jsx)
+      object:
+      (identifier)
+      @type
+      @tag.component.jsx
+      property:
+      (property_identifier)
+      @type
+      @tag.component.jsx)
     (member_expression
-      object: (member_expression
-        object: (identifier) @type @tag.component.jsx
-        property: (property_identifier) @type @tag.component.jsx)
-      property: (property_identifier) @type @tag.component.jsx)
+      object:
+      (member_expression
+        object:
+        (identifier)
+        @type
+        @tag.component.jsx
+        property:
+        (property_identifier)
+        @type
+        @tag.component.jsx)
+      property:
+      (property_identifier)
+      @type
+      @tag.component.jsx)
     (member_expression
-      object: (member_expression
-        object: (member_expression
-          object: (identifier) @type @tag.component.jsx
-          property: (property_identifier) @type @tag.component.jsx)
-        property: (property_identifier) @type @tag.component.jsx)
-      property: (property_identifier) @type @tag.component.jsx)
-  ])
+      object:
+      (member_expression
+        object:
+        (member_expression
+          object:
+          (identifier)
+          @type
+          @tag.component.jsx
+          property:
+          (property_identifier)
+          @type
+          @tag.component.jsx)
+        property:
+        (property_identifier)
+        @type
+        @tag.component.jsx)
+      property:
+      (property_identifier)
+      @type
+      @tag.component.jsx)])
 
 (jsx_closing_element
   [
-    (identifier) @type @tag.component.jsx
+    (identifier)
+    @type
+    @tag.component.jsx
     (member_expression
-      object: (identifier) @type @tag.component.jsx
-      property: (property_identifier) @type @tag.component.jsx)
+      object:
+      (identifier)
+      @type
+      @tag.component.jsx
+      property:
+      (property_identifier)
+      @type
+      @tag.component.jsx)
     (member_expression
-      object: (member_expression
-        object: (identifier) @type @tag.component.jsx
-        property: (property_identifier) @type @tag.component.jsx)
-      property: (property_identifier) @type @tag.component.jsx)
+      object:
+      (member_expression
+        object:
+        (identifier)
+        @type
+        @tag.component.jsx
+        property:
+        (property_identifier)
+        @type
+        @tag.component.jsx)
+      property:
+      (property_identifier)
+      @type
+      @tag.component.jsx)
     (member_expression
-      object: (member_expression
-        object: (member_expression
-          object: (identifier) @type @tag.component.jsx
-          property: (property_identifier) @type @tag.component.jsx)
-        property: (property_identifier) @type @tag.component.jsx)
-      property: (property_identifier) @type @tag.component.jsx)
-  ])
+      object:
+      (member_expression
+        object:
+        (member_expression
+          object:
+          (identifier)
+          @type
+          @tag.component.jsx
+          property:
+          (property_identifier)
+          @type
+          @tag.component.jsx)
+        property:
+        (property_identifier)
+        @type
+        @tag.component.jsx)
+      property:
+      (property_identifier)
+      @type
+      @tag.component.jsx)])
 
 (jsx_self_closing_element
   [
-    (identifier) @type @tag.component.jsx
+    (identifier)
+    @type
+    @tag.component.jsx
     (member_expression
-      object: (identifier) @type @tag.component.jsx
-      property: (property_identifier) @type @tag.component.jsx)
+      object:
+      (identifier)
+      @type
+      @tag.component.jsx
+      property:
+      (property_identifier)
+      @type
+      @tag.component.jsx)
     (member_expression
-      object: (member_expression
-        object: (identifier) @type @tag.component.jsx
-        property: (property_identifier) @type @tag.component.jsx)
-      property: (property_identifier) @type @tag.component.jsx)
+      object:
+      (member_expression
+        object:
+        (identifier)
+        @type
+        @tag.component.jsx
+        property:
+        (property_identifier)
+        @type
+        @tag.component.jsx)
+      property:
+      (property_identifier)
+      @type
+      @tag.component.jsx)
     (member_expression
-      object: (member_expression
-        object: (member_expression
-          object: (identifier) @type @tag.component.jsx
-          property: (property_identifier) @type @tag.component.jsx)
-        property: (property_identifier) @type @tag.component.jsx)
-      property: (property_identifier) @type @tag.component.jsx)
-  ])
+      object:
+      (member_expression
+        object:
+        (member_expression
+          object:
+          (identifier)
+          @type
+          @tag.component.jsx
+          property:
+          (property_identifier)
+          @type
+          @tag.component.jsx)
+        property:
+        (property_identifier)
+        @type
+        @tag.component.jsx)
+      property:
+      (property_identifier)
+      @type
+      @tag.component.jsx)])
 
 (jsx_opening_element
-  (identifier) @tag.jsx
+  (identifier)
+  @tag.jsx
   (#match? @tag.jsx "^[a-z][^.]*$"))
 
 (jsx_closing_element
-  (identifier) @tag.jsx
+  (identifier)
+  @tag.jsx
   (#match? @tag.jsx "^[a-z][^.]*$"))
 
 (jsx_self_closing_element
-  (identifier) @tag.jsx
+  (identifier)
+  @tag.jsx
   (#match? @tag.jsx "^[a-z][^.]*$"))
 
 (jsx_attribute
-  (property_identifier) @attribute.jsx)
+  (property_identifier)
+  @attribute.jsx)
 
 (jsx_opening_element
   ([
-    "<"
-    ">"
-  ]) @punctuation.bracket.jsx)
+      "<"
+      ">"])
+  @punctuation.bracket.jsx)
 
 (jsx_closing_element
   ([
-    "</"
-    ">"
-  ]) @punctuation.bracket.jsx)
+      "</"
+      ">"])
+  @punctuation.bracket.jsx)
 
 (jsx_self_closing_element
   ([
-    "<"
-    "/>"
-  ]) @punctuation.bracket.jsx)
+      "<"
+      "/>"])
+  @punctuation.bracket.jsx)
 
 (jsx_attribute
-  "=" @punctuation.delimiter.jsx)
+  "="
+  @punctuation.delimiter.jsx)
 
-(jsx_text) @text.jsx
+(jsx_text)
+@text.jsx
 
-(html_character_reference) @string.special
+(html_character_reference)
+@string.special

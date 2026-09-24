@@ -1,4 +1,6 @@
 (list
-  (list_item) @indent)
+  (list_item)
+  @indent)
 
-(list_item) @start.list_item
+(list_item)
+@start.list_item

@@ -16,15 +16,15 @@
   "then"
   "until"
   "while"
-  (break_statement)
-] @keyword
+  (break_statement)]
+@keyword
 
 ; Operators
 [
   "and"
   "not"
-  "or"
-] @keyword.operator
+  "or"]
+@keyword.operator
 
 [
   "+"
@@ -47,16 +47,16 @@
   "<<"
   ">>"
   "//"
-  ".."
-] @operator
+  ".."]
+@operator
 
 ; Punctuations
 [
   ";"
   ":"
   ","
-  "."
-] @punctuation.delimiter
+  "."]
+@punctuation.delimiter
 
 ; Brackets
 [
@@ -65,97 +65,145 @@
   "["
   "]"
   "{"
-  "}"
-] @punctuation.bracket
+  "}"]
+@punctuation.bracket
 
 ; Variables
-(identifier) @variable
+(identifier)
+@variable
 
 ((identifier) @variable.special
   (#eq? @variable.special "self"))
 
 (variable_list
-  attribute: (attribute
+  attribute:
+  (attribute
     ([
-      "<"
-      ">"
-    ] @punctuation.bracket
-      (identifier) @attribute)))
+        "<"
+        ">"]
+      @punctuation.bracket
+      (identifier)
+      @attribute)))
 
 ; Constants
 ((identifier) @constant
   (#match? @constant "^[A-Z][A-Z_0-9]*$"))
 
-(vararg_expression) @constant
+(vararg_expression)
+@constant
 
-(nil) @constant.builtin
+(nil)
+@constant.builtin
 
 [
   (false)
-  (true)
-] @boolean
+  (true)]
+@boolean
 
 ; Tables
 (field
-  name: (identifier) @property)
+  name:
+  (identifier)
+  @property)
 
 (dot_index_expression
-  field: (identifier) @property)
+  field:
+  (identifier)
+  @property)
 
 (table_constructor
   [
     "{"
-    "}"
-  ] @constructor)
+    "}"]
+  @constructor)
 
 ; Functions
 (parameters
-  (identifier) @parameter)
+  (identifier)
+  @parameter)
 
 (function_call
-  name: [
-    (identifier) @function
+  name:
+  [
+    (identifier)
+    @function
     (dot_index_expression
-      field: (identifier) @function)
-  ])
+      field:
+      (identifier)
+      @function)])
 
 (function_declaration
-  name: [
-    (identifier) @function.definition
+  name:
+  [
+    (identifier)
+    @function.definition
     (dot_index_expression
-      field: (identifier) @function.definition)
-  ])
+      field:
+      (identifier)
+      @function.definition)])
 
 (method_index_expression
-  method: (identifier) @function.method)
+  method:
+  (identifier)
+  @function.method)
 
 (function_call
-  (identifier) @function.builtin
+  (identifier)
+  @function.builtin
   (#any-of? @function.builtin
     ; built-in functions in Lua 5.1
-    "assert" "collectgarbage" "dofile" "error" "getfenv" "getmetatable" "ipairs" "load" "loadfile"
-    "loadstring" "module" "next" "pairs" "pcall" "print" "rawequal" "rawget" "rawset" "require"
-    "select" "setfenv" "setmetatable" "tonumber" "tostring" "type" "unpack" "xpcall"))
+    "assert"
+    "collectgarbage"
+    "dofile"
+    "error"
+    "getfenv"
+    "getmetatable"
+    "ipairs"
+    "load"
+    "loadfile"
+    "loadstring"
+    "module"
+    "next"
+    "pairs"
+    "pcall"
+    "print"
+    "rawequal"
+    "rawget"
+    "rawset"
+    "require"
+    "select"
+    "setfenv"
+    "setmetatable"
+    "tonumber"
+    "tostring"
+    "type"
+    "unpack"
+    "xpcall"))
 
 ; Others
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
 
-(hash_bang_line) @preproc
+(hash_bang_line)
+@preproc
 
-(number) @number
+(number)
+@number
 
-(string) @string
+(string)
+@string
 
-(escape_sequence) @string.escape
+(escape_sequence)
+@string.escape

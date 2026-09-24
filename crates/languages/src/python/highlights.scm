@@ -1,8 +1,11 @@
 ; Identifier naming conventions; these "soft conventions" should stay at the top of the file as they're often overridden
-(identifier) @variable
+(identifier)
+@variable
 
 (attribute
-  attribute: (identifier) @property)
+  attribute:
+  (identifier)
+  @property)
 
 ; CamelCase for classes
 ((identifier) @type.class
@@ -13,166 +16,288 @@
   (#match? @constant "^_*[A-Z][A-Z0-9_]*$"))
 
 (type
-  (identifier) @type)
+  (identifier)
+  @type)
 
 (generic_type
-  (identifier) @type)
+  (identifier)
+  @type)
 
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
 
-(string) @string
+(string)
+@string
 
-(escape_sequence) @string.escape
+(escape_sequence)
+@string.escape
 
 ; Type alias
 (type_alias_statement
-  "type" @keyword)
+  "type"
+  @keyword)
 
 ; TypeVar with constraints in type parameters
 (type
   (tuple
-    (identifier) @type))
+    (identifier)
+    @type))
 
 ; Forward references
 (type
-  (string) @type)
+  (string)
+  @type)
 
 ; Function calls
 (call
-  function: (attribute
-    attribute: (identifier) @function.method.call))
+  function:
+  (attribute
+    attribute:
+    (identifier)
+    @function.method.call))
 
 (call
-  function: (identifier) @function.call)
+  function:
+  (identifier)
+  @function.call)
 
 (decorator
-  "@" @function.decorator
+  "@"
+  @function.decorator
   [
-    (identifier) @function.decorator
+    (identifier)
+    @function.decorator
     (attribute
-      object: (identifier) @function.decorator
-      attribute: (identifier) @function.decorator)
+      object:
+      (identifier)
+      @function.decorator
+      attribute:
+      (identifier)
+      @function.decorator)
     (call
-      function: (identifier) @function.decorator.call)
+      function:
+      (identifier)
+      @function.decorator.call)
     (call
       (attribute
-        object: (identifier) @function.decorator.call
-        attribute: (identifier) @function.decorator.call))
-  ])
+        object:
+        (identifier)
+        @function.decorator.call
+        attribute:
+        (identifier)
+        @function.decorator.call))])
 
 ; Function and class definitions
 (function_definition
-  name: (identifier) @function.definition)
+  name:
+  (identifier)
+  @function.definition)
 
 ((call
-  function: (identifier) @_isinstance
-  arguments: (argument_list
-    (_)
-    (identifier) @type))
+    function:
+    (identifier)
+    @_isinstance
+    arguments:
+    (argument_list
+      (_)
+      (identifier)
+      @type))
   (#eq? @_isinstance "isinstance"))
 
 ((call
-  function: (identifier) @_issubclass
-  arguments: (argument_list
-    (identifier) @type
-    (identifier) @type))
+    function:
+    (identifier)
+    @_issubclass
+    arguments:
+    (argument_list
+      (identifier)
+      @type
+      (identifier)
+      @type))
   (#eq? @_issubclass "issubclass"))
 
 ; Function arguments
 (function_definition
-  parameters: (parameters
+  parameters:
+  (parameters
     [
-      (identifier) @variable.parameter ; Simple parameters
+      (identifier) ; Simple parameters
+      @variable.parameter
       (typed_parameter
-        (identifier) @variable.parameter) ; Typed parameters
+        (identifier) ; Typed parameters
+        @variable.parameter)
       (default_parameter
-        name: (identifier) @variable.parameter) ; Default parameters
+        name: ; Default parameters
+        (identifier)
+        @variable.parameter)
       (typed_default_parameter
-        name: (identifier) @variable.parameter) ; Typed default parameters
+        name: ; Typed default parameters
+        (identifier)
+        @variable.parameter)
       (list_splat_pattern
-        (identifier) @variable.parameter) ; List splat parameters (*args)
+        (identifier) ; List splat parameters (*args)
+        @variable.parameter)
       (dictionary_splat_pattern
-        (identifier) @variable.parameter) ; Dictionary splat parameters (**kwargs)
+        (identifier) ; Dictionary splat parameters (**kwargs)
+        @variable.parameter)
       (typed_parameter
         (list_splat_pattern
-          (identifier) @variable.parameter)) ; Typed list splat parameters
+          (identifier) ; Typed list splat parameters
+          @variable.parameter))
       (typed_parameter
         (dictionary_splat_pattern
-          (identifier) @variable.parameter)) ; Typed dictionary splat parameters
-    ]))
+          (identifier) ; Typed dictionary splat parameters
+          @variable.parameter))]))
 
 ; Keyword arguments
 (call
-  arguments: (argument_list
+  arguments:
+  (argument_list
     (keyword_argument
-      name: (identifier) @function.kwargs)))
+      name:
+      (identifier)
+      @function.kwargs)))
 
 ; Class definitions and calling: needs to come after the regex matching above
 (class_definition
-  name: (identifier) @type.class.definition)
+  name:
+  (identifier)
+  @type.class.definition)
 
 (class_definition
-  superclasses: (argument_list
-    (identifier) @type.class.inheritance))
+  superclasses:
+  (argument_list
+    (identifier)
+    @type.class.inheritance))
 
 (call
-  function: (identifier) @type.class.call
+  function:
+  (identifier)
+  @type.class.call
   (#match? @type.class.call "^_*[A-Z][A-Za-z0-9_]*$"))
 
 ; Builtins
 ((call
-  function: (identifier) @function.builtin)
+    function:
+    (identifier)
+    @function.builtin)
   (#any-of? @function.builtin
-    "abs" "aiter" "all" "anext" "any" "ascii" "bin" "bool" "breakpoint" "bytearray" "bytes"
-    "callable" "chr" "classmethod" "compile" "complex" "delattr" "dict" "dir" "divmod" "enumerate"
-    "eval" "exec" "filter" "float" "format" "frozenset" "getattr" "globals" "hasattr" "hash" "help"
-    "hex" "id" "input" "int" "isinstance" "issubclass" "iter" "len" "list" "locals" "map" "max"
-    "memoryview" "min" "next" "object" "oct" "open" "ord" "pow" "print" "property" "range" "repr"
-    "reversed" "round" "set" "setattr" "sentinel" "slice" "sorted" "staticmethod" "str" "sum"
-    "super" "tuple" "type" "vars" "zip" "__import__"))
+    "abs"
+    "aiter"
+    "all"
+    "anext"
+    "any"
+    "ascii"
+    "bin"
+    "bool"
+    "breakpoint"
+    "bytearray"
+    "bytes"
+    "callable"
+    "chr"
+    "classmethod"
+    "compile"
+    "complex"
+    "delattr"
+    "dict"
+    "dir"
+    "divmod"
+    "enumerate"
+    "eval"
+    "exec"
+    "filter"
+    "float"
+    "format"
+    "frozenset"
+    "getattr"
+    "globals"
+    "hasattr"
+    "hash"
+    "help"
+    "hex"
+    "id"
+    "input"
+    "int"
+    "isinstance"
+    "issubclass"
+    "iter"
+    "len"
+    "list"
+    "locals"
+    "map"
+    "max"
+    "memoryview"
+    "min"
+    "next"
+    "object"
+    "oct"
+    "open"
+    "ord"
+    "pow"
+    "print"
+    "property"
+    "range"
+    "repr"
+    "reversed"
+    "round"
+    "set"
+    "setattr"
+    "sentinel"
+    "slice"
+    "sorted"
+    "staticmethod"
+    "str"
+    "sum"
+    "super"
+    "tuple"
+    "type"
+    "vars"
+    "zip"
+    "__import__"))
 
 ; Literals
 [
   (true)
-  (false)
-] @boolean
+  (false)]
+@boolean
 
 [
   (none)
-  (ellipsis)
-] @constant.builtin
+  (ellipsis)]
+@constant.builtin
 
 [
   (integer)
-  (float)
-] @number
+  (float)]
+@number
 
 ; Self references
 [
   (parameters
-    (identifier) @variable.special)
+    (identifier)
+    @variable.special)
   (attribute
-    (identifier) @variable.special)
-  (#any-of? @variable.special "self" "cls")
-]
+    (identifier)
+    @variable.special)
+  (#any-of? @variable.special "self" "cls")]
 
 [
   "."
   ","
-  ":"
-] @punctuation.delimiter
+  ":"]
+@punctuation.delimiter
 
 [
   "("
@@ -180,78 +305,109 @@
   "["
   "]"
   "{"
-  "}"
-] @punctuation.bracket
+  "}"]
+@punctuation.bracket
 
 (interpolation
-  "{" @punctuation.special
-  "}" @punctuation.special) @embedded
+  "{"
+  @punctuation.special
+  "}"
+  @punctuation.special)
+@embedded
 
 ; Docstrings.
 ([
-  (expression_statement
-    (assignment))
-  (type_alias_statement)
-]
+    (expression_statement
+      (assignment))
+    (type_alias_statement)]
   .
   (expression_statement
-    (string) @string.doc)+)
+    (string)
+    @string.doc)
+  +)
 
 (module
   .
   (expression_statement
-    (string) @string.doc)+)
+    (string)
+    @string.doc)
+  +)
 
 (class_definition
-  body: (block
+  body:
+  (block
     .
     (expression_statement
-      (string) @string.doc)+))
+      (string)
+      @string.doc)
+    +))
 
 (function_definition
-  "async"?
+  "async"
+  ?
   "def"
-  name: (_)
-  (parameters)?
-  body: (block
+  name:
+  (_)
+  (parameters)
+  ?
+  body:
+  (block
     .
     (expression_statement
-      (string) @string.doc)+))
+      (string)
+      @string.doc)
+    +))
 
 (class_definition
-  body: (block
+  body:
+  (block
     .
-    (comment) @comment*
+    (comment)
+    @comment*
     .
     (expression_statement
-      (string) @string.doc)+))
+      (string)
+      @string.doc)
+    +))
 
 (module
   .
-  (comment) @comment*
+  (comment)
+  @comment*
   .
   (expression_statement
-    (string) @string.doc)+)
+    (string)
+    @string.doc)
+  +)
 
 (class_definition
-  body: (block
+  body:
+  (block
     (expression_statement
       (assignment))
     .
     (expression_statement
-      (string) @string.doc)+))
+      (string)
+      @string.doc)
+    +))
 
 (class_definition
-  body: (block
+  body:
+  (block
     (function_definition
-      name: (identifier) @function.method.constructor
+      name:
+      (identifier)
+      @function.method.constructor
       (#eq? @function.method.constructor "__init__")
-      body: (block
+      body:
+      (block
         (expression_statement
           (assignment))
         .
         (expression_statement
-          (string) @string.doc)+))))
+          (string)
+          @string.doc)
+        +))))
 
 [
   "-"
@@ -289,11 +445,13 @@
   ">>="
   "@="
   "^="
-  "|="
-] @operator
+  "|="]
+@operator
 
 (binary_operator
-  operator: "@" @operator)
+  operator:
+  "@"
+  @operator)
 
 [
   "and"
@@ -302,8 +460,8 @@
   "not"
   "or"
   "is not"
-  "not in"
-] @keyword.operator
+  "not in"]
+@keyword.operator
 
 [
   "as"
@@ -336,65 +494,177 @@
   "with"
   "yield"
   "match"
-  "case"
-] @keyword
+  "case"]
+@keyword
 
 ; Definition keywords def, class, async def, lambda
 [
   "async"
   "def"
   "class"
-  "lambda"
-] @keyword.definition
+  "lambda"]
+@keyword.definition
 
 (decorator
-  "@" @attribute.builtin
-  (identifier) @attribute.builtin @_decorator
+  "@"
+  @attribute.builtin
+  (identifier)
+  @attribute.builtin
+  @_decorator
   (#any-of? @_decorator "classmethod" "staticmethod" "property"))
 
 (attribute
-  attribute: (identifier) @attribute.special
+  attribute:
+  (identifier)
+  @attribute.special
   (#any-of? @attribute.special
-    "__all__" "__annotations__" "__bases__" "__builtins__" "__class__" "__closure__" "__code__"
-    "__debug__" "__defaults__" "__dict__" "__doc__" "__file__" "__func__" "__globals__"
-    "__kwdefaults__" "__match_args__" "__members__" "__metaclass__" "__methods__" "__module__"
-    "__mro__" "__mro_entries__" "__name__" "__qualname__" "__post_init__" "__self__" "__signature__"
-    "__slots__" "__subclasses__" "__version__" "__weakref__" "__wrapped__" "__classcell__"
-    "__spec__" "__path__" "__package__" "__future__" "__traceback__"))
+    "__all__"
+    "__annotations__"
+    "__bases__"
+    "__builtins__"
+    "__class__"
+    "__closure__"
+    "__code__"
+    "__debug__"
+    "__defaults__"
+    "__dict__"
+    "__doc__"
+    "__file__"
+    "__func__"
+    "__globals__"
+    "__kwdefaults__"
+    "__match_args__"
+    "__members__"
+    "__metaclass__"
+    "__methods__"
+    "__module__"
+    "__mro__"
+    "__mro_entries__"
+    "__name__"
+    "__qualname__"
+    "__post_init__"
+    "__self__"
+    "__signature__"
+    "__slots__"
+    "__subclasses__"
+    "__version__"
+    "__weakref__"
+    "__wrapped__"
+    "__classcell__"
+    "__spec__"
+    "__path__"
+    "__package__"
+    "__future__"
+    "__traceback__"))
 
 ; Builtin types as identifiers
 [
   (call
-    function: (identifier) @type.builtin)
+    function:
+    (identifier)
+    @type.builtin)
   (type
-    (identifier) @type.builtin)
+    (identifier)
+    @type.builtin)
   (generic_type
-    (identifier) @type.builtin)
+    (identifier)
+    @type.builtin)
   ; also check if type binary operator left identifier for union types
   (type
     (binary_operator
-      left: (identifier) @type.builtin))
+      left:
+      (identifier)
+      @type.builtin))
   (#any-of? @type.builtin
-    "bool" "bytearray" "bytes" "complex" "dict" "float" "frozenset" "frozendict" "int" "list"
-    "memoryview" "object" "range" "set" "slice" "str" "tuple")
-]
+    "bool"
+    "bytearray"
+    "bytes"
+    "complex"
+    "dict"
+    "float"
+    "frozenset"
+    "frozendict"
+    "int"
+    "list"
+    "memoryview"
+    "object"
+    "range"
+    "set"
+    "slice"
+    "str"
+    "tuple")]
 
 ((identifier) @type.class.builtin
   (#any-of? @type.class.builtin
     ; Exceptions
-    "BaseException" "Exception" "ArithmeticError" "BufferError" "LookupError" "AssertionError"
-    "AttributeError" "EOFError" "FloatingPointError" "GeneratorExit" "ImportError"
-    "ModuleNotFoundError" "IndexError" "KeyError" "KeyboardInterrupt" "MemoryError" "NameError"
-    "NotImplementedError" "OSError" "OverflowError" "RecursionError" "ReferenceError" "RuntimeError"
-    "StopIteration" "StopAsyncIteration" "SyntaxError" "IndentationError" "TabError" "SystemError"
-    "SystemExit" "TypeError" "UnboundLocalError" "UnicodeError" "UnicodeEncodeError"
-    "UnicodeDecodeError" "UnicodeTranslateError" "ValueError" "ZeroDivisionError" "EnvironmentError"
-    "IOError" "WindowsError" "BlockingIOError" "ChildProcessError" "ConnectionError"
-    "BrokenPipeError" "ConnectionAbortedError" "ConnectionRefusedError" "ConnectionResetError"
-    "FileExistsError" "FileNotFoundError" "InterruptedError" "IsADirectoryError"
-    "NotADirectoryError" "PermissionError" "ProcessLookupError" "TimeoutError" "ExceptionGroup"
+    "BaseException"
+    "Exception"
+    "ArithmeticError"
+    "BufferError"
+    "LookupError"
+    "AssertionError"
+    "AttributeError"
+    "EOFError"
+    "FloatingPointError"
+    "GeneratorExit"
+    "ImportError"
+    "ModuleNotFoundError"
+    "IndexError"
+    "KeyError"
+    "KeyboardInterrupt"
+    "MemoryError"
+    "NameError"
+    "NotImplementedError"
+    "OSError"
+    "OverflowError"
+    "RecursionError"
+    "ReferenceError"
+    "RuntimeError"
+    "StopIteration"
+    "StopAsyncIteration"
+    "SyntaxError"
+    "IndentationError"
+    "TabError"
+    "SystemError"
+    "SystemExit"
+    "TypeError"
+    "UnboundLocalError"
+    "UnicodeError"
+    "UnicodeEncodeError"
+    "UnicodeDecodeError"
+    "UnicodeTranslateError"
+    "ValueError"
+    "ZeroDivisionError"
+    "EnvironmentError"
+    "IOError"
+    "WindowsError"
+    "BlockingIOError"
+    "ChildProcessError"
+    "ConnectionError"
+    "BrokenPipeError"
+    "ConnectionAbortedError"
+    "ConnectionRefusedError"
+    "ConnectionResetError"
+    "FileExistsError"
+    "FileNotFoundError"
+    "InterruptedError"
+    "IsADirectoryError"
+    "NotADirectoryError"
+    "PermissionError"
+    "ProcessLookupError"
+    "TimeoutError"
+    "ExceptionGroup"
     "BaseExceptionGroup"
     ; Warnings
-    "Warning" "UserWarning" "DeprecationWarning" "PendingDeprecationWarning" "SyntaxWarning"
-    "RuntimeWarning" "FutureWarning" "ImportWarning" "UnicodeWarning" "EncodingWarning"
-    "BytesWarning" "ResourceWarning"))
+    "Warning"
+    "UserWarning"
+    "DeprecationWarning"
+    "PendingDeprecationWarning"
+    "SyntaxWarning"
+    "RuntimeWarning"
+    "FutureWarning"
+    "ImportWarning"
+    "UnicodeWarning"
+    "EncodingWarning"
+    "BytesWarning"
+    "ResourceWarning"))

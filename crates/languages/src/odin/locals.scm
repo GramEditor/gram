@@ -6,12 +6,13 @@
   (for_statement)
   (if_statement)
   (when_statement)
-  (switch_statement)
-] @scope
+  (switch_statement)]
+@scope
 
 ; References
 
-(identifier) @reference
+(identifier)
+@reference
 
 ; Definitions
 
@@ -33,7 +34,7 @@
 (const_declaration (identifier) @definition.constant "::")
 
 ; Function parameters
-(parameter (identifier) @definition.parameter ":"?)
+(parameter (identifier) @definition.parameter ":" ?)
 (default_parameter (identifier) @definition.parameter ":=")
 
 ; Struct fields

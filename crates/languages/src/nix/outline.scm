@@ -1,4 +1,8 @@
-(comment) @annotation
+(comment)
+@annotation
 
 (binding
-  attrpath: (attrpath) @name) @item
+  attrpath:
+  (attrpath)
+  @name)
+@item

@@ -6,49 +6,69 @@
   (for_statement)
   (while_statement)
   (do_statement)
-  (else_clause)
-] @indent
+  (else_clause)]
+@indent
 
 (expression_statement
-  (_) @indent
-  ";" @end)
+  (_)
+  @indent
+  ";"
+  @end)
 
 (_
   "{"
-  "}" @end) @indent
-
-(field_declaration_list
-  (access_specifier) @start
-  "}" @end) @indent
+  "}"
+  @end)
+@indent
 
 (field_declaration_list
   (access_specifier)
-  (access_specifier) @outdent)
+  @start
+  "}"
+  @end)
+@indent
+
+(field_declaration_list
+  (access_specifier)
+  (access_specifier)
+  @outdent)
 
 (compound_statement
   (case_statement
-    ":" @start)
-  "}" @end) @indent
+    ":"
+    @start)
+  "}"
+  @end)
+@indent
 
 (compound_statement
   (case_statement)
-  (case_statement) @outdent)
+  (case_statement)
+  @outdent)
 
 (_
   "("
-  ")" @end) @indent
+  ")"
+  @end)
+@indent
 
 ((comment) @indent
   (#match? @indent "^/\\*"))
 
-(if_statement) @start.if
+(if_statement)
+@start.if
 
-(for_statement) @start.for
+(for_statement)
+@start.for
 
-(while_statement) @start.while
+(while_statement)
+@start.while
 
-(do_statement) @start.do
+(do_statement)
+@start.do
 
-(switch_statement) @start.switch
+(switch_statement)
+@start.switch
 
-(else_clause) @start.else
+(else_clause)
+@start.else

@@ -1,3 +1,5 @@
-(comment) @comment.inclusive
+(comment)
+@comment.inclusive
 
-(string_value) @string
+(string_value)
+@string

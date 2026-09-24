@@ -1,51 +1,64 @@
 ; Properties
 ;-----------
-(bare_key) @property
+(bare_key)
+@property
 
-(quoted_key) @property
+(quoted_key)
+@property
 
 ; Literals
 ;---------
-(comment) @comment
+(comment)
+@comment
 (
-  (comment) @comment.todo
-  (#match? @comment.todo "TODO:")
-)
+  (comment)
+  @comment.todo
+  (#match? @comment.todo "TODO:"))
 (
-  (comment) @comment.note
-  (#match? @comment.note "NOTE:")
-)
+  (comment)
+  @comment.note
+  (#match? @comment.note "NOTE:"))
 (
-  (comment) @comment.warning
-  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:")
-)
+  (comment)
+  @comment.warning
+  (#match? @comment.warning "WARNING:|WARN:|ATTENTION:"))
 
-(boolean) @constant
+(boolean)
+@constant
 
-(integer) @number
+(integer)
+@number
 
-(float) @number
+(float)
+@number
 
-(string) @string
+(string)
+@string
 
-(escape_sequence) @string.escape
+(escape_sequence)
+@string.escape
 
-(offset_date_time) @string.special
+(offset_date_time)
+@string.special
 
-(local_date_time) @string.special
+(local_date_time)
+@string.special
 
-(local_date) @string.special
+(local_date)
+@string.special
 
-(local_time) @string.special
+(local_time)
+@string.special
 
 ; Punctuation
 ;------------
 [
   "."
-  ","
-] @punctuation.delimiter
+  ","]
+@punctuation.delimiter
 
-"=" @operator
+"="
+@operator
 
 [
   "["
@@ -53,5 +66,5 @@
   "[["
   "]]"
   "{"
-  "}"
-] @punctuation.bracket
+  "}"]
+@punctuation.bracket
