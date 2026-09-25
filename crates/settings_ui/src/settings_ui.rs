@@ -1117,6 +1117,7 @@ fn render_settings_item_link(
 struct SettingItem {
     title: &'static str,
     description: &'static str,
+    aliases: Option<&'static [&'static str]>,
     field: Box<dyn AnySettingField>,
     metadata: Option<Box<SettingsFieldMetadata>>,
     files: FileMask,
@@ -1791,12 +1792,26 @@ impl SettingsWindow {
                     SettingsPageItem::DynamicItem(DynamicItem { discriminant: item, .. })
                     | SettingsPageItem::SettingItem(item) => {
                         json_path = item.field.json_path().map(|path| path.trim_end_matches('$'));
+
+                        let aliases = item.aliases.unwrap_or(&[]);
+
+                        let contents = [page.title, header_str, item.title, item.description]
+                            .into_iter()
+                            .chain(aliases.iter().copied())
+                            .collect::<Vec<_>>()
+                            .join("\n");
+
                         documents.push(bm25::Document {
                             id: key_index,
-                            contents: [page.title, header_str, item.title, item.description].join("\n"),
+                            contents,
                         });
+
                         push_candidates(&mut fuzzy_match_candidates, key_index, item.title);
                         push_candidates(&mut fuzzy_match_candidates, key_index, item.description);
+
+                        for alias in aliases.into_iter() {
+                            push_candidates(&mut fuzzy_match_candidates, key_index, alias);
+                        }
                     }
                     SettingsPageItem::SectionHeader(header) => {
                         documents.push(bm25::Document {
