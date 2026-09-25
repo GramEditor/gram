@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configure debug adapter permissions in language server config view
 - Add refs information to commit history views
 - Add 'refresh git history' button (#575) by @nicoco
+- Add settings-alias support (#581) by @nitbook
 
 ## Removed
 
