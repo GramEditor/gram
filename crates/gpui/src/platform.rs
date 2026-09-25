@@ -32,12 +32,12 @@ use crate::{
 };
 use anyhow::Result;
 use async_task::Runnable;
+use collections::FxHasher;
 use futures::channel::oneshot;
 use image::codecs::gif::GifDecoder;
 use image::{AnimationDecoder as _, Frame};
 use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 use schemars::JsonSchema;
-use seahash::SeaHasher;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 use std::borrow::Cow;
@@ -1852,7 +1852,7 @@ impl ClipboardString {
 
     #[cfg_attr(any(target_os = "linux", target_os = "freebsd"), allow(dead_code))]
     pub(crate) fn text_hash(text: &str) -> u64 {
-        let mut hasher = SeaHasher::new();
+        let mut hasher = FxHasher::default();
         text.hash(&mut hasher);
         hasher.finish()
     }

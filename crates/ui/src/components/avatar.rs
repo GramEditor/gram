@@ -2,7 +2,7 @@ use std::hash::{Hash, Hasher};
 
 use crate::prelude::*;
 
-use fnv::FnvHasher;
+use collections::FxHasher;
 use gpui::{Hsla, ImageSource, IntoElement, Styled, img};
 
 pub struct AvatarStyle {
@@ -14,7 +14,7 @@ pub struct AvatarStyle {
 impl AvatarStyle {
     /// Generate a "unique" avatar based on an identity string (usually an email address).
     pub fn new(identity: &str) -> Self {
-        let mut hasher = FnvHasher::default();
+        let mut hasher = FxHasher::default();
         identity.hash(&mut hasher);
         let id = hasher.finish();
         Self {

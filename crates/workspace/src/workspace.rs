@@ -29,7 +29,7 @@ use client::{
     Client, ErrorExt, TypedEnvelope,
     proto::{self, ErrorCode, PanelId},
 };
-use collections::{HashMap, HashSet, hash_map};
+use collections::{FxHasher, HashMap, HashSet, hash_map};
 use dock::{Dock, DockPosition, PanelButtons, PanelHandle, RESIZE_HANDLE_SIZE};
 use futures::{
     Future, FutureExt, StreamExt,
@@ -89,7 +89,7 @@ use std::{
     borrow::Cow,
     cell::RefCell,
     cmp,
-    collections::{VecDeque, hash_map::DefaultHasher},
+    collections::VecDeque,
     env,
     hash::{Hash, Hasher},
     path::{Path, PathBuf},
@@ -1084,7 +1084,7 @@ impl Workspace {
                 project::Event::LanguageServerPrompt(request) => {
                     struct LanguageServerPrompt;
 
-                    let mut hasher = DefaultHasher::new();
+                    let mut hasher = FxHasher::default();
                     request.lsp_name.as_str().hash(&mut hasher);
                     let id = hasher.finish();
 

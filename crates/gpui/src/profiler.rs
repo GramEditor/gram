@@ -1,12 +1,6 @@
-use std::{
-    cell::LazyCell,
-    hash::Hasher,
-    hash::{DefaultHasher, Hash},
-    sync::Arc,
-    thread::ThreadId,
-    time::Instant,
-};
+use std::{cell::LazyCell, hash::Hash, hash::Hasher, sync::Arc, thread::ThreadId, time::Instant};
 
+use collections::FxHasher;
 use serde::{Deserialize, Serialize};
 
 #[doc(hidden)]
@@ -136,7 +130,7 @@ impl<'a> SerializedThreadTaskTimings<'a> {
     pub fn convert(anchor: Instant, timings: ThreadTaskTimings) -> SerializedThreadTaskTimings<'static> {
         let serialized_timings = SerializedTaskTiming::convert(anchor, &timings.timings);
 
-        let mut hasher = DefaultHasher::new();
+        let mut hasher = FxHasher::default();
         timings.thread_id.hash(&mut hasher);
         let thread_id = hasher.finish();
 

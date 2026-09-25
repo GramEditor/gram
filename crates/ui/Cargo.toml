@@ -12,9 +12,9 @@ path = "src/ui.rs"
 
 [dependencies]
 chrono.workspace = true
+collections.workspace = true
 component.workspace = true
 documented.workspace = true
-fnv.workspace = true
 gpui.workspace = true
 gpui_macros.workspace = true
 icons.workspace = true
