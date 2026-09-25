@@ -9503,16 +9503,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b2231b7c3057d5e4ad0156fb3dc807d900806020c5ffa3ee6ff2c8c76fb8520"
 
 [[package]]
-name = "streaming_diff"
-version = "3.3.0"
-dependencies = [
- "ordered-float",
- "rand 0.10.2",
- "rope",
- "util",
-]
-
-[[package]]
 name = "strict-num"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

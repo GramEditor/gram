@@ -110,7 +110,6 @@ members = [
   "crates/snippets_ui",
   "crates/sqlez",
   "crates/sqlez_macros",
-  "crates/streaming_diff",
   "crates/sum_tree",
   "crates/svg_preview",
   "crates/system_specs",
