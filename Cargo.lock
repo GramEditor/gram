@@ -8672,18 +8672,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "scheduler"
-version = "3.3.0"
-dependencies = [
- "async-task",
- "backtrace",
- "chrono",
- "futures",
- "parking_lot",
- "rand 0.10.2",
-]
-
-[[package]]
 name = "schema_generator"
 version = "3.3.0"
 dependencies = [

@@ -96,7 +96,6 @@ members = [
   "crates/reqwest_client",
   "crates/rope",
   "crates/rpc",
-  "crates/scheduler",
   "crates/schema_generator",
   "crates/search",
   "crates/session",
