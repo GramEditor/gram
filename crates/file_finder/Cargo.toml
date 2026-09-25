@@ -43,5 +43,8 @@ theme = { workspace = true, features = ["test-support"] }
 workspace = { workspace = true, features = ["test-support"] }
 zlog.workspace = true
 
+[features]
+test-support = []
+
 [lints]
 workspace = true

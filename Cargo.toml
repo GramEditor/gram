@@ -610,7 +610,7 @@ too_many_arguments = "allow"
 type_complexity = "allow"
 
 [workspace.lints.rust]
-unexpected_cfgs = { level = "allow" }
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(perf_enabled)', 'cfg(rust_analyzer)'] }
 
 [workspace.metadata.cargo-shear]
 ignored-paths = ["crates/extension_api/wit/since*/settings.rs"]

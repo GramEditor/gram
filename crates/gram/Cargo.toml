@@ -206,5 +206,8 @@ windows.workspace = true
 [target.'cfg(target_os = "windows")'.build-dependencies]
 winresource.workspace = true
 
+[features]
+test-support = []
+
 [lints]
 workspace = true

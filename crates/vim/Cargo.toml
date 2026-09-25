@@ -62,5 +62,8 @@ settings_ui.workspace = true
 util = { workspace = true, features = ["test-support"] }
 workspace = { workspace = true, features = ["test-support"] }
 
+[features]
+test-support = []
+
 [lints]
 workspace = true
