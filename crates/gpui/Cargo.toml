@@ -100,7 +100,6 @@ itertools.workspace = true
 libc.workspace = true
 log.workspace = true
 lyon.workspace = true
-num_cpus.workspace = true
 parking.workspace = true
 parking_lot.workspace = true
 pin-project.workspace = true

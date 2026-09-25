@@ -377,7 +377,6 @@ moka = { version = "0.12.16", features = ["sync"] }
 nbformat = "1.2.2"
 nix = "0.31.3"
 notify = "9.0.0-rc.5"
-num_cpus = "1.17.0"
 num-format = "0.4.4"
 objc2 = "0.6.4"
 objc2-app-kit = "0.3.2"
