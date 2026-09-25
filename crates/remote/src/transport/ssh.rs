@@ -677,7 +677,8 @@ impl SshRemoteConnection {
     async fn try_server_binary(&self, path: &RelPath) -> Result<ServerBinaryStatus> {
         let path_str = path.display(self.path_style());
         let script = format!(
-            "if [ ! -f {path_str} ]; then echo NOT_FOUND; \
+            "if command -v {path_str} >/dev/null 2>&1; then {path_str} version; \
+             elif [ ! -f {path_str} ]; then echo NOT_FOUND; \
              elif [ ! -x {path_str} ]; then echo NOT_EXECUTABLE; \
              else {path_str} version; fi"
         );
