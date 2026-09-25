@@ -595,8 +595,6 @@ nonminimal_bool = "allow"
 redundant_clone = "deny"
 # Motivation: We use `vec![a..b]` a lot when dealing with ranges in text, so warning on this rule produces a lot of noise.
 single_range_in_vec_init = "allow"
-# Style rules are not enforced.
-style = { level = "allow", priority = -1 }
 todo = "deny"
 # in Rust it can be very tedious to reduce argument count without running afoul of the borrow checker.
 too_many_arguments = "allow"
