@@ -4031,10 +4031,6 @@ impl Workspace {
             }
         }
 
-        if project.is_shared() {
-            title.push_str(" ↗");
-        }
-
         if let Some(last_title) = self.last_window_title.as_ref()
             && &title == last_title
         {

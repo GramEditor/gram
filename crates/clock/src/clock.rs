@@ -63,7 +63,7 @@ pub struct Lamport {
 #[derive(Clone, Default, Hash, Eq, PartialEq)]
 pub struct Global {
     // 4 is chosen as it is the biggest count that does not increase the size of the field itself.
-    // Coincidentally, it also covers all the important non-collab replica ids.
+    // Coincidentally, it also covers all the important replica ids.
     values: SmallVec<[u32; 4]>,
 }
 

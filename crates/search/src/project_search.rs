@@ -21,7 +21,7 @@ use gpui::{
     Task, UpdateGlobal, WeakEntity, Window, actions, div,
 };
 use itertools::Itertools;
-use language::{Buffer, Language};
+use language::{Buffer, Capability, Language};
 use menu::Confirm;
 use project::{
     Project, ProjectPath, SearchResults,
@@ -233,11 +233,9 @@ pub struct ProjectSearchBar {
 
 impl ProjectSearch {
     pub fn new(project: Entity<Project>, cx: &mut Context<Self>) -> Self {
-        let capability = project.read(cx).capability();
-
         Self {
             project,
-            excerpts: cx.new(|_| MultiBuffer::new(capability)),
+            excerpts: cx.new(|_| MultiBuffer::new(Capability::ReadWrite)),
             pending_search: Default::default(),
             match_ranges: Default::default(),
             active_query: None,

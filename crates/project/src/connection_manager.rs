@@ -1,7 +1,7 @@
 use super::Project;
 use anyhow::Result;
 use client::Client;
-use collections::{HashMap, HashSet};
+use collections::HashSet;
 use futures::{FutureExt, StreamExt};
 use gpui::{App, AppContext as _, AsyncApp, Context, Entity, Global, Task, WeakEntity};
 use postage::stream::Stream;
@@ -38,16 +38,10 @@ impl Manager {
         let manager = cx.weak_entity();
         project.update(cx, |_, cx| {
             let manager = manager.clone();
-            cx.on_release(move |project, cx| {
+            cx.on_release(move |_, cx| {
                 manager
-                    .update(cx, |manager, cx| {
-                        manager.projects.retain(|p| {
-                            if let Some(p) = p.upgrade() {
-                                p.read(cx).remote_id() != project.remote_id()
-                            } else {
-                                false
-                            }
-                        });
+                    .update(cx, |manager, _| {
+                        manager.projects.retain(|p| p.upgrade().is_some());
                         if manager.projects.is_empty() {
                             manager.maintain_connection.take();
                         }
@@ -67,57 +61,13 @@ impl Manager {
     }
 
     fn reconnected(&mut self, cx: &mut Context<Self>) -> Task<Result<()>> {
-        let mut projects = HashMap::default();
-
         let request = self.client.request_envelope(proto::RejoinRemoteProjects {
-            rejoined_projects: self
-                .projects
-                .iter()
-                .filter_map(|project| {
-                    if let Some(handle) = project.upgrade() {
-                        let project = handle.read(cx);
-                        let project_id = project.remote_id()?;
-                        projects.insert(project_id, handle.clone());
-                        let mut worktrees = Vec::new();
-                        let mut repositories = Vec::new();
-                        for (id, repository) in project.repositories(cx) {
-                            repositories.push(proto::RejoinRepository {
-                                id: id.to_proto(),
-                                scan_id: repository.read(cx).scan_id,
-                            });
-                        }
-                        for worktree in project.worktrees(cx) {
-                            let worktree = worktree.read(cx);
-                            worktrees.push(proto::RejoinWorktree {
-                                id: worktree.id().to_proto(),
-                                scan_id: worktree.completed_scan_id() as u64,
-                            });
-                        }
-                        Some(proto::RejoinProject {
-                            id: project_id,
-                            worktrees,
-                            repositories,
-                        })
-                    } else {
-                        None
-                    }
-                })
-                .collect(),
+            rejoined_projects: vec![],
         });
 
-        cx.spawn(async move |this, cx| {
-            let response = request.await?;
-            let message_id = response.message_id;
-
-            this.update(cx, |_, cx| {
-                for rejoined_project in response.payload.rejoined_projects {
-                    if let Some(project) = projects.get(&rejoined_project.id) {
-                        project.update(cx, |project, cx| {
-                            project.rejoined(rejoined_project, message_id, cx).log_err();
-                        });
-                    }
-                }
-            })
+        cx.spawn(async move |_, _| {
+            let _ = request.await?;
+            Ok(())
         })
     }
 

@@ -3403,8 +3403,8 @@ pub struct RemoteLspStore {
 }
 
 pub(crate) enum LspStoreMode {
-    Local(LocalLspStore),   // ssh host and collab host
-    Remote(RemoteLspStore), // collab guest
+    Local(LocalLspStore),
+    Remote(RemoteLspStore),
 }
 
 impl LspStoreMode {

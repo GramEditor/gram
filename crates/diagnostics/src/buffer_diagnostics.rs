@@ -14,7 +14,7 @@ use gpui::{
     AnyElement, App, AppContext, Context, Entity, EntityId, EventEmitter, FocusHandle, Focusable, InteractiveElement,
     IntoElement, ParentElement, Render, SharedString, Styled, Subscription, Task, WeakEntity, Window, actions, div,
 };
-use language::{Buffer, DiagnosticEntry, DiagnosticEntryRef, Point};
+use language::{Buffer, Capability, DiagnosticEntry, DiagnosticEntryRef, Point};
 use project::{
     DiagnosticSummary, Event, Project, ProjectItem, ProjectPath,
     project_settings::{DiagnosticSeverity, ProjectSettings},
@@ -143,7 +143,7 @@ impl BufferDiagnosticsEditor {
 
         let summary = project_handle.read(cx).diagnostic_summary_for_path(&project_path, cx);
 
-        let multibuffer = cx.new(|cx| MultiBuffer::new(project_handle.read(cx).capability()));
+        let multibuffer = cx.new(|_| MultiBuffer::new(Capability::ReadWrite));
         let max_severity = Self::max_diagnostics_severity(include_warnings);
         let editor = cx.new(|cx| {
             let mut editor = Editor::for_multibuffer(multibuffer.clone(), Some(project_handle.clone()), window, cx);

@@ -1159,12 +1159,11 @@ impl BufferStore {
         &mut self,
         envelope: TypedEnvelope<proto::CreateBufferForPeer>,
         replica_id: ReplicaId,
-        capability: Capability,
         cx: &mut Context<Self>,
     ) -> Result<()> {
         let remote = self.as_remote_mut().context("buffer store is not a remote")?;
 
-        if let Some(buffer) = remote.handle_create_buffer_for_peer(envelope, replica_id, capability, cx)? {
+        if let Some(buffer) = remote.handle_create_buffer_for_peer(envelope, replica_id, Capability::ReadWrite, cx)? {
             self.add_buffer(buffer, cx)?;
         }
 

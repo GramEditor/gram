@@ -1,7 +1,7 @@
 /// Some helpers for structured error handling.
 ///
 /// The helpers defined here allow you to pass type-safe error codes from
-/// the collab server to the client; and provide a mechanism for additional
+/// the remote server to the client; and provide a mechanism for additional
 /// structured data alongside the message.
 ///
 /// When returning an error, it can be as simple as:
@@ -147,7 +147,7 @@ pub struct RpcError {
     tags: Vec<String>,
 }
 
-/// RpcError is a structured error type that is returned by the collab server.
+/// RpcError is a structured error type that is returned by the remote server.
 /// In addition to a message, it lets you set a specific ErrorCode, and attach
 /// small amounts of metadata to help the client handle the error appropriately.
 ///

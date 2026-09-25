@@ -34,7 +34,6 @@ index.scip
 vendor/*/grammars
 xcuserdata/
 /assets/*licenses.*
-/crates/collab/seed.json
 /crates/gram/resources/arch/PKGBUILD
 /crates/gram/resources/arch/gram-*
 /crates/gram/resources/flatpak/flatpak-cargo-sources.json

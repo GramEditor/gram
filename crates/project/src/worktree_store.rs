@@ -782,10 +782,7 @@ impl WorktreeStore {
                 }
             }
         }
-        // Only send project updates if we share in a collaborative mode.
-        // Otherwise we are the remote server which is currently constructing
-        // worktree store before the client actually has set up its message
-        // handlers.
+        // TODO: this can probably be removed.
         if remote_id != REMOTE_SERVER_PROJECT_ID {
             self.send_project_updates(cx);
         }

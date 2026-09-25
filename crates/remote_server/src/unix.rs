@@ -711,6 +711,8 @@ async fn spawn_server(paths: &ServerPaths) -> Result<(), SpawnServerError> {
         .arg("--stderr-socket")
         .arg(&paths.stderr_socket);
 
+    log::info!("running remotely with paths: {:?}", paths);
+
     let status = server_process.status().await.map_err(SpawnServerError::ProcessStatus)?;
 
     if !status.success() {

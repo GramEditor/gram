@@ -3996,7 +3996,9 @@ impl Repository {
                             Ok(RepositoryState::Local(LocalRepositoryState { backend, .. })) => {
                                 Self::local_git_graph_data(repository, backend, log_source, log_order, cx).await
                             }
-                            Ok(RepositoryState::Remote(_)) => Err("Git graph is not supported for collab yet".into()),
+                            Ok(RepositoryState::Remote(_)) => {
+                                Err("Git graph is not supported for remote projects".into())
+                            }
                             Err(e) => Err(SharedString::from(e)),
                         }
                     }),

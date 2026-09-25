@@ -1279,7 +1279,6 @@ impl EditorElement {
                     .buffer_snapshot()
                     .anchor_before(point.to_offset(&position_map.snapshot, Bias::Left));
                 hover_at(editor, Some(anchor), window, cx);
-                Self::update_visible_cursor(editor, point, position_map, window, cx);
             } else {
                 editor.update_inlay_link_and_hover_points(
                     &position_map.snapshot,
@@ -1294,58 +1293,6 @@ impl EditorElement {
             editor.hide_hovered_link(cx);
             hover_at(editor, None, window, cx);
         }
-    }
-
-    fn update_visible_cursor(
-        _editor: &mut Editor,
-        _point: DisplayPoint,
-        _position_map: &PositionMap,
-        _window: &mut Window,
-        cx: &mut Context<Editor>,
-    ) {
-        // let snapshot = &position_map.snapshot;
-        // let Some(hub) = editor.collaboration_hub() else {
-        //     return;
-        // };
-        // let start = snapshot.display_snapshot.clip_point(
-        //     DisplayPoint::new(point.row(), point.column().saturating_sub(1)),
-        //     Bias::Left,
-        // );
-        // let end = snapshot.display_snapshot.clip_point(
-        //     DisplayPoint::new(
-        //         point.row(),
-        //         (point.column() + 1).min(snapshot.line_len(point.row())),
-        //     ),
-        //     Bias::Right,
-        // );
-        //
-        // let range = snapshot
-        //     .buffer_snapshot()
-        //     .anchor_before(start.to_point(&snapshot.display_snapshot))
-        //     ..snapshot
-        //         .buffer_snapshot()
-        //         .anchor_after(end.to_point(&snapshot.display_snapshot));
-        //
-        // let Some(selection) = snapshot.remote_selections_in_range(&range, hub, cx).next() else {
-        //     return;
-        // };
-        // let key = crate::HoveredCursor {
-        //     replica_id: selection.replica_id,
-        //     selection_id: selection.selection.id,
-        // };
-        // editor.hovered_cursors.insert(
-        //     key.clone(),
-        //     cx.spawn_in(window, async move |editor, cx| {
-        //         cx.background_executor().timer(CURSORS_VISIBLE_FOR).await;
-        //         editor
-        //             .update(cx, |editor, cx| {
-        //                 editor.hovered_cursors.remove(&key);
-        //                 cx.notify();
-        //             })
-        //             .ok();
-        //     }),
-        // );
-        cx.notify();
     }
 
     fn layout_selections(

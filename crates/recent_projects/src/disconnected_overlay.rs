@@ -12,7 +12,7 @@ use workspace::{ModalView, OpenOptions, Workspace, notifications::DetachAndPromp
 use crate::open_remote_project;
 
 enum Host {
-    CollabGuestProject,
+    RemoteGuestProject,
     RemoteServerProject(RemoteConnectionOptions),
 }
 
@@ -56,7 +56,7 @@ impl DisconnectedOverlay {
             let host = if let Some(ssh_connection_options) = remote_connection_options {
                 Host::RemoteServerProject(ssh_connection_options)
             } else {
-                Host::CollabGuestProject
+                Host::RemoteGuestProject
             };
 
             workspace.toggle_modal(window, cx, |_, cx| DisconnectedOverlay {
@@ -128,7 +128,7 @@ impl Render for DisconnectedOverlay {
         let can_reconnect = matches!(self.host, Host::RemoteServerProject(_));
 
         let message = match &self.host {
-            Host::CollabGuestProject => "Your connection to the remote project has been lost.".to_string(),
+            Host::RemoteGuestProject => "Your connection to the remote project has been lost.".to_string(),
             Host::RemoteServerProject(options) => {
                 let autosave = if ProjectSettings::get_global(cx).session.restore_unsaved_buffers {
                     "\nUnsaved changes are stored locally."

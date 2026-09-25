@@ -197,12 +197,6 @@ impl BreakpointStore {
         self.downstream_client = Some((downstream_client, project_id));
     }
 
-    pub(crate) fn unshared(&mut self, cx: &mut Context<Self>) {
-        self.downstream_client.take();
-
-        cx.notify();
-    }
-
     async fn handle_breakpoints_for_file(
         this: Entity<Self>,
         message: TypedEnvelope<proto::BreakpointsForFile>,

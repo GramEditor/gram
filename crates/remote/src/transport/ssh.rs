@@ -397,6 +397,7 @@ impl RemoteConnection for SshRemoteConnection {
                 proxy_args.push(format!("{}='{}'", env_var, value));
             }
         }
+        proxy_args.push("RUST_LOG=debug".to_owned());
         proxy_args.push(remote_binary_path.display(self.path_style()).into_owned());
         proxy_args.push("proxy".to_owned());
         proxy_args.push("--identifier".to_owned());

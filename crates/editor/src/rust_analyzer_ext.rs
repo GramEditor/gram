@@ -90,7 +90,7 @@ pub fn go_to_parent_module(editor: &mut Editor, _: &GoToParentModule, window: &m
             .await
             .into_iter()
             .collect::<anyhow::Result<_>>()
-            .context("go to parent module via collab")?
+            .context("go to parent module via remote")?
         } else {
             let buffer_snapshot = buffer.read_with(cx, |buffer, _| buffer.snapshot())?;
             let position = trigger_anchor.text_anchor.to_point_utf16(&buffer_snapshot);

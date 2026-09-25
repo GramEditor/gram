@@ -17,7 +17,7 @@ use gpui::{
     SharedString, Styled, Task, WeakEntity, Window, point,
 };
 use language::{
-    Bias, Buffer, BufferRow, CharKind, CharScopeContext, LocalFile, Point, SelectionGoal,
+    Bias, Buffer, BufferRow, Capability, CharKind, CharScopeContext, LocalFile, Point, SelectionGoal,
     proto::serialize_anchor as serialize_text_anchor,
 };
 use lsp::DiagnosticSeverity;
@@ -102,7 +102,7 @@ impl FollowableItem for Editor {
                     if state.singleton && buffers.len() == 1 {
                         multibuffer = MultiBuffer::singleton(buffers.pop().unwrap(), cx)
                     } else {
-                        multibuffer = MultiBuffer::new(project.read(cx).capability());
+                        multibuffer = MultiBuffer::new(Capability::ReadWrite);
                         let mut sorted_excerpts = state.excerpts.clone();
                         sorted_excerpts.sort_by_key(|e| e.id);
                         let sorted_excerpts = sorted_excerpts.into_iter().peekable();

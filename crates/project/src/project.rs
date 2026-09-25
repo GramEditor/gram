@@ -76,8 +76,8 @@ use gpui::{
     Window,
 };
 use language::{
-    Buffer, BufferEvent, Capability, CodeLabel, DiskState, Language, LanguageName, LanguageRegistry, PointUtf16,
-    ToOffset, ToPointUtf16, Toolchain, ToolchainMetadata, ToolchainScope, Transaction, Unclipped,
+    Buffer, BufferEvent, CodeLabel, DiskState, Language, LanguageName, LanguageRegistry, PointUtf16, ToOffset,
+    ToPointUtf16, Toolchain, ToolchainMetadata, ToolchainScope, Transaction, Unclipped,
     language_settings::InlayHintKind,
 };
 use lsp::{
@@ -106,7 +106,7 @@ use std::{
     borrow::Cow,
     collections::BTreeMap,
     ffi::OsString,
-    ops::{Not as _, Range},
+    ops::Range,
     path::{Path, PathBuf},
     pin::pin,
     str::{self, FromStr},
@@ -165,10 +165,10 @@ pub enum OpenedBufferEvent {
 const REFRESH_DEBOUNCE: Duration = Duration::from_secs(5);
 
 /// Semantics-aware entity that is relevant to one or more [`Worktree`] with the files.
-/// `Project` is responsible for tasks, LSP and collab queries, synchronizing worktree states accordingly.
+/// `Project` is responsible for tasks and LSP queries, synchronizing worktree states accordingly.
 /// Maps [`Worktree`] entries with its own logic using [`ProjectEntryId`] and [`ProjectPath`] structs.
 ///
-/// Can be either local (for the project opened on the same host) or remote.(for collab projects, browsed by multiple remote users).
+/// Can be either local (for the project opened on the same host) or remote.
 pub struct Project {
     active_entry: Option<ProjectEntryId>,
     buffer_ordered_messages_tx: mpsc::UnboundedSender<BufferOrderedMessage>,
@@ -176,14 +176,12 @@ pub struct Project {
     dap_store: Entity<DapStore>,
 
     breakpoint_store: Entity<BreakpointStore>,
-    collab_client: Arc<client::Client>,
+    client: Arc<client::Client>,
     join_project_response_message_id: u32,
     task_store: Entity<TaskStore>,
     fs: Arc<dyn Fs>,
     remote_client: Option<Entity<RemoteClient>>,
-    client_state: ProjectClientState,
     git_store: Entity<GitStore>,
-    client_subscriptions: Vec<client::Subscription>,
     worktree_store: Entity<WorktreeStore>,
     buffer_store: Entity<BufferStore>,
     image_store: Entity<ImageStore>,
@@ -238,20 +236,8 @@ enum BufferOrderedMessage {
         buffer_id: BufferId,
         operation: proto::Operation,
     },
-    LanguageServerUpdate {
-        language_server_id: LanguageServerId,
-        message: proto::update_language_server::Variant,
-        name: Option<LanguageServerName>,
-    },
+    LanguageServerUpdate,
     Resync,
-}
-
-#[derive(Debug)]
-enum ProjectClientState {
-    /// Single-player mode.
-    Local,
-    /// Multi-player mode but still a local project.
-    Shared { remote_id: u64 },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -1079,14 +1065,12 @@ impl Project {
                 image_store,
                 lsp_store,
                 join_project_response_message_id: 0,
-                client_state: ProjectClientState::Local,
                 git_store,
-                client_subscriptions: Vec::new(),
                 _subscriptions: vec![cx.on_release(Self::release)],
                 active_entry: None,
                 snippets,
                 languages,
-                collab_client: client,
+                client,
                 task_store,
                 settings_observer,
                 fs,
@@ -1235,9 +1219,7 @@ impl Project {
                 breakpoint_store,
                 dap_store,
                 join_project_response_message_id: 0,
-                client_state: ProjectClientState::Local,
                 git_store,
-                client_subscriptions: Vec::new(),
                 _subscriptions: vec![
                     cx.on_release(Self::release),
                     cx.on_app_quit(|this, cx| {
@@ -1260,7 +1242,7 @@ impl Project {
                 active_entry: None,
                 snippets,
                 languages,
-                collab_client: client,
+                client,
                 task_store,
                 settings_observer,
                 fs,
@@ -1333,13 +1315,6 @@ impl Project {
                 }
             })
             .detach()
-        }
-
-        match &self.client_state {
-            ProjectClientState::Local => {}
-            ProjectClientState::Shared { .. } => {
-                let _ = self.unshare_internal(cx);
-            }
         }
     }
 
@@ -1441,9 +1416,10 @@ impl Project {
         &self.languages
     }
 
+    /// Only used in tests
     #[inline]
     pub fn client(&self) -> Arc<Client> {
-        self.collab_client.clone()
+        self.client.clone()
     }
 
     #[inline]
@@ -1486,26 +1462,6 @@ impl Project {
     #[inline]
     pub fn fs(&self) -> &Arc<dyn Fs> {
         &self.fs
-    }
-
-    #[inline]
-    pub fn remote_id(&self) -> Option<u64> {
-        match self.client_state {
-            ProjectClientState::Local => None,
-            ProjectClientState::Shared { remote_id, .. } => Some(remote_id),
-        }
-    }
-
-    #[inline]
-    pub fn supports_terminal(&self, _cx: &App) -> bool {
-        if self.is_local() {
-            return true;
-        }
-        if self.is_via_remote_server() {
-            return true;
-        }
-
-        false
     }
 
     #[inline]
@@ -1784,70 +1740,6 @@ impl Project {
         }))
     }
 
-    pub fn shared(&mut self, project_id: u64, cx: &mut Context<Self>) -> Result<()> {
-        anyhow::ensure!(
-            matches!(self.client_state, ProjectClientState::Local),
-            "project was already shared"
-        );
-
-        self.client_subscriptions.extend([
-            self.collab_client
-                .subscribe_to_entity(project_id)?
-                .set_entity(&cx.entity(), &cx.to_async()),
-            self.collab_client
-                .subscribe_to_entity(project_id)?
-                .set_entity(&self.worktree_store, &cx.to_async()),
-            self.collab_client
-                .subscribe_to_entity(project_id)?
-                .set_entity(&self.buffer_store, &cx.to_async()),
-            self.collab_client
-                .subscribe_to_entity(project_id)?
-                .set_entity(&self.lsp_store, &cx.to_async()),
-            self.collab_client
-                .subscribe_to_entity(project_id)?
-                .set_entity(&self.settings_observer, &cx.to_async()),
-            self.collab_client
-                .subscribe_to_entity(project_id)?
-                .set_entity(&self.dap_store, &cx.to_async()),
-            self.collab_client
-                .subscribe_to_entity(project_id)?
-                .set_entity(&self.breakpoint_store, &cx.to_async()),
-            self.collab_client
-                .subscribe_to_entity(project_id)?
-                .set_entity(&self.git_store, &cx.to_async()),
-        ]);
-
-        self.buffer_store.update(cx, |buffer_store, cx| {
-            buffer_store.shared(project_id, self.collab_client.clone().into(), cx)
-        });
-        self.worktree_store.update(cx, |worktree_store, cx| {
-            worktree_store.shared(project_id, self.collab_client.clone().into(), cx);
-        });
-        self.lsp_store.update(cx, |lsp_store, cx| {
-            lsp_store.shared(project_id, self.collab_client.clone().into(), cx)
-        });
-        self.breakpoint_store.update(cx, |breakpoint_store, _| {
-            breakpoint_store.shared(project_id, self.collab_client.clone().into())
-        });
-        self.dap_store.update(cx, |dap_store, cx| {
-            dap_store.shared(project_id, self.collab_client.clone().into(), cx);
-        });
-        self.task_store.update(cx, |task_store, cx| {
-            task_store.shared(project_id, self.collab_client.clone().into(), cx);
-        });
-        self.settings_observer.update(cx, |settings_observer, cx| {
-            settings_observer.shared(project_id, self.collab_client.clone().into(), cx)
-        });
-        self.git_store.update(cx, |git_store, cx| {
-            git_store.shared(project_id, self.collab_client.clone().into(), cx)
-        });
-
-        self.client_state = ProjectClientState::Shared { remote_id: project_id };
-
-        cx.emit(Event::RemoteIdChanged(Some(project_id)));
-        Ok(())
-    }
-
     pub fn rejoined(&mut self, message: proto::RejoinedProject, message_id: u32, cx: &mut Context<Self>) -> Result<()> {
         cx.update_global::<SettingsStore, _>(|store, cx| {
             for worktree_metadata in &message.worktrees {
@@ -1882,40 +1774,8 @@ impl Project {
         Ok(())
     }
 
-    fn unshare_internal(&mut self, cx: &mut App) -> Result<()> {
-        if let ProjectClientState::Shared { remote_id, .. } = self.client_state {
-            self.client_state = ProjectClientState::Local;
-            self.client_subscriptions.clear();
-            self.worktree_store.update(cx, |store, cx| {
-                store.unshared(cx);
-            });
-            self.buffer_store.update(cx, |buffer_store, cx| {
-                buffer_store.forget_shared_buffers();
-                buffer_store.unshared(cx)
-            });
-            self.task_store.update(cx, |task_store, cx| {
-                task_store.unshared(cx);
-            });
-            self.breakpoint_store.update(cx, |breakpoint_store, cx| {
-                breakpoint_store.unshared(cx);
-            });
-            self.dap_store.update(cx, |dap_store, cx| {
-                dap_store.unshared(cx);
-            });
-            self.settings_observer.update(cx, |settings_observer, cx| {
-                settings_observer.unshared(cx);
-            });
-            self.git_store.update(cx, |git_store, cx| {
-                git_store.unshared(cx);
-            });
-
-            self.collab_client
-                .send(proto::UnshareProject { project_id: remote_id })
-                .ok();
-            Ok(())
-        } else {
-            anyhow::bail!("attempted to unshare an unshared project");
-        }
+    fn unshare_internal(&mut self, _cx: &mut App) -> Result<()> {
+        anyhow::bail!("attempted to unshare an unshared project");
     }
 
     pub fn disconnected_from_host(&mut self, cx: &mut Context<Self>) {
@@ -1932,10 +1792,7 @@ impl Project {
 
     #[inline]
     pub fn is_disconnected(&self, cx: &App) -> bool {
-        match &self.client_state {
-            ProjectClientState::Local if self.is_via_remote_server() => self.remote_client_is_disconnected(cx),
-            _ => false,
-        }
+        self.is_via_remote_server() && self.remote_client_is_disconnected(cx)
     }
 
     #[inline]
@@ -1947,25 +1804,16 @@ impl Project {
     }
 
     #[inline]
-    pub fn capability(&self) -> Capability {
-        match &self.client_state {
-            ProjectClientState::Shared { .. } | ProjectClientState::Local => Capability::ReadWrite,
-        }
-    }
-
-    #[inline]
     pub fn is_read_only(&self, cx: &App) -> bool {
-        self.is_disconnected(cx) || self.capability() == Capability::ReadOnly
+        self.is_disconnected(cx)
     }
 
     #[inline]
     pub fn is_local(&self) -> bool {
-        match &self.client_state {
-            ProjectClientState::Local | ProjectClientState::Shared { .. } => self.remote_client.is_none(),
-        }
+        self.remote_client.is_none()
     }
 
-    /// Whether this project is a remote server (not counting collab).
+    /// Whether this project is a remote server.
     #[inline]
     pub fn is_via_remote_server(&self) -> bool {
         self.remote_client.is_some()
@@ -2104,21 +1952,6 @@ impl Project {
             Task::ready(Ok(buffer))
         } else if self.is_local() || self.is_via_remote_server() {
             Task::ready(Err(anyhow!("buffer {id} does not exist")))
-        } else if let Some(project_id) = self.remote_id() {
-            let request = self.collab_client.request(proto::OpenBufferById {
-                project_id,
-                id: id.into(),
-            });
-            cx.spawn(async move |project, cx| {
-                let buffer_id = BufferId::new(request.await?.buffer_id)?;
-                project
-                    .update(cx, |project, cx| {
-                        project.buffer_store.update(cx, |buffer_store, cx| {
-                            buffer_store.wait_for_remote_buffer(buffer_id, cx)
-                        })
-                    })?
-                    .await
-            })
         } else {
             Task::ready(Err(anyhow!("cannot open buffer while disconnected")))
         }
@@ -2213,46 +2046,12 @@ impl Project {
         const MAX_BATCH_SIZE: usize = 128;
 
         let mut operations_by_buffer_id = HashMap::default();
-        async fn flush_operations(
-            this: &WeakEntity<Project>,
-            operations_by_buffer_id: &mut HashMap<BufferId, Vec<proto::Operation>>,
-            needs_resync_with_host: &mut bool,
-            is_local: bool,
-            cx: &mut AsyncApp,
-        ) -> Result<()> {
-            for (buffer_id, operations) in operations_by_buffer_id.drain() {
-                let request = this.read_with(cx, |this, _| {
-                    let project_id = this.remote_id()?;
-                    Some(this.collab_client.request(proto::UpdateBuffer {
-                        buffer_id: buffer_id.into(),
-                        project_id,
-                        operations,
-                    }))
-                })?;
-                if let Some(request) = request
-                    && request.await.is_err()
-                    && !is_local
-                {
-                    *needs_resync_with_host = true;
-                    break;
-                }
-            }
-            Ok(())
-        }
-
-        let mut needs_resync_with_host = false;
         let mut changes = rx.ready_chunks(MAX_BATCH_SIZE);
 
         while let Some(changes) = changes.next().await {
-            let is_local = project.read_with(cx, |this, _| this.is_local())?;
-
             for change in changes {
                 match change {
                     BufferOrderedMessage::Operation { buffer_id, operation } => {
-                        if needs_resync_with_host {
-                            continue;
-                        }
-
                         operations_by_buffer_id
                             .entry(buffer_id)
                             .or_insert(Vec::new())
@@ -2261,54 +2060,14 @@ impl Project {
 
                     BufferOrderedMessage::Resync => {
                         operations_by_buffer_id.clear();
-                        if project
+                        let _ = project
                             .update(cx, |this, cx| this.synchronize_remote_buffers(cx))?
-                            .await
-                            .is_ok()
-                        {
-                            needs_resync_with_host = false;
-                        }
+                            .await;
                     }
 
-                    BufferOrderedMessage::LanguageServerUpdate {
-                        language_server_id,
-                        message,
-                        name,
-                    } => {
-                        flush_operations(
-                            &project,
-                            &mut operations_by_buffer_id,
-                            &mut needs_resync_with_host,
-                            is_local,
-                            cx,
-                        )
-                        .await?;
-
-                        project.read_with(cx, |project, _| {
-                            if let Some(project_id) = project.remote_id() {
-                                project
-                                    .collab_client
-                                    .send(proto::UpdateLanguageServer {
-                                        project_id,
-                                        server_name: name.map(|name| String::from(name.0)),
-                                        language_server_id: language_server_id.to_proto(),
-                                        variant: Some(message),
-                                    })
-                                    .log_err();
-                            }
-                        })?;
-                    }
+                    BufferOrderedMessage::LanguageServerUpdate => {}
                 }
             }
-
-            flush_operations(
-                &project,
-                &mut operations_by_buffer_id,
-                &mut needs_resync_with_host,
-                is_local,
-                cx,
-            )
-            .await?;
         }
 
         Ok(())
@@ -2396,12 +2155,8 @@ impl Project {
                 message,
             } => {
                 if self.is_local() {
-                    self.enqueue_buffer_ordered_message(BufferOrderedMessage::LanguageServerUpdate {
-                        language_server_id: *language_server_id,
-                        message: message.clone(),
-                        name: name.clone(),
-                    })
-                    .ok();
+                    self.enqueue_buffer_ordered_message(BufferOrderedMessage::LanguageServerUpdate)
+                        .ok();
                 }
 
                 match message {
@@ -3236,10 +2991,6 @@ impl Project {
     fn search_impl(&mut self, query: SearchQuery, cx: &mut Context<Self>) -> SearchResultsHandle {
         let client: Option<(AnyProtoClient, _)> = if let Some(ssh_client) = &self.remote_client {
             Some((ssh_client.read(cx).proto_client(), 0))
-        } else if let Some(remote_id) = self.remote_id() {
-            self.is_local()
-                .not()
-                .then(|| (self.collab_client.clone().into(), remote_id))
         } else {
             None
         };
@@ -3329,13 +3080,6 @@ impl Project {
 
     pub fn find_worktree(&self, abs_path: &Path, cx: &App) -> Option<(Entity<Worktree>, Arc<RelPath>)> {
         self.worktree_store.read(cx).find_worktree(abs_path, cx)
-    }
-
-    pub fn is_shared(&self) -> bool {
-        match &self.client_state {
-            ProjectClientState::Shared { .. } => true,
-            ProjectClientState::Local => false,
-        }
     }
 
     /// Returns the resolved version of `path`, that was found in `buffer`, if it exists.
@@ -3778,7 +3522,6 @@ impl Project {
         })?
     }
 
-    // Collab sends UpdateWorktree protos as messages
     async fn handle_update_worktree(
         this: Entity<Self>,
         envelope: TypedEnvelope<proto::UpdateWorktree>,
@@ -3801,15 +3544,7 @@ impl Project {
         envelope: TypedEnvelope<proto::UpdateBuffer>,
         cx: AsyncApp,
     ) -> Result<proto::Ack> {
-        let buffer_store = this.read_with(&cx, |this, cx| {
-            if let Some(remote_id) = this.remote_id() {
-                let mut payload = envelope.payload.clone();
-                payload.project_id = remote_id;
-                cx.background_spawn(this.collab_client.request(payload))
-                    .detach_and_log_err(cx);
-            }
-            this.buffer_store.clone()
-        })?;
+        let buffer_store = this.read_with(&cx, |this, _| this.buffer_store.clone())?;
         BufferStore::handle_update_buffer(buffer_store, envelope, cx).await
     }
 
@@ -3865,7 +3600,7 @@ impl Project {
     ) -> Result<()> {
         this.update(&mut cx, |this, cx| {
             this.buffer_store.update(cx, |buffer_store, cx| {
-                buffer_store.handle_create_buffer_for_peer(envelope, this.replica_id(), this.capability(), cx)
+                buffer_store.handle_create_buffer_for_peer(envelope, this.replica_id(), cx)
             })
         })?
     }
@@ -3897,7 +3632,7 @@ impl Project {
         mut cx: AsyncApp,
     ) -> Result<proto::SynchronizeBuffersResponse> {
         let response = this.update(&mut cx, |this, cx| {
-            let client = this.collab_client.clone();
+            let client = this.client.clone();
             this.buffer_store
                 .update(cx, |this, cx| this.handle_synchronize_buffers(envelope, cx, client))
         })??;

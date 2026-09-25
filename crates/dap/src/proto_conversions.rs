@@ -92,7 +92,7 @@ impl ProtoConversion for dap_types::Variable {
             value: payload.value,
             type_: payload.r#type,
             evaluate_name: payload.evaluate_name,
-            presentation_hint: None, // TODO Debugger Collab Add this
+            presentation_hint: None,
             variables_reference: payload.variables_reference,
             named_variables: payload.named_variables,
             indexed_variables: payload.indexed_variables,
@@ -207,7 +207,7 @@ impl ProtoConversion for dap_types::Source {
             presentation_hint: self.presentation_hint.map(|hint| hint.to_proto().into()),
             origin: self.origin.clone(),
             sources: self.sources.clone().map(|src| src.to_proto()).unwrap_or_default(),
-            adapter_data: Default::default(), // TODO Debugger Collab
+            adapter_data: Default::default(),
             checksums: self.checksums.clone().map(|c| c.to_proto()).unwrap_or_default(),
         }
     }
@@ -224,7 +224,7 @@ impl ProtoConversion for dap_types::Source {
             origin: payload.origin.clone(),
             sources: Some(Vec::<dap_types::Source>::from_proto(payload.sources)),
             checksums: Some(Vec::<dap_types::Checksum>::from_proto(payload.checksums)),
-            adapter_data: None, // TODO Debugger Collab
+            adapter_data: None,
         }
     }
 }
@@ -244,8 +244,8 @@ impl ProtoConversion for dap_types::StackFrame {
             end_column: self.end_column,
             can_restart: self.can_restart,
             instruction_pointer_reference: self.instruction_pointer_reference.clone(),
-            module_id: None,         // TODO Debugger Collab
-            presentation_hint: None, // TODO Debugger Collab
+            module_id: None,
+            presentation_hint: None,
         }
     }
 
@@ -260,8 +260,8 @@ impl ProtoConversion for dap_types::StackFrame {
             end_column: payload.end_column,
             can_restart: payload.can_restart,
             instruction_pointer_reference: payload.instruction_pointer_reference,
-            module_id: None,         // TODO Debugger Collab
-            presentation_hint: None, // TODO Debugger Collab
+            module_id: None,
+            presentation_hint: None,
         }
     }
 }

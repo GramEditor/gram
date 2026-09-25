@@ -22,8 +22,8 @@ use gpui::{
     HighlightStyle, KeyContext, ParentElement, Render, Styled, StyledText, Subscription, Task, WeakEntity, Window,
     actions, px, relative,
 };
-use language::Buffer;
 use language::language_settings::SoftWrap;
+use language::{Buffer, Capability};
 use menu;
 use multi_buffer::{ExcerptRange, MultiBuffer};
 use picker::{Picker, PickerDelegate, PickerEditorPosition};
@@ -115,9 +115,8 @@ impl QuickSearch {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
-        let capability = project.read(cx).capability();
         let preview_editor = cx.new(|cx| {
-            let multi_buffer = cx.new(|_| MultiBuffer::without_headers(capability));
+            let multi_buffer = cx.new(|_| MultiBuffer::without_headers(Capability::ReadWrite));
             let editor = Editor::for_multibuffer(multi_buffer, Some(project.clone()), window, cx);
             editor
         });

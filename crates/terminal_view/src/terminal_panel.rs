@@ -51,25 +51,21 @@ pub fn init(cx: &mut App) {
         workspace.register_action(TerminalPanel::new_terminal);
         workspace.register_action(TerminalPanel::open_terminal);
         workspace.register_action(|workspace, _: &ToggleFocus, window, cx| {
-            if is_enabled_in_workspace(workspace, cx) {
-                workspace.toggle_panel_focus::<TerminalPanel>(window, cx);
-            }
+            workspace.toggle_panel_focus::<TerminalPanel>(window, cx);
         });
         workspace.register_action(|workspace, _: &Toggle, window, cx| {
-            if is_enabled_in_workspace(workspace, cx) {
-                let mut found = false;
-                for dock in workspace.all_docks() {
-                    if dock.read(cx).is_open()
-                        && let Some(panel_index) = dock.read(cx).panel_index_for_type::<TerminalPanel>()
-                        && dock.read(cx).active_panel_index() == Some(panel_index)
-                    {
-                        workspace.close_panel::<TerminalPanel>(window, cx);
-                        found = true;
-                    }
+            let mut found = false;
+            for dock in workspace.all_docks() {
+                if dock.read(cx).is_open()
+                    && let Some(panel_index) = dock.read(cx).panel_index_for_type::<TerminalPanel>()
+                    && dock.read(cx).active_panel_index() == Some(panel_index)
+                {
+                    workspace.close_panel::<TerminalPanel>(window, cx);
+                    found = true;
                 }
-                if !found {
-                    workspace.focus_panel::<TerminalPanel>(window, cx);
-                }
+            }
+            if !found {
+                workspace.focus_panel::<TerminalPanel>(window, cx);
             }
         });
     })
@@ -634,9 +630,6 @@ impl TerminalPanel {
         cx: &mut Context<Workspace>,
         create_terminal: impl FnOnce(&mut Project, &mut Context<Project>) -> Task<Result<Entity<Terminal>>> + 'static,
     ) -> Task<Result<WeakEntity<Terminal>>> {
-        if !is_enabled_in_workspace(workspace, cx) {
-            return Task::ready(Err(anyhow!("terminal not yet supported for remote projects")));
-        }
         let project = workspace.project().downgrade();
         cx.spawn_in(window, async move |workspace, cx| {
             let terminal = project.update(cx, create_terminal)?.await?;
@@ -667,9 +660,6 @@ impl TerminalPanel {
     ) -> Task<Result<WeakEntity<Terminal>>> {
         let workspace = self.workspace.clone();
         cx.spawn_in(window, async move |terminal_panel, cx| {
-            if workspace.update(cx, |workspace, cx| !is_enabled_in_workspace(workspace, cx))? {
-                anyhow::bail!("terminal not yet supported for remote projects");
-            }
             let pane = terminal_panel.update(cx, |terminal_panel, _| {
                 terminal_panel.pending_terminals_to_add += 1;
                 terminal_panel.active_pane.clone()
@@ -725,9 +715,6 @@ impl TerminalPanel {
         let workspace = self.workspace.clone();
 
         cx.spawn_in(window, async move |terminal_panel, cx| {
-            if workspace.update(cx, |workspace, cx| !is_enabled_in_workspace(workspace, cx))? {
-                anyhow::bail!("terminal not yet supported for collaborative projects");
-            }
             let pane = terminal_panel.update(cx, |terminal_panel, _| {
                 terminal_panel.pending_terminals_to_add += 1;
                 terminal_panel.active_pane.clone()
@@ -919,10 +906,8 @@ impl TerminalPanel {
         self.active_pane.read(cx).items_len() == 0 && self.pending_terminals_to_add == 0
     }
 
-    fn is_enabled(&self, cx: &App) -> bool {
-        self.workspace
-            .upgrade()
-            .is_some_and(|workspace| is_enabled_in_workspace(workspace.read(cx), cx))
+    fn is_enabled(&self) -> bool {
+        self.workspace.upgrade().is_some()
     }
 
     fn activate_pane_in_direction(&mut self, direction: SplitDirection, window: &mut Window, cx: &mut Context<Self>) {
@@ -953,10 +938,6 @@ impl TerminalPanel {
             cx.notify();
         }
     }
-}
-
-fn is_enabled_in_workspace(workspace: &Workspace, cx: &App) -> bool {
-    workspace.project().read(cx).supports_terminal(cx)
 }
 
 pub fn new_terminal_pane(
@@ -1467,7 +1448,7 @@ impl Panel for TerminalPanel {
     }
 
     fn icon(&self, _window: &Window, cx: &App) -> Option<IconName> {
-        if (self.is_enabled(cx) || !self.has_no_terminals(cx)) && TerminalSettings::get_global(cx).button {
+        if (self.is_enabled() || !self.has_no_terminals(cx)) && TerminalSettings::get_global(cx).button {
             Some(IconName::TerminalAlt)
         } else {
             None

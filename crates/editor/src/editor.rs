@@ -14422,7 +14422,6 @@ impl Editor {
             return;
         }
 
-        let capability = workspace.project().read(cx).capability();
         let mut ranges = <Vec<Range<Anchor>>>::new();
 
         // a key to find existing multibuffer editors with the same set of locations
@@ -14430,7 +14429,7 @@ impl Editor {
         let mut key = (title.clone(), vec![]);
         let excerpt_buffer = cx.new(|cx| {
             let key = &mut key.1;
-            let mut multibuffer = MultiBuffer::new(capability);
+            let mut multibuffer = MultiBuffer::new(Capability::ReadWrite);
             for (buffer, mut ranges_for_buffer) in locations {
                 ranges_for_buffer.sort_by_key(|range| (range.start, Reverse(range.end)));
                 key.push((buffer.read(cx).remote_id(), ranges_for_buffer.clone()));

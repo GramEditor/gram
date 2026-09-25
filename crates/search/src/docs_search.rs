@@ -172,9 +172,8 @@ impl DocsSearch {
     }
 
     fn new(project: Entity<Project>, window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let capability = project.read(cx).capability();
         let preview_editor = cx.new(|cx| {
-            let multi_buffer = cx.new(|_| MultiBuffer::without_headers(capability));
+            let multi_buffer = cx.new(|_| MultiBuffer::without_headers(Capability::ReadWrite));
             let editor = Editor::for_multibuffer(multi_buffer, Some(project.clone()), window, cx);
             editor
         });

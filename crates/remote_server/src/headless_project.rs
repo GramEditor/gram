@@ -262,7 +262,6 @@ impl HeadlessProject {
         TaskStore::init(Some(&session));
         ToolchainStore::init(&session);
         DapStore::init(&session, cx);
-        // todo(debugger): Re init breakpoint store when we set it up for collab
         BreakpointStore::init(&session);
         GitStore::init(&session);
 
