@@ -1426,8 +1426,7 @@ impl Window {
     {
         self.root
             .as_ref()
-            .map(|view| view.downcast_ref::<E>().cloned())
-            .flatten()
+            .and_then(|view| view.downcast_ref::<E>().cloned())
     }
 
     /// Obtain a handle to the window that belongs to this context.
