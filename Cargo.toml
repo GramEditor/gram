@@ -364,13 +364,13 @@ libc = "0.2.189"
 libsqlite3-sys = { version = "0.37.0", features = ["bundled", "min_sqlite_version_3_34_1"] }
 linkify = "0.11.0"
 log = { version = "0.4.34", features = ["kv_unstable_serde", "serde"] }
+lru = "0.18.5"
 lsp-types = { git = "https://github.com/zed-industries/lsp-types", rev = "b71ab4eeb27d9758be8092020a46fe33fbca4e33" }
 lyon = { version = "1.0.19", features = ["extra"] }
 mach2 = "0.6.0"
 mermaid-rs-renderer = { git = "https://codeberg.org/GramEditor/mermaid-rs-renderer", rev = "88d0890b2ea95e02009f183de1c1ea0408d3093d", default-features = false }
 mimalloc = "0.1.52"
 minidumper = "0.10.1"
-moka = { version = "0.12.16", features = ["sync"] }
 nbformat = "1.2.2"
 nix = "0.31.3"
 notify = "9.0.0-rc.5"

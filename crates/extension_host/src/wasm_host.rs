@@ -23,12 +23,14 @@ use futures::{
 use gpui::{App, AsyncApp, BackgroundExecutor, Task, Timer};
 use http_client::HttpClient;
 use language::LanguageName;
+use lru::LruCache;
 use lsp::{LanguageServerBinaryOptions, LanguageServerName};
-use moka::sync::Cache;
 use node_runtime::NodeRuntime;
+use parking_lot::RwLock;
 use release_channel::ReleaseChannel;
 use semver::Version as SemanticVersion;
 use settings::Settings;
+use std::num::NonZeroUsize;
 use std::{
     borrow::Cow,
     path::{Path, PathBuf},
@@ -754,35 +756,29 @@ impl WasiView for WasmState {
     }
 }
 
-/// Wrapper around a mini-moka bounded cache for storing incremental compilation artifacts.
+/// Wrapper around a bounded cache for storing incremental compilation artifacts.
 /// Since wasm modules have many similar elements, this can save us a lot of work at the
 /// cost of a small memory footprint. However, we don't want this to be unbounded, so we use
-/// a LFU/LRU cache to evict less used cache entries.
+/// a LRU cache to evict less used cache entries.
 #[derive(Debug)]
 struct IncrementalCompilationCache {
-    cache: Cache<Vec<u8>, Vec<u8>>,
+    cache: Arc<RwLock<LruCache<Vec<u8>, Vec<u8>>>>,
 }
 
 impl IncrementalCompilationCache {
     fn new() -> Self {
-        let cache = Cache::builder()
-            // Cap this at 32 MB for now. Our extensions turn into roughly 512kb in the cache,
-            // which means we could store 64 completely novel extensions in the cache, but in
-            // practice we will more than that, which is more than enough for our use case.
-            .max_capacity(32 * 1024 * 1024)
-            .weigher(|k: &Vec<u8>, v: &Vec<u8>| (k.len() + v.len()).try_into().unwrap_or(u32::MAX))
-            .build();
+        let cache = Arc::new(RwLock::new(LruCache::new(NonZeroUsize::new(128).unwrap())));
         Self { cache }
     }
 }
 
 impl CacheStore for IncrementalCompilationCache {
     fn get(&self, key: &[u8]) -> Option<Cow<'_, [u8]>> {
-        self.cache.get(key).map(|v| v.into())
+        self.cache.write().get(key).cloned().map(|v| v.into())
     }
 
     fn insert(&self, key: &[u8], value: Vec<u8>) -> bool {
-        self.cache.insert(key.to_vec(), value);
+        self.cache.write().put(key.to_vec(), value);
         true
     }
 }
