@@ -681,7 +681,7 @@
             "font_style": null,
             "font_weight": null
           },
-          "predoc": {
+          "preproc": {
             "color": "#d20f39",
             "font_style": null,
             "font_weight": null
@@ -1392,7 +1392,7 @@
             "font_style": null,
             "font_weight": null
           },
-          "predoc": {
+          "preproc": {
             "color": "#e78284",
             "font_style": null,
             "font_weight": null
@@ -2103,7 +2103,7 @@
             "font_style": null,
             "font_weight": null
           },
-          "predoc": {
+          "preproc": {
             "color": "#ed8796",
             "font_style": null,
             "font_weight": null
@@ -2814,7 +2814,7 @@
             "font_style": null,
             "font_weight": null
           },
-          "predoc": {
+          "preproc": {
             "color": "#f38ba8",
             "font_style": null,
             "font_weight": null

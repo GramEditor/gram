@@ -1,6 +1,6 @@
 /// LSP support for Zig
 /// based on https://github.com/zed-extensions/zig
-/// License: ./LICENSE-APACHE
+/// License: licenses/APACHE
 /// Author: Allan Calix
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;

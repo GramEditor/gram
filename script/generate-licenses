@@ -15,21 +15,43 @@ fail_on_stderr() {
     return $rc
 }
 
+licenses_in_dirs() {
+    for d in "$1"/*; do
+      if [ -f "$d"/LICENSE ]; then
+         cat "$d"/LICENSE
+      fi
+    done
+}
+
 echo -n "" >"$OUTPUT_FILE"
 
 {
+    echo -e "# GPL LICENSE\n"
+    cat LICENSE
+
+    echo -e "# APACHE LICENSE\n"
+    cat licenses/APACHE
+
+    echo -e "# MIT LICENSE\n"
+    cat licenses/MIT
+
+    echo -e "# CC-A-SA 4.0 LICENSE\n"
+    cat licenses/CC-A-SA-4.0
+
+    echo -e "# OFL LICENSE\n"
+    cat licenses/OFL
+
     echo -e "# ###### THEME LICENSES ######\n"
-    cat assets/themes/LICENSES
+    licenses_in_dirs assets/themes
 
     echo -e "\n# ###### ICON LICENSES ######\n"
-    cat assets/icons/LICENSES
+    cat assets/icons/LICENSE
+
+    echo -e "\n# ###### FONT LICENSES ######\n"
+    licenses_in_dirs assets/fonts
 
     echo -e "\n# ###### LANGUAGE LICENSES ######\n"
-    for d in crates/languages/src/*; do
-        if [ -f crates/languages/src/"$d"/LICENSE ]; then
-            cat crates/languages/src/"$d"/LICENSE
-        fi
-    done
+    licenses_in_dirs crates/languages/src
 
     echo -e "\n# ###### CODE LICENSES ######\n"
 } >>"$OUTPUT_FILE"

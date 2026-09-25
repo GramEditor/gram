@@ -1,7 +1,7 @@
 /*
  * Copyright 2022 - 2025 Gram Project, Inc.
  * License: Apache-2.0
- * See LICENSE-APACHE for complete license terms
+ * See licenses/APACHE for complete license terms
  *
  * Adapted from the x11 submodule of the arboard project https://github.com/1Password/arboard
  *

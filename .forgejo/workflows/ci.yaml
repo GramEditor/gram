@@ -47,6 +47,9 @@ jobs:
       - name: Install dependencies
         run: ./script/prepare-ci ci
 
+      - name: Check licenses
+        run: ./script/check-licenses
+
       - name: Cargo nextest
         run: cargo nextest run --workspace --no-fail-fast --success-output never --show-progress none
 

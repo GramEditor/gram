@@ -15,4 +15,4 @@ Please include information about affected versions, how to reproduce the issue,
 potential impact and any other details that could help us address it.
 
 For information about warranties and liability, see section 15 to 17 of the
-GPL-3.0 [license](./LICENSE-GPL) under which this software is provided.
+GPL-3.0 [license](./LICENSE) under which this software is provided.

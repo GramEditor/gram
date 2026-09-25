@@ -1,6 +1,6 @@
 /// LSP support for Gleam
 /// based on https://github.com/gleam-lang/zed
-/// License: ./LICENSE-APACHE
+/// License: licenses/APACHE
 /// Author: Marshall Bowers
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;

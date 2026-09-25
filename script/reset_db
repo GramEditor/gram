@@ -1,2 +1,0 @@
-psql postgres -c "DROP DATABASE gram WITH (FORCE);"
-script/bootstrap
