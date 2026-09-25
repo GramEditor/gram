@@ -2,7 +2,6 @@
 
 pub use gpui::GpuSpecs;
 use gpui::{App, AppContext as _, SemanticVersion, Task, Window, actions};
-use human_bytes::human_bytes;
 use release_channel::{AppCommitSha, AppVersion, ReleaseChannel};
 use serde::Serialize;
 use std::{env, fmt::Display};
@@ -102,9 +101,10 @@ impl Display for SystemSpecs {
             },
             if cfg!(debug_assertions) { "(Debug Build)" } else { "" },
         );
+        let memory_gb = self.memory as f64 / (1024.0 * 1024.0 * 1024.0);
         let system_specs = [
             app_version_information,
-            format!("Memory: {}", human_bytes(self.memory as f64)),
+            format!("Memory: {:0} GB", memory_gb),
             format!("Architecture: {}", self.architecture),
         ]
         .into_iter()

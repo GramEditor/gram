@@ -348,7 +348,6 @@ globset = "0.4.20"
 hex = "0.4.3"
 http = "1.5.0"
 http-body = "1.1.0"
-human_bytes = "0.4.3"
 ignore = "0.4.33"
 image = { version = "0.25.10", default-features = false, features = ["gif", "ico", "jpeg", "png", "webp"] }
 imara-diff = "0.2.0"
