@@ -297,8 +297,12 @@ impl Element for ImageContentElement {
             top = center_y - (scaled_height / 2.0) + pan_offset.y;
         }
 
-        self.image_view.update(cx, |this, _| {
-            this.container_bounds = Some(bounds);
+        self.image_view.update(cx, |this, cx| {
+            let previous_bounds = this.container_bounds.replace(bounds);
+            if previous_bounds.is_none() {
+                // Fit image to view on first paint
+                this.fit_to_view(&FitToView, window, cx);
+            }
         });
 
         let mut image_content = div()
