@@ -9,7 +9,7 @@ use chardetng::EncodingDetector;
 use clock::ReplicaId;
 use collections::{HashMap, HashSet, VecDeque};
 use encoding_rs::Encoding;
-use fs::{Fs, MTime, PathEvent, RemoveOptions, Watcher, copy_recursive, read_dir_items};
+use fs::{Fs, MTime, Metadata, PathEvent, RemoveOptions, Watcher, copy_recursive, read_dir_items};
 use futures::{
     FutureExt as _, Stream, StreamExt,
     channel::{
@@ -269,6 +269,13 @@ struct BackgroundScannerState {
     removed_entries: HashMap<u64, Entry>,
     changed_paths: Vec<Arc<RelPath>>,
     prev_snapshot: Snapshot,
+    pending_watches: Vec<PendingWatch>,
+}
+
+#[derive(Debug, Clone)]
+enum PendingWatch {
+    Add(Arc<Path>),
+    Remove(PathBuf),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -1130,6 +1137,7 @@ impl LocalWorktree {
                         paths_to_scan: Default::default(),
                         removed_entries: Default::default(),
                         changed_paths: Default::default(),
+                        pending_watches: Default::default(),
                     }),
                     phase: BackgroundScannerPhase::InitialScan,
                     share_private_files,
@@ -2747,10 +2755,10 @@ impl BackgroundScannerState {
         ProjectEntryId::new(next_entry_id)
     }
 
-    async fn insert_entry(&mut self, entry: Entry, fs: &dyn Fs, watcher: &dyn Watcher) -> Entry {
+    async fn insert_entry(&mut self, entry: Entry, fs: &dyn Fs) -> Entry {
         let entry = self.snapshot.insert_entry(entry, fs);
         if entry.path.file_name() == Some(DOT_GIT) {
-            self.insert_git_repository(entry.path.clone(), fs, watcher).await;
+            self.insert_git_repository(entry.path.clone(), fs).await;
         }
 
         #[cfg(test)]
@@ -2812,7 +2820,7 @@ impl BackgroundScannerState {
         self.snapshot.check_invariants(false);
     }
 
-    fn remove_path(&mut self, path: &RelPath, prune_repositories: bool, watcher: &dyn Watcher) {
+    fn remove_path_from_snapshot(&mut self, path: &RelPath, prune_repositories: bool) -> Vec<PathBuf> {
         log::trace!("background scanner removing path {path:?}");
         let mut new_entries;
         let removed_entries;
@@ -2868,15 +2876,19 @@ impl BackgroundScannerState {
                 .retain(|id, _| removed_ids.binary_search(id).is_err());
         }
 
-        for removed_dir_abs_path in removed_dir_abs_paths {
-            watcher.remove(&removed_dir_abs_path).log_err();
-        }
-
         #[cfg(test)]
         self.snapshot.check_invariants(false);
+
+        removed_dir_abs_paths
     }
 
-    async fn insert_git_repository(&mut self, dot_git_path: Arc<RelPath>, fs: &dyn Fs, watcher: &dyn Watcher) {
+    fn remove_path(&mut self, path: &RelPath, prune_repositories: bool) {
+        for removed_dir_abs_path in self.remove_path_from_snapshot(path, prune_repositories) {
+            self.pending_watches.push(PendingWatch::Remove(removed_dir_abs_path));
+        }
+    }
+
+    async fn insert_git_repository(&mut self, dot_git_path: Arc<RelPath>, fs: &dyn Fs) {
         let work_dir_path: Arc<RelPath> = match dot_git_path.parent() {
             Some(parent_dir) => {
                 // Guard against repositories inside the repository metadata
@@ -2907,7 +2919,6 @@ impl BackgroundScannerState {
             },
             dot_git_abs_path,
             fs,
-            watcher,
         )
         .await
         .log_err();
@@ -2918,7 +2929,6 @@ impl BackgroundScannerState {
         work_directory: WorkDirectory,
         dot_git_abs_path: Arc<Path>,
         fs: &dyn Fs,
-        watcher: &dyn Watcher,
     ) -> Result<LocalRepositoryEntry> {
         let work_dir_entry = self
             .snapshot
@@ -2932,15 +2942,11 @@ impl BackgroundScannerState {
         let work_directory_abs_path = self.snapshot.work_directory_abs_path(&work_directory);
 
         let (repository_dir_abs_path, common_dir_abs_path) = discover_git_paths(&dot_git_abs_path, fs).await;
-        watcher
-            .add(&common_dir_abs_path)
-            .context("failed to add common directory to watcher")
-            .log_err();
+        self.pending_watches
+            .push(PendingWatch::Add(common_dir_abs_path.clone()));
         if !repository_dir_abs_path.starts_with(&common_dir_abs_path) {
-            watcher
-                .add(&repository_dir_abs_path)
-                .context("failed to add repository directory to watcher")
-                .log_err();
+            self.pending_watches
+                .push(PendingWatch::Add(repository_dir_abs_path.clone()));
         }
 
         let work_directory_id = work_dir_entry.id;
@@ -3628,12 +3634,7 @@ impl BackgroundScanner {
                 self.state
                     .lock()
                     .await
-                    .insert_git_repository_for_path(
-                        work_directory,
-                        ancestor_dot_git.clone().into(),
-                        self.fs.as_ref(),
-                        self.watcher.as_ref(),
-                    )
+                    .insert_git_repository_for_path(work_directory, ancestor_dot_git.clone().into(), self.fs.as_ref())
                     .await
                     .log_err()?;
                 Some(ancestor_dot_git)
@@ -3642,8 +3643,9 @@ impl BackgroundScanner {
         } else {
             None
         };
-
         log::trace!("containing git repository: {containing_git_repository:?}");
+
+        self.process_pending_watches().await;
 
         let global_gitignore_file = paths::global_gitignore_path();
         let mut global_gitignore_events = if let Some(global_gitignore_path) = &global_gitignore_file
@@ -3684,9 +3686,7 @@ impl BackgroundScanner {
                     root_entry.is_ignored = true;
                     let mut root_entry = root_entry.clone();
                     state.reuse_entry_id(&mut root_entry);
-                    state
-                        .insert_entry(root_entry, self.fs.as_ref(), self.watcher.as_ref())
-                        .await;
+                    state.insert_entry(root_entry, self.fs.as_ref()).await;
                 }
                 if root_entry.is_dir() && self.scanning_enabled {
                     state
@@ -3703,6 +3703,7 @@ impl BackgroundScanner {
 
         // Perform an initial scan of the directory.
         drop(scan_job_tx);
+        self.process_pending_watches().await;
         self.scan_dirs(true, scan_job_rx).await;
         {
             let mut state = self.state.lock().await;
@@ -4101,15 +4102,38 @@ impl BackgroundScanner {
                 .await;
             self.scan_dirs(false, scan_job_rx).await;
         }
+        self.process_pending_watches().await;
 
         {
             let mut state = self.state.lock().await;
             state.snapshot.completed_scan_id = state.snapshot.scan_id;
             for (_, entry) in mem::take(&mut state.removed_entries) {
                 state.scanned_dirs.remove(&entry.id);
+                if entry.is_dir() && state.snapshot.entry_for_path(&entry.path).is_none() {
+                    let path = state.snapshot.absolutize(&entry.path);
+                    state.pending_watches.push(PendingWatch::Remove(path));
+                }
             }
         }
+        self.process_pending_watches().await;
         self.send_status_update(false, SmallVec::new(), &relative_paths).await;
+    }
+
+    async fn process_pending_watches(&self) {
+        let pending = {
+            let mut state = self.state.lock().await;
+            mem::take(&mut state.pending_watches)
+        };
+        for event in &pending {
+            if let PendingWatch::Remove(path) = event {
+                self.watcher.remove(path).log_err();
+            }
+        }
+        for event in &pending {
+            if let PendingWatch::Add(path) = event {
+                self.watcher.add(path).log_err();
+            }
+        }
     }
 
     async fn update_global_gitignore(&self, abs_path: &Path) {
@@ -4310,9 +4334,7 @@ impl BackgroundScanner {
 
             if child_name == DOT_GIT {
                 let mut state = self.state.lock().await;
-                state
-                    .insert_git_repository(child_path.clone(), self.fs.as_ref(), self.watcher.as_ref())
-                    .await;
+                state.insert_git_repository(child_path.clone(), self.fs.as_ref()).await;
             } else if child_name == GITIGNORE {
                 match build_gitignore(&child_abs_path, self.fs.as_ref()).await {
                     Ok(ignore) => {
@@ -4328,10 +4350,7 @@ impl BackgroundScanner {
 
             if self.settings.is_path_excluded(&child_path) {
                 log::debug!("skipping excluded child entry {child_path:?}");
-                self.state
-                    .lock()
-                    .await
-                    .remove_path(&child_path, true, self.watcher.as_ref());
+                self.state.lock().await.remove_path(&child_path, true);
                 continue;
             }
 
@@ -4448,7 +4467,9 @@ impl BackgroundScanner {
         }
 
         state.populate_dir(job.path.clone(), new_entries, new_ignore);
-        self.watcher.add(job.abs_path.as_ref()).log_err();
+        state.pending_watches.push(PendingWatch::Add(job.abs_path.clone()));
+        drop(state);
+        self.process_pending_watches().await;
 
         for new_job in new_jobs.into_iter().flatten() {
             job.scan_queue.try_send(new_job).expect("channel is unbounded");
@@ -4467,32 +4488,36 @@ impl BackgroundScanner {
         scan_queue_tx: Option<Sender<ScanJob>>,
     ) {
         // grab metadata for all requested paths
-        let metadata = futures::future::join_all(
+        let mut requested_paths = futures::future::join_all(
             abs_paths
                 .iter()
                 .map(|abs_path| async move {
-                    let metadata = self.fs.metadata(abs_path).await?;
-                    if let Some(metadata) = metadata {
-                        let canonical_path = self.fs.canonicalize(abs_path).await?;
+                    let metadata = match self.fs.metadata(abs_path).await {
+                        Ok(Some(metadata)) => metadata,
+                        Ok(None) => return RequestedPath::Remove(Vec::new()),
+                        Err(err) => return RequestedPath::Error(err),
+                    };
 
-                        // If we're on a case-insensitive filesystem (default on macOS), we want
-                        // to only ignore metadata for non-symlink files if their absolute-path matches
-                        // the canonical-path.
-                        // Because if not, this might be a case-only-renaming (`mv test.txt TEST.TXT`)
-                        // and we want to ignore the metadata for the old path (`test.txt`) so it's
-                        // treated as removed.
-                        if !self.fs_case_sensitive && !metadata.is_symlink {
-                            let canonical_file_name = canonical_path.file_name();
-                            let file_name = abs_path.file_name();
-                            if canonical_file_name != file_name {
-                                return Ok(None);
-                            }
+                    let canonical_path = match self.fs.canonicalize(abs_path).await {
+                        Ok(path) => path,
+                        Err(err) => return RequestedPath::Error(err),
+                    };
+
+                    // If we're on a case-insensitive filesystem (default on macOS), we want
+                    // to only ignore metadata for non-symlink files if their absolute-path matches
+                    // the canonical-path.
+                    // Because if not, this might be a case-only-renaming (`mv test.txt TEST.TXT`)
+                    // and we want to ignore the metadata for the old path (`test.txt`) so it's
+                    // treated as removed.
+                    if !self.fs_case_sensitive && !metadata.is_symlink {
+                        let canonical_file_name = canonical_path.file_name();
+                        let file_name = abs_path.file_name();
+                        if canonical_file_name != file_name {
+                            return RequestedPath::Remove(Vec::new());
                         }
-
-                        anyhow::Ok(Some((metadata, SanitizedPath::new_arc(&canonical_path))))
-                    } else {
-                        Ok(None)
                     }
+
+                    RequestedPath::Update((metadata, SanitizedPath::new_arc(&canonical_path), Vec::new()))
                 })
                 .collect::<Vec<_>>(),
         )
@@ -4510,17 +4535,20 @@ impl BackgroundScanner {
         // Remove any entries for paths that no longer exist or are being recursively
         // refreshed. Do this before adding any new entries, so that renames can be
         // detected regardless of the order of the paths.
-        for (path, metadata) in relative_paths.iter().zip(metadata.iter()) {
-            let path_was_removed = matches!(metadata, Ok(None));
-            if path_was_removed || doing_recursive_update {
-                state.remove_path(path, path_was_removed, self.watcher.as_ref());
+        for (path, request) in relative_paths.iter().zip(requested_paths.iter_mut()) {
+            match request {
+                RequestedPath::Remove(paths) => paths.extend(state.remove_path_from_snapshot(path, true)),
+                RequestedPath::Update((_, _, paths)) if doing_recursive_update => {
+                    paths.extend(state.remove_path_from_snapshot(path, false))
+                }
+                _ => {}
             }
         }
 
-        for (path, metadata) in relative_paths.iter().zip(metadata) {
+        for (path, request) in relative_paths.iter().zip(requested_paths) {
             let abs_path: Arc<Path> = root_abs_path.join(path.as_std_path()).into();
-            match metadata {
-                Ok(Some((metadata, canonical_path))) => {
+            match request {
+                RequestedPath::Update((metadata, canonical_path, remove_paths)) => {
                     let ignore_stack = state
                         .snapshot
                         .ignore_stack_for_abs_path(&abs_path, metadata.is_dir, self.fs.as_ref())
@@ -4558,9 +4586,7 @@ impl BackgroundScanner {
                         }
                     }
 
-                    state
-                        .insert_entry(fs_entry.clone(), self.fs.as_ref(), self.watcher.as_ref())
-                        .await;
+                    state.insert_entry(fs_entry.clone(), self.fs.as_ref()).await;
 
                     if path.is_empty()
                         && let Some((ignores, exclude, repo)) = new_ancestor_repo.take()
@@ -4581,18 +4607,24 @@ impl BackgroundScanner {
                                     work_directory,
                                     ancestor_dot_git.into(),
                                     self.fs.as_ref(),
-                                    self.watcher.as_ref(),
                                 )
                                 .await
                                 .log_err();
                         }
                     }
+
+                    for path in remove_paths {
+                        state.pending_watches.push(PendingWatch::Remove(path));
+                    }
                 }
-                Ok(None) => {
+                RequestedPath::Remove(paths) => {
                     self.remove_repo_path(path.clone(), &mut state.snapshot);
+                    for path in paths {
+                        state.pending_watches.push(PendingWatch::Remove(path));
+                    }
                 }
-                Err(err) => {
-                    log::error!("error reading file {abs_path:?} on event: {err:#}");
+                RequestedPath::Error(err) => {
+                    log::error!("Error reading {abs_path:?}: {err}");
                 }
             }
         }
@@ -4603,6 +4635,8 @@ impl BackgroundScanner {
             usize::MAX,
             Ord::cmp,
         );
+        drop(state);
+        self.process_pending_watches().await;
     }
 
     fn remove_repo_path(&self, path: Arc<RelPath>, snapshot: &mut LocalSnapshot) -> Option<()> {
@@ -4869,7 +4903,6 @@ impl BackgroundScanner {
                         .insert_git_repository(
                             RelPath::new(relative, PathStyle::local()).unwrap().to_arc(),
                             self.fs.as_ref(),
-                            self.watcher.as_ref(),
                         )
                         .await;
                 }
@@ -4940,6 +4973,12 @@ impl BackgroundScanner {
         }
         Ok(request)
     }
+}
+
+enum RequestedPath {
+    Update((Metadata, Arc<SanitizedPath>, Vec<PathBuf>)),
+    Remove(Vec<PathBuf>),
+    Error(anyhow::Error),
 }
 
 async fn discover_ancestor_git_repo(
