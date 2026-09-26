@@ -869,7 +869,9 @@ mod tests {
         for width in [1000., 500., 1000.] {
             for _ in 0..8 {
                 cx.run_until_parked();
-                cx.draw(point(px(0.), px(0.)), size(px(width), px(700.)), |_, _| split.clone());
+                cx.draw(point(px(0.), px(0.)), size(px(width), px(700.)), |_, _| {
+                    split.clone().into_any_element()
+                });
             }
             cx.run_until_parked();
             split.update(cx, |split, cx| {
@@ -877,10 +879,10 @@ mod tests {
                 let snapshots = [split.primary_editor.clone(), old.editor.clone()]
                     .map(|editor| editor.update(cx, |editor, cx| editor.display_snapshot(cx)));
                 assert!(split.alignment.blocks[1].values().any(|(_, height)| *height == 3));
-                for side in 0..2 {
+                for (side, snapshot) in snapshots.iter().enumerate() {
                     for (id, expected_height) in split.alignment.blocks[side].values() {
                         assert_eq!(
-                            snapshots[side].block_for_id(BlockId::Custom(*id)).unwrap().height(),
+                            snapshot.block_for_id(BlockId::Custom(*id)).unwrap().height(),
                             *expected_height,
                             "render must preserve the requested padding height"
                         );

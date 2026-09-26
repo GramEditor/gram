@@ -284,12 +284,11 @@ impl Item for FileDiffView {
     fn breadcrumbs(&self, theme: &theme::Theme, cx: &App) -> Option<Vec<BreadcrumbText>> {
         let active = self.active_editor(cx);
         let mut breadcrumbs = active.breadcrumbs(theme, cx)?;
-        if active != self.editor {
-            if let Some(first) = breadcrumbs.first_mut()
-                && let Some(path) = self.old_buffer.read(cx).snapshot().resolve_file_path(false, cx)
-            {
-                first.text = path;
-            }
+        if active != self.editor
+            && let Some(first) = breadcrumbs.first_mut()
+            && let Some(path) = self.old_buffer.read(cx).snapshot().resolve_file_path(false, cx)
+        {
+            first.text = path;
         }
         Some(breadcrumbs)
     }

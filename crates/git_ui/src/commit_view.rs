@@ -1189,7 +1189,7 @@ mod split_tests {
         for _ in 0..6 {
             cx.run_until_parked();
             cx.draw(gpui::point(px(0.), px(0.)), gpui::size(px(1000.), px(700.)), |_, _| {
-                view.clone()
+                view.clone().into_any_element()
             });
         }
         view.read_with(cx, |view, cx| {

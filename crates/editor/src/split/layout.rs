@@ -518,7 +518,7 @@ impl SplittableEditor {
                         let rows = alignment::boundaries(
                             key.ranges[0].start.row..key.ranges[0].end.row + 1,
                             key.ranges[1].start.row..key.ranges[1].end.row + 1,
-                            &changes,
+                            changes,
                         );
                         (id, key, rows)
                     })
