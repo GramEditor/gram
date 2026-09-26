@@ -255,11 +255,8 @@ impl StatusItemView for CursorPosition {
             self._observe_active_editor = Some(cx.subscribe_in(
                 &editor,
                 window,
-                |cursor_position, editor, event, window, cx| match event {
-                    EditorEvent::SelectionsChanged { .. } => {
-                        Self::update_position(cursor_position, editor, Some(UPDATE_DEBOUNCE), window, cx)
-                    }
-                    _ => {}
+                |cursor_position, editor, event, window, cx| if let EditorEvent::SelectionsChanged { .. } = event {
+                    Self::update_position(cursor_position, editor, Some(UPDATE_DEBOUNCE), window, cx)
                 },
             ));
             self.update_position(&editor, None, window, cx);

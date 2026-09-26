@@ -155,18 +155,14 @@ impl LspInstaller for TypstLspAdapter {
     ) -> Option<LanguageServerBinary> {
         let asset_basename = Self::build_asset_base_name().ok()?;
 
-        match find_cached_server_binary(&container_dir, Some("tinymist-"), async |path| {
+        find_cached_server_binary(&container_dir, Some("tinymist-"), async |path| {
             Some(path.join(&asset_basename).join(with_exe("tinymist")))
         })
-        .await
-        {
-            Some(path) => Some(LanguageServerBinary {
+        .await.map(|path| LanguageServerBinary {
                 path,
                 arguments: vec!["lsp".into()],
                 env: None,
-            }),
-            None => None,
-        }
+            })
     }
 }
 

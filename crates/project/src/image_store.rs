@@ -20,7 +20,7 @@ use worktree::{LoadedBinaryFile, PathChange, Worktree, WorktreeId};
 pub struct ImageId(NonZeroU64);
 
 impl ImageId {
-    pub fn to_proto(&self) -> u64 {
+    pub fn to_proto(self) -> u64 {
         self.0.get()
     }
 }
@@ -297,7 +297,7 @@ impl ImageStore {
         Self {
             state: Box::new(cx.new(|cx| {
                 let subscription = cx.subscribe(&worktree_store, |this: &mut LocalImageStore, _, event, cx| {
-                    if let WorktreeStoreEvent::WorktreeAdded(worktree) = event {
+                    if let WorktreeStoreEvent::Added(worktree) = event {
                         this.subscribe_to_worktree(worktree, cx);
                     }
                 });
@@ -469,10 +469,7 @@ impl RemoteImageStore {
         let (tx, rx) = oneshot::channel();
         self.remote_image_listeners.entry(id).or_default().push(tx);
 
-        cx.spawn(async move |_this, cx| {
-            let result = cx.background_spawn(async move { rx.await? }).await;
-            result
-        })
+        cx.spawn(async move |_this, cx| cx.background_spawn(async move { rx.await? }).await)
     }
 
     pub fn handle_create_image_for_peer(

@@ -557,11 +557,11 @@ impl LspInstaller for TypeScriptLspAdapter {
     ) -> Option<LanguageServerBinary> {
         let path = delegate.which(Self::SERVER_NAME.as_ref()).await?;
 
-        return Some(LanguageServerBinary {
-            path: path,
+        Some(LanguageServerBinary {
+            path,
             env: None,
             arguments: vec!["--stdio".into()],
-        });
+        })
     }
 
     async fn fetch_latest_server_version(

@@ -33,7 +33,6 @@ use std::{
         atomic::{self, AtomicBool},
     },
     time::Duration,
-    u32,
 };
 
 use outline_panel_settings::{DockSide, OutlinePanelSettings, ShowIndentGuides};
@@ -1577,10 +1576,9 @@ impl OutlinePanel {
             if let PanelEntry::FoldedDirs(FoldedDirsEntry {
                 worktree_id, entries, ..
             }) = &cached.entry
+                && let Some(last) = entries.last()
             {
-                if let Some(last) = entries.last() {
-                    to_uncollapse.insert(CollapsedEntry::Dir(*worktree_id, last.id));
-                }
+                to_uncollapse.insert(CollapsedEntry::Dir(*worktree_id, last.id));
             }
         }
 
@@ -2230,7 +2228,7 @@ impl OutlinePanel {
                 .unwrap_or_default();
             let color = entry_git_aware_label_color(git_status, is_ignored, is_active);
             let icon = if settings.folder_icons {
-                FileIcons::get_folder_icon(is_expanded, &Path::new(&name), cx)
+                FileIcons::get_folder_icon(is_expanded, Path::new(&name), cx)
             } else {
                 FileIcons::get_chevron_icon(is_expanded, cx)
             }
@@ -2423,15 +2421,8 @@ impl OutlinePanel {
             Some(worktree) => {
                 let worktree = worktree.read(cx);
                 match worktree.snapshot().root_entry() {
-                    Some(root_entry) => {
-                        if root_entry.id == entry.id {
-                            file_name(worktree.abs_path().as_ref())
-                        } else {
-                            let path = worktree.absolutize(entry.path.as_ref());
-                            file_name(&path)
-                        }
-                    }
-                    None => {
+                    Some(root_entry) if root_entry.id == entry.id => file_name(worktree.abs_path().as_ref()),
+                    _ => {
                         let path = worktree.absolutize(entry.path.as_ref());
                         file_name(&path)
                     }
@@ -2950,11 +2941,10 @@ impl OutlinePanel {
         let mut parents_stack = Vec::<(&Range<DisplayPoint>, &&Outline, usize)>::new();
 
         for (i, (outline_range, outline)) in excerpt_outlines.iter().enumerate() {
-            if outline_range.to_inclusive().contains(&selection_display_point) {
-                matching_outline_indices.push(i);
-            } else if (outline_range.start.row()..outline_range.end.row())
-                .to_inclusive()
-                .contains(&selection_display_point.row())
+            if outline_range.to_inclusive().contains(&selection_display_point)
+                || (outline_range.start.row()..outline_range.end.row())
+                    .to_inclusive()
+                    .contains(&selection_display_point.row())
             {
                 matching_outline_indices.push(i);
             }
@@ -3937,8 +3927,8 @@ impl OutlinePanel {
                     if outline.depth < last_depth_at_level.len() {
                         last_depth_at_level[outline.depth] = Some(outline.range.clone());
                         // Clear deeper levels when we go back to a shallower depth
-                        for d in (outline.depth + 1)..last_depth_at_level.len() {
-                            last_depth_at_level[d] = None;
+                        for item in last_depth_at_level.iter_mut().skip(outline.depth + 1) {
+                            *item = None;
                         }
                     }
 
@@ -4064,7 +4054,7 @@ impl OutlinePanel {
             .cached_entries
             .iter()
             .enumerate()
-            .find(|(_, cached_entry)| &cached_entry.entry == &entry)
+            .find(|(_, cached_entry)| cached_entry.entry == entry)
             .map(|(i, _)| i)
             .unwrap_or_default();
 

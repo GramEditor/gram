@@ -166,7 +166,7 @@ impl LanguageServerState {
                                         .iter()
                                         .filter_map(|(abs_path, servers)| {
                                             let worktree = servers.worktree.as_ref()?.upgrade()?.read(cx);
-                                            let relative_path = abs_path.strip_prefix(&worktree.abs_path()).ok()?;
+                                            let relative_path = abs_path.strip_prefix(worktree.abs_path()).ok()?;
                                             let relative_path = RelPath::new(relative_path, path_style).log_err()?;
                                             let entry = worktree.entry_for_path(&relative_path)?;
                                             let project_path = project.read(cx).path_for_entry(entry.id, cx)?;
@@ -212,13 +212,10 @@ impl LanguageServerState {
                     .when_some(header.as_ref(), |menu, header| menu.header(header));
                 continue;
             } else {
-                match item {
-                    LspMenuItem::OpenConfigView => {
-                        menu = menu.entry("Configure Servers", None, move |window, cx| {
-                            window.dispatch_action(Box::new(OpenLanguageServerConfig), cx);
-                        })
-                    }
-                    _ => {}
+                if let LspMenuItem::OpenConfigView = item {
+                    menu = menu.entry("Configure Servers", None, move |window, cx| {
+                        window.dispatch_action(Box::new(OpenLanguageServerConfig), cx);
+                    })
                 }
             }
 
@@ -395,7 +392,7 @@ impl LanguageServerState {
 
                                         let worktree = servers.worktree.as_ref()?.upgrade()?;
                                         let worktree_ref = worktree.read(cx);
-                                        let relative_path = abs_path.strip_prefix(&worktree_ref.abs_path()).ok()?;
+                                        let relative_path = abs_path.strip_prefix(worktree_ref.abs_path()).ok()?;
                                         let relative_path = RelPath::new(relative_path, path_style).log_err()?;
                                         let entry = worktree_ref.entry_for_path(&relative_path)?;
                                         let project_path = project.read(cx).path_for_entry(entry.id, cx)?;
@@ -411,7 +408,7 @@ impl LanguageServerState {
                                         .iter()
                                         .filter_map(|(abs_path, servers)| {
                                             let worktree = servers.worktree.as_ref()?.upgrade()?.read(cx);
-                                            let relative_path = abs_path.strip_prefix(&worktree.abs_path()).ok()?;
+                                            let relative_path = abs_path.strip_prefix(worktree.abs_path()).ok()?;
                                             let relative_path = RelPath::new(relative_path, path_style).log_err()?;
                                             let entry = worktree.entry_for_path(&relative_path)?;
                                             let project_path = project.read(cx).path_for_entry(entry.id, cx)?;

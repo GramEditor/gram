@@ -1056,7 +1056,7 @@ impl SerializableItem for Editor {
                     let (worktree, path) = project.find_worktree(&abs_path, cx)?;
                     let project_path = ProjectPath {
                         worktree_id: worktree.read(cx).id(),
-                        path: path,
+                        path,
                     };
                     Some(project.open_path(project_path, cx))
                 });
@@ -1743,9 +1743,7 @@ fn path_for_file<'a>(
     include_filename: bool,
     cx: &'a App,
 ) -> Option<Cow<'a, str>> {
-    if project::File::from_dyn(Some(file)).is_none() {
-        return None;
-    }
+    project::File::from_dyn(Some(file))?;
 
     let file = file.as_ref();
     // Ensure we always render at least the filename.
@@ -1764,10 +1762,8 @@ fn path_for_file<'a>(
     // The full_path method allocates, so avoid calling it if height is zero.
     if height > 0 {
         let mut full_path = file.full_path(cx);
-        if !include_filename {
-            if !full_path.pop() {
-                return None;
-            }
+        if !include_filename && !full_path.pop() {
+            return None;
         }
         Some(full_path.to_string_lossy().into_owned().into())
     } else {

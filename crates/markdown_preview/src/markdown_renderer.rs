@@ -907,7 +907,7 @@ fn render_markdown_text(parsed_new: &MarkdownParagraph, cx: &mut RenderContext) 
                                     Link::Web { url } => cx.open_url(url),
                                     Link::Fragment { id } => {
                                         if let Some(jump_cb) = &jump_cb {
-                                            jump_cb(&id, window, cx);
+                                            jump_cb(id, window, cx);
                                         }
                                     }
                                     Link::Path { path, .. } => {
@@ -999,7 +999,7 @@ fn render_markdown_image(image: &Image, cx: &mut RenderContext) -> AnyElement {
                             Link::Web { url } => cx.open_url(url),
                             Link::Fragment { id } => {
                                 if let Some(jump_cb) = &jump_cb {
-                                    jump_cb(&id, window, cx);
+                                    jump_cb(id, window, cx);
                                 }
                             }
                             Link::Path { path, .. } => {
@@ -1089,7 +1089,7 @@ fn list_item_prefix(order: usize, ordered: bool, depth: usize) -> String {
     } else {
         let depth = depth.min(BULLETS.len() - 1);
         let bullet = BULLETS[depth];
-        return format!("{} ", bullet);
+        format!("{} ", bullet)
     }
 }
 

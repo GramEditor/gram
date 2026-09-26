@@ -154,8 +154,8 @@ pub fn indent_guides_in_range(
     let mut fold_ranges = Vec::<Range<Point>>::new();
     let folds = snapshot.folds_in_range(start_offset..end_offset).peekable();
     for fold in folds {
-        let start = fold.range.start.to_point(&snapshot.buffer_snapshot());
-        let end = fold.range.end.to_point(&snapshot.buffer_snapshot());
+        let start = fold.range.start.to_point(snapshot.buffer_snapshot());
+        let end = fold.range.end.to_point(snapshot.buffer_snapshot());
         if let Some(last_range) = fold_ranges.last_mut()
             && last_range.end >= start
         {

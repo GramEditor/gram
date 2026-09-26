@@ -8314,8 +8314,10 @@ async fn test_select_next(cx: &mut TestAppContext) {
 
     // Enable case sensitive search.
     update_test_editor_settings(&mut cx, |settings| {
-        let mut search_settings = SearchSettingsContent::default();
-        search_settings.case_sensitive = Some(true);
+        let search_settings = SearchSettingsContent {
+            case_sensitive: Some(true),
+            ..Default::default()
+        };
         settings.search = Some(search_settings);
     });
 
@@ -8359,8 +8361,10 @@ async fn test_select_next(cx: &mut TestAppContext) {
 
     // Disable case sensitive search.
     update_test_editor_settings(&mut cx, |settings| {
-        let mut search_settings = SearchSettingsContent::default();
-        search_settings.case_sensitive = Some(false);
+        let search_settings = SearchSettingsContent {
+            case_sensitive: Some(false),
+            ..Default::default()
+        };
         settings.search = Some(search_settings);
     });
 
@@ -8379,8 +8383,10 @@ async fn test_select_all_matches(cx: &mut TestAppContext) {
 
     // Enable case sensitive search.
     update_test_editor_settings(&mut cx, |settings| {
-        let mut search_settings = SearchSettingsContent::default();
-        search_settings.case_sensitive = Some(true);
+        let search_settings = SearchSettingsContent {
+            case_sensitive: Some(true),
+            ..Default::default()
+        };
         settings.search = Some(search_settings);
     });
 
@@ -8438,8 +8444,10 @@ async fn test_select_all_matches(cx: &mut TestAppContext) {
 
     // Disable case sensitive search.
     update_test_editor_settings(&mut cx, |settings| {
-        let mut search_settings = SearchSettingsContent::default();
-        search_settings.case_sensitive = Some(false);
+        let search_settings = SearchSettingsContent {
+            case_sensitive: Some(false),
+            ..Default::default()
+        };
         settings.search = Some(search_settings);
     });
 
@@ -8730,8 +8738,10 @@ async fn test_select_previous_with_single_selection(cx: &mut TestAppContext) {
 
     // Enable case sensitive search.
     update_test_editor_settings(&mut cx, |settings| {
-        let mut search_settings = SearchSettingsContent::default();
-        search_settings.case_sensitive = Some(true);
+        let search_settings = SearchSettingsContent {
+            case_sensitive: Some(true),
+            ..Default::default()
+        };
         settings.search = Some(search_settings);
     });
 
@@ -8770,8 +8780,10 @@ async fn test_select_previous_with_single_selection(cx: &mut TestAppContext) {
 
     // Disable case sensitive search.
     update_test_editor_settings(&mut cx, |settings| {
-        let mut search_settings = SearchSettingsContent::default();
-        search_settings.case_sensitive = Some(false);
+        let search_settings = SearchSettingsContent {
+            case_sensitive: Some(false),
+            ..Default::default()
+        };
         settings.search = Some(search_settings);
     });
 
@@ -11072,7 +11084,7 @@ async fn test_snippet_placeholder_choices(cx: &mut TestAppContext) {
     let buffer = cx.update(|cx| MultiBuffer::build_simple(&text, cx));
     let (editor, cx) = cx.add_window_view(|window, cx| build_editor(buffer, window, cx));
 
-    _ = editor.update_in(cx, |editor, window, cx| {
+    editor.update_in(cx, |editor, window, cx| {
         let snippet = Snippet::parse("type ${1|,i32,u32|} = $2").unwrap();
 
         editor
@@ -11137,7 +11149,7 @@ async fn test_snippet_tabstop_navigation_with_placeholders(cx: &mut TestAppConte
     let buffer = cx.update(|cx| MultiBuffer::build_simple(&text, cx));
     let (editor, cx) = cx.add_window_view(|window, cx| build_editor(buffer, window, cx));
 
-    _ = editor.update_in(cx, |editor, window, cx| {
+    editor.update_in(cx, |editor, window, cx| {
         let snippet = Snippet::parse("type ${1|,i32,u32|} = $2; $3").unwrap();
 
         editor
@@ -11201,7 +11213,7 @@ async fn test_snippet_tabstop_navigation_with_placeholders(cx: &mut TestAppConte
         );
     });
 
-    _ = editor.update_in(cx, |editor, window, cx| {
+    editor.update_in(cx, |editor, window, cx| {
         editor.select_all(&SelectAll, window, cx);
         editor.backspace(&Backspace, window, cx);
 
@@ -21101,7 +21113,7 @@ async fn test_adjacent_diff_hunks(executor: BackgroundExecutor, cx: &mut TestApp
     let hunk_ranges = cx.update_editor(|editor, window, cx| {
         let snapshot = editor.snapshot(window, cx);
         let hunks = editor
-            .diff_hunks_in_ranges(&[Anchor::min()..Anchor::max()], &snapshot.buffer_snapshot())
+            .diff_hunks_in_ranges(&[Anchor::min()..Anchor::max()], snapshot.buffer_snapshot())
             .collect::<Vec<_>>();
         let excerpt_id = editor.buffer.read(cx).excerpt_ids()[0];
         hunks
@@ -21191,7 +21203,7 @@ async fn test_adjacent_diff_hunks(executor: BackgroundExecutor, cx: &mut TestApp
     let hunk_ranges = cx.update_editor(|editor, window, cx| {
         let snapshot = editor.snapshot(window, cx);
         let hunks = editor
-            .diff_hunks_in_ranges(&[Anchor::min()..Anchor::max()], &snapshot.buffer_snapshot())
+            .diff_hunks_in_ranges(&[Anchor::min()..Anchor::max()], snapshot.buffer_snapshot())
             .collect::<Vec<_>>();
         let excerpt_id = editor.buffer.read(cx).excerpt_ids()[0];
         hunks
@@ -21253,7 +21265,7 @@ async fn test_toggle_deletion_hunk_at_start_of_file(executor: BackgroundExecutor
     let hunk_ranges = cx.update_editor(|editor, window, cx| {
         let snapshot = editor.snapshot(window, cx);
         let hunks = editor
-            .diff_hunks_in_ranges(&[Anchor::min()..Anchor::max()], &snapshot.buffer_snapshot())
+            .diff_hunks_in_ranges(&[Anchor::min()..Anchor::max()], snapshot.buffer_snapshot())
             .collect::<Vec<_>>();
         let excerpt_id = editor.buffer.read(cx).excerpt_ids()[0];
         hunks
@@ -21305,7 +21317,7 @@ async fn test_expand_first_line_diff_hunk_keeps_deleted_lines_visible(
         let snapshot = editor.snapshot(window, cx);
         let excerpt_id = editor.buffer.read(cx).excerpt_ids()[0];
         let hunks = editor
-            .diff_hunks_in_ranges(&[Anchor::min()..Anchor::max()], &snapshot.buffer_snapshot())
+            .diff_hunks_in_ranges(&[Anchor::min()..Anchor::max()], snapshot.buffer_snapshot())
             .collect::<Vec<_>>();
         assert_eq!(hunks.len(), 1);
         let hunk_range = Anchor::range_in_buffer(excerpt_id, hunks[0].buffer_range.clone());
@@ -21447,7 +21459,7 @@ async fn test_partially_staged_hunk(cx: &mut TestAppContext) {
     cx.update_editor(|editor, window, cx| {
         let snapshot = editor.snapshot(window, cx);
         let hunks = editor
-            .diff_hunks_in_ranges(&[Anchor::min()..Anchor::max()], &snapshot.buffer_snapshot())
+            .diff_hunks_in_ranges(&[Anchor::min()..Anchor::max()], snapshot.buffer_snapshot())
             .collect::<Vec<_>>();
         assert_eq!(hunks.len(), 1);
         assert_eq!(
@@ -27023,7 +27035,7 @@ async fn test_sticky_scroll(cx: &mut TestAppContext) {
             fn baz() {
             }
         "};
-    cx.set_state(&buffer);
+    cx.set_state(buffer);
 
     cx.update_editor(|e, _, cx| {
         e.buffer().read(cx).as_singleton().unwrap().update(cx, |buffer, cx| {
@@ -27035,7 +27047,7 @@ async fn test_sticky_scroll(cx: &mut TestAppContext) {
         cx.update_editor(|e, window, cx| {
             e.scroll(gpui::Point { x: 0., y: offset }, None, window, cx);
             let style = e.style(cx).clone();
-            EditorElement::sticky_headers(&e, &e.snapshot(window, cx), &style, cx)
+            EditorElement::sticky_headers(e, &e.snapshot(window, cx), &style, cx)
                 .into_iter()
                 .map(
                     |StickyHeader {
@@ -27216,7 +27228,7 @@ async fn test_scroll_by_clicking_sticky_header(cx: &mut TestAppContext) {
             fn baz() {
             }
         "};
-    cx.set_state(&buffer);
+    cx.set_state(buffer);
 
     cx.update_editor(|e, _, cx| {
         e.buffer().read(cx).as_singleton().unwrap().update(cx, |buffer, cx| {
@@ -27315,7 +27327,7 @@ async fn test_scroll_by_clicking_sticky_header(cx: &mut TestAppContext) {
 
 #[gpui::test]
 async fn test_next_prev_reference(cx: &mut TestAppContext) {
-    const CYCLE_POSITIONS: &[&'static str] = &[
+    const CYCLE_POSITIONS: &[&str] = &[
         indoc! {"
             fn foo() {
                 let ˇabc = 123;

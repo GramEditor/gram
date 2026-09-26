@@ -134,7 +134,7 @@ impl Project {
                         if let Some(command) = &spawn_task.command {
                             let command = shell_kind.prepend_command_prefix(command);
                             let command = shell_kind.try_quote_prefix_aware(&command);
-                            let args = spawn_task.args.iter().filter_map(|arg| shell_kind.try_quote(&arg));
+                            let args = spawn_task.args.iter().filter_map(|arg| shell_kind.try_quote(arg));
 
                             command.into_iter().chain(args).join(" ")
                         } else {

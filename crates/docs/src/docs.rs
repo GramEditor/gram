@@ -109,7 +109,7 @@ pub fn open_doc_url(url: SharedString, window: &mut Window, cx: &mut App) {
         if url.starts_with("#") {
             return;
         }
-        let url = url.split_once("#").map(|s| s.0).unwrap_or(&url);
+        let url = url.split_once("#").map(|s| s.0).unwrap_or(url);
         let url = format!("gram://docs/{url}");
         let url = if url.contains(".md#") {
             url.replace(".md#", "#")
@@ -464,7 +464,7 @@ fn preprocess_text(text: &str, actions: Vec<Box<dyn Action>>) -> String {
 }
 
 fn get_docs<'b>(path: &str) -> Option<Cow<'b, str>> {
-    if let Some(text) = lookup_docs(&path) {
+    if let Some(text) = lookup_docs(path) {
         Some(match text.data {
             Cow::Borrowed(bytes) => Cow::Borrowed(std::str::from_utf8(bytes).unwrap()),
             Cow::Owned(bytes) => Cow::Owned(String::from_utf8(bytes).unwrap()),

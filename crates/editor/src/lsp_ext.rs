@@ -163,7 +163,7 @@ pub fn lsp_tasks(
         })
         // Make this timeout longer so the inner timeout can fire and
         // deliver word completions (see editor.rs:open_or_update_completions_menu)
-        .with_timeout(Duration::from_millis(250), &cx.background_executor())
+        .with_timeout(Duration::from_millis(250), cx.background_executor())
         .unwrap_or_else(|_| {
             log::debug!("Timed out waiting for LSP tasks");
             Vec::new()

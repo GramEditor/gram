@@ -621,7 +621,7 @@ impl HeadlessProject {
                 buffer_store.open_buffer(
                     ProjectPath {
                         worktree_id: worktree.read(cx).id(),
-                        path: path,
+                        path,
                     },
                     cx,
                 )

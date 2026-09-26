@@ -151,18 +151,14 @@ impl LspInstaller for XmlLspAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        match find_cached_server_binary(&container_dir, Some("lemminx-"), async |path| {
+        find_cached_server_binary(&container_dir, Some("lemminx-"), async |path| {
             Some(path.join(with_exe("lemminx")))
         })
-        .await
-        {
-            Some(path) => Some(LanguageServerBinary {
+        .await.map(|path| LanguageServerBinary {
                 path,
                 arguments: Default::default(),
                 env: None,
-            }),
-            None => None,
-        }
+            })
     }
 }
 

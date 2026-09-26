@@ -124,18 +124,14 @@ impl LspInstaller for OpenTofuLspAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        match find_cached_server_binary(&container_dir, Some("tofu-ls-"), async |path| {
+        find_cached_server_binary(&container_dir, Some("tofu-ls-"), async |path| {
             Some(path.join(with_exe("tofu-ls")))
         })
-        .await
-        {
-            Some(path) => Some(LanguageServerBinary {
+        .await.map(|path| LanguageServerBinary {
                 path,
                 arguments: vec!["serve".into()],
                 env: None,
-            }),
-            None => None,
-        }
+            })
     }
 }
 

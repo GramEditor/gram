@@ -498,7 +498,7 @@ impl ServerPaths {
         })?;
         let log_dir = logs_dir();
         std::fs::create_dir_all(log_dir).map_err(|source| ServerPathError::CreateLogsDir {
-            source: source,
+            source,
             path: log_dir.clone(),
         })?;
 
@@ -747,7 +747,7 @@ pub(crate) struct CheckPidError {
 }
 
 async fn check_pid_file(path: &Path) -> Result<Option<u32>, CheckPidError> {
-    let Some(pid) = std::fs::read_to_string(&path)
+    let Some(pid) = std::fs::read_to_string(path)
         .ok()
         .and_then(|contents| contents.parse::<u32>().ok())
     else {
@@ -765,7 +765,7 @@ async fn check_pid_file(path: &Path) -> Result<Option<u32>, CheckPidError> {
         }
         _ => {
             log::debug!("Found PID file, but process with that PID does not exist. Removing PID file.");
-            std::fs::remove_file(&path).map_err(|source| CheckPidError { source, pid })?;
+            std::fs::remove_file(path).map_err(|source| CheckPidError { source, pid })?;
             Ok(None)
         }
     }

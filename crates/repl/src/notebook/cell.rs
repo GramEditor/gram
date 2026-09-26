@@ -80,7 +80,7 @@ pub enum Cell {
     Raw(Entity<RawCell>),
 }
 
-fn convert_outputs(outputs: &Vec<nbformat::v4::Output>, window: &mut Window, cx: &mut App) -> Vec<Output> {
+fn convert_outputs(outputs: &[nbformat::v4::Output], window: &mut Window, cx: &mut App) -> Vec<Output> {
     outputs
         .iter()
         .map(|output| match output {

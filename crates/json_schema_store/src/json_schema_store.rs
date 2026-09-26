@@ -114,12 +114,8 @@ pub async fn resolve_schema_request_inner(
             let delegate: Arc<dyn LspAdapterDelegate> = cx
                 .update(|inner_cx| {
                     lsp_store.update(inner_cx, |lsp_store, cx| {
-                        let Some(local) = lsp_store.as_local() else {
-                            return None;
-                        };
-                        let Some(worktree) = local.worktree_store.read(cx).worktrees().next() else {
-                            return None;
-                        };
+                        let local = lsp_store.as_local()?;
+                        let worktree = local.worktree_store.read(cx).worktrees().next()?;
                         Some(LocalLspAdapterDelegate::from_local_lsp(local, &worktree, cx))
                     })
                 })?
@@ -298,7 +294,7 @@ pub fn all_schema_file_associations(
 
     file_associations.as_array_mut().unwrap().extend(
         // ?PERF: use all_action_schemas() and don't include action schemas with no arguments
-        cx.all_action_names().into_iter().map(|&name| {
+        cx.all_action_names().iter().map(|&name| {
             let normalized_name = normalize_action_name(name);
             let file_name = normalized_action_name_to_file_name(normalized_name.clone());
             serde_json::json!({

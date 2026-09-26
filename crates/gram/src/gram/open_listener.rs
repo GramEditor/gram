@@ -71,9 +71,11 @@ pub enum OpenRequestKind {
 
 impl OpenRequest {
     pub fn parse(request: RawOpenRequest, cx: &App) -> Result<Self> {
-        let mut this = Self::default();
+        let mut this = Self {
+            diff_paths: request.diff_paths,
+            ..Default::default()
+        };
 
-        this.diff_paths = request.diff_paths;
         if let Some(wsl) = request.wsl {
             let (user, distro_name) = if let Some((user, distro)) = wsl.split_once('@') {
                 if user.is_empty() {

@@ -240,7 +240,7 @@ fn show_hover(
 
     // Don't request again if the location is the same as the previous request
     if let Some(triggered_from) = &editor.hover_state.triggered_from
-        && triggered_from.cmp(&anchor, &snapshot.buffer_snapshot()).is_eq()
+        && triggered_from.cmp(&anchor, snapshot.buffer_snapshot()).is_eq()
     {
         return None;
     }
@@ -266,8 +266,7 @@ fn show_hover(
                     .await;
 
                 // Construct delay task to wait for later
-                let total_delay = Some(cx.background_executor().timer(Duration::from_millis(lsp_request_early)));
-                total_delay
+                Some(cx.background_executor().timer(Duration::from_millis(lsp_request_early)))
             };
 
             let hover_request = cx.update(|_, cx| provider.hover(&buffer, buffer_position, cx))?;
@@ -275,7 +274,7 @@ fn show_hover(
             if let Some(delay) = delay {
                 delay.await;
             }
-            let offset = anchor.to_offset(&snapshot.buffer_snapshot());
+            let offset = anchor.to_offset(snapshot.buffer_snapshot());
             let local_diagnostic = if all_diagnostics_active {
                 None
             } else {
@@ -292,8 +291,8 @@ fn show_hover(
                     .buffer_snapshot()
                     .diagnostic_group(buffer_id, local_diagnostic.diagnostic.group_id)
                     .collect::<Vec<_>>();
-                let point_range = local_diagnostic.range.start.to_point(&snapshot.buffer_snapshot())
-                    ..local_diagnostic.range.end.to_point(&snapshot.buffer_snapshot());
+                let point_range = local_diagnostic.range.start.to_point(snapshot.buffer_snapshot())
+                    ..local_diagnostic.range.end.to_point(snapshot.buffer_snapshot());
                 let markdown = cx.update(|_, cx| {
                     renderer
                         .as_ref()
@@ -350,7 +349,7 @@ fn show_hover(
             {
                 let after = snapshot
                     .buffer_snapshot()
-                    .anchor_after(anchor.to_offset(&snapshot.buffer_snapshot()) + invisible.len_utf8());
+                    .anchor_after(anchor.to_offset(snapshot.buffer_snapshot()) + invisible.len_utf8());
                 Some((invisible, anchor..after))
             } else if let Some(invisible) = snapshot
                 .buffer_snapshot()
@@ -360,7 +359,7 @@ fn show_hover(
             {
                 let before = snapshot
                     .buffer_snapshot()
-                    .anchor_before(anchor.to_offset(&snapshot.buffer_snapshot()) - invisible.len_utf8());
+                    .anchor_before(anchor.to_offset(snapshot.buffer_snapshot()) - invisible.len_utf8());
 
                 Some((invisible, before..anchor))
             } else {
@@ -415,7 +414,7 @@ fn show_hover(
                         let range = snapshot.syntax_ancestor(anchor..anchor)?.1;
                         Some(snapshot.anchor_before(range.start)..snapshot.anchor_after(range.end))
                     })
-                    .unwrap_or_else(|| anchor..anchor);
+                    .unwrap_or(anchor..anchor);
 
                 let blocks = hover_result.contents;
                 let language = hover_result.language;
@@ -476,8 +475,8 @@ fn same_info_hover(editor: &Editor, snapshot: &EditorSnapshot, anchor: Anchor) -
             symbol_range
                 .as_text_range()
                 .map(|range| {
-                    let hover_range = range.to_offset(&snapshot.buffer_snapshot());
-                    let offset = anchor.to_offset(&snapshot.buffer_snapshot());
+                    let hover_range = range.to_offset(snapshot.buffer_snapshot());
+                    let offset = anchor.to_offset(snapshot.buffer_snapshot());
                     // LSP returns a hover result for the end index of ranges that should be hovered, so we need to
                     // use an inclusive range here to check if we should dismiss the popover
                     (hover_range.start..=hover_range.end).contains(&offset)
@@ -492,8 +491,8 @@ fn same_diagnostic_hover(editor: &Editor, snapshot: &EditorSnapshot, anchor: Anc
         .diagnostic_popover
         .as_ref()
         .map(|diagnostic| {
-            let hover_range = diagnostic.local_diagnostic.range.to_offset(&snapshot.buffer_snapshot());
-            let offset = anchor.to_offset(&snapshot.buffer_snapshot());
+            let hover_range = diagnostic.local_diagnostic.range.to_offset(snapshot.buffer_snapshot());
+            let offset = anchor.to_offset(snapshot.buffer_snapshot());
 
             // Here we do basically the same as in `same_info_hover`, see comment there for an explanation
             (hover_range.start..=hover_range.end).contains(&offset)
@@ -553,7 +552,7 @@ pub fn open_markdown_url(link: SharedString, window: &mut Window, cx: &mut App) 
                 };
                 let mut accum = 0u32;
                 for c in fragment.chars() {
-                    if c >= '0' && c <= '9' && accum < u32::MAX / 2 {
+                    if c.is_ascii_digit() && accum < u32::MAX / 2 {
                         accum *= 10;
                         accum += c as u32 - '0' as u32;
                     } else if accum > 0 {

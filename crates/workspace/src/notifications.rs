@@ -503,6 +503,12 @@ pub struct NotificationFrame {
     suffix: Option<AnyElement>,
 }
 
+impl Default for NotificationFrame {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl NotificationFrame {
     pub fn new() -> Self {
         Self {
@@ -1126,7 +1132,7 @@ where
                 log::error!("{err:#}");
                 if let Ok(prompt) = cx.update(|window, cx| {
                     let display = format!("{err:#}");
-                    let detail = f(err, window, cx).unwrap_or_else(|| display);
+                    let detail = f(err, window, cx).unwrap_or(display);
                     window.prompt(PromptLevel::Critical, &msg, Some(&detail), &["Ok"], cx)
                 }) {
                     prompt.await.ok();

@@ -560,11 +560,10 @@ impl BranchListDelegate {
             picker.update_in(cx, |picker, _, cx| {
                 picker.delegate.matches.retain(|e| e != &entry);
 
-                if let Entry::Branch { branch, .. } = &entry {
-                    if let Some(all_branches) = &mut picker.delegate.all_branches {
+                if let Entry::Branch { branch, .. } = &entry
+                    && let Some(all_branches) = &mut picker.delegate.all_branches {
                         all_branches.retain(|e| e.ref_name != branch.ref_name);
                     }
-                }
 
                 if picker.delegate.matches.is_empty() {
                     picker.delegate.selected_index = 0;
@@ -865,7 +864,7 @@ impl PickerDelegate for BranchListDelegate {
                     (Some(formatted_time), Some(author), Some(subject))
                 })
             })
-            .unwrap_or_else(|| (None, None, None));
+            .unwrap_or((None, None, None));
 
         let entry_icon = match entry {
             Entry::NewUrl { .. } | Entry::NewBranch { .. } | Entry::NewRemoteName { .. } => {

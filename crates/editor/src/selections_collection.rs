@@ -117,7 +117,7 @@ impl SelectionsCollection {
     where
         D: MultiBufferDimension + Sub + AddAssign<<D as Sub>::Output> + Ord,
     {
-        resolve_selections_wrapping_blocks(self.pending_anchor(), &snapshot).next()
+        resolve_selections_wrapping_blocks(self.pending_anchor(), snapshot).next()
     }
 
     pub(crate) fn pending_mode(&self) -> Option<SelectMode> {
@@ -129,8 +129,8 @@ impl SelectionsCollection {
         D: MultiBufferDimension + Sub + AddAssign<<D as Sub>::Output> + Ord,
     {
         let disjoint_anchors = &self.disjoint;
-        let mut disjoint = resolve_selections_wrapping_blocks::<D, _>(disjoint_anchors.iter(), &snapshot).peekable();
-        let mut pending_opt = self.pending::<D>(&snapshot);
+        let mut disjoint = resolve_selections_wrapping_blocks::<D, _>(disjoint_anchors.iter(), snapshot).peekable();
+        let mut pending_opt = self.pending::<D>(snapshot);
         iter::from_fn(move || {
             if let Some(pending) = pending_opt.as_mut() {
                 while let Some(next_selection) = disjoint.peek() {
@@ -165,7 +165,7 @@ impl SelectionsCollection {
 
     /// Returns all of the selections, adjusted to take into account the selection line_mode
     pub fn all_adjusted(&self, snapshot: &DisplaySnapshot) -> Vec<Selection<Point>> {
-        let mut selections = self.all::<Point>(&snapshot);
+        let mut selections = self.all::<Point>(snapshot);
         if self.line_mode {
             for selection in &mut selections {
                 let new_range = snapshot.expand_to_line(selection.range());
@@ -178,7 +178,7 @@ impl SelectionsCollection {
 
     /// Returns the newest selection, adjusted to take into account the selection line_mode
     pub fn newest_adjusted(&self, snapshot: &DisplaySnapshot) -> Selection<Point> {
-        let mut selection = self.newest::<Point>(&snapshot);
+        let mut selection = self.newest::<Point>(snapshot);
         if self.line_mode {
             let new_range = snapshot.expand_to_line(selection.range());
             selection.start = new_range.start;
@@ -189,17 +189,16 @@ impl SelectionsCollection {
 
     pub fn all_adjusted_display(&self, display_map: &DisplaySnapshot) -> Vec<Selection<DisplayPoint>> {
         if self.line_mode {
-            let selections = self.all::<Point>(&display_map);
-            let result = selections
+            let selections = self.all::<Point>(display_map);
+            selections
                 .into_iter()
                 .map(|mut selection| {
                     let new_range = display_map.expand_to_line(selection.range());
                     selection.start = new_range.start;
                     selection.end = new_range.end;
-                    selection.map(|point| point.to_display_point(&display_map))
+                    selection.map(|point| point.to_display_point(display_map))
                 })
-                .collect();
-            result
+                .collect()
         } else {
             self.all_display(display_map)
         }
@@ -227,8 +226,8 @@ impl SelectionsCollection {
 
     pub fn all_display(&self, snapshot: &DisplaySnapshot) -> Vec<Selection<DisplayPoint>> {
         let disjoint_anchors = &self.disjoint;
-        let mut disjoint = resolve_selections_display(disjoint_anchors.iter(), &snapshot).peekable();
-        let mut pending_opt = resolve_selections_display(self.pending_anchor(), &snapshot).next();
+        let mut disjoint = resolve_selections_display(disjoint_anchors.iter(), snapshot).peekable();
+        let mut pending_opt = resolve_selections_display(self.pending_anchor(), snapshot).next();
         iter::from_fn(move || {
             if let Some(pending) = pending_opt.as_mut() {
                 while let Some(next_selection) = disjoint.peek() {
@@ -273,13 +272,13 @@ impl SelectionsCollection {
     where
         D: MultiBufferDimension + Sub + AddAssign<<D as Sub>::Output> + Ord,
     {
-        resolve_selections_wrapping_blocks([self.newest_anchor()], &snapshot)
+        resolve_selections_wrapping_blocks([self.newest_anchor()], snapshot)
             .next()
             .unwrap()
     }
 
     pub fn newest_display(&self, snapshot: &DisplaySnapshot) -> Selection<DisplayPoint> {
-        resolve_selections_display([self.newest_anchor()], &snapshot)
+        resolve_selections_display([self.newest_anchor()], snapshot)
             .next()
             .unwrap()
     }
@@ -296,7 +295,7 @@ impl SelectionsCollection {
     where
         D: MultiBufferDimension + Sub + AddAssign<<D as Sub>::Output> + Ord,
     {
-        resolve_selections_wrapping_blocks([self.oldest_anchor()], &snapshot)
+        resolve_selections_wrapping_blocks([self.oldest_anchor()], snapshot)
             .next()
             .unwrap()
     }

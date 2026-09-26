@@ -618,11 +618,10 @@ impl Pane {
                 self.last_focus_handle_by_item
                     .insert(active_item.item_id(), focused.downgrade());
             }
-        } else if let Some(welcome_page) = self.welcome_page.as_ref() {
-            if self.focus_handle.is_focused(window) {
+        } else if let Some(welcome_page) = self.welcome_page.as_ref()
+            && self.focus_handle.is_focused(window) {
                 welcome_page.read(cx).focus_handle(cx).focus(window, cx);
             }
-        }
     }
 
     pub fn context_menu_focused(&self, window: &mut Window, cx: &mut Context<Self>) -> bool {
@@ -641,8 +640,8 @@ impl Pane {
 
     fn project_events(&mut self, _project: Entity<Project>, event: &project::Event, cx: &mut Context<Self>) {
         match event {
-            project::Event::DiskBasedDiagnosticsFinished { .. } | project::Event::DiagnosticsUpdated { .. } => {
-                if ItemSettings::get_global(cx).show_diagnostics != ShowDiagnostics::Off {
+            project::Event::DiskBasedDiagnosticsFinished { .. } | project::Event::DiagnosticsUpdated { .. }
+                if ItemSettings::get_global(cx).show_diagnostics != ShowDiagnostics::Off => {
                     self.diagnostic_summary_update = cx.spawn(async move |this, cx| {
                         cx.background_executor().timer(Duration::from_millis(30)).await;
                         this.update(cx, |this, cx| {
@@ -652,7 +651,6 @@ impl Pane {
                         .log_err();
                     });
                 }
-            }
             _ => {}
         }
     }
@@ -2126,7 +2124,7 @@ impl Pane {
                     let worktree_id = worktree.read_with(cx, |worktree, _| worktree.id())?;
                     let new_path = ProjectPath {
                         worktree_id,
-                        path: path,
+                        path,
                     };
 
                     pane.update_in(cx, |pane, window, cx| {
@@ -2388,10 +2386,9 @@ impl Pane {
         );
 
         let item_diagnostic = item
-            .project_path(cx)
-            .map_or(None, |project_path| self.diagnostics.get(&project_path));
+            .project_path(cx).and_then(|project_path| self.diagnostics.get(&project_path));
 
-        let decorated_icon = item_diagnostic.map_or(None, |diagnostic| {
+        let decorated_icon = item_diagnostic.and_then(|diagnostic| {
             let icon = match item.tab_icon(window, cx) {
                 Some(icon) => icon,
                 None => return None,
@@ -2600,7 +2597,7 @@ impl Pane {
             );
 
         let single_entry_to_resolve = (self.items[ix].buffer_kind(cx) == ItemBufferKind::Singleton)
-            .then(|| self.items[ix].project_entry_ids(cx).get(0).copied())
+            .then(|| self.items[ix].project_entry_ids(cx).first().copied())
             .flatten();
 
         let total_items = self.items.len();

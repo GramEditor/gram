@@ -12,7 +12,6 @@ use gpui::{
     InteractiveElement, KeyContext, ParentElement, Point, Render, Styled, Task, TextStyle, UniformListScrollHandle,
     WeakEntity, Window, actions, point, uniform_list,
 };
-use menu;
 use num_format::{Locale, ToFormattedString};
 use project::DirectoryLister;
 use schemars::JsonSchema;
@@ -147,7 +146,7 @@ pub fn init(cx: &mut App) {
                     .detach();
             })
             .register_action(move |workspace, _: &InstallExtensionFromUrl, window, cx| {
-                workspace.toggle_modal(window, cx, |window, cx| GitCloneModal::show(window, cx));
+                workspace.toggle_modal(window, cx, GitCloneModal::show);
             })
             .register_action(move |workspace, action: &InstallExtensionFromGit, window, cx| {
                 let url = action.url.clone();
@@ -197,7 +196,7 @@ pub fn init(cx: &mut App) {
                         let fs = workspace.app_state().fs.clone();
                         cx.spawn_in(window, async move |workspace, cx| {
                             let repo_url = url.as_str();
-                            match fs.git_clone(&repo_url, destination_dir.as_path()).await {
+                            match fs.git_clone(repo_url, destination_dir.as_path()).await {
                                 Ok(_) => {}
                                 Err(err) => {
                                     return workspace.update(cx, |workspace, cx| {
@@ -447,7 +446,7 @@ impl ExtensionsPage {
         cx.notify();
 
         let extension_store = ExtensionStore::global(cx);
-        let provides_filter = provides_filter.unwrap_or(BTreeSet::default());
+        let provides_filter = provides_filter.unwrap_or_default();
 
         let extensions = extension_store
             .read(cx)
@@ -770,11 +769,8 @@ impl ExtensionsPage {
                                             .provides
                                             .iter()
                                             .filter_map(|provides| {
-                                                match provides {
-                                                    ExtensionProvides::IndexedDocsProviders => {
-                                                        return None;
-                                                    }
-                                                    _ => {}
+                                                if provides == &ExtensionProvides::IndexedDocsProviders {
+                                                    return None;
                                                 }
 
                                                 Some(Chip::new(extension_provides_label(*provides)))
@@ -1369,10 +1365,7 @@ impl Render for ExtensionsPage {
                             })),
                     )
                     .children(ExtensionProvides::iter().filter_map(|provides| {
-                        match provides {
-                            ExtensionProvides::IndexedDocsProviders => return None,
-                            _ => {}
-                        }
+                        if provides == ExtensionProvides::IndexedDocsProviders { return None }
 
                         let label = extension_provides_label(provides);
                         let button_id = SharedString::from(format!("filter-category-{}", label));

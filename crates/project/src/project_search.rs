@@ -95,7 +95,7 @@ enum FindSearchCandidates {
         /// - Exclude filters
         /// - Only open buffers
         /// - Scan ignored files
-        /// Put another way: filter out files that can't match (without looking at file contents)
+        ///   Put another way: filter out files that can't match (without looking at file contents)
         input_paths_rx: Receiver<InputPath>,
         /// After that, if the buffer is not yet loaded, we'll figure out if it contains at least one match
         /// based on disk contents of a buffer. This step is not performed for buffers we already have in memory.
@@ -194,7 +194,7 @@ impl Search {
                         let fill_requests = cx
                             .background_spawn(async move {
                                 for buffer in open_buffers {
-                                    if let Err(_) = grab_buffer_snapshot_tx.send(buffer).await {
+                                    if grab_buffer_snapshot_tx.send(buffer).await.is_err() {
                                         return;
                                     }
                                 }
@@ -485,11 +485,11 @@ impl Search {
             oneshot::Sender<(Entity<Buffer>, Vec<Range<language::Anchor>>)>,
         )>,
         results: Sender<oneshot::Receiver<(Entity<Buffer>, Vec<Range<language::Anchor>>)>>,
-        mut cx: AsyncApp,
+        cx: AsyncApp,
     ) {
         _ = maybe!(async move {
             while let Ok(buffer) = rx.recv().await {
-                let snapshot = buffer.read_with(&mut cx, |this, _| this.snapshot())?;
+                let snapshot = buffer.read_with(&cx, |this, _| this.snapshot())?;
                 let (tx, rx) = oneshot::channel();
                 find_all_matches_tx.send((buffer, snapshot, tx)).await?;
                 results.send(rx).await?;
@@ -520,7 +520,7 @@ impl Search {
                 matched_buffers += 1;
                 matches += ranges.len();
 
-                _ = tx.send(SearchResult::Buffer { buffer, ranges }).await?;
+                tx.send(SearchResult::Buffer { buffer, ranges }).await?;
             }
             anyhow::Ok(())
         })
@@ -819,7 +819,7 @@ impl PathInclusionMatcher {
         let entry_path = &entry.path;
         // 3. Check Exclusions (Pruning)
         // If the current path is a child of an excluded path, we stop.
-        let is_excluded = self.path_is_definitely_excluded(&entry_path, snapshot);
+        let is_excluded = self.path_is_definitely_excluded(entry_path, snapshot);
 
         if is_excluded {
             return false;
@@ -832,7 +832,8 @@ impl PathInclusionMatcher {
 
         // We scan if the current path is a descendant of an include prefix
         // OR if the current path is an ancestor of an include prefix (we need to go deeper to find it).
-        let is_included = self.included.iter().any(|prefix| {
+
+        self.included.iter().any(|prefix| {
             let (prefix_matches_entry, entry_matches_prefix) = if prefix.is_absolute() {
                 (prefix.starts_with(&**as_abs_path), as_abs_path.starts_with(prefix))
             } else {
@@ -845,9 +846,7 @@ impl PathInclusionMatcher {
             // 1. entry_matches_prefix: We are inside the target zone (e.g. glob: src/, current: src/lib/). Keep scanning.
             // 2. prefix_matches_entry: We are above the target zone (e.g. glob: src/foo/, current: src/). Keep scanning to reach foo.
             prefix_matches_entry || entry_matches_prefix
-        });
-
-        is_included
+        })
     }
     fn path_is_definitely_excluded(&self, path: &RelPath, snapshot: &Snapshot) -> bool {
         if !self.query.files_to_exclude().sources().next().is_none() {
@@ -911,10 +910,10 @@ mod tests {
         let worktree = project.update(cx, |project, cx| project.worktrees(cx).next().unwrap());
         let (worktree_settings, worktree_snapshot) = worktree.update(cx, |worktree, cx| {
             let settings_location = worktree.settings_location(cx);
-            return (
+            (
                 WorktreeSettings::get(Some(settings_location), cx).clone(),
                 worktree.snapshot(),
-            );
+            )
         });
 
         // Manually create a test entry for the gitignored directory since it won't

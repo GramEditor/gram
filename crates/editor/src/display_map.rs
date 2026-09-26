@@ -1630,7 +1630,7 @@ pub mod tests {
                                     let height = rng.random_range(1..5);
                                     log::info!(
                                         "inserting block {:?} with height {}",
-                                        placement.as_ref().map(|p| p.to_point(&buffer)),
+                                        placement.as_ref().map(|p| p.to_point(buffer)),
                                         height
                                     );
                                     let priority = rng.random_range(1..100);

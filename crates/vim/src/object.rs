@@ -198,7 +198,7 @@ fn find_mini_delimiters(
     is_valid_delimiter: &DelimiterPredicate,
 ) -> Option<Range<DisplayPoint>> {
     let point = map.clip_at_line_end(display_point).to_point(map);
-    let offset = point.to_offset(&map.buffer_snapshot());
+    let offset = point.to_offset(map.buffer_snapshot());
 
     let line_range = get_line_range(map, point);
     let visible_line_range = get_visible_line_range(&line_range);
@@ -1068,7 +1068,7 @@ fn text_object(map: &DisplaySnapshot, relative_to: DisplayPoint, target: TextObj
     }
     let around_range = BufferOffset(around_range.start)..BufferOffset(around_range.end);
     let buffer_range = excerpt.map_range_from_buffer(around_range);
-    return Some(buffer_range.start.to_display_point(map)..buffer_range.end.to_display_point(map));
+    Some(buffer_range.start.to_display_point(map)..buffer_range.end.to_display_point(map))
 }
 
 fn argument(map: &DisplaySnapshot, relative_to: DisplayPoint, around: bool) -> Option<Range<DisplayPoint>> {

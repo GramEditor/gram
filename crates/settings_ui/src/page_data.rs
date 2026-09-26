@@ -244,7 +244,7 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                     pick_discriminant: |settings_content| {
                         Some(settings_content.theme.theme.as_ref()?.discriminant() as usize)
                     },
-                    fields: dynamic_variants::<settings::ThemeSelection>().into_iter().map(|variant| {
+                    fields: dynamic_variants::<settings::ThemeSelection>().iter().map(|variant| {
                         match variant {
                             settings::ThemeSelectionDiscriminants::Static => vec![
                                 SettingItem {
@@ -264,12 +264,9 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                             let Some(value) = value else {
                                                 return;
                                             };
-                                            match settings_content
+                                            if let Some(settings::ThemeSelection::Static(theme_name)) = settings_content
                                                 .theme
-                                                .theme.as_mut() {
-                                                    Some(settings::ThemeSelection::Static(theme_name)) => *theme_name = value,
-                                                    _ => return
-                                                }
+                                                .theme.as_mut() { *theme_name = value }
                                         },
                                     }),
                                     metadata: None,
@@ -293,12 +290,9 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                             let Some(value) = value else {
                                                 return;
                                             };
-                                            match settings_content
+                                            if let Some(settings::ThemeSelection::Dynamic{ mode, ..}) = settings_content
                                                 .theme
-                                                .theme.as_mut() {
-                                                    Some(settings::ThemeSelection::Dynamic{ mode, ..}) => *mode = value,
-                                                    _ => return
-                                                }
+                                                .theme.as_mut() { *mode = value }
                                         },
                                     }),
                                     metadata: None,
@@ -320,12 +314,9 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                             let Some(value) = value else {
                                                 return;
                                             };
-                                            match settings_content
+                                            if let Some(settings::ThemeSelection::Dynamic{ light, ..}) = settings_content
                                                 .theme
-                                                .theme.as_mut() {
-                                                    Some(settings::ThemeSelection::Dynamic{ light, ..}) => *light = value,
-                                                    _ => return
-                                                }
+                                                .theme.as_mut() { *light = value }
                                         },
                                     }),
                                     metadata: None,
@@ -347,12 +338,9 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                             let Some(value) = value else {
                                                 return;
                                             };
-                                            match settings_content
+                                            if let Some(settings::ThemeSelection::Dynamic{ dark, ..}) = settings_content
                                                 .theme
-                                                .theme.as_mut() {
-                                                    Some(settings::ThemeSelection::Dynamic{ dark, ..}) => *dark = value,
-                                                    _ => return
-                                                }
+                                                .theme.as_mut() { *dark = value }
                                         },
                                     }),
                                     metadata: None,
@@ -419,7 +407,7 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                     pick_discriminant: |settings_content| {
                         Some(settings_content.theme.icon_theme.as_ref()?.discriminant() as usize)
                     },
-                    fields: dynamic_variants::<settings::IconThemeSelection>().into_iter().map(|variant| {
+                    fields: dynamic_variants::<settings::IconThemeSelection>().iter().map(|variant| {
                         match variant {
                             settings::IconThemeSelectionDiscriminants::Static => vec![
                                 SettingItem {
@@ -439,12 +427,9 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                             let Some(value) = value else {
                                                 return;
                                             };
-                                            match settings_content
+                                            if let Some(settings::IconThemeSelection::Static(theme_name)) = settings_content
                                                 .theme
-                                                .icon_theme.as_mut() {
-                                                    Some(settings::IconThemeSelection::Static(theme_name)) => *theme_name = value,
-                                                    _ => return
-                                                }
+                                                .icon_theme.as_mut() { *theme_name = value }
                                         },
                                     }),
                                     metadata: None,
@@ -468,12 +453,9 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                             let Some(value) = value else {
                                                 return;
                                             };
-                                            match settings_content
+                                            if let Some(settings::IconThemeSelection::Dynamic{ mode, ..}) = settings_content
                                                 .theme
-                                                .icon_theme.as_mut() {
-                                                    Some(settings::IconThemeSelection::Dynamic{ mode, ..}) => *mode = value,
-                                                    _ => return
-                                                }
+                                                .icon_theme.as_mut() { *mode = value }
                                         },
                                     }),
                                     metadata: None,
@@ -495,12 +477,9 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                             let Some(value) = value else {
                                                 return;
                                             };
-                                            match settings_content
+                                            if let Some(settings::IconThemeSelection::Dynamic{ light, ..}) = settings_content
                                                 .theme
-                                                .icon_theme.as_mut() {
-                                                    Some(settings::IconThemeSelection::Dynamic{ light, ..}) => *light = value,
-                                                    _ => return
-                                                }
+                                                .icon_theme.as_mut() { *light = value }
                                         },
                                     }),
                                     metadata: None,
@@ -522,12 +501,9 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                             let Some(value) = value else {
                                                 return;
                                             };
-                                            match settings_content
+                                            if let Some(settings::IconThemeSelection::Dynamic{ dark, ..}) = settings_content
                                                 .theme
-                                                .icon_theme.as_mut() {
-                                                    Some(settings::IconThemeSelection::Dynamic{ dark, ..}) => *dark = value,
-                                                    _ => return
-                                                }
+                                                .icon_theme.as_mut() { *dark = value }
                                         },
                                     }),
                                     metadata: None,
@@ -616,7 +592,7 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                     pick_discriminant: |settings_content| {
                         Some(settings_content.theme.buffer_line_height.as_ref()?.discriminant() as usize)
                     },
-                    fields: dynamic_variants::<settings::BufferLineHeight>().into_iter().map(|variant| {
+                    fields: dynamic_variants::<settings::BufferLineHeight>().iter().map(|variant| {
                         match variant {
                             settings::BufferLineHeightDiscriminants::Comfortable => vec![],
                             settings::BufferLineHeightDiscriminants::Standard => vec![],
@@ -638,12 +614,9 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                             let Some(value) = value else {
                                                 return;
                                             };
-                                            match settings_content
+                                            if let Some(settings::BufferLineHeight::Custom(line_height)) = settings_content
                                                 .theme
-                                                .buffer_line_height.as_mut() {
-                                                    Some(settings::BufferLineHeight::Custom(line_height)) => *line_height = f32::max(value, 1.0),
-                                                    _ => return
-                                                }
+                                                .buffer_line_height.as_mut() { *line_height = f32::max(value, 1.0) }
                                         },
                                     }),
                                     metadata: None,
@@ -1112,7 +1085,7 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                         settings_content.workspace.autosave = None;
                                         return;
                                     };
-                                    let settings_value = settings_content.workspace.autosave.get_or_insert_with(|| {
+                                    let settings_value = settings_content.workspace.autosave.get_or_insert({
                                         settings::AutosaveSetting::Off
                                     });
                                     *settings_value = match value {
@@ -1140,7 +1113,7 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                         pick_discriminant: |settings_content| {
                             Some(settings_content.workspace.autosave.as_ref()?.discriminant() as usize)
                         },
-                        fields: dynamic_variants::<settings::AutosaveSetting>().into_iter().map(|variant| {
+                        fields: dynamic_variants::<settings::AutosaveSetting>().iter().map(|variant| {
                             match variant {
                                 settings::AutosaveSettingDiscriminants::Off => vec![],
                                 settings::AutosaveSettingDiscriminants::AfterDelay => vec![
@@ -1162,12 +1135,9 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                                     settings_content.workspace.autosave = None;
                                                     return;
                                                 };
-                                                match settings_content
+                                                if let Some(settings::AutosaveSetting::AfterDelay { milliseconds }) = settings_content
                                                     .workspace
-                                                    .autosave.as_mut() {
-                                                        Some(settings::AutosaveSetting::AfterDelay { milliseconds }) => *milliseconds = value,
-                                                        _ => return
-                                                    }
+                                                    .autosave.as_mut() { *milliseconds = value }
                                             },
                                         }),
                                         metadata: None,
@@ -4882,7 +4852,7 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                     .get_or_insert_default()
                                     .project
                                     .shell
-                                    .get_or_insert_with(|| settings::Shell::default());
+                                    .get_or_insert_with(settings::Shell::default);
                                 let default_shell = if cfg!(target_os = "windows") {
                                     "powershell.exe"
                                 } else {
@@ -4922,7 +4892,7 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                     pick_discriminant: |settings_content| {
                         Some(settings_content.terminal.as_ref()?.project.shell.as_ref()?.discriminant() as usize)
                     },
-                    fields: dynamic_variants::<settings::Shell>().into_iter().map(|variant| {
+                    fields: dynamic_variants::<settings::Shell>().iter().map(|variant| {
                         match variant {
                             settings::ShellDiscriminants::System => vec![],
                             settings::ShellDiscriminants::Program => vec![
@@ -4943,14 +4913,11 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                             let Some(value) = value else {
                                                 return;
                                             };
-                                            match settings_content
+                                            if let Some(settings::Shell::Program(program)) = settings_content
                                                 .terminal
                                                 .get_or_insert_default()
                                                 .project
-                                                .shell.as_mut() {
-                                                    Some(settings::Shell::Program(program)) => *program = value,
-                                                    _ => return
-                                                }
+                                                .shell.as_mut() { *program = value }
                                         },
                                     }),
                                     metadata: None,
@@ -4974,14 +4941,11 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                             let Some(value) = value else {
                                                 return;
                                             };
-                                            match settings_content
+                                            if let Some(settings::Shell::WithArguments { program, .. }) = settings_content
                                                 .terminal
                                                 .get_or_insert_default()
                                                 .project
-                                                .shell.as_mut() {
-                                                    Some(settings::Shell::WithArguments { program, .. }) => *program = value,
-                                                    _ => return
-                                                }
+                                                .shell.as_mut() { *program = value }
                                         },
                                     }),
                                     metadata: None,
@@ -5004,14 +4968,11 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                                 let Some(value) = value else {
                                                     return;
                                                 };
-                                                match settings_content
+                                                if let Some(settings::Shell::WithArguments { args, .. }) = settings_content
                                                     .terminal
                                                     .get_or_insert_default()
                                                     .project
-                                                    .shell.as_mut() {
-                                                        Some(settings::Shell::WithArguments { args, .. }) => *args = value,
-                                                        _ => return
-                                                    }
+                                                    .shell.as_mut() { *args = value }
                                             },
                                         }
                                         .unimplemented(),
@@ -5032,14 +4993,11 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                             }
                                         },
                                         write: |settings_content, value| {
-                                            match settings_content
+                                            if let Some(settings::Shell::WithArguments { title_override, .. }) = settings_content
                                                 .terminal
                                                 .get_or_insert_default()
                                                 .project
-                                                .shell.as_mut() {
-                                                    Some(settings::Shell::WithArguments { title_override, .. }) => *title_override = value.filter(|s| !s.is_empty()),
-                                                    _ => return
-                                                }
+                                                .shell.as_mut() { *title_override = value.filter(|s| !s.is_empty()) }
                                         },
                                     }),
                                     metadata: None,
@@ -5078,7 +5036,7 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                     .get_or_insert_default()
                                     .project
                                     .working_directory
-                                    .get_or_insert_with(|| settings::WorkingDirectory::CurrentProjectDirectory);
+                                    .get_or_insert(settings::WorkingDirectory::CurrentProjectDirectory);
                                 *settings_value = match value {
                                     settings::WorkingDirectoryDiscriminants::CurrentProjectDirectory => {
                                         settings::WorkingDirectory::CurrentProjectDirectory
@@ -5104,7 +5062,7 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                     pick_discriminant: |settings_content| {
                         Some(settings_content.terminal.as_ref()?.project.working_directory.as_ref()?.discriminant() as usize)
                     },
-                    fields: dynamic_variants::<settings::WorkingDirectory>().into_iter().map(|variant| {
+                    fields: dynamic_variants::<settings::WorkingDirectory>().iter().map(|variant| {
                         match variant {
                             settings::WorkingDirectoryDiscriminants::CurrentProjectDirectory => vec![],
                             settings::WorkingDirectoryDiscriminants::FirstProjectDirectory => vec![],
@@ -5125,14 +5083,11 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                                         },
                                         write: |settings_content, value| {
                                             let value = value.unwrap_or_default();
-                                            match settings_content
+                                            if let Some(settings::WorkingDirectory::Always { directory }) = settings_content
                                                 .terminal
                                                 .get_or_insert_default()
                                                 .project
-                                                .working_directory.as_mut() {
-                                                    Some(settings::WorkingDirectory::Always { directory }) => *directory = value,
-                                                    _ => return
-                                                }
+                                                .working_directory.as_mut() { *directory = value }
                                         },
                                     }),
                                     metadata: None,
@@ -5899,7 +5854,7 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
     ]
 }
 
-const LANGUAGES_SECTION_HEADER: &'static str = "Languages";
+const LANGUAGES_SECTION_HEADER: &str = "Languages";
 
 fn current_language() -> Option<SharedString> {
     sub_page_stack()
@@ -5912,16 +5867,15 @@ fn language_settings_field<T>(
     get: fn(&LanguageSettingsContent) -> Option<&T>,
 ) -> Option<&T> {
     let all_languages = &settings_content.project.all_languages;
-    if let Some(current_language_name) = current_language() {
-        if let Some(current_language) = all_languages.languages.0.get(&current_language_name) {
+    if let Some(current_language_name) = current_language()
+        && let Some(current_language) = all_languages.languages.0.get(&current_language_name) {
             let value = get(current_language);
             if value.is_some() {
                 return value;
             }
         }
-    }
-    let default_value = get(&all_languages.defaults);
-    return default_value;
+    
+    get(&all_languages.defaults)
 }
 
 fn language_settings_field_mut<T>(

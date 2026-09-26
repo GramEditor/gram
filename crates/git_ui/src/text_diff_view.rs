@@ -87,7 +87,7 @@ impl TextDiffView {
         let mut clipboard_text = diff_data.clipboard_text.clone();
 
         if !clipboard_text.ends_with("\n") {
-            clipboard_text.push_str("\n");
+            clipboard_text.push('\n');
         }
 
         let workspace = workspace.weak_handle();

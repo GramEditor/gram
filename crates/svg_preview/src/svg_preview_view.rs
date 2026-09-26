@@ -151,7 +151,7 @@ impl SvgPreviewView {
         workspace
             .active_item(cx)?
             .act_as::<MultiBuffer>(cx)
-            .filter(|buffer| Self::is_svg_file(&buffer, cx))
+            .filter(|buffer| Self::is_svg_file(buffer, cx))
     }
 
     fn create_svg_view(

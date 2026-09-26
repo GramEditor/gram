@@ -75,8 +75,8 @@ impl ManifestProvider for PyprojectTomlManifestProvider {
 }
 
 enum TestRunner {
-    UNITTEST,
-    PYTEST,
+    UnitTest,
+    PyTest,
 }
 
 impl FromStr for TestRunner {
@@ -84,8 +84,8 @@ impl FromStr for TestRunner {
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
-            "unittest" => Ok(Self::UNITTEST),
-            "pytest" => Ok(Self::PYTEST),
+            "unittest" => Ok(Self::UnitTest),
+            "pytest" => Ok(Self::PyTest),
             _ => Err(()),
         }
     }
@@ -354,7 +354,7 @@ impl LspInstaller for TyLspAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        match find_cached_server_binary(&container_dir, None, async |path| match Self::build_asset_name() {
+        find_cached_server_binary(&container_dir, None, async |path| match Self::build_asset_name() {
             Ok(name) => Some(match TyLspAdapter::GITHUB_ASSET_KIND {
                 AssetKind::TarGz | AssetKind::Gz => path.join(name.0).join("ty"),
                 AssetKind::Zip => path.join("ty.exe"),
@@ -362,14 +362,11 @@ impl LspInstaller for TyLspAdapter {
             Err(_) => None,
         })
         .await
-        {
-            Some(path) => Some(LanguageServerBinary {
-                path,
-                env: None,
-                arguments: vec!["server".into()],
-            }),
-            None => None,
-        }
+        .map(|path| LanguageServerBinary {
+            path,
+            env: None,
+            arguments: vec!["server".into()],
+        })
     }
 }
 
@@ -681,8 +678,8 @@ impl ContextProvider for PythonContextProvider {
         cx: &mut gpui::App,
     ) -> Task<Result<task::TaskVariables>> {
         let test_target = match selected_test_runner(location.file_location.buffer.read(cx).file(), cx) {
-            TestRunner::UNITTEST => self.build_unittest_target(variables),
-            TestRunner::PYTEST => self.build_pytest_target(variables),
+            TestRunner::UnitTest => self.build_unittest_target(variables),
+            TestRunner::PyTest => self.build_pytest_target(variables),
         };
 
         let module_target = self.build_module_target(variables);
@@ -748,7 +745,7 @@ impl ContextProvider for PythonContextProvider {
         ];
 
         tasks.extend(match test_runner {
-            TestRunner::UNITTEST => {
+            TestRunner::UnitTest => {
                 [
                     // Run tests for an entire file
                     TaskTemplate {
@@ -777,7 +774,7 @@ impl ContextProvider for PythonContextProvider {
                     },
                 ]
             }
-            TestRunner::PYTEST => {
+            TestRunner::PyTest => {
                 [
                     // Run tests for an entire file
                     TaskTemplate {
@@ -819,7 +816,7 @@ fn selected_test_runner(location: Option<&Arc<dyn language::File>>, cx: &App) ->
         .variables
         .get(TEST_RUNNER_VARIABLE)
         .and_then(|val| TestRunner::from_str(val).ok())
-        .unwrap_or(TestRunner::PYTEST)
+        .unwrap_or(TestRunner::PyTest)
 }
 
 impl PythonContextProvider {
@@ -869,7 +866,7 @@ impl PythonContextProvider {
     fn build_module_target(&self, variables: &task::TaskVariables) -> Result<(VariableName, String)> {
         let python_module_name = variables
             .get(&VariableName::RelativeFile)
-            .and_then(|module| python_module_name_from_relative_path(module))
+            .and_then(python_module_name_from_relative_path)
             .unwrap_or_default();
 
         let module_target = (PYTHON_MODULE_NAME_TASK_VARIABLE.clone(), python_module_name);
@@ -1044,25 +1041,26 @@ impl ToolchainLister for PythonToolchainProvider {
             Arc::new(pet_poetry::Poetry::from(&environment)),
             &environment,
         );
-        let mut config = Configuration::default();
-
         // `.ancestors()` will yield at least one path, so in case of empty `subroot_relative_path`, we'll just use
         // worktree root as the workspace directory.
-        config.workspace_directories = Some(
-            subroot_relative_path
-                .ancestors()
-                .map(|ancestor| {
-                    // remove trailing separator as it alters the environment name hash used by Poetry.
-                    let path = worktree_root.join(ancestor.as_std_path());
-                    let path_str = path.to_string_lossy();
-                    if path_str.ends_with(std::path::MAIN_SEPARATOR) && path_str.len() > 1 {
-                        PathBuf::from(path_str.trim_end_matches(std::path::MAIN_SEPARATOR))
-                    } else {
-                        path
-                    }
-                })
-                .collect(),
-        );
+        let config = Configuration {
+            workspace_directories: Some(
+                subroot_relative_path
+                    .ancestors()
+                    .map(|ancestor| {
+                        // remove trailing separator as it alters the environment name hash used by Poetry.
+                        let path = worktree_root.join(ancestor.as_std_path());
+                        let path_str = path.to_string_lossy();
+                        if path_str.ends_with(std::path::MAIN_SEPARATOR) && path_str.len() > 1 {
+                            PathBuf::from(path_str.trim_end_matches(std::path::MAIN_SEPARATOR))
+                        } else {
+                            path
+                        }
+                    })
+                    .collect(),
+            ),
+            ..Default::default()
+        };
         for locator in locators.iter() {
             locator.configure(&config);
         }
@@ -1234,12 +1232,12 @@ impl ToolchainLister for PythonToolchainProvider {
                 | PythonEnvironmentKind::UvWorkspace
                 | PythonEnvironmentKind::Poetry,
             ) => {
-                if let Some(activation_scripts) = &toolchain.activation_scripts {
-                    if let Some(activate_script_path) = activation_scripts.get(&shell) {
-                        let activate_keyword = shell.activate_keyword();
-                        if let Some(quoted) = shell.try_quote(&activate_script_path.to_string_lossy()) {
-                            activation_script.push(format!("{activate_keyword} {quoted}"));
-                        }
+                if let Some(activation_scripts) = &toolchain.activation_scripts
+                    && let Some(activate_script_path) = activation_scripts.get(&shell)
+                {
+                    let activate_keyword = shell.activate_keyword();
+                    if let Some(quoted) = shell.try_quote(&activate_script_path.to_string_lossy()) {
+                        activation_script.push(format!("{activate_keyword} {quoted}"));
                     }
                 }
             }
@@ -1287,15 +1285,15 @@ async fn venv_to_toolchain(venv: PythonEnvironment, fs: &dyn Fs) -> Option<Toolc
     }
 
     let mut activation_scripts = HashMap::default();
-    match venv.kind {
-        Some(
-            PythonEnvironmentKind::Venv
-            | PythonEnvironmentKind::VirtualEnv
-            | PythonEnvironmentKind::Uv
-            | PythonEnvironmentKind::UvWorkspace
-            | PythonEnvironmentKind::Poetry,
-        ) => resolve_venv_activation_scripts(&venv, fs, &mut activation_scripts).await,
-        _ => {}
+    if let Some(
+        PythonEnvironmentKind::Venv
+        | PythonEnvironmentKind::VirtualEnv
+        | PythonEnvironmentKind::Uv
+        | PythonEnvironmentKind::UvWorkspace
+        | PythonEnvironmentKind::Poetry,
+    ) = venv.kind
+    {
+        resolve_venv_activation_scripts(&venv, fs, &mut activation_scripts).await
     }
     let data = PythonToolchainData {
         environment: venv,
@@ -2179,7 +2177,7 @@ impl LspAdapter for RuffLspAdapter {
 
         let mut command = util::command::new_smol_command(&binary.path);
         command
-            .args(&["config", "--output-format", "json"])
+            .args(["config", "--output-format", "json"])
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
         let cmd = command

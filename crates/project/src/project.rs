@@ -1658,7 +1658,7 @@ impl Project {
                 let new_abs_path = if is_root_entry {
                     root_path.parent().unwrap().join(new_path.path.as_std_path())
                 } else {
-                    root_path.join(&new_path.path.as_std_path())
+                    root_path.join(new_path.path.as_std_path())
                 };
                 (root_path.join(old_path.as_std_path()), new_abs_path)
             };
@@ -2196,7 +2196,7 @@ impl Project {
                         });
                     }
                     proto::update_language_server::Variant::RegisteredForBuffer(update) => {
-                        if let Some(buffer_id) = BufferId::new(update.buffer_id).ok() {
+                        if let Ok(buffer_id) = BufferId::new(update.buffer_id) {
                             cx.emit(Event::LanguageServerBufferRegistered {
                                 buffer_id,
                                 server_id: *language_server_id,
@@ -2254,7 +2254,7 @@ impl Project {
         cx: &mut Context<Self>,
     ) {
         match event {
-            SettingsObserverEvent::LocalSettingsUpdated(result) => match result {
+            SettingsObserverEvent::Settings(result) => match result {
                 Err(InvalidSettingsError::LocalSettings { message, path }) => {
                     let message = format!("Failed to set local settings in {path:?}:\n{message}");
                     cx.emit(Event::Toast {
@@ -2267,7 +2267,7 @@ impl Project {
                 }),
                 Err(_) => {}
             },
-            SettingsObserverEvent::LocalTasksUpdated(result) => match result {
+            SettingsObserverEvent::Tasks(result) => match result {
                 Err(InvalidSettingsError::Tasks { message, path }) => {
                     let message = format!("Failed to set local tasks in {path:?}:\n{message}");
                     cx.emit(Event::Toast {
@@ -2280,7 +2280,7 @@ impl Project {
                 }),
                 Err(_) => {}
             },
-            SettingsObserverEvent::LocalDebugScenariosUpdated(result) => match result {
+            SettingsObserverEvent::DebugScenarios(result) => match result {
                 Err(InvalidSettingsError::Debug { message, path }) => {
                     let message = format!("Failed to set local debug scenarios in {path:?}:\n{message}");
                     cx.emit(Event::Toast {
@@ -2303,26 +2303,24 @@ impl Project {
         cx: &mut Context<Self>,
     ) {
         match event {
-            WorktreeStoreEvent::WorktreeAdded(worktree) => {
+            WorktreeStoreEvent::Added(worktree) => {
                 self.on_worktree_added(worktree, cx);
                 cx.emit(Event::WorktreeAdded(worktree.read(cx).id()));
             }
-            WorktreeStoreEvent::WorktreeRemoved(_, id) => {
+            WorktreeStoreEvent::Removed(_, id) => {
                 cx.emit(Event::WorktreeRemoved(*id));
             }
-            WorktreeStoreEvent::WorktreeReleased(_, id) => {
+            WorktreeStoreEvent::Released(_, id) => {
                 self.on_worktree_released(*id, cx);
             }
-            WorktreeStoreEvent::WorktreeOrderChanged => cx.emit(Event::WorktreeOrderChanged),
-            WorktreeStoreEvent::WorktreeUpdateSent(_) => {}
-            WorktreeStoreEvent::WorktreeUpdatedEntries(worktree_id, changes) => {
+            WorktreeStoreEvent::OrderChanged => cx.emit(Event::WorktreeOrderChanged),
+            WorktreeStoreEvent::UpdateSent(_) => {}
+            WorktreeStoreEvent::UpdatedEntries(worktree_id, changes) => {
                 cx.emit(Event::WorktreeUpdatedEntries(*worktree_id, changes.clone()))
             }
-            WorktreeStoreEvent::WorktreeDeletedEntry(worktree_id, id) => {
-                cx.emit(Event::DeletedEntry(*worktree_id, *id))
-            }
+            WorktreeStoreEvent::DeletedEntry(worktree_id, id) => cx.emit(Event::DeletedEntry(*worktree_id, *id)),
             // Listen to the GitStore instead.
-            WorktreeStoreEvent::WorktreeUpdatedGitRepositories(_, _) => {}
+            WorktreeStoreEvent::UpdatedGitRepositories(_, _) => {}
         }
     }
 
@@ -2988,11 +2986,10 @@ impl Project {
     }
 
     fn search_impl(&mut self, query: SearchQuery, cx: &mut Context<Self>) -> SearchResultsHandle {
-        let client: Option<(AnyProtoClient, _)> = if let Some(ssh_client) = &self.remote_client {
-            Some((ssh_client.read(cx).proto_client(), 0))
-        } else {
-            None
-        };
+        let client: Option<(AnyProtoClient, _)> = self
+            .remote_client
+            .as_ref()
+            .map(|ssh_client| (ssh_client.read(cx).proto_client(), 0));
         let searcher = if query.is_opened_only() {
             project_search::Search::open_buffers_only(
                 self.buffer_store.clone(),
@@ -3150,12 +3147,10 @@ impl Project {
 
         if let Some(file) = buffer.read(cx).file()
             && let Some(dir) = file.path().parent()
+            && let Some(joined) = path_style.join(&*dir.display(path_style), path)
+            && let Some(joined) = RelPath::new(joined.as_ref(), path_style).ok()
         {
-            if let Some(joined) = path_style.join(&*dir.display(path_style), path)
-                && let Some(joined) = RelPath::new(joined.as_ref(), path_style).ok()
-            {
-                candidates.push(joined.to_arc());
-            }
+            candidates.push(joined.to_arc());
         }
 
         let buffer_worktree_id = buffer.read(cx).file().map(|file| file.worktree_id(cx));
@@ -3588,7 +3583,7 @@ impl Project {
             remotely_create_models.retain_count += 1;
         }
         RemotelyCreatedModelGuard {
-            remote_models: Arc::downgrade(&models),
+            remote_models: Arc::downgrade(models),
         }
     }
 
@@ -3884,7 +3879,7 @@ impl Project {
 
     pub fn contains_local_settings_file(&self, worktree_id: WorktreeId, rel_path: &RelPath, cx: &App) -> bool {
         self.worktree_for_id(worktree_id, cx)
-            .map_or(false, |worktree| worktree.read(cx).entry_for_path(rel_path).is_some())
+            .is_some_and(|worktree| worktree.read(cx).entry_for_path(rel_path).is_some())
     }
 
     pub fn update_local_settings_file(
@@ -3934,10 +3929,10 @@ impl Project {
         let mut worktree_paths = HashMap::<WorktreeId, Vec<Arc<RelPath>>>::default();
 
         for path in paths {
-            if let Some(last) = self.last_refresh.get(&path) {
-                if now.duration_since(*last) < REFRESH_DEBOUNCE {
-                    continue;
-                }
+            if let Some(last) = self.last_refresh.get(&path)
+                && now.duration_since(*last) < REFRESH_DEBOUNCE
+            {
+                continue;
             }
             worktree_paths
                 .entry(path.worktree_id)

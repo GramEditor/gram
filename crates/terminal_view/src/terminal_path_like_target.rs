@@ -151,14 +151,14 @@ fn possible_open_target(
     // Since we do not check paths via FS and joining, we need to strip off potential `./`, `a/`, `b/` prefixes out of it.
     const GIT_DIFF_PATH_PREFIXES: &[&str] = &["a", "b"];
     for prefix_str in GIT_DIFF_PATH_PREFIXES.iter().chain(std::iter::once(&".")) {
-        if let Some(stripped) = original_path.path.strip_prefix(prefix_str).ok() {
+        if let Ok(stripped) = original_path.path.strip_prefix(prefix_str) {
             potential_paths.push(PathWithPosition {
                 path: stripped.to_owned(),
                 row: original_path.row,
                 column: original_path.column,
             });
         }
-        if let Some(stripped) = path_with_position.path.strip_prefix(prefix_str).ok() {
+        if let Ok(stripped) = path_with_position.path.strip_prefix(prefix_str) {
             potential_paths.push(PathWithPosition {
                 path: stripped.to_owned(),
                 row: path_with_position.row,
@@ -279,7 +279,7 @@ fn possible_open_target(
                     let maybe_path = &path_to_check.path;
                     if path_to_check.path.is_relative() {
                         paths_to_check.push(PathWithPosition {
-                            path: cwd.join(&maybe_path),
+                            path: cwd.join(maybe_path),
                             row: path_to_check.row,
                             column: path_to_check.column,
                         });

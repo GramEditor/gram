@@ -62,8 +62,8 @@ async fn test_fuzzy_score(cx: &mut TestAppContext) {
             CompletionBuilder::function("onCanPlay?", None, "12"),
         ];
         let matches = filter_and_sort_matches("ona", &completions, SnippetSortOrder::default(), cx).await;
-        for i in 0..4 {
-            assert!(matches[i].string.to_lowercase().starts_with("ona"));
+        for item in matches.iter().take(4) {
+            assert!(item.string.to_lowercase().starts_with("ona"));
         }
     }
 
@@ -214,7 +214,7 @@ async fn test_fuzzy_over_sort_positions(cx: &mut TestAppContext) {
     assert_eq!(matches[2].string, "fetch_code_lens");
 }
 
-async fn test_for_each_prefix<F>(target: &str, completions: &Vec<Completion>, cx: &mut TestAppContext, mut test_fn: F)
+async fn test_for_each_prefix<F>(target: &str, completions: &[Completion], cx: &mut TestAppContext, mut test_fn: F)
 where
     F: FnMut(Vec<StringMatch>),
 {
@@ -229,26 +229,26 @@ struct CompletionBuilder;
 
 impl CompletionBuilder {
     fn constant(label: &str, filter_text: Option<&str>, sort_text: &str) -> Completion {
-        Self::new(label, filter_text, sort_text, Some(CompletionItemKind::CONSTANT))
+        Self::build(label, filter_text, sort_text, Some(CompletionItemKind::CONSTANT))
     }
 
     fn function(label: &str, filter_text: Option<&str>, sort_text: &str) -> Completion {
-        Self::new(label, filter_text, sort_text, Some(CompletionItemKind::FUNCTION))
+        Self::build(label, filter_text, sort_text, Some(CompletionItemKind::FUNCTION))
     }
 
     fn method(label: &str, filter_text: Option<&str>, sort_text: &str) -> Completion {
-        Self::new(label, filter_text, sort_text, Some(CompletionItemKind::METHOD))
+        Self::build(label, filter_text, sort_text, Some(CompletionItemKind::METHOD))
     }
 
     fn variable(label: &str, filter_text: Option<&str>, sort_text: &str) -> Completion {
-        Self::new(label, filter_text, sort_text, Some(CompletionItemKind::VARIABLE))
+        Self::build(label, filter_text, sort_text, Some(CompletionItemKind::VARIABLE))
     }
 
     fn snippet(label: &str, filter_text: Option<&str>, sort_text: &str) -> Completion {
-        Self::new(label, filter_text, sort_text, Some(CompletionItemKind::SNIPPET))
+        Self::build(label, filter_text, sort_text, Some(CompletionItemKind::SNIPPET))
     }
 
-    fn new(label: &str, filter_text: Option<&str>, sort_text: &str, kind: Option<CompletionItemKind>) -> Completion {
+    fn build(label: &str, filter_text: Option<&str>, sort_text: &str, kind: Option<CompletionItemKind>) -> Completion {
         Completion {
             replace_range: Anchor::MIN..Anchor::MAX,
             new_text: label.to_string(),
@@ -259,7 +259,7 @@ impl CompletionBuilder {
                 server_id: LanguageServerId(0),
                 lsp_completion: Box::new(CompletionItem {
                     label: label.to_string(),
-                    kind: kind,
+                    kind,
                     sort_text: Some(sort_text.to_string()),
                     filter_text: filter_text.map(|text| text.to_string()),
                     ..Default::default()
@@ -278,7 +278,7 @@ impl CompletionBuilder {
 
 async fn filter_and_sort_matches(
     query: &str,
-    completions: &Vec<Completion>,
+    completions: &[Completion],
     snippet_sort_order: SnippetSortOrder,
     cx: &mut TestAppContext,
 ) -> Vec<StringMatch> {

@@ -598,8 +598,10 @@ impl LspCommand for GetLspRunnables {
                 }
                 None => None,
             };
-            let mut task_template = TaskTemplate::default();
-            task_template.label = runnable.label;
+            let mut task_template = TaskTemplate {
+                label: runnable.label,
+                ..Default::default()
+            };
             match runnable.args {
                 RunnableArgs::Cargo(cargo) => {
                     match cargo.override_cargo {

@@ -3,7 +3,7 @@ use http_client::github_download::GithubBinaryMetadata;
 use language::LspAdapterDelegate;
 use lsp::LanguageServerBinary;
 use smol::{fs, stream::StreamExt};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use util::maybe;
 
 pub fn with_exe(name: &str) -> String {
@@ -11,7 +11,7 @@ pub fn with_exe(name: &str) -> String {
     format!("{}{}", name, suffix)
 }
 
-pub async fn write_metadata(destination_path: &PathBuf, expected_digest: Option<String>) -> Result<()> {
+pub async fn write_metadata(destination_path: &Path, expected_digest: Option<String>) -> Result<()> {
     let metadata_path = destination_path.with_extension("metadata");
     GithubBinaryMetadata::write_to_file(
         &GithubBinaryMetadata {
@@ -58,13 +58,13 @@ pub async fn verify_metadata(
     } else if validity_check().await.is_ok() {
         return true;
     }
-    return false;
+    false
 }
 
 pub async fn find_cached_server_binary(
     container_dir: &PathBuf,
     prefix: Option<&str>,
-    build_server_path: impl AsyncFn(&PathBuf) -> Option<PathBuf>,
+    build_server_path: impl AsyncFn(&Path) -> Option<PathBuf>,
 ) -> Option<PathBuf> {
     let binary_result = maybe!(async {
         let mut last = None;
@@ -85,16 +85,16 @@ pub async fn find_cached_server_binary(
                 continue;
             };
 
-            if let Some(prefix) = prefix {
-                if !file_name_str.starts_with(prefix) {
-                    continue;
-                }
+            if let Some(prefix) = prefix
+                && !file_name_str.starts_with(prefix)
+            {
+                continue;
             }
-            if let Some(server_path) = build_server_path(&path).await {
-                if server_path.exists() {
-                    log::info!("Cached LSP binary: {:?}", server_path);
-                    last = Some(server_path);
-                }
+            if let Some(server_path) = build_server_path(&path).await
+                && server_path.exists()
+            {
+                log::info!("Cached LSP binary: {:?}", server_path);
+                last = Some(server_path);
             }
         }
         anyhow::Ok(last)

@@ -553,15 +553,12 @@ impl<'a> Iterator for TabChunks<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.chunk.text.is_empty() {
-            if let Some(chunk) = self.fold_chunks.next() {
-                self.chunk = chunk;
-                if self.inside_leading_tab {
-                    self.chunk.text = &self.chunk.text[1..];
-                    self.inside_leading_tab = false;
-                    self.input_column += 1;
-                }
-            } else {
-                return None;
+            let chunk = self.fold_chunks.next()?;
+            self.chunk = chunk;
+            if self.inside_leading_tab {
+                self.chunk.text = &self.chunk.text[1..];
+                self.inside_leading_tab = false;
+                self.input_column += 1;
             }
         }
 

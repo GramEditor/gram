@@ -91,48 +91,45 @@ impl LspConfigView {
                         .or_insert((BinaryStatus::None, None));
                 }
                 LspStoreEvent::LanguageServerUpdate {
-                    name,
+                    name: Some(name),
                     message: RegisteredForBuffer(_),
                     ..
                 } => {
-                    if let Some(name) = name {
-                        state
-                            .binary_statuses
-                            .entry(name.clone())
-                            .or_insert((BinaryStatus::None, None));
-                    }
+                    state
+                        .binary_statuses
+                        .entry(name.clone())
+                        .or_insert((BinaryStatus::None, None));
                 }
                 LspStoreEvent::LanguageServerUpdate {
                     name,
                     message: StatusUpdate(status_update),
                     ..
                 } => {
-                    if let Some(Status::Binary(binary_status_proto)) = &status_update.status {
-                        if let Some(name) = name.as_ref() {
-                            if let Ok(binary_status) = ServerBinaryStatus::try_from(*binary_status_proto) {
-                                let status = match binary_status {
-                                    ServerBinaryStatus::None => BinaryStatus::None,
-                                    ServerBinaryStatus::CheckingForUpdate => BinaryStatus::CheckingForUpdate,
-                                    ServerBinaryStatus::Downloading => BinaryStatus::Downloading,
-                                    ServerBinaryStatus::Starting => BinaryStatus::Starting,
-                                    ServerBinaryStatus::Stopping => BinaryStatus::Stopping,
-                                    ServerBinaryStatus::Stopped => BinaryStatus::Stopped,
-                                    ServerBinaryStatus::Failed => {
-                                        if let Some(error) = status_update.message.clone() {
-                                            BinaryStatus::Failed { error }
-                                        } else {
-                                            BinaryStatus::Failed {
-                                                error: "Unknown error".to_string(),
-                                            }
-                                        }
+                    if let Some(Status::Binary(binary_status_proto)) = &status_update.status
+                        && let Some(name) = name.as_ref()
+                        && let Ok(binary_status) = ServerBinaryStatus::try_from(*binary_status_proto)
+                    {
+                        let status = match binary_status {
+                            ServerBinaryStatus::None => BinaryStatus::None,
+                            ServerBinaryStatus::CheckingForUpdate => BinaryStatus::CheckingForUpdate,
+                            ServerBinaryStatus::Downloading => BinaryStatus::Downloading,
+                            ServerBinaryStatus::Starting => BinaryStatus::Starting,
+                            ServerBinaryStatus::Stopping => BinaryStatus::Stopping,
+                            ServerBinaryStatus::Stopped => BinaryStatus::Stopped,
+                            ServerBinaryStatus::Failed => {
+                                if let Some(error) = status_update.message.clone() {
+                                    BinaryStatus::Failed { error }
+                                } else {
+                                    BinaryStatus::Failed {
+                                        error: "Unknown error".to_string(),
                                     }
-                                };
-                                state.binary_statuses.insert(
-                                    name.clone(),
-                                    (status, status_update.message.as_ref().map(|s| s.clone().into())),
-                                );
+                                }
                             }
-                        }
+                        };
+                        state.binary_statuses.insert(
+                            name.clone(),
+                            (status, status_update.message.as_ref().map(|s| s.clone().into())),
+                        );
                     }
                 }
                 _ => {}
@@ -157,18 +154,17 @@ impl LspConfigView {
     fn new(language_registry: Arc<LanguageRegistry>, cx: &mut Context<Self>) -> Self {
         let focus_handle = cx.focus_handle();
 
-        let this = Self {
+        Self {
             _language_registry: language_registry,
             focus_handle,
             scroll_handle: ScrollHandle::new(),
             _binary_status_task: None,
-        };
-        this
+        }
     }
 
     fn toggle_node_setting(
         &mut self,
-        f: impl FnOnce(&mut settings::NodeBinarySettings) -> () + std::marker::Send + 'static,
+        f: impl FnOnce(&mut settings::NodeBinarySettings) + std::marker::Send + 'static,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
@@ -223,7 +219,7 @@ impl LspConfigView {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) where
-        F: FnOnce(&mut BinarySettings) -> () + std::marker::Send + 'static,
+        F: FnOnce(&mut BinarySettings) + std::marker::Send + 'static,
     {
         cx.update_global(|store: &mut SettingsStore, cx| {
             store.update_settings_file(
@@ -253,7 +249,7 @@ impl LspConfigView {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) where
-        F: FnOnce(&mut DapSettingsContent) -> () + std::marker::Send + 'static,
+        F: FnOnce(&mut DapSettingsContent) + std::marker::Send + 'static,
     {
         cx.update_global(|store: &mut SettingsStore, cx| {
             store.update_settings_file(
@@ -567,7 +563,7 @@ impl LspConfigView {
 
     fn render_all_dap_settings(
         &mut self,
-        dap_settings: &Vec<(DebugAdapterName, DapSettings)>,
+        dap_settings: &[(DebugAdapterName, DapSettings)],
         cx: &mut Context<Self>,
     ) -> impl IntoIterator<Item = impl IntoElement> {
         dap_settings.iter().map(|(name, settings)| {

@@ -10,6 +10,12 @@ pub struct ActiveFileName {
     full_path: Option<SharedString>,
 }
 
+impl Default for ActiveFileName {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ActiveFileName {
     pub fn new() -> Self {
         Self {

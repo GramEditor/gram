@@ -57,7 +57,7 @@ fn open_editor_with_one_long_line(bencher: &mut Bencher<'_>, args: &(String, Tes
     let mut cx = cx.clone();
 
     bencher.iter(|| {
-        let buffer = cx.update(|cx| MultiBuffer::build_simple(&text, cx));
+        let buffer = cx.update(|cx| MultiBuffer::build_simple(text, cx));
 
         let cx = cx.add_empty_window();
         let _ = cx.update(|window, cx| {

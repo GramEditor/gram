@@ -1047,13 +1047,13 @@ mod foo «1{
                 .fetch_bracket_ranges(
                     snapshot
                         .display_point_to_point(DisplayPoint::new(visible_range.start, 0), Bias::Left)
-                        .to_offset(&buffer_snapshot)
+                        .to_offset(buffer_snapshot)
                         ..snapshot
                             .display_point_to_point(
                                 DisplayPoint::new(visible_range.end, snapshot.line_len(visible_range.end)),
                                 Bias::Right,
                             )
-                            .to_offset(&buffer_snapshot),
+                            .to_offset(buffer_snapshot),
                     None,
                 )
                 .iter()
@@ -1290,7 +1290,7 @@ mod foo «1{
 
     fn separate_with_comment_lines(head: &str, tail: &str, comment_lines: usize) -> String {
         let mut result = head.to_string();
-        result.push_str("\n");
+        result.push('\n');
         result.push_str(&"//\n".repeat(comment_lines));
         result.push_str(tail);
         result
@@ -1356,7 +1356,7 @@ mod foo «1{
             markup.insert_str(offset, &text);
         }
 
-        markup.push_str("\n");
+        markup.push('\n');
         for (index, color) in color_to_index
             .iter()
             .map(|(color, index)| (*index, *color))

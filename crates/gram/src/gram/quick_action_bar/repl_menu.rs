@@ -117,7 +117,7 @@ impl QuickActionBar {
                             menu.custom_row(move |_window, _cx| {
                                 h_flex()
                                     .child(
-                                        Label::new(format!("{}...", status.to_string()))
+                                        Label::new(format!("{}...", status))
                                             .size(LabelSize::Small)
                                             .color(Color::Muted),
                                     )
@@ -404,7 +404,7 @@ fn session_state(session: Entity<Session>, cx: &mut App) -> ReplMenuState {
 
     match &session.kernel {
         Kernel::Restarting => restarting(),
-        Kernel::RunningKernel(kernel) => match &kernel.execution_state() {
+        Kernel::Running(kernel) => match &kernel.execution_state() {
             ExecutionState::Idle => ReplMenuState {
                 tooltip: format!("Run code on {kernel_name} ({kernel_language})").into(),
                 indicator: Some(Indicator::dot().color(Color::Success)),
@@ -427,7 +427,7 @@ fn session_state(session: Entity<Session>, cx: &mut App) -> ReplMenuState {
             ExecutionState::Dead => shutdown(),
             ExecutionState::Other(state) => other(state),
         },
-        Kernel::StartingKernel(_) => starting(),
+        Kernel::Starting(_) => starting(),
         Kernel::ErroredLaunch(e) => ReplMenuState {
             tooltip: format!("Error with kernel {kernel_name}: {e}").into(),
             popover_disabled: false,

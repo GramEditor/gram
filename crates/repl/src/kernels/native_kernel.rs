@@ -42,7 +42,6 @@ impl PartialEq for LocalKernelSpecification {
 impl Eq for LocalKernelSpecification {}
 
 impl LocalKernelSpecification {
-    #[must_use]
     fn command(&self, connection_path: &PathBuf) -> Result<Command> {
         let argv = &self.kernelspec.argv;
 
@@ -78,10 +77,10 @@ async fn peek_ports(ip: IpAddr) -> Result<[u16; 5]> {
     let mut addr_zeroport: SocketAddr = SocketAddr::new(ip, 0);
     addr_zeroport.set_port(0);
     let mut ports: [u16; 5] = [0; 5];
-    for i in 0..5 {
+    for port in &mut ports {
         let listener = TcpListener::bind(addr_zeroport).await?;
         let addr = listener.local_addr()?;
-        ports[i] = addr.port();
+        *port = addr.port();
     }
     Ok(ports)
 }
@@ -103,7 +102,7 @@ impl Debug for NativeRunningKernel {
 }
 
 impl NativeRunningKernel {
-    pub fn new(
+    pub fn launch(
         kernel_specification: LocalKernelSpecification,
         entity_id: EntityId,
         working_directory: PathBuf,

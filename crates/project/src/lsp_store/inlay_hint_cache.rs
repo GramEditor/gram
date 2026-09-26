@@ -123,11 +123,10 @@ impl BufferInlayHints {
 
     pub fn remove_server_data(&mut self, for_server: LanguageServerId) {
         for (chunk_index, hints) in self.hints_by_chunks.iter_mut().enumerate() {
-            if let Some(hints) = hints {
-                if hints.remove(&for_server).is_some() {
+            if let Some(hints) = hints
+                && hints.remove(&for_server).is_some() {
                     self.fetches_by_chunks[chunk_index] = None;
                 }
-            }
         }
     }
 
@@ -148,7 +147,7 @@ impl BufferInlayHints {
         let existing_hints = self.hints_by_chunks[chunk.id]
             .get_or_insert_default()
             .entry(server_id)
-            .or_insert_with(Vec::new);
+            .or_default();
         let existing_count = existing_hints.len();
         existing_hints.extend(new_hints.into_iter().enumerate().filter_map(|(i, (id, new_hint))| {
             let new_hint_for_id = HintForId {

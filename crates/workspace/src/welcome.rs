@@ -293,7 +293,7 @@ impl WelcomePage {
                         options
                             .nickname
                             .as_ref()
-                            .map(|nick| SharedString::from(nick))
+                            .map(SharedString::from)
                             .unwrap_or_else(|| SharedString::from(display_name)),
                     ),
                     RemoteConnectionOptions::Wsl(_) => (IconName::ServerCrash, SharedString::from(display_name)),

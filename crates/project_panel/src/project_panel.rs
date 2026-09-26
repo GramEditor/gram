@@ -18,9 +18,7 @@ use editor::{
     },
 };
 use file_icons::FileIcons;
-use git;
 use git::status::GitSummary;
-use git_ui;
 use git_ui::file_diff_view::FileDiffView;
 use gpui::{
     Action, AnyElement, App, AsyncWindowContext, Bounds, ClipboardEntry as GpuiClipboardEntry, ClipboardItem, Context,
@@ -761,22 +759,21 @@ impl ProjectPanel {
                     EditorEvent::SelectionsChanged { .. } => {
                         project_panel.autoscroll(cx);
                     }
-                    EditorEvent::Blurred => {
+                    EditorEvent::Blurred
                         if project_panel
                             .state
                             .edit_state
                             .as_ref()
-                            .is_some_and(|state| state.processing_filename.is_none())
-                        {
-                            match project_panel.confirm_edit(false, window, cx) {
-                                Some(task) => {
-                                    task.detach_and_notify_err(window, cx);
-                                }
-                                None => {
-                                    project_panel.state.edit_state = None;
-                                    project_panel.update_visible_entries(None, false, false, window, cx);
-                                    cx.notify();
-                                }
+                            .is_some_and(|state| state.processing_filename.is_none()) =>
+                    {
+                        match project_panel.confirm_edit(false, window, cx) {
+                            Some(task) => {
+                                task.detach_and_notify_err(window, cx);
+                            }
+                            None => {
+                                project_panel.state.edit_state = None;
+                                project_panel.update_visible_entries(None, false, false, window, cx);
+                                cx.notify();
                             }
                         }
                     }
@@ -860,8 +857,8 @@ impl ProjectPanel {
 
         cx.subscribe_in(&project_panel, window, {
             let project_panel = project_panel.downgrade();
-            move |workspace, _, event, window, cx| match event {
-                &Event::OpenedEntry {
+            move |workspace, _, event, window, cx| match *event {
+                Event::OpenedEntry {
                     entry_id,
                     focus_opened_item,
                     allow_preview,
@@ -918,7 +915,7 @@ impl ProjectPanel {
                             }
                         }
                 }
-                &Event::SplitEntry {
+                Event::SplitEntry {
                     entry_id,
                     allow_preview,
                     split_direction,
@@ -1587,7 +1584,7 @@ impl ProjectPanel {
                     }
                 } else {
                     let new_path = if let Some(parent) = entry.path.clone().parent() {
-                        parent.join(&filename)
+                        parent.join(filename)
                     } else {
                         filename.into()
                     };
@@ -1635,7 +1632,7 @@ impl ProjectPanel {
             filename.ends_with('/')
         };
         let filename = if path_style.is_windows() {
-            filename.trim_start_matches(&['/', '\\'])
+            filename.trim_start_matches(['/', '\\'])
         } else {
             filename.trim_start_matches('/')
         };
@@ -1646,9 +1643,7 @@ impl ProjectPanel {
         let worktree = self.project.read(cx).worktree_for_id(worktree_id, cx)?;
         let entry = worktree.read(cx).entry_for_id(edit_state.entry_id)?.clone();
 
-        let edit_task;
-        let edited_entry_id;
-        if is_new_entry {
+        let (edited_entry_id, edit_task) = if is_new_entry {
             self.state.selection = Some(SelectedEntry {
                 worktree_id,
                 entry_id: NEW_ENTRY_ID,
@@ -1658,10 +1653,12 @@ impl ProjectPanel {
                 return None;
             }
 
-            edited_entry_id = NEW_ENTRY_ID;
-            edit_task = self.project.update(cx, |project, cx| {
-                project.create_entry((worktree_id, new_path), is_dir, cx)
-            });
+            (
+                NEW_ENTRY_ID,
+                self.project.update(cx, |project, cx| {
+                    project.create_entry((worktree_id, new_path), is_dir, cx)
+                }),
+            )
         } else {
             let new_path = if let Some(parent) = entry.path.clone().parent() {
                 parent.join(&filename)
@@ -1674,10 +1671,12 @@ impl ProjectPanel {
                 }
                 return None;
             }
-            edited_entry_id = entry.id;
-            edit_task = self.project.update(cx, |project, cx| {
-                project.rename_entry(entry.id, (worktree_id, new_path).into(), cx)
-            });
+            (
+                entry.id,
+                self.project.update(cx, |project, cx| {
+                    project.rename_entry(entry.id, (worktree_id, new_path).into(), cx)
+                }),
+            )
         };
 
         if refocus {
@@ -2038,12 +2037,11 @@ impl ProjectPanel {
                                 .buffer_store()
                                 .read(cx)
                                 .buffer_id_for_project_path(&project_path)
+                                && let Some(buffer) = project.buffer_for_id(*buffer_id, cx)
                             {
-                                if let Some(buffer) = project.buffer_for_id(*buffer_id, cx) {
-                                    buffer.update(cx, |buffer, cx| {
-                                        let _ = buffer.reload(cx);
-                                    });
-                                }
+                                buffer.update(cx, |buffer, cx| {
+                                    let _ = buffer.reload(cx);
+                                });
                             }
                         })
                     })
@@ -2716,7 +2714,6 @@ impl ProjectPanel {
             .filter(|clipboard| !clipboard.items().is_empty())
         {
             self.paste_internal(item.clone(), should_open, target_worktree, target_entry.id, window, cx);
-            return;
         }
     }
 
@@ -2785,7 +2782,7 @@ impl ProjectPanel {
 
         let worktree = target_worktree.read(cx);
         let paths = paths
-            .into_iter()
+            .iter()
             .filter_map(|path| {
                 let name = path.file_name()?.to_str()?;
                 let target_path = target_dir.join(RelPath::unix(name).log_err()?);
@@ -2876,14 +2873,13 @@ impl ProjectPanel {
                         }
                     }
                     PasteTask::CopyExternal(task) => {
-                        if let Some(entries) = task.await.notify_async_err(cx) {
-                            if let Some(entry_id) = entries.last() {
-                                if let Ok(Some(entry)) = this.read_with(cx, |_this, cx| {
-                                    target_worktree.read(cx).entry_for_id(*entry_id).cloned()
-                                }) {
-                                    last_succeed = Some(entry);
-                                }
-                            }
+                        if let Some(entries) = task.await.notify_async_err(cx)
+                            && let Some(entry_id) = entries.last()
+                            && let Ok(Some(entry)) = this.read_with(cx, |_this, cx| {
+                                target_worktree.read(cx).entry_for_id(*entry_id).cloned()
+                            })
+                        {
+                            last_succeed = Some(entry);
                         }
                     }
                 }
@@ -3617,7 +3613,7 @@ impl ProjectPanel {
             .collect::<Vec<&str>>()
             .join("\n");
 
-        if text.len() > 0 {
+        if !text.is_empty() {
             cx.write_to_clipboard(ClipboardItem::new_string(text));
         }
     }
@@ -3778,7 +3774,11 @@ impl ProjectPanel {
                     .index
                     .get_or_init(|| visible.entries.iter().map(|e| e.path.clone()).collect());
                 for entry in visible.entries[entry_range].iter() {
-                    let status = git_status_setting.then_some(entry.git_summary).unwrap_or_default();
+                    let status = if git_status_setting {
+                        entry.git_summary
+                    } else {
+                        Default::default()
+                    };
 
                     let mut details = self.details_for_entry(
                         entry,
@@ -4187,19 +4187,17 @@ impl ProjectPanel {
             .project
             .read(cx)
             .path_for_entry(drag_state.active_selection.entry_id, cx)
+            && let Some(parent_path) = entry_path.path.parent()
+            && !parent_path.is_empty()
         {
-            if let Some(parent_path) = entry_path.path.parent() {
-                if !parent_path.is_empty() {
-                    return true;
-                }
-            }
+            return true;
         }
 
         // If parent is empty, check if different worktree
-        if let Some(last_root_worktree_id) = self.project.read(cx).worktree_id_for_entry(last_root_id, cx) {
-            if drag_state.active_selection.worktree_id != last_root_worktree_id {
-                return true;
-            }
+        if let Some(last_root_worktree_id) = self.project.read(cx).worktree_id_for_entry(last_root_id, cx)
+            && drag_state.active_selection.worktree_id != last_root_worktree_id
+        {
+            return true;
         }
 
         false
@@ -4364,7 +4362,7 @@ impl ProjectPanel {
                         let is_current_target = this.drag_target_entry.as_ref()
                              .and_then(|entry| match entry {
                                  DragTarget::Entry { entry_id: target_id, .. } => Some(*target_id),
-                                 DragTarget::Background { .. } => None,
+                                 DragTarget::Background => None,
                              }) == Some(entry_id);
 
                         if !event.bounds.contains(&event.event.position) {
@@ -4411,7 +4409,7 @@ impl ProjectPanel {
                         let is_current_target = this.drag_target_entry.as_ref()
                              .and_then(|entry| match entry {
                                  DragTarget::Entry { entry_id: target_id, .. } => Some(*target_id),
-                                 DragTarget::Background { .. } => None,
+                                 DragTarget::Background => None,
                              }) == Some(entry_id);
 
                         if !event.bounds.contains(&event.event.position) {
@@ -4470,7 +4468,7 @@ impl ProjectPanel {
                                     this.hover_expand_task.take();
                                     if this.drag_target_entry.as_ref().and_then(|entry| match entry {
                                         DragTarget::Entry { entry_id: target_id, .. } => Some(*target_id),
-                                        DragTarget::Background { .. } => None,
+                                        DragTarget::Background => None,
                                     }) == Some(entry_id)
                                         && bounds.contains(&window.mouse_position())
                                     {
@@ -4494,7 +4492,7 @@ impl ProjectPanel {
                     {
                         let active_component = self.state.ancestors.get(&entry_id).and_then(|ancestors| ancestors.active_component(&details.filename));
                         move |selection, click_offset, _window, cx| {
-                            let filename = active_component.as_ref().unwrap_or_else(|| &details.filename);
+                            let filename = active_component.as_ref().unwrap_or(&details.filename);
                             cx.new(|_| DraggedProjectEntryView {
                                 icon: details.icon.clone(),
                                 filename: filename.clone(),
@@ -4820,21 +4818,19 @@ impl ProjectPanel {
                                             .on_mouse_down(
                                                 MouseButton::Left,
                                                 cx.listener(move |this, _, _, cx| {
-                                                    if let Some(folds) = this.state.ancestors.get_mut(&entry_id) {
-                                                        if folds.set_active_index(index) {
+                                                    if let Some(folds) = this.state.ancestors.get_mut(&entry_id)
+                                                        && folds.set_active_index(index) {
                                                             cx.notify();
                                                         }
-                                                    }
                                                 }),
                                             )
                                             .on_mouse_down(
                                                 MouseButton::Right,
                                                 cx.listener(move |this, _, _, cx| {
-                                                    if let Some(folds) = this.state.ancestors.get_mut(&entry_id) {
-                                                        if folds.set_active_index(index) {
+                                                    if let Some(folds) = this.state.ancestors.get_mut(&entry_id)
+                                                        && folds.set_active_index(index) {
                                                             cx.notify();
                                                         }
-                                                    }
                                                 }),
                                             )
                                             .child(
@@ -5076,7 +5072,7 @@ impl ProjectPanel {
             if is_expanded_dir {
                 break;
             }
-            entry = worktree.entry_for_path(&entry.path.parent()?)?;
+            entry = worktree.entry_for_path(entry.path.parent()?)?;
         }
 
         let (active_indent_range, depth) = {
@@ -5443,7 +5439,7 @@ impl Render for ProjectPanel {
                                                         let worktree =
                                                             this.project.read(cx).worktree_for_id(worktree_id, cx)?;
                                                         let target_entry =
-                                                            worktree.read(cx).entry_for_path(&entry.path.parent()?)?;
+                                                            worktree.read(cx).entry_for_path(entry.path.parent()?)?;
                                                         Some((target_entry, worktree))
                                                     }) else {
                                                         return;
@@ -5593,7 +5589,7 @@ impl Render for ProjectPanel {
                                         if event.bounds.contains(&event.event.position) {
                                             let drag_state = event.drag(cx);
                                             if this.should_highlight_background_for_selection_drag(
-                                                &drag_state,
+                                                drag_state,
                                                 last_root_id,
                                                 cx,
                                             ) {
@@ -5931,7 +5927,7 @@ pub fn sort_worktree_entries_with_mode(entries: &mut [impl AsRef<Entry>], mode: 
     entries.sort_by(|lhs, rhs| cmp_with_mode(lhs.as_ref(), rhs.as_ref(), &mode));
 }
 
-pub fn par_sort_worktree_entries_with_mode(entries: &mut Vec<GitEntry>, mode: settings::ProjectPanelSortMode) {
+pub fn par_sort_worktree_entries_with_mode(entries: &mut [GitEntry], mode: settings::ProjectPanelSortMode) {
     entries.par_sort_by(|lhs, rhs| cmp_with_mode(lhs, rhs, &mode));
 }
 

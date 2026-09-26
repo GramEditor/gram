@@ -33,7 +33,7 @@ impl DiagnosticRenderer {
         let group_id = primary.diagnostic.group_id;
         let mut results = vec![];
         for entry in diagnostic_group.iter() {
-            let mut markdown = Self::markdown(&entry.diagnostic);
+            let mut markdown = Self::markdown(entry.diagnostic);
             if entry.diagnostic.is_primary {
                 let diagnostic = &primary.diagnostic;
                 if diagnostic.source.is_some() || diagnostic.code.is_some() {
@@ -142,7 +142,7 @@ impl editor::DiagnosticRenderer for DiagnosticRenderer {
         let blocks = Self::diagnostic_blocks_for_group(diagnostic_group, buffer_id, None, language_registry, cx);
         blocks
             .into_iter()
-            .find_map(|block| (block.initial_range == range).then(|| block.markdown))
+            .find_map(|block| (block.initial_range == range).then_some(block.markdown))
     }
 
     fn open_link(&self, editor: &mut Editor, link: SharedString, window: &mut Window, cx: &mut Context<Editor>) {

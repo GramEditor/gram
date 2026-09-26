@@ -331,11 +331,8 @@ impl<D: PickerDelegate> Picker<D> {
     }
 
     pub fn list_measure_all(mut self) -> Self {
-        match self.element_container {
-            ElementContainer::List(state) => {
-                self.element_container = ElementContainer::List(state.measure_all());
-            }
-            _ => {}
+        if let ElementContainer::List(state) = self.element_container {
+            self.element_container = ElementContainer::List(state.measure_all());
         }
         self
     }
@@ -550,11 +547,10 @@ impl<D: PickerDelegate> Picker<D> {
                 let query = editor.read(cx).text(cx);
                 self.update_matches(query, window, cx);
             }
-            editor::EditorEvent::Blurred => {
-                if self.is_modal && window.is_window_active() {
+            editor::EditorEvent::Blurred
+                if self.is_modal && window.is_window_active() => {
                     self.cancel(&menu::Cancel, window, cx);
                 }
-            }
             _ => {}
         }
     }
@@ -721,7 +717,7 @@ impl<D: PickerDelegate> Picker<D> {
             })
             .flex_grow()
             .py_1()
-            .track_scroll(&scroll_handle)
+            .track_scroll(scroll_handle)
             .into_any_element(),
             ElementContainer::List(state) => list(
                 state.clone(),

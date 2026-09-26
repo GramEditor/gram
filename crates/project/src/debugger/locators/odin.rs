@@ -57,7 +57,7 @@ impl DapLocator for OdinLocator {
         let label = if is_run {
             resolved_label
                 .strip_prefix("run: ")
-                .unwrap_or(&resolved_label)
+                .unwrap_or(resolved_label)
                 .to_string()
         } else {
             resolved_label

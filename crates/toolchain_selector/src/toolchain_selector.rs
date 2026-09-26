@@ -215,7 +215,7 @@ impl AddToolchainState {
                     return Err(anyhow::anyhow!("Failed to resolve toolchain"));
                 };
                 let resolved_toolchain_path =
-                    project.read_with(cx, |this, cx| this.find_project_path(&toolchain.path.as_ref(), cx))?;
+                    project.read_with(cx, |this, cx| this.find_project_path(toolchain.path.as_ref(), cx))?;
 
                 // Suggest a default scope based on the applicability.
                 let scope = if let Some(project_path) = resolved_toolchain_path {
@@ -782,7 +782,7 @@ impl ToolchainSelectorDelegate {
     }
     fn relativize_path(path: SharedString, worktree_root: &Path, path_style: PathStyle) -> SharedString {
         Path::new(&path.as_ref())
-            .strip_prefix(&worktree_root)
+            .strip_prefix(worktree_root)
             .ok()
             .and_then(|suffix| suffix.to_str())
             .map(|suffix| format!(".{}{suffix}", path_style.primary_separator()).into())
@@ -857,7 +857,7 @@ impl PickerDelegate for ToolchainSelectorDelegate {
         cx.spawn_in(window, async move |this, cx| {
             let matches = if query.is_empty() {
                 candidates
-                    .into_iter()
+                    .iter()
                     .enumerate()
                     .map(|(index, (candidate, _))| {
                         let path = Self::relativize_path(candidate.path.clone(), &worktree_root_path, path_style);
@@ -872,7 +872,7 @@ impl PickerDelegate for ToolchainSelectorDelegate {
                     .collect()
             } else {
                 let candidates = candidates
-                    .into_iter()
+                    .iter()
                     .enumerate()
                     .map(|(candidate_id, (toolchain, _))| {
                         let path = Self::relativize_path(toolchain.path.clone(), &worktree_root_path, path_style);

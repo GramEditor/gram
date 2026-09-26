@@ -49,10 +49,11 @@ use project::{
 };
 use serde::{Deserialize, Serialize};
 use settings::{Settings, SettingsStore, StatusStyle};
+use std::fmt;
 use std::future::Future;
 use std::ops::Range;
 use std::path::Path;
-use std::{sync::Arc, time::Duration, usize};
+use std::{sync::Arc, time::Duration};
 use strum::{IntoEnumIterator, VariantNames};
 use time::OffsetDateTime;
 use ui::{
@@ -550,7 +551,10 @@ impl TruncatedPatch {
         }
         size
     }
-    fn to_string(&self) -> String {
+}
+
+impl fmt::Display for TruncatedPatch {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut out = self.header.clone();
         for (i, hunk) in self.hunks.iter().enumerate() {
             if i < self.hunks_to_keep {
@@ -561,7 +565,7 @@ impl TruncatedPatch {
         if skipped_hunks > 0 {
             out.push_str(&format!("[...skipped {} hunks...]\n", skipped_hunks));
         }
-        out
+        f.write_str(&out)
     }
 }
 
@@ -1214,10 +1218,10 @@ impl GitPanel {
                 })
                 .ok()?;
 
-            cx.spawn_in(window, async move |_, mut cx| {
+            cx.spawn_in(window, async move |_, cx| {
                 let item = open_task
                     .await
-                    .notify_async_err(&mut cx)
+                    .notify_async_err(cx)
                     .ok_or_else(|| anyhow::anyhow!("Failed to open file"))?;
                 if let Some(active_editor) = item.downcast::<Editor>() {
                     if let Some(diff_task) = active_editor.update(cx, |editor, _cx| editor.wait_for_diff_to_load())? {
@@ -1332,9 +1336,7 @@ impl GitPanel {
                     }
 
                     let insert_position = existing_content.len();
-                    let new_entry = if existing_content.is_empty() {
-                        format!("{}\n", file_path_str)
-                    } else if existing_content.ends_with('\n') {
+                    let new_entry = if existing_content.is_empty() || existing_content.ends_with('\n') {
                         format!("{}\n", file_path_str)
                     } else {
                         format!("\n{}\n", file_path_str)
@@ -1685,7 +1687,7 @@ impl GitPanel {
             match entry {
                 GitListEntry::Status(status_entry) => {
                     let repo_paths = vec![status_entry.clone()];
-                    let stage = match GitPanel::stage_status_for_entry(status_entry, &repo) {
+                    let stage = match GitPanel::stage_status_for_entry(status_entry, repo) {
                         StageStatus::Staged => {
                             if let Some(op) = self.bulk_staging.clone()
                                 && op.anchor == status_entry.repo_path
@@ -1703,7 +1705,7 @@ impl GitPanel {
                 }
                 GitListEntry::TreeStatus(status_entry) => {
                     let repo_paths = vec![status_entry.entry.clone()];
-                    let stage = match GitPanel::stage_status_for_entry(&status_entry.entry, &repo) {
+                    let stage = match GitPanel::stage_status_for_entry(&status_entry.entry, repo) {
                         StageStatus::Staged => {
                             if let Some(op) = self.bulk_staging.clone()
                                 && op.anchor == status_entry.entry.repo_path
@@ -1726,8 +1728,8 @@ impl GitPanel {
                         .iter()
                         .filter_map(|entry| entry.status_entry())
                         .filter(|status_entry| {
-                            section.contains(status_entry, &repo)
-                                && GitPanel::stage_status_for_entry(status_entry, &repo).as_bool()
+                            section.contains(status_entry, repo)
+                                && GitPanel::stage_status_for_entry(status_entry, repo).as_bool()
                                     != Some(goal_staged_state)
                         })
                         .cloned()
@@ -1750,19 +1752,18 @@ impl GitPanel {
                         .unwrap_or_default()
                         .into_iter()
                         .filter(|status_entry| {
-                            GitPanel::stage_status_for_entry(status_entry, &repo) != goal_staged_state
+                            GitPanel::stage_status_for_entry(status_entry, repo) != goal_staged_state
                         })
                         .collect::<Vec<_>>();
                     (goal_stage, entries)
                 }
             }
         };
-        if let Some(anchor) = clear_anchor {
-            if let Some(op) = self.bulk_staging.clone()
-                && op.anchor == anchor
-            {
-                self.bulk_staging = None;
-            }
+        if let Some(anchor) = clear_anchor
+            && let Some(op) = self.bulk_staging.clone()
+            && op.anchor == anchor
+        {
+            self.bulk_staging = None;
         }
         if let Some(anchor) = set_anchor {
             self.set_bulk_staging_anchor(anchor, cx);
@@ -1982,10 +1983,10 @@ impl GitPanel {
                     return true;
                 }
             }
-            return false;
+            false
         } else {
             cx.propagate();
-            return false;
+            false
         }
     }
     pub fn head_commit(&self, cx: &App) -> Option<CommitDetails> {
@@ -2969,11 +2970,10 @@ impl GitPanel {
             |this: &mut Self, entry: GitListEntry, is_visible: bool, logical_indices: Option<&mut Vec<usize>>| {
                 if let Some(estimate) =
                     this.width_estimate_for_list_entry(is_tree_view, show_diff_stats, &entry, path_style)
+                    && estimate > max_width_estimate
                 {
-                    if estimate > max_width_estimate {
-                        max_width_estimate = estimate;
-                        max_width_item_index = Some(this.entries.len());
-                    }
+                    max_width_estimate = estimate;
+                    max_width_item_index = Some(this.entries.len());
                 }
 
                 if let Some(repo_path) = entry.status_entry().map(|status| status.repo_path.clone()) {
@@ -3060,9 +3060,7 @@ impl GitPanel {
             && let Some(index) = bulk_staging_anchor_new_index
             && let Some(entry) = self.entries.get(index)
             && let Some(entry) = entry.status_entry()
-            && GitPanel::stage_status_for_entry(entry, &repo)
-                .as_bool()
-                .unwrap_or(false)
+            && GitPanel::stage_status_for_entry(entry, repo).as_bool().unwrap_or(false)
         {
             self.bulk_staging = bulk_staging;
         }
@@ -3263,7 +3261,7 @@ impl GitPanel {
         let has_staged_changes = self.has_staged_changes();
         let has_unstaged_changes = self.has_unstaged_changes();
         let has_new_changes = self.new_count > 0;
-        let has_stash_items = self.stash_entries.entries.len() > 0;
+        let has_stash_items = !self.stash_entries.entries.is_empty();
 
         PopoverMenu::new(id.into())
             .trigger(
@@ -4040,7 +4038,7 @@ impl GitPanel {
                 has_unstaged_changes: self.has_unstaged_changes(),
                 has_new_changes: self.new_count > 0,
                 sort_by_path: GitPanelSettings::get_global(cx).sort_by_path,
-                has_stash_items: self.stash_entries.entries.len() > 0,
+                has_stash_items: !self.stash_entries.entries.is_empty(),
                 tree_view: GitPanelSettings::get_global(cx).tree_view,
             },
             window,
@@ -4126,7 +4124,7 @@ impl GitPanel {
 
         let active_repo = self.project.read(cx).active_repository(cx)?;
         let repo = active_repo.read(cx);
-        let stage_status = GitPanel::stage_status_for_entry(entry, &repo);
+        let stage_status = GitPanel::stage_status_for_entry(entry, repo);
         let mut is_staged: ToggleState = match stage_status {
             StageStatus::Staged => ToggleState::Selected,
             StageStatus::Unstaged => ToggleState::Unselected,

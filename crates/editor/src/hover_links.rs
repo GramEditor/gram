@@ -41,8 +41,8 @@ impl RangeInEditor {
     pub fn point_within_range(&self, trigger_point: &TriggerPoint, snapshot: &EditorSnapshot) -> bool {
         match (self, trigger_point) {
             (Self::Text(range), TriggerPoint::Text(point)) => {
-                let point_after_start = range.start.cmp(point, &snapshot.buffer_snapshot()).is_le();
-                point_after_start && range.end.cmp(point, &snapshot.buffer_snapshot()).is_ge()
+                let point_after_start = range.start.cmp(point, snapshot.buffer_snapshot()).is_le();
+                point_after_start && range.end.cmp(point, snapshot.buffer_snapshot()).is_ge()
             }
             (Self::Inlay(highlight), TriggerPoint::InlayHint(point, _, _)) => {
                 highlight.inlay == point.inlay
@@ -577,7 +577,7 @@ pub(crate) async fn find_file(
     let pattern_candidates = link_pattern_file_candidates(&candidate_file_path);
 
     for (pattern_candidate, pattern_range) in &pattern_candidates {
-        if let Some(existing_path) = check_path(&pattern_candidate, &project, buffer, cx).await {
+        if let Some(existing_path) = check_path(pattern_candidate, &project, buffer, cx).await {
             let offset_range = range.to_offset(&snapshot);
             let actual_start = offset_range.start + pattern_range.start;
             let actual_end = offset_range.end - (candidate_len - pattern_range.end);
@@ -622,10 +622,10 @@ fn link_pattern_file_candidates(candidate: &str) -> Vec<(String, Range<usize>)> 
 
     let mut candidates = vec![(candidate.to_string(), 0..candidate_len)];
 
-    if let Some(captures) = MD_LINK_REGEX.captures(candidate) {
-        if let Some(link) = captures.get(1) {
-            candidates.push((link.as_str().to_string(), link.range()));
-        }
+    if let Some(captures) = MD_LINK_REGEX.captures(candidate)
+        && let Some(link) = captures.get(1)
+    {
+        candidates.push((link.as_str().to_string(), link.range()));
     }
     candidates
 }
@@ -636,7 +636,7 @@ fn surrounding_filename(
 ) -> Option<(Range<text::Anchor>, String)> {
     const LIMIT: usize = 2048;
 
-    let offset = position.to_offset(&snapshot);
+    let offset = position.to_offset(snapshot);
     let mut token_start = offset;
     let mut token_end = offset;
     let mut found_start = false;

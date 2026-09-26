@@ -319,7 +319,7 @@ impl Component for ThemePreviewTile {
                 .gap_6()
                 .p_4()
                 .children({
-                    if let Some(one_dark) = one_dark.ok() {
+                    if let Ok(one_dark) = one_dark {
                         vec![example_group(vec![single_example(
                             "Default",
                             div()

@@ -631,7 +631,7 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
                 path: path.to_arc(),
             };
 
-            let _ = workspace.update(cx, |workspace, cx| {
+            workspace.update(cx, |workspace, cx| {
                 workspace
                     .open_path(project_path, None, true, window, cx)
                     .detach_and_log_err(cx);
@@ -1059,7 +1059,7 @@ impl VimCommand {
                 .map(|dir| {
                     let path = RelPath::new(dir.path.as_path(), PathStyle::local())
                         .map(|cow| cow.into_owned())
-                        .unwrap_or(RelPathBuf::new());
+                        .unwrap_or_default();
                     let mut path_string = args_path.join(&path).display(PathStyle::local()).to_string();
                     if dir.is_dir {
                         path_string.push_str(PathStyle::local().primary_separator());
@@ -1105,10 +1105,9 @@ impl VimCommand {
             bang_action.boxed_clone()
         } else if let Some(action) = self.action.as_ref() {
             action.boxed_clone()
-        } else if let Some(action_name) = self.action_name {
-            cx.build_action(action_name, None).log_err()?
         } else {
-            return None;
+            let action_name = self.action_name?;
+            cx.build_action(action_name, None).log_err()?
         };
 
         // If the command does not accept args and we have args, we should do no
@@ -1255,7 +1254,7 @@ impl Position {
                         .buffer_point_to_anchor(&buffer, Point::new(row.saturating_sub(1), 0), cx)
                 }) {
                     anchor
-                        .to_point(&snapshot.buffer_snapshot())
+                        .to_point(snapshot.buffer_snapshot())
                         .row
                         .saturating_add_signed(*offset)
                 } else {
@@ -1269,7 +1268,7 @@ impl Position {
                 let Some(mark) = anchors.last() else {
                     anyhow::bail!("mark {name} contains empty anchors");
                 };
-                mark.to_point(&snapshot.buffer_snapshot())
+                mark.to_point(snapshot.buffer_snapshot())
                     .row
                     .saturating_add_signed(*offset)
             }
@@ -1278,7 +1277,7 @@ impl Position {
                 .selections
                 .newest_anchor()
                 .head()
-                .to_point(&snapshot.buffer_snapshot())
+                .to_point(snapshot.buffer_snapshot())
                 .row
                 .saturating_add_signed(*offset),
         };
@@ -1821,7 +1820,7 @@ pub fn command_interceptor(
             let mut candidates = Vec::with_capacity(filenames.len());
 
             for (idx, filename) in filenames.iter().enumerate() {
-                candidates.push(fuzzy::StringMatchCandidate::new(idx, &filename));
+                candidates.push(fuzzy::StringMatchCandidate::new(idx, filename));
             }
             let filenames = fuzzy::match_strings(
                 &candidates,
@@ -2121,7 +2120,7 @@ impl Vim {
             if c != '%' && c != '!' {
                 ret.push(c);
                 continue;
-            } else if ret.chars().last() == Some('\\') {
+            } else if ret.ends_with('\\') {
                 ret.pop();
                 ret.push(c);
                 continue;
@@ -2386,7 +2385,7 @@ impl ShellExec {
             }
             text.push_str(&String::from_utf8_lossy(&output.stdout));
             text.push_str(&String::from_utf8_lossy(&output.stderr));
-            if !text.is_empty() && text.chars().last() != Some('\n') {
+            if !text.is_empty() && !text.ends_with('\n') {
                 text.push('\n');
             }
 
@@ -2778,45 +2777,40 @@ mod test {
     async fn test_ignorecase_command(cx: &mut TestAppContext) {
         let mut cx = VimTestContext::new(cx, true).await;
         cx.read(|cx| {
-            assert_eq!(
-                EditorSettings::get_global(cx).search.case_sensitive,
-                false,
+            assert!(
+                !EditorSettings::get_global(cx).search.case_sensitive,
                 "The `case_sensitive` setting should be `false` by default."
             );
         });
         cx.simulate_keystrokes(": set space noignorecase");
         cx.simulate_keystrokes("enter");
         cx.read(|cx| {
-            assert_eq!(
+            assert!(
                 EditorSettings::get_global(cx).search.case_sensitive,
-                true,
                 "The `case_sensitive` setting should have been enabled with `:set noignorecase`."
             );
         });
         cx.simulate_keystrokes(": set space ignorecase");
         cx.simulate_keystrokes("enter");
         cx.read(|cx| {
-            assert_eq!(
-                EditorSettings::get_global(cx).search.case_sensitive,
-                false,
+            assert!(
+                !EditorSettings::get_global(cx).search.case_sensitive,
                 "The `case_sensitive` setting should have been disabled with `:set ignorecase`."
             );
         });
         cx.simulate_keystrokes(": set space noic");
         cx.simulate_keystrokes("enter");
         cx.read(|cx| {
-            assert_eq!(
+            assert!(
                 EditorSettings::get_global(cx).search.case_sensitive,
-                true,
                 "The `case_sensitive` setting should have been enabled with `:set noic`."
             );
         });
         cx.simulate_keystrokes(": set space ic");
         cx.simulate_keystrokes("enter");
         cx.read(|cx| {
-            assert_eq!(
-                EditorSettings::get_global(cx).search.case_sensitive,
-                false,
+            assert!(
+                !EditorSettings::get_global(cx).search.case_sensitive,
                 "The `case_sensitive` setting should have been disabled with `:set ic`."
             );
         });

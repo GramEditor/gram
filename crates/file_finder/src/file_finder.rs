@@ -894,13 +894,12 @@ impl FileFinderDelegate {
                 let mut expect_worktree = available_worktree.first().cloned();
                 for worktree in available_worktree {
                     let worktree_root = worktree.read(cx).root_name();
-                    if worktree_count > 1 {
-                        if let Ok(suffix) = query_path.strip_prefix(worktree_root) {
+                    if worktree_count > 1
+                        && let Ok(suffix) = query_path.strip_prefix(worktree_root) {
                             query_path = Cow::Owned(suffix.to_owned());
                             expect_worktree = Some(worktree);
                             break;
                         }
-                    }
                 }
 
                 if let Some(FoundPath { ref project, .. }) = self.currently_opened_path {
@@ -1367,7 +1366,7 @@ impl PickerDelegate for FileFinderDelegate {
         match self.matches.get(self.selected_index)? {
             Match::History { path, .. } => path.project.path.file_name().map(|n| n.into()),
             Match::Search(m) => m.0.path.file_name().map(|n| n.into()),
-            Match::OpenPath(_) | Match::CreateNew(_) => return None,
+            Match::OpenPath(_) | Match::CreateNew(_) => None,
         }
     }
 

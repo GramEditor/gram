@@ -684,7 +684,7 @@ impl Vim {
                     .disjoint_anchors_arc()
                     .iter()
                     .map(|selection| {
-                        let start = selection.start.bias_left(&display_map.buffer_snapshot());
+                        let start = selection.start.bias_left(display_map.buffer_snapshot());
                         start..start
                     })
                     .collect::<Vec<_>>();

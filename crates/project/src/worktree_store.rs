@@ -49,14 +49,14 @@ pub struct WorktreeStore {
 
 #[derive(Debug)]
 pub enum WorktreeStoreEvent {
-    WorktreeAdded(Entity<Worktree>),
-    WorktreeRemoved(EntityId, WorktreeId),
-    WorktreeReleased(EntityId, WorktreeId),
-    WorktreeOrderChanged,
-    WorktreeUpdateSent(Entity<Worktree>),
-    WorktreeUpdatedEntries(WorktreeId, UpdatedEntriesSet),
-    WorktreeUpdatedGitRepositories(WorktreeId, UpdatedGitRepositoriesSet),
-    WorktreeDeletedEntry(WorktreeId, ProjectEntryId),
+    Added(Entity<Worktree>),
+    Removed(EntityId, WorktreeId),
+    Released(EntityId, WorktreeId),
+    OrderChanged,
+    UpdateSent(Entity<Worktree>),
+    UpdatedEntries(WorktreeId, UpdatedEntriesSet),
+    UpdatedGitRepositories(WorktreeId, UpdatedGitRepositoriesSet),
+    DeletedEntry(WorktreeId, ProjectEntryId),
 }
 
 impl EventEmitter<WorktreeStoreEvent> for WorktreeStore {}
@@ -309,8 +309,8 @@ impl WorktreeStore {
 
                 let do_rename = async move |fs: &dyn Fs, old_path: &Path, new_path: &Path, overwrite| {
                     fs.rename(
-                        &old_path,
-                        &new_path,
+                        old_path,
+                        new_path,
                         fs::RenameOptions {
                             overwrite,
                             ..fs::RenameOptions::default()
@@ -334,13 +334,12 @@ impl WorktreeStore {
                         if let Err(e) = do_rename(fs.as_ref(), &abs_old_path, &abs_new_path, overwrite).await {
                             if let Some(err) = e.downcast_ref::<std::io::Error>()
                                 && err.kind() == std::io::ErrorKind::NotFound
+                                && let Some(parent) = abs_new_path.parent()
                             {
-                                if let Some(parent) = abs_new_path.parent() {
-                                    fs.create_dir(parent)
-                                        .await
-                                        .with_context(|| format!("creating parent directory {parent:?}"))?;
-                                    return do_rename(fs.as_ref(), &abs_old_path, &abs_new_path, overwrite).await;
-                                }
+                                fs.create_dir(parent)
+                                    .await
+                                    .with_context(|| format!("creating parent directory {parent:?}"))?;
+                                return do_rename(fs.as_ref(), &abs_old_path, &abs_new_path, overwrite).await;
                             }
                             return Err(e);
                         }
@@ -568,7 +567,7 @@ impl WorktreeStore {
             self.worktrees.insert(i, handle);
         }
 
-        cx.emit(WorktreeStoreEvent::WorktreeAdded(worktree.clone()));
+        cx.emit(WorktreeStoreEvent::Added(worktree.clone()));
         self.send_project_updates(cx);
 
         let handle_id = worktree.entity_id();
@@ -576,23 +575,18 @@ impl WorktreeStore {
             let worktree_id = worktree.read(cx).id();
             match event {
                 worktree::Event::UpdatedEntries(changes) => {
-                    cx.emit(WorktreeStoreEvent::WorktreeUpdatedEntries(worktree_id, changes.clone()));
+                    cx.emit(WorktreeStoreEvent::UpdatedEntries(worktree_id, changes.clone()));
                 }
                 worktree::Event::UpdatedGitRepositories(set) => {
-                    cx.emit(WorktreeStoreEvent::WorktreeUpdatedGitRepositories(
-                        worktree_id,
-                        set.clone(),
-                    ));
+                    cx.emit(WorktreeStoreEvent::UpdatedGitRepositories(worktree_id, set.clone()));
                 }
-                worktree::Event::DeletedEntry(id) => {
-                    cx.emit(WorktreeStoreEvent::WorktreeDeletedEntry(worktree_id, *id))
-                }
+                worktree::Event::DeletedEntry(id) => cx.emit(WorktreeStoreEvent::DeletedEntry(worktree_id, *id)),
             }
         })
         .detach();
         cx.observe_release(worktree, move |this, worktree, cx| {
-            cx.emit(WorktreeStoreEvent::WorktreeReleased(handle_id, worktree.id()));
-            cx.emit(WorktreeStoreEvent::WorktreeRemoved(handle_id, worktree.id()));
+            cx.emit(WorktreeStoreEvent::Released(handle_id, worktree.id()));
+            cx.emit(WorktreeStoreEvent::Removed(handle_id, worktree.id()));
             this.send_project_updates(cx);
         })
         .detach();
@@ -602,7 +596,7 @@ impl WorktreeStore {
         self.worktrees.retain(|worktree| {
             if let Some(worktree) = worktree.upgrade() {
                 if worktree.read(cx).id() == id_to_remove {
-                    cx.emit(WorktreeStoreEvent::WorktreeRemoved(worktree.entity_id(), id_to_remove));
+                    cx.emit(WorktreeStoreEvent::Removed(worktree.entity_id(), id_to_remove));
                     false
                 } else {
                     true
@@ -701,7 +695,7 @@ impl WorktreeStore {
         let worktree_to_move = self.worktrees.remove(source_index);
         self.worktrees.insert(destination_index, worktree_to_move);
         self.worktrees_reordered = true;
-        cx.emit(WorktreeStoreEvent::WorktreeOrderChanged);
+        cx.emit(WorktreeStoreEvent::OrderChanged);
         cx.notify();
         Ok(())
     }
@@ -744,7 +738,7 @@ impl WorktreeStore {
                         });
                     });
 
-                    cx.emit(WorktreeStoreEvent::WorktreeUpdateSent(worktree.clone()))
+                    cx.emit(WorktreeStoreEvent::UpdateSent(worktree.clone()))
                 }
 
                 anyhow::Ok(())

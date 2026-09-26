@@ -525,7 +525,7 @@ impl CommitView {
         let clipboard_has_link = cx
             .read_from_clipboard()
             .and_then(|entry| entry.text())
-            .map_or(false, |clipboard_text| clipboard_text.trim() == commit_sha.as_ref());
+            .is_some_and(|clipboard_text| clipboard_text.trim() == commit_sha.as_ref());
 
         let (copy_icon, copy_icon_color) = if clipboard_has_link {
             (IconName::Check, Color::Success)
@@ -602,7 +602,7 @@ impl CommitView {
                                     .child(Icon::new(IconName::Diff).color(Color::Ignored).size(IconSize::XSmall))
                                     .children(commit_diff_stat),
                             )
-                            .child(h_flex().gap_1p5().children(commit.refs.iter().map(|s| Chip::new(s)))),
+                            .child(h_flex().gap_1p5().children(commit.refs.iter().map(Chip::new))),
                     )
                     .children(remote_info.map(|(provider_name, url)| {
                         Button::new("view_on_provider", format!("View on {}", provider_name))
@@ -623,7 +623,7 @@ impl CommitView {
             cx,
             async move |repository, sha, stash, commit_view, workspace, cx| {
                 let result = repository.update(cx, |repo, cx| {
-                    if !stash_matches_index(&sha, stash, repo) {
+                    if !stash_matches_index(sha, stash, repo) {
                         return Err(anyhow::anyhow!("Stash has changed, not applying"));
                     }
                     Ok(repo.stash_apply(Some(stash), cx))
@@ -650,7 +650,7 @@ impl CommitView {
             cx,
             async move |repository, sha, stash, commit_view, workspace, cx| {
                 let result = repository.update(cx, |repo, cx| {
-                    if !stash_matches_index(&sha, stash, repo) {
+                    if !stash_matches_index(sha, stash, repo) {
                         return Err(anyhow::anyhow!("Stash has changed, pop aborted"));
                     }
                     Ok(repo.stash_pop(Some(stash), cx))
@@ -677,7 +677,7 @@ impl CommitView {
             cx,
             async move |repository, sha, stash, commit_view, workspace, cx| {
                 let result = repository.update(cx, |repo, cx| {
-                    if !stash_matches_index(&sha, stash, repo) {
+                    if !stash_matches_index(sha, stash, repo) {
                         return Err(anyhow::anyhow!("Stash has changed, drop aborted"));
                     }
                     Ok(repo.stash_drop(Some(stash), cx))
@@ -1050,6 +1050,12 @@ impl Render for CommitView {
 
 pub struct CommitViewToolbar {
     commit_view: Option<WeakEntity<CommitView>>,
+}
+
+impl Default for CommitViewToolbar {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CommitViewToolbar {

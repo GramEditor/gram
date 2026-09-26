@@ -581,7 +581,7 @@ impl VariableList {
             } else {
                 var.evaluate_name
                     .as_deref()
-                    .map(|name| name.strip_prefix("/nat ").unwrap_or_else(|| name))
+                    .map(|name| name.strip_prefix("/nat ").unwrap_or(name))
             };
             self.memory_view.update(cx, |this, cx| {
                 this.go_to_memory_reference(memory_reference, sizeof_expr, self.selected_stack_frame_id, cx);
@@ -1198,7 +1198,7 @@ impl VariableList {
                             .text_ui_sm(cx)
                             .w_full()
                             .child(
-                                Label::new(&Self::center_truncate_string(watcher.expression.as_ref(), watcher_len))
+                                Label::new(Self::center_truncate_string(watcher.expression.as_ref(), watcher_len))
                                     .when_some(variable_color.name, |this, color| this.color(Color::from(color))),
                             )
                             .child(self.render_variable_value(entry, &variable_color, watcher.value.to_string(), cx)),

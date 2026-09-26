@@ -112,7 +112,9 @@ pub struct ProfilerWindow {
 
 impl ProfilerWindow {
     pub fn new(startup_time: Instant, workspace_handle: Option<WindowHandle<Workspace>>, cx: &mut App) -> Entity<Self> {
-        let entity = cx.new(|cx| ProfilerWindow {
+        
+
+        cx.new(|cx| ProfilerWindow {
             startup_time,
             data: DataMode::Realtime(None),
             include_self_timings: ToggleState::Unselected,
@@ -120,9 +122,7 @@ impl ProfilerWindow {
             scroll_handle: UniformListScrollHandle::default(),
             workspace: workspace_handle,
             _refresh: Some(Self::begin_listen(cx)),
-        });
-
-        entity
+        })
     }
 
     fn begin_listen(cx: &mut Context<Self>) -> Task<()> {
@@ -273,14 +273,14 @@ impl Render for ProfilerWindow {
                                     let Some(data) = this.get_timings() else {
                                         return;
                                     };
-                                    let timings = SerializedTaskTiming::convert(this.startup_time, &data);
+                                    let timings = SerializedTaskTiming::convert(this.startup_time, data);
 
                                     let active_path = workspace
                                         .read_with(cx, |workspace, cx| workspace.most_recent_active_path(cx))
                                         .log_err()
                                         .flatten()
                                         .and_then(|p| p.parent().map(|p| p.to_owned()))
-                                        .unwrap_or_else(|| PathBuf::default());
+                                        .unwrap_or_else(PathBuf::default);
 
                                     let path =
                                         cx.prompt_for_new_path(&active_path, Some("performance_profile.miniprof"));
@@ -313,18 +313,18 @@ impl Render for ProfilerWindow {
                     ),
             )
             .when_some(self.get_timings(), |div, e| {
-                if e.len() == 0 {
+                if e.is_empty() {
                     return div;
                 }
 
                 let min = e[0].start;
-                let max = e[e.len() - 1].end.unwrap_or_else(|| Instant::now());
+                let max = e[e.len() - 1].end.unwrap_or_else(Instant::now);
                 let timings = Rc::new(
-                    e.into_iter()
+                    e.iter()
                         .filter(|timing| {
                             timing
                                 .end
-                                .unwrap_or_else(|| Instant::now())
+                                .unwrap_or_else(Instant::now)
                                 .duration_since(timing.start)
                                 .as_millis()
                                 >= 1
@@ -359,7 +359,7 @@ impl Render for ProfilerWindow {
                                             TimingBar {
                                                 location: timing.location,
                                                 start: timing.start,
-                                                end: timing.end.unwrap_or_else(|| Instant::now()),
+                                                end: timing.end.unwrap_or_else(Instant::now),
                                                 color: cx.theme().accents().color_for_index(i as u32),
                                             },
                                             cx,

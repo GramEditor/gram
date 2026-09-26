@@ -268,7 +268,7 @@ impl MarkdownPreviewView {
         let subscription = cx.subscribe_in(&editor, window, |this, editor, event: &EditorEvent, window, cx| {
             match event {
                 EditorEvent::Edited { .. }
-                | EditorEvent::BufferEdited { .. }
+                | EditorEvent::BufferEdited
                 | EditorEvent::DirtyChanged
                 | EditorEvent::ExcerptsEdited { .. } => {
                     this.parse_markdown_from_active_editor(true, window, cx);

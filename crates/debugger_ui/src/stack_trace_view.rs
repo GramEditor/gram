@@ -246,7 +246,7 @@ impl StackTraceView {
             let mut is_first = true;
 
             for (_, highlight) in self.highlights.iter().skip(active_idx) {
-                let position = highlight.to_point(&snapshot.buffer_snapshot());
+                let position = highlight.to_point(snapshot.buffer_snapshot());
                 let color = if is_first {
                     is_first = false;
                     first_color

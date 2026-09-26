@@ -157,8 +157,8 @@ impl FileHistoryView {
                 .ok()
                 .flatten();
 
-            if let Some(task) = file_history_task {
-                if let Ok(more_history) = task.await {
+            if let Some(task) = file_history_task
+                && let Ok(more_history) = task.await {
                     this.update(cx, |this, cx| {
                         this.loading_more = false;
                         this.has_more = more_history.entries.len() >= PAGE_SIZE;
@@ -167,7 +167,6 @@ impl FileHistoryView {
                     })
                     .ok();
                 }
-            }
         });
 
         task.detach();
@@ -323,7 +322,7 @@ impl FileHistoryView {
         };
 
         let commit_time =
-            OffsetDateTime::from_unix_timestamp(entry.commit_timestamp).unwrap_or_else(|_| OffsetDateTime::UNIX_EPOCH);
+            OffsetDateTime::from_unix_timestamp(entry.commit_timestamp).unwrap_or(OffsetDateTime::UNIX_EPOCH);
         let timestamp = time_format::format_localized_timestamp(
             commit_time,
             OffsetDateTime::now_utc(),

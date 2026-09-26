@@ -278,11 +278,9 @@ impl DebugPanel {
             .iter()
             .find(|(thread, _)| thread_id.map(|id| id.0) == Some(thread.id))
             .map(|(thread, _)| {
-                thread
+                if thread
                     .name
-                    .is_empty()
-                    .then(|| format!("Tid: {}", thread.id))
-                    .unwrap_or_else(|| thread.name.clone())
+                    .is_empty() { format!("Tid: {}", thread.id) } else { thread.name.clone() }
             });
 
         if let Some(selected_thread_name) = selected_thread_name {
@@ -295,11 +293,9 @@ impl DebugPanel {
                         for (thread, _) in threads {
                             let running_state = running_state.clone();
                             let thread_id = thread.id;
-                            let entry_name = thread
+                            let entry_name = if thread
                                 .name
-                                .is_empty()
-                                .then(|| format!("Tid: {}", thread.id))
-                                .unwrap_or_else(|| thread.name);
+                                .is_empty() { format!("Tid: {}", thread.id) } else { thread.name };
                             let entry_name = truncate_and_trailoff(&entry_name, MAX_LABEL_CHARS);
 
                             this = this.entry(entry_name, None, move |window, cx| {

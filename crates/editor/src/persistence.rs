@@ -333,7 +333,7 @@ impl EditorDb {
             .collect::<Vec<_>>()
         {
             first_selection = last_selection;
-            last_selection = last_selection + count;
+            last_selection += count;
             let query = format!(
                 r#"
 DELETE FROM editor_selections WHERE editor_id = ?1 AND workspace_id = ?2;
@@ -385,7 +385,7 @@ VALUES {placeholders};
             .collect::<Vec<_>>()
         {
             first_fold = last_fold;
-            last_fold = last_fold + count;
+            last_fold += count;
             let query = format!(
                 r#"
 DELETE FROM editor_folds WHERE editor_id = ?1 AND workspace_id = ?2;

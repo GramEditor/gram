@@ -181,12 +181,11 @@ impl QueryHistory {
     }
 
     fn validate_cursor(&mut self, current_query: &str) -> Option<usize> {
-        if let Some(pos) = self.cursor {
-            if self.history().get(pos).map(|s| s.as_str()) != Some(current_query) {
+        if let Some(pos) = self.cursor
+            && self.history().get(pos).map(|s| s.as_str()) != Some(current_query) {
                 self.cursor = None;
                 self.prefix = None;
             }
-        }
         self.cursor
     }
 
@@ -356,11 +355,10 @@ impl PickerDelegate for CommandPaletteDelegate {
         match direction {
             Direction::Up => {
                 let should_use_history = self.selected_ix == 0 || self.query_history.is_navigating();
-                if should_use_history {
-                    if let Some(query) = self.query_history.previous(query).map(|s| s.to_string()) {
+                if should_use_history
+                    && let Some(query) = self.query_history.previous(query).map(|s| s.to_string()) {
                         return Some(query);
                     }
-                }
             }
             Direction::Down => {
                 if self.query_history.is_navigating() {
@@ -591,7 +589,7 @@ impl PickerDelegate for CommandPaletteDelegate {
                 .child(
                     Button::new("run-action", "Run")
                         .key_binding(
-                            KeyBinding::for_action_in(&menu::Confirm, &focus_handle, cx)
+                            KeyBinding::for_action_in(&menu::Confirm, focus_handle, cx)
                                 .map(|kb| kb.size(TextSize::Small.rems(cx))),
                         )
                         .on_click(|_, window, cx| window.dispatch_action(menu::Confirm.boxed_clone(), cx)),

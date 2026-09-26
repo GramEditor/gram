@@ -100,12 +100,12 @@ struct SettingField<T: 'static> {
     ///
     /// There are a couple of special cases:
     /// - discrimminants are represented with a trailing `$`, for example
-    /// `terminal.working_directory$`. This is to distinguish the discrimminant
-    /// setting (i.e. the setting that changes whether the value is a string or
-    /// an object) from the setting in the case that it is a string.
+    ///   `terminal.working_directory$`. This is to distinguish the discrimminant
+    ///   setting (i.e. the setting that changes whether the value is a string or
+    ///   an object) from the setting in the case that it is a string.
     /// - language-specific settings begin `languages.$(language)`. Links
-    /// targeting these settings should take the form `languages/Rust/...`, for
-    /// example, but are not currently supported.
+    ///   targeting these settings should take the form `languages/Rust/...`, for
+    ///   example, but are not currently supported.
     json_path: Option<&'static str>,
 }
 
@@ -175,7 +175,7 @@ impl<T: PartialEq + Clone + Send + Sync + 'static> AnySettingField for SettingFi
         let (file, value) = cx
             .global::<SettingsStore>()
             .get_value(file.to_settings(), true, self.pick);
-        return (file, value.is_some());
+        (file, value.is_some())
     }
 
     fn reset_to_default_fn(
@@ -193,13 +193,13 @@ impl<T: PartialEq + Clone + Send + Sync + 'static> AnySettingField for SettingFi
         let this = *self;
         let store = SettingsStore::global(cx);
         let default_value = (this.pick)(store.raw_default_settings());
-        let is_default = store.get_content_for_file(file_set_in.clone()).map_or(None, this.pick) == default_value;
+        let is_default = store.get_content_for_file(file_set_in.clone()).and_then(this.pick) == default_value;
         if is_default {
             return None;
         }
         let current_file = current_file.clone();
 
-        return Some(Box::new(move |cx| {
+        Some(Box::new(move |cx| {
             let store = SettingsStore::global(cx);
             let default_value = (this.pick)(store.raw_default_settings());
             let is_set_somewhere_other_than_default =
@@ -218,7 +218,7 @@ impl<T: PartialEq + Clone + Send + Sync + 'static> AnySettingField for SettingFi
             )
             // todo(settings_ui): Don't log err
             .log_err();
-        }));
+        }))
     }
 
     fn json_path(&self) -> Option<&'static str> {
@@ -370,7 +370,7 @@ pub fn init(cx: &mut App) {
                     .window_handle()
                     .downcast::<Workspace>()
                     .expect("Workspaces are root Windows");
-                open_settings_editor(workspace, Some(&path), false, window_handle, cx);
+                open_settings_editor(workspace, Some(path), false, window_handle, cx);
             })
             .register_action(|workspace, _: &OpenSettings, window, cx| {
                 let window_handle = window
@@ -940,7 +940,7 @@ impl SettingsPageItem {
                     }
                 }
 
-                return content.into_any_element();
+                content.into_any_element()
             }
             SettingsPageItem::ActionLink(action_link) => v_flex()
                 .group("setting-item")
@@ -1078,9 +1078,7 @@ fn render_settings_item_link(
     let clipboard_has_link = cx
         .read_from_clipboard()
         .and_then(|entry| entry.text())
-        .map_or(false, |maybe_url| {
-            json_path.is_some() && maybe_url.strip_prefix("gram://settings/") == json_path
-        });
+        .is_some_and(|maybe_url| json_path.is_some() && maybe_url.strip_prefix("gram://settings/") == json_path);
 
     let (link_icon, link_icon_color) = if clipboard_has_link {
         (IconName::Check, Color::Success)
@@ -1438,7 +1436,7 @@ impl SettingsWindow {
             worktree_root_dirs: HashMap::default(),
             files: vec![],
 
-            current_file: current_file,
+            current_file,
             pages: vec![],
             navbar_entries: vec![],
             navbar_entry: 0,
@@ -1582,7 +1580,7 @@ impl SettingsWindow {
                 }
             }
 
-            return Some((entry_index, entry));
+            Some((entry_index, entry))
         })
     }
 
@@ -1640,13 +1638,12 @@ impl SettingsWindow {
             return;
         }
 
-        let is_json_link_query;
-        if query.starts_with("#") {
+        let is_json_link_query = if query.starts_with("#") {
             query.remove(0);
-            is_json_link_query = true;
+            true
         } else {
-            is_json_link_query = false;
-        }
+            false
+        };
 
         let search_index = self.search_index.as_ref().unwrap().clone();
 
@@ -1809,7 +1806,7 @@ impl SettingsWindow {
                         push_candidates(&mut fuzzy_match_candidates, key_index, item.title);
                         push_candidates(&mut fuzzy_match_candidates, key_index, item.description);
 
-                        for alias in aliases.into_iter() {
+                        for alias in aliases.iter() {
                             push_candidates(&mut fuzzy_match_candidates, key_index, alias);
                         }
                     }
@@ -2038,7 +2035,7 @@ impl SettingsWindow {
         static OVERFLOW_LIMIT: usize = 1;
 
         let file_button = |ix, file: &SettingsUiFile, focus_handle, cx: &mut Context<SettingsWindow>| {
-            Button::new(ix, self.display_name(&file).expect("Files should always have a name"))
+            Button::new(ix, self.display_name(file).expect("Files should always have a name"))
                 .toggle_state(file == &self.current_file)
                 .selected_style(ButtonStyle::Tinted(ui::TintColor::Accent))
                 .track_focus(focus_handle)
@@ -2101,7 +2098,7 @@ impl SettingsWindow {
                                                     ix = OVERFLOW_LIMIT;
                                                     (self.display_name(&self.files[ix].0), self.files[ix].1.clone())
                                                 } else {
-                                                    (self.display_name(&file), focus_handle.clone())
+                                                    (self.display_name(file), focus_handle.clone())
                                                 };
 
                                                 menu = menu.entry(
@@ -2152,7 +2149,7 @@ impl SettingsWindow {
         match file {
             SettingsUiFile::User => Some("User".to_string()),
             SettingsUiFile::Project((worktree_id, path)) => {
-                self.worktree_root_dirs.get(&worktree_id).map(|directory_name| {
+                self.worktree_root_dirs.get(worktree_id).map(|directory_name| {
                     let path_style = PathStyle::local();
                     if path.is_empty() {
                         directory_name.clone()
@@ -3051,9 +3048,8 @@ impl SettingsWindow {
             }
             SettingsUiFile::Server(_) => {
                 // Server files are not editable
-                return;
             }
-        };
+        }
     }
 
     fn current_page_index(&self) -> usize {
@@ -3140,7 +3136,7 @@ impl SettingsWindow {
         {
             index = prev_index.checked_sub(1);
         }
-        return index.expect("No root entry found");
+        index.expect("No root entry found")
     }
 }
 
@@ -3271,7 +3267,7 @@ fn update_settings_file(
                 .detach();
             });
 
-            return Ok(());
+            Ok(())
         }
         SettingsUiFile::User => {
             // todo(settings_ui) error?
@@ -3325,7 +3321,7 @@ fn render_toggle_button<B: Into<bool> + From<bool> + Copy>(
 ) -> AnyElement {
     let (_, value) = SettingsStore::global(cx).get_value(file.to_settings(), true, field.pick);
 
-    let toggle_state = if value.copied().map_or(false, Into::into) {
+    let toggle_state = if value.copied().is_some_and(Into::into) {
         ToggleState::Selected
     } else {
         ToggleState::Unselected

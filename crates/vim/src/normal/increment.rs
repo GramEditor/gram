@@ -39,7 +39,7 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
         vim.record_current_action(cx);
         let count = Vim::take_count(cx).unwrap_or(1);
         Vim::take_forced_motion(cx);
-        let step = if action.step { -1 * (count as i32) } else { 0 };
+        let step = if action.step { -(count as i32) } else { 0 };
         vim.increment(-(count as i64), step, window, cx)
     });
 }
@@ -122,7 +122,7 @@ fn increment_decimal_string(num: &str, delta: i64) -> String {
     let num_length = num_str.len();
     let leading_zero = num_str.starts_with('0');
 
-    let (result, new_negative) = match u64::from_str_radix(num_str, 10) {
+    let (result, new_negative) = match num_str.parse::<u64>() {
         Ok(value) => {
             let wrapped = value.wrapping_add_signed(delta);
             if delta < 0 && wrapped > value {
@@ -199,7 +199,7 @@ fn find_target(
     let mut first_char_is_num = snapshot
         .chars_at(offset)
         .next()
-        .map_or(false, |ch| ch.is_ascii_hexdigit());
+        .is_some_and(|ch| ch.is_ascii_hexdigit());
     let mut pre_char = String::new();
 
     let next_offset = offset + snapshot.chars_at(start_offset).next().map_or(0, |ch| ch.len_utf8());

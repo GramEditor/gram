@@ -1177,10 +1177,9 @@ impl Motion {
             GramSearchResult { new_selections, .. } => {
                 // There will be only one selection, as
                 // Search::SelectNextMatch selects a single match.
-                if let Some(new_selection) = new_selections.first() {
+                {
+                    let new_selection = new_selections.first()?;
                     (new_selection.start.to_display_point(map), SelectionGoal::None)
-                } else {
-                    return None;
                 }
             }
             NextSectionStart => (
@@ -1726,7 +1725,7 @@ fn previous_word_end(
     }
     for _ in 0..times {
         let new_point = movement::find_preceding_boundary_point(
-            &map.buffer_snapshot(),
+            map.buffer_snapshot(),
             point,
             FindRange::MultiLine,
             |left, right| {
@@ -1859,7 +1858,7 @@ fn previous_subword_end(
     }
     for _ in 0..times {
         let new_point = movement::find_preceding_boundary_point(
-            &map.buffer_snapshot(),
+            map.buffer_snapshot(),
             point,
             FindRange::MultiLine,
             |left, right| {
@@ -1981,7 +1980,7 @@ pub(crate) fn end_of_line(
 }
 
 pub(crate) fn sentence_backwards(map: &DisplaySnapshot, point: DisplayPoint, mut times: usize) -> DisplayPoint {
-    let mut start = point.to_point(map).to_offset(&map.buffer_snapshot());
+    let mut start = point.to_point(map).to_offset(map.buffer_snapshot());
     let mut chars = map.reverse_buffer_chars_at(start).peekable();
 
     let mut was_newline = map.buffer_chars_at(start).next().is_some_and(|(c, _)| c == '\n');
@@ -2004,7 +2003,7 @@ pub(crate) fn sentence_backwards(map: &DisplaySnapshot, point: DisplayPoint, mut
             if times == 0 || offset.0 == 0 {
                 return map.clip_point(
                     start_of_next_sentence
-                        .to_offset(&map.buffer_snapshot())
+                        .to_offset(map.buffer_snapshot())
                         .to_display_point(map),
                     Bias::Left,
                 );
@@ -2020,7 +2019,7 @@ pub(crate) fn sentence_backwards(map: &DisplaySnapshot, point: DisplayPoint, mut
 }
 
 pub(crate) fn sentence_forwards(map: &DisplaySnapshot, point: DisplayPoint, mut times: usize) -> DisplayPoint {
-    let start = point.to_point(map).to_offset(&map.buffer_snapshot());
+    let start = point.to_point(map).to_offset(map.buffer_snapshot());
     let mut chars = map.buffer_chars_at(start).peekable();
 
     let mut was_newline = map
@@ -2048,7 +2047,7 @@ pub(crate) fn sentence_forwards(map: &DisplaySnapshot, point: DisplayPoint, mut 
             if times == 0 {
                 return map.clip_point(
                     start_of_next_sentence
-                        .to_offset(&map.buffer_snapshot())
+                        .to_offset(map.buffer_snapshot())
                         .to_display_point(map),
                     Bias::Right,
                 );
@@ -2248,7 +2247,7 @@ fn matching(map: &DisplaySnapshot, display_point: DisplayPoint, match_quotes: bo
     // https://github.com/vim/vim/blob/1d87e11a1ef201b26ed87585fba70182ad0c468a/runtime/doc/motion.txt#L1200
     let display_point = map.clip_at_line_end(display_point);
     let point = display_point.to_point(map);
-    let offset = point.to_offset(&map.buffer_snapshot());
+    let offset = point.to_offset(map.buffer_snapshot());
     let snapshot = map.buffer_snapshot();
 
     // Ensure the range is contained by the current line.
@@ -2297,8 +2296,7 @@ fn matching(map: &DisplaySnapshot, display_point: DisplayPoint, match_quotes: bo
 
     let line_range = map.prev_line_boundary(point).0..line_end;
     let visible_line_range = line_range.start..Point::new(line_range.end.row, line_range.end.column.saturating_sub(1));
-    let line_range =
-        line_range.start.to_offset(&map.buffer_snapshot())..line_range.end.to_offset(&map.buffer_snapshot());
+    let line_range = line_range.start.to_offset(map.buffer_snapshot())..line_range.end.to_offset(map.buffer_snapshot());
     let ranges = map.buffer_snapshot().bracket_ranges(visible_line_range);
     if let Some(ranges) = ranges {
         let mut closest_pair_destination = None;
@@ -2382,7 +2380,7 @@ fn unmatched_forward(map: &DisplaySnapshot, mut display_point: DisplayPoint, cha
     for _ in 0..times {
         // https://github.com/vim/vim/blob/1d87e11a1ef201b26ed87585fba70182ad0c468a/runtime/doc/motion.txt#L1245
         let point = display_point.to_point(map);
-        let offset = point.to_offset(&map.buffer_snapshot());
+        let offset = point.to_offset(map.buffer_snapshot());
 
         let ranges = map.buffer_snapshot().enclosing_bracket_ranges(point..point);
         let Some(ranges) = ranges else { break };
@@ -2423,7 +2421,7 @@ fn unmatched_backward(
     for _ in 0..times {
         // https://github.com/vim/vim/blob/1d87e11a1ef201b26ed87585fba70182ad0c468a/runtime/doc/motion.txt#L1239
         let point = display_point.to_point(map);
-        let offset = point.to_offset(&map.buffer_snapshot());
+        let offset = point.to_offset(map.buffer_snapshot());
 
         let ranges = map.buffer_snapshot().enclosing_bracket_ranges(point..point);
         let Some(ranges) = ranges else {
@@ -2712,7 +2710,7 @@ fn method_motion(
 
     for _ in 0..times {
         let point = map.display_point_to_point(display_point, Bias::Left);
-        let offset = point.to_offset(&map.buffer_snapshot()).0;
+        let offset = point.to_offset(map.buffer_snapshot()).0;
         let range = if direction == Direction::Prev {
             0..offset
         } else {
@@ -2727,9 +2725,9 @@ fn method_motion(
                 }
 
                 let relevant = if is_start { range.start } else { range.end };
-                if direction == Direction::Prev && relevant < offset {
-                    Some(relevant)
-                } else if direction == Direction::Next && relevant > offset + 1 {
+                if (direction == Direction::Prev && relevant < offset)
+                    || (direction == Direction::Next && relevant > offset + 1)
+                {
                     Some(relevant)
                 } else {
                     None
@@ -2762,7 +2760,7 @@ fn comment_motion(
 
     for _ in 0..times {
         let point = map.display_point_to_point(display_point, Bias::Left);
-        let offset = point.to_offset(&map.buffer_snapshot()).0;
+        let offset = point.to_offset(map.buffer_snapshot()).0;
         let range = if direction == Direction::Prev {
             0..offset
         } else {
@@ -2781,9 +2779,9 @@ fn comment_motion(
                 } else {
                     range.end
                 };
-                if direction == Direction::Prev && relevant < offset {
-                    Some(relevant)
-                } else if direction == Direction::Next && relevant > offset + 1 {
+                if (direction == Direction::Prev && relevant < offset)
+                    || (direction == Direction::Next && relevant > offset + 1)
+                {
                     Some(relevant)
                 } else {
                     None
@@ -2816,7 +2814,7 @@ fn section_motion(
         for _ in 0..times {
             let offset = map
                 .display_point_to_point(display_point, Bias::Left)
-                .to_offset(&map.buffer_snapshot());
+                .to_offset(map.buffer_snapshot());
             let range = if direction == Direction::Prev {
                 MultiBufferOffset(0)..offset
             } else {
@@ -2846,9 +2844,9 @@ fn section_motion(
                 prev_end = Some(range.end);
 
                 let relevant = if is_start { range.start } else { range.end };
-                if direction == Direction::Prev && relevant < offset {
-                    Some(relevant)
-                } else if direction == Direction::Next && relevant > offset + 1usize {
+                if (direction == Direction::Prev && relevant < offset)
+                    || (direction == Direction::Next && relevant > offset + 1usize)
+                {
                     Some(relevant)
                 } else {
                     None

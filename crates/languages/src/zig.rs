@@ -155,18 +155,14 @@ impl LspInstaller for ZigLspAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        match find_cached_server_binary(&container_dir, Some("zls-"), async |path| {
+        find_cached_server_binary(&container_dir, Some("zls-"), async |path| {
             Some(path.join(with_exe("zls")))
         })
-        .await
-        {
-            Some(path) => Some(LanguageServerBinary {
+        .await.map(|path| LanguageServerBinary {
                 path,
                 env: None,
                 arguments: vec![],
-            }),
-            None => None,
-        }
+            })
     }
 }
 

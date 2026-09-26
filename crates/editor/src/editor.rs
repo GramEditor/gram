@@ -803,6 +803,12 @@ impl ChangeList {
     }
 }
 
+impl Default for ChangeList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Clone)]
 struct InlineBlamePopoverState {
     scroll_handle: ScrollHandle,
@@ -2099,8 +2105,8 @@ impl Editor {
             breakpoint_store,
             gutter_breakpoint_indicator: (None, None),
             hovered_diff_hunk_row: None,
-            _subscriptions: (!is_minimap)
-                .then(|| {
+            _subscriptions: if !is_minimap {
+                {
                     vec![
                         cx.observe(&multi_buffer, Self::on_buffer_changed),
                         cx.subscribe_in(&multi_buffer, window, Self::on_buffer_event),
@@ -2123,8 +2129,10 @@ impl Editor {
                             }
                         }),
                     ]
-                })
-                .unwrap_or_default(),
+                }
+            } else {
+                Default::default()
+            },
             tasks_update_task: None,
             pull_diagnostics_task: Task::ready(()),
             pull_diagnostics_background_task: Task::ready(()),
@@ -2371,13 +2379,11 @@ impl Editor {
                     key_context.add("showing_completions");
                 }
             }
-            Some(CodeContextMenu::CodeActions(menu)) => {
-                if menu.visible() {
-                    key_context.add("menu");
-                    key_context.add("showing_code_actions")
-                }
+            Some(CodeContextMenu::CodeActions(menu)) if menu.visible() => {
+                key_context.add("menu");
+                key_context.add("showing_code_actions")
             }
-            None => {}
+            _ => {}
         }
 
         if self.signature_help_state.has_multiple_signatures() {
@@ -2987,9 +2993,7 @@ impl Editor {
         };
         let inmemory_folds = display_snapshot
             .folds_in_range(MultiBufferOffset(0)..display_snapshot.buffer_snapshot().len())
-            .map(|fold| {
-                fold.range.start.text_anchor.to_point(&snapshot)..fold.range.end.text_anchor.to_point(&snapshot)
-            })
+            .map(|fold| fold.range.start.text_anchor.to_point(snapshot)..fold.range.end.text_anchor.to_point(snapshot))
             .collect();
         self.update_restoration_data(cx, |data| {
             data.folds = inmemory_folds;
@@ -3004,8 +3008,8 @@ impl Editor {
         let db_folds = display_snapshot
             .folds_in_range(MultiBufferOffset(0)..display_snapshot.buffer_snapshot().len())
             .map(|fold| {
-                let start = fold.range.start.text_anchor.to_offset(&snapshot);
-                let end = fold.range.end.text_anchor.to_offset(&snapshot);
+                let start = fold.range.start.text_anchor.to_offset(snapshot);
+                let end = fold.range.end.text_anchor.to_offset(snapshot);
 
                 // Extract fingerprints - content at fold boundaries for validation on restore
                 // Both fingerprints must be INSIDE the fold to avoid capturing surrounding
@@ -5018,7 +5022,7 @@ impl Editor {
 
         let skip_digits = query
             .as_ref()
-            .is_none_or(|query| !query.chars().any(|c| c.is_digit(10)));
+            .is_none_or(|query| !query.chars().any(|c| c.is_ascii_digit()));
 
         let load_provider_completions = provider.as_ref().is_some_and(|provider| {
             trigger.as_ref().is_none_or(|trigger| {
@@ -5121,7 +5125,7 @@ impl Editor {
             let mut is_incomplete = false;
             let mut display_options: Option<CompletionDisplayOptions> = None;
             if let Some(provider_responses) = provider_responses
-                .with_timeout(Duration::from_millis(200), &cx.background_executor())
+                .with_timeout(Duration::from_millis(200), cx.background_executor())
                 .await
                 .context("Timed out waiting for LSP completions")
                 .flatten()
@@ -5843,7 +5847,7 @@ impl Editor {
                         && multi_buffer
                             .read(cx)
                             .as_singleton()
-                            .map_or(false, |singleton| singleton.entity_id() == buffer.entity_id())
+                            .is_some_and(|singleton| singleton.entity_id() == buffer.entity_id())
                 })
             })
         };
@@ -6126,7 +6130,7 @@ impl Editor {
         };
 
         let anchor = self.selections.newest_anchor().head();
-        let position = self.to_pixel_point(anchor, &snapshot, window, cx);
+        let position = self.source_to_pixel_point(anchor, &snapshot, window, cx);
         if let (Some(position), Some(last_bounds)) = (position, self.last_bounds) {
             self.show_blame_popover(buffer, &blame_entry, position + last_bounds.origin, true, cx);
         };
@@ -6283,7 +6287,7 @@ impl Editor {
                                 .range
                                 .end
                                 .min(&excerpt_range.context.end, cursor_buffer_snapshot);
-                            if start.cmp(&end, cursor_buffer_snapshot).is_ge() {
+                            if start.cmp(end, cursor_buffer_snapshot).is_ge() {
                                 continue;
                             }
 
@@ -6705,7 +6709,7 @@ impl Editor {
             for (breakpoint, state) in breakpoints {
                 let multi_buffer_anchor = Anchor::in_buffer(excerpt_id, breakpoint.position);
                 let position = multi_buffer_anchor
-                    .to_point(&multi_buffer_snapshot)
+                    .to_point(multi_buffer_snapshot)
                     .to_display_point(&snapshot);
 
                 breakpoint_display_points.insert(position.row(), (multi_buffer_anchor, breakpoint.bp.clone(), state));
@@ -6761,9 +6765,9 @@ impl Editor {
 
         let run_to_cursor = window.is_action_available(&RunToCursor, cx);
 
-        let toggle_state_msg = breakpoint.as_ref().map_or(None, |bp| match bp.1.state {
-            BreakpointState::Enabled => Some("Disable"),
-            BreakpointState::Disabled => Some("Enable"),
+        let toggle_state_msg = breakpoint.as_ref().map(|bp| match bp.1.state {
+            BreakpointState::Enabled => "Disable",
+            BreakpointState::Disabled => "Enable",
         });
 
         let (anchor, breakpoint) = breakpoint.unwrap_or_else(|| (anchor, Arc::new(Breakpoint::new_standard())));
@@ -7189,7 +7193,7 @@ impl Editor {
         context_menu
     }
 
-    fn show_snippet_choices(&mut self, choices: &Vec<String>, selection: Range<Anchor>, cx: &mut Context<Self>) {
+    fn show_snippet_choices(&mut self, choices: &[String], selection: Range<Anchor>, cx: &mut Context<Self>) {
         let Some((_, buffer, _)) = self.buffer().read(cx).excerpt_containing(selection.start, cx) else {
             return;
         };
@@ -7737,7 +7741,7 @@ impl Editor {
             };
 
             let word_end =
-                !preceding.is_whitespace() && following.map_or(true, |c| c.is_whitespace() || TERMINATORS.contains(&c));
+                !preceding.is_whitespace() && following.is_none_or(|c| c.is_whitespace() || TERMINATORS.contains(&c));
             let trigger_end = TRIGGERS.contains(&preceding);
 
             if word_end || trigger_end {
@@ -8437,7 +8441,7 @@ impl Editor {
         }
 
         for (anchor, breakpoint) in self.breakpoints_at_cursors(window, cx) {
-            let breakpoint = breakpoint.unwrap_or_else(|| Breakpoint {
+            let breakpoint = breakpoint.unwrap_or(Breakpoint {
                 message: None,
                 state: BreakpointState::Enabled,
                 condition: None,
@@ -8455,7 +8459,7 @@ impl Editor {
             .disjoint_anchors_arc()
             .iter()
             .map(|selection| {
-                let cursor_position: Point = selection.head().to_point(&snapshot.buffer_snapshot());
+                let cursor_position: Point = selection.head().to_point(snapshot.buffer_snapshot());
 
                 let breakpoint_position = self
                     .breakpoint_at_row(cursor_position.row, window, cx)
@@ -8471,7 +8475,7 @@ impl Editor {
                     .breakpoint_at_anchor(breakpoint_position, &snapshot, cx)
                     .map(|(anchor, breakpoint)| (anchor, Some(breakpoint)));
 
-                breakpoint.unwrap_or_else(|| (breakpoint_position, None))
+                breakpoint.unwrap_or((breakpoint_position, None))
             })
             // There might be multiple cursors on the same line; all of them should have the same anchors though as their breakpoints positions, which makes it possible to sort and dedup the list.
             .collect::<HashMap<Anchor, _>>();
@@ -9089,7 +9093,7 @@ impl Editor {
             text.chars()
                 .map(|c| {
                     let code_point = c as u32;
-                    if code_point >= 33 && code_point <= 126 {
+                    if (33..=126).contains(&code_point) {
                         return char::from_u32(33 + ((code_point + 14) % 94)).unwrap();
                     }
                     c
@@ -9839,7 +9843,7 @@ impl Editor {
                             .with_context(|| format!("line did not start with prefix {prefix:?}: {line:?}"))
                     } else {
                         line_trimmed
-                            .strip_prefix(&line_prefix.trim_start())
+                            .strip_prefix(line_prefix.trim_start())
                             .with_context(|| format!("line did not start with prefix {line_prefix:?}: {line:?}"))
                     }
                 })
@@ -10148,7 +10152,7 @@ impl Editor {
 
     pub fn do_paste(
         &mut self,
-        text: &String,
+        text: &str,
         clipboard_selections: Option<Vec<ClipboardSelection>>,
         handle_entire_lines: bool,
         window: &mut Window,
@@ -10158,7 +10162,7 @@ impl Editor {
             return;
         }
 
-        let clipboard_text = Cow::Borrowed(text.as_str());
+        let clipboard_text = Cow::Borrowed(text);
 
         self.transact(window, cx, |this, window, cx| {
             let display_map = this.display_snapshot(cx);
@@ -11624,21 +11628,19 @@ impl Editor {
             let mut new_selection_to_add = None;
 
             while current_row != boundary_row {
-                let target_buffer_row;
-
-                if skip_soft_wrap {
+                let target_buffer_row = if skip_soft_wrap {
                     // get the raw position within the buffer
                     let new_display_row =
                         display_map.start_of_relative_buffer_row(DisplayPoint::new(current_row, 0), direction);
                     current_row = new_display_row.row();
-                    target_buffer_row = Some(new_display_row.to_point(&display_map).row)
+                    Some(new_display_row.to_point(&display_map).row)
                 } else {
                     if above {
                         current_row.0 -= 1;
                     } else {
                         current_row.0 += 1;
                     }
-                    target_buffer_row = None
+                    None
                 };
 
                 let candidate = if let Some(buffer_row) = target_buffer_row {
@@ -11790,7 +11792,7 @@ impl Editor {
         cx: &mut Context<Self>,
     ) -> Result<()> {
         let buffer = display_map.buffer_snapshot();
-        let mut selections = self.selections.all::<MultiBufferOffset>(&display_map);
+        let mut selections = self.selections.all::<MultiBufferOffset>(display_map);
         if let Some(mut select_next_state) = self.forward_matches.take() {
             let query = &select_next_state.query;
             if !select_next_state.done {
@@ -11820,7 +11822,7 @@ impl Editor {
                         let idx = selections.partition_point(|selection| selection.end <= offset_range.start);
                         let overlaps = selections
                             .get(idx)
-                            .map_or(false, |selection| selection.start < offset_range.end);
+                            .is_some_and(|selection| selection.start < offset_range.end);
 
                         if !overlaps {
                             next_selected_range = Some(offset_range);
@@ -13079,7 +13081,7 @@ impl Editor {
                     continue;
                 }
 
-                let point = run_range.start.to_point(&snapshot.buffer_snapshot());
+                let point = run_range.start.to_point(snapshot.buffer_snapshot());
                 let Some(row) = snapshot
                     .buffer_snapshot()
                     .buffer_line_for_row(MultiBufferRow(point.row))
@@ -13240,16 +13242,15 @@ impl Editor {
                 // brackets.scm (notably Markdown inline content), fall back to detecting
                 // string-like nodes via the syntax tree.
                 // The same node kinds are used by select_larger_syntax_node.
-                if !include_brackets {
-                    if let Some((node, node_range)) = snapshot.syntax_ancestor(selection.start..selection.end) {
-                        if ["string_content", "inline"].contains(&node.kind()) {
-                            selection.start = node_range.start;
-                            selection.end = node_range.end;
-                            selection.reversed = false;
-                            selection.goal = SelectionGoal::None;
-                            return;
-                        }
-                    }
+                if !include_brackets
+                    && let Some((node, node_range)) = snapshot.syntax_ancestor(selection.start..selection.end)
+                    && ["string_content", "inline"].contains(&node.kind())
+                {
+                    selection.start = node_range.start;
+                    selection.end = node_range.end;
+                    selection.reversed = false;
+                    selection.goal = SelectionGoal::None;
+                    return;
                 }
 
                 // Fall back to the nearest bracket pair via tree-sitter.
@@ -13702,7 +13703,7 @@ impl Editor {
         cx: &mut Context<Self>,
     ) {
         let snapshot = self.snapshot(window, cx).display_snapshot;
-        let position = position.to_point(&snapshot.buffer_snapshot());
+        let position = position.to_point(snapshot.buffer_snapshot());
         let start = snapshot
             .buffer_snapshot()
             .clip_point(Point::new(position.row, 0), Bias::Left);
@@ -14779,10 +14780,7 @@ impl Editor {
     fn format(&mut self, _: &Format, window: &mut Window, cx: &mut Context<Self>) -> Option<Task<Result<()>>> {
         self.hide_mouse_cursor(HideMouseCursorOrigin::TypingAction, cx);
 
-        let project = match &self.project {
-            Some(project) => project.clone(),
-            None => return None,
-        };
+        let project = self.project.clone()?;
 
         Some(self.perform_format(
             project,
@@ -14801,10 +14799,7 @@ impl Editor {
     ) -> Option<Task<Result<()>>> {
         self.hide_mouse_cursor(HideMouseCursorOrigin::TypingAction, cx);
 
-        let project = match &self.project {
-            Some(project) => project.clone(),
-            None => return None,
-        };
+        let project = self.project.clone()?;
 
         let ranges = self
             .selections
@@ -14906,10 +14901,7 @@ impl Editor {
         cx: &mut Context<Self>,
     ) -> Option<Task<Result<()>>> {
         self.hide_mouse_cursor(HideMouseCursorOrigin::TypingAction, cx);
-        let project = match &self.project {
-            Some(project) => project.clone(),
-            None => return None,
-        };
+        let project = self.project.clone()?;
         Some(self.perform_code_action_kind(project, CodeActionKind::SOURCE_ORGANIZE_IMPORTS, window, cx))
     }
 
@@ -15309,10 +15301,10 @@ impl Editor {
             .filter(|buffer| {
                 let buffer = buffer.read(cx);
                 let buffer_id = buffer.remote_id();
-                if already_used_buffers.insert(buffer_id) {
-                    if let Some(worktree_id) = buffer.file().map(|f| f.worktree_id(cx)) {
-                        return !edited_buffer_ids.contains(&buffer_id) && edited_worktree_ids.contains(&worktree_id);
-                    }
+                if already_used_buffers.insert(buffer_id)
+                    && let Some(worktree_id) = buffer.file().map(|f| f.worktree_id(cx))
+                {
+                    return !edited_buffer_ids.contains(&buffer_id) && edited_worktree_ids.contains(&worktree_id);
                 }
                 false
             })
@@ -16631,9 +16623,9 @@ impl Editor {
     // element's layout code because it does not notify when rewrapping is computed synchronously.
     pub(crate) fn set_wrap_width(&self, width: Option<Pixels>, cx: &mut App) -> bool {
         if self.is_empty(cx) {
-            self.placeholder_display_map.as_ref().map_or(false, |display_map| {
-                display_map.update(cx, |map, cx| map.set_wrap_width(width, cx))
-            })
+            self.placeholder_display_map
+                .as_ref()
+                .is_some_and(|display_map| display_map.update(cx, |map, cx| map.set_wrap_width(width, cx)))
         } else {
             self.display_map.update(cx, |map, cx| map.set_wrap_width(width, cx))
         }
@@ -16869,12 +16861,11 @@ impl Editor {
     }
 
     pub fn working_directory(&self, cx: &App) -> Option<PathBuf> {
-        if let Some(buffer) = self.buffer().read(cx).as_singleton() {
-            if let Some(file) = buffer.read(cx).file().and_then(|f| f.as_local())
-                && let Some(dir) = file.abs_path(cx).parent()
-            {
-                return Some(dir.to_owned());
-            }
+        if let Some(buffer) = self.buffer().read(cx).as_singleton()
+            && let Some(file) = buffer.read(cx).file().and_then(|f| f.as_local())
+            && let Some(dir) = file.abs_path(cx).parent()
+        {
+            return Some(dir.to_owned());
         }
 
         None
@@ -17752,7 +17743,7 @@ impl Editor {
         let mut results = Vec::new();
         for (color_fetcher, ranges) in self.background_highlights.values() {
             let start_ix = match ranges.binary_search_by(|probe| {
-                let cmp = probe.end.cmp(&search_range.start, &display_snapshot.buffer_snapshot());
+                let cmp = probe.end.cmp(&search_range.start, display_snapshot.buffer_snapshot());
                 if cmp.is_gt() { Ordering::Greater } else { Ordering::Less }
             }) {
                 Ok(i) | Err(i) => i,
@@ -17760,7 +17751,7 @@ impl Editor {
             for (index, range) in ranges[start_ix..].iter().enumerate() {
                 if range
                     .start
-                    .cmp(&search_range.end, &display_snapshot.buffer_snapshot())
+                    .cmp(&search_range.end, display_snapshot.buffer_snapshot())
                     .is_ge()
                 {
                     break;
@@ -17785,7 +17776,7 @@ impl Editor {
         for (color_fetcher, ranges) in self.gutter_highlights.values() {
             let color = color_fetcher(cx);
             let start_ix = match ranges.binary_search_by(|probe| {
-                let cmp = probe.end.cmp(&search_range.start, &display_snapshot.buffer_snapshot());
+                let cmp = probe.end.cmp(&search_range.start, display_snapshot.buffer_snapshot());
                 if cmp.is_gt() { Ordering::Greater } else { Ordering::Less }
             }) {
                 Ok(i) | Err(i) => i,
@@ -17793,7 +17784,7 @@ impl Editor {
             for range in &ranges[start_ix..] {
                 if range
                     .start
-                    .cmp(&search_range.end, &display_snapshot.buffer_snapshot())
+                    .cmp(&search_range.end, display_snapshot.buffer_snapshot())
                     .is_ge()
                 {
                     break;
@@ -18080,7 +18071,7 @@ impl Editor {
             }
             multi_buffer::Event::LanguageChanged(buffer_id, is_fresh_language) => {
                 if !is_fresh_language {
-                    self.registered_buffers.remove(&buffer_id);
+                    self.registered_buffers.remove(buffer_id);
                 }
                 jsx_tag_auto_close::refresh_enabled_in_any_buffer(self, multibuffer, cx);
                 cx.emit(EditorEvent::Reparsed(*buffer_id));
@@ -18848,7 +18839,7 @@ impl Editor {
         });
     }
 
-    pub fn to_pixel_point(
+    pub fn source_to_pixel_point(
         &mut self,
         source: multi_buffer::Anchor,
         editor_snapshot: &EditorSnapshot,
@@ -19998,7 +19989,7 @@ fn snippet_completions(
                 matches.extend(
                     fuzzy::match_strings(
                         &candidates,
-                        &buffer_window,
+                        buffer_window,
                         buffer_window.chars().any(|c| c.is_uppercase()),
                         true,
                         MAX_RESULTS - matches.len(), // always prioritize longer snippets
@@ -20977,7 +20968,7 @@ impl EntityInputHandler for Editor {
         }
         let display_point = position_map.point_for_position(point).previous_valid;
         let anchor = position_map.snapshot.display_point_to_anchor(display_point, Bias::Left);
-        let utf16_offset = anchor.to_offset_utf16(&position_map.snapshot.buffer_snapshot());
+        let utf16_offset = anchor.to_offset_utf16(position_map.snapshot.buffer_snapshot());
         Some(utf16_offset.0.0)
     }
 
@@ -21180,7 +21171,7 @@ pub trait RangeToAnchorExt: Sized {
     fn to_anchors(self, snapshot: &MultiBufferSnapshot) -> Range<Anchor>;
 
     fn to_display_points(self, snapshot: &EditorSnapshot) -> Range<DisplayPoint> {
-        let anchor_range = self.to_anchors(&snapshot.buffer_snapshot());
+        let anchor_range = self.to_anchors(snapshot.buffer_snapshot());
         anchor_range.start.to_display_point(snapshot)..anchor_range.end.to_display_point(snapshot)
     }
 }
@@ -21547,7 +21538,7 @@ fn render_diff_hunk_controls(
                     move |_event, window, cx| {
                         editor.update(cx, |editor, cx| {
                             let snapshot = editor.snapshot(window, cx);
-                            let point = hunk_range.start.to_point(&snapshot.buffer_snapshot());
+                            let point = hunk_range.start.to_point(snapshot.buffer_snapshot());
                             editor.restore_hunks_in_ranges(vec![point..point], window, cx);
                         });
                     }
@@ -21569,7 +21560,7 @@ fn render_diff_hunk_controls(
                         move |_event, window, cx| {
                             editor.update(cx, |editor, cx| {
                                 let snapshot = editor.snapshot(window, cx);
-                                let position = hunk_range.end.to_point(&snapshot.buffer_snapshot());
+                                let position = hunk_range.end.to_point(snapshot.buffer_snapshot());
                                 editor.go_to_hunk_before_or_after_position(
                                     &snapshot,
                                     position,
@@ -21596,7 +21587,7 @@ fn render_diff_hunk_controls(
                         move |_event, window, cx| {
                             editor.update(cx, |editor, cx| {
                                 let snapshot = editor.snapshot(window, cx);
-                                let point = hunk_range.start.to_point(&snapshot.buffer_snapshot());
+                                let point = hunk_range.start.to_point(snapshot.buffer_snapshot());
                                 editor.go_to_hunk_before_or_after_position(
                                     &snapshot,
                                     point,

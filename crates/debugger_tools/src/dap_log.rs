@@ -458,6 +458,12 @@ pub struct DapLogToolbarItemView {
     log_view: Option<Entity<DapLogView>>,
 }
 
+impl Default for DapLogToolbarItemView {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DapLogToolbarItemView {
     pub fn new() -> Self {
         Self { log_view: None }

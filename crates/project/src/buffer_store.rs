@@ -679,7 +679,7 @@ impl BufferStore {
                 local_buffer_ids_by_entry_id: Default::default(),
                 worktree_store: worktree_store.clone(),
                 _subscription: cx.subscribe(&worktree_store, |this, _, event, cx| {
-                    if let WorktreeStoreEvent::WorktreeAdded(worktree) = event {
+                    if let WorktreeStoreEvent::Added(worktree) = event {
                         let this = this.as_local_mut().unwrap();
                         this.subscribe_to_worktree(worktree, cx);
                     }
@@ -862,11 +862,11 @@ impl BufferStore {
             })
             .detach()
         });
-        let _expect_path_to_exist;
-        match self.opened_buffers.entry(remote_id) {
+
+        let _expect_path_to_exist = match self.opened_buffers.entry(remote_id) {
             hash_map::Entry::Vacant(entry) => {
                 entry.insert(open_buffer);
-                _expect_path_to_exist = false;
+                false
             }
             hash_map::Entry::Occupied(mut entry) => {
                 if let OpenBuffer::Operations(operations) = entry.get_mut() {
@@ -880,9 +880,9 @@ impl BufferStore {
                     }
                 }
                 entry.insert(open_buffer);
-                _expect_path_to_exist = true;
+                true
             }
-        }
+        };
 
         if let Some(path) = path {
             self.path_to_buffer_id.insert(path, remote_id);
@@ -898,7 +898,7 @@ impl BufferStore {
     }
 
     pub(crate) fn is_searchable(&self, id: &BufferId) -> bool {
-        !self.non_searchable_buffers.contains(&id)
+        !self.non_searchable_buffers.contains(id)
     }
 
     pub fn loading_buffers(

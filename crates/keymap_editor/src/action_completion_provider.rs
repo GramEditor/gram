@@ -1,5 +1,4 @@
 use collections::HashMap;
-use command_palette;
 use editor::{Editor, completion::CompletionProvider};
 use fuzzy::StringMatchCandidate;
 use gpui::{Context, Entity, SharedString, Window};
@@ -41,7 +40,7 @@ impl CompletionProvider for ActionCompletionProvider {
             }
         }
 
-        let start_anchor = buffer.anchor_before(buffer_position.to_offset(&buffer).saturating_sub(count_back));
+        let start_anchor = buffer.anchor_before(buffer_position.to_offset(buffer).saturating_sub(count_back));
 
         let replace_range = start_anchor..buffer_position;
         let snapshot = buffer.text_snapshot();

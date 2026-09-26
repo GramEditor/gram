@@ -114,7 +114,7 @@ pub fn python_env_kernel_specifications(
 
                     // Check if ipykernel is installed
                     let ipykernel_check = util::command::new_smol_command(&python_path)
-                        .args(&["-c", "import ipykernel"])
+                        .args(["-c", "import ipykernel"])
                         .output()
                         .await;
 
@@ -183,24 +183,24 @@ impl KernelStatus {
     }
 }
 
-impl ToString for KernelStatus {
-    fn to_string(&self) -> String {
-        match self {
-            KernelStatus::Idle => "Idle".to_string(),
-            KernelStatus::Busy => "Busy".to_string(),
-            KernelStatus::Starting => "Starting".to_string(),
-            KernelStatus::Error => "Error".to_string(),
-            KernelStatus::ShuttingDown => "Shutting Down".to_string(),
-            KernelStatus::Shutdown => "Shutdown".to_string(),
-            KernelStatus::Restarting => "Restarting".to_string(),
-        }
+impl std::fmt::Display for KernelStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            KernelStatus::Idle => "Idle",
+            KernelStatus::Busy => "Busy",
+            KernelStatus::Starting => "Starting",
+            KernelStatus::Error => "Error",
+            KernelStatus::ShuttingDown => "Shutting Down",
+            KernelStatus::Shutdown => "Shutdown",
+            KernelStatus::Restarting => "Restarting",
+        })
     }
 }
 
 #[derive(Debug)]
 pub enum Kernel {
-    RunningKernel(Box<dyn RunningKernel>),
-    StartingKernel(Shared<Task<()>>),
+    Running(Box<dyn RunningKernel>),
+    Starting(Shared<Task<()>>),
     ErroredLaunch(String),
     ShuttingDown,
     Shutdown,
@@ -210,7 +210,7 @@ pub enum Kernel {
 impl From<&Kernel> for KernelStatus {
     fn from(kernel: &Kernel) -> Self {
         match kernel {
-            Kernel::RunningKernel(kernel) => match kernel.execution_state() {
+            Kernel::Running(kernel) => match kernel.execution_state() {
                 ExecutionState::Idle => KernelStatus::Idle,
                 ExecutionState::Busy => KernelStatus::Busy,
                 ExecutionState::Unknown => KernelStatus::Error,
@@ -221,7 +221,7 @@ impl From<&Kernel> for KernelStatus {
                 ExecutionState::Dead => KernelStatus::Error,
                 ExecutionState::Other(_) => KernelStatus::Error,
             },
-            Kernel::StartingKernel(_) => KernelStatus::Starting,
+            Kernel::Starting(_) => KernelStatus::Starting,
             Kernel::ErroredLaunch(_) => KernelStatus::Error,
             Kernel::ShuttingDown => KernelStatus::ShuttingDown,
             Kernel::Shutdown => KernelStatus::Shutdown,
@@ -236,13 +236,13 @@ impl Kernel {
     }
 
     pub fn set_execution_state(&mut self, status: &ExecutionState) {
-        if let Kernel::RunningKernel(running_kernel) = self {
+        if let Kernel::Running(running_kernel) = self {
             running_kernel.set_execution_state(status.clone());
         }
     }
 
     pub fn set_kernel_info(&mut self, kernel_info: &KernelInfoReply) {
-        if let Kernel::RunningKernel(running_kernel) = self {
+        if let Kernel::Running(running_kernel) = self {
             running_kernel.set_kernel_info(kernel_info.clone());
         }
     }
@@ -250,7 +250,7 @@ impl Kernel {
     pub fn is_shutting_down(&self) -> bool {
         match self {
             Kernel::Restarting | Kernel::ShuttingDown => true,
-            Kernel::RunningKernel(_) | Kernel::StartingKernel(_) | Kernel::ErroredLaunch(_) | Kernel::Shutdown => false,
+            Kernel::Running(_) | Kernel::Starting(_) | Kernel::ErroredLaunch(_) | Kernel::Shutdown => false,
         }
     }
 }

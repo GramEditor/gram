@@ -357,7 +357,7 @@ pub fn adjust_greedy_deletion(
     };
 
     closest_whitespace_end
-        .unwrap_or_else(|| {
+        .unwrap_or({
             if is_backward {
                 trimmed_delete_range.start
             } else {

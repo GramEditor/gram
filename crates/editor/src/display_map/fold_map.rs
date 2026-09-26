@@ -16,7 +16,6 @@ use std::{
     fmt, iter,
     ops::{Add, AddAssign, Deref, DerefMut, Range, Sub, SubAssign},
     sync::Arc,
-    usize,
 };
 use sum_tree::{Bias, Cursor, Dimensions, FilterCursor, SumTree, Summary, TreeMap};
 use ui::IntoElement as _;
@@ -332,7 +331,7 @@ impl FoldMap {
                     },
                     (),
                 ),
-                inlay_snapshot: inlay_snapshot,
+                inlay_snapshot,
                 version: 0,
                 fold_metadata_by_id: TreeMap::default(),
             },

@@ -101,19 +101,15 @@ impl OngoingScroll {
         } else if x.max(y) >= UNLOCK_LOWER_BOUND {
             //Check if the current ongoing will need to unlock
             match axis {
-                Some(Axis::Vertical) => {
-                    if x > y && x >= y * UNLOCK_PERCENT {
-                        axis = None;
-                    }
+                Some(Axis::Vertical) if x > y && x >= y * UNLOCK_PERCENT => {
+                    axis = None;
                 }
 
-                Some(Axis::Horizontal) => {
-                    if y > x && y >= x * UNLOCK_PERCENT {
-                        axis = None;
-                    }
+                Some(Axis::Horizontal) if y > x && y >= x * UNLOCK_PERCENT => {
+                    axis = None;
                 }
 
-                None => {}
+                _ => {}
             }
         }
 

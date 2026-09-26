@@ -1121,7 +1121,7 @@ impl Vim {
                     && let Some(pending) = s.pending_anchor()
                 {
                     let snapshot = s.display_snapshot();
-                    let is_empty = pending.start.cmp(&pending.end, &snapshot.buffer_snapshot()).is_eq();
+                    let is_empty = pending.start.cmp(&pending.end, snapshot.buffer_snapshot()).is_eq();
                     should_extend_pending =
                         pending.reversed && !is_empty && vim.extended_pending_selection_id != Some(pending.id);
                 };
@@ -1129,7 +1129,7 @@ impl Vim {
                 if should_extend_pending {
                     let snapshot = s.display_snapshot();
                     if let Some(pending) = s.pending_anchor_mut() {
-                        let end = pending.end.to_point(&snapshot.buffer_snapshot());
+                        let end = pending.end.to_point(snapshot.buffer_snapshot());
                         let end = end.to_display_point(&snapshot);
                         let new_end = movement::right(&snapshot, end);
                         pending.end = snapshot.buffer_snapshot().anchor_before(new_end.to_point(&snapshot));
@@ -1146,10 +1146,8 @@ impl Vim {
                             point = map.clip_point(point, Bias::Left);
                         }
                         selection.collapse_to(point, selection.goal)
-                    } else if !last_mode.is_visual() && mode.is_visual() {
-                        if selection.is_empty() {
-                            selection.end = movement::right(map, selection.start);
-                        }
+                    } else if !last_mode.is_visual() && mode.is_visual() && selection.is_empty() {
+                        selection.end = movement::right(map, selection.start);
                     }
                 });
             })
@@ -1300,17 +1298,17 @@ impl Vim {
         // If editor gains focus while search bar is still open (not dismissed),
         // the user has explicitly navigated away - clear prior_selections so we
         // don't restore to the old position if they later dismiss the search.
-        if !self.search.prior_selections.is_empty() {
-            if let Some(pane) = self.pane(window, cx) {
-                let search_still_open = pane
-                    .read(cx)
-                    .toolbar()
-                    .read(cx)
-                    .item_of_type::<BufferSearchBar>()
-                    .is_some_and(|bar| !bar.read(cx).is_dismissed());
-                if search_still_open {
-                    self.search.prior_selections.clear();
-                }
+        if !self.search.prior_selections.is_empty()
+            && let Some(pane) = self.pane(window, cx)
+        {
+            let search_still_open = pane
+                .read(cx)
+                .toolbar()
+                .read(cx)
+                .item_of_type::<BufferSearchBar>()
+                .is_some_and(|bar| !bar.read(cx).is_dismissed());
+            if search_still_open {
+                self.search.prior_selections.clear();
             }
         }
 
@@ -1810,13 +1808,7 @@ impl Vim {
                         if let Some(register) = Vim::update_globals(cx, |globals, cx| {
                             globals.read_register(text.chars().next(), Some(editor), cx)
                         }) {
-                            editor.do_paste(
-                                &register.text.to_string(),
-                                register.clipboard_selections,
-                                false,
-                                window,
-                                cx,
-                            )
+                            editor.do_paste(register.text.as_ref(), register.clipboard_selections, false, window, cx)
                         }
                     });
                     self.clear_operator(window, cx);

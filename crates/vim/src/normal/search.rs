@@ -238,8 +238,8 @@ impl Vim {
         }
 
         let subscription = cx.subscribe_in(&search_bar, window, |vim, _, event, window, cx| {
-            if let buffer_search::Event::Dismissed = event {
-                if !vim.search.prior_selections.is_empty() {
+            if let buffer_search::Event::Dismissed = event
+                && !vim.search.prior_selections.is_empty() {
                     let prior_selections: Vec<_> = std::mem::take(&mut vim.search.prior_selections);
                     vim.update_editor(cx, |_, editor, cx| {
                         editor.change_selections(Default::default(), window, cx, |s| {
@@ -247,7 +247,6 @@ impl Vim {
                         });
                     });
                 }
-            }
         });
 
         let prior_mode = if self.temp_mode { Mode::Insert } else { self.mode };
@@ -323,7 +322,7 @@ impl Vim {
         // If the active editor has changed during a search, don't panic.
         if prior_selections.iter().any(|s| {
             self.update_editor(cx, |_, editor, cx| {
-                !s.start.is_valid(&editor.snapshot(window, cx).buffer_snapshot())
+                !s.start.is_valid(editor.snapshot(window, cx).buffer_snapshot())
             })
             .unwrap_or(true)
         }) {

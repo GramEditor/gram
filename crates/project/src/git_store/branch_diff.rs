@@ -186,7 +186,7 @@ impl BranchDiff {
             // and *does* exist in work-tree
             (Some(FileStatus::Tracked(_)), Some(tree_status)) => Some(FileStatus::Tracked(TrackedStatus {
                 index_status: match tree_status {
-                    TreeDiffStatus::Added { .. } => StatusCode::Added,
+                    TreeDiffStatus::Added => StatusCode::Added,
                     _ => StatusCode::Modified,
                 },
                 worktree_status: match tree_status {
@@ -271,11 +271,11 @@ impl BranchDiff {
             };
 
             for (path, branch_diff) in tree_diff.entries.iter() {
-                if seen.contains(&path) {
+                if seen.contains(path) {
                     continue;
                 }
 
-                let Some(project_path) = repo.read(cx).repo_path_to_project_path(&path, cx) else {
+                let Some(project_path) = repo.read(cx).repo_path_to_project_path(path, cx) else {
                     continue;
                 };
                 let task = Self::load_buffer(Some(branch_diff.clone()), project_path, repo.clone(), cx);
@@ -298,14 +298,15 @@ impl BranchDiff {
         repo: Entity<Repository>,
         cx: &Context<'_, Project>,
     ) -> Task<Result<(Entity<Buffer>, Entity<BufferDiff>)>> {
-        let task = cx.spawn(async move |project, cx| {
+        
+        cx.spawn(async move |project, cx| {
             let buffer = project
                 .update(cx, |project, cx| project.open_buffer(project_path, cx))?
                 .await?;
 
             let changes = if let Some(entry) = branch_diff {
                 let oid = match entry {
-                    git::status::TreeDiffStatus::Added { .. } => None,
+                    git::status::TreeDiffStatus::Added => None,
                     git::status::TreeDiffStatus::Modified { old, .. }
                     | git::status::TreeDiffStatus::Deleted { old } => Some(old),
                 };
@@ -322,14 +323,14 @@ impl BranchDiff {
                     .await?
             };
             Ok((buffer, changes))
-        });
-        task
+        })
     }
 }
 
 fn diff_status_to_file_status(branch_diff: &git::status::TreeDiffStatus) -> FileStatus {
-    let file_status = match branch_diff {
-        git::status::TreeDiffStatus::Added { .. } => FileStatus::Tracked(TrackedStatus {
+    
+    match branch_diff {
+        git::status::TreeDiffStatus::Added => FileStatus::Tracked(TrackedStatus {
             index_status: StatusCode::Added,
             worktree_status: StatusCode::Added,
         }),
@@ -341,8 +342,7 @@ fn diff_status_to_file_status(branch_diff: &git::status::TreeDiffStatus) -> File
             index_status: StatusCode::Deleted,
             worktree_status: StatusCode::Deleted,
         }),
-    };
-    file_status
+    }
 }
 
 #[derive(Debug)]

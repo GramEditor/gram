@@ -2251,7 +2251,7 @@ impl LspCommand for GetCompletions {
                 trigger_kind: CompletionTriggerKind::INVOKED,
                 trigger_character: None,
             },
-            server_id: message.server_id.map(|id| lsp::LanguageServerId::from_proto(id)),
+            server_id: message.server_id.map(lsp::LanguageServerId::from_proto),
         })
     }
 

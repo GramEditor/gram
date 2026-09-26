@@ -122,14 +122,13 @@ impl LspInstaller for TomlLspAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        match find_cached_server_binary(&container_dir, Some("taplo-"), async |path| Some(path.clone())).await {
-            Some(path) => Some(LanguageServerBinary {
+        find_cached_server_binary(&container_dir, Some("taplo-"), async |path| Some(path.into()))
+            .await
+            .map(|path| LanguageServerBinary {
                 path,
                 arguments: vec!["lsp".into(), "stdio".into()],
                 env: None,
-            }),
-            None => None,
-        }
+            })
     }
 }
 

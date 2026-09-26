@@ -10,7 +10,6 @@ use gpui::{
     Keystroke, MouseButton, MouseDownEvent, Pixels, Point, Render, ScrollWheelEvent, Styled, Subscription, Task,
     WeakEntity, actions, anchored, deferred, div,
 };
-use menu;
 use persistence::TERMINAL_DB;
 use project::{Project, search::SearchQuery};
 use schemars::JsonSchema;

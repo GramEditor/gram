@@ -381,7 +381,7 @@ impl EditorTestContext {
 
     #[track_caller]
     pub fn assert_excerpts_with_selections(&mut self, marked_text: &str) {
-        let actual_text = self.to_format_multibuffer_as_marked_text();
+        let actual_text = self.make_format_multibuffer_as_marked_text();
         let fmt_additional_notes = || {
             struct Format<'a, T: std::fmt::Display>(&'a str, &'a T);
 
@@ -483,7 +483,7 @@ impl EditorTestContext {
         }
     }
 
-    fn to_format_multibuffer_as_marked_text(&mut self) -> FormatMultiBufferAsMarkedText {
+    fn make_format_multibuffer_as_marked_text(&mut self) -> FormatMultiBufferAsMarkedText {
         let (multibuffer_snapshot, selections, excerpts) = self.update_editor(|editor, _, cx| {
             let multibuffer_snapshot = editor.buffer.read(cx).snapshot(cx);
 
@@ -543,7 +543,7 @@ impl EditorTestContext {
                 .map(|h| h.1.clone())
                 .unwrap_or_default()
                 .iter()
-                .map(|range| range.to_offset(&snapshot.buffer_snapshot()))
+                .map(|range| range.to_offset(snapshot.buffer_snapshot()))
                 .map(|range| range.start.0..range.end.0)
                 .collect()
         });
@@ -559,7 +559,7 @@ impl EditorTestContext {
             .map(|ranges| ranges.as_ref().clone().1)
             .unwrap_or_default()
             .into_iter()
-            .map(|range| range.to_offset(&snapshot.buffer_snapshot()))
+            .map(|range| range.to_offset(snapshot.buffer_snapshot()))
             .map(|range| range.start.0..range.end.0)
             .collect();
         assert_set_eq!(actual_ranges, expected_ranges);
@@ -620,10 +620,10 @@ impl std::fmt::Display for FormatMultiBufferAsMarkedText {
             excerpts,
         } = self;
 
-        for (excerpt_id, snapshot, range, is_folded) in excerpts.into_iter() {
-            write!(f, "[EXCERPT]\n")?;
+        for (excerpt_id, snapshot, range, is_folded) in excerpts.iter() {
+            writeln!(f, "[EXCERPT]")?;
             if *is_folded {
-                write!(f, "[FOLDED]\n")?;
+                writeln!(f, "[FOLDED]")?;
             }
 
             let mut text = multibuffer_snapshot
@@ -634,10 +634,10 @@ impl std::fmt::Display for FormatMultiBufferAsMarkedText {
                 .iter()
                 .filter(|&s| s.head().excerpt_id == *excerpt_id)
                 .map(|s| {
-                    let head = text::ToOffset::to_offset(&s.head().text_anchor, &snapshot)
-                        - text::ToOffset::to_offset(&range.context.start, &snapshot);
-                    let tail = text::ToOffset::to_offset(&s.head().text_anchor, &snapshot)
-                        - text::ToOffset::to_offset(&range.context.start, &snapshot);
+                    let head = text::ToOffset::to_offset(&s.head().text_anchor, snapshot)
+                        - text::ToOffset::to_offset(&range.context.start, snapshot);
+                    let tail = text::ToOffset::to_offset(&s.head().text_anchor, snapshot)
+                        - text::ToOffset::to_offset(&range.context.start, snapshot);
                     tail..head
                 })
                 .rev()

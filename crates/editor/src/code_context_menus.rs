@@ -328,7 +328,7 @@ impl CompletionsMenu {
             selected_item: 0,
             filter_task: Task::ready(()),
             cancel_filter: Arc::new(AtomicBool::new(false)),
-            scroll_handle: scroll_handle.unwrap_or_else(UniformListScrollHandle::new),
+            scroll_handle: scroll_handle.unwrap_or_default(),
             scroll_handle_aside: ScrollHandle::new(),
             resolve_completions: true,
             last_rendered_range: RefCell::new(None).into(),
@@ -347,7 +347,7 @@ impl CompletionsMenu {
     pub fn new_snippet_choices(
         id: CompletionId,
         sort_completions: bool,
-        choices: &Vec<String>,
+        choices: &[String],
         selection: Range<Anchor>,
         buffer: Entity<Buffer>,
         scroll_handle: Option<UniformListScrollHandle>,
@@ -401,7 +401,7 @@ impl CompletionsMenu {
             selected_item: 0,
             filter_task: Task::ready(()),
             cancel_filter: Arc::new(AtomicBool::new(false)),
-            scroll_handle: scroll_handle.unwrap_or_else(UniformListScrollHandle::new),
+            scroll_handle: scroll_handle.unwrap_or_default(),
             scroll_handle_aside: ScrollHandle::new(),
             resolve_completions: false,
             show_completion_documentation: false,
@@ -769,10 +769,10 @@ impl CompletionsMenu {
                     let documentation = &completion.documentation;
 
                     let mut len = completion.label.text.chars().count();
-                    if let Some(CompletionDocumentation::SingleLine(text)) = documentation {
-                        if show_completion_documentation {
-                            len += text.chars().count();
-                        }
+                    if let Some(CompletionDocumentation::SingleLine(text)) = documentation
+                        && show_completion_documentation
+                    {
+                        len += text.chars().count();
                     }
 
                     len
@@ -1069,7 +1069,7 @@ impl CompletionsMenu {
             for (query, match_candidates) in queries_and_candidates {
                 results.extend(
                     fuzzy::match_strings(
-                        &match_candidates,
+                        match_candidates,
                         &query,
                         query.chars().any(|c| c.is_uppercase()),
                         false,
@@ -1555,9 +1555,7 @@ impl CodeActionsMenu {
         window: &mut Window,
         _cx: &mut Context<Editor>,
     ) -> Option<AnyElement> {
-        let Some(action) = self.actions.get(self.selected_item) else {
-            return None;
-        };
+        let action = self.actions.get(self.selected_item)?;
 
         let label = action.menu_label();
         let text_system = window.text_system();
@@ -1568,9 +1566,7 @@ impl CodeActionsMenu {
         let is_truncated =
             line_wrapper.should_truncate_line(&label, CODE_ACTION_MENU_MAX_WIDTH, "…", gpui::TruncateFrom::End);
 
-        if is_truncated.is_none() {
-            return None;
-        }
+        is_truncated?;
 
         Some(
             Popover::new()

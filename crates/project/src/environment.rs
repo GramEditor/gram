@@ -167,7 +167,7 @@ impl ProjectEnvironment {
                     let shell = terminal::terminal_settings::TerminalSettings::get(
                         worktree.as_ref().map(|(worktree, path)| settings::SettingsLocation {
                             worktree_id: worktree.read(cx).id(),
-                            path: &path,
+                            path,
                         }),
                         cx,
                     )

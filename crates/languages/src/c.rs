@@ -151,10 +151,10 @@ impl super::LspAdapter for CLspAdapter {
             .to_owned();
 
         if !label_detail.is_empty() {
-            let should_add_space = match completion.kind {
-                Some(lsp::CompletionItemKind::FUNCTION | lsp::CompletionItemKind::METHOD) => false,
-                _ => true,
-            };
+            let should_add_space = !matches!(
+                completion.kind,
+                Some(lsp::CompletionItemKind::FUNCTION | lsp::CompletionItemKind::METHOD)
+            );
 
             if should_add_space && !label.ends_with(' ') && !label_detail.starts_with(' ') {
                 label.push(' ');

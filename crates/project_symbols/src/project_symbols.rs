@@ -354,7 +354,7 @@ mod tests {
                     } else {
                         fuzzy::match_strings(
                             &candidates,
-                            &query,
+                            query,
                             true,
                             true,
                             100,

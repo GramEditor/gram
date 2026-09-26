@@ -386,7 +386,7 @@ impl Vim {
                         .disjoint_anchors_arc()
                         .iter()
                         .map(|selection| {
-                            let start = selection.start.bias_left(&display_map.buffer_snapshot());
+                            let start = selection.start.bias_left(display_map.buffer_snapshot());
                             start..start
                         })
                         .collect::<Vec<_>>();
@@ -557,7 +557,7 @@ fn object_to_surround_pair(object: Object) -> Option<SurroundPair> {
         Object::VerticalBars => '|',
         Object::Parentheses => '(',
         Object::SquareBrackets => '[',
-        Object::CurlyBrackets { .. } => '{',
+        Object::CurlyBrackets => '{',
         Object::AngleBrackets => '<',
         _ => return None,
     };

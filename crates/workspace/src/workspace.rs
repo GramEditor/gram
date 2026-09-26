@@ -635,7 +635,7 @@ impl ProjectItemRegistry {
                     match project_item.await.with_context(|| {
                         format!(
                             "opening project path {:?}",
-                            entry_abs_path.as_deref().unwrap_or(&project_path.path.as_std_path())
+                            entry_abs_path.as_deref().unwrap_or(project_path.path.as_std_path())
                         )
                     }) {
                         Ok(project_item) => {
@@ -652,18 +652,17 @@ impl ProjectItemRegistry {
                         }
                         Err(e) => {
                             log::warn!("Failed to open a project item: {e:#}");
-                            if e.error_code() == ErrorCode::Internal {
-                                if let Some(abs_path) = entry_abs_path.as_deref().filter(|_| is_file) {
-                                    if let Some(broken_project_item_view) = cx.update(|window, cx| {
-                                        T::for_broken_project_item(abs_path, is_local, &e, window, cx)
-                                    })? {
-                                        let build_workspace_item =
-                                            Box::new(move |_: &mut Pane, _: &mut Window, cx: &mut Context<Pane>| {
-                                                cx.new(|_| broken_project_item_view).boxed_clone()
-                                            }) as Box<_>;
-                                        return Ok((None, build_workspace_item));
-                                    }
-                                }
+                            if e.error_code() == ErrorCode::Internal
+                                && let Some(abs_path) = entry_abs_path.as_deref().filter(|_| is_file)
+                                && let Some(broken_project_item_view) = cx.update(|window, cx| {
+                                    T::for_broken_project_item(abs_path, is_local, &e, window, cx)
+                                })?
+                            {
+                                let build_workspace_item =
+                                    Box::new(move |_: &mut Pane, _: &mut Window, cx: &mut Context<Pane>| {
+                                        cx.new(|_| broken_project_item_view).boxed_clone()
+                                    }) as Box<_>;
+                                return Ok((None, build_workspace_item));
                             }
                             Err(e)
                         }
@@ -1116,16 +1115,11 @@ impl Workspace {
         cx.background_spawn(persistence::DB.clean_recent_files()).detach();
 
         if let Some(toolchain_store) = project.read(cx).toolchain_store() {
-            cx.subscribe_in(
-                &toolchain_store,
-                window,
-                |workspace, _, event, window, cx| match event {
-                    ToolchainStoreEvent::CustomToolchainsModified => {
-                        workspace.serialize_workspace(window, cx);
-                    }
-                    _ => {}
-                },
-            )
+            cx.subscribe_in(&toolchain_store, window, |workspace, _, event, window, cx| {
+                if let ToolchainStoreEvent::CustomToolchainsModified = event {
+                    workspace.serialize_workspace(window, cx);
+                }
+            })
             .detach();
         }
 
@@ -1346,7 +1340,7 @@ impl Workspace {
         cx.spawn(async move |cx| {
             let mut paths_to_open = Vec::with_capacity(abs_paths.len());
             for path in abs_paths.into_iter() {
-                if let Some(canonical) = app_state.fs.canonicalize(&path).await.ok() {
+                if let Ok(canonical) = app_state.fs.canonicalize(&path).await {
                     paths_to_open.push(canonical)
                 } else {
                     paths_to_open.push(path)
@@ -1505,26 +1499,27 @@ impl Workspace {
             // Only restore if:
             // 1. This is an empty workspace (no paths), AND
             // 2. The serialized workspace either doesn't exist or has no paths
-            if is_empty_workspace && !serialized_workspace_has_paths {
-                if let Some(default_docks) = persistence::read_default_dock_state() {
-                    window
-                        .update(cx, |workspace, window, cx| {
-                            for (dock, serialized_dock) in [
-                                (&mut workspace.right_dock, default_docks.right),
-                                (&mut workspace.left_dock, default_docks.left),
-                                (&mut workspace.bottom_dock, default_docks.bottom),
-                            ]
-                            .iter_mut()
-                            {
-                                dock.update(cx, |dock, cx| {
-                                    dock.serialized_dock = Some(serialized_dock.clone());
-                                    dock.restore_state(window, cx);
-                                });
-                            }
-                            cx.notify();
-                        })
-                        .log_err();
-                }
+            if is_empty_workspace
+                && !serialized_workspace_has_paths
+                && let Some(default_docks) = persistence::read_default_dock_state()
+            {
+                window
+                    .update(cx, |workspace, window, cx| {
+                        for (dock, serialized_dock) in [
+                            (&mut workspace.right_dock, default_docks.right),
+                            (&mut workspace.left_dock, default_docks.left),
+                            (&mut workspace.bottom_dock, default_docks.bottom),
+                        ]
+                        .iter_mut()
+                        {
+                            dock.update(cx, |dock, cx| {
+                                dock.serialized_dock = Some(serialized_dock.clone());
+                                dock.restore_state(window, cx);
+                            });
+                        }
+                        cx.notify();
+                    })
+                    .log_err();
             }
 
             window
@@ -1702,7 +1697,7 @@ impl Workspace {
                         .insert(project_path.clone());
                 }
 
-                history.insert(project_path, (fs_path, std::usize::MAX));
+                history.insert(project_path, (fs_path, usize::MAX));
             }
         }
 
@@ -2559,13 +2554,7 @@ impl Workspace {
         cx.spawn(async move |cx| {
             let (worktree, path) = entry.await?;
             let worktree_id = worktree.read_with(cx, |t, _| t.id())?;
-            Ok((
-                worktree,
-                ProjectPath {
-                    worktree_id,
-                    path: path,
-                },
-            ))
+            Ok((worktree, ProjectPath { worktree_id, path }))
         })
     }
 
@@ -3403,23 +3392,22 @@ impl Workspace {
             }
         };
 
-        if action.clone {
-            if self
+        if action.clone
+            && self
                 .active_pane
                 .read(cx)
                 .active_item()
                 .is_some_and(|item| item.can_split(cx))
-            {
-                clone_active_item(
-                    self.database_id(),
-                    &self.active_pane,
-                    &destination,
-                    action.focus,
-                    window,
-                    cx,
-                );
-                return;
-            }
+        {
+            clone_active_item(
+                self.database_id(),
+                &self.active_pane,
+                &destination,
+                action.focus,
+                window,
+                cx,
+            );
+            return;
         }
         move_active_item(&self.active_pane, &destination, action.focus, true, window, cx)
     }
@@ -3571,23 +3559,22 @@ impl Workspace {
             }
         };
 
-        if action.clone {
-            if self
+        if action.clone
+            && self
                 .active_pane
                 .read(cx)
                 .active_item()
                 .is_some_and(|item| item.can_split(cx))
-            {
-                clone_active_item(
-                    self.database_id(),
-                    &self.active_pane,
-                    &destination,
-                    action.focus,
-                    window,
-                    cx,
-                );
-                return;
-            }
+        {
+            clone_active_item(
+                self.database_id(),
+                &self.active_pane,
+                &destination,
+                action.focus,
+                window,
+                cx,
+            );
+            return;
         }
         move_active_item(&self.active_pane, &destination, action.focus, true, window, cx);
     }
@@ -4744,35 +4731,35 @@ impl Workspace {
                 |workspace: &mut Workspace, _action: &pane::ActivateNextItem, window, cx| {
                     if let Some(active_dock) = workspace.active_dock(window, cx) {
                         let dock = active_dock.read(cx);
-                        if let Some(active_panel) = dock.active_panel() {
-                            if active_panel.pane(cx).is_none() {
-                                let mut recent_pane: Option<Entity<Pane>> = None;
-                                let mut recent_timestamp = 0;
-                                for pane_handle in workspace.panes() {
-                                    let pane = pane_handle.read(cx);
-                                    for entry in pane.activation_history() {
-                                        if entry.timestamp > recent_timestamp {
-                                            recent_timestamp = entry.timestamp;
-                                            recent_pane = Some(pane_handle.clone());
-                                        }
+                        if let Some(active_panel) = dock.active_panel()
+                            && active_panel.pane(cx).is_none()
+                        {
+                            let mut recent_pane: Option<Entity<Pane>> = None;
+                            let mut recent_timestamp = 0;
+                            for pane_handle in workspace.panes() {
+                                let pane = pane_handle.read(cx);
+                                for entry in pane.activation_history() {
+                                    if entry.timestamp > recent_timestamp {
+                                        recent_timestamp = entry.timestamp;
+                                        recent_pane = Some(pane_handle.clone());
                                     }
                                 }
+                            }
 
-                                if let Some(pane) = recent_pane {
-                                    pane.update(cx, |pane, cx| {
-                                        let current_index = pane.active_item_index();
-                                        let items_len = pane.items_len();
-                                        if items_len > 0 {
-                                            let next_index = if current_index + 1 < items_len {
-                                                current_index + 1
-                                            } else {
-                                                0
-                                            };
-                                            pane.activate_item(next_index, false, false, window, cx);
-                                        }
-                                    });
-                                    return;
-                                }
+                            if let Some(pane) = recent_pane {
+                                pane.update(cx, |pane, cx| {
+                                    let current_index = pane.active_item_index();
+                                    let items_len = pane.items_len();
+                                    if items_len > 0 {
+                                        let next_index = if current_index + 1 < items_len {
+                                            current_index + 1
+                                        } else {
+                                            0
+                                        };
+                                        pane.activate_item(next_index, false, false, window, cx);
+                                    }
+                                });
+                                return;
                             }
                         }
                     }
@@ -4783,35 +4770,35 @@ impl Workspace {
                 |workspace: &mut Workspace, _action: &pane::ActivatePreviousItem, window, cx| {
                     if let Some(active_dock) = workspace.active_dock(window, cx) {
                         let dock = active_dock.read(cx);
-                        if let Some(active_panel) = dock.active_panel() {
-                            if active_panel.pane(cx).is_none() {
-                                let mut recent_pane: Option<Entity<Pane>> = None;
-                                let mut recent_timestamp = 0;
-                                for pane_handle in workspace.panes() {
-                                    let pane = pane_handle.read(cx);
-                                    for entry in pane.activation_history() {
-                                        if entry.timestamp > recent_timestamp {
-                                            recent_timestamp = entry.timestamp;
-                                            recent_pane = Some(pane_handle.clone());
-                                        }
+                        if let Some(active_panel) = dock.active_panel()
+                            && active_panel.pane(cx).is_none()
+                        {
+                            let mut recent_pane: Option<Entity<Pane>> = None;
+                            let mut recent_timestamp = 0;
+                            for pane_handle in workspace.panes() {
+                                let pane = pane_handle.read(cx);
+                                for entry in pane.activation_history() {
+                                    if entry.timestamp > recent_timestamp {
+                                        recent_timestamp = entry.timestamp;
+                                        recent_pane = Some(pane_handle.clone());
                                     }
                                 }
+                            }
 
-                                if let Some(pane) = recent_pane {
-                                    pane.update(cx, |pane, cx| {
-                                        let current_index = pane.active_item_index();
-                                        let items_len = pane.items_len();
-                                        if items_len > 0 {
-                                            let prev_index = if current_index > 0 {
-                                                current_index - 1
-                                            } else {
-                                                items_len.saturating_sub(1)
-                                            };
-                                            pane.activate_item(prev_index, false, false, window, cx);
-                                        }
-                                    });
-                                    return;
-                                }
+                            if let Some(pane) = recent_pane {
+                                pane.update(cx, |pane, cx| {
+                                    let current_index = pane.active_item_index();
+                                    let items_len = pane.items_len();
+                                    if items_len > 0 {
+                                        let prev_index = if current_index > 0 {
+                                            current_index - 1
+                                        } else {
+                                            items_len.saturating_sub(1)
+                                        };
+                                        pane.activate_item(prev_index, false, false, window, cx);
+                                    }
+                                });
+                                return;
                             }
                         }
                     }
@@ -5268,22 +5255,22 @@ impl Render for Workspace {
             }
         }
 
-        if self.left_dock.read(cx).is_open() {
-            if let Some(active_panel) = self.left_dock.read(cx).active_panel() {
-                context.set("left_dock", active_panel.panel_key());
-            }
+        if self.left_dock.read(cx).is_open()
+            && let Some(active_panel) = self.left_dock.read(cx).active_panel()
+        {
+            context.set("left_dock", active_panel.panel_key());
         }
 
-        if self.right_dock.read(cx).is_open() {
-            if let Some(active_panel) = self.right_dock.read(cx).active_panel() {
-                context.set("right_dock", active_panel.panel_key());
-            }
+        if self.right_dock.read(cx).is_open()
+            && let Some(active_panel) = self.right_dock.read(cx).active_panel()
+        {
+            context.set("right_dock", active_panel.panel_key());
         }
 
-        if self.bottom_dock.read(cx).is_open() {
-            if let Some(active_panel) = self.bottom_dock.read(cx).active_panel() {
-                context.set("bottom_dock", active_panel.panel_key());
-            }
+        if self.bottom_dock.read(cx).is_open()
+            && let Some(active_panel) = self.bottom_dock.read(cx).active_panel()
+        {
+            context.set("bottom_dock", active_panel.panel_key());
         }
 
         let centered_layout = self.centered_layout && self.center.panes().len() == 1 && self.active_item(cx).is_some();
@@ -5814,7 +5801,7 @@ pub fn open_paths(
                         let m = workspace.project.read(cx).visibility_for_paths(
                             &abs_paths,
                             &all_metadatas,
-                            open_options.open_new_workspace == None,
+                            open_options.open_new_workspace.is_none(),
                             cx,
                         );
                         if m > best_match {
@@ -6099,14 +6086,11 @@ async fn open_remote_project_inner(
         return Err(project_path_errors.pop().context("no paths given")?);
     }
 
-    if let Some(detach_session_task) = window
-        .update(cx, |_workspace, window, cx| {
-            cx.spawn_in(window, async move |this, cx| {
-                this.update_in(cx, |this, window, cx| this.remove_from_session(window, cx))
-            })
+    if let Ok(detach_session_task) = window.update(cx, |_workspace, window, cx| {
+        cx.spawn_in(window, async move |this, cx| {
+            this.update_in(cx, |this, window, cx| this.remove_from_session(window, cx))
         })
-        .ok()
-    {
+    }) {
         detach_session_task.await.ok();
     }
 
@@ -6587,7 +6571,7 @@ pub fn remote_workspace_position_from_db(
             let restorable_bounds = serialized_workspace
                 .as_ref()
                 .and_then(|workspace| Some((workspace.display?, workspace.window_bounds.map(|b| b.0)?)))
-                .or_else(|| persistence::read_default_window_bounds());
+                .or_else(persistence::read_default_window_bounds);
 
             if let Some((serialized_display, serialized_bounds)) = restorable_bounds {
                 (Some(serialized_bounds), Some(serialized_display))

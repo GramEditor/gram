@@ -153,7 +153,7 @@ impl PickerDelegate for LineEndingSelectorDelegate {
         _window: &mut Window,
         _cx: &mut Context<Picker<Self>>,
     ) -> gpui::Task<()> {
-        return Task::ready(());
+        Task::ready(())
     }
 
     fn render_match(

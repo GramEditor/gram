@@ -613,10 +613,8 @@ impl RunningState {
                     Self::substitute_process_id_in_config(value, process_id);
                 });
             }
-            serde_json::Value::String(s) => {
-                if s.contains(PROCESS_ID_PLACEHOLDER.as_str()) {
-                    *s = s.replace(PROCESS_ID_PLACEHOLDER.as_str(), &process_id.to_string());
-                }
+            serde_json::Value::String(s) if s.contains(PROCESS_ID_PLACEHOLDER.as_str()) => {
+                *s = s.replace(PROCESS_ID_PLACEHOLDER.as_str(), &process_id.to_string());
             }
             _ => {}
         }
@@ -1463,7 +1461,7 @@ impl RunningState {
 
     pub fn select_current_thread(
         &mut self,
-        threads: &Vec<(Thread, ThreadStatus)>,
+        threads: &[(Thread, ThreadStatus)],
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {

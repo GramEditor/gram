@@ -583,7 +583,7 @@ impl StackFrameList {
     fn render_collapsed_entry(
         &self,
         ix: usize,
-        stack_frames: &Vec<dap::StackFrame>,
+        stack_frames: &[dap::StackFrame],
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let first_stack_frame = &stack_frames[0];

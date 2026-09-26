@@ -73,13 +73,10 @@ impl SignatureHelp {
                                 }
                             })
                         }
-                        lsp::ParameterLabel::Simple(parameter_label) => {
-                            if let Some(start) = signature.label.find(parameter_label) {
-                                Some(start..start + parameter_label.len())
-                            } else {
-                                None
-                            }
-                        }
+                        lsp::ParameterLabel::Simple(parameter_label) => signature
+                            .label
+                            .find(parameter_label)
+                            .map(|start| start..start + parameter_label.len()),
                     };
 
                     if let Some(label_range) = &label_range

@@ -174,8 +174,8 @@ impl DocsSearch {
     fn new(project: Entity<Project>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let preview_editor = cx.new(|cx| {
             let multi_buffer = cx.new(|_| MultiBuffer::without_headers(Capability::ReadWrite));
-            let editor = Editor::for_multibuffer(multi_buffer, Some(project.clone()), window, cx);
-            editor
+            
+            Editor::for_multibuffer(multi_buffer, Some(project.clone()), window, cx)
         });
 
         let focus_handle = cx.focus_handle();
@@ -674,7 +674,9 @@ impl DocsSearchDelegate {
             return Ok(Vec::new());
         }
 
-        let buffer_data = buffer.read_with(cx, |buf, cx| {
+        
+
+        buffer.read_with(cx, |buf, cx| {
             let file = buf.file();
             let path = file.map(|f| ProjectPath {
                 worktree_id: f.worktree_id(cx),
@@ -711,9 +713,7 @@ impl DocsSearchDelegate {
                 }
             }
             result
-        });
-
-        buffer_data
+        })
     }
 }
 

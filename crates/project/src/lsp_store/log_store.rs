@@ -630,8 +630,8 @@ impl LogStore {
                         LanguageServerKind::Global => None,
                     }
                     .and_then(|lsp_store| lsp_store.read(cx).downstream_client());
-                    if let Some((client, project_id)) = downstream_client {
-                        if Some(LogKind::from_server_log_type(kind)) == state.toggled_log_kind {
+                    if let Some((client, project_id)) = downstream_client
+                        && Some(LogKind::from_server_log_type(kind)) == state.toggled_log_kind {
                             client
                                 .send(proto::LanguageServerLog {
                                     project_id,
@@ -641,7 +641,6 @@ impl LogStore {
                                 })
                                 .ok();
                         }
-                    }
                 }
             }
         }

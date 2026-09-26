@@ -1264,7 +1264,7 @@ impl EditorElement {
             None
         };
 
-        if &breakpoint_indicator != &editor.gutter_breakpoint_indicator.0 {
+        if breakpoint_indicator != editor.gutter_breakpoint_indicator.0 {
             editor.gutter_breakpoint_indicator.0 = breakpoint_indicator;
             cx.notify();
         }
@@ -1366,11 +1366,11 @@ impl EditorElement {
                     && !hide_drop_cursor
                     && (drop_cursor
                         .start
-                        .cmp(&selection.start, &snapshot.buffer_snapshot())
+                        .cmp(&selection.start, snapshot.buffer_snapshot())
                         .eq(&Ordering::Less)
                         || drop_cursor
                             .end
-                            .cmp(&selection.end, &snapshot.buffer_snapshot())
+                            .cmp(&selection.end, snapshot.buffer_snapshot())
                             .eq(&Ordering::Greater))
                 {
                     let drag_cursor_layout = SelectionLayout::new(
@@ -1434,7 +1434,7 @@ impl EditorElement {
         editor.selections.disjoint_anchors().iter().for_each(|selection| {
             add_cursor(selection.head(), color);
         });
-        if let Some(ref selection) = editor.selections.pending_anchor() {
+        if let Some(selection) = editor.selections.pending_anchor() {
             add_cursor(selection.head(), color);
         }
         cursors
@@ -1662,13 +1662,16 @@ impl EditorElement {
         // The horizontal scrollbar is usually slightly offset to align nicely with
         // indent guides. However, this offset is not needed if indent guides are
         // disabled for the current editor.
-        let content_offset = self
+        let content_offset = if self
             .editor
             .read(cx)
             .show_indent_guides
             .is_none_or(|should_show| should_show)
-            .then_some(content_offset)
-            .unwrap_or_default();
+        {
+            content_offset
+        } else {
+            Default::default()
+        };
 
         Some(EditorScrollbars::from_scrollbar_axes(
             ScrollbarAxes {
@@ -2041,11 +2044,11 @@ impl EditorElement {
             return HashMap::default();
         }
 
-        let severity_to_color = |sev: &lsp::DiagnosticSeverity| match sev {
-            &lsp::DiagnosticSeverity::ERROR => Color::Error,
-            &lsp::DiagnosticSeverity::WARNING => Color::Warning,
-            &lsp::DiagnosticSeverity::INFORMATION => Color::Info,
-            &lsp::DiagnosticSeverity::HINT => Color::Hint,
+        let severity_to_color = |sev: &lsp::DiagnosticSeverity| match *sev {
+            lsp::DiagnosticSeverity::ERROR => Color::Error,
+            lsp::DiagnosticSeverity::WARNING => Color::Warning,
+            lsp::DiagnosticSeverity::INFORMATION => Color::Info,
+            lsp::DiagnosticSeverity::HINT => Color::Hint,
             _ => Color::Error,
         };
 
@@ -2727,7 +2730,7 @@ impl EditorElement {
                     actions
                         .tasks()
                         .map(|tasks| tasks.position.to_display_point(snapshot).row())
-                        .or_else(|| match deployed_from {
+                        .or(match deployed_from {
                             Some(CodeActionSource::Indicator(row)) => Some(*row),
                             _ => None,
                         })
@@ -2743,7 +2746,7 @@ impl EditorElement {
                 .tasks
                 .values()
                 .filter_map(|tasks| {
-                    let multibuffer_point = tasks.offset.to_point(&snapshot.buffer_snapshot());
+                    let multibuffer_point = tasks.offset.to_point(snapshot.buffer_snapshot());
                     if multibuffer_point < offset_range_start || multibuffer_point > offset_range_end {
                         return None;
                     }
@@ -3158,21 +3161,19 @@ impl EditorElement {
         let boundaries_len = boundaries.len();
         while i < boundaries_len {
             let current_boundary_pos = boundaries[i].pos;
-            if start_pos < current_boundary_pos {
-                if !active_ranges.is_empty() {
-                    let mut color = base_background;
-                    for &(_, c) in &active_ranges {
-                        color = Hsla::blend(color, c);
-                    }
-                    if let Some((last_range, last_color)) = processed_ranges.last_mut() {
-                        if *last_color == color && last_range.end == start_pos {
-                            last_range.end = current_boundary_pos;
-                        } else {
-                            processed_ranges.push((start_pos..current_boundary_pos, color));
-                        }
+            if start_pos < current_boundary_pos && !active_ranges.is_empty() {
+                let mut color = base_background;
+                for &(_, c) in &active_ranges {
+                    color = Hsla::blend(color, c);
+                }
+                if let Some((last_range, last_color)) = processed_ranges.last_mut() {
+                    if *last_color == color && last_range.end == start_pos {
+                        last_range.end = current_boundary_pos;
                     } else {
                         processed_ranges.push((start_pos..current_boundary_pos, color));
                     }
+                } else {
+                    processed_ranges.push((start_pos..current_boundary_pos, color));
                 }
             }
             while i < boundaries_len && boundaries[i].pos == current_boundary_pos {
@@ -3311,7 +3312,7 @@ impl EditorElement {
         resized_blocks: &mut HashMap<CustomBlockId, u32>,
         row_block_types: &mut HashMap<DisplayRow, bool>,
         selections: &[Selection<Point>],
-        selected_buffer_ids: &Vec<BufferId>,
+        selected_buffer_ids: &[BufferId],
         latest_selection_anchors: &HashMap<BufferId, Anchor>,
         is_row_soft_wrapped: impl Copy + Fn(usize) -> bool,
         sticky_header_excerpt_id: Option<ExcerptId>,
@@ -3322,8 +3323,8 @@ impl EditorElement {
         let mut x_position = None;
         let mut element = match block {
             Block::Custom(custom) => {
-                let block_start = custom.start().to_point(&snapshot.buffer_snapshot());
-                let block_end = custom.end().to_point(&snapshot.buffer_snapshot());
+                let block_start = custom.start().to_point(snapshot.buffer_snapshot());
+                let block_end = custom.end().to_point(snapshot.buffer_snapshot());
                 if block.place_near() && snapshot.is_line_folded(MultiBufferRow(block_start.row)) {
                     return None;
                 }
@@ -3904,7 +3905,7 @@ impl EditorElement {
         line_height: Pixels,
         line_layouts: &mut [LineWithInvisibles],
         selections: &[Selection<Point>],
-        selected_buffer_ids: &Vec<BufferId>,
+        selected_buffer_ids: &[BufferId],
         latest_selection_anchors: &HashMap<BufferId, Anchor>,
         is_row_soft_wrapped: impl Copy + Fn(usize) -> bool,
         sticky_header_excerpt_id: Option<ExcerptId>,
@@ -4144,7 +4145,7 @@ impl EditorElement {
         right_margin: Pixels,
         snapshot: &EditorSnapshot,
         hitbox: &Hitbox,
-        selected_buffer_ids: &Vec<BufferId>,
+        selected_buffer_ids: &[BufferId],
         blocks: &[BlockLayout],
         latest_selection_anchors: &HashMap<BufferId, Anchor>,
         window: &mut Window,
@@ -4747,9 +4748,7 @@ impl EditorElement {
                 // the line.
                 if !y_flipped && wanted.height < available.bottom {
                     Some(bottom_position)
-                } else if !y_flipped && wanted.height < available.top {
-                    Some(top_position)
-                } else if y_flipped && wanted.height < available.top {
+                } else if wanted.height < available.top {
                     Some(top_position)
                 } else if y_flipped && wanted.height < available.bottom {
                     Some(bottom_position)
@@ -4830,7 +4829,7 @@ impl EditorElement {
                 MenuPosition::PinnedToScreen(point) => (None, point),
                 MenuPosition::PinnedToEditor { source, offset } => {
                     let source_display_point = source.to_display_point(editor_snapshot);
-                    let source_point = editor.to_pixel_point(source, editor_snapshot, window, cx)?;
+                    let source_point = editor.source_to_pixel_point(source, editor_snapshot, window, cx)?;
                     let position = content_origin + source_point + offset;
                     (Some(source_display_point), position)
                 }
@@ -5114,7 +5113,7 @@ impl EditorElement {
         let colors = cx.theme().colors();
 
         let word_highlights = display_hunks
-            .into_iter()
+            .iter()
             .filter_map(|(hunk, _)| match hunk {
                 DisplayDiffHunk::Unfolded { word_diffs, status, .. } => Some((word_diffs, status)),
                 _ => None,
@@ -6991,7 +6990,7 @@ impl EditorElement {
             move |event: &MousePressureEvent, phase, window, cx| {
                 if phase == DispatchPhase::Bubble {
                     editor.update(cx, |editor, cx| {
-                        Self::pressure_click(editor, &event, &position_map, window, cx);
+                        Self::pressure_click(editor, event, &position_map, window, cx);
                     })
                 }
             }
@@ -8192,11 +8191,14 @@ impl Element for EditorElement {
 
                     let settings = EditorSettings::get_global(cx);
                     let scrollbars_shown = settings.scrollbar.show != ShowScrollbar::Never;
-                    let vertical_scrollbar_width = (scrollbars_shown
+                    let vertical_scrollbar_width = if scrollbars_shown
                         && settings.scrollbar.axes.vertical
-                        && self.editor.read(cx).show_scrollbars.vertical)
-                        .then_some(style.scrollbar_width)
-                        .unwrap_or_default();
+                        && self.editor.read(cx).show_scrollbars.vertical
+                    {
+                        style.scrollbar_width
+                    } else {
+                        Default::default()
+                    };
                     let minimap_width = self
                         .get_minimap_width(
                             &settings.minimap,
@@ -8624,7 +8626,7 @@ impl Element for EditorElement {
                     let bg_segments_per_row = Self::bg_segments_per_row(
                         start_row..end_row,
                         &selections,
-                        &merged_highlighted_ranges,
+                        merged_highlighted_ranges,
                         self.style.background,
                     );
 
@@ -8723,8 +8725,8 @@ impl Element for EditorElement {
                     };
                     let sticky_header_excerpt_id = sticky_header_excerpt.as_ref().map(|top| top.excerpt.id);
 
-                    let blocks = (!is_minimap)
-                        .then(|| {
+                    let blocks = if !is_minimap {
+                        {
                             window.with_element_namespace("blocks", |window| {
                                 self.render_blocks(
                                     start_row..end_row,
@@ -8747,8 +8749,10 @@ impl Element for EditorElement {
                                     cx,
                                 )
                             })
-                        })
-                        .unwrap_or_default();
+                        }
+                    } else {
+                        Default::default()
+                    };
                     let RenderBlocksOutput {
                         mut blocks,
                         row_block_types,
@@ -8790,8 +8794,8 @@ impl Element for EditorElement {
                         })
                     });
 
-                    let start_buffer_row = MultiBufferRow(start_anchor.to_point(&snapshot.buffer_snapshot()).row);
-                    let end_buffer_row = MultiBufferRow(end_anchor.to_point(&snapshot.buffer_snapshot()).row);
+                    let start_buffer_row = MultiBufferRow(start_anchor.to_point(snapshot.buffer_snapshot()).row);
+                    let end_buffer_row = MultiBufferRow(end_anchor.to_point(snapshot.buffer_snapshot()).row);
 
                     let scroll_max: gpui::Point<ScrollPixelOffset> = point(
                         ScrollPixelOffset::from(((scroll_width - editor_width) / em_advance).max(0.0)),
@@ -8836,7 +8840,7 @@ impl Element for EditorElement {
                                 &gutter_dimensions,
                                 &gutter_hitbox,
                                 &text_hitbox,
-                                &style,
+                                style,
                                 relative,
                                 current_selection_head,
                                 window,

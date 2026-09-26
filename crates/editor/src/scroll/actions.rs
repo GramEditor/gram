@@ -80,11 +80,11 @@ impl Editor {
         let display_snapshot = self.display_snapshot(cx);
         let scroll_margin_rows = self.vertical_scroll_margin() as u32;
         let new_screen_top = self.selections.newest_display(&display_snapshot).head().row().0;
-        let header_offset = display_snapshot
-            .buffer_snapshot()
-            .show_headers()
-            .then(|| display_snapshot.buffer_header_height())
-            .unwrap_or(0);
+        let header_offset = if display_snapshot.buffer_snapshot().show_headers() {
+            display_snapshot.buffer_header_height()
+        } else {
+            0
+        };
         let new_screen_top = new_screen_top.saturating_sub(scroll_margin_rows + header_offset);
         self.set_scroll_top_row(DisplayRow(new_screen_top), window, cx);
     }

@@ -468,7 +468,10 @@ impl workspace::SerializableItem for Onboarding {
         cx: &mut App,
     ) -> gpui::Task<gpui::Result<Entity<Self>>> {
         window.spawn(cx, async move |cx| {
-            if let Some(_) = persistence::ONBOARDING_PAGES.get_onboarding_page(item_id, workspace_id)? {
+            if persistence::ONBOARDING_PAGES
+                .get_onboarding_page(item_id, workspace_id)?
+                .is_some()
+            {
                 workspace.update(cx, |workspace, cx| Onboarding::new(workspace, cx))
             } else {
                 Err(anyhow::anyhow!("No onboarding page to deserialize"))

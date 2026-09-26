@@ -115,7 +115,7 @@ impl WhichKeyModal {
             text_a.cmp(&text_b)
         });
         binding_data.dedup();
-        self.pending_keys = text_for_keystrokes(&pending_keys, cx).into();
+        self.pending_keys = text_for_keystrokes(pending_keys, cx).into();
         self.bindings = binding_data
             .into_iter()
             .map(|(keystrokes, action)| (text_for_keystrokes(&keystrokes, cx).into(), action))

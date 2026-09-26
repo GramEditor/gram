@@ -102,12 +102,12 @@ impl BufferDiagnosticsEditor {
                 Event::DiagnosticsUpdated {
                     paths,
                     language_server_id,
-                } => {
+                }
                     // When diagnostics have been updated, the
                     // `BufferDiagnosticsEditor` should update its state only if
                     // one of the paths matches its `project_path`, otherwise
                     // the event should be ignored.
-                    if paths.contains(&buffer_diagnostics_editor.project_path) {
+                    if paths.contains(&buffer_diagnostics_editor.project_path) => {
                         buffer_diagnostics_editor.update_diagnostic_summary(cx);
 
                         if buffer_diagnostics_editor
@@ -122,7 +122,6 @@ impl BufferDiagnosticsEditor {
                             buffer_diagnostics_editor.update_all_excerpts(window, cx);
                         }
                     }
-                }
                 _ => {}
             },
         );
@@ -297,7 +296,7 @@ impl BufferDiagnosticsEditor {
             .into_lsp()
             .unwrap_or(lsp::DiagnosticSeverity::WARNING);
 
-        cx.spawn_in(window, async move |buffer_diagnostics_editor, mut cx| {
+        cx.spawn_in(window, async move |buffer_diagnostics_editor, cx| {
             // Fetch the diagnostics for the whole of the buffer
             // (`Point::zero()..buffer_snapshot.max_point()`) so we can confirm
             // if the diagnostics changed, if it didn't, early return as there's
@@ -312,7 +311,7 @@ impl BufferDiagnosticsEditor {
                 }
 
                 buffer_diagnostics_editor.set_diagnostics(&diagnostics);
-                return false;
+                false
             })?;
 
             if unchanged {
@@ -391,7 +390,7 @@ impl BufferDiagnosticsEditor {
                     diagnostic_block.initial_range.clone(),
                     multibuffer_context,
                     buffer_snapshot.clone(),
-                    &mut cx,
+                    cx,
                 )
                 .await;
                 let initial_range = buffer_snapshot.anchor_after(diagnostic_block.initial_range.start)
@@ -451,8 +450,8 @@ impl BufferDiagnosticsEditor {
                     )
                 });
 
-                if was_empty {
-                    if let Some(anchor_range) = anchor_ranges.first() {
+                if was_empty
+                    && let Some(anchor_range) = anchor_ranges.first() {
                         let range_to_select = anchor_range.start..anchor_range.start;
 
                         buffer_diagnostics_editor.editor.update(cx, |editor, cx| {
@@ -471,7 +470,6 @@ impl BufferDiagnosticsEditor {
                                 .focus(window, cx);
                         }
                     }
-                }
 
                 // Cloning the blocks before moving ownership so these can later
                 // be used to set the block contents for testing purposes.

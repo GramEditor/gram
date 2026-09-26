@@ -10,7 +10,7 @@ use http_client::github::{GitHubLspBinaryVersion, latest_github_release};
 use http_client::github_download::download_server_binary;
 pub use language::*;
 use lsp::{CompletionItemKind, LanguageServerBinary, SymbolKind};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use util::fs::{make_file_executable, remove_matching};
 
@@ -48,7 +48,7 @@ impl LuaLspAdapter {
         Some(format!("lua-language-server-{}-{}", Self::OS_NAME, arch))
     }
 
-    fn server_path(container: &PathBuf) -> Option<PathBuf> {
+    fn server_path(container: &Path) -> Option<PathBuf> {
         Some(container.join("bin").join(with_exe("lua-language-server")))
     }
 }
@@ -163,18 +163,15 @@ impl LspInstaller for LuaLspAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        match find_cached_server_binary(&container_dir, Some("lua-language-server-"), async |path| {
+        find_cached_server_binary(&container_dir, Some("lua-language-server-"), async |path| {
             Self::server_path(path)
         })
         .await
-        {
-            Some(path) => Some(LanguageServerBinary {
-                path,
-                env: None,
-                arguments: vec![],
-            }),
-            None => None,
-        }
+        .map(|path| LanguageServerBinary {
+            path,
+            env: None,
+            arguments: vec![],
+        })
     }
 }
 

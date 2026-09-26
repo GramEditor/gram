@@ -311,7 +311,7 @@ impl ConflictState {
         for entries in action_keybind_mapping.values_mut() {
             for (_, indices) in entries.iter_mut() {
                 indices.sort_unstable_by_key(|origin| origin.override_source);
-                let Some((fst, snd)) = indices.get(0).zip(indices.get(1)) else {
+                let Some((fst, snd)) = indices.first().zip(indices.get(1)) else {
                     continue;
                 };
 
@@ -339,7 +339,7 @@ impl ConflictState {
         let ActionMapping { keystrokes, context } = action_mapping;
         let predicate = context
             .as_deref()
-            .and_then(|ctx| gpui::KeyBindingContextPredicate::parse(&ctx).ok());
+            .and_then(|ctx| gpui::KeyBindingContextPredicate::parse(ctx).ok());
         self.keybind_mapping.get(keystrokes).and_then(|entries| {
             entries
                 .iter()
@@ -1055,7 +1055,7 @@ impl KeymapEditor {
 
     fn select_first(&mut self, _: &menu::SelectFirst, window: &mut Window, cx: &mut Context<Self>) {
         self.show_hover_menus = false;
-        if self.matches.get(0).is_some() {
+        if !self.matches.is_empty() {
             self.select_index(0, Some(ScrollStrategy::Center), window, cx);
         }
     }
@@ -1683,7 +1683,7 @@ impl Render for KeymapEditor {
                                                 Button::new("create", "Create Keybinding")
                                                     .style(ButtonStyle::Outlined)
                                                     .key_binding(
-                                                        ui::KeyBinding::for_action_in(&OpenCreateKeybindingModal, &focus_handle, cx)
+                                                        ui::KeyBinding::for_action_in(&OpenCreateKeybindingModal, focus_handle, cx)
                                                             .map(|kb| kb.size(TextSize::XSmall.rems(cx))),
                                                     )
                                                     .on_click(|_, window, cx| {
@@ -2630,7 +2630,7 @@ impl Render for KeybindingEditorModal {
                             v_flex()
                                 .gap_2p5()
                                 .when_some(
-                                    self.creating.then_some(()).and_then(|_| self.action_editor.as_ref()),
+                                    self.creating.then_some(()).and(self.action_editor.as_ref()),
                                     |this, selector| this.child(selector.clone()),
                                 )
                                 .child(

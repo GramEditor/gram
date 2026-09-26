@@ -11,7 +11,10 @@ use picker::{Picker, PickerDelegate, PickerEditorPosition};
 use project::{DirectoryLister, git_store::Repository};
 use recent_projects::{RemoteConnectionModal, connect};
 use remote::{RemoteConnectionOptions, remote_client::ConnectionIdentifier};
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use ui::{HighlightedLabel, KeyBinding, ListItem, ListItemSpacing, prelude::*};
 use util::ResultExt;
 use workspace::{ModalView, Workspace, notifications::DetachAndPromptErr};
@@ -271,7 +274,7 @@ impl WorktreeListDelegate {
             let Some(paths) = worktree_path.await? else {
                 return anyhow::Ok(());
             };
-            let path = paths.get(0).cloned().context("No path selected")?;
+            let path = paths.first().cloned().context("No path selected")?;
 
             repo.update(cx, |repo, _| repo.create_worktree(branch.clone(), path.clone(), commit))?
                 .await??;
@@ -311,13 +314,13 @@ impl WorktreeListDelegate {
 
     fn open_worktree(
         &self,
-        worktree_path: &PathBuf,
+        worktree_path: &Path,
         replace_current_window: bool,
         window: &mut Window,
         cx: &mut Context<Picker<Self>>,
     ) {
         let workspace = self.workspace.clone();
-        let path = worktree_path.clone();
+        let path = worktree_path;
 
         let Some((connection_options, app_state, is_local)) = workspace
             .update(cx, |workspace, cx| {
@@ -334,7 +337,7 @@ impl WorktreeListDelegate {
 
         if is_local {
             let open_task = workspace.update(cx, |workspace, cx| {
-                workspace.open_workspace_for_paths(replace_current_window, vec![path], window, cx)
+                workspace.open_workspace_for_paths(replace_current_window, vec![path.to_path_buf()], window, cx)
             });
             cx.spawn(async move |_, _| {
                 open_task?.await?;
@@ -343,6 +346,7 @@ impl WorktreeListDelegate {
             .detach_and_prompt_err("Failed to open worktree", window, cx, |e, _, _| Some(e.to_string()));
         } else if let Some(connection_options) = connection_options {
             let window_handle = window.window_handle();
+            let path = path.to_path_buf();
             cx.spawn_in(window, async move |_, cx| {
                 open_remote_worktree(
                     connection_options,
@@ -551,7 +555,7 @@ impl PickerDelegate for WorktreeListDelegate {
             return;
         };
         if entry.is_new {
-            self.create_worktree(&entry.worktree.branch(), secondary, None, window, cx);
+            self.create_worktree(entry.worktree.branch(), secondary, None, window, cx);
         } else {
             self.open_worktree(&entry.worktree.path, secondary, window, cx);
         }

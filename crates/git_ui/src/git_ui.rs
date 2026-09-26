@@ -10,7 +10,6 @@ use ui::{
 mod blame_ui;
 pub mod clone;
 
-use app_actions;
 use git::{
     repository::{Branch, Upstream, UpstreamTracking, UpstreamTrackingStatus},
     status::{FileStatus, StatusCode, UnmergedStatus, UnmergedStatusCode},

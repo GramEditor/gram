@@ -25,7 +25,7 @@ use project::{
 };
 use settings::Settings;
 use std::fmt::Write;
-use std::{ops::Range, rc::Rc, usize};
+use std::{ops::Range, rc::Rc};
 use theme::{Theme, ThemeSettings};
 use ui::{ContextMenu, Divider, PopoverMenu, SplitButton, Tooltip, prelude::*};
 use util::ResultExt;
@@ -172,7 +172,7 @@ impl Console {
                             let _ = writeln!(&mut scratch, "{trimmed_output}");
                             ansi_processor.advance(&mut ansi_handler, scratch.as_bytes());
                             let output = std::mem::take(&mut ansi_handler.output);
-                            to_insert.extend(output.chars());
+                            to_insert.push_str(&output);
                             let mut spans = std::mem::take(&mut ansi_handler.spans);
                             let mut background_spans = std::mem::take(&mut ansi_handler.background_spans);
                             if ansi_handler.current_range_start < output.len() {
@@ -789,7 +789,7 @@ impl ansi::Handler for ConsoleHandler {
     }
 
     fn put_tab(&mut self, count: u16) {
-        self.output.extend(std::iter::repeat('\t').take(count as usize));
+        self.output.extend(std::iter::repeat_n('\t', count as usize));
         self.pos += count as usize;
     }
 

@@ -820,11 +820,10 @@ async fn install_prettier_packages(
     plugins_to_install: HashSet<Arc<str>>,
     node: NodeRuntime,
 ) -> anyhow::Result<()> {
-    if let Some(options) = node.get_options().await {
-        if !options.allow_prettier_download {
+    if let Some(options) = node.get_options().await
+        && !options.allow_prettier_download {
             anyhow::bail!("Not installing prettier: Node package installation not allowed");
         }
-    }
 
     let packages_to_versions = future::try_join_all(plugins_to_install.iter().chain(Some(&"prettier".into())).map(
         |package_name| async {

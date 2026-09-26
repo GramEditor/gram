@@ -27,6 +27,12 @@ pub struct CommitAvatar {
     size: Option<IconSize>,
 }
 
+impl Default for CommitAvatar {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CommitAvatar {
     pub fn new() -> Self {
         Self { size: None }

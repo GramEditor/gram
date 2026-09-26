@@ -59,12 +59,12 @@ impl Vim {
     fn literal(&mut self, action: &Literal, window: &mut Window, cx: &mut Context<Self>) {
         match self.active_operator() {
             Some(Operator::Literal { prefix: Some(prefix) }) => {
-                if let Some(keystroke) = Keystroke::parse(&action.0).ok() {
+                if let Ok(keystroke) = Keystroke::parse(&action.0) {
                     window.defer(cx, |window, cx| {
                         window.dispatch_keystroke(keystroke, cx);
                     });
                 }
-                return self.handle_literal_input(prefix, "", window, cx);
+                self.handle_literal_input(prefix, "", window, cx)
             }
             Some(_) => self.insert_literal(Some(action.1), "", window, cx),
             None => log::error!(
@@ -162,11 +162,11 @@ impl Vim {
                 if next.is_ascii_hexdigit() {
                     prefix.push(next);
                     if prefix.len() == 3 {
-                        let ch: char = u8::from_str_radix(&prefix, 10).unwrap_or(255).into();
+                        let ch: char = prefix.parse::<u8>().unwrap_or(255).into();
                         return self.insert_literal(Some(ch), "", window, cx);
                     }
                 } else {
-                    let ch: char = u8::from_str_radix(&prefix, 10).unwrap_or(255).into();
+                    let ch: char = prefix.parse::<u8>().unwrap_or(255).into();
                     return self.insert_literal(Some(ch), "", window, cx);
                 }
             }

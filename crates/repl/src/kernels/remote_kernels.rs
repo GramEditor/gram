@@ -45,7 +45,7 @@ pub async fn launch_remote_kernel(
 
     let request = Request::builder()
         .method("POST")
-        .uri(&remote_server.api_url("/kernels"))
+        .uri(remote_server.api_url("/kernels"))
         .header("Authorization", format!("token {}", remote_server.token))
         .body(AsyncBody::from(kernel_launch_request))?;
 
@@ -127,7 +127,7 @@ pub struct RemoteRunningKernel {
 }
 
 impl RemoteRunningKernel {
-    pub fn new(
+    pub fn launch(
         kernelspec: RemoteKernelSpecification,
         working_directory: std::path::PathBuf,
         session: Entity<Session>,

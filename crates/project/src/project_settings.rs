@@ -473,9 +473,9 @@ pub enum SettingsObserverMode {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum SettingsObserverEvent {
-    LocalSettingsUpdated(Result<PathBuf, InvalidSettingsError>),
-    LocalTasksUpdated(Result<PathBuf, InvalidSettingsError>),
-    LocalDebugScenariosUpdated(Result<PathBuf, InvalidSettingsError>),
+    Settings(Result<PathBuf, InvalidSettingsError>),
+    Tasks(Result<PathBuf, InvalidSettingsError>),
+    DebugScenarios(Result<PathBuf, InvalidSettingsError>),
 }
 
 impl EventEmitter<SettingsObserverEvent> for SettingsObserver {}
@@ -538,25 +538,24 @@ impl SettingsObserver {
         cx: &mut Context<Self>,
     ) -> Self {
         let mut user_settings_watcher = None;
-        if cx.try_global::<SettingsStore>().is_some() {
-            if let Some(upstream_client) = upstream_client {
-                let mut user_settings = None;
-                user_settings_watcher = Some(cx.observe_global::<SettingsStore>(move |_, cx| {
-                    if let Some(new_settings) = cx.global::<SettingsStore>().raw_user_settings() {
-                        if Some(new_settings) != user_settings.as_ref() {
-                            if let Some(new_settings_string) = serde_json::to_string(new_settings).ok() {
-                                user_settings = Some(new_settings.clone());
-                                upstream_client
-                                    .send(proto::UpdateUserSettings {
-                                        project_id: REMOTE_SERVER_PROJECT_ID,
-                                        contents: new_settings_string,
-                                    })
-                                    .log_err();
-                            }
-                        }
-                    }
-                }));
-            }
+        if cx.try_global::<SettingsStore>().is_some()
+            && let Some(upstream_client) = upstream_client
+        {
+            let mut user_settings = None;
+            user_settings_watcher = Some(cx.observe_global::<SettingsStore>(move |_, cx| {
+                if let Some(new_settings) = cx.global::<SettingsStore>().raw_user_settings()
+                    && Some(new_settings) != user_settings.as_ref()
+                    && let Ok(new_settings_string) = serde_json::to_string(new_settings)
+                {
+                    user_settings = Some(new_settings.clone());
+                    upstream_client
+                        .send(proto::UpdateUserSettings {
+                            project_id: REMOTE_SERVER_PROJECT_ID,
+                            contents: new_settings_string,
+                        })
+                        .log_err();
+                }
+            }));
         };
 
         Self {
@@ -663,14 +662,14 @@ impl SettingsObserver {
         cx: &mut Context<Self>,
     ) {
         match event {
-            WorktreeStoreEvent::WorktreeAdded(worktree) => cx
+            WorktreeStoreEvent::Added(worktree) => cx
                 .subscribe(worktree, |this, worktree, event, cx| {
                     if let worktree::Event::UpdatedEntries(changes) = event {
                         this.update_local_worktree_settings(&worktree, changes, cx)
                     }
                 })
                 .detach(),
-            WorktreeStoreEvent::WorktreeRemoved(_, worktree_id) => {
+            WorktreeStoreEvent::Removed(_, worktree_id) => {
                 cx.update_global::<SettingsStore, _>(|store, cx| {
                     store.clear_local_settings(*worktree_id, cx).log_err();
                 });
@@ -859,7 +858,7 @@ impl SettingsObserver {
                         match result {
                             Err(InvalidSettingsError::LocalSettings { path, message }) => {
                                 log::error!("Failed to set local settings in {path:?}: {message}");
-                                cx.emit(SettingsObserverEvent::LocalSettingsUpdated(Err(
+                                cx.emit(SettingsObserverEvent::Settings(Err(
                                     InvalidSettingsError::LocalSettings { path, message },
                                 )));
                             }
@@ -867,7 +866,7 @@ impl SettingsObserver {
                                 log::error!("Failed to set local settings: {e}");
                             }
                             Ok(()) => {
-                                cx.emit(SettingsObserverEvent::LocalSettingsUpdated(Ok(directory
+                                cx.emit(SettingsObserverEvent::Settings(Ok(directory
                                     .as_std_path()
                                     .join(local_settings_file_relative_path().as_std_path()))));
                             }
@@ -889,15 +888,16 @@ impl SettingsObserver {
                     match result {
                         Err(InvalidSettingsError::Tasks { path, message }) => {
                             log::error!("Failed to set local tasks in {path:?}: {message:?}");
-                            cx.emit(SettingsObserverEvent::LocalTasksUpdated(Err(
-                                InvalidSettingsError::Tasks { path, message },
-                            )));
+                            cx.emit(SettingsObserverEvent::Tasks(Err(InvalidSettingsError::Tasks {
+                                path,
+                                message,
+                            })));
                         }
                         Err(e) => {
                             log::error!("Failed to set local tasks: {e}");
                         }
                         Ok(()) => {
-                            cx.emit(SettingsObserverEvent::LocalTasksUpdated(Ok(directory
+                            cx.emit(SettingsObserverEvent::Tasks(Ok(directory
                                 .as_std_path()
                                 .join(task_file_name()))));
                         }
@@ -918,15 +918,16 @@ impl SettingsObserver {
                     match result {
                         Err(InvalidSettingsError::Debug { path, message }) => {
                             log::error!("Failed to set local debug scenarios in {path:?}: {message:?}");
-                            cx.emit(SettingsObserverEvent::LocalTasksUpdated(Err(
-                                InvalidSettingsError::Debug { path, message },
-                            )));
+                            cx.emit(SettingsObserverEvent::Tasks(Err(InvalidSettingsError::Debug {
+                                path,
+                                message,
+                            })));
                         }
                         Err(e) => {
                             log::error!("Failed to set local tasks: {e}");
                         }
                         Ok(()) => {
-                            cx.emit(SettingsObserverEvent::LocalTasksUpdated(Ok(directory
+                            cx.emit(SettingsObserverEvent::Tasks(Ok(directory
                                 .as_std_path()
                                 .join(task_file_name()))));
                         }
@@ -980,13 +981,11 @@ impl SettingsObserver {
 
                 weak_entry
                     .update(cx, |_, cx| match result {
-                        Ok(()) => cx.emit(SettingsObserverEvent::LocalTasksUpdated(Ok(file_path.clone()))),
-                        Err(err) => cx.emit(SettingsObserverEvent::LocalTasksUpdated(Err(
-                            InvalidSettingsError::Tasks {
-                                path: file_path.clone(),
-                                message: err.to_string(),
-                            },
-                        ))),
+                        Ok(()) => cx.emit(SettingsObserverEvent::Tasks(Ok(file_path.clone()))),
+                        Err(err) => cx.emit(SettingsObserverEvent::Tasks(Err(InvalidSettingsError::Tasks {
+                            path: file_path.clone(),
+                            message: err.to_string(),
+                        }))),
                     })
                     .ok();
             }
@@ -1032,8 +1031,8 @@ impl SettingsObserver {
 
                 weak_entry
                     .update(cx, |_, cx| match result {
-                        Ok(()) => cx.emit(SettingsObserverEvent::LocalDebugScenariosUpdated(Ok(file_path.clone()))),
-                        Err(err) => cx.emit(SettingsObserverEvent::LocalDebugScenariosUpdated(Err(
+                        Ok(()) => cx.emit(SettingsObserverEvent::DebugScenarios(Ok(file_path.clone()))),
+                        Err(err) => cx.emit(SettingsObserverEvent::DebugScenarios(Err(
                             InvalidSettingsError::Tasks {
                                 path: file_path.clone(),
                                 message: err.to_string(),

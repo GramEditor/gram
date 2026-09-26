@@ -469,7 +469,7 @@ impl<'a> MarkdownParser<'a> {
                     self.cursor += 1;
                     let columns = std::mem::take(&mut row_columns);
                     if in_header {
-                        header.push(ParsedMarkdownTableRow { columns: columns });
+                        header.push(ParsedMarkdownTableRow { columns });
                         in_header = false;
                     } else {
                         body.push(ParsedMarkdownTableRow::with_columns(columns));
@@ -697,9 +697,7 @@ impl<'a> MarkdownParser<'a> {
     }
 
     async fn parse_code_block(&mut self, language: Option<String>) -> Option<ParsedMarkdownCodeBlock> {
-        let Some((_event, source_range)) = self.previous() else {
-            return None;
-        };
+        let (_event, source_range) = self.previous()?;
 
         let source_range = source_range.clone();
         let mut code = String::new();
@@ -750,10 +748,7 @@ impl<'a> MarkdownParser<'a> {
     }
 
     async fn parse_mermaid_diagram(&mut self, scale: Option<u32>) -> Option<ParsedMarkdownMermaidDiagram> {
-        let Some((_event, source_range)) = self.previous() else {
-            return None;
-        };
-
+        let (_event, source_range) = self.previous()?;
         let source_range = source_range.clone();
         let mut code = String::new();
 

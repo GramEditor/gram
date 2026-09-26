@@ -678,6 +678,12 @@ pub struct ImageViewToolbarControls {
     _subscription: Option<gpui::Subscription>,
 }
 
+impl Default for ImageViewToolbarControls {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ImageViewToolbarControls {
     pub fn new() -> Self {
         Self {

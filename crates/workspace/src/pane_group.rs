@@ -143,7 +143,7 @@ impl PaneGroup {
         match &mut self.root {
             Member::Pane(_) => {}
             Member::Axis(axis) => {
-                let _ = axis.reset_pane_sizes();
+                axis.reset_pane_sizes();
             }
         };
     }
@@ -260,7 +260,7 @@ impl PaneLeaderDecorator for ActivePaneDecorator<'_> {
 
 impl PaneLeaderDecorator for PaneRenderContext<'_> {
     fn decorate(&self, _pane: &Entity<Pane>, _cx: &App) -> LeaderDecoration {
-        return LeaderDecoration::default();
+        LeaderDecoration::default()
     }
 
     fn active_pane(&self) -> &Entity<Pane> {

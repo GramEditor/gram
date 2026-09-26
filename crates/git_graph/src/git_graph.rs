@@ -78,7 +78,7 @@ enum LaneState {
 }
 
 impl LaneState {
-    fn to_commit_lines(
+    fn try_to_commit_line(
         &mut self,
         ending_row: usize,
         lane_column: usize,
@@ -376,29 +376,28 @@ impl GraphData {
                     if let LaneState::Active {
                         starting_row, segments, ..
                     } = state
-                    {
-                        if let Some(CommitLineSegment::Curve {
+                        && let Some(CommitLineSegment::Curve {
                             to_column,
                             curve_kind: CurveKind::Merge,
                             ..
                         }) = segments.first_mut()
-                        {
-                            let curve_row = *starting_row + 1;
-                            let would_overlap = if lane_column != commit_lane && curve_row < commit_row {
-                                self.commits[curve_row..commit_row]
-                                    .iter()
-                                    .any(|c| c.lane == commit_lane)
-                            } else {
-                                false
-                            };
+                    {
+                        let curve_row = *starting_row + 1;
+                        let would_overlap = if lane_column != commit_lane && curve_row < commit_row {
+                            self.commits[curve_row..commit_row]
+                                .iter()
+                                .any(|c| c.lane == commit_lane)
+                        } else {
+                            false
+                        };
 
-                            if would_overlap {
-                                *to_column = lane_column;
-                            }
+                        if would_overlap {
+                            *to_column = lane_column;
                         }
                     }
 
-                    if let Some(commit_line) = state.to_commit_lines(commit_row, lane_column, commit_lane, commit_color)
+                    if let Some(commit_line) =
+                        state.try_to_commit_line(commit_row, lane_column, commit_lane, commit_color)
                     {
                         self.lines.push(Rc::new(commit_line));
                     }
@@ -559,10 +558,8 @@ impl GitGraph {
 
         cx.subscribe(&git_store, |this, _, event, cx| match event {
             GitStoreEvent::RepositoryUpdated(_, repo_event, is_active) => {
-                if *is_active {
-                    if let Some(repository) = this.project.read(cx).active_repository(cx) {
-                        this.on_repository_event(repository, repo_event, cx);
-                    }
+                if *is_active && let Some(repository) = this.project.read(cx).active_repository(cx) {
+                    this.on_repository_event(repository, repo_event, cx);
                 }
             }
             GitStoreEvent::ActiveRepositoryChanged(_) => {

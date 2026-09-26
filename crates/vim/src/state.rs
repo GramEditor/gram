@@ -307,9 +307,7 @@ impl MarksState {
 
     fn load(&mut self, cx: &mut Context<Self>) {
         cx.spawn(async move |this, cx| {
-            let Some(workspace_id) = this.update(cx, |this, cx| this.workspace_id(cx)).ok()? else {
-                return None;
-            };
+            let workspace_id = this.update(cx, |this, cx| this.workspace_id(cx)).ok()??;
             let (marks, paths) = cx
                 .background_spawn(async move {
                     let marks = DB.get_marks(workspace_id)?;
@@ -443,7 +441,9 @@ impl MarksState {
     }
 
     fn is_global_mark(&self, key: &str) -> bool {
-        key.chars().next().is_some_and(|c| c.is_uppercase() || c.is_digit(10))
+        key.chars()
+            .next()
+            .is_some_and(|c| c.is_uppercase() || c.is_ascii_digit())
     }
 
     fn rename_buffer(
@@ -1241,10 +1241,10 @@ impl RegistersView {
 
     pub fn toggle(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>) {
         let editor = workspace.active_item(cx).and_then(|item| item.act_as::<Editor>(cx));
-        workspace.toggle_modal(window, cx, move |window, cx| RegistersView::new(editor, window, cx));
+        workspace.toggle_modal(window, cx, move |window, cx| RegistersView::picker(editor, window, cx));
     }
 
-    fn new(
+    fn picker(
         editor: Option<Entity<Editor>>,
         window: &mut Window,
         cx: &mut Context<Picker<RegistersViewDelegate>>,
@@ -1593,10 +1593,10 @@ impl MarksView {
 
     pub fn toggle(workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>) {
         let handle = cx.weak_entity();
-        workspace.toggle_modal(window, cx, move |window, cx| MarksView::new(handle, window, cx));
+        workspace.toggle_modal(window, cx, move |window, cx| MarksView::picker(handle, window, cx));
     }
 
-    fn new(
+    fn picker(
         workspace: WeakEntity<Workspace>,
         window: &mut Window,
         cx: &mut Context<Picker<MarksViewDelegate>>,

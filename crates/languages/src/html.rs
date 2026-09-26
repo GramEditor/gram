@@ -165,18 +165,14 @@ impl LspInstaller for SuperhtmlLspAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        match find_cached_server_binary(&container_dir, Some("superhtml-"), async |path| {
+        find_cached_server_binary(&container_dir, Some("superhtml-"), async |path| {
             Some(path.join(with_exe("superhtml")))
         })
-        .await
-        {
-            Some(path) => Some(LanguageServerBinary {
+        .await.map(|path| LanguageServerBinary {
                 path,
                 arguments: vec!["lsp".into()],
                 env: None,
-            }),
-            None => None,
-        }
+            })
     }
 }
 

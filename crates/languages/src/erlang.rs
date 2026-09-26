@@ -10,7 +10,7 @@ use http_client::github::{GitHubLspBinaryVersion, latest_github_release};
 use http_client::github_download::download_server_binary;
 pub use language::*;
 use lsp::LanguageServerBinary;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use util::fs::{make_file_executable, remove_matching};
 
 use crate::helpers::{find_cached_server_binary, verify_metadata, with_exe, write_metadata};
@@ -94,7 +94,7 @@ impl ElpAdapter {
     const SERVER_NAME: LanguageServerName = LanguageServerName::new_static("elp");
     const OTP_VERSION: &str = "28";
 
-    fn server_path(container: &PathBuf) -> Option<PathBuf> {
+    fn server_path(container: &Path) -> Option<PathBuf> {
         Some(container.join("elp"))
     }
 }
@@ -225,14 +225,13 @@ impl LspInstaller for ElpAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        match find_cached_server_binary(&container_dir, Some("elp-"), async |path| Self::server_path(path)).await {
-            Some(path) => Some(LanguageServerBinary {
+        find_cached_server_binary(&container_dir, Some("elp-"), async |path| Self::server_path(path))
+            .await
+            .map(|path| LanguageServerBinary {
                 path,
                 arguments: vec!["server".into()],
                 env: None,
-            }),
-            None => None,
-        }
+            })
     }
 }
 

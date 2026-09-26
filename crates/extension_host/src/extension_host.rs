@@ -1109,7 +1109,7 @@ impl ExtensionStore {
     }
 
     async fn add_extensions_from_path(
-        path: &PathBuf,
+        path: &Path,
         fs: Arc<dyn Fs>,
         index: &mut ExtensionIndex,
         proxy: Arc<ExtensionHostProxy>,

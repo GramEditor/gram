@@ -525,7 +525,7 @@ impl ProjectDiff {
 
                 path_keys = Vec::with_capacity(buffers_to_load.len());
                 for entry in buffers_to_load.iter() {
-                    let sort_prefix = sort_prefix(&repo, &entry.repo_path, entry.file_status, cx);
+                    let sort_prefix = sort_prefix(repo, &entry.repo_path, entry.file_status, cx);
                     let path_key = PathKey::with_sort_prefix(sort_prefix, entry.repo_path.as_ref().clone());
                     previous_paths.remove(&path_key);
                     path_keys.push(path_key)

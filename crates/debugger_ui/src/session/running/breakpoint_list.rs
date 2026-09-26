@@ -162,12 +162,12 @@ impl BreakpointList {
     pub(crate) fn selection_kind(&self) -> Option<(SelectedBreakpointKind, bool)> {
         self.selected_ix.and_then(|ix| {
             self.breakpoints.get(ix).map(|bp| match &bp.kind {
-                BreakpointEntryKind::LineBreakpoint(bp) => (
+                BreakpointEntryKind::Line(bp) => (
                     SelectedBreakpointKind::Source,
                     bp.breakpoint.state == project::debugger::breakpoint_store::BreakpointState::Enabled,
                 ),
-                BreakpointEntryKind::ExceptionBreakpoint(bp) => (SelectedBreakpointKind::Exception, bp.is_enabled),
-                BreakpointEntryKind::DataBreakpoint(bp) => (SelectedBreakpointKind::Data, bp.0.is_enabled),
+                BreakpointEntryKind::Exception(bp) => (SelectedBreakpointKind::Exception, bp.is_enabled),
+                BreakpointEntryKind::Data(bp) => (SelectedBreakpointKind::Data, bp.0.is_enabled),
             })
         })
     }
@@ -182,7 +182,7 @@ impl BreakpointList {
         let mut is_exception_breakpoint = true;
         let active_value = self.selected_ix.and_then(|ix| {
             self.breakpoints.get(ix).and_then(|bp| {
-                if let BreakpointEntryKind::LineBreakpoint(bp) = &bp.kind {
+                if let BreakpointEntryKind::Line(bp) = &bp.kind {
                     is_exception_breakpoint = false;
                     match prop {
                         ActiveBreakpointStripMode::Log => bp.breakpoint.message.clone(),
@@ -297,7 +297,7 @@ impl BreakpointList {
 
                 match mode {
                     ActiveBreakpointStripMode::Log => {
-                        if let BreakpointEntryKind::LineBreakpoint(line_breakpoint) = &entry.kind {
+                        if let BreakpointEntryKind::Line(line_breakpoint) = &entry.kind {
                             Self::edit_line_breakpoint_inner(
                                 &self.breakpoint_store,
                                 line_breakpoint.breakpoint.path.clone(),
@@ -308,7 +308,7 @@ impl BreakpointList {
                         }
                     }
                     ActiveBreakpointStripMode::Condition => {
-                        if let BreakpointEntryKind::LineBreakpoint(line_breakpoint) = &entry.kind {
+                        if let BreakpointEntryKind::Line(line_breakpoint) = &entry.kind {
                             Self::edit_line_breakpoint_inner(
                                 &self.breakpoint_store,
                                 line_breakpoint.breakpoint.path.clone(),
@@ -319,7 +319,7 @@ impl BreakpointList {
                         }
                     }
                     ActiveBreakpointStripMode::HitCondition => {
-                        if let BreakpointEntryKind::LineBreakpoint(line_breakpoint) = &entry.kind {
+                        if let BreakpointEntryKind::Line(line_breakpoint) = &entry.kind {
                             Self::edit_line_breakpoint_inner(
                                 &self.breakpoint_store,
                                 line_breakpoint.breakpoint.path.clone(),
@@ -338,12 +338,12 @@ impl BreakpointList {
             return;
         }
         match &mut entry.kind {
-            BreakpointEntryKind::LineBreakpoint(line_breakpoint) => {
+            BreakpointEntryKind::Line(line_breakpoint) => {
                 let path = line_breakpoint.breakpoint.path.clone();
                 let row = line_breakpoint.breakpoint.row;
                 self.go_to_line_breakpoint(path, row, window, cx);
             }
-            BreakpointEntryKind::DataBreakpoint(_) | BreakpointEntryKind::ExceptionBreakpoint(_) => {}
+            BreakpointEntryKind::Data(_) | BreakpointEntryKind::Exception(_) => {}
         }
     }
 
@@ -357,16 +357,16 @@ impl BreakpointList {
         }
 
         match &mut entry.kind {
-            BreakpointEntryKind::LineBreakpoint(line_breakpoint) => {
+            BreakpointEntryKind::Line(line_breakpoint) => {
                 let path = line_breakpoint.breakpoint.path.clone();
                 let row = line_breakpoint.breakpoint.row;
                 self.edit_line_breakpoint(path, row, BreakpointEditAction::InvertState, cx);
             }
-            BreakpointEntryKind::ExceptionBreakpoint(exception_breakpoint) => {
+            BreakpointEntryKind::Exception(exception_breakpoint) => {
                 let id = exception_breakpoint.id.clone();
                 self.toggle_exception_breakpoint(&id, cx);
             }
-            BreakpointEntryKind::DataBreakpoint(data_breakpoint) => {
+            BreakpointEntryKind::Data(data_breakpoint) => {
                 let id = data_breakpoint.0.dap.data_id.clone();
                 self.toggle_data_breakpoint(&id, cx);
             }
@@ -379,7 +379,7 @@ impl BreakpointList {
             return;
         };
 
-        if let BreakpointEntryKind::LineBreakpoint(line_breakpoint) = &mut entry.kind {
+        if let BreakpointEntryKind::Line(line_breakpoint) = &mut entry.kind {
             let path = line_breakpoint.breakpoint.path.clone();
             let row = line_breakpoint.breakpoint.row;
             self.edit_line_breakpoint(path, row, BreakpointEditAction::Toggle, cx);
@@ -456,10 +456,10 @@ impl BreakpointList {
                 let name = session.adapter().0;
                 Self::kvp_key(&name)
             };
-            let settings = self.dap_store.update(cx, |this, cx| {
+            self.dap_store.update(cx, |this, cx| {
                 this.sync_adapter_options(session, cx);
             });
-            let value = serde_json::to_string(&settings);
+            let value = serde_json::to_string(&());
 
             cx.background_executor()
                 .spawn(async move { KEY_VALUE_STORE.write_kvp(key, value?).await })
@@ -624,7 +624,7 @@ impl Render for BreakpointList {
                 let weak = weak.clone();
                 let line = breakpoint.row + 1;
                 Some(BreakpointEntry {
-                    kind: BreakpointEntryKind::LineBreakpoint(LineBreakpoint {
+                    kind: BreakpointEntryKind::Line(LineBreakpoint {
                         name,
                         dir,
                         line,
@@ -639,7 +639,7 @@ impl Render for BreakpointList {
                 .read(cx)
                 .exception_breakpoints()
                 .map(|(data, is_enabled)| BreakpointEntry {
-                    kind: BreakpointEntryKind::ExceptionBreakpoint(ExceptionBreakpoint {
+                    kind: BreakpointEntryKind::Exception(ExceptionBreakpoint {
                         id: data.filter.clone(),
                         data: data.clone(),
                         is_enabled: *is_enabled,
@@ -649,7 +649,7 @@ impl Render for BreakpointList {
         });
         let data_breakpoints = self.session.as_ref().into_iter().flat_map(|session| {
             session.read(cx).data_breakpoints().map(|state| BreakpointEntry {
-                kind: BreakpointEntryKind::DataBreakpoint(DataBreakpoint(state.clone())),
+                kind: BreakpointEntryKind::Data(DataBreakpoint(state.clone())),
                 weak: weak.clone(),
             })
         });
@@ -662,13 +662,13 @@ impl Render for BreakpointList {
             .breakpoints
             .iter()
             .map(|entry| match &entry.kind {
-                BreakpointEntryKind::LineBreakpoint(line_bp) => {
+                BreakpointEntryKind::Line(line_bp) => {
                     let name_and_line = format!("{}:{}", line_bp.name, line_bp.line);
                     let dir_len = line_bp.dir.as_ref().map(|d| d.len()).unwrap_or(0);
                     (name_and_line.len() + dir_len) as f32 * text_pixels
                 }
-                BreakpointEntryKind::ExceptionBreakpoint(exc_bp) => exc_bp.data.label.len() as f32 * text_pixels,
-                BreakpointEntryKind::DataBreakpoint(data_bp) => {
+                BreakpointEntryKind::Exception(exc_bp) => exc_bp.data.label.len() as f32 * text_pixels,
+                BreakpointEntryKind::Data(data_bp) => {
                     data_bp.0.context.human_readable_label().len() as f32 * text_pixels
                 }
             })
@@ -849,7 +849,7 @@ impl LineBreakpoint {
                 .child(BreakpointOptionsStrip {
                     props,
                     breakpoint: BreakpointEntry {
-                        kind: BreakpointEntryKind::LineBreakpoint(self.clone()),
+                        kind: BreakpointEntryKind::Line(self.clone()),
                         weak,
                     },
                     is_selected,
@@ -948,7 +948,7 @@ impl DataBreakpoint {
                 .child(BreakpointOptionsStrip {
                     props,
                     breakpoint: BreakpointEntry {
-                        kind: BreakpointEntryKind::DataBreakpoint(self.clone()),
+                        kind: BreakpointEntryKind::Data(self.clone()),
                         weak: list,
                     },
                     is_selected,
@@ -1042,7 +1042,7 @@ impl ExceptionBreakpoint {
                     .child(BreakpointOptionsStrip {
                         props,
                         breakpoint: BreakpointEntry {
-                            kind: BreakpointEntryKind::ExceptionBreakpoint(self.clone()),
+                            kind: BreakpointEntryKind::Exception(self.clone()),
                             weak,
                         },
                         is_selected,
@@ -1055,9 +1055,9 @@ impl ExceptionBreakpoint {
 }
 #[derive(Clone, Debug)]
 enum BreakpointEntryKind {
-    LineBreakpoint(LineBreakpoint),
-    ExceptionBreakpoint(ExceptionBreakpoint),
-    DataBreakpoint(DataBreakpoint),
+    Line(LineBreakpoint),
+    Exception(ExceptionBreakpoint),
+    Data(DataBreakpoint),
 }
 
 #[derive(Clone, Debug)]
@@ -1076,10 +1076,10 @@ impl BreakpointEntry {
         focus_handle: FocusHandle,
     ) -> ListItem {
         match &mut self.kind {
-            BreakpointEntryKind::LineBreakpoint(line_breakpoint) => {
+            BreakpointEntryKind::Line(line_breakpoint) => {
                 line_breakpoint.render(props, strip_mode, ix, is_selected, focus_handle, self.weak.clone())
             }
-            BreakpointEntryKind::ExceptionBreakpoint(exception_breakpoint) => exception_breakpoint.render(
+            BreakpointEntryKind::Exception(exception_breakpoint) => exception_breakpoint.render(
                 props.for_exception_breakpoints(),
                 strip_mode,
                 ix,
@@ -1087,7 +1087,7 @@ impl BreakpointEntry {
                 focus_handle,
                 self.weak.clone(),
             ),
-            BreakpointEntryKind::DataBreakpoint(data_breakpoint) => data_breakpoint.render(
+            BreakpointEntryKind::Data(data_breakpoint) => data_breakpoint.render(
                 props.for_data_breakpoints(),
                 strip_mode,
                 ix,
@@ -1100,15 +1100,15 @@ impl BreakpointEntry {
 
     fn id(&self) -> SharedString {
         match &self.kind {
-            BreakpointEntryKind::LineBreakpoint(line_breakpoint) => format!(
+            BreakpointEntryKind::Line(line_breakpoint) => format!(
                 "source-breakpoint-control-strip-{:?}:{}",
                 line_breakpoint.breakpoint.path, line_breakpoint.breakpoint.row
             )
             .into(),
-            BreakpointEntryKind::ExceptionBreakpoint(exception_breakpoint) => {
+            BreakpointEntryKind::Exception(exception_breakpoint) => {
                 format!("exception-breakpoint-control-strip--{}", exception_breakpoint.id).into()
             }
-            BreakpointEntryKind::DataBreakpoint(data_breakpoint) => {
+            BreakpointEntryKind::Data(data_breakpoint) => {
                 format!("data-breakpoint-control-strip--{}", data_breakpoint.0.dap.data_id).into()
             }
         }
@@ -1116,14 +1116,14 @@ impl BreakpointEntry {
 
     fn has_log(&self) -> bool {
         match &self.kind {
-            BreakpointEntryKind::LineBreakpoint(line_breakpoint) => line_breakpoint.breakpoint.message.is_some(),
+            BreakpointEntryKind::Line(line_breakpoint) => line_breakpoint.breakpoint.message.is_some(),
             _ => false,
         }
     }
 
     fn has_condition(&self) -> bool {
         match &self.kind {
-            BreakpointEntryKind::LineBreakpoint(line_breakpoint) => line_breakpoint.breakpoint.condition.is_some(),
+            BreakpointEntryKind::Line(line_breakpoint) => line_breakpoint.breakpoint.condition.is_some(),
             // We don't support conditions on exception/data breakpoints
             _ => false,
         }
@@ -1131,7 +1131,7 @@ impl BreakpointEntry {
 
     fn has_hit_condition(&self) -> bool {
         match &self.kind {
-            BreakpointEntryKind::LineBreakpoint(line_breakpoint) => line_breakpoint.breakpoint.hit_condition.is_some(),
+            BreakpointEntryKind::Line(line_breakpoint) => line_breakpoint.breakpoint.hit_condition.is_some(),
             _ => false,
         }
     }

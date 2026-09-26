@@ -11,7 +11,7 @@ use http_client::github_download::download_server_binary;
 pub use language::*;
 use lsp::{CompletionItemKind, LanguageServerBinary, SymbolKind};
 use project::ContextProviderWithTasks;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use task::{TaskTemplate, TaskTemplates};
 use util::fs::{make_file_executable, remove_matching};
@@ -53,7 +53,7 @@ impl OdinLspAdapter {
         Some(binary_name)
     }
 
-    async fn ols_path(path: &PathBuf) -> Option<PathBuf> {
+    async fn ols_path(path: &Path) -> Option<PathBuf> {
         let binary_name = Self::ols_binary_name()?;
         let executable = with_exe(&binary_name);
         Some(path.join(executable))
@@ -166,14 +166,13 @@ impl LspInstaller for OdinLspAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        match find_cached_server_binary(&container_dir, Some("ols-"), Self::ols_path).await {
-            Some(path) => Some(LanguageServerBinary {
+        find_cached_server_binary(&container_dir, Some("ols-"), Self::ols_path)
+            .await
+            .map(|path| LanguageServerBinary {
                 path,
                 env: None,
                 arguments: vec![],
-            }),
-            None => None,
-        }
+            })
     }
 }
 

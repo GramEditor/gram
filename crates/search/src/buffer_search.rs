@@ -1160,7 +1160,7 @@ impl BufferSearchBar {
 
     fn toggle_selection(&mut self, _: &ToggleSelection, window: &mut Window, cx: &mut Context<Self>) {
         self.set_search_within_selection(
-            if let Some(_) = self.selection_search_enabled {
+            if self.selection_search_enabled.is_some() {
                 None
             } else {
                 Some(FilteredSearchRange::Default)
@@ -1329,14 +1329,12 @@ impl BufferSearchBar {
         });
         if new_index != self.active_match_index {
             self.active_match_index = new_index;
-            if !self.dismissed {
-                if let Some(searchable_item) = self.active_searchable_item.as_ref() {
-                    if let Some(matches) = self.searchable_items_with_matches.get(&searchable_item.downgrade()) {
-                        if !matches.is_empty() {
-                            searchable_item.update_matches(matches, new_index, window, cx);
-                        }
-                    }
-                }
+            if !self.dismissed
+                && let Some(searchable_item) = self.active_searchable_item.as_ref()
+                && let Some(matches) = self.searchable_items_with_matches.get(&searchable_item.downgrade())
+                && !matches.is_empty()
+            {
+                searchable_item.update_matches(matches, new_index, window, cx);
             }
             cx.notify();
         }
@@ -1464,7 +1462,7 @@ impl BufferSearchBar {
         EditorSettings::get_global(cx).use_smartcase_search
     }
 
-    pub fn is_contains_uppercase(&mut self, str: &String) -> bool {
+    pub fn is_contains_uppercase(&mut self, str: &str) -> bool {
         str.chars().any(|c| c.is_uppercase())
     }
 
@@ -2954,8 +2952,10 @@ mod tests {
         let mut editor_cx = EditorTestContext::for_editor_in(editor, cx).await;
 
         // Start with case sensitive search settings.
-        let mut search_settings = SearchSettings::default();
-        search_settings.case_sensitive = true;
+        let search_settings = SearchSettings {
+            case_sensitive: true,
+            ..Default::default()
+        };
         update_search_settings(search_settings, cx);
         search_bar.update(cx, |search_bar, cx| {
             let mut search_options = search_bar.search_options;
@@ -2993,8 +2993,10 @@ mod tests {
 
         // Update the editor's search settings, disabling case sensitivity, to
         // check that the value is respected.
-        let mut search_settings = SearchSettings::default();
-        search_settings.case_sensitive = false;
+        let search_settings = SearchSettings {
+            case_sensitive: false,
+            ..Default::default()
+        };
         update_search_settings(search_settings, cx);
         editor_cx.set_state("«ˇfoo»\nFOO\nFoo\nfoo");
         editor_cx.update_editor(|e, window, cx| {

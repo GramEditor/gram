@@ -284,10 +284,11 @@ pub fn task_contexts(workspace: &Workspace, window: &mut Window, cx: &mut App) -
         .collect::<HashMap<_, _>>();
 
     cx.background_spawn(async move {
-        let mut task_contexts = TaskContexts::default();
-
-        task_contexts.lsp_task_sources = lsp_task_sources;
-        task_contexts.latest_selection = latest_selection;
+        let mut task_contexts = TaskContexts {
+            lsp_task_sources,
+            latest_selection,
+            ..Default::default()
+        };
 
         if let Some(editor_context_task) = editor_context_task
             && let Some(editor_context) = editor_context_task.await

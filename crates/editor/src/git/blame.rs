@@ -499,7 +499,7 @@ impl GitBlame {
                         })
                         .collect::<Result<Vec<_>>>()
                 })??;
-                let provider_registry = cx.update(|cx| GitHostingProviderRegistry::default_global(cx))?;
+                let provider_registry = cx.update(GitHostingProviderRegistry::default_global)?;
                 let (results, errors) = cx
                     .background_spawn({
                         async move {

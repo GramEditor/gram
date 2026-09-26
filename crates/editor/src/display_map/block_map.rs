@@ -878,13 +878,11 @@ impl BlockMap {
         blocks.dedup_by(|right, left| match (left.0.clone(), right.0.clone()) {
             (BlockPlacement::Replace(range), BlockPlacement::Above(row))
             | (BlockPlacement::Replace(range), BlockPlacement::Below(row)) => range.contains(&row),
-            (BlockPlacement::Replace(range_a), BlockPlacement::Replace(range_b)) => {
-                if range_a.end() >= range_b.start() && range_a.start() <= range_b.end() {
-                    left.0 = BlockPlacement::Replace(*range_a.start()..=*range_a.end().max(range_b.end()));
-                    true
-                } else {
-                    false
-                }
+            (BlockPlacement::Replace(range_a), BlockPlacement::Replace(range_b))
+                if range_a.end() >= range_b.start() && range_a.start() <= range_b.end() =>
+            {
+                left.0 = BlockPlacement::Replace(*range_a.start()..=*range_a.end().max(range_b.end()));
+                true
             }
             _ => false,
         });
@@ -1574,9 +1572,7 @@ impl BlockSnapshot {
                     if block.place_below() {
                         let wrap_row = start.1 - RowDelta(1);
                         WrapPoint::new(wrap_row, self.wrap_snapshot.line_len(wrap_row))
-                    } else if block.place_above() {
-                        WrapPoint::new(start.1, 0)
-                    } else if bias == Bias::Left {
+                    } else if block.place_above() || bias == Bias::Left {
                         WrapPoint::new(start.1, 0)
                     } else {
                         let wrap_row = end.1 - RowDelta(1);

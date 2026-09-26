@@ -365,7 +365,7 @@ impl TerminalPanel {
                     new_pane.update(cx, |pane, cx| {
                         pane.add_item(item, true, true, None, window, cx);
                     });
-                    self.center.split(&pane, &new_pane, direction).log_err();
+                    self.center.split(pane, &new_pane, direction).log_err();
                     window.focus(&new_pane.focus_handle(cx), cx);
                 }
             }
@@ -594,7 +594,7 @@ impl TerminalPanel {
                 .filter_map(|(index, item)| Some((index, item.act_as::<TerminalView>(cx)?)))
                 .filter_map(|(index, terminal_view)| {
                     let task_state = terminal_view.read(cx).terminal().read(cx).task()?;
-                    if &task_state.spawned_task.full_label == label {
+                    if task_state.spawned_task.full_label == label {
                         Some((index, terminal_view))
                     } else {
                         None
@@ -1723,7 +1723,7 @@ mod tests {
                         format!(
                             "{cmd}{args}",
                             cmd = user_command.clone(),
-                            args = user_args.iter().fold(String::new(), |acc, arg| acc + " " + &arg)
+                            args = user_args.iter().fold(String::new(), |acc, arg| acc + " " + arg)
                         ),
                     ],
                     "Use command should have been moved into the arguments, as we're spawning a new -i shell",
@@ -1733,7 +1733,7 @@ mod tests {
                     format!(
                         "{shell} {interactive}-c '{user_command}{args}'",
                         interactive = if cfg!(windows) { "" } else { "-i " },
-                        args = user_args.iter().fold(String::new(), |acc, arg| acc + " " + &arg)
+                        args = user_args.iter().fold(String::new(), |acc, arg| acc + " " + arg)
                     ),
                     "We want to show to the user the entire command spawned"
                 );

@@ -377,6 +377,7 @@ impl Default for FakeAdapter {
     }
 }
 
+#[cfg(any(test, feature = "test-support"))]
 impl FakeAdapter {
     pub const ADAPTER_NAME: &'static str = "fake-adapter";
 

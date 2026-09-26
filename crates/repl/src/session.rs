@@ -208,7 +208,7 @@ impl Session {
         let mut session = Self {
             fs,
             editor,
-            kernel: Kernel::StartingKernel(Task::ready(()).shared()),
+            kernel: Kernel::Starting(Task::ready(()).shared()),
             blocks: HashMap::default(),
             result_inlays: HashMap::default(),
             next_inlay_id: 0,
@@ -232,7 +232,7 @@ impl Session {
 
         let kernel = match self.kernel_specification.clone() {
             KernelSpecification::Jupyter(kernel_specification)
-            | KernelSpecification::PythonEnv(kernel_specification) => NativeRunningKernel::new(
+            | KernelSpecification::PythonEnv(kernel_specification) => NativeRunningKernel::launch(
                 kernel_specification,
                 entity_id,
                 working_directory,
@@ -242,7 +242,7 @@ impl Session {
                 cx,
             ),
             KernelSpecification::Remote(remote_kernel_specification) => {
-                RemoteRunningKernel::new(remote_kernel_specification, working_directory, session_view, window, cx)
+                RemoteRunningKernel::launch(remote_kernel_specification, working_directory, session_view, window, cx)
             }
         };
 
@@ -253,7 +253,7 @@ impl Session {
                 match kernel {
                     Ok(kernel) => {
                         this.update(cx, |session, cx| {
-                            session.kernel(Kernel::RunningKernel(kernel), cx);
+                            session.kernel(Kernel::Running(kernel), cx);
                         })
                         .ok();
                     }
@@ -267,7 +267,7 @@ impl Session {
             })
             .shared();
 
-        self.kernel(Kernel::StartingKernel(pending_kernel), cx);
+        self.kernel(Kernel::Starting(pending_kernel), cx);
         cx.notify();
     }
 
@@ -346,7 +346,7 @@ impl Session {
     }
 
     fn send(&mut self, message: JupyterMessage, _cx: &mut Context<Self>) -> anyhow::Result<()> {
-        if let Kernel::RunningKernel(kernel) = &mut self.kernel {
+        if let Kernel::Running(kernel) = &mut self.kernel {
             kernel.request_tx().try_send(message).ok();
         }
 
@@ -474,8 +474,8 @@ impl Session {
 
         let status = match &self.kernel {
             Kernel::Restarting => ExecutionStatus::Restarting,
-            Kernel::RunningKernel(_) => ExecutionStatus::Queued,
-            Kernel::StartingKernel(_) => ExecutionStatus::ConnectingToKernel,
+            Kernel::Running(_) => ExecutionStatus::Queued,
+            Kernel::Starting(_) => ExecutionStatus::ConnectingToKernel,
             Kernel::ErroredLaunch(error) => ExecutionStatus::KernelErrored(error.clone()),
             Kernel::ShuttingDown => ExecutionStatus::ShuttingDown,
             Kernel::Shutdown => ExecutionStatus::Shutdown,
@@ -545,10 +545,10 @@ impl Session {
         self.blocks.insert(message.header.msg_id.clone(), editor_block);
 
         match &self.kernel {
-            Kernel::RunningKernel(_) => {
+            Kernel::Running(_) => {
                 self.send(message, cx).ok();
             }
-            Kernel::StartingKernel(task) => {
+            Kernel::Starting(task) => {
                 // Queue up the execution as a task to run after the kernel starts
                 let task = task.clone();
 
@@ -618,10 +618,10 @@ impl Session {
 
     pub fn interrupt(&mut self, cx: &mut Context<Self>) {
         match &mut self.kernel {
-            Kernel::RunningKernel(_kernel) => {
+            Kernel::Running(_kernel) => {
                 self.send(InterruptRequest {}.into(), cx).ok();
             }
-            Kernel::StartingKernel(_task) => {
+            Kernel::Starting(_task) => {
                 // NOTE: If we switch to a literal queue instead of chaining on to the task, clear all queued executions
             }
             _ => {}
@@ -640,7 +640,7 @@ impl Session {
         let kernel = std::mem::replace(&mut self.kernel, Kernel::ShuttingDown);
 
         match kernel {
-            Kernel::RunningKernel(mut kernel) => {
+            Kernel::Running(mut kernel) => {
                 let mut request_tx = kernel.request_tx();
 
                 let forced = kernel.force_shutdown(window, cx);
@@ -677,7 +677,7 @@ impl Session {
             Kernel::Restarting => {
                 // Do nothing if already restarting
             }
-            Kernel::RunningKernel(mut kernel) => {
+            Kernel::Running(mut kernel) => {
                 let mut request_tx = kernel.request_tx();
 
                 let forced = kernel.force_shutdown(window, cx);
@@ -722,7 +722,7 @@ impl EventEmitter<SessionEvent> for Session {}
 impl Render for Session {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let (status_text, interrupt_button) = match &self.kernel {
-            Kernel::RunningKernel(kernel) => (
+            Kernel::Running(kernel) => (
                 kernel
                     .kernel_info()
                     .as_ref()
@@ -735,7 +735,7 @@ impl Render for Session {
                         })),
                 ),
             ),
-            Kernel::StartingKernel(_) => (Some("Starting".into()), None),
+            Kernel::Starting(_) => (Some("Starting".into()), None),
             Kernel::ErroredLaunch(err) => (Some(format!("Error: {err}")), None),
             Kernel::ShuttingDown => (Some("Shutting Down".into()), None),
             Kernel::Shutdown => (Some("Shutdown".into()), None),
@@ -744,7 +744,7 @@ impl Render for Session {
 
         KernelListItem::new(self.kernel_specification.clone())
             .status_color(match &self.kernel {
-                Kernel::RunningKernel(kernel) => match kernel.execution_state() {
+                Kernel::Running(kernel) => match kernel.execution_state() {
                     ExecutionState::Idle => Color::Success,
                     ExecutionState::Busy => Color::Modified,
                     ExecutionState::Unknown => Color::Modified,
@@ -755,7 +755,7 @@ impl Render for Session {
                     ExecutionState::Dead => Color::Disabled,
                     ExecutionState::Other(_) => Color::Modified,
                 },
-                Kernel::StartingKernel(_) => Color::Modified,
+                Kernel::Starting(_) => Color::Modified,
                 Kernel::ErroredLaunch(_) => Color::Error,
                 Kernel::ShuttingDown => Color::Modified,
                 Kernel::Shutdown => Color::Disabled,

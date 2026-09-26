@@ -605,7 +605,7 @@ mod tests {
             let path_matcher = PathMatcher::new(&[valid_path.to_owned()], PathStyle::local())
                 .unwrap_or_else(|e| panic!("Valid path {valid_path} should be accepted, but got: {e}"));
             assert!(
-                path_matcher.is_match(&RelPath::new(valid_path.as_ref(), PathStyle::local()).unwrap()),
+                path_matcher.is_match(RelPath::new(valid_path.as_ref(), PathStyle::local()).unwrap()),
                 "Path matcher for valid path {valid_path} should match itself"
             )
         }

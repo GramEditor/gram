@@ -102,6 +102,7 @@ impl<V: OutputContent + 'static> OutputContent for Entity<V> {
     }
 }
 
+#[allow(clippy::enum_variant_names)]
 pub enum Output {
     Plain {
         content: Entity<TerminalOutput>,
@@ -417,10 +418,10 @@ impl ExecutionView {
                         self.status = ExecutionStatus::Finished;
                         if self.outputs.is_empty() {
                             cx.emit(ExecutionViewFinishedEmpty);
-                        } else if ReplSettings::get_global(cx).inline_output {
-                            if let Some(small_text) = self.get_small_inline_output(cx) {
-                                cx.emit(ExecutionViewFinishedSmall(small_text));
-                            }
+                        } else if ReplSettings::get_global(cx).inline_output
+                            && let Some(small_text) = self.get_small_inline_output(cx)
+                        {
+                            cx.emit(ExecutionViewFinishedSmall(small_text));
                         }
                     }
                     ExecutionState::Unknown => self.status = ExecutionStatus::Unknown,

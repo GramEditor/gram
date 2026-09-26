@@ -33,12 +33,9 @@ impl Render for ToolbarControls {
         let mut include_warnings = false;
         let mut is_updating = false;
 
-        match &self.editor {
-            Some(editor) => {
-                include_warnings = editor.include_warnings(cx);
-                is_updating = editor.is_updating(cx);
-            }
-            None => {}
+        if let Some(editor) = &self.editor {
+            include_warnings = editor.include_warnings(cx);
+            is_updating = editor.is_updating(cx);
         }
 
         let warning_tooltip = if include_warnings {

@@ -52,7 +52,6 @@ use std::ops::RangeInclusive;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::time::Duration;
-use std::u64;
 use std::{
     any::Any,
     collections::hash_map::Entry,
@@ -232,7 +231,7 @@ impl RunningMode {
         &self.worktree
     }
 
-    fn unset_breakpoints_from_paths(&self, paths: &Vec<Arc<Path>>, cx: &mut App) -> Task<()> {
+    fn unset_breakpoints_from_paths(&self, paths: &[Arc<Path>], cx: &mut App) -> Task<()> {
         let tasks: Vec<_> = paths
             .iter()
             .map(|path| {
@@ -269,7 +268,8 @@ impl RunningMode {
             .chain(
                 self.tmp_breakpoint
                     .iter()
-                    .filter_map(|breakpoint| breakpoint.path.eq(&abs_path).then(|| breakpoint.clone())),
+                    .filter(|&breakpoint| breakpoint.path.eq(&abs_path))
+                    .cloned(),
             )
             .map(Into::into)
             .collect();
@@ -1285,7 +1285,7 @@ impl Session {
     }
 
     pub fn has_new_output(&self, last_update: OutputToken) -> bool {
-        self.output_token.0.checked_sub(last_update.0).unwrap_or(0) != 0
+        self.output_token.0.saturating_sub(last_update.0) != 0
     }
 
     pub fn output(&self, since: OutputToken) -> (impl Iterator<Item = &dap::OutputEvent>, OutputToken) {
@@ -1293,7 +1293,7 @@ impl Session {
             return (self.output.range(0..0), OutputToken(0));
         };
 
-        let events_since = self.output_token.0.checked_sub(since.0).unwrap_or(0);
+        let events_since = self.output_token.0.saturating_sub(since.0);
 
         let clamped_events_since = events_since.clamp(0, self.output.len());
         (
@@ -1838,7 +1838,8 @@ impl Session {
             let exception_filters = self
                 .exception_breakpoints
                 .values()
-                .filter_map(|(filter, is_enabled)| is_enabled.then(|| filter.clone()))
+                .filter(|&(_filter, is_enabled)| *is_enabled)
+                .map(|(filter, _is_enabled)| filter.clone())
                 .collect();
 
             let supports_exception_filters = self.capabilities.supports_exception_filter_options.unwrap_or_default();
@@ -1862,7 +1863,8 @@ impl Session {
             let breakpoints = self
                 .data_breakpoints
                 .values()
-                .filter_map(|state| state.is_enabled.then(|| state.dap.clone()))
+                .filter(|&state| state.is_enabled)
+                .map(|state| state.dap.clone())
                 .collect();
             let command = SetDataBreakpointsCommand { breakpoints };
             mode.request(command).detach_and_log_err(cx);
@@ -2084,7 +2086,7 @@ impl Session {
         let command = NextCommand {
             inner: StepCommand {
                 thread_id: thread_id.0,
-                granularity: supports_stepping_granularity.then(|| granularity),
+                granularity: supports_stepping_granularity.then_some(granularity),
                 single_thread: supports_single_thread_execution_requests,
             },
         };
@@ -2101,7 +2103,7 @@ impl Session {
         let command = StepInCommand {
             inner: StepCommand {
                 thread_id: thread_id.0,
-                granularity: supports_stepping_granularity.then(|| granularity),
+                granularity: supports_stepping_granularity.then_some(granularity),
                 single_thread: supports_single_thread_execution_requests,
             },
         };
@@ -2118,7 +2120,7 @@ impl Session {
         let command = StepOutCommand {
             inner: StepCommand {
                 thread_id: thread_id.0,
-                granularity: supports_stepping_granularity.then(|| granularity),
+                granularity: supports_stepping_granularity.then_some(granularity),
                 single_thread: supports_single_thread_execution_requests,
             },
         };
@@ -2135,7 +2137,7 @@ impl Session {
         let command = StepBackCommand {
             inner: StepCommand {
                 thread_id: thread_id.0,
-                granularity: supports_stepping_granularity.then(|| granularity),
+                granularity: supports_stepping_granularity.then_some(granularity),
                 single_thread: supports_single_thread_execution_requests,
             },
         };

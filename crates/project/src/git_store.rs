@@ -133,13 +133,13 @@ struct BufferGitState {
 
 #[derive(Clone, Debug)]
 enum DiffBasesChange {
-    SetIndex(Option<String>),
-    SetHead(Option<String>),
-    SetEach {
+    Index(Option<String>),
+    Head(Option<String>),
+    Each {
         index: Option<String>,
         head: Option<String>,
     },
-    SetBoth(Option<String>),
+    Both(Option<String>),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -687,7 +687,7 @@ impl GitStore {
                     Self::open_diff_internal(
                         this,
                         DiffKind::Unstaged,
-                        staged_text.await.map(DiffBasesChange::SetIndex),
+                        staged_text.await.map(DiffBasesChange::Index),
                         buffer,
                         cx,
                     )
@@ -1160,7 +1160,7 @@ impl GitStore {
         };
 
         match event {
-            WorktreeStoreEvent::WorktreeUpdatedEntries(worktree_id, updated_entries) => {
+            WorktreeStoreEvent::UpdatedEntries(worktree_id, updated_entries) => {
                 if let Some(worktree) = self.worktree_store.read(cx).worktree_for_id(*worktree_id, cx) {
                     let paths_by_git_repo = self.process_updated_entries(&worktree, updated_entries, cx);
                     let downstream = downstream.as_ref().map(|downstream| downstream.updates_tx.clone());
@@ -1176,7 +1176,7 @@ impl GitStore {
                     .detach();
                 }
             }
-            WorktreeStoreEvent::WorktreeUpdatedGitRepositories(worktree_id, changed_repos) => {
+            WorktreeStoreEvent::UpdatedGitRepositories(worktree_id, changed_repos) => {
                 let Some(worktree) = worktree_store.read(cx).worktree_for_id(*worktree_id, cx) else {
                     return;
                 };
@@ -1198,7 +1198,7 @@ impl GitStore {
                 );
                 self.local_worktree_git_repos_changed(worktree, changed_repos, cx);
             }
-            WorktreeStoreEvent::WorktreeRemoved(_entity_id, worktree_id) => {
+            WorktreeStoreEvent::Removed(_entity_id, worktree_id) => {
                 let repos_without_worktree: Vec<RepositoryId> = self
                     .worktree_ids
                     .iter_mut()
@@ -1290,10 +1290,7 @@ impl GitStore {
             }) {
                 let repo_id = *id;
                 if let Some(new_work_directory_abs_path) = update.new_work_directory_abs_path.clone() {
-                    self.worktree_ids
-                        .entry(repo_id)
-                        .or_insert_with(HashSet::new)
-                        .insert(worktree_id);
+                    self.worktree_ids.entry(repo_id).or_default().insert(worktree_id);
                     existing.update(cx, |existing, cx| {
                         existing.snapshot.work_directory_abs_path = new_work_directory_abs_path;
                         existing.schedule_scan(updates_tx.clone(), cx);
@@ -2474,7 +2471,7 @@ impl GitStore {
                 .map(|(path, status)| proto::TreeDiffStatus {
                     path: path.as_ref().to_proto(),
                     status: match status {
-                        TreeDiffStatus::Added {} => proto::tree_diff_status::Status::Added.into(),
+                        TreeDiffStatus::Added => proto::tree_diff_status::Status::Added.into(),
                         TreeDiffStatus::Modified { .. } => proto::tree_diff_status::Status::Modified.into(),
                         TreeDiffStatus::Deleted { .. } => proto::tree_diff_status::Status::Deleted.into(),
                     },
@@ -2764,7 +2761,7 @@ impl GitStore {
             return;
         };
 
-        for (_, repo) in &self.repositories {
+        for repo in self.repositories.values() {
             repo.update(cx, |repo, cx| {
                 repo.schedule_scan(downstream.as_ref().map(|downstream| downstream.updates_tx.clone()), cx);
             });
@@ -2797,7 +2794,7 @@ impl BufferGitState {
     fn buffer_language_changed(&mut self, buffer: Entity<Buffer>, cx: &mut Context<Self>) {
         self.language = buffer.read(cx).language().cloned();
         self.language_changed = true;
-        let _ = self.recalculate_diffs(buffer.read(cx).text_snapshot(), cx);
+        self.recalculate_diffs(buffer.read(cx).text_snapshot(), cx);
     }
 
     fn reparse_conflict_markers(
@@ -2873,10 +2870,10 @@ impl BufferGitState {
         };
 
         let diff_bases_change = match mode {
-            Mode::HeadOnly => DiffBasesChange::SetHead(message.committed_text),
-            Mode::IndexOnly => DiffBasesChange::SetIndex(message.staged_text),
-            Mode::IndexMatchesHead => DiffBasesChange::SetBoth(message.committed_text),
-            Mode::IndexAndHead => DiffBasesChange::SetEach {
+            Mode::HeadOnly => DiffBasesChange::Head(message.committed_text),
+            Mode::IndexOnly => DiffBasesChange::Index(message.staged_text),
+            Mode::IndexMatchesHead => DiffBasesChange::Both(message.committed_text),
+            Mode::IndexAndHead => DiffBasesChange::Each {
                 index: message.staged_text,
                 head: message.committed_text,
             },
@@ -2908,21 +2905,21 @@ impl BufferGitState {
         cx: &mut Context<Self>,
     ) {
         match diff_bases_change {
-            Some(DiffBasesChange::SetIndex(index)) => {
+            Some(DiffBasesChange::Index(index)) => {
                 self.index_text = index.map(|mut index| {
                     text::LineEnding::normalize(&mut index);
                     Arc::from(index.as_str())
                 });
                 self.index_changed = true;
             }
-            Some(DiffBasesChange::SetHead(head)) => {
+            Some(DiffBasesChange::Head(head)) => {
                 self.head_text = head.map(|mut head| {
                     text::LineEnding::normalize(&mut head);
                     Arc::from(head.as_str())
                 });
                 self.head_changed = true;
             }
-            Some(DiffBasesChange::SetBoth(text)) => {
+            Some(DiffBasesChange::Both(text)) => {
                 let text = text.map(|mut text| {
                     text::LineEnding::normalize(&mut text);
                     Arc::from(text.as_str())
@@ -2932,7 +2929,7 @@ impl BufferGitState {
                 self.head_changed = true;
                 self.index_changed = true;
             }
-            Some(DiffBasesChange::SetEach { index, head }) => {
+            Some(DiffBasesChange::Each { index, head }) => {
                 self.index_text = index.map(|mut index| {
                     text::LineEnding::normalize(&mut index);
                     Arc::from(index.as_str())
@@ -3543,28 +3540,28 @@ impl Repository {
                                     let head_changed = head_text.as_deref() != current_head.as_deref();
                                     if index_changed && head_changed {
                                         if index_text == head_text {
-                                            Some(DiffBasesChange::SetBoth(head_text))
+                                            Some(DiffBasesChange::Both(head_text))
                                         } else {
-                                            Some(DiffBasesChange::SetEach {
+                                            Some(DiffBasesChange::Each {
                                                 index: index_text,
                                                 head: head_text,
                                             })
                                         }
                                     } else if index_changed {
-                                        Some(DiffBasesChange::SetIndex(index_text))
+                                        Some(DiffBasesChange::Index(index_text))
                                     } else if head_changed {
-                                        Some(DiffBasesChange::SetHead(head_text))
+                                        Some(DiffBasesChange::Head(head_text))
                                     } else {
                                         None
                                     }
                                 }
                                 (Some(current_index), None) => {
                                     let index_changed = index_text.as_deref() != current_index.as_deref();
-                                    index_changed.then_some(DiffBasesChange::SetIndex(index_text))
+                                    index_changed.then_some(DiffBasesChange::Index(index_text))
                                 }
                                 (None, Some(current_head)) => {
                                     let head_changed = head_text.as_deref() != current_head.as_deref();
-                                    head_changed.then_some(DiffBasesChange::SetHead(head_text))
+                                    head_changed.then_some(DiffBasesChange::Head(head_text))
                                 }
                                 (None, None) => None,
                             };
@@ -3591,10 +3588,10 @@ impl Repository {
                                 diff_bases_change.clone().zip(downstream_client)
                             {
                                 let (staged_text, committed_text, mode) = match diff_bases_change {
-                                    DiffBasesChange::SetIndex(index) => (index, None, Mode::IndexOnly),
-                                    DiffBasesChange::SetHead(head) => (None, head, Mode::HeadOnly),
-                                    DiffBasesChange::SetEach { index, head } => (index, head, Mode::IndexAndHead),
-                                    DiffBasesChange::SetBoth(text) => (None, text, Mode::IndexMatchesHead),
+                                    DiffBasesChange::Index(index) => (index, None, Mode::IndexOnly),
+                                    DiffBasesChange::Head(head) => (None, head, Mode::HeadOnly),
+                                    DiffBasesChange::Each { index, head } => (index, head, Mode::IndexAndHead),
+                                    DiffBasesChange::Both(text) => (None, text, Mode::IndexMatchesHead),
                                 };
                                 client
                                     .send(proto::UpdateDiffBases {
@@ -5565,9 +5562,9 @@ impl Repository {
                     let committed_text = backend.load_committed_text(repo_path.clone()).await;
                     let staged_text = backend.load_index_text(repo_path).await;
                     let diff_bases_change = if committed_text == staged_text {
-                        DiffBasesChange::SetBoth(committed_text)
+                        DiffBasesChange::Both(committed_text)
                     } else {
-                        DiffBasesChange::SetEach {
+                        DiffBasesChange::Each {
                             index: staged_text,
                             head: committed_text,
                         }
@@ -5585,8 +5582,8 @@ impl Repository {
                         .await?;
                     let mode = Mode::try_from(response.mode).context("Invalid mode")?;
                     let bases = match mode {
-                        Mode::IndexMatchesHead => DiffBasesChange::SetBoth(response.committed_text),
-                        Mode::IndexAndHead => DiffBasesChange::SetEach {
+                        Mode::IndexMatchesHead => DiffBasesChange::Both(response.committed_text),
+                        Mode::IndexAndHead => DiffBasesChange::Each {
                             head: response.committed_text,
                             index: response.staged_text,
                         },

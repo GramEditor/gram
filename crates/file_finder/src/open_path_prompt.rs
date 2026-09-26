@@ -372,7 +372,7 @@ impl PickerDelegate for OpenPathDelegate {
                     })
                     .unwrap_or(false);
 
-                let current_dir_in_new_entries = new_entries.iter().any(|entry| &entry.path.string == current_dir);
+                let current_dir_in_new_entries = new_entries.iter().any(|entry| entry.path.string == current_dir);
 
                 if should_prepend_with_current_dir && !current_dir_in_new_entries {
                     new_entries.insert(
