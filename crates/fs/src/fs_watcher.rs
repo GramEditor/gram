@@ -253,49 +253,14 @@ impl Watcher for FsWatcher {
             |g| {
                 g.add(watch_path, mode, move |event: &notify::Event| {
                     log::trace!("watcher ({:?}) received event: {:?}", debug_path, event);
-                    let kind = match event.kind {
-                        EventKind::Create(_) => Some(PathEventKind::Created),
-                        EventKind::Modify(_) => Some(PathEventKind::Changed),
-                        EventKind::Remove(_) => Some(PathEventKind::Removed),
-                        _ => None,
-                    };
-                    let mut path_events = event
-                        .paths
-                        .iter()
-                        .filter_map(|event_path| {
-                            let cano_path = cano_path.clone();
-                            let event_path = SanitizedPath::new(event_path);
-                            if event_path.starts_with(&root_path) {
-                                return Some(PathEvent {
-                                    path: event_path.as_path().to_path_buf(),
-                                    kind,
-                                });
-                            }
-                            if let Some(cano) = &cano_path
-                                && event_path.starts_with(cano)
-                            {
-                                return Some(PathEvent {
-                                    path: event_path.as_path().to_path_buf(),
-                                    kind,
-                                });
-                            }
-                            None
-                        })
-                        .collect::<Vec<_>>();
-
-                    let is_rescan_event = event.need_rescan();
-                    if is_rescan_event {
-                        log::warn!("filesystem watcher lost sync for {callback_path:?}");
-                        path_events.retain(|p| p.path != callback_path.as_ref());
-                        path_events.push(PathEvent {
-                            path: callback_path.to_path_buf(),
-                            kind: Some(PathEventKind::Rescan),
-                        });
-                    }
-
-                    if !path_events.is_empty() {
-                        push_path_events(&tx, &pending_paths, path_events);
-                    }
+                    push_notify_event(
+                        &tx,
+                        &pending_paths,
+                        &root_path,
+                        cano_path.as_deref(),
+                        &callback_path,
+                        event,
+                    );
                 })
             }
         });
@@ -323,6 +288,54 @@ impl Watcher for FsWatcher {
         }
         Ok(())
     }
+}
+
+fn push_notify_event(
+    tx: &Sender<()>,
+    pending_path_events: &Arc<Mutex<Vec<PathEvent>>>,
+    root_path: &SanitizedPath,
+    cano_path: Option<&SanitizedPath>,
+    watched_root: &Path,
+    event: &notify::Event,
+) {
+    let kind = match event.kind {
+        EventKind::Create(_) => Some(PathEventKind::Created),
+        EventKind::Modify(_) => Some(PathEventKind::Changed),
+        EventKind::Remove(_) => Some(PathEventKind::Removed),
+        _ => None,
+    };
+    let mut path_events = event
+        .paths
+        .iter()
+        .filter_map(|event_path| {
+            let event_path = SanitizedPath::new(event_path);
+            if event_path.starts_with(root_path) || cano_path.is_some_and(|cano| event_path.starts_with(cano)) {
+                return Some(PathEvent {
+                    path: event_path.as_path().to_path_buf(),
+                    kind,
+                });
+            }
+            None
+        })
+        .collect::<Vec<_>>();
+
+    if event.need_rescan() {
+        if path_events.is_empty() {
+            log::warn!("filesystem watcher lost sync for {watched_root:?}");
+            path_events.push(PathEvent {
+                path: watched_root.to_path_buf(),
+                kind: Some(PathEventKind::Rescan),
+            });
+        } else {
+            log::warn!("filesystem watcher lost sync for {:?}", path_events);
+            for path_event in &mut path_events {
+                path_event.kind = Some(PathEventKind::Rescan);
+            }
+        }
+    }
+
+    log::trace!("path_events: {:?}", path_events);
+    push_path_events(tx, pending_path_events, path_events);
 }
 
 pub(crate) struct PollFsWatcher {
