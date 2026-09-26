@@ -43,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Require permission to download or use extension-provided DAPs
 - Update Zig tree-sitter queries (#553) by @koru
 - Update bundled git version to 2.53.0 (Mac OS)
+- Fit image to view on first paint (#589) by @Emilinya
 
 ## Fixed
 
