@@ -5577,7 +5577,7 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                 SettingsPageItem::SettingItem(SettingItem {
                     title: "Side By Side Diff",
                     description: "Open repository diffs, commits and file comparisons in two panels.",
-                    aliases: None,
+                    aliases: Some(&["Split Diff"]),
                     field: Box::new(SettingField {
                         json_path: Some("git.split_diff"),
                         pick: |content| content.git.as_ref()?.split_diff.as_ref(),
