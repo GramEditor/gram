@@ -66,6 +66,12 @@ impl SpinnerVariant {
     }
 }
 
+impl Default for SpinnerLabel {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SpinnerLabel {
     pub fn new() -> Self {
         Self::with_variant(SpinnerVariant::default())

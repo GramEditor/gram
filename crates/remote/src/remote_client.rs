@@ -770,7 +770,7 @@ impl RemoteClient {
 
     pub fn shares_network_interface(&self) -> bool {
         self.remote_connection()
-            .map_or(false, |connection| connection.shares_network_interface())
+            .is_some_and(|connection| connection.shares_network_interface())
     }
 
     pub fn build_command(

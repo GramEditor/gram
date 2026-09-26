@@ -58,7 +58,6 @@ use debugger::{
     dap_store::{DapStore, DapStoreEvent},
     session::Session,
 };
-use encoding_rs;
 pub use environment::ProjectEnvironment;
 #[cfg(test)]
 use futures::future::join_all;
@@ -3146,7 +3145,7 @@ impl Project {
         let mut candidates = vec![];
         let path_style = self.path_style(cx);
         if let Ok(path) = RelPath::new(path.as_ref(), path_style) {
-            candidates.push(path.into_arc());
+            candidates.push(path.to_arc());
         }
 
         if let Some(file) = buffer.read(cx).file()
@@ -3155,7 +3154,7 @@ impl Project {
             if let Some(joined) = path_style.join(&*dir.display(path_style), path)
                 && let Some(joined) = RelPath::new(joined.as_ref(), path_style).ok()
             {
-                candidates.push(joined.into_arc());
+                candidates.push(joined.to_arc());
             }
         }
 
@@ -3353,7 +3352,7 @@ impl Project {
                 {
                     return Some(ProjectPath {
                         worktree_id: worktree.read(cx).id(),
-                        path: path.into_arc(),
+                        path: path.to_arc(),
                     });
                 }
             }
@@ -3377,7 +3376,7 @@ impl Project {
                 {
                     return Some(ProjectPath {
                         worktree_id: worktree.read(cx).id(),
-                        path: path.into_arc(),
+                        path: path.to_arc(),
                     });
                 }
             }
@@ -3742,7 +3741,7 @@ impl Project {
     }
 
     fn synchronize_remote_buffers(&mut self, _cx: &mut Context<Self>) -> Task<Result<()>> {
-        return Task::ready(Err(anyhow!("can't synchronize remote buffers on a local project")));
+        Task::ready(Err(anyhow!("can't synchronize remote buffers on a local project")))
     }
 
     pub fn worktree_metadata_protos(&self, cx: &App) -> Vec<proto::WorktreeMetadata> {

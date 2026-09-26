@@ -145,7 +145,7 @@ impl WorktreeStore {
             if let Ok(relative_path) = abs_path.as_ref().strip_prefix(tree.read(cx).abs_path())
                 && let Ok(relative_path) = RelPath::new(relative_path, path_style)
             {
-                return Some((tree.clone(), relative_path.into_arc()));
+                return Some((tree.clone(), relative_path.to_arc()));
             }
         }
         None
@@ -469,7 +469,7 @@ impl WorktreeStore {
             let response = client
                 .request(proto::AddWorktree {
                     project_id: REMOTE_SERVER_PROJECT_ID,
-                    path: path.to_proto(),
+                    path: path.into_proto(),
                     visible,
                 })
                 .await?;

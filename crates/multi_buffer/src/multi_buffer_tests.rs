@@ -1596,7 +1596,7 @@ fn test_set_excerpts_for_buffer_ordering(cx: &mut TestAppContext) {
             cx,
         )
     });
-    let path1: PathKey = PathKey::with_sort_prefix(0, rel_path("root").into_arc());
+    let path1: PathKey = PathKey::with_sort_prefix(0, rel_path("root").to_arc());
 
     let multibuffer = cx.new(|_| MultiBuffer::new(Capability::ReadWrite));
     multibuffer.update(cx, |multibuffer, cx| {
@@ -1683,7 +1683,7 @@ fn test_set_excerpts_for_buffer(cx: &mut TestAppContext) {
             cx,
         )
     });
-    let path1: PathKey = PathKey::with_sort_prefix(0, rel_path("root").into_arc());
+    let path1: PathKey = PathKey::with_sort_prefix(0, rel_path("root").to_arc());
     let buf2 = cx.new(|cx| {
         Buffer::local(
             indoc! {
@@ -1702,7 +1702,7 @@ fn test_set_excerpts_for_buffer(cx: &mut TestAppContext) {
             cx,
         )
     });
-    let path2 = PathKey::with_sort_prefix(1, rel_path("root").into_arc());
+    let path2 = PathKey::with_sort_prefix(1, rel_path("root").to_arc());
 
     let multibuffer = cx.new(|_| MultiBuffer::new(Capability::ReadWrite));
     multibuffer.update(cx, |multibuffer, cx| {
@@ -1855,7 +1855,7 @@ fn test_set_excerpts_for_buffer_rename(cx: &mut TestAppContext) {
             cx,
         )
     });
-    let path: PathKey = PathKey::with_sort_prefix(0, rel_path("root").into_arc());
+    let path: PathKey = PathKey::with_sort_prefix(0, rel_path("root").to_arc());
     let buf2 = cx.new(|cx| {
         Buffer::local(
             indoc! {
@@ -2299,7 +2299,7 @@ impl ReferenceMultibuffer {
                             regions.push(ReferenceRegion {
                                 buffer_id: Some(buffer_id),
                                 range: len..text.len(),
-                                buffer_range: Some((offset..hunk_base_range.start).to_point(&buffer)),
+                                buffer_range: Some((offset..hunk_base_range.start).to_point(buffer)),
                                 status: None,
                                 excerpt_id: Some(excerpt.id),
                             });
@@ -2313,7 +2313,7 @@ impl ReferenceMultibuffer {
                         regions.push(ReferenceRegion {
                             buffer_id: Some(buffer_id),
                             range: len..text.len(),
-                            buffer_range: Some(hunk_base_range.to_point(&buffer)),
+                            buffer_range: Some(hunk_base_range.to_point(buffer)),
                             status: Some(DiffHunkStatus::deleted(hunk.secondary_status)),
                             excerpt_id: Some(excerpt.id),
                         });
@@ -2329,7 +2329,7 @@ impl ReferenceMultibuffer {
                 regions.push(ReferenceRegion {
                     buffer_id: Some(buffer_id),
                     range: len..text.len(),
-                    buffer_range: Some((offset..buffer_range.end).to_point(&buffer)),
+                    buffer_range: Some((offset..buffer_range.end).to_point(buffer)),
                     status: None,
                     excerpt_id: Some(excerpt.id),
                 });
@@ -2371,7 +2371,7 @@ impl ReferenceMultibuffer {
                             regions.push(ReferenceRegion {
                                 buffer_id: Some(buffer_id),
                                 range: len..text.len(),
-                                buffer_range: Some((offset..hunk_range.start).to_point(&buffer)),
+                                buffer_range: Some((offset..hunk_range.start).to_point(buffer)),
                                 status: None,
                                 excerpt_id: Some(excerpt.id),
                             });
@@ -2390,7 +2390,7 @@ impl ReferenceMultibuffer {
                             regions.push(ReferenceRegion {
                                 buffer_id: Some(base_buffer.remote_id()),
                                 range: len..text.len(),
-                                buffer_range: Some(hunk.diff_base_byte_range.to_point(&base_buffer)),
+                                buffer_range: Some(hunk.diff_base_byte_range.to_point(base_buffer)),
                                 status: Some(DiffHunkStatus::deleted(hunk.secondary_status)),
                                 excerpt_id: Some(excerpt.id),
                             });
@@ -2407,7 +2407,7 @@ impl ReferenceMultibuffer {
                         let region = ReferenceRegion {
                             buffer_id: Some(buffer_id),
                             range,
-                            buffer_range: Some((offset..hunk_range.end).to_point(&buffer)),
+                            buffer_range: Some((offset..hunk_range.end).to_point(buffer)),
                             status: Some(DiffHunkStatus::added(hunk.secondary_status)),
                             excerpt_id: Some(excerpt.id),
                         };
@@ -2423,7 +2423,7 @@ impl ReferenceMultibuffer {
                 regions.push(ReferenceRegion {
                     buffer_id: Some(buffer_id),
                     range: len..text.len(),
-                    buffer_range: Some((offset..buffer_range.end).to_point(&buffer)),
+                    buffer_range: Some((offset..buffer_range.end).to_point(buffer)),
                     status: None,
                     excerpt_id: Some(excerpt.id),
                 });
@@ -2462,10 +2462,10 @@ impl ReferenceMultibuffer {
                             .find(|e| e.id == region.excerpt_id.unwrap())
                             .map(|e| e.buffer.clone());
                         let is_excerpt_start = region_ix == 0
-                            || &regions[region_ix - 1].excerpt_id != &region.excerpt_id
+                            || regions[region_ix - 1].excerpt_id != region.excerpt_id
                             || regions[region_ix - 1].range.is_empty();
                         let mut is_excerpt_end =
-                            region_ix == regions.len() - 1 || &regions[region_ix + 1].excerpt_id != &region.excerpt_id;
+                            region_ix == regions.len() - 1 || regions[region_ix + 1].excerpt_id != region.excerpt_id;
                         let is_start = !text[region.range.start..ix].contains('\n');
                         let mut is_end = if region.range.end > text.len() {
                             !text[ix..].contains('\n')
@@ -2579,7 +2579,7 @@ async fn test_random_set_ranges(cx: &mut TestAppContext, mut rng: StdRng) {
         .map(|i| i.parse().expect("invalid `OPERATIONS` variable"))
         .unwrap_or(10);
 
-    fn row_ranges(ranges: &Vec<Range<Point>>) -> Vec<Range<u32>> {
+    fn row_ranges(ranges: &[Range<Point>]) -> Vec<Range<u32>> {
         ranges.iter().map(|range| range.start.row..range.end.row).collect()
     }
 
@@ -4175,41 +4175,40 @@ fn test_random_chunk_bitmaps_with_diffs(cx: &mut App, mut rng: StdRng) {
 
     multibuffer.update(cx, |multibuffer, cx| {
         for buffer_id in multibuffer.excerpt_buffer_ids() {
-            if rng.random_bool(0.7) {
-                if let Some(buffer_handle) = multibuffer.buffer(buffer_id) {
-                    let buffer_text = buffer_handle.read(cx).text();
-                    let mut base_text = String::new();
+            if rng.random_bool(0.7)
+                && let Some(buffer_handle) = multibuffer.buffer(buffer_id)
+            {
+                let buffer_text = buffer_handle.read(cx).text();
+                let mut base_text = String::new();
 
-                    for line in buffer_text.lines() {
-                        if rng.random_bool(0.3) {
-                            continue;
-                        } else if rng.random_bool(0.3) {
-                            let line_len = rng.random_range(0..50);
-                            let modified_line = RandomCharIter::new(&mut rng).take(line_len).collect::<String>();
-                            base_text.push_str(&modified_line);
-                            base_text.push('\n');
-                        } else {
-                            base_text.push_str(line);
-                            base_text.push('\n');
-                        }
+                for line in buffer_text.lines() {
+                    if rng.random_bool(0.3) {
+                        continue;
+                    } else if rng.random_bool(0.3) {
+                        let line_len = rng.random_range(0..50);
+                        let modified_line = RandomCharIter::new(&mut rng).take(line_len).collect::<String>();
+                        base_text.push_str(&modified_line);
+                        base_text.push('\n');
+                    } else {
+                        base_text.push_str(line);
+                        base_text.push('\n');
                     }
-
-                    if rng.random_bool(0.5) {
-                        let extra_lines = rng.random_range(1..5);
-                        for _ in 0..extra_lines {
-                            let line_len = rng.random_range(0..50);
-                            let extra_line = RandomCharIter::new(&mut rng).take(line_len).collect::<String>();
-                            base_text.push_str(&extra_line);
-                            base_text.push('\n');
-                        }
-                    }
-
-                    let diff = cx.new(|cx| {
-                        BufferDiff::new_with_base_text(&base_text, &buffer_handle.read(cx).text_snapshot(), cx)
-                    });
-                    diffs.push(diff.clone());
-                    multibuffer.add_diff(diff, cx);
                 }
+
+                if rng.random_bool(0.5) {
+                    let extra_lines = rng.random_range(1..5);
+                    for _ in 0..extra_lines {
+                        let line_len = rng.random_range(0..50);
+                        let extra_line = RandomCharIter::new(&mut rng).take(line_len).collect::<String>();
+                        base_text.push_str(&extra_line);
+                        base_text.push('\n');
+                    }
+                }
+
+                let diff = cx
+                    .new(|cx| BufferDiff::new_with_base_text(&base_text, &buffer_handle.read(cx).text_snapshot(), cx));
+                diffs.push(diff.clone());
+                multibuffer.add_diff(diff, cx);
             }
         }
     });
@@ -4331,7 +4330,7 @@ fn collect_word_diffs(base_text: &str, modified_text: &str, cx: &mut TestAppCont
 
 #[gpui::test]
 async fn test_word_diff_simple_replacement(cx: &mut TestAppContext) {
-    let settings_store = cx.update(|cx| SettingsStore::test(cx));
+    let settings_store = cx.update(SettingsStore::test);
     cx.set_global(settings_store);
 
     let base_text = "hello world foo bar\n";
@@ -4344,7 +4343,7 @@ async fn test_word_diff_simple_replacement(cx: &mut TestAppContext) {
 
 #[gpui::test]
 async fn test_word_diff_white_space(cx: &mut TestAppContext) {
-    let settings_store = cx.update(|cx| SettingsStore::test(cx));
+    let settings_store = cx.update(SettingsStore::test);
     cx.set_global(settings_store);
 
     let base_text = "hello world foo bar\n";
@@ -4357,7 +4356,7 @@ async fn test_word_diff_white_space(cx: &mut TestAppContext) {
 
 #[gpui::test]
 async fn test_word_diff_consecutive_modified_lines(cx: &mut TestAppContext) {
-    let settings_store = cx.update(|cx| SettingsStore::test(cx));
+    let settings_store = cx.update(SettingsStore::test);
     cx.set_global(settings_store);
 
     let base_text = "aaa bbb\nccc ddd\n";
@@ -4374,7 +4373,7 @@ async fn test_word_diff_consecutive_modified_lines(cx: &mut TestAppContext) {
 
 #[gpui::test]
 async fn test_word_diff_modified_lines_with_deletion_between(cx: &mut TestAppContext) {
-    let settings_store = cx.update(|cx| SettingsStore::test(cx));
+    let settings_store = cx.update(SettingsStore::test);
     cx.set_global(settings_store);
 
     let base_text = "aaa bbb\ndeleted line\nccc ddd\n";

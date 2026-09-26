@@ -1411,7 +1411,7 @@ impl ExtensionStore {
             let result = client
                 .update(cx, |client, _cx| {
                     client.proto_client().request(proto::InstallExtension {
-                        tmp_dir: dest_dir.to_proto(),
+                        tmp_dir: dest_dir.into_proto(),
                         extension: Some(missing_extension.clone()),
                     })
                 })?

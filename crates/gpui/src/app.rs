@@ -390,7 +390,7 @@ impl SystemWindowTabController {
     /// Update the position of a tab within its group.
     pub fn update_tab_position(cx: &mut App, id: WindowId, ix: usize) {
         let mut controller = cx.global_mut::<SystemWindowTabController>();
-        for (_, windows) in controller.tab_groups.iter_mut() {
+        for windows in controller.tab_groups.values_mut() {
             if let Some(current_pos) = windows.iter().position(|tab| tab.id == id) {
                 if ix < windows.len() && current_pos != ix {
                     let window_tab = windows.remove(current_pos);
@@ -410,7 +410,7 @@ impl SystemWindowTabController {
             .flat_map(|windows| windows.iter())
             .find(|tab| tab.id == id);
 
-        if tab.map_or(true, |t| t.title == title) {
+        if tab.is_none_or(|t| t.title == title) {
             return;
         }
 
@@ -1176,11 +1176,10 @@ impl App {
                     return;
                 }
             }
-            Effect::NotifyGlobalObservers { global_type } => {
-                if !self.pending_global_notifications.insert(*global_type) {
+            Effect::NotifyGlobalObservers { global_type }
+                if !self.pending_global_notifications.insert(*global_type) => {
                     return;
                 }
-            }
             _ => {}
         };
 

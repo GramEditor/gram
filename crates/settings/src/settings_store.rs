@@ -240,7 +240,7 @@ pub struct SettingValue<T> {
 pub trait AnySettingValue: 'static + Send + Sync {
     fn setting_type_name(&self) -> &'static str;
 
-    fn from_settings(&self, s: &SettingsContent) -> Box<dyn Any>;
+    fn value_from(&self, s: &SettingsContent) -> Box<dyn Any>;
 
     fn value_for_path(&self, path: Option<SettingsLocation>) -> &dyn Any;
     fn all_local_values(&self) -> Vec<(WorktreeId, Arc<RelPath>, &dyn Any)>;
@@ -479,7 +479,7 @@ impl SettingsStore {
             }))
             .map_err(|err| anyhow::format_err!("Failed to update settings file: {}", err))
             .log_with_level(log::Level::Warn);
-        return rx;
+        rx
     }
 
     pub fn update_settings_file(&self, fs: Arc<dyn Fs>, update: Box<dyn FnOnce(&mut SettingsContent, &App)>) {
@@ -588,7 +588,7 @@ impl SettingsStore {
             // Don't return values from local files in different worktrees
             if let SettingsFile::Project((worktree_id, ref path)) = file
                 && let SettingsFile::Project((target_worktree_id, ref target_path)) = target_file
-                && (worktree_id != target_worktree_id || !target_path.starts_with(&path))
+                && (worktree_id != target_worktree_id || !target_path.starts_with(path))
             {
                 continue;
             }
@@ -633,7 +633,7 @@ impl SettingsStore {
             migration_status,
         };
         self.file_errors.insert(file, result.clone());
-        return (settings, result);
+        (settings, result)
     }
 
     pub fn error_for_file(&self, file: SettingsFile) -> Option<SettingsParseResult> {
@@ -676,7 +676,7 @@ impl SettingsStore {
 
         let mut key_path = Vec::new();
         let mut edits = Vec::new();
-        let tab_size = infer_json_indent_size(&text);
+        let tab_size = infer_json_indent_size(text);
         let mut text = text.to_string();
         update_value_in_json_text(&mut text, &mut key_path, tab_size, &old_value, &new_value, &mut edits);
         edits
@@ -701,7 +701,7 @@ impl SettingsStore {
             self.user_settings = Some(settings);
             self.recompute_values(None, cx);
         }
-        return parse_result;
+        parse_result
     }
 
     /// Sets the global settings via a JSON string.
@@ -714,7 +714,7 @@ impl SettingsStore {
             self.global_settings = Some(Box::new(settings));
             self.recompute_values(None, cx);
         }
-        return parse_result;
+        parse_result
     }
 
     pub fn set_server_settings(&mut self, server_settings_content: &str, cx: &mut App) -> Result<()> {
@@ -725,7 +725,7 @@ impl SettingsStore {
         };
 
         // Rewrite the server settings into a content type
-        self.server_settings = settings.map(|settings| Box::new(settings));
+        self.server_settings = settings.map(Box::new);
 
         self.recompute_values(None, cx);
         Ok(())
@@ -796,7 +796,7 @@ impl SettingsStore {
                             zed_settings_changed = true;
                         }
                         btree_map::Entry::Occupied(mut o) => {
-                            if &o.get().project != &new_settings {
+                            if o.get().project != new_settings {
                                 o.insert(SettingsContent {
                                     project: new_settings,
                                     ..Default::default()
@@ -961,15 +961,15 @@ impl SettingsStore {
                     .expect("LspSettings should be an object")
                     .clone();
 
-                if let Some(properties) = base_lsp_settings.get_mut("properties") {
-                    if let Some(props_obj) = properties.as_object_mut() {
-                        props_obj.insert(
-                            "initialization_options".to_string(),
-                            serde_json::json!({
-                                "$ref": format!("{LSP_SETTINGS_SCHEMA_URL_PREFIX}{adapter_name}")
-                            }),
-                        );
-                    }
+                if let Some(properties) = base_lsp_settings.get_mut("properties")
+                    && let Some(props_obj) = properties.as_object_mut()
+                {
+                    props_obj.insert(
+                        "initialization_options".to_string(),
+                        serde_json::json!({
+                            "$ref": format!("{LSP_SETTINGS_SCHEMA_URL_PREFIX}{adapter_name}")
+                        }),
+                    );
                 }
 
                 lsp_properties.insert(adapter_name.clone(), serde_json::Value::Object(base_lsp_settings));
@@ -1003,7 +1003,7 @@ impl SettingsStore {
             self.merged_settings = Rc::new(merged);
 
             for setting_value in self.setting_values.values_mut() {
-                let value = setting_value.from_settings(&self.merged_settings);
+                let value = setting_value.value_from(&self.merged_settings);
                 setting_value.set_global_value(value);
             }
         }
@@ -1040,7 +1040,7 @@ impl SettingsStore {
             }
 
             for setting_value in self.setting_values.values_mut() {
-                let value = setting_value.from_settings(&project_settings_stack.last().unwrap());
+                let value = setting_value.value_from(project_settings_stack.last().unwrap());
                 setting_value.set_local_value(*root_id, directory_path.clone(), value);
             }
         }
@@ -1205,7 +1205,7 @@ impl Debug for SettingsStore {
 }
 
 impl<T: Settings> AnySettingValue for SettingValue<T> {
-    fn from_settings(&self, s: &SettingsContent) -> Box<dyn Any> {
+    fn value_from(&self, s: &SettingsContent) -> Box<dyn Any> {
         Box::new(T::from_settings(s)) as _
     }
 
@@ -1782,7 +1782,7 @@ mod tests {
         store.register_setting::<DefaultLanguageSettings>();
 
         store.set_user_settings(r#"{"preferred_line_length": 0}"#, cx).unwrap();
-        let local = (WorktreeId::from_usize(0), RelPath::empty().into_arc());
+        let local = (WorktreeId::from_usize(0), RelPath::empty().to_arc());
         store
             .set_local_settings(local.0, local.1.clone(), LocalSettingsKind::Settings, Some(r#"{}"#), cx)
             .unwrap();
@@ -1830,21 +1830,21 @@ mod tests {
         let mut store = SettingsStore::new(cx, &test_settings());
         store.register_setting::<DefaultLanguageSettings>();
 
-        let local_1 = (WorktreeId::from_usize(0), RelPath::empty().into_arc());
+        let local_1 = (WorktreeId::from_usize(0), RelPath::empty().to_arc());
 
         let local_1_child = (
             WorktreeId::from_usize(0),
             RelPath::new(std::path::Path::new("child1"), util::paths::PathStyle::Posix)
                 .unwrap()
-                .into_arc(),
+                .to_arc(),
         );
 
-        let local_2 = (WorktreeId::from_usize(1), RelPath::empty().into_arc());
+        let local_2 = (WorktreeId::from_usize(1), RelPath::empty().to_arc());
         let local_2_child = (
             WorktreeId::from_usize(1),
             RelPath::new(std::path::Path::new("child2"), util::paths::PathStyle::Posix)
                 .unwrap()
-                .into_arc(),
+                .to_arc(),
         );
 
         fn get(content: &SettingsContent) -> Option<&u32> {
@@ -1899,7 +1899,7 @@ mod tests {
         );
 
         // adjacent children should be treated as siblings not inherit from each other
-        let local_1_adjacent_child = (local_1.0, rel_path("adjacent_child").into_arc());
+        let local_1_adjacent_child = (local_1.0, rel_path("adjacent_child").to_arc());
         store
             .set_local_settings(
                 local_1_adjacent_child.0,
@@ -1949,12 +1949,12 @@ mod tests {
 
     #[test]
     fn test_file_ord() {
-        let wt0_root = SettingsFile::Project((WorktreeId::from_usize(0), RelPath::empty().into_arc()));
-        let wt0_child1 = SettingsFile::Project((WorktreeId::from_usize(0), rel_path("child1").into_arc()));
-        let wt0_child2 = SettingsFile::Project((WorktreeId::from_usize(0), rel_path("child2").into_arc()));
+        let wt0_root = SettingsFile::Project((WorktreeId::from_usize(0), RelPath::empty().to_arc()));
+        let wt0_child1 = SettingsFile::Project((WorktreeId::from_usize(0), rel_path("child1").to_arc()));
+        let wt0_child2 = SettingsFile::Project((WorktreeId::from_usize(0), rel_path("child2").to_arc()));
 
-        let wt1_root = SettingsFile::Project((WorktreeId::from_usize(1), RelPath::empty().into_arc()));
-        let wt1_subdir = SettingsFile::Project((WorktreeId::from_usize(1), rel_path("subdir").into_arc()));
+        let wt1_root = SettingsFile::Project((WorktreeId::from_usize(1), RelPath::empty().to_arc()));
+        let wt1_subdir = SettingsFile::Project((WorktreeId::from_usize(1), rel_path("subdir").to_arc()));
 
         let mut files = vec![
             &wt1_root,

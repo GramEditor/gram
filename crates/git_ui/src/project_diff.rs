@@ -1512,7 +1512,7 @@ mod tests {
 
         let editor = cx.update_window_entity(&diff, |diff, window, cx| {
             diff.move_to_path(
-                PathKey::with_sort_prefix(TRACKED_SORT_PREFIX, rel_path("foo").into_arc()),
+                PathKey::with_sort_prefix(TRACKED_SORT_PREFIX, rel_path("foo").to_arc()),
                 window,
                 cx,
             );
@@ -1533,7 +1533,7 @@ mod tests {
 
         let editor = cx.update_window_entity(&diff, |diff, window, cx| {
             diff.move_to_path(
-                PathKey::with_sort_prefix(TRACKED_SORT_PREFIX, rel_path("bar").into_arc()),
+                PathKey::with_sort_prefix(TRACKED_SORT_PREFIX, rel_path("bar").to_arc()),
                 window,
                 cx,
             );
@@ -2090,15 +2090,15 @@ mod tests {
             statuses,
             HashMap::from_iter([
                 (
-                    rel_path("a.txt").into_arc(),
+                    rel_path("a.txt").to_arc(),
                     Some(FileStatus::Tracked(TrackedStatus {
                         index_status: git::status::StatusCode::Modified,
                         worktree_status: git::status::StatusCode::Modified
                     }))
                 ),
-                (rel_path("b.txt").into_arc(), Some(FileStatus::Untracked)),
+                (rel_path("b.txt").to_arc(), Some(FileStatus::Untracked)),
                 (
-                    rel_path("d.txt").into_arc(),
+                    rel_path("d.txt").to_arc(),
                     Some(FileStatus::Tracked(TrackedStatus {
                         index_status: git::status::StatusCode::Added,
                         worktree_status: git::status::StatusCode::Added

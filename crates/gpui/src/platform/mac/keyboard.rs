@@ -30,13 +30,12 @@ impl PlatformKeyboardLayout for MacKeyboardLayout {
 
 impl PlatformKeyboardMapper for MacKeyboardMapper {
     fn map_key_equivalent(&self, mut keystroke: Keystroke, use_key_equivalents: bool) -> KeybindingKeystroke {
-        if use_key_equivalents && let Some(key_equivalents) = &self.key_equivalents {
-            if keystroke.key.chars().count() == 1
+        if use_key_equivalents && let Some(key_equivalents) = &self.key_equivalents
+            && keystroke.key.chars().count() == 1
                 && let Some(key) = key_equivalents.get(&keystroke.key.chars().next().unwrap())
             {
                 keystroke.key = key.to_string();
             }
-        }
         KeybindingKeystroke::from_keystroke(keystroke)
     }
 

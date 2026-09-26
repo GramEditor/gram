@@ -260,19 +260,19 @@ impl Keystroke {
     pub fn is_ascii_graphic(&self) -> bool {
         self.key_char
             .as_ref()
-            .map_or(false, |s| s.chars().all(|c| c.is_ascii_graphic()))
+            .is_some_and(|s| s.chars().all(|c| c.is_ascii_graphic()))
     }
 
     /// True if all chars in keystroke are alphanumeric
     pub fn is_alphanumeric(&self) -> bool {
         self.key_char
             .as_ref()
-            .map_or(false, |s| s.chars().all(|c| c.is_alphanumeric()))
+            .is_some_and(|s| s.chars().all(|c| c.is_alphanumeric()))
     }
 
     /// Used to detect when altgr/right option is used for text input
     pub fn prefer_character_input(&self) -> bool {
-        self.key_char.as_ref().map_or(false, |typed| *typed != self.key)
+        self.key_char.as_ref().is_some_and(|typed| *typed != self.key)
     }
 }
 
@@ -323,7 +323,7 @@ impl KeybindingKeystroke {
     /// Platform-specific behavior:
     /// - On macOS and Linux, this modifiers is the same as `inner.modifiers`, which is the GPUI representation of the keystroke.
     /// - On Windows, this modifiers is the display modifiers, for example, a `ctrl-@` keystroke will have `inner.modifiers` as
-    /// `Modifiers::control()` and `display_modifiers` as `Modifiers::control_shift()`.
+    ///   `Modifiers::control()` and `display_modifiers` as `Modifiers::control_shift()`.
     pub fn modifiers(&self) -> &Modifiers {
         #[cfg(target_os = "windows")]
         {
@@ -779,6 +779,6 @@ fn unparse(modifiers: &Modifiers, key: &str) -> String {
     if modifiers.shift {
         result.push_str("shift-");
     }
-    result.push_str(&key);
+    result.push_str(key);
     result
 }

@@ -245,9 +245,10 @@ impl Asset for SvgAsset {
     type Source = SharedString;
     type Output = Result<Arc<[u8]>, Arc<std::io::Error>>;
 
+    #[allow(clippy::manual_async_fn)]
     fn load(source: Self::Source, _cx: &mut App) -> impl Future<Output = Self::Output> + Send + 'static {
         async move {
-            let bytes = fs::read(Path::new(source.as_ref())).map_err(|e| Arc::new(e))?;
+            let bytes = fs::read(Path::new(source.as_ref())).map_err(Arc::new)?;
             let bytes = Arc::from(bytes);
             Ok(bytes)
         }

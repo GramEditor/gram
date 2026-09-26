@@ -835,7 +835,7 @@ impl DebugAdapter for PythonDebugAdapter {
                 .toolchain_store()
                 .active_toolchain(
                     delegate.worktree_id(),
-                    base_path.into_arc(),
+                    base_path.to_arc(),
                     language::LanguageName::new_static(Self::LANGUAGE_NAME),
                     cx,
                 )
@@ -912,7 +912,7 @@ mod tests {
 
         let result = adapter
             .get_installed_binary(
-                &test_mocks::MockDelegate::new(),
+                &test_mocks::MockDelegate::new_arc(),
                 &task_def,
                 None,
                 None,
@@ -953,7 +953,7 @@ mod tests {
 
         let result_host = adapter
             .get_installed_binary(
-                &test_mocks::MockDelegate::new(),
+                &test_mocks::MockDelegate::new_arc(),
                 &task_def_host,
                 None,
                 None,

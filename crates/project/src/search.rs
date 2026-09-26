@@ -644,9 +644,8 @@ mod tests {
         )
         .expect("Should be able to create a regex SearchQuery");
 
-        assert_eq!(
+        assert!(
             search_query.case_sensitive(),
-            true,
             "Case sensitivity should be enabled when \\C pattern item is present in the query."
         );
 
@@ -664,9 +663,8 @@ mod tests {
         )
         .expect("Should be able to create a regex SearchQuery");
 
-        assert_eq!(
-            search_query.case_sensitive(),
-            false,
+        assert!(
+            !search_query.case_sensitive(),
             "Case sensitivity should be disabled when \\c pattern item is present, even if initially set to true."
         );
 
@@ -684,9 +682,8 @@ mod tests {
         )
         .expect("Should be able to create a regex SearchQuery");
 
-        assert_eq!(
+        assert!(
             search_query.case_sensitive(),
-            true,
             "Case sensitivity should be enabled when \\C is the last pattern item, even after a \\c."
         );
 
@@ -704,9 +701,8 @@ mod tests {
         )
         .expect("Should be able to create a regex SearchQuery");
 
-        assert_eq!(
-            search_query.case_sensitive(),
-            false,
+        assert!(
+            !search_query.case_sensitive(),
             "Case sensitivity should not be enabled when \\C pattern item is preceded by a backslash."
         );
     }

@@ -344,8 +344,8 @@ impl RunHook {
         }
     }
 
-    pub fn to_proto(&self) -> i32 {
-        *self as i32
+    pub fn to_proto(self) -> i32 {
+        self as i32
     }
 
     pub fn from_proto(value: i32) -> Option<Self> {

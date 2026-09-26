@@ -596,11 +596,10 @@ impl Fs for RealFs {
     }
 
     async fn rename(&self, source: &Path, target: &Path, options: RenameOptions) -> Result<()> {
-        if options.create_parents {
-            if let Some(parent) = target.parent() {
+        if options.create_parents
+            && let Some(parent) = target.parent() {
                 self.create_dir(parent).await?;
             }
-        }
 
         if options.overwrite {
             smol::fs::rename(source, target).await?;
@@ -1007,7 +1006,7 @@ impl Fs for RealFs {
         }
 
         // Check if path is a symlink and follow the target parent
-        if let Some(mut target) = self.read_link(path).await.ok() {
+        if let Ok(mut target) = self.read_link(path).await {
             log::trace!("watch symlink {path:?} -> {target:?}");
             // Check if symlink target is relative path, if so make it absolute
             if target.is_relative()
@@ -1053,21 +1052,21 @@ impl Fs for RealFs {
     async fn git_init(&self, abs_work_directory_path: &Path, fallback_branch_name: String) -> Result<()> {
         let config = new_smol_command("git")
             .current_dir(abs_work_directory_path)
-            .args(&["config", "--global", "--get", "init.defaultBranch"])
+            .args(["config", "--global", "--get", "init.defaultBranch"])
             .output()
             .await?;
 
-        let branch_name;
+        
 
-        if config.status.success() && !config.stdout.is_empty() {
-            branch_name = String::from_utf8_lossy(&config.stdout);
+        let branch_name = if config.status.success() && !config.stdout.is_empty() {
+            String::from_utf8_lossy(&config.stdout)
         } else {
-            branch_name = Cow::Borrowed(fallback_branch_name.as_str());
-        }
+            Cow::Borrowed(fallback_branch_name.as_str())
+        };
 
         new_smol_command("git")
             .current_dir(abs_work_directory_path)
-            .args(&["init", "-b"])
+            .args(["init", "-b"])
             .arg(branch_name.trim())
             .output()
             .await?;
@@ -1087,7 +1086,7 @@ impl Fs for RealFs {
 
         let output = new_smol_command("git")
             .current_dir(abs_work_directory)
-            .args(&["clone", repo_url])
+            .args(["clone", repo_url])
             .output()
             .await?;
 
@@ -1908,7 +1907,7 @@ impl FakeFs {
             for (path, content) in workdir_contents {
                 use util::{paths::PathStyle, rel_path::RelPath};
 
-                let repo_path = RelPath::new(path.strip_prefix(&workdir_path).unwrap(), PathStyle::local()).unwrap();
+                let repo_path = RelPath::new(path.strip_prefix(workdir_path).unwrap(), PathStyle::local()).unwrap();
                 let repo_path = RepoPath::from_rel_path(&repo_path);
                 let status = statuses
                     .iter()
@@ -2298,11 +2297,10 @@ impl Fs for FakeFs {
         let old_path = normalize_path(old_path);
         let new_path = normalize_path(new_path);
 
-        if options.create_parents {
-            if let Some(parent) = new_path.parent() {
+        if options.create_parents
+            && let Some(parent) = new_path.parent() {
                 self.create_dir(parent).await?;
             }
-        }
 
         let mut state = self.state.lock();
         let moved_entry = state.write_path(&old_path, |e| {

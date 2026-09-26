@@ -351,7 +351,7 @@ impl MarksState {
                     let path = RelPath::new(relative, worktree.read(cx).path_style()).log_err()?;
                     Some(ProjectPath {
                         worktree_id: worktree.read(cx).id(),
-                        path: path.into_arc(),
+                        path: path.to_arc(),
                     })
                 })
                 .next();

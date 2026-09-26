@@ -54,6 +54,7 @@ type IoHandler = Box<dyn Send + FnMut(IoKind, &str)>;
 
 /// Kind of language server stdio given to an IO handler.
 #[derive(Debug, Clone, Copy)]
+#[allow(clippy::enum_variant_names)]
 pub enum IoKind {
     StdOut,
     StdIn,
@@ -330,7 +331,7 @@ impl LanguageServer {
         } else {
             root_path.parent().unwrap_or_else(|| Path::new("/"))
         };
-        let root_uri = Uri::from_file_path(&working_dir).map_err(|()| anyhow!("{working_dir:?} is not a valid URI"))?;
+        let root_uri = Uri::from_file_path(working_dir).map_err(|()| anyhow!("{working_dir:?} is not a valid URI"))?;
         log::info!(
             "starting language server process. binary path: \
             {:?}, working directory: {:?}, args: {:?}",

@@ -171,9 +171,7 @@ impl UserSettingsContent {
     }
 
     pub fn for_profile(&self, cx: &App) -> Option<&SettingsContent> {
-        let Some(active_profile) = cx.try_global::<ActiveSettingsProfileName>() else {
-            return None;
-        };
+        let active_profile = cx.try_global::<ActiveSettingsProfileName>()?;
         self.profiles.get(&active_profile.0)
     }
 }
@@ -819,9 +817,9 @@ pub struct WhichKeySettingsContent {
 /// and remove values from the set.
 pub struct ExtendingVec<T>(pub Vec<T>);
 
-impl<T> Into<Vec<T>> for ExtendingVec<T> {
-    fn into(self) -> Vec<T> {
-        self.0
+impl<T> From<ExtendingVec<T>> for Vec<T> {
+    fn from(val: ExtendingVec<T>) -> Self {
+        val.0
     }
 }
 impl<T> From<Vec<T>> for ExtendingVec<T> {

@@ -240,7 +240,6 @@ impl SnippetProvider {
 mod tests {
     use super::*;
     use fs::FakeFs;
-    use gpui;
     use gpui::TestAppContext;
     use indoc::indoc;
 

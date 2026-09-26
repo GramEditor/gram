@@ -1670,8 +1670,8 @@ impl Buffer {
         drop(syntax_map);
 
         self.parse_status.0.send(ParseStatus::Parsing).unwrap();
-        if may_block && let Some(sync_parse_timeout) = self.sync_parse_timeout {
-            if let Ok(()) = syntax_snapshot.reparse_with_timeout(
+        if may_block && let Some(sync_parse_timeout) = self.sync_parse_timeout
+            && let Ok(()) = syntax_snapshot.reparse_with_timeout(
                 &text,
                 language_registry.clone(),
                 language.clone(),
@@ -1681,7 +1681,6 @@ impl Buffer {
                 self.reparse = None;
                 return;
             }
-        }
 
         let parse_task = cx.background_spawn({
             let language = language.clone();
@@ -1986,8 +1985,7 @@ impl Buffer {
                     let point = Point::new(row, 0);
                     Some((
                         point..point,
-                        iter::repeat(new_size.char())
-                            .take((new_size.len - current_size.len) as usize)
+                        std::iter::repeat_n(new_size.char(), (new_size.len - current_size.len) as usize)
                             .collect::<String>(),
                     ))
                 }
@@ -2002,8 +2000,7 @@ impl Buffer {
         } else {
             Some((
                 Point::new(row, 0)..Point::new(row, current_size.len),
-                iter::repeat(new_size.char())
-                    .take(new_size.len as usize)
+                std::iter::repeat_n(new_size.char(), new_size.len as usize)
                     .collect::<String>(),
             ))
         }
@@ -3651,11 +3648,10 @@ impl BufferSnapshot {
                 if cursor.goto_previous_sibling() {
                     let layer_result = cursor.node();
 
-                    if let Some(previous_result) = &result {
-                        if previous_result.byte_range().end < layer_result.byte_range().end {
+                    if let Some(previous_result) = &result
+                        && previous_result.byte_range().end < layer_result.byte_range().end {
                             continue;
                         }
-                    }
                     result = Some(layer_result);
                     break;
                 }
@@ -3696,11 +3692,10 @@ impl BufferSnapshot {
                 if cursor.goto_next_sibling() {
                     let layer_result = cursor.node();
 
-                    if let Some(previous_result) = &result {
-                        if previous_result.byte_range().start > layer_result.byte_range().start {
+                    if let Some(previous_result) = &result
+                        && previous_result.byte_range().start > layer_result.byte_range().start {
                             continue;
                         }
-                    }
                     result = Some(layer_result);
                     break;
                 }
@@ -4087,7 +4082,7 @@ impl BufferSnapshot {
                 continue;
             }
             let chunk_range = chunk.anchor_range();
-            let chunk_range = chunk_range.to_offset(&self);
+            let chunk_range = chunk_range.to_offset(self);
 
             if let Some(cached_brackets) = &self.tree_sitter_data.brackets_by_chunks.lock()[chunk.id] {
                 all_bracket_matches.insert(chunk.row_range(), cached_brackets.clone());
@@ -4856,7 +4851,7 @@ impl BufferSnapshot {
                     let mut word_text = self.text_for_range(word_start..ix).peekable();
                     let first_char = word_text.peek().and_then(|first_chunk| first_chunk.chars().next());
                     // Skip empty and "words" starting with digits as a heuristic to reduce useless completions
-                    if !query.skip_digits || first_char.is_none_or(|first_char| !first_char.is_digit(10)) {
+                    if !query.skip_digits || first_char.is_none_or(|first_char| !first_char.is_ascii_digit()) {
                         words.insert(word_text.collect(), word_range);
                     }
                 }
@@ -5232,7 +5227,7 @@ impl IndentSize {
 
     /// An iterator over the characters represented by this [`IndentSize`].
     pub fn chars(&self) -> impl Iterator<Item = char> {
-        iter::repeat(self.char()).take(self.len as usize)
+        std::iter::repeat_n(self.char(), self.len as usize)
     }
 
     /// The character representation of this [`IndentSize`].

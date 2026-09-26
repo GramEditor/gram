@@ -16,7 +16,7 @@ impl From<DapSettingsContent> for DapSettings {
         DapSettings {
             binary: content
                 .binary
-                .map_or_else(|| DapBinary::Default, |binary| DapBinary::Custom(binary)),
+                .map_or_else(|| DapBinary::Default, DapBinary::Custom),
             args: content.args.unwrap_or_default(),
             env: content.env.unwrap_or_default(),
             ignore_system_version: content.ignore_system_version.unwrap_or(false),

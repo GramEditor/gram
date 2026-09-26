@@ -279,11 +279,11 @@ impl ExtensionLanguageServerProxy for ExtensionHostProxy {
 }
 
 pub trait ExtensionSnippetProxy: Send + Sync + 'static {
-    fn register_snippet(&self, path: &PathBuf, snippet_contents: &str) -> Result<()>;
+    fn register_snippet(&self, path: &Path, snippet_contents: &str) -> Result<()>;
 }
 
 impl ExtensionSnippetProxy for ExtensionHostProxy {
-    fn register_snippet(&self, path: &PathBuf, snippet_contents: &str) -> Result<()> {
+    fn register_snippet(&self, path: &Path, snippet_contents: &str) -> Result<()> {
         let Some(proxy) = self.snippet_proxy.read().clone() else {
             return Ok(());
         };

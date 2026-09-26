@@ -104,7 +104,7 @@ mod tests {
     #[test]
     fn test_serialize_optional_f32_with_two_decimal_places() {
         let cases = [
-            (Some(123.456789), r#"{"value":123.46}"#),
+            (Some(123.456_79), r#"{"value":123.46}"#),
             (Some(1.2), r#"{"value":1.2}"#),
             (Some(300.00000), r#"{"value":300.0}"#),
         ];
@@ -117,7 +117,7 @@ mod tests {
     #[test]
     fn test_serialize_f32_with_two_decimal_places() {
         let cases = [
-            (123.456789, r#"{"value":123.46}"#),
+            (123.456_79, r#"{"value":123.46}"#),
             (1.200, r#"{"value":1.2}"#),
             (300.00000, r#"{"value":300.0}"#),
         ];

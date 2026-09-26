@@ -31,7 +31,7 @@ impl PathKey {
         } else {
             Self {
                 sort_prefix: None,
-                path: RelPath::unix(&buffer.entity_id().to_string()).unwrap().into_arc(),
+                path: RelPath::unix(&buffer.entity_id().to_string()).unwrap().to_arc(),
             }
         }
     }
@@ -251,8 +251,7 @@ impl MultiBuffer {
             for range in ranges.by_ref().take(range_count) {
                 let range = Anchor::range_in_buffer(
                     excerpt_id,
-                    buffer_snapshot.anchor_before(&range.primary.start)
-                        ..buffer_snapshot.anchor_after(&range.primary.end),
+                    buffer_snapshot.anchor_before(range.primary.start)..buffer_snapshot.anchor_after(range.primary.end),
                 );
                 result.push(range)
             }

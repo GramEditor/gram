@@ -1226,7 +1226,7 @@ impl WgpuRenderer {
 
         self.queue.submit(std::iter::once(encoder.finish()));
         self.queue.present(frame);
-        return true;
+        true
     }
 
     fn draw_paths_to_intermediate(&self, encoder: &mut wgpu::CommandEncoder, paths: &[Path<ScaledPixels>]) {

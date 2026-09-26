@@ -268,7 +268,7 @@ fn construct_json_value(key_path: &[impl AsRef<str>], new_value: Option<&serde_j
             new_value = serde_json::json!({ key.as_ref().to_string(): new_value });
         }
     }
-    return new_value;
+    new_value
 }
 
 fn parse_index_key(index_key: &str) -> Option<usize> {
@@ -330,7 +330,7 @@ fn handle_possible_array_value(
             replace_value.remove(idx);
         }
     }
-    return Some((replace_range, replace_value));
+    Some((replace_range, replace_value))
 }
 
 const TS_DOCUMENT_KIND: &str = "document";
@@ -407,7 +407,7 @@ pub fn replace_top_level_array_value_in_json_text(
                     .chars()
                     .all(|c| c.is_ascii_whitespace())
             {
-                remove_range.end = remove_range.end + next_newline;
+                remove_range.end += next_newline;
             }
         } else {
             while cursor.goto_previous_sibling() && (cursor.node().is_extra() || cursor.node().is_missing()) {}
@@ -663,7 +663,7 @@ pub fn to_pretty_json(value: &impl Serialize, indent_size: usize, indent_prefix_
     let mut adjusted_text = String::new();
     for (i, line) in text.split('\n').enumerate() {
         if i > 0 {
-            adjusted_text.extend(std::iter::repeat(' ').take(indent_prefix_len));
+            adjusted_text.extend(std::iter::repeat_n(' ', indent_prefix_len));
         }
         adjusted_text.push_str(line);
         adjusted_text.push('\n');

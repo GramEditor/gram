@@ -892,7 +892,7 @@ fn render_markdown_text(parsed_new: &MarkdownParagraph, cx: &mut RenderContext) 
                             move |idx, _, cx| {
                                 for (ix, range) in link_ranges.iter().enumerate() {
                                     if range.contains(&idx) {
-                                        return Some(LinkPreview::new(&links[ix].to_string(), cx));
+                                        return Some(LinkPreview::new_entity(&links[ix].to_string(), cx).into());
                                     }
                                 }
                                 None

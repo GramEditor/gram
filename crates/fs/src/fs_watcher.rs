@@ -51,7 +51,7 @@ impl FsWatcher {
                 self.poll_interval,
             )?));
         }
-        fallback.as_ref().unwrap().add(&path)
+        fallback.as_ref().unwrap().add(path)
     }
 }
 
@@ -218,7 +218,7 @@ impl Watcher for FsWatcher {
                 }
             }
         }
-        #[cfg(any(target_os = "linux"))]
+        #[cfg(target_os = "linux")]
         {
             if self.registrations.lock().contains_key(path) {
                 log::trace!("path to watch is already watched: {path:?}");
@@ -271,22 +271,22 @@ impl Watcher for FsWatcher {
                                     kind,
                                 });
                             }
-                            if let Some(cano) = &cano_path {
-                                if event_path.starts_with(cano) {
-                                    return Some(PathEvent {
-                                        path: event_path.as_path().to_path_buf(),
-                                        kind,
-                                    });
-                                }
+                            if let Some(cano) = &cano_path
+                                && event_path.starts_with(cano)
+                            {
+                                return Some(PathEvent {
+                                    path: event_path.as_path().to_path_buf(),
+                                    kind,
+                                });
                             }
-                            return None;
+                            None
                         })
                         .collect::<Vec<_>>();
 
                     let is_rescan_event = event.need_rescan();
                     if is_rescan_event {
                         log::warn!("filesystem watcher lost sync for {callback_path:?}");
-                        path_events.retain(|p| &p.path != callback_path.as_ref());
+                        path_events.retain(|p| p.path != callback_path.as_ref());
                         path_events.push(PathEvent {
                             path: callback_path.to_path_buf(),
                             kind: Some(PathEventKind::Rescan),
@@ -308,7 +308,7 @@ impl Watcher for FsWatcher {
             }
             Err(e) | Ok(Err(e)) => {
                 log::warn!("Fall back to poll watcher: {}", e,);
-                return self.poll_path(&path);
+                self.poll_path(&path)
             }
         }
     }
@@ -503,7 +503,6 @@ pub struct GlobalWatcher {
 }
 
 impl GlobalWatcher {
-    #[must_use]
     fn add(
         &self,
         path: Arc<Path>,
@@ -517,7 +516,7 @@ impl GlobalWatcher {
             .lock()
             .path_registrations
             .get(&path)
-            .map_or(true, |&count| count == 0)
+            .is_none_or(|&count| count == 0)
         {
             self.watcher.lock().watch(&path, mode)?;
         }
@@ -556,6 +555,48 @@ impl GlobalWatcher {
 }
 
 static FS_WATCHER_INSTANCE: OnceLock<Result<GlobalWatcher, notify::Error>> = OnceLock::new();
+
+fn handle_event(event: Result<notify::Event, notify::Error>) {
+    log::trace!("global handle event: {event:?}");
+    // Filter out access events, which could lead to a weird bug on Linux after upgrading notify
+    // https://github.com/zed-industries/zed/actions/runs/14085230504/job/39449448832
+    let Some(event) = event
+        .log_err()
+        .filter(|event| !matches!(event.kind, EventKind::Access(_)))
+    else {
+        return;
+    };
+    global::<()>(move |watcher| {
+        let callbacks = {
+            let state = watcher.state.lock();
+            state.watchers.values().map(|r| r.callback.clone()).collect::<Vec<_>>()
+        };
+        for callback in callbacks {
+            callback(&event);
+        }
+    })
+    .log_err();
+}
+
+pub fn global<T>(f: impl FnOnce(&GlobalWatcher) -> T) -> Result<T> {
+    let result = FS_WATCHER_INSTANCE.get_or_init(|| {
+        let config = notify::Config::default()
+            .with_event_kinds(EventKindMask::CORE)
+            .with_fsevent_latency(Duration::from_millis(500));
+        notify::RecommendedWatcher::new(handle_event, config).map(|file_watcher| GlobalWatcher {
+            state: Mutex::new(WatcherState {
+                watchers: Default::default(),
+                path_registrations: Default::default(),
+                last_registration: Default::default(),
+            }),
+            watcher: Mutex::new(file_watcher),
+        })
+    });
+    match result {
+        Ok(g) => Ok(f(g)),
+        Err(e) => Err(anyhow::anyhow!("{e}")),
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -645,47 +686,5 @@ mod tests {
                 test_case.name
             );
         }
-    }
-}
-
-fn handle_event(event: Result<notify::Event, notify::Error>) {
-    log::trace!("global handle event: {event:?}");
-    // Filter out access events, which could lead to a weird bug on Linux after upgrading notify
-    // https://github.com/zed-industries/zed/actions/runs/14085230504/job/39449448832
-    let Some(event) = event
-        .log_err()
-        .filter(|event| !matches!(event.kind, EventKind::Access(_)))
-    else {
-        return;
-    };
-    global::<()>(move |watcher| {
-        let callbacks = {
-            let state = watcher.state.lock();
-            state.watchers.values().map(|r| r.callback.clone()).collect::<Vec<_>>()
-        };
-        for callback in callbacks {
-            callback(&event);
-        }
-    })
-    .log_err();
-}
-
-pub fn global<T>(f: impl FnOnce(&GlobalWatcher) -> T) -> Result<T> {
-    let result = FS_WATCHER_INSTANCE.get_or_init(|| {
-        let config = notify::Config::default()
-            .with_event_kinds(EventKindMask::CORE)
-            .with_fsevent_latency(Duration::from_millis(500));
-        notify::RecommendedWatcher::new(handle_event, config).map(|file_watcher| GlobalWatcher {
-            state: Mutex::new(WatcherState {
-                watchers: Default::default(),
-                path_registrations: Default::default(),
-                last_registration: Default::default(),
-            }),
-            watcher: Mutex::new(file_watcher),
-        })
-    });
-    match result {
-        Ok(g) => Ok(f(g)),
-        Err(e) => Err(anyhow::anyhow!("{e}")),
     }
 }

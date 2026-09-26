@@ -349,7 +349,7 @@ impl VsCodeSettings {
             }),
             max_width_columns: self
                 .read_u32("editor.minimap.maxColumn")
-                .and_then(|v| NonZeroU32::new(v)),
+                .and_then(NonZeroU32::new),
             ..Default::default()
         })
     }
@@ -436,7 +436,7 @@ impl VsCodeSettings {
                 "off" => Some(SoftWrap::None),
                 _ => None,
             }),
-            tab_size: self.read_u32("editor.tabSize").and_then(|n| NonZeroU32::new(n)),
+            tab_size: self.read_u32("editor.tabSize").and_then(NonZeroU32::new),
             tasks: None,
             use_auto_surround: self.read_enum("editor.autoSurround", |s| match s {
                 "languageDefined" | "quotes" | "brackets" => Some(true),
@@ -628,7 +628,7 @@ impl VsCodeSettings {
             keep_selection_on_copy: None,
             line_height: self
                 .read_f32("terminal.integrated.lineHeight")
-                .map(|lh| TerminalLineHeight::Custom(lh)),
+                .map(TerminalLineHeight::Custom),
             max_scroll_history_lines: self.read_usize("terminal.integrated.scrollback"),
             minimum_contrast: None,
             option_as_meta: self.read_bool("terminal.integrated.macOptionIsMeta"),
@@ -663,7 +663,7 @@ impl VsCodeSettings {
             // TODO: handle arguments
             shell: self
                 .read_string(&format!("terminal.integrated.{platform}Exec"))
-                .map(|s| Shell::Program(s)),
+                .map(Shell::Program),
             working_directory: None,
             env,
             detect_venv: None,
@@ -729,7 +729,7 @@ impl VsCodeSettings {
             // we'll ignore "perEditorGroup" for now since we only support a global max
             max_tabs: if self.read_bool("workbench.editor.limit.enabled") == Some(true) {
                 self.read_usize("workbench.editor.limit.value")
-                    .and_then(|n| NonZeroUsize::new(n))
+                    .and_then(NonZeroUsize::new)
             } else {
                 None
             },

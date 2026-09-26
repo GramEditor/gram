@@ -61,7 +61,7 @@ impl RelPath {
             path = prefix;
         }
 
-        if is_absolute(&path, path_style) {
+        if is_absolute(path, path_style) {
             return Err(anyhow!("absolute path not allowed: {path:?}"));
         }
 
@@ -77,7 +77,7 @@ impl RelPath {
 
         if result
             .components()
-            .any(|component| component == "" || component == "." || component == "..")
+            .any(|component| component.is_empty() || component == "." || component == "..")
         {
             let mut normalized = RelPathBuf::new();
             for component in result.components() {
@@ -152,11 +152,7 @@ impl RelPath {
 
     pub fn ends_with(&self, other: &Self) -> bool {
         if let Some(suffix) = self.0.strip_suffix(&other.0) {
-            if suffix.ends_with('/') {
-                return true;
-            } else if suffix.is_empty() {
-                return true;
-            }
+            return suffix.is_empty() || suffix.ends_with('/');
         }
         false
     }
@@ -207,7 +203,7 @@ impl RelPath {
         RelPathBuf(self.0.to_string())
     }
 
-    pub fn into_arc(&self) -> Arc<Self> {
+    pub fn to_arc(&self) -> Arc<Self> {
         Arc::from(self)
     }
 
@@ -292,6 +288,12 @@ impl fmt::Debug for RelPathBuf {
     }
 }
 
+impl Default for RelPathBuf {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RelPathBuf {
     pub fn new() -> Self {
         Self(String::new())
@@ -333,9 +335,9 @@ impl RelPathBuf {
     }
 }
 
-impl Into<Arc<RelPath>> for RelPathBuf {
-    fn into(self) -> Arc<RelPath> {
-        Arc::from(self.as_rel_path())
+impl From<RelPathBuf> for Arc<RelPath> {
+    fn from(val: RelPathBuf) -> Self {
+        Arc::from(val.as_rel_path())
     }
 }
 
@@ -545,7 +547,7 @@ mod tests {
         for [lhs, rhs] in test_cases.iter().array_combinations::<2>() {
             assert_eq!(
                 Path::new(lhs).cmp(Path::new(rhs)),
-                RelPath::unix(lhs).unwrap().cmp(&RelPath::unix(rhs).unwrap())
+                RelPath::unix(lhs).unwrap().cmp(RelPath::unix(rhs).unwrap())
             );
         }
     }

@@ -102,7 +102,7 @@ impl YarnPathStore {
                 };
                 // Rebase zip-path onto new temp path.
                 let as_relative = RelPath::new(path.strip_prefix(zip_file).ok()?, PathStyle::local()).ok()?;
-                Some((zip_root.into(), as_relative.into_arc()))
+                Some((zip_root.into(), as_relative.to_arc()))
             })
         } else {
             Task::ready(None)

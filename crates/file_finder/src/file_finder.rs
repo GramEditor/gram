@@ -927,7 +927,7 @@ impl FileFinderDelegate {
                     {
                         self.matches.matches.push(Match::CreateNew(ProjectPath {
                             worktree_id: worktree.id(),
-                            path: query_path.into_arc(),
+                            path: query_path.to_arc(),
                         }));
                     }
                 }

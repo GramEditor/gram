@@ -458,7 +458,7 @@ impl GitRepository for FakeGitRepository {
             let contents = paths
                 .into_iter()
                 .map(|path| {
-                    let abs_path = self.dot_git_path.parent().unwrap().join(&path.as_std_path());
+                    let abs_path = self.dot_git_path.parent().unwrap().join(path.as_std_path());
                     Box::pin(async move { (path.clone(), self.fs.load(&abs_path).await.ok()) })
                 })
                 .collect::<Vec<_>>();

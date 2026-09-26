@@ -17,27 +17,27 @@ impl AnimationDuration {
     }
 }
 
-impl Into<std::time::Duration> for AnimationDuration {
-    fn into(self) -> Duration {
-        self.duration()
+impl From<AnimationDuration> for std::time::Duration {
+    fn from(val: AnimationDuration) -> Self {
+        val.duration()
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum AnimationDirection {
-    FromBottom,
-    FromLeft,
-    FromRight,
-    FromTop,
+    Bottom,
+    Left,
+    Right,
+    Top,
 }
 
 pub trait DefaultAnimations: Styled + Sized + Element {
     fn animate_in(self, animation_type: AnimationDirection, fade_in: bool) -> AnimationElement<Self> {
         let animation_name = match animation_type {
-            AnimationDirection::FromBottom => "animate_from_bottom",
-            AnimationDirection::FromLeft => "animate_from_left",
-            AnimationDirection::FromRight => "animate_from_right",
-            AnimationDirection::FromTop => "animate_from_top",
+            AnimationDirection::Bottom => "animate_from_bottom",
+            AnimationDirection::Left => "animate_from_left",
+            AnimationDirection::Right => "animate_from_right",
+            AnimationDirection::Top => "animate_from_top",
         };
 
         let animation_id = self
@@ -57,29 +57,29 @@ pub trait DefaultAnimations: Styled + Sized + Element {
                 }
 
                 match animation_type {
-                    AnimationDirection::FromBottom => this.bottom(px(start_pos + delta * (end_pos - start_pos))),
-                    AnimationDirection::FromLeft => this.left(px(start_pos + delta * (end_pos - start_pos))),
-                    AnimationDirection::FromRight => this.right(px(start_pos + delta * (end_pos - start_pos))),
-                    AnimationDirection::FromTop => this.top(px(start_pos + delta * (end_pos - start_pos))),
+                    AnimationDirection::Bottom => this.bottom(px(start_pos + delta * (end_pos - start_pos))),
+                    AnimationDirection::Left => this.left(px(start_pos + delta * (end_pos - start_pos))),
+                    AnimationDirection::Right => this.right(px(start_pos + delta * (end_pos - start_pos))),
+                    AnimationDirection::Top => this.top(px(start_pos + delta * (end_pos - start_pos))),
                 }
             },
         )
     }
 
     fn animate_in_from_bottom(self, fade: bool) -> AnimationElement<Self> {
-        self.animate_in(AnimationDirection::FromBottom, fade)
+        self.animate_in(AnimationDirection::Bottom, fade)
     }
 
     fn animate_in_from_left(self, fade: bool) -> AnimationElement<Self> {
-        self.animate_in(AnimationDirection::FromLeft, fade)
+        self.animate_in(AnimationDirection::Left, fade)
     }
 
     fn animate_in_from_right(self, fade: bool) -> AnimationElement<Self> {
-        self.animate_in(AnimationDirection::FromRight, fade)
+        self.animate_in(AnimationDirection::Right, fade)
     }
 
     fn animate_in_from_top(self, fade: bool) -> AnimationElement<Self> {
-        self.animate_in(AnimationDirection::FromTop, fade)
+        self.animate_in(AnimationDirection::Top, fade)
     }
 }
 

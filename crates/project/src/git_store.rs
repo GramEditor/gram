@@ -1550,15 +1550,15 @@ impl GitStore {
             }
             GitStoreState::Remote {
                 upstream_client,
-                upstream_project_id: project_id,
+                upstream_project_id,
                 ..
             } => {
                 let client = upstream_client.clone();
-                let project_id = *project_id;
+                let project_id = *upstream_project_id;
                 cx.background_executor().spawn(async move {
                     client
                         .request(proto::GitInit {
-                            project_id: project_id,
+                            project_id,
                             abs_path: path.to_string_lossy().into_owned(),
                             fallback_branch_name,
                         })
@@ -3598,7 +3598,7 @@ impl Repository {
                                 };
                                 client
                                     .send(proto::UpdateDiffBases {
-                                        project_id: project_id,
+                                        project_id,
                                         buffer_id: buffer_id.to_proto(),
                                         staged_text,
                                         committed_text,

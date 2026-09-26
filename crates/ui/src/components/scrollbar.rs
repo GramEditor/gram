@@ -331,7 +331,7 @@ enum ScrollbarWidth {
 }
 
 impl ScrollbarWidth {
-    fn to_pixels(&self) -> Pixels {
+    fn to_pixels(self) -> Pixels {
         match self {
             ScrollbarWidth::Normal => px(8.),
             ScrollbarWidth::Small => px(6.),
@@ -1131,7 +1131,7 @@ impl<T: ScrollableHandle> Element for ScrollbarElement<T> {
                     .animation_progress()
                     .map(|(delta, delta_duration, should_invert)| {
                         window.with_element_state(id.unwrap(), |state, window| {
-                            let state = state.unwrap_or_else(|| Instant::now());
+                            let state = state.unwrap_or_else(Instant::now);
                             let current = Instant::now();
 
                             let new_delta = DELTA_MAX.min(delta + (current - state).div_duration_f32(delta_duration));

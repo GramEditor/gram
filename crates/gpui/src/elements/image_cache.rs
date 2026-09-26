@@ -238,7 +238,7 @@ impl RetainAllImageCache {
     pub fn new(cx: &mut App) -> Entity<Self> {
         let e = cx.new(|_cx| RetainAllImageCache(HashMap::new()));
         cx.observe_release(&e, |image_cache, cx| {
-            for (_, mut item) in std::mem::replace(&mut image_cache.0, HashMap::new()) {
+            for (_, mut item) in std::mem::take(&mut image_cache.0) {
                 if let Some(Ok(image)) = item.get() {
                     cx.drop_image(image, None);
                 }
@@ -284,7 +284,7 @@ impl RetainAllImageCache {
 
     /// Clear the image cache.
     pub fn clear(&mut self, window: &mut Window, cx: &mut App) {
-        for (_, mut item) in std::mem::replace(&mut self.0, HashMap::new()) {
+        for (_, mut item) in std::mem::take(&mut self.0) {
             if let Some(Ok(image)) = item.get() {
                 cx.drop_image(image, Some(window));
             }

@@ -82,7 +82,7 @@ pub fn get_default_system_shell() -> String {
 /// Get the default system shell, preferring bash on Windows.
 pub fn get_default_system_shell_preferring_bash() -> String {
     if cfg!(windows) {
-        get_windows_bash().unwrap_or_else(|| get_windows_system_shell())
+        get_windows_bash().unwrap_or_else(get_windows_system_shell)
     } else {
         "/bin/sh".to_string()
     }
@@ -105,7 +105,7 @@ pub fn get_windows_bash() -> Option<String> {
 
     static BASH: LazyLock<Option<String>> = LazyLock::new(|| {
         let bash = find_bash_in_scoop()
-            .or_else(|| find_bash_in_git())
+            .or_else(find_bash_in_git)
             .map(|p| p.to_string_lossy().into_owned());
         if let Some(ref path) = bash {
             log::info!("Found bash at {}", path);
@@ -242,14 +242,14 @@ impl fmt::Display for ShellKind {
 
 impl ShellKind {
     pub fn system() -> Self {
-        Self::new(&get_system_shell(), cfg!(windows))
+        Self::new(get_system_shell(), cfg!(windows))
     }
 
     pub fn new(program: impl AsRef<Path>, is_windows: bool) -> Self {
         let program = program.as_ref();
         let program = program
             .file_stem()
-            .unwrap_or_else(|| program.as_os_str())
+            .unwrap_or(program.as_os_str())
             .to_string_lossy();
 
         match &*program {
@@ -359,12 +359,12 @@ impl ShellKind {
                     let var_name = &source[..end];
                     if !var_name.is_empty() {
                         if !is_start {
-                            text.push_str("(");
+                            text.push('(');
                         }
                         text.push_str("$env.");
                         text.push_str(var_name);
                         if !is_start {
-                            text.push_str(")");
+                            text.push(')');
                         }
                         &source[end + 1..]
                     } else {
@@ -382,12 +382,12 @@ impl ShellKind {
                     .unwrap_or(source.len());
                 let var_name = &source[..end];
                 if !is_start {
-                    text.push_str("(");
+                    text.push('(');
                 }
                 text.push_str("$env.");
                 text.push_str(var_name);
                 if !is_start {
-                    text.push_str(")");
+                    text.push(')');
                 }
                 &source[end..]
             }
@@ -490,8 +490,8 @@ impl ShellKind {
     /// In other words, this will consider quoting arg without its command prefix to not break the command.
     /// You should use this over `try_quote` when you want to quote a shell command.
     pub fn try_quote_prefix_aware<'a>(&self, arg: &'a str) -> Option<Cow<'a, str>> {
-        if let Some(char) = self.command_prefix() {
-            if let Some(arg) = arg.strip_prefix(char) {
+        if let Some(char) = self.command_prefix()
+            && let Some(arg) = arg.strip_prefix(char) {
                 // we have a command that is prefixed
                 for quote in ['\'', '"'] {
                     if let Some(arg) = arg.strip_prefix(quote).and_then(|arg| arg.strip_suffix(quote)) {
@@ -514,7 +514,6 @@ impl ShellKind {
                     .try_quote(arg)
                     .map(|quoted| Cow::Owned(self.prepend_command_prefix(&quoted).into_owned()));
             }
-        }
         self.try_quote(arg)
     }
 

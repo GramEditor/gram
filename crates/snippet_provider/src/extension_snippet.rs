@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -19,7 +19,7 @@ struct SnippetRegistryProxy {
 }
 
 impl ExtensionSnippetProxy for SnippetRegistryProxy {
-    fn register_snippet(&self, path: &PathBuf, snippet_contents: &str) -> Result<()> {
+    fn register_snippet(&self, path: &Path, snippet_contents: &str) -> Result<()> {
         self.snippet_registry.register_snippets(path, snippet_contents)
     }
 }

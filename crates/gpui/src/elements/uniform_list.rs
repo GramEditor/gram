@@ -10,7 +10,7 @@ use crate::{
     Pixels, Point, ScrollHandle, Size, StyleRefinement, Styled, Window, point, size,
 };
 use smallvec::SmallVec;
-use std::{cell::RefCell, cmp, ops::Range, rc::Rc, usize};
+use std::{cell::RefCell, cmp, ops::Range, rc::Rc};
 
 use super::ListHorizontalSizingBehavior;
 
@@ -616,7 +616,7 @@ impl UniformList {
             return Size::default();
         };
         let available_space = size(
-            list_width.map_or(AvailableSpace::MinContent, |width| AvailableSpace::Definite(width)),
+            list_width.map_or(AvailableSpace::MinContent, AvailableSpace::Definite),
             AvailableSpace::MinContent,
         );
         item_to_measure.layout_as_root(available_space, window, cx)

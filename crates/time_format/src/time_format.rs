@@ -417,15 +417,15 @@ mod macos {
     };
 
     pub fn format_time(timestamp: &time::OffsetDateTime) -> String {
-        TIME_FORMATTER.with(|fmt| format_with_date_formatter(timestamp, Some(&fmt)))
+        TIME_FORMATTER.with(|fmt| format_with_date_formatter(timestamp, Some(fmt)))
     }
 
     pub fn format_date(timestamp: &time::OffsetDateTime) -> String {
-        DATE_FORMATTER.with(|fmt| format_with_date_formatter(timestamp, Some(&fmt)))
+        DATE_FORMATTER.with(|fmt| format_with_date_formatter(timestamp, Some(fmt)))
     }
 
     pub fn format_date_medium(timestamp: &time::OffsetDateTime) -> String {
-        MEDIUM_DATE_FORMATTER.with(|fmt| format_with_date_formatter(timestamp, Some(&fmt)))
+        MEDIUM_DATE_FORMATTER.with(|fmt| format_with_date_formatter(timestamp, Some(fmt)))
     }
 
     fn format_with_date_formatter(timestamp: &time::OffsetDateTime, fmt: Option<&CFDateFormatter>) -> String {
@@ -444,7 +444,7 @@ mod macos {
         static TIME_FORMATTER: CFRetained<CFDateFormatter> = CURRENT_LOCALE.with(|locale| {
             unsafe { CFDateFormatter::new(
                 None,
-                Some(&locale),
+                Some(locale),
                 CFDateFormatterStyle::NoStyle,
                 CFDateFormatterStyle::ShortStyle,
             ).unwrap() }
@@ -452,7 +452,7 @@ mod macos {
         static DATE_FORMATTER: CFRetained<CFDateFormatter> = CURRENT_LOCALE.with(|locale| {
             unsafe { CFDateFormatter::new(
                 None,
-                Some(&locale),
+                Some(locale),
                 CFDateFormatterStyle::ShortStyle,
                 CFDateFormatterStyle::NoStyle,
             ).unwrap() }
@@ -460,7 +460,7 @@ mod macos {
         static MEDIUM_DATE_FORMATTER: CFRetained<CFDateFormatter> = CURRENT_LOCALE.with(|locale| {
             unsafe { CFDateFormatter::new(
                 None,
-                Some(&locale),
+                Some(locale),
                 CFDateFormatterStyle::MediumStyle,
                 CFDateFormatterStyle::NoStyle,
             ).unwrap() }

@@ -10,7 +10,7 @@ static DEPTH: LazyLock<u64> = LazyLock::new(|| {
     std::env::var("GPUI_TREE_DEPTH")
         .ok()
         .and_then(|depth| depth.parse().ok())
-        .unwrap_or_else(|| 50)
+        .unwrap_or(50)
 });
 
 impl Render for Tree {

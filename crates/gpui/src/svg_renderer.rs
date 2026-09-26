@@ -37,12 +37,12 @@ pub enum SvgSize {
 impl SvgRenderer {
     /// Creates a new SVG renderer with the provided asset source.
     pub fn new(asset_source: Arc<dyn AssetSource>) -> Self {
-        static FONT_DB: LazyLock<Mutex<Arc<usvg::fontdb::Database>>> = LazyLock::new(|| Mutex::default());
+        static FONT_DB: LazyLock<Mutex<Arc<usvg::fontdb::Database>>> = LazyLock::new(Mutex::default);
         let default_font_resolver = usvg::FontResolver::default_font_selector();
         let assets = asset_source.clone();
         let font_resolver = Box::new(move |font: &usvg::Font, db: &mut Arc<usvg::fontdb::Database>| {
-            if db.is_empty() {
-                if let Ok(mut lock) = FONT_DB.lock() {
+            if db.is_empty()
+                && let Ok(mut lock) = FONT_DB.lock() {
                     let mut fontdb = usvg::fontdb::Database::new();
                     if let Ok(font_paths) = assets.list("fonts") {
                         for font_path in font_paths {
@@ -58,7 +58,6 @@ impl SvgRenderer {
                     *lock = Arc::new(fontdb);
                     *db = (*lock).clone();
                 }
-            }
             default_font_resolver(font, db)
         });
         let options = usvg::Options {
@@ -86,7 +85,7 @@ impl SvgRenderer {
                 let mut buffer = image::ImageBuffer::from_raw(pixmap.width(), pixmap.height(), pixmap.take()).unwrap();
 
                 if to_brga {
-                    for pixel in buffer.chunks_exact_mut(4) {
+                    for pixel in buffer.as_chunks_mut::<4>().0 {
                         swap_rgba_pa_to_bgra(pixel);
                     }
                 }

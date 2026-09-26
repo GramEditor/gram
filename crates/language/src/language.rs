@@ -635,7 +635,7 @@ where
             // for each worktree we might have open.
             if binary_options.allow_path_lookup
                 && let Some(binary) = self
-                    .check_if_user_installed(delegate.as_ref(), toolchain, &mut cx)
+                    .check_if_user_installed(delegate.as_ref(), toolchain, &cx)
                     .await
             {
                 log::info!(

@@ -459,34 +459,28 @@ pub fn deserialize_anchor(anchor: proto::Anchor) -> Option<Anchor> {
 
 /// Returns a `[clock::Lamport`] timestamp for the given [`proto::Operation`].
 pub fn lamport_timestamp_for_operation(operation: &proto::Operation) -> Option<clock::Lamport> {
-    let replica_id;
-    let value;
-    match operation.variant.as_ref()? {
+    
+    
+    let (replica_id, value) = match operation.variant.as_ref()? {
         proto::operation::Variant::Edit(op) => {
-            replica_id = op.replica_id;
-            value = op.lamport_timestamp;
+            (op.replica_id, op.lamport_timestamp)
         }
         proto::operation::Variant::Undo(op) => {
-            replica_id = op.replica_id;
-            value = op.lamport_timestamp;
+            (op.replica_id, op.lamport_timestamp)
         }
         proto::operation::Variant::UpdateDiagnostics(op) => {
-            replica_id = op.replica_id;
-            value = op.lamport_timestamp;
+            (op.replica_id, op.lamport_timestamp)
         }
         proto::operation::Variant::UpdateSelections(op) => {
-            replica_id = op.replica_id;
-            value = op.lamport_timestamp;
+            (op.replica_id, op.lamport_timestamp)
         }
         proto::operation::Variant::UpdateCompletionTriggers(op) => {
-            replica_id = op.replica_id;
-            value = op.lamport_timestamp;
+            (op.replica_id, op.lamport_timestamp)
         }
         proto::operation::Variant::UpdateLineEnding(op) => {
-            replica_id = op.replica_id;
-            value = op.lamport_timestamp;
+            (op.replica_id, op.lamport_timestamp)
         }
-    }
+    };
 
     Some(clock::Lamport {
         replica_id: ReplicaId::new(replica_id as u16),

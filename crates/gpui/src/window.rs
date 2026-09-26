@@ -3817,7 +3817,7 @@ impl Window {
                 .downcast_ref::<KeyDownEvent>()
                 .filter(|key_down| key_down.keystroke.key_char.is_some())
                 .and_then(|_| self.platform_window.take_input_handler())
-                .map_or(false, |mut input_handler| {
+                .is_some_and(|mut input_handler| {
                     let accepts = input_handler.accepts_text_input(self, cx);
                     self.platform_window.set_input_handler(input_handler);
                     accepts
@@ -3873,7 +3873,7 @@ impl Window {
             .map(|_| {
                 self.platform_window
                     .take_input_handler()
-                    .map_or(false, |mut input_handler| {
+                    .is_some_and(|mut input_handler| {
                         let accepts = input_handler.accepts_text_input(self, cx);
                         self.platform_window.set_input_handler(input_handler);
                         // If modifiers are not excessive (e.g. AltGr), and the input handler is accepting text input,

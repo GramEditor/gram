@@ -6051,7 +6051,7 @@ mod tests {
                 .active_path(cx)
                 .expect("active_path should exist");
 
-            assert_eq!(active_path.path, rel_path("untracked").into_arc());
+            assert_eq!(active_path.path, rel_path("untracked").to_arc());
         });
     }
 
@@ -6142,7 +6142,7 @@ mod tests {
         let worktree_id = cx.read(|cx| project.read(cx).worktrees(cx).next().unwrap().read(cx).id());
         let project_path = ProjectPath {
             worktree_id,
-            path: RelPath::unix("src/a/foo.rs").unwrap().into_arc(),
+            path: RelPath::unix("src/a/foo.rs").unwrap().to_arc(),
         };
 
         panel.update_in(cx, |panel, window, cx| {

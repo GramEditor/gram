@@ -327,7 +327,7 @@ pub fn parse_links_only(text: &str) -> Vec<(Range<usize>, MarkdownEvent)> {
         let line = untrimmed_line.trim_end();
         let paragraph_range = index..index + line.len();
         index += untrimmed_line.len() + 1;
-        if line == "" {
+        if line.is_empty() {
             continue;
         }
 

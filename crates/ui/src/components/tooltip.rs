@@ -1,7 +1,7 @@
 use std::borrow::Borrow;
 use std::rc::Rc;
 
-use gpui::{Action, AnyElement, AnyView, AppContext, FocusHandle, IntoElement, Render};
+use gpui::{Action, AnyElement, AnyView, AppContext, Entity, FocusHandle, IntoElement, Render};
 use settings::Settings;
 use theme::ThemeSettings;
 
@@ -233,7 +233,7 @@ pub struct LinkPreview {
 }
 
 impl LinkPreview {
-    pub fn new(url: &str, cx: &mut App) -> AnyView {
+    pub fn new_entity(url: &str, cx: &mut App) -> Entity<Self> {
         let mut wrapped_url = String::new();
         for (i, ch) in url.chars().enumerate() {
             if i == 500 {
@@ -248,7 +248,6 @@ impl LinkPreview {
         cx.new(|_| LinkPreview {
             link: wrapped_url.into(),
         })
-        .into()
     }
 }
 

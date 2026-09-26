@@ -186,14 +186,14 @@ pub struct ChunkSlice<'a> {
     text: &'a str,
 }
 
-impl Into<Chunk> for ChunkSlice<'_> {
-    fn into(self) -> Chunk {
+impl From<ChunkSlice<'_>> for Chunk {
+    fn from(val: ChunkSlice<'_>) -> Self {
         Chunk {
-            chars: self.chars,
-            chars_utf16: self.chars_utf16,
-            newlines: self.newlines,
-            tabs: self.tabs,
-            text: self.text.try_into().unwrap(),
+            chars: val.chars,
+            chars_utf16: val.chars_utf16,
+            newlines: val.newlines,
+            tabs: val.tabs,
+            text: val.text.try_into().unwrap(),
         }
     }
 }

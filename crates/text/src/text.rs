@@ -87,7 +87,7 @@ impl BufferId {
 
     /// Increments this buffer id, returning the old value.
     /// So that's a post-increment operator in disguise.
-    pub fn next(&mut self) -> Self {
+    pub fn next_id(&mut self) -> Self {
         let old = *self;
         self.0 = self.0.saturating_add(1);
         old

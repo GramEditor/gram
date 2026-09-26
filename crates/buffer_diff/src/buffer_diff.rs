@@ -1036,12 +1036,12 @@ impl BufferDiff {
 
     #[cfg(any(test, feature = "test-support"))]
     pub fn new_with_base_text(base_text: &str, buffer: &text::BufferSnapshot, cx: &mut Context<Self>) -> Self {
-        let mut this = BufferDiff::new(&buffer, cx);
+        let mut this = BufferDiff::new(buffer, cx);
         let executor = cx.background_executor().clone();
         let mut base_text = base_text.to_owned();
         text::LineEnding::normalize(&mut base_text);
         let inner = executor.block(this.update_diff(buffer.clone(), Some(Arc::from(base_text)), true, None, cx));
-        this.set_snapshot(inner, &buffer, cx).detach();
+        this.set_snapshot(inner, buffer, cx).detach();
         this
     }
 
@@ -1126,7 +1126,7 @@ impl BufferDiff {
         language: Option<Arc<Language>>,
         cx: &App,
     ) -> Task<BufferDiffUpdate> {
-        let base_text = base_text.map(|t| text::LineEnding::normalize_arc(t));
+        let base_text = base_text.map(text::LineEnding::normalize_arc);
         let prev_base_text = self.base_text(cx).as_rope().clone();
         let diff_options = build_diff_options(
             None,

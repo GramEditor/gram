@@ -742,7 +742,7 @@ impl RequestHandler<'_> {
             } else {
                 self.confirm_contents_will_match_tx
                     .send(MatchingEntry {
-                        should_scan_tx: should_scan_tx,
+                        should_scan_tx,
                         worktree_root: snapshot.abs_path().clone(),
                         path: ProjectPath {
                             worktree_id: snapshot.id(),

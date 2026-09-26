@@ -609,15 +609,13 @@ impl TableColumnWidths {
             return diff;
         }
 
-        let step_right;
-        let step_left;
-        if direction < 0 {
-            step_right = 0;
-            step_left = 1;
+        
+        
+        let (step_right, step_left) = if direction < 0 {
+            (0, 1)
         } else {
-            step_right = 1;
-            step_left = 0;
-        }
+            (1, 0)
+        };
         if col_idx == 0 && direction < 0 {
             return diff;
         }
@@ -649,7 +647,7 @@ impl TableColumnWidths {
             curr_column -= step_left;
             curr_column += step_right;
         }
-        widths[col_idx] = widths[col_idx] + (diff - diff_remaining);
+        widths[col_idx] += diff - diff_remaining;
 
         diff_remaining
     }

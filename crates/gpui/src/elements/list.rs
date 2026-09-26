@@ -276,8 +276,8 @@ impl ListState {
             let mut cursor = state.items.cursor::<Count>(());
             cursor.seek(&Count(scroll_top.item_ix), Bias::Right);
 
-            if let Some(item) = cursor.item() {
-                if let Some(size) = item.size() {
+            if let Some(item) = cursor.item()
+                && let Some(size) = item.size() {
                     let fraction = if size.height.0 > 0.0 {
                         (scroll_top.offset_in_item.0 / size.height.0).clamp(0.0, 1.0)
                     } else {
@@ -289,7 +289,6 @@ impl ListState {
                         fraction,
                     });
                 }
-            }
         }
 
         state.items = SumTree::from_iter(new_items, ());
@@ -646,7 +645,7 @@ impl StateInner {
         let mut rendered_focused_item = false;
 
         let available_item_space = size(
-            available_width.map_or(AvailableSpace::MinContent, |width| AvailableSpace::Definite(width)),
+            available_width.map_or(AvailableSpace::MinContent, AvailableSpace::Definite),
             AvailableSpace::MinContent,
         );
 
@@ -673,14 +672,12 @@ impl StateInner {
                 // If there's a pending scroll adjustment for the scroll-top
                 // item, apply it, ensuring proportional scroll position is
                 // maintained after re-measuring.
-                if ix == 0 {
-                    if let Some(pending_scroll) = self.pending_scroll.take() {
-                        if pending_scroll.item_ix == scroll_top.item_ix {
+                if ix == 0
+                    && let Some(pending_scroll) = self.pending_scroll.take()
+                        && pending_scroll.item_ix == scroll_top.item_ix {
                             scroll_top.offset_in_item = Pixels(pending_scroll.fraction * element_size.height.0);
                             self.logical_scroll_top = Some(scroll_top);
                         }
-                    }
-                }
 
                 if visible_height < available_height {
                     item_layouts.push_back(ItemLayout {

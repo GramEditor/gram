@@ -340,8 +340,10 @@ async fn test_managing_project_specific_settings(cx: &mut gpui::TestAppContext) 
     let worktree_id =
         cx.update(|cx| project.update(cx, |project, cx| project.worktrees(cx).next().unwrap().read(cx).id()));
 
-    let mut task_contexts = TaskContexts::default();
-    task_contexts.active_worktree_context = Some((worktree_id, TaskContext::default()));
+    let task_contexts = TaskContexts {
+        active_worktree_context: Some((worktree_id, TaskContext::default())),
+        ..Default::default()
+    };
     let task_contexts = Arc::new(task_contexts);
 
     let topmost_local_task_source_kind = TaskSourceKind::Worktree {
@@ -714,7 +716,7 @@ async fn test_running_multiple_instances_of_a_single_server_in_one_worktree(cx: 
         .await;
 
     assert!(currently_active_toolchain.is_none());
-    let _ = project
+    project
         .update(cx, |this, cx| {
             let worktree_id = this.worktrees(cx).next().unwrap().read(cx).id();
             this.activate_toolchain(
@@ -8805,7 +8807,7 @@ async fn test_file_status(cx: &mut gpui::TestAppContext) {
 
     // Set up git repository before creating the worktree.
     let work_dir = root.path().join("project");
-    let mut repo = git_init(work_dir.as_path());
+    let repo = git_init(work_dir.as_path());
     git_add(A_TXT, &repo);
     git_add(E_TXT, &repo);
     git_add(DOTGITIGNORE, &repo);
@@ -8874,7 +8876,7 @@ async fn test_file_status(cx: &mut gpui::TestAppContext) {
     // Modify files in the working copy and perform git operations on other files.
     git_reset(0, &repo);
     git_remove_index(Path::new(B_TXT), &repo);
-    git_stash(&mut repo);
+    git_stash(&repo);
     std::fs::write(work_dir.join(E_TXT), "eeee").unwrap();
     std::fs::write(work_dir.join(BUILD_FILE), "this should be ignored").unwrap();
     tree.flush_fs_events(cx).await;
@@ -9400,7 +9402,7 @@ async fn test_rescan_with_gitignore(cx: &mut gpui::TestAppContext) {
             None,
             true,
         );
-        assert!(tree.read(cx).entry_for_path(&rel_path(".git")).unwrap().is_ignored);
+        assert!(tree.read(cx).entry_for_path(rel_path(".git")).unwrap().is_ignored);
     });
 }
 
@@ -9906,7 +9908,7 @@ fn assert_entry_git_state(
 ) {
     assert_eq!(tree.abs_path(), repository.work_directory_abs_path);
     let entry = tree
-        .entry_for_path(&rel_path(path))
+        .entry_for_path(rel_path(path))
         .unwrap_or_else(|| panic!("entry {path} not found"));
     let status = repository.status_for_path(&repo_path(path)).map(|entry| entry.status);
     let expected = index_status.map(|index_status| {

@@ -293,7 +293,7 @@ impl RemoteConnection for WslRemoteConnection {
 
         let mut proxy_args = vec![];
         for env_var in ["RUST_LOG", "RUST_BACKTRACE", "GRAM_GENERATE_MINIDUMPS"] {
-            if let Some(value) = std::env::var(env_var).ok() {
+            if let Ok(value) = std::env::var(env_var) {
                 // We don't quote the value here as it seems excessive and may result in invalid envs for the
                 // proxy server. For example, `RUST_LOG='debug'` will result in a warning "invalid logging spec 'debug'', ignoring it"
                 // in the proxy server. Therefore, we pass the env vars as is.
@@ -393,7 +393,7 @@ impl RemoteConnection for WslRemoteConnection {
                 shell_kind.try_quote_prefix_aware(&program).context("shell quoting")?
             )?;
             for arg in args {
-                let arg = shell_kind.try_quote(&arg).context("shell quoting")?;
+                let arg = shell_kind.try_quote(arg).context("shell quoting")?;
                 write!(exec, " {}", arg)?;
             }
         } else {

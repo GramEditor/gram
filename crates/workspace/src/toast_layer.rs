@@ -238,7 +238,7 @@ impl Render for ToastLayer {
                         })
                         .child(active_toast.toast.view()),
                 )
-                .animate_in(AnimationDirection::FromBottom, true),
+                .animate_in(AnimationDirection::Bottom, true),
         )
     }
 }

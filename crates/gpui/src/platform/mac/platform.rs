@@ -501,7 +501,7 @@ impl MacPlatform {
                         Some(crate::OsAction::Redo) => sel!(handleGPUIMenuItem:),
                         None => sel!(handleGPUIMenuItem:),
                     };
-                    let name_str = NSString::from_str(&name);
+                    let name_str = NSString::from_str(name);
 
                     let item;
                     if let Some(keystrokes) = keystrokes {
@@ -564,7 +564,7 @@ impl MacPlatform {
                         submenu.addItem(&self.create_menu_item(mtm, item, delegate, actions, keymap));
                     }
                     item.setSubmenu(Some(&*submenu));
-                    item.setTitle(&NSString::from_str(&name));
+                    item.setTitle(&NSString::from_str(name));
                     item
                 }
                 MenuItem::SystemMenu(OsMenu { name, menu_type }) => {
@@ -572,7 +572,7 @@ impl MacPlatform {
                     let submenu = NSMenu::new(mtm);
                     submenu.setDelegate(Some(delegate));
                     item.setSubmenu(Some(&*submenu));
-                    item.setTitle(&NSString::from_str(&name));
+                    item.setTitle(&NSString::from_str(name));
 
                     match menu_type {
                         SystemMenuType::Services => {

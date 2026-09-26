@@ -11,8 +11,8 @@ use strum::IntoEnumIterator as _;
 
 use crate::{ClipboardEntry, ClipboardItem, ClipboardString, Image, ImageFormat, asset_cache::hash};
 
-static TEXT_HASH_TYPE: &'static str = "gram-text-hash";
-static METADATA_TYPE: &'static str = "gram-metadata";
+static TEXT_HASH_TYPE: &str = "gram-text-hash";
+static METADATA_TYPE: &str = "gram-metadata";
 
 pub struct Pasteboard {
     inner: Retained<NSPasteboard>,
@@ -79,11 +79,10 @@ impl Pasteboard {
         // Drain NSURL items
         let mut url_paths = SmallVec::<[PathBuf; 2]>::new();
         while let Some(url) = objects.peek().and_then(|o| o.downcast_ref::<NSURL>()) {
-            if url.isFileURL() {
-                if let Some(path) = url.to_file_path() {
+            if url.isFileURL()
+                && let Some(path) = url.to_file_path() {
                     url_paths.push(path);
                 }
-            }
             objects.next();
         }
         if !url_paths.is_empty() {
@@ -115,9 +114,9 @@ impl Pasteboard {
         })?;
         let bytes = data.to_vec();
         let id = hash(&bytes);
-        return Some(ClipboardItem {
+        Some(ClipboardItem {
             entries: vec![ClipboardEntry::Image(Image { format, bytes, id })],
-        });
+        })
     }
 
     fn read_string(&self, ns_text: &NSString) -> ClipboardItem {
@@ -171,14 +170,11 @@ impl Pasteboard {
                 };
 
                 for entry in item.entries {
-                    match entry {
-                        ClipboardEntry::String(text) => {
-                            combined.text.push_str(&text.text());
-                            if combined.metadata.is_none() {
-                                combined.metadata = text.metadata;
-                            }
+                    if let ClipboardEntry::String(text) = entry {
+                        combined.text.push_str(text.text());
+                        if combined.metadata.is_none() {
+                            combined.metadata = text.metadata;
                         }
-                        _ => {}
                     }
                 }
 
@@ -199,7 +195,7 @@ impl Pasteboard {
             let hash_bytes = ClipboardString::text_hash(&string.text).to_be_bytes();
             let hash_data = &NSData::with_bytes(&hash_bytes);
             self.inner.setData_forType(Some(hash_data), text_hash_type);
-            let metadata_data = NSString::from_str(&metadata);
+            let metadata_data = NSString::from_str(metadata);
             self.inner.setString_forType(&metadata_data, metadata_type);
         }
     }
@@ -207,7 +203,7 @@ impl Pasteboard {
     fn write_image(&self, image: &Image) {
         self.inner.clearContents();
 
-        if image.bytes().len() > 0 {
+        if !image.bytes().is_empty() {
             let image_type = Into::<UTType>::into(image.format).inner();
             let image_data = NSData::with_bytes(&image.bytes);
             self.inner.setData_forType(Some(&image_data), image_type);
@@ -218,7 +214,7 @@ impl Pasteboard {
         self.inner.clearContents();
 
         let text = paths.0.iter().map(|p| p.to_string_lossy()).join("\n");
-        if text.len() > 0 {
+        if !text.is_empty() {
             self.write_plaintext(&ClipboardString { text, metadata: None });
         }
     }

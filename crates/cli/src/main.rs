@@ -26,7 +26,7 @@ use util::paths::PathWithPosition;
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
 use std::io::IsTerminal;
 
-const URL_PREFIX: [&'static str; 5] = ["gram://", "http://", "https://", "file://", "ssh://"];
+const URL_PREFIX: [&str; 5] = ["gram://", "http://", "https://", "file://", "ssh://"];
 
 struct Detect;
 
@@ -309,7 +309,7 @@ fn parse_path_in_wsl(source: &str, wsl: &str) -> Result<String> {
     let output = util::command::new_std_command("wsl.exe")
         .args(&args)
         .arg("--exec")
-        .args(&command)
+        .args(command)
         .output()?;
     let result = if output.status.success() {
         String::from_utf8_lossy(&output.stdout).to_string()
@@ -317,7 +317,7 @@ fn parse_path_in_wsl(source: &str, wsl: &str) -> Result<String> {
         let fallback = util::command::new_std_command("wsl.exe")
             .args(&args)
             .arg("--")
-            .args(&command)
+            .args(command)
             .output()?;
         String::from_utf8_lossy(&fallback.stdout).to_string()
     };

@@ -122,8 +122,8 @@ pub struct ThemeSettings {
     pub client_side_decoration_shadow: Pixels,
 }
 
-pub(crate) const DEFAULT_LIGHT_THEME: &'static str = "One Light";
-pub(crate) const DEFAULT_DARK_THEME: &'static str = "One Dark";
+pub(crate) const DEFAULT_LIGHT_THEME: &str = "One Light";
+pub(crate) const DEFAULT_DARK_THEME: &str = "One Dark";
 
 /// Returns the name of the default theme for the given [`Appearance`].
 pub fn default_theme(appearance: Appearance) -> &'static str {
@@ -508,7 +508,7 @@ impl ThemeSettings {
         base_theme.styles.player.merge(&theme_overrides.players);
         base_theme.styles.accents.merge(&theme_overrides.accents);
         base_theme.styles.syntax =
-            SyntaxTheme::merge(base_theme.styles.syntax.clone(), syntax_overrides(&theme_overrides));
+            SyntaxTheme::merge(base_theme.styles.syntax.clone(), syntax_overrides(theme_overrides));
     }
 }
 

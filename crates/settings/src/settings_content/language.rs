@@ -41,10 +41,10 @@ impl merge_from::MergeFrom for AllLanguageSettingsContent {
         // A user's language-specific settings override default language-specific settings.
         for (language_name, user_language_settings) in &other.languages.0 {
             if let Some(existing) = self.languages.0.get_mut(language_name) {
-                existing.merge_from(&user_language_settings);
+                existing.merge_from(user_language_settings);
             } else {
                 let mut new_settings = self.defaults.clone();
-                new_settings.merge_from(&user_language_settings);
+                new_settings.merge_from(user_language_settings);
 
                 self.languages.0.insert(language_name.clone(), new_settings);
             }

@@ -1104,9 +1104,9 @@ pub enum WindowBackgroundContent {
     Blurred,
 }
 
-impl Into<gpui::WindowBackgroundAppearance> for WindowBackgroundContent {
-    fn into(self) -> gpui::WindowBackgroundAppearance {
-        match self {
+impl From<WindowBackgroundContent> for gpui::WindowBackgroundAppearance {
+    fn from(val: WindowBackgroundContent) -> Self {
+        match val {
             WindowBackgroundContent::Opaque => gpui::WindowBackgroundAppearance::Opaque,
             WindowBackgroundContent::Transparent => gpui::WindowBackgroundAppearance::Transparent,
             WindowBackgroundContent::Blurred => gpui::WindowBackgroundAppearance::Blurred,

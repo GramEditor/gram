@@ -258,10 +258,7 @@ pub fn system_extensions_dir() -> &'static Option<PathBuf> {
     static SYSTEM_EXTENSIONS_DIR: OnceLock<Option<PathBuf>> = OnceLock::new();
     SYSTEM_EXTENSIONS_DIR.get_or_init(|| match std::env::var("GRAM_SYSTEM_EXTENSIONS_DIR") {
         Ok(dir) => Some(dir.into()),
-        Err(_) => match option_env!("GRAM_SYSTEM_EXTENSIONS_DIR") {
-            Some(dir) => Some(dir.into()),
-            None => None,
-        },
+        Err(_) => option_env!("GRAM_SYSTEM_EXTENSIONS_DIR").map(|dir| dir.into()),
     })
 }
 

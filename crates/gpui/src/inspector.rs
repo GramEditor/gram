@@ -9,9 +9,9 @@ pub struct InspectorElementId {
     pub instance_id: usize,
 }
 
-impl Into<InspectorElementId> for &InspectorElementId {
-    fn into(self) -> InspectorElementId {
-        self.clone()
+impl From<&InspectorElementId> for InspectorElementId {
+    fn from(val: &InspectorElementId) -> Self {
+        val.clone()
     }
 }
 
@@ -45,9 +45,9 @@ mod conditional {
         }
     }
 
-    impl Into<InspectorElementPath> for &InspectorElementPath {
-        fn into(self) -> InspectorElementPath {
-            self.clone()
+    impl From<&InspectorElementPath> for InspectorElementPath {
+        fn from(val: &InspectorElementPath) -> Self {
+            val.clone()
         }
     }
 

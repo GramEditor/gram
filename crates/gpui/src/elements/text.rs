@@ -563,6 +563,11 @@ impl TextLayout {
         self.0.borrow().as_ref().unwrap().len
     }
 
+    /// Check if underlying text is empty.
+    pub fn is_empty(&self) -> bool {
+        self.0.borrow().as_ref().unwrap().len == 0
+    }
+
     /// The text for this layout.
     pub fn text(&self) -> String {
         self.0

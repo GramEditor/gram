@@ -76,7 +76,7 @@ pub async fn get_messages(git: &GitBinary, shas: &[Oid]) -> Result<HashMap<Oid, 
 async fn get_messages_impl(git: &GitBinary, shas: &[Oid]) -> Result<Vec<String>> {
     const MARKER: &str = "<MARKER>";
     let output = git
-        .build_command(&["show"])
+        .build_command(["show"])
         .arg("-s")
         .arg(format!("--format=%B{}", MARKER))
         .args(shas.iter().map(ToString::to_string))

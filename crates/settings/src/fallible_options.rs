@@ -88,7 +88,7 @@ mod tests {
             }
         "#;
 
-        let (settings, result) = crate::fallible_options::parse_json::<Foo>(&input);
+        let (settings, result) = crate::fallible_options::parse_json::<Foo>(input);
         assert_eq!(
             settings.unwrap(),
             Foo {
@@ -98,7 +98,7 @@ mod tests {
             }
         );
 
-        assert!(crate::parse_json_with_comments::<Foo>(&input).is_err());
+        assert!(crate::parse_json_with_comments::<Foo>(input).is_err());
 
         let ParseStatus::Failed { error } = result else {
             panic!("Expected parse to fail")

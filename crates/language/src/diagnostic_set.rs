@@ -72,7 +72,7 @@ impl<'a> DiagnosticEntryRef<'a, Anchor> {
     pub fn resolve<O: FromAnchor>(&self, buffer: &text::BufferSnapshot) -> DiagnosticEntryRef<'a, O> {
         DiagnosticEntryRef {
             range: O::from_anchor(&self.range.start, buffer)..O::from_anchor(&self.range.end, buffer),
-            diagnostic: &self.diagnostic,
+            diagnostic: self.diagnostic,
         }
     }
 }

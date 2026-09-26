@@ -1,5 +1,5 @@
 use std::cmp::{self, max, min};
-use std::iter::repeat;
+use std::iter::repeat_n;
 
 use alacritty_terminal::grid::Dimensions;
 /// Most of the code, and specifically the constants, in this are copied from Alacritty,
@@ -93,7 +93,7 @@ pub fn scroll_report(
             e.modifiers,
             MouseFormat::from_mode(mode),
         )
-        .map(|report| repeat(report).take(max(scroll_lines, 1) as usize))
+        .map(|report| repeat_n(report, max(scroll_lines, 1) as usize))
     } else {
         None
     }

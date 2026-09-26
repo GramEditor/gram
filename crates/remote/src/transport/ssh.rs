@@ -21,6 +21,7 @@ use smol::fs;
 
 use smol::process::{self, Child, Stdio};
 use std::{
+    fmt,
     net::IpAddr,
     path::{Path, PathBuf},
     sync::Arc,
@@ -68,12 +69,15 @@ impl SshConnectionHost {
             Self::Hostname(hostname) => hostname.clone(),
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        match self {
+impl fmt::Display for SshConnectionHost {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = match self {
             Self::IpAddr(ip) => ip.to_string(),
             Self::Hostname(hostname) => hostname.clone(),
-        }
+        };
+        f.write_str(&s)
     }
 }
 
@@ -169,7 +173,7 @@ impl MasterProcess {
 
         master_process.arg(format!("ControlPath={}", socket_path.display()));
 
-        let process = master_process.arg(&destination).spawn()?;
+        let process = master_process.arg(destination).spawn()?;
 
         Ok(MasterProcess { process })
     }
@@ -393,7 +397,7 @@ impl RemoteConnection for SshRemoteConnection {
 
         let mut proxy_args = vec![];
         for env_var in ["RUST_LOG", "RUST_BACKTRACE", "GRAM_GENERATE_MINIDUMPS"] {
-            if let Some(value) = std::env::var(env_var).ok() {
+            if let Ok(value) = std::env::var(env_var) {
                 proxy_args.push(format!("{}='{}'", env_var, value));
             }
         }
@@ -532,13 +536,7 @@ impl SshRemoteConnection {
             _ => PathStyle::Posix,
         };
         let ssh_default_system_shell = String::from("/bin/sh");
-        let ssh_shell_kind = ShellKind::new(
-            &ssh_shell,
-            match ssh_platform.os {
-                "windows" => true,
-                _ => false,
-            },
-        );
+        let ssh_shell_kind = ShellKind::new(&ssh_shell, matches!(ssh_platform.os, "windows"));
 
         let mut this = Self {
             socket,
@@ -1267,7 +1265,7 @@ fn build_command(
 
         // shlex will wrap the command in single quotes (''), disabling ~ expansion,
         // replace with something that works
-        const TILDE_PREFIX: &'static str = "~/";
+        const TILDE_PREFIX: &str = "~/";
         if working_dir.starts_with(TILDE_PREFIX) {
             let working_dir = working_dir.trim_start_matches("~").trim_start_matches("/");
             write!(
@@ -1300,7 +1298,7 @@ fn build_command(
                 .context("shell quoting")?
         )?;
         for arg in input_args {
-            let arg = ssh_shell_kind.try_quote(&arg).context("shell quoting")?;
+            let arg = ssh_shell_kind.try_quote(arg).context("shell quoting")?;
             write!(exec, " {}", arg)?;
         }
     } else {

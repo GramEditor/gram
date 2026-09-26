@@ -48,7 +48,7 @@ mod test_mocks {
     }
 
     impl MockDelegate {
-        pub(crate) fn new() -> Arc<dyn adapters::DapDelegate> {
+        pub(crate) fn new_arc() -> Arc<dyn adapters::DapDelegate> {
             Arc::new(Self {
                 worktree_root: PathBuf::from("/tmp/test"),
             })

@@ -23,6 +23,12 @@ pub struct ReqwestClient {
     handle: tokio::runtime::Handle,
 }
 
+impl Default for ReqwestClient {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ReqwestClient {
     fn builder() -> reqwest::ClientBuilder {
         reqwest::Client::builder()

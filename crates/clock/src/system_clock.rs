@@ -25,6 +25,13 @@ pub struct FakeSystemClock {
 }
 
 #[cfg(any(test, feature = "test-support"))]
+impl Default for FakeSystemClock {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(any(test, feature = "test-support"))]
 impl FakeSystemClock {
     pub fn new() -> Self {
         let state = FakeSystemClockState { now: Instant::now() };

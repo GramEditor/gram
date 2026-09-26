@@ -104,11 +104,10 @@ extern "C" fn trampoline(runnable: *mut c_void) {
     THREAD_TIMINGS.with(|timings| {
         let mut timings = timings.lock();
         let timings = &mut timings.timings;
-        if let Some(last_timing) = timings.iter_mut().rev().next() {
-            if last_timing.location == timing.location {
+        if let Some(last_timing) = timings.iter_mut().next_back()
+            && last_timing.location == timing.location {
                 return;
             }
-        }
 
         timings.push_back(timing);
     });
@@ -119,7 +118,7 @@ extern "C" fn trampoline(runnable: *mut c_void) {
     THREAD_TIMINGS.with(|timings| {
         let mut timings = timings.lock();
         let timings = &mut timings.timings;
-        let Some(last_timing) = timings.iter_mut().rev().next() else {
+        let Some(last_timing) = timings.iter_mut().next_back() else {
             return;
         };
         last_timing.end = Some(end);
@@ -140,11 +139,10 @@ extern "C" fn trampoline_compat(runnable: *mut c_void) {
     THREAD_TIMINGS.with(|timings| {
         let mut timings = timings.lock();
         let timings = &mut timings.timings;
-        if let Some(last_timing) = timings.iter_mut().rev().next() {
-            if last_timing.location == timing.location {
+        if let Some(last_timing) = timings.iter_mut().next_back()
+            && last_timing.location == timing.location {
                 return;
             }
-        }
 
         timings.push_back(timing);
     });
@@ -155,7 +153,7 @@ extern "C" fn trampoline_compat(runnable: *mut c_void) {
     THREAD_TIMINGS.with(|timings| {
         let mut timings = timings.lock();
         let timings = &mut timings.timings;
-        let Some(last_timing) = timings.iter_mut().rev().next() else {
+        let Some(last_timing) = timings.iter_mut().next_back() else {
             return;
         };
         last_timing.end = Some(end);

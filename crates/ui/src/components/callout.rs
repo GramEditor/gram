@@ -111,6 +111,12 @@ impl Callout {
     }
 }
 
+impl Default for Callout {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RenderOnce for Callout {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         let line_height = self.line_height.unwrap_or(window.line_height());

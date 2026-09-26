@@ -248,7 +248,7 @@ impl DebugAdapter for GdbDebugAdapter {
                     .filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_string())))
                     .collect::<HashMap<String, String>>()
             })
-            .unwrap_or_else(HashMap::default);
+            .unwrap_or_default();
 
         base_env.extend(config_env);
 

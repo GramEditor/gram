@@ -204,9 +204,9 @@ impl ExtensionBuilder {
         let wasi_sdk_sysroot = self.cache_dir.join("wasi-sdk").join("share").join("wasi-sysroot");
         let wasi_sysroot = self.cache_dir.join("wasi-sysroot");
         if wasi_sdk_sysroot.is_dir() {
-            return Ok(wasi_sdk_sysroot);
+            Ok(wasi_sdk_sysroot)
         } else if wasi_sysroot.is_dir() {
-            return Ok(wasi_sysroot);
+            Ok(wasi_sysroot)
         } else {
             anyhow::bail!("No WASI sysroot found");
         }
@@ -404,18 +404,16 @@ impl ExtensionBuilder {
         if let Ok(system_clang) = which::which(format!("clang{}", env::consts::EXE_SUFFIX))
             && let Ok(_) = which::which(format!("wasm-ld{}", env::consts::EXE_SUFFIX))
             && let Ok(_) = which::which(format!("wasm-component-ld{}", env::consts::EXE_SUFFIX))
-        {
-            if util::command::new_smol_command(&system_clang)
+            && util::command::new_smol_command(&system_clang)
                 .args([&format!("--target={RUST_TARGET}"), "-print-supported-cpus"])
                 .output()
                 .await
                 .is_ok_and(|o| o.status.success())
-            {
-                match self.install_wasi_sysroot_if_needed().await {
-                    Ok(..) => return Ok(system_clang),
-                    Err(err) => {
-                        log::error!("failed to get wasi sysroot: {err:?}");
-                    }
+        {
+            match self.install_wasi_sysroot_if_needed().await {
+                Ok(..) => return Ok(system_clang),
+                Err(err) => {
+                    log::error!("failed to get wasi sysroot: {err:?}");
                 }
             }
         }
@@ -541,7 +539,7 @@ impl ExtensionBuilder {
 
     // This was adapted from:
     // https://github.com/bytecodealliance/wasm-tools/blob/e8809bb17fcf69aa8c85cd5e6db7cff5cf36b1de/src/bin/wasm-tools/strip.rs
-    fn strip_custom_sections(&self, input: &Vec<u8>) -> Result<Vec<u8>> {
+    fn strip_custom_sections(&self, input: &[u8]) -> Result<Vec<u8>> {
         use wasmparser::Payload::*;
 
         let strip_custom_section = |name: &str| {

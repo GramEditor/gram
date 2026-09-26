@@ -1639,7 +1639,7 @@ impl ProjectPanel {
         } else {
             filename.trim_start_matches('/')
         };
-        let filename = RelPath::new(filename.as_ref(), path_style).ok()?.into_arc();
+        let filename = RelPath::new(filename.as_ref(), path_style).ok()?.to_arc();
 
         edit_state.is_dir = edit_state.is_dir || (edit_state.is_new_entry() && filename_indicates_dir);
         let is_dir = edit_state.is_dir;
@@ -2769,9 +2769,9 @@ impl ProjectPanel {
         let Some(target_dir) = maybe!({
             let target_entry = target_worktree.read(cx).entry_for_id(target_entry_id)?;
             let target_dir = if target_entry.is_dir() {
-                target_entry.path.into_arc()
+                target_entry.path.to_arc()
             } else {
-                target_entry.path.parent()?.into_arc()
+                target_entry.path.parent()?.to_arc()
             };
             Some(target_dir)
         }) else {

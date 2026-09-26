@@ -3012,9 +3012,7 @@ impl ScrollHandle {
                         if state.overflow.y == Overflow::Scroll {
                             let child_height = bounds.size.height;
                             let viewport_height = state.bounds.size.height;
-                            if child_height > viewport_height {
-                                scroll_offset.y = state.bounds.top() - bounds.top();
-                            } else if bounds.top() + scroll_offset.y < state.bounds.top() {
+                            if child_height > viewport_height || bounds.top() + scroll_offset.y < state.bounds.top() {
                                 scroll_offset.y = state.bounds.top() - bounds.top();
                             } else if bounds.bottom() + scroll_offset.y > state.bounds.bottom() {
                                 scroll_offset.y = state.bounds.bottom() - bounds.bottom();
@@ -3029,9 +3027,7 @@ impl ScrollHandle {
                 if state.overflow.x == Overflow::Scroll {
                     let child_width = bounds.size.width;
                     let viewport_width = state.bounds.size.width;
-                    if child_width > viewport_width {
-                        scroll_offset.x = state.bounds.left() - bounds.left();
-                    } else if bounds.left() + scroll_offset.x < state.bounds.left() {
+                    if child_width > viewport_width || bounds.left() + scroll_offset.x < state.bounds.left() {
                         scroll_offset.x = state.bounds.left() - bounds.left();
                     } else if bounds.right() + scroll_offset.x > state.bounds.right() {
                         scroll_offset.x = state.bounds.right() - bounds.right();

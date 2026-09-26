@@ -46,7 +46,6 @@ use task::{HideStrategy, Shell, SpawnInTerminal};
 use terminal_hyperlinks::RegexSearches;
 use terminal_settings::{AlternateScroll, CursorShape, TerminalSettings};
 use theme::{ActiveTheme, Theme};
-use urlencoding;
 use util::truncate_and_trailoff;
 
 #[cfg(unix)]
@@ -938,10 +937,10 @@ impl Terminal {
             AlacTermEvent::Wakeup => {
                 cx.emit(Event::Wakeup);
 
-                if let TerminalType::Pty { info, .. } = &mut self.terminal_type {
-                    if info.has_changed() {
-                        cx.emit(Event::TitleChanged);
-                    }
+                if let TerminalType::Pty { info, .. } = &mut self.terminal_type
+                    && info.has_changed()
+                {
+                    cx.emit(Event::TitleChanged);
                 }
             }
             AlacTermEvent::ColorRequest(index, format) => {
@@ -1594,15 +1593,8 @@ impl Terminal {
 
     pub fn mouse_changed(&mut self, point: AlacPoint, side: AlacDirection) -> bool {
         match self.last_mouse {
-            Some((old_point, old_side)) => {
-                if old_point == point && old_side == side {
-                    false
-                } else {
-                    self.last_mouse = Some((point, side));
-                    true
-                }
-            }
-            None => {
+            Some((old_point, old_side)) if old_point == point && old_side == side => false,
+            _ => {
                 self.last_mouse = Some((point, side));
                 true
             }
@@ -1644,7 +1636,7 @@ impl Terminal {
 
         // Throttle hyperlink searches to avoid excessive processing
         let now = Instant::now();
-        if self.last_hyperlink_search_position.map_or(true, |last_pos| {
+        if self.last_hyperlink_search_position.is_none_or(|last_pos| {
             // Only search if mouse moved significantly or enough time passed
             let distance_moved =
                 ((position.x - last_pos.x).abs() + (position.y - last_pos.y).abs()) > FIND_HYPERLINK_THROTTLE_PX;
@@ -1818,14 +1810,13 @@ impl Terminal {
                 if let Some(mouse_up_hyperlink) = {
                     let term_lock = self.term.lock();
                     terminal_hyperlinks::find_from_grid_point(&term_lock, point, &mut self.hyperlink_regex_searches)
-                } {
-                    if mouse_down_hyperlink == mouse_up_hyperlink {
-                        self.events
-                            .push_back(InternalEvent::ProcessHyperlink(mouse_up_hyperlink, true));
-                        self.selection_phase = SelectionPhase::Ended;
-                        self.last_mouse = None;
-                        return;
-                    }
+                } && mouse_down_hyperlink == mouse_up_hyperlink
+                {
+                    self.events
+                        .push_back(InternalEvent::ProcessHyperlink(mouse_up_hyperlink, true));
+                    self.selection_phase = SelectionPhase::Ended;
+                    self.last_mouse = None;
+                    return;
                 }
             }
 
@@ -1996,10 +1987,9 @@ impl Terminal {
     pub fn kill_active_task(&mut self) {
         if let Some(task) = self.task()
             && task.status == TaskStatus::Running
+            && let TerminalType::Pty { info, .. } = &mut self.terminal_type
         {
-            if let TerminalType::Pty { info, .. } = &mut self.terminal_type {
-                info.kill_current_process();
-            }
+            info.kill_current_process();
         }
     }
 
@@ -2104,7 +2094,7 @@ impl Terminal {
     }
 
     pub fn clone_builder(&self, cx: &App, cwd: Option<PathBuf>) -> Task<Result<TerminalBuilder>> {
-        let working_directory = self.working_directory().or_else(|| cwd);
+        let working_directory = self.working_directory().or(cwd);
         TerminalBuilder::new(
             working_directory,
             None,

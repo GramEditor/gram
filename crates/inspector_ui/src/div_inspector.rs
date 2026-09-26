@@ -644,7 +644,7 @@ fn completion_replace_range(snapshot: &BufferSnapshot, anchor: &Anchor) -> Optio
     let line_start = Point::new(point.row, 0).to_offset(snapshot);
     let line_end = Point::new(point.row, snapshot.line_len(point.row)).to_offset(snapshot);
     let mut lines = snapshot.text_for_range(line_start..line_end).lines();
-    let line = lines.next()?;
+    let line = lines.next_chunk()?;
 
     let start_in_line = &line[..offset - line_start]
         .rfind(|c| is_not_identifier_char(c) && c != '.')

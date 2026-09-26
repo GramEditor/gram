@@ -360,10 +360,10 @@ fn deserialize_npm_info_from_response(data: &[u8]) -> Result<NpmInfo, serde_json
     let value: serde_json::Value = serde_json::from_slice(data)?;
 
     // npm >= 12 returns an array with one object: [ { ... } ]
-    if let serde_json::Value::Array(arr) = &value {
-        if arr.len() == 1 {
-            return NpmInfo::deserialize(&arr[0]);
-        }
+    if let serde_json::Value::Array(arr) = &value
+        && arr.len() == 1
+    {
+        return NpmInfo::deserialize(&arr[0]);
     }
 
     // npm <= v11 returns a bare JSON object: { ... }
@@ -877,7 +877,7 @@ mod tests {
             let mut dummy = smol::process::Command::new("");
             let proxy = Url::parse(proxy).unwrap();
             configure_npm_command(&mut dummy, None, Some(&proxy));
-            let proxy = dummy.get_args().skip_while(|&arg| arg != "--proxy").skip(1).next();
+            let proxy = dummy.get_args().skip_while(|&arg| arg != "--proxy").nth(1);
             let proxy = proxy.expect("Proxy was not passed to Command correctly");
             assert_eq!(proxy, mapped_proxy, "Incorrectly mapped localhost to 127.0.0.1");
         }

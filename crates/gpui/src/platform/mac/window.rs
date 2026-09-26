@@ -918,11 +918,11 @@ impl MacWindow {
         match &native_window {
             GpuiWindowVariant::Window(wnd) => {
                 wnd.set_window_state(window.0.clone());
-                wnd.setDelegate(Some(&ProtocolObject::from_ref(&**wnd)));
+                wnd.setDelegate(Some(ProtocolObject::from_ref(&**wnd)));
             }
             GpuiWindowVariant::Panel(wnd) => {
                 wnd.set_window_state(window.0.clone());
-                wnd.setDelegate(Some(&ProtocolObject::from_ref(&**wnd)));
+                wnd.setDelegate(Some(ProtocolObject::from_ref(&**wnd)));
             }
         }
         native_view.set_window_state(window.0.clone());
@@ -1100,11 +1100,7 @@ impl MacWindow {
 fn to_window_state(window: &NSWindow) -> Option<Arc<Mutex<MacWindowState>>> {
     if let Some(window) = window.downcast_ref::<GpuiWindow>() {
         Some(window.state())
-    } else if let Some(panel) = window.downcast_ref::<GpuiPanel>() {
-        Some(panel.state())
-    } else {
-        None
-    }
+    } else { window.downcast_ref::<GpuiPanel>().map(|panel| panel.state()) }
 }
 
 impl Drop for MacWindow {

@@ -6,6 +6,7 @@ fn main() {
     let mut build = prost_build::Config::new();
     match build
         .type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]")
+        .enum_attribute(".", "#[allow(clippy::enum_variant_names)]")
         .compile_protos(&["proto/gram.proto"], &["proto"])
     {
         Ok(()) => (),

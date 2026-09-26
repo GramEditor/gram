@@ -1027,7 +1027,7 @@ mod tests {
     #[gpui::test]
     async fn test_task_list_sorting(cx: &mut TestAppContext) {
         init_test(cx);
-        let inventory = cx.update(|cx| Inventory::new(cx));
+        let inventory = cx.update(Inventory::new);
         let initial_tasks = resolved_task_names(&inventory, None, cx).await;
         assert!(
             initial_tasks.is_empty(),
@@ -1192,7 +1192,7 @@ mod tests {
     #[gpui::test]
     async fn test_reloading_debug_scenarios(cx: &mut TestAppContext) {
         init_test(cx);
-        let inventory = cx.update(|cx| Inventory::new(cx));
+        let inventory = cx.update(Inventory::new);
         inventory.update(cx, |inventory, _| {
             inventory
                 .update_file_based_scenarios(
@@ -1301,7 +1301,7 @@ mod tests {
     #[gpui::test]
     async fn test_inventory_static_task_filters(cx: &mut TestAppContext) {
         init_test(cx);
-        let inventory = cx.update(|cx| Inventory::new(cx));
+        let inventory = cx.update(Inventory::new);
         let common_name = "common_task_name";
         let worktree_1 = WorktreeId::from_usize(1);
         let worktree_2 = WorktreeId::from_usize(2);
@@ -1458,8 +1458,10 @@ mod tests {
         cx: &mut TestAppContext,
     ) -> Task<Vec<String>> {
         let tasks = inventory.update(cx, |inventory, cx| {
-            let mut task_contexts = TaskContexts::default();
-            task_contexts.active_worktree_context = worktree.map(|worktree| (worktree, TaskContext::default()));
+            let task_contexts = TaskContexts {
+                active_worktree_context: worktree.map(|worktree| (worktree, TaskContext::default())),
+                ..Default::default()
+            };
 
             inventory.used_and_current_resolved_tasks(Arc::new(task_contexts), cx)
         });
@@ -1496,8 +1498,10 @@ mod tests {
     ) -> Vec<(TaskSourceKind, String)> {
         let (used, current) = inventory
             .update(cx, |inventory, cx| {
-                let mut task_contexts = TaskContexts::default();
-                task_contexts.active_worktree_context = worktree.map(|worktree| (worktree, TaskContext::default()));
+                let task_contexts = TaskContexts {
+                    active_worktree_context: worktree.map(|worktree| (worktree, TaskContext::default())),
+                    ..Default::default()
+                };
 
                 inventory.used_and_current_resolved_tasks(Arc::new(task_contexts), cx)
             })

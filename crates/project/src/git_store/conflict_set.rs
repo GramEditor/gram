@@ -157,7 +157,7 @@ impl ConflictSet {
         let mut theirs_start: Option<usize> = None;
         let mut theirs_branch_name: Option<SharedString> = None;
 
-        while let Some(line) = lines.next() {
+        while let Some(line) = lines.next_chunk() {
             let line_end = line_pos + line.len();
 
             if let Some(branch_name) = line.strip_prefix("<<<<<<< ") {

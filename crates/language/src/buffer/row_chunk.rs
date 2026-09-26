@@ -70,6 +70,10 @@ impl RowChunks {
         self.chunks.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.chunks.is_empty()
+    }
+
     pub fn applicable_chunks(&self, ranges: &[Range<Point>]) -> impl Iterator<Item = RowChunk> {
         let row_ranges = ranges
             .iter()
@@ -81,7 +85,7 @@ impl RowChunks {
             .iter()
             .filter(move |chunk| -> bool {
                 let chunk_range = chunk.row_range().to_inclusive();
-                row_ranges.iter().any(|row_range| chunk_range.overlaps(&row_range))
+                row_ranges.iter().any(|row_range| chunk_range.overlaps(row_range))
             })
             .copied()
     }

@@ -430,7 +430,7 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
                                     return;
                                 };
                                 worktree
-                                    .write_file(path.into_arc(), text.clone(), line_ending, encoding, has_bom, cx)
+                                    .write_file(path.to_arc(), text.clone(), line_ending, encoding, has_bom, cx)
                                     .detach_and_prompt_err("Failed to write lines", window, cx, |_, _, _| None);
                             });
                         })
@@ -460,7 +460,7 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
             let path_style = worktree.read(cx).path_style();
             let Ok(project_path) = RelPath::new(Path::new(&action.filename), path_style).map(|path| ProjectPath {
                 worktree_id: worktree.read(cx).id(),
-                path: path.into_arc(),
+                path: path.to_arc(),
             }) else {
                 // TODO implement save_as with absolute path
                 Task::ready(Err::<(), _>(anyhow!("Cannot save buffer with absolute path"))).detach_and_prompt_err(
@@ -530,7 +530,7 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
             };
             let project_path = ProjectPath {
                 worktree_id: worktree.read(cx).id(),
-                path: path.into_arc(),
+                path: path.to_arc(),
             };
 
             let direction = if action.vertical {
@@ -628,7 +628,7 @@ pub fn register(editor: &mut Editor, cx: &mut Context<Vim>) {
             };
             let project_path = ProjectPath {
                 worktree_id: worktree.read(cx).id(),
-                path: path.into_arc(),
+                path: path.to_arc(),
             };
 
             let _ = workspace.update(cx, |workspace, cx| {

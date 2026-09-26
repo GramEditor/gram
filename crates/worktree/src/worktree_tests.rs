@@ -1,6 +1,5 @@
 use crate::{Entry, EntryKind, Event, PathChange, Worktree, WorktreeModelHandle};
 use anyhow::Result;
-use encoding_rs;
 use fs::{FakeFs, Fs, RealFs, RemoveOptions};
 use git::{DOT_GIT, GITIGNORE, REPO_EXCLUDE};
 use gpui::{AppContext as _, BackgroundExecutor, BorrowAppContext, Context, Task, TestAppContext};
@@ -2439,7 +2438,7 @@ async fn test_load_file_encoding(cx: &mut TestAppContext) {
 
     cx.read(|cx| tree.read(cx).as_local().unwrap().scan_complete()).await;
 
-    let rel_path = |name: &str| RelPath::new(&Path::new(name), PathStyle::local()).unwrap().into_arc();
+    let rel_path = |name: &str| RelPath::new(Path::new(name), PathStyle::local()).unwrap().to_arc();
 
     // Run Success Tests
     for case in success_cases {
@@ -2572,7 +2571,7 @@ async fn test_write_file_encoding(cx: &mut gpui::TestAppContext) {
 
         fs.insert_file(&file_path, "".into()).await;
 
-        let rel_path = RelPath::new(&path, PathStyle::local()).unwrap().into_arc();
+        let rel_path = RelPath::new(&path, PathStyle::local()).unwrap().to_arc();
         let text = text::Rope::from(case.text);
 
         let task = worktree.update(cx, |wt, cx| {

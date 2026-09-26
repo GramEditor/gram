@@ -398,7 +398,7 @@ pub const fn red() -> Hsla {
 /// The color blue in [`Hsla`]
 pub const fn blue() -> Hsla {
     Hsla {
-        h: 0.6666666667,
+        h: 0.666_666_7,
         s: 1.,
         l: 0.5,
         a: 1.,
@@ -408,7 +408,7 @@ pub const fn blue() -> Hsla {
 /// The color green in [`Hsla`]
 pub const fn green() -> Hsla {
     Hsla {
-        h: 0.3333333333,
+        h: 0.333_333_34,
         s: 1.,
         l: 0.25,
         a: 1.,
@@ -418,7 +418,7 @@ pub const fn green() -> Hsla {
 /// The color yellow in [`Hsla`]
 pub const fn yellow() -> Hsla {
     Hsla {
-        h: 0.1666666667,
+        h: 0.166_666_67,
         s: 1.,
         l: 0.5,
         a: 1.,

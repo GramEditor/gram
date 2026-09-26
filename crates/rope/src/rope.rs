@@ -1067,7 +1067,7 @@ pub struct Lines<'a> {
 }
 
 impl<'a> Lines<'a> {
-    pub fn next(&mut self) -> Option<&str> {
+    pub fn next_chunk(&mut self) -> Option<&str> {
         if self.done {
             return None;
         }
@@ -1693,47 +1693,47 @@ mod tests {
     fn test_lines() {
         let rope = Rope::from("abc\ndefg\nhi");
         let mut lines = rope.chunks().lines();
-        assert_eq!(lines.next(), Some("abc"));
-        assert_eq!(lines.next(), Some("defg"));
-        assert_eq!(lines.next(), Some("hi"));
-        assert_eq!(lines.next(), None);
+        assert_eq!(lines.next_chunk(), Some("abc"));
+        assert_eq!(lines.next_chunk(), Some("defg"));
+        assert_eq!(lines.next_chunk(), Some("hi"));
+        assert_eq!(lines.next_chunk(), None);
 
         let rope = Rope::from("abc\ndefg\nhi\n");
         let mut lines = rope.chunks().lines();
-        assert_eq!(lines.next(), Some("abc"));
-        assert_eq!(lines.next(), Some("defg"));
-        assert_eq!(lines.next(), Some("hi"));
-        assert_eq!(lines.next(), Some(""));
-        assert_eq!(lines.next(), None);
+        assert_eq!(lines.next_chunk(), Some("abc"));
+        assert_eq!(lines.next_chunk(), Some("defg"));
+        assert_eq!(lines.next_chunk(), Some("hi"));
+        assert_eq!(lines.next_chunk(), Some(""));
+        assert_eq!(lines.next_chunk(), None);
 
         let rope = Rope::from("abc\ndefg\nhi");
         let mut lines = rope.reversed_chunks_in_range(0..rope.len()).lines();
-        assert_eq!(lines.next(), Some("hi"));
-        assert_eq!(lines.next(), Some("defg"));
-        assert_eq!(lines.next(), Some("abc"));
-        assert_eq!(lines.next(), None);
+        assert_eq!(lines.next_chunk(), Some("hi"));
+        assert_eq!(lines.next_chunk(), Some("defg"));
+        assert_eq!(lines.next_chunk(), Some("abc"));
+        assert_eq!(lines.next_chunk(), None);
 
         let rope = Rope::from("abc\ndefg\nhi\n");
         let mut lines = rope.reversed_chunks_in_range(0..rope.len()).lines();
-        assert_eq!(lines.next(), Some(""));
-        assert_eq!(lines.next(), Some("hi"));
-        assert_eq!(lines.next(), Some("defg"));
-        assert_eq!(lines.next(), Some("abc"));
-        assert_eq!(lines.next(), None);
+        assert_eq!(lines.next_chunk(), Some(""));
+        assert_eq!(lines.next_chunk(), Some("hi"));
+        assert_eq!(lines.next_chunk(), Some("defg"));
+        assert_eq!(lines.next_chunk(), Some("abc"));
+        assert_eq!(lines.next_chunk(), None);
 
         let rope = Rope::from("abc\nlonger line test\nhi");
         let mut lines = rope.chunks().lines();
-        assert_eq!(lines.next(), Some("abc"));
-        assert_eq!(lines.next(), Some("longer line test"));
-        assert_eq!(lines.next(), Some("hi"));
-        assert_eq!(lines.next(), None);
+        assert_eq!(lines.next_chunk(), Some("abc"));
+        assert_eq!(lines.next_chunk(), Some("longer line test"));
+        assert_eq!(lines.next_chunk(), Some("hi"));
+        assert_eq!(lines.next_chunk(), None);
 
         let rope = Rope::from("abc\nlonger line test\nhi");
         let mut lines = rope.reversed_chunks_in_range(0..rope.len()).lines();
-        assert_eq!(lines.next(), Some("hi"));
-        assert_eq!(lines.next(), Some("longer line test"));
-        assert_eq!(lines.next(), Some("abc"));
-        assert_eq!(lines.next(), None);
+        assert_eq!(lines.next_chunk(), Some("hi"));
+        assert_eq!(lines.next_chunk(), Some("longer line test"));
+        assert_eq!(lines.next_chunk(), Some("abc"));
+        assert_eq!(lines.next_chunk(), None);
     }
 
     #[gpui::test(iterations = 100)]

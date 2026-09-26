@@ -253,7 +253,7 @@ pub async fn download_adapter_from_github(
     file_type: DownloadedFileType,
     delegate: &dyn DapDelegate,
 ) -> Result<PathBuf> {
-    let adapter_path = paths::debug_adapters_dir().join(&adapter_name.as_ref());
+    let adapter_path = paths::debug_adapters_dir().join(adapter_name.as_ref());
     let version_path = adapter_path.join(format!("{}_{}", adapter_name, github_version.tag_name));
     let fs = delegate.fs();
 
@@ -371,6 +371,12 @@ pub trait DebugAdapter: 'static + Send + Sync {
 pub struct FakeAdapter {}
 
 #[cfg(any(test, feature = "test-support"))]
+impl Default for FakeAdapter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FakeAdapter {
     pub const ADAPTER_NAME: &'static str = "fake-adapter";
 

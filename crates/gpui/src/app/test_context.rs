@@ -179,8 +179,7 @@ impl TestAppContext {
         &self.foreground_executor
     }
 
-    #[expect(clippy::wrong_self_convention)]
-    fn new<T: 'static>(&mut self, build_entity: impl FnOnce(&mut Context<T>) -> T) -> Entity<T> {
+    fn entity<T: 'static>(&mut self, build_entity: impl FnOnce(&mut Context<T>) -> T) -> Entity<T> {
         let mut cx = self.app.borrow_mut();
         cx.new(build_entity)
     }
@@ -858,7 +857,7 @@ impl AppContext for VisualTestContext {
     type Result<T> = <TestAppContext as AppContext>::Result<T>;
 
     fn new<T: 'static>(&mut self, build_entity: impl FnOnce(&mut Context<T>) -> T) -> Self::Result<Entity<T>> {
-        self.cx.new(build_entity)
+        self.cx.entity(build_entity)
     }
 
     fn reserve_entity<T: 'static>(&mut self) -> Self::Result<crate::Reservation<T>> {

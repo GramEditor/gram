@@ -1762,7 +1762,7 @@ impl Image {
             let mut data = image::load_from_memory_with_format(bytes, format)?.into_rgba8();
 
             // Convert from RGBA to BGRA.
-            for pixel in data.chunks_exact_mut(4) {
+            for pixel in data.as_chunks_mut::<4>().0 {
                 pixel.swap(0, 2);
             }
 
@@ -1777,7 +1777,7 @@ impl Image {
                 for frame in decoder.into_frames() {
                     let mut frame = frame?;
                     // Convert from RGBA to BGRA.
-                    for pixel in frame.buffer_mut().chunks_exact_mut(4) {
+                    for pixel in frame.buffer_mut().as_chunks_mut::<4>().0 {
                         pixel.swap(0, 2);
                     }
                     frames.push(frame);

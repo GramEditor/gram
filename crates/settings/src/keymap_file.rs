@@ -266,7 +266,7 @@ impl KeymapFile {
                             for line in lines {
                                 indented_err.push_str("  ");
                                 indented_err.push_str(line);
-                                indented_err.push_str("\n");
+                                indented_err.push('\n');
                             }
                             write!(
                                 section_errors,
@@ -985,10 +985,10 @@ impl ActionSequence {
                         |(index, action)| match KeymapFile::build_keymap_action(&KeymapAction(action), cx) {
                             Ok((action, _)) => Ok(action),
                             Err(err) => {
-                                return Err(ActionBuildError::BuildError {
+                                Err(ActionBuildError::BuildError {
                                     name: Self::name_for_type().to_string(),
                                     error: anyhow::anyhow!("error at sequence index {index}: {err}"),
-                                });
+                                })
                             }
                         },
                     )
@@ -1020,7 +1020,7 @@ impl Action for ActionSequence {
     }
 
     fn partial_eq(&self, action: &dyn Action) -> bool {
-        action.as_any().downcast_ref::<Self>().map_or(false, |other| {
+        action.as_any().downcast_ref::<Self>().is_some_and(|other| {
             self.0.len() == other.0.len() && self.0.iter().zip(other.0.iter()).all(|(a, b)| a.partial_eq(b.as_ref()))
         })
     }

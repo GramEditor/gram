@@ -67,7 +67,7 @@ impl DapRegistry {
 
         let adapters = &self.0.read().adapters;
 
-        for (name, adapter) in adapters.into_iter() {
+        for (name, adapter) in adapters.iter() {
             schemas.push(AdapterSchema {
                 adapter: name.clone().into(),
                 schema: adapter.dap_schema(),

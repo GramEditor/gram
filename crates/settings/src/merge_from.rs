@@ -8,7 +8,7 @@
 /// The default behaviour of merging is:
 /// * For objects with named keys (HashMap, structs, etc.). The values are merged deeply
 ///   (so if the default settings has languages.JSON.prettier.allowed = true, and the user's settings has
-///    languages.JSON.tab_size = 4; the merged settings file will have both settings).
+///   languages.JSON.tab_size = 4; the merged settings file will have both settings).
 /// * For options, a None value is ignored, but Some values are merged recursively.
 /// * For other types (including Vec), a merge overwrites the current value.
 ///

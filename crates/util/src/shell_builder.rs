@@ -37,7 +37,7 @@ impl ShellBuilder {
     }
 
     /// Returns the label to show in the terminal tab
-    pub fn command_label(&self, command_to_use_in_label: &str, args: &Vec<String>) -> String {
+    pub fn command_label(&self, command_to_use_in_label: &str, args: &[String]) -> String {
         let combined_command = args
             .iter()
             .fold(command_to_use_in_label.to_string(), |mut command, arg| {
@@ -64,7 +64,7 @@ impl ShellBuilder {
                 | ShellKind::Rc
                 | ShellKind::Xonsh
                 | ShellKind::Elvish => {
-                    let interactivity = self.interactive.then_some("-i ").unwrap_or_default();
+                    let interactivity = if self.interactive { "-i " } else { Default::default() };
                     format!(
                         "{PROGRAM} {interactivity}-c '{combined_command}'",
                         PROGRAM = self.program
@@ -105,7 +105,7 @@ impl ShellBuilder {
                     }
                     ShellKind::PowerShell => {
                         combined_command.insert_str(0, "$null | & {");
-                        combined_command.push_str("}");
+                        combined_command.push('}');
                     }
                     ShellKind::Cmd => {
                         combined_command.push_str("< NUL");

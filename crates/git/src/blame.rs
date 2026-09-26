@@ -44,7 +44,7 @@ const GIT_BLAME_NO_PATH: &str = "fatal: no such path";
 
 async fn run_git_blame(git: &GitBinary, path: &RepoPath, contents: &Rope) -> Result<String> {
     let mut child = git
-        .build_command(&["blame", "--incremental", "-w", "--contents", "-", "--"])
+        .build_command(["blame", "--incremental", "-w", "--contents", "-", "--"])
         .arg(path.as_unix_str())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
