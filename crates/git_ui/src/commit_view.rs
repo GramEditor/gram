@@ -319,17 +319,24 @@ impl CommitView {
                     .file_name()
                     .map(|name| name.to_string())
                     .unwrap_or_else(|| file.path.display(PathStyle::local()).to_string());
-                let display_name = format!("{short_sha} - {file_name}");
 
-                let file = Arc::new(GitBlob {
+                let base_file = Arc::new(GitBlob {
+                    path: file.path.clone(),
+                    is_deleted: false,
+                    is_binary,
+                    worktree_id,
+                    display_name: format!("{short_sha}^ - {file_name}"),
+                }) as Arc<dyn language::File>;
+
+                let new_file = Arc::new(GitBlob {
                     path: file.path.clone(),
                     is_deleted,
                     is_binary,
                     worktree_id,
-                    display_name,
+                    display_name: format!("{short_sha} - {file_name}"),
                 }) as Arc<dyn language::File>;
 
-                let buffer = build_buffer(new_text, file, &language_registry, cx).await?;
+                let buffer = build_buffer(new_text, new_file, &language_registry, cx).await?;
                 let buffer_id = cx.update(|cx| buffer.read(cx).remote_id())?;
 
                 let status_code = if is_created {
@@ -358,6 +365,13 @@ impl CommitView {
                 };
 
                 this.update(cx, |this, cx| {
+                    if let Some(buffer_diff) = buffer_diff.as_ref() {
+                        buffer_diff
+                            .read(cx)
+                            .base_text_buffer()
+                            .update(cx, |base, cx| base.file_updated(base_file, cx));
+                    }
+
                     this.multibuffer.update(cx, |multibuffer, cx| {
                         let snapshot = buffer.read(cx).snapshot();
                         let path = snapshot.file().unwrap().path().clone();
