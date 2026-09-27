@@ -6,7 +6,7 @@ use smol::{Timer, channel::Sender};
 use std::{
     collections::{BTreeMap, HashMap},
     ops::DerefMut,
-    path::{Path, PathBuf},
+    path::{MAIN_SEPARATOR_STR, Path, PathBuf},
     sync::{Arc, OnceLock},
     time::Duration,
 };
@@ -523,6 +523,12 @@ impl GlobalWatcher {
         cb: impl Fn(&notify::Event) + Send + Sync + 'static,
     ) -> Result<WatcherRegistrationId> {
         use notify::Watcher;
+
+        let path: Arc<Path> = if path.ends_with(MAIN_SEPARATOR_STR) {
+            path.components().collect::<PathBuf>().into()
+        } else {
+            path
+        };
 
         if self
             .state
