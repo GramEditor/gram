@@ -3691,7 +3691,7 @@ impl EditorElement {
                             }))
                             .when(can_open_current_file && is_selected && relative_path.is_some(), |el| {
                                 el.child(
-                                    Button::new("open-file-button", "Open Current File")
+                                    Button::new("open-current-file-button", "Open Current File")
                                         .style(ButtonStyle::OutlinedGhost)
                                         .on_click(window.listener_for(&self.editor, {
                                             let file = file.cloned();
