@@ -115,6 +115,12 @@ impl SplittableEditor {
         if self.secondary.is_none() {
             return;
         }
+        if let Some(versions) = self.get_wrap_settings_versions(cx)
+            && versions != self.wrap_versions
+        {
+            self.wrap_versions = versions;
+            self.alignment.dirty = true;
+        }
         if std::mem::take(&mut self.alignment.refresh_excerpts) {
             self.sync_excerpts(cx);
         }

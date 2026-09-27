@@ -92,6 +92,7 @@ pub struct SplittableEditor {
     workspace: WeakEntity<Workspace>,
     _subscriptions: Vec<Subscription>,
     alignment: AlignmentState,
+    wrap_versions: [u64; 2],
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -417,6 +418,7 @@ impl SplittableEditor {
             workspace: workspace.downgrade(),
             _subscriptions: subscriptions,
             alignment: AlignmentState::default(),
+            wrap_versions: Default::default(),
         }
     }
 
@@ -692,6 +694,16 @@ impl SplittableEditor {
                 .update(cx, |buffer, cx| buffer.remove_excerpts_for_path(path, cx))
         }
     }
+
+    fn get_wrap_settings_versions(&self, cx: &App) -> Option<[u64; 2]> {
+        let secondary = self.secondary.as_ref()?;
+        let editors = [self.primary_editor.clone(), secondary.editor.clone()];
+        Some(
+            editors
+                .each_ref()
+                .map(|editor| editor.read(cx).display_map.read(cx).wrap_settings_version(cx)),
+        )
+    }
 }
 
 impl EventEmitter<EditorEvent> for SplittableEditor {}
@@ -713,7 +725,20 @@ impl Render for SplittableEditor {
         } else {
             div().into_any_element()
         };
+        let weak_split_entity = cx.entity().downgrade();
         div()
+            .on_children_prepainted(move |_, _, cx| {
+                let Some(split_entity) = weak_split_entity.upgrade() else {
+                    return;
+                };
+                let split = split_entity.read(cx);
+                if split
+                    .get_wrap_settings_versions(cx)
+                    .is_some_and(|versions| versions != split.wrap_versions)
+                {
+                    cx.notify(split_entity.entity_id());
+                }
+            })
             .id("splittable-editor")
             .on_action(cx.listener(Self::split))
             .on_action(cx.listener(Self::unsplit))

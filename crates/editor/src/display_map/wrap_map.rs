@@ -163,7 +163,6 @@ impl WrapMap {
             self.font_with_size = font_with_size;
             self.settings_version += 1;
             self.rewrap(cx);
-            cx.notify();
             true
         }
     }
@@ -177,7 +176,6 @@ impl WrapMap {
         self.settings_version += 1;
         self.rewrap(cx);
         // Split layout also needs invalidation when wrapping finished synchronously.
-        cx.notify();
         true
     }
 
