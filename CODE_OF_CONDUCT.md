@@ -42,12 +42,18 @@ No LLMs for issues.
 
 No LLMs for pull requests.
 
+No LLMs for drafting, suggesting, or refining issue or pull request content.
+
+No LLMs for any interaction with this project, including but not limited to
+issues, pull requests, code, comments, or any other form of participation.
+
 No LLMs for comments on the bug tracker, including translation. English is
 encouraged, but not required. You are welcome to post in your native language
 and rely on others to have their own translation tools of choice to interpret
 your words.
 
-This section was copied from the Zig community Code of Conduct:
+This section was copied from the Zig community Code of Conduct and slightly
+modified:
 https://ziglang.org/code-of-conduct/
 
 ## Enforcement Responsibilities

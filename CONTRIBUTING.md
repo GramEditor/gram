@@ -26,10 +26,10 @@ the editor: Support as many languages and themes as possible out of the box.
 
 If this sounds interesting to you, feel free to help out.
 
-It should go without saying but AI-generated pull requests are strictly banned
-from this project. This codebase is bloated and vibe-coded enough as it is, we
-need to fix and mend and patch and not start adding to the mess as much as
-possible.
+It should go without saying but AI-generated and/or AI-assisted pull requests
+are strictly banned from this project. This codebase is bloated and vibe-coded
+enough as it is, we need to fix and mend and patch and not start adding to the
+mess as much as possible.
 
 The project policy on AI and LLM use is outlined in the
 [Code of Conduct](./CODE_OF_CONDUCT.md).
