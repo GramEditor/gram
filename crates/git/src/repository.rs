@@ -1,7 +1,7 @@
 use crate::commit::parse_git_diff_name_status;
 use crate::stash::GitStash;
 use crate::status::{DiffTreeType, GitStatus, StatusCode, TreeDiff};
-use crate::{Oid, RunHook, SHORT_SHA_LENGTH};
+use crate::{Oid, SHORT_SHA_LENGTH};
 use anyhow::{Context as _, Result, anyhow, bail};
 use collections::HashMap;
 use futures::channel::oneshot;
@@ -9,7 +9,6 @@ use futures::future::BoxFuture;
 use futures::io::BufWriter;
 use futures::{AsyncWriteExt, FutureExt as _, select_biased};
 use gpui::{AppContext as _, AsyncApp, BackgroundExecutor, SharedString, Task};
-use parking_lot::Mutex;
 use rope::Rope;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -729,8 +728,6 @@ pub trait GitRepository: Send + Sync {
     /// If any of the paths were previously staged but do not exist in HEAD, they will be removed from the index.
     fn unstage_paths(&self, paths: Vec<RepoPath>, env: Arc<HashMap<String, String>>) -> BoxFuture<'_, Result<()>>;
 
-    fn run_hook(&self, hook: RunHook, env: Arc<HashMap<String, String>>) -> BoxFuture<'_, Result<()>>;
-
     fn commit(
         &self,
         message: SharedString,
@@ -873,7 +870,6 @@ pub struct RealGitRepository {
     pub working_directory: Option<PathBuf>,
     pub system_git_binary_path: Option<PathBuf>,
     pub any_git_binary_path: PathBuf,
-    any_git_binary_help_output: Arc<Mutex<Option<SharedString>>>,
     executor: BackgroundExecutor,
 }
 
@@ -937,7 +933,6 @@ impl RealGitRepository {
             system_git_binary_path,
             any_git_binary_path,
             executor,
-            any_git_binary_help_output: Arc::new(Mutex::new(None)),
         })
     }
 
@@ -967,21 +962,6 @@ impl RealGitRepository {
             self.path(),
             self.executor.clone(),
         ))
-    }
-
-    async fn any_git_binary_help_output(&self) -> SharedString {
-        if let Some(output) = self.any_git_binary_help_output.lock().clone() {
-            return output;
-        }
-        let git = self.git_binary();
-        let output: SharedString = self
-            .executor
-            .spawn(async move { git.run(&["help", "-a"]).await })
-            .await
-            .unwrap_or_default()
-            .into();
-        *self.any_git_binary_help_output.lock() = Some(output.clone());
-        output
     }
 }
 
@@ -2016,7 +1996,6 @@ impl GitRepository for RealGitRepository {
             cmd.envs(env.iter())
                 .arg(message.to_string())
                 .arg("--cleanup=strip")
-                .arg("--no-verify")
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped());
 
@@ -2026,6 +2005,10 @@ impl GitRepository for RealGitRepository {
 
             if options.signoff {
                 cmd.arg("--signoff");
+            }
+
+            if !options.verify {
+                cmd.arg("--no-verify");
             }
 
             if let Some((name, email)) = name_and_email {
@@ -2433,46 +2416,6 @@ impl GitRepository for RealGitRepository {
                 Ok(None)
             })
             .boxed()
-    }
-
-    fn run_hook(&self, hook: RunHook, env: Arc<HashMap<String, String>>) -> BoxFuture<'_, Result<()>> {
-        let git_binary = self.git_binary_in_worktree();
-        let git_dir = self.git_dir.clone();
-        let help_output = self.any_git_binary_help_output();
-
-        // Note: Do not spawn these commands on the background thread, as this causes some git hooks to hang.
-        async move {
-            let git_binary = git_binary?;
-            let working_directory = git_binary.working_directory.clone();
-            if !help_output.await.lines().any(|line| line.trim().starts_with("hook ")) {
-                let hook_abs_path = git_dir.join("hooks").join(hook.as_str());
-                if hook_abs_path.is_file() {
-                    let output = new_smol_command(&hook_abs_path)
-                        .envs(env.iter())
-                        .current_dir(&working_directory)
-                        .output()
-                        .await?;
-
-                    if !output.status.success() {
-                        return Err(GitBinaryCommandError {
-                            stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
-                            stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
-                            status: output.status,
-                        }
-                        .into());
-                    }
-                }
-
-                return Ok(());
-            }
-
-            git_binary
-                .envs(HashMap::clone(&env))
-                .run(&["hook", "run", "--ignore-missing", hook.as_str()])
-                .await?;
-            Ok(())
-        }
-        .boxed()
     }
 
     fn initial_graph_data(

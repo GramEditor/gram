@@ -90,7 +90,7 @@ actions!(
         Amend,
         /// Enable the --signoff option.
         Signoff,
-        // Run pre-commit hook.
+        // Run hooks.
         Verify,
         /// Cancels the current git operation.
         Cancel,
@@ -330,31 +330,6 @@ impl From<Oid> for usize {
         let mut u64_bytes = [0u8; 8];
         u64_bytes.copy_from_slice(&oid.as_bytes()[..8]);
         u64::from_ne_bytes(u64_bytes) as usize
-    }
-}
-
-#[repr(i32)]
-#[derive(Copy, Clone, Debug)]
-pub enum RunHook {
-    PreCommit,
-}
-
-impl RunHook {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Self::PreCommit => "pre-commit",
-        }
-    }
-
-    pub fn to_proto(self) -> i32 {
-        self as i32
-    }
-
-    pub fn from_proto(value: i32) -> Option<Self> {
-        match value {
-            0 => Some(Self::PreCommit),
-            _ => None,
-        }
     }
 }
 

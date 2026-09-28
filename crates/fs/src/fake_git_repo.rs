@@ -3,7 +3,7 @@ use anyhow::{Context as _, Result, bail};
 use collections::{HashMap, HashSet};
 use futures::future::{self, BoxFuture, join_all};
 use git::{
-    Oid, RunHook,
+    Oid,
     blame::Blame,
     repository::{
         AskPassDelegate, Branch, CommitDataReader, CommitDetails, CommitOptions, FetchOptions, GRAPH_CHUNK_SIZE,
@@ -513,10 +513,6 @@ impl GitRepository for FakeGitRepository {
         _askpass: AskPassDelegate,
         _env: Arc<HashMap<String, String>>,
     ) -> BoxFuture<'_, Result<()>> {
-        async { Ok(()) }.boxed()
-    }
-
-    fn run_hook(&self, _hook: RunHook, _env: Arc<HashMap<String, String>>) -> BoxFuture<'_, Result<()>> {
         async { Ok(()) }.boxed()
     }
 
