@@ -56,6 +56,8 @@ This section was copied from the Zig community Code of Conduct and slightly
 modified:
 https://ziglang.org/code-of-conduct/
 
+Gram adheres to [SciActive's human contribution policy 2 UP](./docs/HUMAN-CONTRIBUTION-POLICY-2-UP.md).
+
 ## Enforcement Responsibilities
 
 Community leaders are responsible for clarifying and enforcing our standards of
