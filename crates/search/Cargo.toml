@@ -53,11 +53,7 @@ unindent.workspace = true
 workspace = { workspace = true, features = ["test-support"] }
 
 [features]
-test-support = [
-  "editor/test-support",
-  "gpui/test-support",
-  "workspace/test-support",
-]
+test-support = ["editor/test-support", "gpui/test-support", "workspace/test-support"]
 
 [lints]
 workspace = true

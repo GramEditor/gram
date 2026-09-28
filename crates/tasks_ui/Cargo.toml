@@ -7,8 +7,8 @@ license = "GPL-3.0-or-later"
 publish.workspace = true
 
 [lib]
-path = "src/tasks_ui.rs"
 doctest = false
+path = "src/tasks_ui.rs"
 
 [dependencies]
 anyhow.workspace = true

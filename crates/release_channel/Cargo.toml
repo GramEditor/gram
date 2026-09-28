@@ -6,12 +6,12 @@ repository.workspace = true
 license = "GPL-3.0-or-later"
 publish.workspace = true
 
+[lib]
+doctest = false
+test = false
+
 [dependencies]
 gpui.workspace = true
 
 [lints]
 workspace = true
-
-[lib]
-test = false
-doctest = false

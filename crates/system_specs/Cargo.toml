@@ -7,9 +7,9 @@ license = "GPL-3.0-or-later"
 publish.workspace = true
 
 [lib]
+doctest = false
 path = "src/system_specs.rs"
 test = false
-doctest = false
 
 [dependencies]
 anyhow.workspace = true

@@ -3,9 +3,9 @@ name = "gram"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
+description.workspace = true
 documentation.workspace = true
 homepage.workspace = true
-description.workspace = true
 repository.workspace = true
 license.workspace = true
 publish.workspace = true
@@ -56,13 +56,13 @@ assets = [
   { source = "resources/gram.desktop", dest = "/usr/share/applications/gram-editor.desktop", mode = "644" },
   { source = "resources/app.liten.Gram.svg", dest = "/usr/share/icons/hicolor/scalable/apps/app.liten.Gram.svg", mode = "644" },
   { source = "resources/app.liten.Gram-symbolic.svg", dest = "/usr/share/icons/hicolor/symbolic/apps/app.liten.Gram-symbolic.svg", mode = "644" },
-  { source = "assets/licenses.md", dest = "/usr/share/doc/gram/licenses.md", mode = "644", doc = true }
+  { source = "assets/licenses.md", dest = "/usr/share/doc/gram/licenses.md", mode = "644", doc = true },
 ]
 
 [lib]
+doctest = false
 name = "gram"
 path = "src/main.rs"
-doctest = false
 
 [[bin]]
 name = "gram"
@@ -71,10 +71,13 @@ path = "src/gram-main.rs"
 [dependencies]
 activity_indicator.workspace = true
 anyhow.workspace = true
+
+app_actions.workspace = true
 askpass.workspace = true
 assets.workspace = true
 bitcode.workspace = true
 breadcrumbs.workspace = true
+chrono.workspace = true
 clap.workspace = true
 cli.workspace = true
 client.workspace = true
@@ -105,11 +108,6 @@ git_ui.workspace = true
 go_to_line.workspace = true
 gpui = { workspace = true, features = ["cosmic-text", "wayland", "windows-manifest", "x11"] }
 gpui_tokio.workspace = true
-rayon.workspace = true
-system_specs.workspace = true
-
-app_actions.workspace = true
-chrono.workspace = true
 image_viewer.workspace = true
 inspector_ui.workspace = true
 install_cli.workspace = true
@@ -141,6 +139,7 @@ picker.workspace = true
 project.workspace = true
 project_panel.workspace = true
 project_symbols.workspace = true
+rayon.workspace = true
 recent_files.workspace = true
 recent_projects.workspace = true
 release_channel.workspace = true
@@ -160,6 +159,8 @@ smol.workspace = true
 snippet_provider.workspace = true
 snippets_ui.workspace = true
 svg_preview.workspace = true
+sysinfo.workspace = true
+system_specs.workspace = true
 tab_switcher.workspace = true
 tasks_ui.workspace = true
 terminal_view.workspace = true

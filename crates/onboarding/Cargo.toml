@@ -6,10 +6,13 @@ repository.workspace = true
 license = "GPL-3.0-or-later"
 publish.workspace = true
 
+[package.metadata.cargo-shear]
+ignored = ["component"]
+
 [lib]
+doctest = false
 path = "src/onboarding.rs"
 test = false
-doctest = false
 
 [dependencies]
 anyhow.workspace = true
@@ -42,6 +45,3 @@ test-support = []
 
 [lints]
 workspace = true
-
-[package.metadata.cargo-shear]
-ignored = ["component"]

@@ -6,6 +6,9 @@ repository.workspace = true
 license = "GPL-3.0-or-later"
 publish.workspace = true
 
+[lib]
+doctest = false
+
 [dependencies]
 anyhow.workspace = true
 collections.workspace = true
@@ -33,6 +36,3 @@ test-support = []
 
 [lints]
 workspace = true
-
-[lib]
-doctest = false

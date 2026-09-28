@@ -3,8 +3,8 @@ name = "fs_benchmarks"
 version.workspace = true
 edition.workspace = true
 repository.workspace = true
-publish.workspace = true
 license.workspace = true
+publish.workspace = true
 
 [dependencies]
 fs.workspace = true
