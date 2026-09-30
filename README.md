@@ -77,8 +77,10 @@ We promise:
 
 For more thoughts on this topic, see the [mission statement](./docs/mission.md).
 
-> **PSA:** As of version 3.3.0, extensions still can and will do whatever they want, including downloading and running executables.
-> See [bug #507](https://codeberg.org/GramEditor/gram/issues/507) and [this post](https://gram-editor.com/posts/psa-extensions/).
+> **PSA:** As of version 3.3.0, extensions still can and will do whatever they
+> want, including downloading and running executables. See
+> [bug #507](https://codeberg.org/GramEditor/gram/issues/507) and
+> [this post](https://gram-editor.com/posts/psa-extensions/).
 
 ### AI in Gram
 
@@ -170,6 +172,7 @@ stronger than any other sword, used to kill a dragon.
 
 ## SciActive's Human Contribution Policy
 
-Gram adheres to [SciActive's human contribution policy 2 UP](./docs/HUMAN-CONTRIBUTION-POLICY-2-UP.md).
+Gram adheres to
+[SciActive's human contribution policy 2 UP](./docs/HUMAN-CONTRIBUTION-POLICY-2-UP.md).
 
 ![Seal of Human Authorship](./assets/images/seal_of_human_authorship.svg)
