@@ -3198,7 +3198,7 @@ impl MultiBuffer {
                     {
                         let hunk_buffer_range = hunk.diff_base_byte_range.clone();
                         if hunk_buffer_range.start < excerpt_buffer_start {
-                            log::trace!("skipping hunk that starts before excerpt");
+                            log::trace!("skipping hunk that starts before excerpt: {hunk:?}");
                             continue;
                         }
                         hunk_buffer_range.end.to_point(&excerpt.buffer);

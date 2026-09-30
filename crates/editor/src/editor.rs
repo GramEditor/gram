@@ -15928,11 +15928,11 @@ impl Editor {
         cx: &mut Context<Self>,
     ) {
         let display_map = self.display_map.update(cx, |map, cx| map.snapshot(cx));
-        let ranges = ranges
+        let creases = ranges
             .into_iter()
             .map(|r| Crease::simple(r, display_map.fold_placeholder.clone()))
             .collect::<Vec<_>>();
-        self.fold_creases(ranges, auto_scroll, window, cx);
+        self.fold_creases(creases, auto_scroll, window, cx);
     }
 
     pub fn fold_creases<T: ToOffset + Clone>(

@@ -1196,7 +1196,7 @@ mod split_tests {
                         CommitFile {
                             path: RepoPath::new("file.txt").unwrap(),
                             old_text: Some("old\nhead\nfold start\nfold body\nfold end\ntail\n".into()),
-                            new_text: Some("head\nfold start\nfold body\nfold end\ntail\n".into()),
+                            new_text: Some("head\nfold start\nfold body\nfold end\ntail\nnew\n".into()),
                             is_binary: false,
                         },
                         CommitFile {
