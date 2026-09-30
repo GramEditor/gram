@@ -1484,9 +1484,9 @@ mod tests {
             &editor,
             cx,
             &if split {
-                "+ ˇFOO".to_string()
+                "+ ˇFOO\n".unindent()
             } else {
-                "- ˇfoo\n+ FOO".to_string()
+                "- ˇfoo\n+ FOO\n".unindent()
             },
         );
 
