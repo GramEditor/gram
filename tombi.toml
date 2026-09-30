@@ -15,8 +15,8 @@ line-width = 255
 enabled = true
 catalog = { paths = ["https://www.schemastore.org/api/json/catalog.json"] }
 
-[[schemas]]
 # Keep Cargo.toml on TOML v1.0.0 for Nix builtins.fromTOML compatibility.
+[[schemas]]
 toml-version = "v1.0.0"
 path = "tombi://www.schemastore.org/cargo.json"
 include = ["Cargo.toml"]

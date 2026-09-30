@@ -293,7 +293,7 @@ anyhow = "1.0.104"
 arrayvec = { version = "0.7.8", features = ["serde", "std"] }
 as-raw-xcb-connection = "1.0.1"
 ashpd = { version = "0.13.13", default-features = false, features = ["async-io", "file_chooser", "notification", "open_uri", "settings", "trash"] }
-async-compression = { version = "0.4.48", features = ["futures-io", "gzip"] }
+async-compression = { version = "0.4.50", features = ["futures-io", "gzip"] }
 async-dispatcher = "0.1.2"
 async-fs = "2.2.0"
 async-io = "2.6.0"
@@ -508,6 +508,7 @@ wayland-protocols-plasma = { version = "0.2.0", features = ["client"] }
 wayland-protocols-wlr = { version = "0.3.12", features = ["client"] }
 wgpu = "30.0.1"
 which = "8.0.6"
+# TODO: Bump to 0.100.0 require test. See: https://codeberg.org/GramEditor/gram/pulls/542#issuecomment-24164973
 windows-core = "0.61.2"
 windows-numerics = "0.2.0"
 windows-registry = "0.5.3"
