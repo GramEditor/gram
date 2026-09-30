@@ -246,8 +246,8 @@ impl DapStore {
                         Some(worktree.read(cx).resolve_executable_path(path))
                     }
                 });
-                let user_args = dap_settings.map(|s| s.args.clone());
-                let user_env = dap_settings.map(|s| s.env.clone());
+                let user_args = dap_settings.and_then(|s| s.args.clone());
+                let user_env = dap_settings.and_then(|s| s.env.clone());
                 let dap_settings = dap_settings.cloned().unwrap_or(DapSettings::default());
 
                 let delegate = self.delegate(worktree, console, cx);
