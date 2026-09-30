@@ -581,7 +581,8 @@ impl Transport for TcpTransport {
                                 let (read, write) = stream.split();
                                 return Ok((Box::new(write) as _, Box::new(read) as _))
                             },
-                            Err(_) => {
+                            Err(err) => {
+                                log::error!("TcpStream::connect Err: {err}");
                                 let has_process = process.lock().is_some();
                                 if has_process {
                                     let status = process.lock().as_mut().unwrap().try_status();
