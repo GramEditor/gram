@@ -1196,7 +1196,7 @@ mod split_tests {
                         CommitFile {
                             path: RepoPath::new("file.txt").unwrap(),
                             old_text: Some("old\nhead\nfold start\nfold body\nfold end\ntail\n".into()),
-                            new_text: Some("head\nfold start\nfold body\nfold end\ntail\n".into()),
+                            new_text: Some("head\nfold start\nfold body\nfold end\ntail\nnew\n".into()),
                             is_binary: false,
                         },
                         CommitFile {
@@ -1276,8 +1276,8 @@ mod split_tests {
             let clone = clone.read(cx);
             assert_ne!(original.multibuffer, clone.multibuffer);
             assert_eq!(clone.multibuffer.read(cx).paths().count(), 3);
-            assert!(original.multibuffer.read(cx).snapshot(cx).text().contains("old"));
-            assert!(!clone.multibuffer.read(cx).snapshot(cx).text().contains("old"));
+            assert!(original.multibuffer.read(cx).snapshot(cx).text().contains("old\n"));
+            assert!(!clone.multibuffer.read(cx).snapshot(cx).text().contains("old\n"));
         });
     }
 }
