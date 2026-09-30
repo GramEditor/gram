@@ -26,6 +26,7 @@ file_icons.workspace = true
 git.workspace = true
 git_ui.workspace = true
 gpui.workspace = true
+itertools.workspace = true
 language.workspace = true
 menu.workspace = true
 notifications.workspace = true

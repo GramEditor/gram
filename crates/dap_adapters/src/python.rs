@@ -7,7 +7,6 @@ use fs::RemoveOptions;
 use futures::{StreamExt, TryStreamExt};
 use gpui::http_client::AsyncBody;
 use gpui::{AsyncApp, SharedString};
-use json_dotpath::DotPaths;
 use language::{LanguageName, Toolchain};
 use paths::debug_adapters_dir;
 use serde_json::Value;
@@ -94,7 +93,10 @@ impl PythonDebugAdapter {
         let request = self.request_kind(&task_definition.config).await?;
 
         let mut configuration = task_definition.config.clone();
-        if let Ok(console) = configuration.dot_get_mut("console") {
+        if let Some(console) = configuration
+            .as_object_mut()
+            .map(|obj| obj.entry("console").or_insert(Value::Null))
+        {
             // Use built-in Gram terminal if user did not explicitly provide a setting for console.
             if console.is_null() {
                 *console = Value::String("integratedTerminal".into());

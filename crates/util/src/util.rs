@@ -34,7 +34,6 @@ use std::{
 };
 use unicase::UniCase;
 
-pub use take_until::*;
 #[cfg(any(test, feature = "test-support"))]
 pub use util_macros::{line_endings, path, uri};
 
