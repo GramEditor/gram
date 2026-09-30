@@ -127,11 +127,12 @@ impl LspInstaller for OpenTofuLspAdapter {
         find_cached_server_binary(&container_dir, Some("tofu-ls-"), async |path| {
             Some(path.join(with_exe("tofu-ls")))
         })
-        .await.map(|path| LanguageServerBinary {
-                path,
-                arguments: vec!["serve".into()],
-                env: None,
-            })
+        .await
+        .map(|path| LanguageServerBinary {
+            path,
+            arguments: vec!["serve".into()],
+            env: None,
+        })
     }
 }
 

@@ -292,8 +292,6 @@ impl WrappedLineLayout {
     ) -> Result<usize, usize> {
         let wrapped_line_ix = (position.y / line_height) as usize;
 
-        
-        
         let (wrapped_line_start_index, wrapped_line_start_x) = if wrapped_line_ix > 0 {
             let Some(line_start_boundary) = self.wrap_boundaries.get(wrapped_line_ix - 1) else {
                 return Err(0);
@@ -305,8 +303,6 @@ impl WrappedLineLayout {
             (0, Pixels::ZERO)
         };
 
-        
-        
         let (wrapped_line_end_index, wrapped_line_end_x) = if wrapped_line_ix < self.wrap_boundaries.len() {
             let next_wrap_boundary_ix = wrapped_line_ix;
             let next_wrap_boundary = self.wrap_boundaries[next_wrap_boundary_ix];

@@ -85,8 +85,6 @@ impl<'a> SerializedTaskTiming<'a> {
     ///
     /// `anchor` - [`Instant`] that should be earlier than all timings to use as base anchor
     pub fn convert(anchor: Instant, timings: &[TaskTiming]) -> Vec<SerializedTaskTiming<'static>> {
-        
-
         timings
             .iter()
             .map(|timing| {

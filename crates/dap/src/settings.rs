@@ -14,10 +14,7 @@ pub struct DapSettings {
 impl From<DapSettingsContent> for DapSettings {
     fn from(content: DapSettingsContent) -> Self {
         DapSettings {
-            binary: content
-                .binary
-                .map_or_else(|| DapBinary::Default, DapBinary::Custom),
-                A
+            binary: content.binary.map_or_else(|| DapBinary::Default, DapBinary::Custom),
             args: content.args,
             env: content.env,
             ignore_system_version: content.ignore_system_version.unwrap_or(false),

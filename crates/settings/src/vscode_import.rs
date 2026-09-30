@@ -347,9 +347,7 @@ impl VsCodeSettings {
                 "mouseover" => Some(MinimapThumb::Hover),
                 _ => None,
             }),
-            max_width_columns: self
-                .read_u32("editor.minimap.maxColumn")
-                .and_then(NonZeroU32::new),
+            max_width_columns: self.read_u32("editor.minimap.maxColumn").and_then(NonZeroU32::new),
             ..Default::default()
         })
     }

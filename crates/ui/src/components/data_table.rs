@@ -609,13 +609,7 @@ impl TableColumnWidths {
             return diff;
         }
 
-        
-        
-        let (step_right, step_left) = if direction < 0 {
-            (0, 1)
-        } else {
-            (1, 0)
-        };
+        let (step_right, step_left) = if direction < 0 { (0, 1) } else { (1, 0) };
         if col_idx == 0 && direction < 0 {
             return diff;
         }

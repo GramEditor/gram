@@ -561,9 +561,10 @@ impl BranchListDelegate {
                 picker.delegate.matches.retain(|e| e != &entry);
 
                 if let Entry::Branch { branch, .. } = &entry
-                    && let Some(all_branches) = &mut picker.delegate.all_branches {
-                        all_branches.retain(|e| e.ref_name != branch.ref_name);
-                    }
+                    && let Some(all_branches) = &mut picker.delegate.all_branches
+                {
+                    all_branches.retain(|e| e.ref_name != branch.ref_name);
+                }
 
                 if picker.delegate.matches.is_empty() {
                     picker.delegate.selected_index = 0;

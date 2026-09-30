@@ -161,10 +161,7 @@ impl Markdown {
     }
 
     fn code_block_scroll_handle(&mut self, id: usize) -> ScrollHandle {
-        self.code_block_scroll_handles
-            .entry(id)
-            .or_default()
-            .clone()
+        self.code_block_scroll_handles.entry(id).or_default().clone()
     }
 
     fn retain_code_block_scroll_handles(&mut self, ids: &HashSet<usize>) {
@@ -1721,15 +1718,9 @@ impl RenderedLine {
     }
 
     fn source_index_for_position(&self, position: Point<Pixels>) -> Result<usize, usize> {
-        
-        
         let (line_rendered_index, out_of_bounds) = match self.layout.index_for_position(position) {
-            Ok(ix) => {
-                (ix, false)
-            }
-            Err(ix) => {
-                (ix, true)
-            }
+            Ok(ix) => (ix, false),
+            Err(ix) => (ix, true),
         };
         let source_index = self.source_index_for_rendered_index(line_rendered_index);
         if out_of_bounds {

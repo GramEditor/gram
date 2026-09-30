@@ -158,15 +158,16 @@ impl FileHistoryView {
                 .flatten();
 
             if let Some(task) = file_history_task
-                && let Ok(more_history) = task.await {
-                    this.update(cx, |this, cx| {
-                        this.loading_more = false;
-                        this.has_more = more_history.entries.len() >= PAGE_SIZE;
-                        this.history.entries.extend(more_history.entries);
-                        cx.notify();
-                    })
-                    .ok();
-                }
+                && let Ok(more_history) = task.await
+            {
+                this.update(cx, |this, cx| {
+                    this.loading_more = false;
+                    this.has_more = more_history.entries.len() >= PAGE_SIZE;
+                    this.history.entries.extend(more_history.entries);
+                    cx.notify();
+                })
+                .ok();
+            }
         });
 
         task.detach();

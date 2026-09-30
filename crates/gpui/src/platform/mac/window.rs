@@ -1100,7 +1100,9 @@ impl MacWindow {
 fn to_window_state(window: &NSWindow) -> Option<Arc<Mutex<MacWindowState>>> {
     if let Some(window) = window.downcast_ref::<GpuiWindow>() {
         Some(window.state())
-    } else { window.downcast_ref::<GpuiPanel>().map(|panel| panel.state()) }
+    } else {
+        window.downcast_ref::<GpuiPanel>().map(|panel| panel.state())
+    }
 }
 
 impl Drop for MacWindow {

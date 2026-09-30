@@ -298,7 +298,6 @@ impl BranchDiff {
         repo: Entity<Repository>,
         cx: &Context<'_, Project>,
     ) -> Task<Result<(Entity<Buffer>, Entity<BufferDiff>)>> {
-        
         cx.spawn(async move |project, cx| {
             let buffer = project
                 .update(cx, |project, cx| project.open_buffer(project_path, cx))?
@@ -328,7 +327,6 @@ impl BranchDiff {
 }
 
 fn diff_status_to_file_status(branch_diff: &git::status::TreeDiffStatus) -> FileStatus {
-    
     match branch_diff {
         git::status::TreeDiffStatus::Added => FileStatus::Tracked(TrackedStatus {
             index_status: StatusCode::Added,

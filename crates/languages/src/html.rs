@@ -168,11 +168,12 @@ impl LspInstaller for SuperhtmlLspAdapter {
         find_cached_server_binary(&container_dir, Some("superhtml-"), async |path| {
             Some(path.join(with_exe("superhtml")))
         })
-        .await.map(|path| LanguageServerBinary {
-                path,
-                arguments: vec!["lsp".into()],
-                env: None,
-            })
+        .await
+        .map(|path| LanguageServerBinary {
+            path,
+            arguments: vec!["lsp".into()],
+            env: None,
+        })
     }
 }
 

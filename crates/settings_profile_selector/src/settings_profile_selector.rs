@@ -242,7 +242,7 @@ fn display_name(profile_name: &Option<String>) -> String {
 mod tests {
     use super::*;
     use app_actions::settings_profile_selector;
-    
+
     use gpui::{TestAppContext, UpdateGlobal, VisualTestContext};
     use menu::{Cancel, Confirm, SelectNext, SelectPrevious};
     use project::{FakeFs, Project};

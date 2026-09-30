@@ -273,12 +273,13 @@ impl ContextMenu {
             }
 
             if this.main_menu.is_none()
-                && let SubmenuState::Open(open_submenu) = &this.submenu_state {
-                    let submenu_focus = open_submenu.entity.read(cx).focus_handle.clone();
-                    if submenu_focus.contains_focused(window, cx) {
-                        return;
-                    }
+                && let SubmenuState::Open(open_submenu) = &this.submenu_state
+            {
+                let submenu_focus = open_submenu.entity.read(cx).focus_handle.clone();
+                if submenu_focus.contains_focused(window, cx) {
+                    return;
                 }
+            }
 
             this.cancel(&menu::Cancel, window, cx)
         });
@@ -352,12 +353,13 @@ impl ContextMenu {
                 }
 
                 if this.main_menu.is_none()
-                    && let SubmenuState::Open(open_submenu) = &this.submenu_state {
-                        let submenu_focus = open_submenu.entity.read(cx).focus_handle.clone();
-                        if submenu_focus.contains_focused(window, cx) {
-                            return;
-                        }
+                    && let SubmenuState::Open(open_submenu) = &this.submenu_state
+                {
+                    let submenu_focus = open_submenu.entity.read(cx).focus_handle.clone();
+                    if submenu_focus.contains_focused(window, cx) {
+                        return;
                     }
+                }
 
                 this.cancel(&menu::Cancel, window, cx)
             });
@@ -436,12 +438,13 @@ impl ContextMenu {
                     }
 
                     if this.main_menu.is_none()
-                        && let SubmenuState::Open(open_submenu) = &this.submenu_state {
-                            let submenu_focus = open_submenu.entity.read(cx).focus_handle.clone();
-                            if submenu_focus.contains_focused(window, cx) {
-                                return;
-                            }
+                        && let SubmenuState::Open(open_submenu) = &this.submenu_state
+                    {
+                        let submenu_focus = open_submenu.entity.read(cx).focus_handle.clone();
+                        if submenu_focus.contains_focused(window, cx) {
+                            return;
                         }
+                    }
 
                     this.cancel(&menu::Cancel, window, cx)
                 }),
@@ -1646,10 +1649,11 @@ impl ContextMenu {
                                 window.focus(&this.focus_handle.clone(), cx);
 
                                 if let SubmenuState::Open(open_submenu) = &this.submenu_state
-                                    && open_submenu.item_index != ix {
-                                        this.close_submenu(false, cx);
-                                        cx.notify();
-                                    }
+                                    && open_submenu.item_index != ix
+                                {
+                                    this.close_submenu(false, cx);
+                                    cx.notify();
+                                }
                             }
                         }))
                     })
@@ -1925,9 +1929,10 @@ impl Render for ContextMenu {
                         .on_mouse_down_out(cx.listener(|this, event: &MouseDownEvent, window, cx| {
                             if matches!(&this.submenu_state, SubmenuState::Open(_))
                                 && let Some(padded_bounds) = this.padded_submenu_bounds()
-                                    && padded_bounds.contains(&event.position) {
-                                        return;
-                                    }
+                                && padded_bounds.contains(&event.position)
+                            {
+                                return;
+                            }
 
                             if let Some(parent) = &this.main_menu {
                                 let overridden_by_parent_trigger = parent

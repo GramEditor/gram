@@ -1670,17 +1670,19 @@ impl Buffer {
         drop(syntax_map);
 
         self.parse_status.0.send(ParseStatus::Parsing).unwrap();
-        if may_block && let Some(sync_parse_timeout) = self.sync_parse_timeout
+        if may_block
+            && let Some(sync_parse_timeout) = self.sync_parse_timeout
             && let Ok(()) = syntax_snapshot.reparse_with_timeout(
                 &text,
                 language_registry.clone(),
                 language.clone(),
                 sync_parse_timeout,
-            ) {
-                self.did_finish_parsing(syntax_snapshot, Duration::from_millis(300), cx);
-                self.reparse = None;
-                return;
-            }
+            )
+        {
+            self.did_finish_parsing(syntax_snapshot, Duration::from_millis(300), cx);
+            self.reparse = None;
+            return;
+        }
 
         let parse_task = cx.background_spawn({
             let language = language.clone();
@@ -2000,8 +2002,7 @@ impl Buffer {
         } else {
             Some((
                 Point::new(row, 0)..Point::new(row, current_size.len),
-                std::iter::repeat_n(new_size.char(), new_size.len as usize)
-                    .collect::<String>(),
+                std::iter::repeat_n(new_size.char(), new_size.len as usize).collect::<String>(),
             ))
         }
     }
@@ -3649,9 +3650,10 @@ impl BufferSnapshot {
                     let layer_result = cursor.node();
 
                     if let Some(previous_result) = &result
-                        && previous_result.byte_range().end < layer_result.byte_range().end {
-                            continue;
-                        }
+                        && previous_result.byte_range().end < layer_result.byte_range().end
+                    {
+                        continue;
+                    }
                     result = Some(layer_result);
                     break;
                 }
@@ -3693,9 +3695,10 @@ impl BufferSnapshot {
                     let layer_result = cursor.node();
 
                     if let Some(previous_result) = &result
-                        && previous_result.byte_range().start > layer_result.byte_range().start {
-                            continue;
-                        }
+                        && previous_result.byte_range().start > layer_result.byte_range().start
+                    {
+                        continue;
+                    }
                     result = Some(layer_result);
                     break;
                 }

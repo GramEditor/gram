@@ -470,12 +470,13 @@ impl Vim {
                 waiting_operator = Some(Operator::DeleteSurrounds);
             }
             Some(Operator::ChangeSurrounds { target: None, .. })
-                if self.check_and_move_to_valid_bracket_pair(object, window, cx) => {
-                    waiting_operator = Some(Operator::ChangeSurrounds {
-                        target: Some(object),
-                        opening,
-                    });
-                }
+                if self.check_and_move_to_valid_bracket_pair(object, window, cx) =>
+            {
+                waiting_operator = Some(Operator::ChangeSurrounds {
+                    target: Some(object),
+                    opening,
+                });
+            }
             _ => {
                 // Can't do anything with change/delete/yank/surrounds and text objects. Ignoring
             }

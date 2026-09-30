@@ -182,10 +182,11 @@ impl QueryHistory {
 
     fn validate_cursor(&mut self, current_query: &str) -> Option<usize> {
         if let Some(pos) = self.cursor
-            && self.history().get(pos).map(|s| s.as_str()) != Some(current_query) {
-                self.cursor = None;
-                self.prefix = None;
-            }
+            && self.history().get(pos).map(|s| s.as_str()) != Some(current_query)
+        {
+            self.cursor = None;
+            self.prefix = None;
+        }
         self.cursor
     }
 
@@ -355,10 +356,9 @@ impl PickerDelegate for CommandPaletteDelegate {
         match direction {
             Direction::Up => {
                 let should_use_history = self.selected_ix == 0 || self.query_history.is_navigating();
-                if should_use_history
-                    && let Some(query) = self.query_history.previous(query).map(|s| s.to_string()) {
-                        return Some(query);
-                    }
+                if should_use_history && let Some(query) = self.query_history.previous(query).map(|s| s.to_string()) {
+                    return Some(query);
+                }
             }
             Direction::Down => {
                 if self.query_history.is_navigating() {

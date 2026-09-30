@@ -80,9 +80,10 @@ impl Pasteboard {
         let mut url_paths = SmallVec::<[PathBuf; 2]>::new();
         while let Some(url) = objects.peek().and_then(|o| o.downcast_ref::<NSURL>()) {
             if url.isFileURL()
-                && let Some(path) = url.to_file_path() {
-                    url_paths.push(path);
-                }
+                && let Some(path) = url.to_file_path()
+            {
+                url_paths.push(path);
+            }
             objects.next();
         }
         if !url_paths.is_empty() {

@@ -112,8 +112,6 @@ pub struct ProfilerWindow {
 
 impl ProfilerWindow {
     pub fn new(startup_time: Instant, workspace_handle: Option<WindowHandle<Workspace>>, cx: &mut App) -> Entity<Self> {
-        
-
         cx.new(|cx| ProfilerWindow {
             startup_time,
             data: DataMode::Realtime(None),

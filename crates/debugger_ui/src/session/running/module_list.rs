@@ -28,10 +28,9 @@ impl ModuleList {
         let focus_handle = cx.focus_handle();
 
         let _subscription = cx.subscribe(&session, |this, _, event, cx| match event {
-            SessionEvent::Stopped(_) | SessionEvent::Modules
-                if this._rebuild_task.is_some() => {
-                    this.schedule_rebuild(cx);
-                }
+            SessionEvent::Stopped(_) | SessionEvent::Modules if this._rebuild_task.is_some() => {
+                this.schedule_rebuild(cx);
+            }
             _ => {}
         });
 

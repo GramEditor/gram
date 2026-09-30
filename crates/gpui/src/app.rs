@@ -1177,9 +1177,10 @@ impl App {
                 }
             }
             Effect::NotifyGlobalObservers { global_type }
-                if !self.pending_global_notifications.insert(*global_type) => {
-                    return;
-                }
+                if !self.pending_global_notifications.insert(*global_type) =>
+            {
+                return;
+            }
             _ => {}
         };
 

@@ -174,7 +174,7 @@ impl DocsSearch {
     fn new(project: Entity<Project>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let preview_editor = cx.new(|cx| {
             let multi_buffer = cx.new(|_| MultiBuffer::without_headers(Capability::ReadWrite));
-            
+
             Editor::for_multibuffer(multi_buffer, Some(project.clone()), window, cx)
         });
 
@@ -673,8 +673,6 @@ impl DocsSearchDelegate {
         if ranges.is_empty() {
             return Ok(Vec::new());
         }
-
-        
 
         buffer.read_with(cx, |buf, cx| {
             let file = buf.file();

@@ -1424,9 +1424,7 @@ impl Window {
     where
         E: 'static + Render,
     {
-        self.root
-            .as_ref()
-            .and_then(|view| view.downcast_ref::<E>().cloned())
+        self.root.as_ref().and_then(|view| view.downcast_ref::<E>().cloned())
     }
 
     /// Obtain a handle to the window that belongs to this context.

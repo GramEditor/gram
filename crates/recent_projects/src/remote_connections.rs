@@ -701,12 +701,11 @@ pub(crate) async fn determine_paths_with_positions(
     for path in &mut paths {
         if let Some(path_str) = path.to_str() {
             let path_with_position = PathWithPosition::parse_str(path_str);
-            if path_with_position.row.is_some()
-                && !path_exists(remote_connection, path).await {
-                    *path = path_with_position.path.clone();
-                    paths_with_positions.push(path_with_position);
-                    continue;
-                }
+            if path_with_position.row.is_some() && !path_exists(remote_connection, path).await {
+                *path = path_with_position.path.clone();
+                paths_with_positions.push(path_with_position);
+                continue;
+            }
         }
         paths_with_positions.push(PathWithPosition::from_path(path.clone()))
     }

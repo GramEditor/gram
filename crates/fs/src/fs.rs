@@ -597,9 +597,10 @@ impl Fs for RealFs {
 
     async fn rename(&self, source: &Path, target: &Path, options: RenameOptions) -> Result<()> {
         if options.create_parents
-            && let Some(parent) = target.parent() {
-                self.create_dir(parent).await?;
-            }
+            && let Some(parent) = target.parent()
+        {
+            self.create_dir(parent).await?;
+        }
 
         if options.overwrite {
             smol::fs::rename(source, target).await?;
@@ -1055,8 +1056,6 @@ impl Fs for RealFs {
             .args(["config", "--global", "--get", "init.defaultBranch"])
             .output()
             .await?;
-
-        
 
         let branch_name = if config.status.success() && !config.stdout.is_empty() {
             String::from_utf8_lossy(&config.stdout)
@@ -2298,9 +2297,10 @@ impl Fs for FakeFs {
         let new_path = normalize_path(new_path);
 
         if options.create_parents
-            && let Some(parent) = new_path.parent() {
-                self.create_dir(parent).await?;
-            }
+            && let Some(parent) = new_path.parent()
+        {
+            self.create_dir(parent).await?;
+        }
 
         let mut state = self.state.lock();
         let moved_entry = state.write_path(&old_path, |e| {

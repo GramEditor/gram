@@ -30,9 +30,7 @@ impl AvatarStyle {
     }
 
     pub fn foreground(&self, fallback: Color) -> Color {
-        self.accent_foreground
-            .map(Color::Custom)
-            .unwrap_or(fallback)
+        self.accent_foreground.map(Color::Custom).unwrap_or(fallback)
     }
 
     pub fn background(&self, fallback: Hsla) -> Hsla {

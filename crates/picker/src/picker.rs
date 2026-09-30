@@ -547,10 +547,9 @@ impl<D: PickerDelegate> Picker<D> {
                 let query = editor.read(cx).text(cx);
                 self.update_matches(query, window, cx);
             }
-            editor::EditorEvent::Blurred
-                if self.is_modal && window.is_window_active() => {
-                    self.cancel(&menu::Cancel, window, cx);
-                }
+            editor::EditorEvent::Blurred if self.is_modal && window.is_window_active() => {
+                self.cancel(&menu::Cancel, window, cx);
+            }
             _ => {}
         }
     }

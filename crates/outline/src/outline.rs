@@ -205,7 +205,6 @@ impl PickerDelegate for OutlineViewDelegate {
         window: &mut Window,
         cx: &mut Context<Picker<OutlineViewDelegate>>,
     ) -> Task<()> {
-        
         let selected_index = if query.is_empty() {
             self.restore_active_editor(window, cx);
             self.matches = self
@@ -229,8 +228,7 @@ impl PickerDelegate for OutlineViewDelegate {
                     .head();
                 (buffer, cursor_offset)
             });
-            self
-                .outline
+            self.outline
                 .items
                 .iter()
                 .enumerate()
@@ -252,8 +250,7 @@ impl PickerDelegate for OutlineViewDelegate {
                 .unwrap_or(0)
         } else {
             self.matches = smol::block_on(self.outline.search(&query, cx.background_executor().clone()));
-            self
-                .matches
+            self.matches
                 .iter()
                 .enumerate()
                 .max_by_key(|(_, m)| OrderedFloat(m.score))

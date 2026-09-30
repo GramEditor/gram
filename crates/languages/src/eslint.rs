@@ -86,10 +86,10 @@ impl LspInstaller for EsLintLspAdapter {
         }
 
         path.map(|path| LanguageServerBinary {
-                path,
-                env: None,
-                arguments: vec!["--stdio".into()],
-            })
+            path,
+            env: None,
+            arguments: vec!["--stdio".into()],
+        })
     }
 
     async fn fetch_latest_server_version(

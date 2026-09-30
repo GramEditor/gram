@@ -42,22 +42,23 @@ impl SvgRenderer {
         let assets = asset_source.clone();
         let font_resolver = Box::new(move |font: &usvg::Font, db: &mut Arc<usvg::fontdb::Database>| {
             if db.is_empty()
-                && let Ok(mut lock) = FONT_DB.lock() {
-                    let mut fontdb = usvg::fontdb::Database::new();
-                    if let Ok(font_paths) = assets.list("fonts") {
-                        for font_path in font_paths {
-                            if font_path.ends_with(".ttf") {
-                                let bytes = assets.load(&font_path).unwrap().unwrap();
-                                fontdb.load_font_data(bytes.into());
-                            }
+                && let Ok(mut lock) = FONT_DB.lock()
+            {
+                let mut fontdb = usvg::fontdb::Database::new();
+                if let Ok(font_paths) = assets.list("fonts") {
+                    for font_path in font_paths {
+                        if font_path.ends_with(".ttf") {
+                            let bytes = assets.load(&font_path).unwrap().unwrap();
+                            fontdb.load_font_data(bytes.into());
                         }
-                        fontdb.set_serif_family(font_name_with_fallbacks(".GramSans", "Fira Sans"));
-                        fontdb.set_sans_serif_family(font_name_with_fallbacks(".GramSans", "Fira Sans"));
-                        fontdb.set_monospace_family(font_name_with_fallbacks(".GramMono", "Myna"));
                     }
-                    *lock = Arc::new(fontdb);
-                    *db = (*lock).clone();
+                    fontdb.set_serif_family(font_name_with_fallbacks(".GramSans", "Fira Sans"));
+                    fontdb.set_sans_serif_family(font_name_with_fallbacks(".GramSans", "Fira Sans"));
+                    fontdb.set_monospace_family(font_name_with_fallbacks(".GramMono", "Myna"));
                 }
+                *lock = Arc::new(fontdb);
+                *db = (*lock).clone();
+            }
             default_font_resolver(font, db)
         });
         let options = usvg::Options {

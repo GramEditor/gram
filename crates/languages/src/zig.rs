@@ -158,11 +158,12 @@ impl LspInstaller for ZigLspAdapter {
         find_cached_server_binary(&container_dir, Some("zls-"), async |path| {
             Some(path.join(with_exe("zls")))
         })
-        .await.map(|path| LanguageServerBinary {
-                path,
-                env: None,
-                arguments: vec![],
-            })
+        .await
+        .map(|path| LanguageServerBinary {
+            path,
+            env: None,
+            arguments: vec![],
+        })
     }
 }
 

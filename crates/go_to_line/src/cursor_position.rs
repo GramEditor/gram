@@ -252,13 +252,14 @@ impl StatusItemView for CursorPosition {
         cx: &mut Context<Self>,
     ) {
         if let Some(editor) = active_pane_item.and_then(|item| item.act_as::<Editor>(cx)) {
-            self._observe_active_editor = Some(cx.subscribe_in(
-                &editor,
-                window,
-                |cursor_position, editor, event, window, cx| if let EditorEvent::SelectionsChanged { .. } = event {
-                    Self::update_position(cursor_position, editor, Some(UPDATE_DEBOUNCE), window, cx)
-                },
-            ));
+            self._observe_active_editor =
+                Some(
+                    cx.subscribe_in(&editor, window, |cursor_position, editor, event, window, cx| {
+                        if let EditorEvent::SelectionsChanged { .. } = event {
+                            Self::update_position(cursor_position, editor, Some(UPDATE_DEBOUNCE), window, cx)
+                        }
+                    }),
+                );
             self.update_position(&editor, None, window, cx);
         } else {
             self.position = None;

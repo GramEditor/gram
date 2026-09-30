@@ -895,11 +895,12 @@ impl FileFinderDelegate {
                 for worktree in available_worktree {
                     let worktree_root = worktree.read(cx).root_name();
                     if worktree_count > 1
-                        && let Ok(suffix) = query_path.strip_prefix(worktree_root) {
-                            query_path = Cow::Owned(suffix.to_owned());
-                            expect_worktree = Some(worktree);
-                            break;
-                        }
+                        && let Ok(suffix) = query_path.strip_prefix(worktree_root)
+                    {
+                        query_path = Cow::Owned(suffix.to_owned());
+                        expect_worktree = Some(worktree);
+                        break;
+                    }
                 }
 
                 if let Some(FoundPath { ref project, .. }) = self.currently_opened_path {

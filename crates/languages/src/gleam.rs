@@ -152,11 +152,12 @@ impl LspInstaller for GleamLspAdapter {
         find_cached_server_binary(&container_dir, Some("gleam-"), async |path| {
             Some(path.join(with_exe("gleam")))
         })
-        .await.map(|path| LanguageServerBinary {
-                path,
-                env: None,
-                arguments: vec!["lsp".into()],
-            })
+        .await
+        .map(|path| LanguageServerBinary {
+            path,
+            env: None,
+            arguments: vec!["lsp".into()],
+        })
     }
 }
 

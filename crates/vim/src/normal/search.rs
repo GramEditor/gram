@@ -239,14 +239,15 @@ impl Vim {
 
         let subscription = cx.subscribe_in(&search_bar, window, |vim, _, event, window, cx| {
             if let buffer_search::Event::Dismissed = event
-                && !vim.search.prior_selections.is_empty() {
-                    let prior_selections: Vec<_> = std::mem::take(&mut vim.search.prior_selections);
-                    vim.update_editor(cx, |_, editor, cx| {
-                        editor.change_selections(Default::default(), window, cx, |s| {
-                            s.select_ranges(prior_selections);
-                        });
+                && !vim.search.prior_selections.is_empty()
+            {
+                let prior_selections: Vec<_> = std::mem::take(&mut vim.search.prior_selections);
+                vim.update_editor(cx, |_, editor, cx| {
+                    editor.change_selections(Default::default(), window, cx, |s| {
+                        s.select_ranges(prior_selections);
                     });
-                }
+                });
+            }
         });
 
         let prior_mode = if self.temp_mode { Mode::Insert } else { self.mode };

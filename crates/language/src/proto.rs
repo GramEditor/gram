@@ -459,27 +459,13 @@ pub fn deserialize_anchor(anchor: proto::Anchor) -> Option<Anchor> {
 
 /// Returns a `[clock::Lamport`] timestamp for the given [`proto::Operation`].
 pub fn lamport_timestamp_for_operation(operation: &proto::Operation) -> Option<clock::Lamport> {
-    
-    
     let (replica_id, value) = match operation.variant.as_ref()? {
-        proto::operation::Variant::Edit(op) => {
-            (op.replica_id, op.lamport_timestamp)
-        }
-        proto::operation::Variant::Undo(op) => {
-            (op.replica_id, op.lamport_timestamp)
-        }
-        proto::operation::Variant::UpdateDiagnostics(op) => {
-            (op.replica_id, op.lamport_timestamp)
-        }
-        proto::operation::Variant::UpdateSelections(op) => {
-            (op.replica_id, op.lamport_timestamp)
-        }
-        proto::operation::Variant::UpdateCompletionTriggers(op) => {
-            (op.replica_id, op.lamport_timestamp)
-        }
-        proto::operation::Variant::UpdateLineEnding(op) => {
-            (op.replica_id, op.lamport_timestamp)
-        }
+        proto::operation::Variant::Edit(op) => (op.replica_id, op.lamport_timestamp),
+        proto::operation::Variant::Undo(op) => (op.replica_id, op.lamport_timestamp),
+        proto::operation::Variant::UpdateDiagnostics(op) => (op.replica_id, op.lamport_timestamp),
+        proto::operation::Variant::UpdateSelections(op) => (op.replica_id, op.lamport_timestamp),
+        proto::operation::Variant::UpdateCompletionTriggers(op) => (op.replica_id, op.lamport_timestamp),
+        proto::operation::Variant::UpdateLineEnding(op) => (op.replica_id, op.lamport_timestamp),
     };
 
     Some(clock::Lamport {

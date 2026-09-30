@@ -1365,7 +1365,9 @@ impl Render for ExtensionsPage {
                             })),
                     )
                     .children(ExtensionProvides::iter().filter_map(|provides| {
-                        if provides == ExtensionProvides::IndexedDocsProviders { return None }
+                        if provides == ExtensionProvides::IndexedDocsProviders {
+                            return None;
+                        }
 
                         let label = extension_provides_label(provides);
                         let button_id = SharedString::from(format!("filter-category-{}", label));

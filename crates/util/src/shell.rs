@@ -247,10 +247,7 @@ impl ShellKind {
 
     pub fn new(program: impl AsRef<Path>, is_windows: bool) -> Self {
         let program = program.as_ref();
-        let program = program
-            .file_stem()
-            .unwrap_or(program.as_os_str())
-            .to_string_lossy();
+        let program = program.file_stem().unwrap_or(program.as_os_str()).to_string_lossy();
 
         match &*program {
             "powershell" | "pwsh" => ShellKind::PowerShell,
@@ -491,29 +488,30 @@ impl ShellKind {
     /// You should use this over `try_quote` when you want to quote a shell command.
     pub fn try_quote_prefix_aware<'a>(&self, arg: &'a str) -> Option<Cow<'a, str>> {
         if let Some(char) = self.command_prefix()
-            && let Some(arg) = arg.strip_prefix(char) {
-                // we have a command that is prefixed
-                for quote in ['\'', '"'] {
-                    if let Some(arg) = arg.strip_prefix(quote).and_then(|arg| arg.strip_suffix(quote)) {
-                        // and the command itself is wrapped as a literal, that
-                        // means the prefix exists to interpret a literal as a
-                        // command. So strip the quotes, quote the command, and
-                        // re-add the quotes if they are missing after requoting
-                        let quoted = self.try_quote(arg)?;
-                        return Some(if quoted.starts_with(['\'', '"']) {
-                            Cow::Owned(self.prepend_command_prefix(&quoted).into_owned())
-                        } else {
-                            Cow::Owned(
-                                self.prepend_command_prefix(&format!("{quote}{quoted}{quote}"))
-                                    .into_owned(),
-                            )
-                        });
-                    }
+            && let Some(arg) = arg.strip_prefix(char)
+        {
+            // we have a command that is prefixed
+            for quote in ['\'', '"'] {
+                if let Some(arg) = arg.strip_prefix(quote).and_then(|arg| arg.strip_suffix(quote)) {
+                    // and the command itself is wrapped as a literal, that
+                    // means the prefix exists to interpret a literal as a
+                    // command. So strip the quotes, quote the command, and
+                    // re-add the quotes if they are missing after requoting
+                    let quoted = self.try_quote(arg)?;
+                    return Some(if quoted.starts_with(['\'', '"']) {
+                        Cow::Owned(self.prepend_command_prefix(&quoted).into_owned())
+                    } else {
+                        Cow::Owned(
+                            self.prepend_command_prefix(&format!("{quote}{quoted}{quote}"))
+                                .into_owned(),
+                        )
+                    });
                 }
-                return self
-                    .try_quote(arg)
-                    .map(|quoted| Cow::Owned(self.prepend_command_prefix(&quoted).into_owned()));
             }
+            return self
+                .try_quote(arg)
+                .map(|quoted| Cow::Owned(self.prepend_command_prefix(&quoted).into_owned()));
+        }
         self.try_quote(arg)
     }
 

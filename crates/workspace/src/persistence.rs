@@ -1780,7 +1780,7 @@ pub fn delete_unloaded_items(
 mod tests {
     use super::*;
     use crate::persistence::model::{SerializedItem, SerializedPane, SerializedPaneGroup, SerializedWorkspace};
-    
+
     use pretty_assertions::assert_eq;
     use remote::SshConnectionOptions;
     use std::{thread, time::Duration};

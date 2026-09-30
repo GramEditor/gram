@@ -277,18 +277,19 @@ impl ListState {
             cursor.seek(&Count(scroll_top.item_ix), Bias::Right);
 
             if let Some(item) = cursor.item()
-                && let Some(size) = item.size() {
-                    let fraction = if size.height.0 > 0.0 {
-                        (scroll_top.offset_in_item.0 / size.height.0).clamp(0.0, 1.0)
-                    } else {
-                        0.0
-                    };
+                && let Some(size) = item.size()
+            {
+                let fraction = if size.height.0 > 0.0 {
+                    (scroll_top.offset_in_item.0 / size.height.0).clamp(0.0, 1.0)
+                } else {
+                    0.0
+                };
 
-                    state.pending_scroll = Some(PendingScrollFraction {
-                        item_ix: scroll_top.item_ix,
-                        fraction,
-                    });
-                }
+                state.pending_scroll = Some(PendingScrollFraction {
+                    item_ix: scroll_top.item_ix,
+                    fraction,
+                });
+            }
         }
 
         state.items = SumTree::from_iter(new_items, ());
@@ -674,10 +675,11 @@ impl StateInner {
                 // maintained after re-measuring.
                 if ix == 0
                     && let Some(pending_scroll) = self.pending_scroll.take()
-                        && pending_scroll.item_ix == scroll_top.item_ix {
-                            scroll_top.offset_in_item = Pixels(pending_scroll.fraction * element_size.height.0);
-                            self.logical_scroll_top = Some(scroll_top);
-                        }
+                    && pending_scroll.item_ix == scroll_top.item_ix
+                {
+                    scroll_top.offset_in_item = Pixels(pending_scroll.fraction * element_size.height.0);
+                    self.logical_scroll_top = Some(scroll_top);
+                }
 
                 if visible_height < available_height {
                     item_layouts.push_back(ItemLayout {

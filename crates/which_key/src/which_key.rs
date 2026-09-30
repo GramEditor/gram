@@ -86,10 +86,7 @@ pub static FILTERED_KEYSTROKES: LazyLock<Vec<Vec<Keystroke>>> = LazyLock::new(||
     ]
     .iter()
     .filter_map(|s| {
-        let keystrokes: Result<Vec<_>, _> = s
-            .split(' ')
-            .map(Keystroke::parse)
-            .collect();
+        let keystrokes: Result<Vec<_>, _> = s.split(' ').map(Keystroke::parse).collect();
         keystrokes.ok()
     })
     .collect()

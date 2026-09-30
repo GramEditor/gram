@@ -740,7 +740,8 @@ impl LanguageRegistry {
 
             let path_matches_custom_suffix = || {
                 user_file_types
-                    .and_then(|types| types.get(language_name.as_ref())).and_then(|(custom_suffixes, _)| {
+                    .and_then(|types| types.get(language_name.as_ref()))
+                    .and_then(|(custom_suffixes, _)| {
                         path_suffixes
                             .iter()
                             .find(|(_, candidate)| custom_suffixes.is_match_candidate(candidate))

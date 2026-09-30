@@ -984,12 +984,10 @@ impl ActionSequence {
                     .map(
                         |(index, action)| match KeymapFile::build_keymap_action(&KeymapAction(action), cx) {
                             Ok((action, _)) => Ok(action),
-                            Err(err) => {
-                                Err(ActionBuildError::BuildError {
-                                    name: Self::name_for_type().to_string(),
-                                    error: anyhow::anyhow!("error at sequence index {index}: {err}"),
-                                })
-                            }
+                            Err(err) => Err(ActionBuildError::BuildError {
+                                name: Self::name_for_type().to_string(),
+                                error: anyhow::anyhow!("error at sequence index {index}: {err}"),
+                            }),
                         },
                     )
                     .collect::<Result<Vec<_>, _>>()?;

@@ -5868,13 +5868,14 @@ fn language_settings_field<T>(
 ) -> Option<&T> {
     let all_languages = &settings_content.project.all_languages;
     if let Some(current_language_name) = current_language()
-        && let Some(current_language) = all_languages.languages.0.get(&current_language_name) {
-            let value = get(current_language);
-            if value.is_some() {
-                return value;
-            }
+        && let Some(current_language) = all_languages.languages.0.get(&current_language_name)
+    {
+        let value = get(current_language);
+        if value.is_some() {
+            return value;
         }
-    
+    }
+
     get(&all_languages.defaults)
 }
 

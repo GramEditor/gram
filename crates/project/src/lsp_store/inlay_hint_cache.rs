@@ -124,9 +124,10 @@ impl BufferInlayHints {
     pub fn remove_server_data(&mut self, for_server: LanguageServerId) {
         for (chunk_index, hints) in self.hints_by_chunks.iter_mut().enumerate() {
             if let Some(hints) = hints
-                && hints.remove(&for_server).is_some() {
-                    self.fetches_by_chunks[chunk_index] = None;
-                }
+                && hints.remove(&for_server).is_some()
+            {
+                self.fetches_by_chunks[chunk_index] = None;
+            }
         }
     }
 

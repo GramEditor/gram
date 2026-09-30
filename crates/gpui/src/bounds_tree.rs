@@ -321,12 +321,13 @@ where
                 // Swap updated child to end (skip first iteration since the invariant is already handled by previous cases)
                 if let Some(child_idx) = updated_child_idx
                     && let NodeKind::Internal { children } = &mut node.kind
-                        && let Some(pos) = children.as_slice().iter().position(|&c| c == child_idx) {
-                            let last = children.len() - 1;
-                            if pos != last {
-                                children.indices.swap(pos, last);
-                            }
-                        }
+                    && let Some(pos) = children.as_slice().iter().position(|&c| c == child_idx)
+                {
+                    let last = children.len() - 1;
+                    if pos != last {
+                        children.indices.swap(pos, last);
+                    }
+                }
             }
 
             updated_child_idx = Some(node_idx);

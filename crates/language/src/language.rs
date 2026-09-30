@@ -634,9 +634,7 @@ where
             // because we don't want to download and overwrite our global one
             // for each worktree we might have open.
             if binary_options.allow_path_lookup
-                && let Some(binary) = self
-                    .check_if_user_installed(delegate.as_ref(), toolchain, &cx)
-                    .await
+                && let Some(binary) = self.check_if_user_installed(delegate.as_ref(), toolchain, &cx).await
             {
                 log::info!(
                     "found user-installed language server for {}. path: {:?}, arguments: {:?}",

@@ -98,7 +98,6 @@ pub fn apca_contrast(text_color: Hsla, background_color: Hsla) -> f32 {
     }
 
     let sapc;
-    
 
     let output_contrast = if bg_y_clamped > text_y_clamped {
         // Normal polarity: dark text on light background

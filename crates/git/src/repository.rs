@@ -188,15 +188,16 @@ fn parse_cat_file_commit(sha: Oid, content: &str) -> Option<GraphCommitData> {
                 }
             } else if let Some(author_line) = line.strip_prefix("author ")
                 && let Some((name_email, _timestamp_tz)) = author_line.rsplit_once(' ')
-                    && let Some((name_email, timestamp_str)) = name_email.rsplit_once(' ') {
-                        if let Ok(ts) = timestamp_str.parse::<i64>() {
-                            commit_timestamp = ts;
-                        }
-                        if let Some((name, email)) = name_email.rsplit_once(" <") {
-                            author_name = SharedString::from(name.to_string());
-                            author_email = SharedString::from(email.trim_end_matches('>').to_string());
-                        }
-                    }
+                && let Some((name_email, timestamp_str)) = name_email.rsplit_once(' ')
+            {
+                if let Ok(ts) = timestamp_str.parse::<i64>() {
+                    commit_timestamp = ts;
+                }
+                if let Some((name, email)) = name_email.rsplit_once(" <") {
+                    author_name = SharedString::from(name.to_string());
+                    author_email = SharedString::from(email.trim_end_matches('>').to_string());
+                }
+            }
         } else if subject.is_none() {
             subject = Some(SharedString::from(line.to_string()));
         }
@@ -553,9 +554,10 @@ impl GitExcludeOverride {
         let end_index = content.rfind(end_marker);
 
         if let (Some(start), Some(end)) = (start_index, end_index)
-            && end > start {
-                content.replace_range(start..end + end_marker.len(), "");
-            }
+            && end > start
+        {
+            content.replace_range(start..end + end_marker.len(), "");
+        }
 
         // Older versions of Gram didn't have end-of-block markers,
         // so it's impossible to determine auto-generated lines.
@@ -2421,9 +2423,10 @@ impl GitRepository for RealGitRepository {
                 }
 
                 if let Ok(default_branch) = git.run(&["config", "init.defaultBranch"]).await
-                    && git.run(&["rev-parse", &default_branch]).await.is_ok() {
-                        return Ok(Some(default_branch.into()));
-                    }
+                    && git.run(&["rev-parse", &default_branch]).await.is_ok()
+                {
+                    return Ok(Some(default_branch.into()));
+                }
 
                 if git.run(&["rev-parse", "master"]).await.is_ok() {
                     return Ok(Some("master".into()));
