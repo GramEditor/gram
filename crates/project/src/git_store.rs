@@ -2198,6 +2198,7 @@ impl GitStore {
             commit_timestamp: commit.commit_timestamp,
             author_email: commit.author_email.into(),
             author_name: commit.author_name.into(),
+            refs: commit.refs.into(),
         })
     }
 
@@ -3880,7 +3881,7 @@ impl Repository {
                         commit_timestamp: resp.commit_timestamp,
                         author_email: resp.author_email.into(),
                         author_name: resp.author_name.into(),
-                        refs: Vec::new(), // TODO
+                        refs: resp.refs.into(),
                     })
                 }
             }
@@ -5985,6 +5986,7 @@ fn commit_details_to_proto(commit: &CommitDetails) -> proto::GitCommitDetails {
         commit_timestamp: commit.commit_timestamp,
         author_email: commit.author_email.to_string(),
         author_name: commit.author_name.to_string(),
+        refs: commit.refs.clone().into(),
     }
 }
 
