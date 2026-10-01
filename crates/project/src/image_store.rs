@@ -188,6 +188,7 @@ impl ImageItem {
             {
                 this.update(cx, |this, cx| {
                     this.image = image;
+                    this.image_metadata = Self::compute_metadata_from_bytes(&this.image.bytes).ok();
                     cx.emit(ImageItemEvent::Reloaded);
                 })
                 .log_err();

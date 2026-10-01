@@ -104,7 +104,9 @@ impl ImageView {
     fn on_image_event(&mut self, _: Entity<ImageItem>, event: &ImageItemEvent, cx: &mut Context<Self>) {
         match event {
             ImageItemEvent::MetadataUpdated | ImageItemEvent::FileHandleChanged | ImageItemEvent::Reloaded => {
-                self.image_size = self.image_item.read(cx).image_metadata.map(|m| (m.width, m.height));
+                if matches!(event, ImageItemEvent::Reloaded) {
+                    self.image_size = self.image_item.read(cx).image_metadata.map(|m| (m.width, m.height));
+                }
                 cx.emit(ImageViewEvent::TitleChanged);
                 cx.notify();
             }
