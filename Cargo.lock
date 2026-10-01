@@ -3795,7 +3795,6 @@ dependencies = [
  "snippet_provider",
  "snippets_ui",
  "svg_preview",
- "sysinfo",
  "system_specs",
  "tab_switcher",
  "tasks_ui",

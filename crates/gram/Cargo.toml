@@ -159,7 +159,6 @@ smol.workspace = true
 snippet_provider.workspace = true
 snippets_ui.workspace = true
 svg_preview.workspace = true
-sysinfo.workspace = true
 system_specs.workspace = true
 tab_switcher.workspace = true
 tasks_ui.workspace = true
