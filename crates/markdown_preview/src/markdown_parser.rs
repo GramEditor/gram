@@ -122,6 +122,7 @@ impl<'a> MarkdownParser<'a> {
         self
     }
 
+    #[allow(clippy::double_must_use)]
     #[async_recursion]
     async fn parse_block(&mut self) -> Option<Vec<ParsedMarkdownElement>> {
         let (current, source_range) = self.current().unwrap();
@@ -652,6 +653,7 @@ impl<'a> MarkdownParser<'a> {
         items
     }
 
+    #[allow(clippy::double_must_use)]
     #[async_recursion]
     async fn parse_block_quote(&mut self) -> ParsedMarkdownBlockQuote {
         let (_event, source_range) = self.previous().unwrap();

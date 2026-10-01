@@ -151,6 +151,7 @@ fn populate_pane_items(
     }
 }
 
+#[allow(clippy::double_must_use)]
 #[async_recursion(?Send)]
 async fn deserialize_pane_group(
     workspace: WeakEntity<Workspace>,

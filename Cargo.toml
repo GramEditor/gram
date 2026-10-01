@@ -325,7 +325,7 @@ convert_case = "0.11.0"
 cosmic-text = { git = "https://codeberg.org/GramEditor/cosmic-text", rev = "4649fd872a6099edebd12c97fc08eb578c4a8062" }
 crash-handler = "0.7.0"
 criterion = { version = "0.8.2", features = ["cargo_bench_support", "html_reports", "plotters", "rayon"] }
-ctor = "0.12.0"
+ctor = "1.0.13"
 dap-types = { git = "https://github.com/zed-industries/dap-types", rev = "1b461b310481d01e02b2603c16d7144b926339f8" }
 derive_more = { version = "2.1.1", features = ["full", "std"] }
 dirs = "6.0.0"

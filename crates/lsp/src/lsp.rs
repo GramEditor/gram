@@ -1826,7 +1826,7 @@ mod tests {
     use gpui::{SemanticVersion, TestAppContext};
     use std::str::FromStr;
 
-    #[ctor::ctor]
+    #[ctor::ctor(unsafe)]
     fn init_logger() {
         zlog::init_test();
     }

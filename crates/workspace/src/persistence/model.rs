@@ -155,6 +155,7 @@ impl Default for SerializedPaneGroup {
 }
 
 impl SerializedPaneGroup {
+    #[allow(clippy::double_must_use)]
     #[async_recursion(?Send)]
     pub(crate) async fn deserialize(
         self,

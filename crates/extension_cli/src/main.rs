@@ -333,11 +333,11 @@ fn test_languages(
             let query_path = entry.path();
             if query_path.extension() == Some("scm".as_ref()) {
                 let grammar = grammar.with_context(|| {
-                    format! {
+                    format!(
                         "language {} provides query {} but no grammar",
                         config.name,
                         query_path.display()
-                    }
+                    )
                 })?;
 
                 let query_source = fs::read_to_string(&query_path)?;

@@ -29,7 +29,7 @@ use std::{
 use unindent::Unindent as _;
 use util::{RandomCharIter, path, post_inc, rel_path::rel_path};
 
-#[ctor::ctor]
+#[ctor::ctor(unsafe)]
 fn init_logger() {
     zlog::init_test();
 }

@@ -1170,7 +1170,7 @@ mod tests {
     use rand::{distr::StandardUniform, prelude::*};
     use std::cmp;
 
-    #[ctor::ctor]
+    #[ctor::ctor(unsafe)]
     fn init_logger() {
         zlog::init_test();
     }

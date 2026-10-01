@@ -11,7 +11,7 @@ use settings::SettingsStore;
 use util::{path, rel_path::rel_path};
 use workspace::{AppState, CloseActiveItem, OpenOptions, ToggleFileFinder, Workspace, open_paths};
 
-#[ctor::ctor]
+#[ctor::ctor(unsafe)]
 fn init_logger() {
     zlog::init_test();
 }
