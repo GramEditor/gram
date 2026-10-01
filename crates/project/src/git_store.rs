@@ -2198,7 +2198,7 @@ impl GitStore {
             commit_timestamp: commit.commit_timestamp,
             author_email: commit.author_email.into(),
             author_name: commit.author_name.into(),
-            refs: commit.refs.into(),
+            refs: commit.refs,
         })
     }
 
@@ -2257,6 +2257,7 @@ impl GitStore {
                     commit_timestamp: entry.commit_timestamp,
                     author_name: entry.author_name.to_string(),
                     author_email: entry.author_email.to_string(),
+                    refs: entry.refs,
                 })
                 .collect(),
             path: file_history.path.unwrap().to_proto(),
@@ -2295,6 +2296,7 @@ impl GitStore {
                     commit_timestamp: entry.commit_timestamp,
                     author_name: entry.author_name.to_string(),
                     author_email: entry.author_email.to_string(),
+                    refs: entry.refs,
                 })
                 .collect(),
             path: commit_history.path.map(|path| path.to_proto()),
@@ -3881,7 +3883,7 @@ impl Repository {
                         commit_timestamp: resp.commit_timestamp,
                         author_email: resp.author_email.into(),
                         author_name: resp.author_name.into(),
-                        refs: resp.refs.into(),
+                        refs: resp.refs,
                     })
                 }
             }
@@ -3960,7 +3962,7 @@ impl Repository {
                                 commit_timestamp: entry.commit_timestamp,
                                 author_name: entry.author_name.into(),
                                 author_email: entry.author_email.into(),
-                                refs: Vec::default(), // TODO
+                                refs: entry.refs,
                             })
                             .collect(),
                         path: if let Some(path) = response.path.as_ref() {
@@ -5986,7 +5988,7 @@ fn commit_details_to_proto(commit: &CommitDetails) -> proto::GitCommitDetails {
         commit_timestamp: commit.commit_timestamp,
         author_email: commit.author_email.to_string(),
         author_name: commit.author_name.to_string(),
-        refs: commit.refs.clone().into(),
+        refs: commit.refs.clone(),
     }
 }
 

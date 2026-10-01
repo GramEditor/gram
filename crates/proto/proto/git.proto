@@ -342,6 +342,7 @@ message FileHistoryEntry {
     int64 commit_timestamp = 4;
     string author_name = 5;
     string author_email = 6;
+    repeated string refs = 7;
 }
 
 message StatusEntry {
