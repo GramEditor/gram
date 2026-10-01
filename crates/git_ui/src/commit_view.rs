@@ -1281,5 +1281,23 @@ mod split_tests {
             assert!(original_text.lines().any(|line| line == "old"));
             assert!(!cloned_text.lines().any(|line| line == "old"));
         });
+        workspace.update_in(cx, |workspace, window, cx| {
+            workspace.add_item_to_active_pane(Box::new(view.clone()), None, true, window, cx);
+        });
+        cx.run_until_parked();
+        for split in [true, false] {
+            view.update_in(cx, |view, window, cx| view.focus_handle(cx).focus(window, cx));
+            cx.draw(gpui::point(px(0.), px(0.)), gpui::size(px(1000.), px(700.)), |_, _| {
+                view.clone().into_any_element()
+            });
+            cx.dispatch_action(ToggleSplitDiff);
+            cx.run_until_parked();
+            view.read_with(cx, |view, cx| {
+                assert_eq!(view.split_editor.as_ref().unwrap().read(cx).is_split(), split);
+            });
+            clone.read_with(cx, |view, cx| {
+                assert!(view.split_editor.as_ref().unwrap().read(cx).is_split());
+            });
+        }
     }
 }
