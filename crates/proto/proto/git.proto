@@ -266,6 +266,7 @@ message GitCommitDetails {
     int64 commit_timestamp = 3;
     string author_email = 4;
     string author_name = 5;
+    repeated string refs = 6;
 }
 
 message LoadCommitDiff {
