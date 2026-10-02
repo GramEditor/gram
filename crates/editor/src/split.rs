@@ -911,6 +911,8 @@ mod tests {
             cx.run_until_parked();
             split.update(cx, |split, cx| {
                 let old = split.secondary.as_ref().unwrap();
+                assert_eq!(split.primary_editor.read(cx).scrollbar_marker_state.markers.len(), 2);
+                assert!(!old.editor.read(cx).show_scrollbars.vertical);
                 let snapshots = [split.primary_editor.clone(), old.editor.clone()]
                     .map(|editor| editor.update(cx, |editor, cx| editor.display_snapshot(cx)));
                 assert!(split.alignment.blocks[1].values().any(|(_, height)| *height == 3));

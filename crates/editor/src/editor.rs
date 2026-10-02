@@ -17921,6 +17921,7 @@ impl Editor {
     }
 
     fn on_buffer_changed(&mut self, _: Entity<MultiBuffer>, cx: &mut Context<Self>) {
+        self.scrollbar_marker_state.dirty = true;
         cx.notify();
     }
 
@@ -18172,6 +18173,7 @@ impl Editor {
     }
 
     fn on_display_map_changed(&mut self, _: Entity<DisplayMap>, _: &mut Window, cx: &mut Context<Self>) {
+        self.scrollbar_marker_state.dirty = true;
         cx.notify();
     }
 
@@ -18196,6 +18198,7 @@ impl Editor {
     }
 
     fn settings_changed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.scrollbar_marker_state.dirty = true;
         let new_language_settings = self.fetch_applicable_language_settings(cx);
         self.applicable_language_settings = new_language_settings;
 
@@ -18287,6 +18290,7 @@ impl Editor {
     }
 
     fn theme_changed(&mut self, _: &mut Window, cx: &mut Context<Self>) {
+        self.scrollbar_marker_state.dirty = true;
         if !self.mode.is_full() {
             return;
         }

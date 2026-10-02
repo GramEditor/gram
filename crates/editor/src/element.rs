@@ -1634,7 +1634,7 @@ impl EditorElement {
                 let editor = self.editor.read(cx);
                 let is_singleton = editor.buffer_kind(cx) == ItemBufferKind::Singleton;
                 // Git
-                (is_singleton && scrollbar_settings.git_diff && snapshot.buffer_snapshot().has_diff_hunks())
+                (scrollbar_settings.git_diff && snapshot.buffer_snapshot().has_diff_hunks())
                 ||
                 // Buffer Search Results
                 (is_singleton && scrollbar_settings.search_results && editor.has_background_highlights::<BufferSearchHighlights>())
@@ -6397,15 +6397,15 @@ impl EditorElement {
         cx: &mut App,
     ) {
         self.editor.update(cx, |editor, cx| {
-            if editor.buffer_kind(cx) != ItemBufferKind::Singleton
-                || !editor
-                    .scrollbar_marker_state
-                    .should_refresh(scrollbar_layout.hitbox.size)
+            if !editor
+                .scrollbar_marker_state
+                .should_refresh(scrollbar_layout.hitbox.size)
             {
                 return;
             }
 
             let scrollbar_layout = scrollbar_layout.clone();
+            let is_singleton = editor.buffer_kind(cx) == ItemBufferKind::Singleton;
             let background_highlights = editor.background_highlights.clone();
             let snapshot = layout.position_map.snapshot.clone();
             let theme = cx.theme().clone();
@@ -6453,9 +6453,10 @@ impl EditorElement {
                                 == HighlightKey::Type(TypeId::of::<DocumentHighlightRead>())
                                 || *background_highlight_id
                                     == HighlightKey::Type(TypeId::of::<DocumentHighlightWrite>());
-                            if (is_search_highlights && scrollbar_settings.search_results)
-                                || (is_text_highlights && scrollbar_settings.selected_text)
-                                || (is_symbol_occurrences && scrollbar_settings.selected_symbol)
+                            if is_singleton
+                                && ((is_search_highlights && scrollbar_settings.search_results)
+                                    || (is_text_highlights && scrollbar_settings.selected_text)
+                                    || (is_symbol_occurrences && scrollbar_settings.selected_symbol))
                             {
                                 let mut color = theme.status().info;
                                 if is_symbol_occurrences {
@@ -6475,7 +6476,7 @@ impl EditorElement {
                             }
                         }
 
-                        if scrollbar_settings.diagnostics != ScrollbarDiagnostics::None {
+                        if is_singleton && scrollbar_settings.diagnostics != ScrollbarDiagnostics::None {
                             let diagnostics = snapshot
                                 .buffer_snapshot()
                                 .diagnostics_in_range::<Point>(Point::zero()..max_point)
@@ -10557,6 +10558,120 @@ mod tests {
     use log::info;
     use std::num::NonZeroU32;
     use util::test::sample_text;
+
+    #[gpui::test]
+    async fn test_multibuffer_diff_scrollbar_markers(cx: &mut TestAppContext) {
+        use buffer_diff::BufferDiff;
+        use language::Capability;
+        use multi_buffer::ExcerptRange;
+        use settings::SettingsStore;
+
+        init_test(cx, |_| {});
+        cx.update(|cx| {
+            SettingsStore::update(cx, |store, cx| {
+                store
+                    .set_user_settings(r#"{"scroll_beyond_last_line":"off"}"#, cx)
+                    .unwrap();
+            });
+        });
+        let cases = [
+            ("before\nadded\nafter\n", "before\nafter\n"),
+            ("before\nnew\nafter\n", "before\nold\nafter\n"),
+            ("before\nafter\n", "before\nremoved\nremoved2\nafter\n"),
+        ];
+        let buffers = cases.map(|(text, base)| {
+            let buffer = cx.new(|cx| Buffer::local(text, cx));
+            let diff = cx.new(|cx| BufferDiff::new_with_base_text(base, &buffer.read(cx).text_snapshot(), cx));
+            (buffer, diff)
+        });
+        let multibuffer = cx.new(|cx| {
+            let mut multibuffer = MultiBuffer::new(Capability::ReadWrite);
+            for (buffer, diff) in &buffers {
+                let end = buffer.read(cx).snapshot().max_point();
+                multibuffer.push_excerpts(buffer.clone(), [ExcerptRange::new(Point::zero()..end)], cx);
+                multibuffer.add_diff(diff.clone(), cx);
+            }
+            multibuffer.set_show_deleted_hunks(false, cx);
+            multibuffer
+        });
+        let window = cx.add_window(|window, cx| Editor::for_multibuffer(multibuffer, None, window, cx));
+        let cx = &mut VisualTestContext::from_window(*window, cx);
+        let editor = window.root(cx).unwrap();
+        let style = editor.update(cx, |editor, cx| editor.style(cx).clone());
+        let line_height = cx.update(|window, _| style.text.line_height_in_pixels(window.rem_size()));
+        let draw = |cx: &mut VisualTestContext| {
+            cx.draw(Default::default(), size(px(800.), px(600.)), |_, _| {
+                editor.clone().into_any_element()
+            });
+            cx.run_until_parked();
+        };
+        draw(cx);
+        let markers = editor.read_with(cx, |editor, _| editor.scrollbar_marker_state.markers.clone());
+        assert_eq!(markers.len(), 3);
+        cx.update(|_, cx| {
+            for (marker, color) in markers.iter().zip([
+                cx.theme().colors().version_control_added,
+                cx.theme().colors().version_control_modified,
+                cx.theme().colors().version_control_deleted,
+            ]) {
+                assert_eq!(marker.background, color.into());
+                assert!(marker.bounds.size.height >= ScrollbarLayout::MIN_MARKER_HEIGHT);
+            }
+        });
+        assert!(
+            markers
+                .windows(2)
+                .all(|pair| pair[0].bounds.origin.y < pair[1].bounds.origin.y)
+        );
+
+        // Split alignment inserts blocks without changing the buffer's text.
+        editor.update(cx, |editor, cx| {
+            let anchor = editor.buffer.read(cx).snapshot(cx).anchor_before(Point::zero());
+            editor.insert_blocks(
+                [BlockProperties {
+                    style: BlockStyle::Fixed,
+                    placement: BlockPlacement::Above(anchor),
+                    height: Some(3),
+                    render: Arc::new(|cx| div().h(3. * cx.window.line_height()).into_any()),
+                    priority: 0,
+                }],
+                None,
+                cx,
+            );
+        });
+        cx.run_until_parked();
+        draw(cx);
+        editor.read_with(cx, |editor, _| {
+            for (before, after) in markers.iter().zip(editor.scrollbar_marker_state.markers.iter()) {
+                assert!((after.bounds.origin.y - before.bounds.origin.y - 3. * line_height).abs() < px(0.01));
+            }
+        });
+
+        buffers[0].0.update(cx, |buffer, cx| {
+            buffer.edit([(0..buffer.len(), cases[0].1)], None, cx);
+        });
+        buffers[0].1.update(cx, |diff, cx| {
+            diff.recalculate_diff_sync(&buffers[0].0.read(cx).text_snapshot(), cx);
+        });
+        cx.run_until_parked();
+        draw(cx);
+        editor.read_with(cx, |editor, _| {
+            assert_eq!(editor.scrollbar_marker_state.markers.len(), 2)
+        });
+
+        cx.update(|_, cx| {
+            SettingsStore::update(cx, |store, cx| {
+                store
+                    .set_user_settings(r#"{"scrollbar":{"show":"always","git_diff":false}}"#, cx)
+                    .unwrap();
+            });
+        });
+        cx.run_until_parked();
+        draw(cx);
+        editor.read_with(cx, |editor, _| {
+            assert!(editor.scrollbar_marker_state.markers.is_empty())
+        });
+    }
 
     #[gpui::test]
     async fn test_soft_wrap_editor_width_auto_height_editor(cx: &mut TestAppContext) {
