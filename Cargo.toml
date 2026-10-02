@@ -303,7 +303,6 @@ async-recursion = "1.1.1"
 async-tar = "0.5.1"
 async-task = "4.7.1"
 async-trait = "0.1.92"
-async-tungstenite = { version = "0.35.0", features = ["futures-03-sink", "handshake", "tokio", "tokio-runtime", "tokio-rustls-manual-roots"] }
 async_zip = { version = "0.0.18", features = ["deflate", "deflate64"] }
 backtrace = "0.3.76"
 base64 = "0.22.1"
@@ -373,7 +372,6 @@ minidumper = "0.10.1"
 nbformat = "1.2.2"
 nix = "0.31.3"
 notify = { git = "https://codeberg.org/GramEditor/notify", rev = "e83c704e8f0b397bcfbb587ae3a536aa36a4c105" }
-num-format = "0.4.4"
 objc2 = "0.6.4"
 objc2-app-kit = "0.3.2"
 objc2-color-sync = "0.3.2"
@@ -449,7 +447,6 @@ thread_local = "1.1.10"
 time = { version = "0.3.55", features = ["formatting", "local-offset", "macros", "parsing", "serde", "serde-well-known", "std"] }
 tokio = { version = "1.53.1", features = ["full"] }
 toml = "1.1.6"
-tracing = { version = "0.1.44", features = ["attributes", "log", "std"] }
 trash = "5.2.9"
 tree-sitter = { version = "0.26.13", features = ["std", "wasm"] }
 tree-sitter-bash = "0.25.1"

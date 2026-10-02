@@ -1,6 +1,5 @@
 pub mod buffer_store;
 mod color_extractor;
-pub mod connection_manager;
 pub mod debounced_delay;
 pub mod debugger;
 pub mod git_store;
@@ -45,8 +44,9 @@ pub use project_search::{Search, SearchResults};
 
 use anyhow::{Context as _, Result, anyhow};
 use buffer_store::{BufferStore, BufferStoreEvent};
-use client::{Client, TypedEnvelope, proto};
+use client::Client;
 use clock::ReplicaId;
+use rpc::{TypedEnvelope, proto};
 
 use dap::client::DebugAdapterClient;
 
@@ -927,35 +927,6 @@ pub enum PulledDiagnostics {
 }
 
 impl Project {
-    pub fn init(client: &Arc<Client>, cx: &mut App) {
-        connection_manager::init(client.clone(), cx);
-
-        let client: AnyProtoClient = client.clone().into();
-        client.add_entity_message_handler(Self::handle_update_project);
-        client.add_entity_message_handler(Self::handle_unshare_project);
-        client.add_entity_request_handler(Self::handle_update_buffer);
-        client.add_entity_message_handler(Self::handle_update_worktree);
-        client.add_entity_request_handler(Self::handle_synchronize_buffers);
-
-        client.add_entity_request_handler(Self::handle_search_candidate_buffers);
-        client.add_entity_request_handler(Self::handle_open_buffer_by_id);
-        client.add_entity_request_handler(Self::handle_open_buffer_by_path);
-        client.add_entity_request_handler(Self::handle_open_new_buffer);
-        client.add_entity_message_handler(Self::handle_create_buffer_for_peer);
-        client.add_entity_message_handler(Self::handle_toggle_lsp_logs);
-        client.add_entity_message_handler(Self::handle_create_image_for_peer);
-
-        WorktreeStore::init(&client);
-        BufferStore::init(&client);
-        LspStore::init(&client);
-        GitStore::init(&client);
-        SettingsObserver::init(&client);
-        TaskStore::init(Some(&client));
-        ToolchainStore::init(&client);
-        DapStore::init(&client, cx);
-        BreakpointStore::init(&client);
-    }
-
     pub fn local(
         client: Arc<Client>,
         node: NodeRuntime,
@@ -1287,7 +1258,7 @@ impl Project {
             SettingsObserver::init(&remote_proto);
             TaskStore::init(Some(&remote_proto));
             ToolchainStore::init(&remote_proto);
-            DapStore::init(&remote_proto, cx);
+            DapStore::init(Some(&remote_proto), cx);
             BreakpointStore::init(&remote_proto);
             GitStore::init(&remote_proto);
 
@@ -1322,7 +1293,7 @@ impl Project {
         let fs = Arc::new(RealFs::new(None, cx.background_executor().clone()));
         let languages = LanguageRegistry::test(cx.background_executor().clone());
         let http_client = http_client::FakeHttpClient::with_404_response();
-        let client = cx.update(|cx| client::Client::new(http_client.clone(), cx)).unwrap();
+        let client = client::Client::new(http_client.clone());
         let project = cx
             .update(|cx| {
                 Project::local(
@@ -1356,7 +1327,7 @@ impl Project {
     ) -> Entity<Project> {
         let languages = LanguageRegistry::test(cx.executor());
         let http_client = http_client::FakeHttpClient::with_404_response();
-        let client = cx.update(|cx| client::Client::new(http_client.clone(), cx));
+        let client = client::Client::new(http_client.clone());
         let project = cx.update(|cx| {
             Project::local(
                 client,
@@ -3409,21 +3380,6 @@ impl Project {
 
     // RPC message handlers
 
-    async fn handle_unshare_project(
-        this: Entity<Self>,
-        _: TypedEnvelope<proto::UnshareProject>,
-        mut cx: AsyncApp,
-    ) -> Result<()> {
-        this.update(&mut cx, |this, cx| {
-            if this.is_local() || this.is_via_remote_server() {
-                this.unshare(cx)?;
-            } else {
-                this.disconnected_from_host(cx);
-            }
-            Ok(())
-        })?
-    }
-
     async fn handle_update_project(
         this: Entity<Self>,
         envelope: TypedEnvelope<proto::UpdateProject>,
@@ -3542,23 +3498,6 @@ impl Project {
         BufferStore::handle_update_buffer(buffer_store, envelope, cx).await
     }
 
-    async fn handle_update_buffer(
-        this: Entity<Self>,
-        envelope: TypedEnvelope<proto::UpdateBuffer>,
-        cx: AsyncApp,
-    ) -> Result<proto::Ack> {
-        let buffer_store = this.read_with(&cx, |this, cx| {
-            if let Some(ssh) = &this.remote_client {
-                let mut payload = envelope.payload.clone();
-                payload.project_id = REMOTE_SERVER_PROJECT_ID;
-                cx.background_spawn(ssh.read(cx).proto_client().request(payload))
-                    .detach_and_log_err(cx);
-            }
-            this.buffer_store.clone()
-        })?;
-        BufferStore::handle_update_buffer(buffer_store, envelope, cx).await
-    }
-
     fn retain_remotely_created_models(&mut self, cx: &mut Context<Self>) -> RemotelyCreatedModelGuard {
         Self::retain_remotely_created_models_impl(
             &self.remotely_created_models,
@@ -3597,128 +3536,6 @@ impl Project {
                 buffer_store.handle_create_buffer_for_peer(envelope, this.replica_id(), cx)
             })
         })?
-    }
-
-    async fn handle_toggle_lsp_logs(
-        project: Entity<Self>,
-        envelope: TypedEnvelope<proto::ToggleLspLogs>,
-        mut cx: AsyncApp,
-    ) -> Result<()> {
-        let toggled_log_kind =
-            match proto::toggle_lsp_logs::LogType::try_from(envelope.payload.log_type).context("invalid log type")? {
-                proto::toggle_lsp_logs::LogType::Log => LogKind::Logs,
-                proto::toggle_lsp_logs::LogType::Trace => LogKind::Trace,
-                proto::toggle_lsp_logs::LogType::Rpc => LogKind::Rpc,
-            };
-        project.update(&mut cx, |_, cx| {
-            cx.emit(Event::ToggleLspLogs {
-                server_id: LanguageServerId::from_proto(envelope.payload.server_id),
-                enabled: envelope.payload.enabled,
-                toggled_log_kind,
-            })
-        })?;
-        Ok(())
-    }
-
-    async fn handle_synchronize_buffers(
-        this: Entity<Self>,
-        envelope: TypedEnvelope<proto::SynchronizeBuffers>,
-        mut cx: AsyncApp,
-    ) -> Result<proto::SynchronizeBuffersResponse> {
-        let response = this.update(&mut cx, |this, cx| {
-            let client = this.client.clone();
-            this.buffer_store
-                .update(cx, |this, cx| this.handle_synchronize_buffers(envelope, cx, client))
-        })??;
-
-        Ok(response)
-    }
-
-    async fn handle_search_candidate_buffers(
-        this: Entity<Self>,
-        envelope: TypedEnvelope<proto::FindSearchCandidates>,
-        mut cx: AsyncApp,
-    ) -> Result<proto::FindSearchCandidatesResponse> {
-        let peer_id = envelope.original_sender_id()?;
-        let message = envelope.payload;
-        let path_style = this.read_with(&cx, |this, cx| this.path_style(cx))?;
-        let query = SearchQuery::from_proto(message.query.context("missing query field")?, path_style)?;
-        let results = this.update(&mut cx, |this, cx| this.search_impl(query, cx).matching_buffers(cx))?;
-
-        let mut response = proto::FindSearchCandidatesResponse { buffer_ids: Vec::new() };
-
-        while let Ok(buffer) = results.rx.recv().await {
-            this.update(&mut cx, |this, cx| {
-                let buffer_id = this.create_buffer_for_peer(&buffer, peer_id, cx);
-                response.buffer_ids.push(buffer_id.to_proto());
-            })?;
-        }
-
-        Ok(response)
-    }
-
-    async fn handle_open_buffer_by_id(
-        this: Entity<Self>,
-        envelope: TypedEnvelope<proto::OpenBufferById>,
-        mut cx: AsyncApp,
-    ) -> Result<proto::OpenBufferResponse> {
-        let peer_id = envelope.original_sender_id()?;
-        let buffer_id = BufferId::new(envelope.payload.id)?;
-        let buffer = this
-            .update(&mut cx, |this, cx| this.open_buffer_by_id(buffer_id, cx))?
-            .await?;
-        Project::respond_to_open_buffer_request(this, buffer, peer_id, &mut cx)
-    }
-
-    async fn handle_open_buffer_by_path(
-        this: Entity<Self>,
-        envelope: TypedEnvelope<proto::OpenBufferByPath>,
-        mut cx: AsyncApp,
-    ) -> Result<proto::OpenBufferResponse> {
-        let peer_id = envelope.original_sender_id()?;
-        let worktree_id = WorktreeId::from_proto(envelope.payload.worktree_id);
-        let path = RelPath::from_proto(&envelope.payload.path)?;
-        let open_buffer = this
-            .update(&mut cx, |this, cx| {
-                this.open_buffer(ProjectPath { worktree_id, path }, cx)
-            })?
-            .await?;
-        Project::respond_to_open_buffer_request(this, open_buffer, peer_id, &mut cx)
-    }
-
-    async fn handle_open_new_buffer(
-        this: Entity<Self>,
-        envelope: TypedEnvelope<proto::OpenNewBuffer>,
-        mut cx: AsyncApp,
-    ) -> Result<proto::OpenBufferResponse> {
-        let buffer = this.update(&mut cx, |this, cx| this.create_buffer(true, cx))?.await?;
-        let peer_id = envelope.original_sender_id()?;
-
-        Project::respond_to_open_buffer_request(this, buffer, peer_id, &mut cx)
-    }
-
-    fn respond_to_open_buffer_request(
-        this: Entity<Self>,
-        buffer: Entity<Buffer>,
-        peer_id: proto::PeerId,
-        cx: &mut AsyncApp,
-    ) -> Result<proto::OpenBufferResponse> {
-        this.update(cx, |this, cx| {
-            let is_private = buffer.read(cx).file().map(|f| f.is_private()).unwrap_or_default();
-            anyhow::ensure!(!is_private, ErrorCode::UnsharedItem);
-            Ok(proto::OpenBufferResponse {
-                buffer_id: this.create_buffer_for_peer(&buffer, peer_id, cx).into(),
-            })
-        })?
-    }
-
-    fn create_buffer_for_peer(&mut self, buffer: &Entity<Buffer>, peer_id: proto::PeerId, cx: &mut App) -> BufferId {
-        self.buffer_store
-            .update(cx, |buffer_store, cx| {
-                buffer_store.create_buffer_for_peer(buffer, peer_id, cx)
-            })
-            .detach_and_log_err(cx);
-        buffer.read(cx).remote_id()
     }
 
     async fn handle_create_image_for_peer(

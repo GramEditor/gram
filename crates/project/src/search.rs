@@ -1,6 +1,6 @@
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder};
 use anyhow::Result;
-use client::proto;
+use rpc::proto;
 use fancy_regex::{Captures, Regex, RegexBuilder};
 use gpui::Entity;
 use itertools::Itertools as _;

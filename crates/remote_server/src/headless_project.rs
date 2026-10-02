@@ -261,7 +261,7 @@ impl HeadlessProject {
         LspStore::init(&session);
         TaskStore::init(Some(&session));
         ToolchainStore::init(&session);
-        DapStore::init(&session, cx);
+        DapStore::init(Some(&session), cx);
         BreakpointStore::init(&session);
         GitStore::init(&session);
 
@@ -376,7 +376,7 @@ impl HeadlessProject {
         message: TypedEnvelope<proto::AddWorktree>,
         mut cx: AsyncApp,
     ) -> Result<proto::AddWorktreeResponse> {
-        use client::ErrorCodeExt;
+        use rpc::ErrorCodeExt;
         let fs = this.read_with(&cx, |this, _| this.fs.clone())?;
         let path = PathBuf::from(shellexpand::tilde(&message.payload.path).to_string());
 

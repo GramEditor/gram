@@ -2,17 +2,15 @@ mod extension_card;
 mod extension_suggest;
 
 use app_actions::ExtensionCategoryFilter;
-use client::{ExtensionMetadata, ExtensionProvides};
 use collections::{BTreeMap, BTreeSet};
 use editor::{Editor, EditorElement, EditorStyle};
 use extension_host::{ExtensionManifest, ExtensionOperation, ExtensionStore};
 use fuzzy::{StringMatchCandidate, match_strings};
 use gpui::{
-    Action, App, ClipboardItem, Context, Corner, DismissEvent, Entity, EventEmitter, Flatten, FocusHandle, Focusable,
-    InteractiveElement, KeyContext, ParentElement, Point, Render, Styled, Task, TextStyle, UniformListScrollHandle,
-    WeakEntity, Window, actions, point, uniform_list,
+    Action, App, Context, DismissEvent, Entity, EventEmitter, Flatten, FocusHandle, Focusable, InteractiveElement,
+    KeyContext, ParentElement, Render, Styled, Task, TextStyle, UniformListScrollHandle, WeakEntity, Window, actions,
+    point, uniform_list,
 };
-use num_format::{Locale, ToFormattedString};
 use project::DirectoryLister;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -23,10 +21,7 @@ use std::time::Duration;
 use std::{ops::Range, sync::Arc};
 use strum::IntoEnumIterator as _;
 use theme::ThemeSettings;
-use ui::{
-    Banner, Chip, ContextMenu, Divider, Modal, ModalHeader, PopoverMenu, ScrollableHandle, Section, Switch, Tooltip,
-    WithScrollbar, prelude::*,
-};
+use ui::{Banner, Divider, Modal, ModalHeader, ScrollableHandle, Section, Switch, Tooltip, WithScrollbar, prelude::*};
 use vim_mode_setting::VimModeSetting;
 use workspace::ModalView;
 use workspace::{
@@ -35,6 +30,18 @@ use workspace::{
 };
 
 use crate::extension_card::ExtensionCard;
+
+#[derive(Debug, PartialEq, Ord, PartialOrd, Eq, Copy, Clone, strum::EnumString, strum::Display, strum::EnumIter)]
+pub enum ExtensionProvides {
+    Themes,
+    IconThemes,
+    Languages,
+    Grammars,
+    LanguageServers,
+    IndexedDocsProviders,
+    Snippets,
+    DebugAdapters,
+}
 
 actions!(
     gram,
@@ -277,7 +284,7 @@ pub fn init(cx: &mut App) {
     .detach();
 }
 
-fn extension_provides_label(provides: ExtensionProvides) -> &'static str {
+fn extension_provides_label(provides: &ExtensionProvides) -> &'static str {
     match provides {
         ExtensionProvides::Themes => "Themes",
         ExtensionProvides::IconThemes => "Icon Themes",
@@ -353,18 +360,11 @@ fn keywords_by_feature() -> &'static BTreeMap<Feature, Vec<&'static str>> {
     })
 }
 
-struct ExtensionCardButtons {
-    install_or_uninstall: Button,
-    upgrade: Option<Button>,
-    configure: Option<Button>,
-}
-
 pub struct ExtensionsPage {
     workspace: WeakEntity<Workspace>,
     list: UniformListScrollHandle,
     is_fetching_extensions: bool,
     fetch_failed: bool,
-    remote_extension_entries: Vec<ExtensionMetadata>,
     extension_entries: Vec<Arc<ExtensionManifest>>,
     filtered_remote_extension_indices: Vec<usize>,
     query_editor: Entity<Editor>,
@@ -416,7 +416,6 @@ impl ExtensionsPage {
                 fetch_failed: false,
                 extension_entries: Vec::new(),
                 filtered_remote_extension_indices: Vec::new(),
-                remote_extension_entries: Vec::new(),
                 query_contains_error: false,
                 provides_filter,
                 extension_fetch_task: None,
@@ -426,7 +425,7 @@ impl ExtensionsPage {
             };
             this.fetch_extensions(
                 this.search_query(cx),
-                Some(BTreeSet::from_iter(this.provides_filter)),
+                Some(BTreeSet::from_iter(provides_filter)),
                 None,
                 cx,
             );
@@ -492,7 +491,6 @@ impl ExtensionsPage {
                 this.extension_entries = extensions;
                 this.is_fetching_extensions = false;
                 this.fetch_failed = false;
-                this.filter_extension_entries(cx);
                 if let Some(callback) = on_complete {
                     callback(this, cx);
                 }
@@ -586,13 +584,6 @@ impl ExtensionsPage {
         }
     }
 
-    fn filter_extension_entries(&mut self, cx: &mut Context<Self>) {
-        self.filtered_remote_extension_indices.clear();
-        self.filtered_remote_extension_indices
-            .extend(self.remote_extension_entries.iter().enumerate().map(|(ix, _)| ix));
-        cx.notify();
-    }
-
     fn render_extensions(&mut self, range: Range<usize>, _: &mut Window, cx: &mut Context<Self>) -> Vec<ExtensionCard> {
         let extension_entries_len = self.extension_entries.len();
         range
@@ -601,9 +592,7 @@ impl ExtensionsPage {
                     let extension = &self.extension_entries[ix];
                     self.render_extension(extension, cx)
                 } else {
-                    let extension_ix = self.filtered_remote_extension_indices[ix - extension_entries_len];
-                    let extension = &self.remote_extension_entries[extension_ix];
-                    self.render_remote_extension(extension, cx)
+                    unreachable!("extension out of bounds")
                 }
             })
             .collect()
@@ -723,252 +712,6 @@ impl ExtensionsPage {
                         .tooltip(Tooltip::text(repository_url))
                     })),
             )
-    }
-
-    fn render_remote_extension(&self, extension: &ExtensionMetadata, cx: &mut Context<Self>) -> ExtensionCard {
-        let this = cx.weak_entity();
-        let status = Self::extension_status(&extension.id, cx);
-
-        let extension_id = extension.id.clone();
-        let buttons = self.buttons_for_entry(extension, &status, cx);
-        let version = extension.manifest.version.clone();
-        let repository_url = extension.manifest.repository.clone();
-        let authors = extension.manifest.authors.clone();
-
-        let installed_version = match status {
-            ExtensionStatus::Installed(installed_version) => Some(installed_version),
-            _ => None,
-        };
-
-        ExtensionCard::new()
-            .child(
-                h_flex()
-                    .justify_between()
-                    .child(
-                        h_flex()
-                            .gap_2()
-                            .child(Headline::new(extension.manifest.name.clone()).size(HeadlineSize::Small))
-                            .child(Headline::new(format!("v{version}")).size(HeadlineSize::XSmall))
-                            .children(
-                                installed_version
-                                    .filter(|installed_version| *installed_version != version)
-                                    .map(|installed_version| {
-                                        Headline::new(format!("(v{installed_version} installed)",))
-                                            .size(HeadlineSize::XSmall)
-                                    }),
-                            )
-                            .map(|parent| {
-                                if extension.manifest.provides.is_empty() {
-                                    return parent;
-                                }
-
-                                parent.child(
-                                    h_flex().gap_1().children(
-                                        extension
-                                            .manifest
-                                            .provides
-                                            .iter()
-                                            .filter_map(|provides| {
-                                                if provides == &ExtensionProvides::IndexedDocsProviders {
-                                                    return None;
-                                                }
-
-                                                Some(Chip::new(extension_provides_label(*provides)))
-                                            })
-                                            .collect::<Vec<_>>(),
-                                    ),
-                                )
-                            }),
-                    )
-                    .child(
-                        h_flex()
-                            .gap_1()
-                            .children(buttons.upgrade)
-                            .children(buttons.configure)
-                            .child(buttons.install_or_uninstall),
-                    ),
-            )
-            .child(
-                h_flex()
-                    .gap_2()
-                    .justify_between()
-                    .children(extension.manifest.description.as_ref().map(|description| {
-                        Label::new(description.clone())
-                            .size(LabelSize::Small)
-                            .color(Color::Default)
-                            .truncate()
-                    }))
-                    .child(
-                        Label::new(format!(
-                            "Downloads: {}",
-                            extension.download_count.to_formatted_string(&Locale::en)
-                        ))
-                        .size(LabelSize::Small),
-                    ),
-            )
-            .child(
-                h_flex()
-                    .justify_between()
-                    .child(
-                        h_flex()
-                            .gap_1()
-                            .child(Icon::new(IconName::Person).size(IconSize::XSmall).color(Color::Muted))
-                            .child(
-                                Label::new(extension.manifest.authors.join(", "))
-                                    .size(LabelSize::Small)
-                                    .color(Color::Muted)
-                                    .truncate(),
-                            ),
-                    )
-                    .child(
-                        h_flex()
-                            .gap_1()
-                            .child({
-                                let repo_url_for_tooltip = repository_url.clone();
-
-                                IconButton::new(
-                                    SharedString::from(format!("repository-{}", extension.id)),
-                                    IconName::Forge,
-                                )
-                                .icon_size(IconSize::Small)
-                                .tooltip(move |_, cx| {
-                                    Tooltip::with_meta(
-                                        "Visit Extension Repository",
-                                        None,
-                                        repo_url_for_tooltip.clone(),
-                                        cx,
-                                    )
-                                })
-                                .on_click(cx.listener(move |_, _, _, cx| {
-                                    cx.open_url(&repository_url);
-                                }))
-                            })
-                            .child(
-                                PopoverMenu::new(SharedString::from(format!("more-{}", extension.id)))
-                                    .trigger(
-                                        IconButton::new(
-                                            SharedString::from(format!("more-{}", extension.id)),
-                                            IconName::Ellipsis,
-                                        )
-                                        .icon_size(IconSize::Small),
-                                    )
-                                    .anchor(Corner::TopRight)
-                                    .offset(Point { x: px(0.0), y: px(2.0) })
-                                    .menu(move |window, cx| {
-                                        this.upgrade().map(|this| {
-                                            Self::render_remote_extension_context_menu(
-                                                &this,
-                                                extension_id.clone(),
-                                                authors.clone(),
-                                                window,
-                                                cx,
-                                            )
-                                        })
-                                    }),
-                            ),
-                    ),
-            )
-    }
-
-    fn render_remote_extension_context_menu(
-        _this: &Entity<Self>,
-        extension_id: Arc<str>,
-        authors: Vec<String>,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> Entity<ContextMenu> {
-        ContextMenu::build(window, cx, |context_menu, _window, _| {
-            context_menu
-                .entry("Copy Extension ID", None, {
-                    let extension_id = extension_id.clone();
-                    move |_, cx| {
-                        cx.write_to_clipboard(ClipboardItem::new_string(extension_id.to_string()));
-                    }
-                })
-                .entry("Copy Author Info", None, {
-                    let authors = authors.clone();
-                    move |_, cx| {
-                        cx.write_to_clipboard(ClipboardItem::new_string(authors.join(", ")));
-                    }
-                })
-        })
-    }
-
-    fn buttons_for_entry(
-        &self,
-        extension: &ExtensionMetadata,
-        status: &ExtensionStatus,
-        _cx: &mut Context<Self>,
-    ) -> ExtensionCardButtons {
-        let is_configurable = false;
-
-        match status.clone() {
-            ExtensionStatus::NotInstalled => ExtensionCardButtons {
-                install_or_uninstall: Button::new(SharedString::from(extension.id.clone()), "Install")
-                    .style(ButtonStyle::Tinted(ui::TintColor::Accent))
-                    .icon(IconName::Download)
-                    .icon_size(IconSize::Small)
-                    .icon_color(Color::Muted)
-                    .icon_position(IconPosition::Start)
-                    .disabled(true),
-                configure: None,
-                upgrade: None,
-            },
-            ExtensionStatus::Installing => ExtensionCardButtons {
-                install_or_uninstall: Button::new(SharedString::from(extension.id.clone()), "Install")
-                    .style(ButtonStyle::Tinted(ui::TintColor::Accent))
-                    .icon(IconName::Download)
-                    .icon_size(IconSize::Small)
-                    .icon_color(Color::Muted)
-                    .icon_position(IconPosition::Start)
-                    .disabled(true),
-                configure: None,
-                upgrade: None,
-            },
-            ExtensionStatus::Upgrading => ExtensionCardButtons {
-                install_or_uninstall: Button::new(SharedString::from(extension.id.clone()), "Uninstall")
-                    .style(ButtonStyle::OutlinedGhost)
-                    .disabled(true),
-                configure: is_configurable.then(|| {
-                    Button::new(SharedString::from(format!("configure-{}", extension.id)), "Configure").disabled(true)
-                }),
-                upgrade: Some(Button::new(SharedString::from(extension.id.clone()), "Upgrade").disabled(true)),
-            },
-            ExtensionStatus::Installed(_installed_version) => ExtensionCardButtons {
-                install_or_uninstall: Button::new(SharedString::from(extension.id.clone()), "Uninstall")
-                    .style(ButtonStyle::OutlinedGhost)
-                    .disabled(true),
-                configure: is_configurable.then(|| {
-                    Button::new(SharedString::from(format!("configure-{}", extension.id)), "Configure")
-                        .style(ButtonStyle::OutlinedGhost)
-                        .on_click({
-                            let extension_id = extension.id.clone();
-                            move |_, _, cx| {
-                                if let Some(manifest) = ExtensionStore::global(cx)
-                                    .read(cx)
-                                    .extension_manifest_for_id(&extension_id)
-                                    .cloned()
-                                    && let Some(events) = extension::ExtensionEvents::try_global(cx)
-                                {
-                                    events.update(cx, |this, cx| {
-                                        this.emit(extension::Event::ConfigureExtensionRequested(manifest), cx)
-                                    });
-                                }
-                            }
-                        })
-                }),
-                upgrade: None,
-            },
-            ExtensionStatus::Removing => ExtensionCardButtons {
-                install_or_uninstall: Button::new(SharedString::from(extension.id.clone()), "Uninstall")
-                    .style(ButtonStyle::OutlinedGhost)
-                    .disabled(true),
-                configure: is_configurable.then(|| {
-                    Button::new(SharedString::from(format!("configure-{}", extension.id)), "Configure").disabled(true)
-                }),
-                upgrade: None,
-            },
-        }
     }
 
     fn render_search(&self, cx: &mut Context<Self>) -> Div {
@@ -1369,7 +1112,7 @@ impl Render for ExtensionsPage {
                             return None;
                         }
 
-                        let label = extension_provides_label(provides);
+                        let label = extension_provides_label(&provides);
                         let button_id = SharedString::from(format!("filter-category-{}", label));
 
                         Some(

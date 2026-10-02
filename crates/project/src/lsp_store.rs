@@ -42,7 +42,7 @@ use crate::{
 };
 use anyhow::{Context as _, Result, anyhow};
 use async_trait::async_trait;
-use client::{TypedEnvelope, proto};
+use rpc::{TypedEnvelope, proto};
 use clock::Global;
 use collections::{BTreeMap, BTreeSet, HashMap, HashSet, btree_map};
 use futures::{

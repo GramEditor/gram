@@ -135,11 +135,14 @@ impl ReplStore {
         &self,
         cx: &mut Context<Self>,
     ) -> Option<Task<Result<Vec<KernelSpecification>>>> {
-        match (std::env::var("JUPYTER_SERVER"), std::env::var("JUPYTER_TOKEN")) {
-            (Ok(server), Ok(token)) => {
-                let remote_server = RemoteServer {
-                    base_url: server,
-                    token,
+        match std::env::var("JUPYTER_URL") {
+            Ok(url) => {
+                let remote_server = match RemoteServer::from_url(&url) {
+                    Ok(url) => url,
+                    Err(err) => {
+                        log::error!("Could not parse JUPYTER_URL: {err}");
+                        return None;
+                    }
                 };
                 let http_client = cx.http_client();
                 Some(cx.spawn(async move |_, _| {

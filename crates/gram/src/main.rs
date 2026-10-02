@@ -452,7 +452,7 @@ pub fn main() {
 
         debug_adapter_extension::init(extension_host_proxy.clone(), cx);
         languages::init(languages.clone(), fs.clone(), node_runtime.clone(), cx);
-        let workspace_store = cx.new(|cx| WorkspaceStore::new(client.clone(), cx));
+        let workspace_store = cx.new(|_| WorkspaceStore::new());
 
         language_extension::init(
             language_extension::LspAccess::ViaWorkspaces({
@@ -474,7 +474,6 @@ pub fn main() {
         );
 
         gram::init(cx);
-        project::Project::init(&client, cx);
         debugger_ui::init(cx);
         debugger_tools::init(cx);
 
@@ -483,7 +482,7 @@ pub fn main() {
 
         let app_state = Arc::new(AppState {
             languages,
-            client: client.clone(),
+            client,
             fs: fs.clone(),
             build_window_options,
             workspace_store,

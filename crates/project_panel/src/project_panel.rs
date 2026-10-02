@@ -7,7 +7,7 @@ use app_actions::{
     project_panel::{Toggle, ToggleFocus},
     workspace::OpenWithSystem,
 };
-use client::{ErrorCode, ErrorExt};
+use rpc::{ErrorCode, ErrorExt};
 use collections::{BTreeSet, HashMap, hash_map};
 use command_palette_hooks::CommandPaletteFilter;
 use db::kvp::KEY_VALUE_STORE;

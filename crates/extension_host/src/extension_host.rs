@@ -4,7 +4,7 @@ pub mod headless_host;
 pub mod wasm_host;
 
 use anyhow::{Context as _, Result, anyhow, bail};
-use client::{Client, ExtensionMetadata, proto};
+use client::Client;
 use collections::{BTreeMap, HashMap, HashSet, btree_map};
 pub use extension::ExtensionManifest;
 use extension::extension_builder::{CompileExtensionOptions, ExtensionBuilder};
@@ -29,13 +29,11 @@ use language::{
 };
 use node_runtime::NodeRuntime;
 use project::ContextProviderWithTasks;
-use release_channel::ReleaseChannel;
 use remote::RemoteClient;
-use semver::Version as SemanticVersion;
+use rpc::proto;
 use serde::{Deserialize, Serialize};
 use std::fs::{copy, create_dir_all, read_dir, read_link};
 use std::ops::RangeInclusive;
-use std::str::FromStr;
 use std::{
     cmp::Ordering,
     path::{self, Path, PathBuf},
@@ -43,7 +41,7 @@ use std::{
     time::{Duration, Instant},
 };
 use util::{ResultExt, paths::RemotePathBuf};
-use wasm_host::{WasmExtension, WasmHost, wit::is_supported_wasm_api_version};
+use wasm_host::{WasmExtension, WasmHost};
 
 pub use extension::{ExtensionLibraryKind, GrammarManifestEntry, OldExtensionManifest, SchemaVersion};
 pub use extension_settings::ExtensionSettings;
@@ -63,26 +61,6 @@ const SUPPRESSED_EXTENSIONS: &[&str] = &["snippets", "ruff", "ty", "basedpyright
 /// Returns the [`SchemaVersion`] range that is compatible with this version of Gram.
 pub fn schema_version_range() -> RangeInclusive<SchemaVersion> {
     SchemaVersion::ZERO..=CURRENT_SCHEMA_VERSION
-}
-
-/// Returns whether the given extension version is compatible with this version of Gram.
-pub fn is_version_compatible(release_channel: ReleaseChannel, extension_version: &ExtensionMetadata) -> bool {
-    let schema_version = extension_version.manifest.schema_version.unwrap_or(0);
-    if CURRENT_SCHEMA_VERSION.0 < schema_version {
-        return false;
-    }
-
-    if let Some(wasm_api_version) = extension_version
-        .manifest
-        .wasm_api_version
-        .as_ref()
-        .and_then(|wasm_api_version| SemanticVersion::from_str(wasm_api_version).ok())
-        && !is_supported_wasm_api_version(release_channel, wasm_api_version)
-    {
-        return false;
-    }
-
-    true
 }
 
 pub struct ExtensionStore {

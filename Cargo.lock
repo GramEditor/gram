@@ -1225,20 +1225,12 @@ dependencies = [
 name = "client"
 version = "3.3.0"
 dependencies = [
- "anyhow",
- "async-tungstenite",
- "futures",
  "gpui",
  "http_client",
  "log",
- "parking_lot",
- "postage",
- "rpc",
  "serde",
  "settings",
- "thiserror 2.0.21",
  "url",
- "util",
 ]
 
 [[package]]
@@ -2726,8 +2718,9 @@ dependencies = [
  "language",
  "log",
  "reqwest_client",
- "rpc",
+ "serde",
  "serde_json",
+ "strum 0.28.0",
  "theme",
  "tokio",
  "toml 1.1.6+spec-1.1.0",
@@ -2765,6 +2758,7 @@ dependencies = [
  "release_channel",
  "remote",
  "reqwest_client",
+ "rpc",
  "semver",
  "serde",
  "serde_json",
@@ -2785,18 +2779,15 @@ name = "extensions_ui"
 version = "3.3.0"
 dependencies = [
  "app_actions",
- "client",
  "collections",
  "db",
  "editor",
- "extension",
  "extension_host",
  "fuzzy",
  "gpui",
  "language",
  "log",
  "menu",
- "num-format",
  "project",
  "schemars",
  "serde",
@@ -5984,16 +5975,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "num-format"
-version = "0.4.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a652d9771a63711fd3c3deb670acfbe5c30a4072e664d7a3bf5a9e1056ac72c3"
-dependencies = [
- "arrayvec",
- "itoa",
-]
-
-[[package]]
 name = "num-integer"
 version = "0.1.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7486,7 +7467,6 @@ version = "3.3.0"
 dependencies = [
  "anyhow",
  "app_actions",
- "client",
  "collections",
  "command_palette_hooks",
  "criterion",
@@ -7503,6 +7483,7 @@ dependencies = [
  "pretty_assertions",
  "project",
  "rayon",
+ "rpc",
  "schemars",
  "search",
  "serde",
@@ -8167,7 +8148,6 @@ dependencies = [
  "alacritty_terminal",
  "anyhow",
  "async-dispatcher",
- "async-tungstenite",
  "base64 0.22.1",
  "collections",
  "command_palette_hooks",
@@ -8302,9 +8282,7 @@ name = "rpc"
 version = "3.3.0"
 dependencies = [
  "anyhow",
- "async-tungstenite",
  "base64 0.22.1",
- "chrono",
  "collections",
  "futures",
  "gpui",
@@ -8312,13 +8290,7 @@ dependencies = [
  "proto",
  "rand 0.10.3",
  "rsa",
- "serde",
  "sha2 0.10.9",
- "strum 0.28.0",
- "tracing",
- "util",
- "zlog",
- "zstd",
 ]
 
 [[package]]
@@ -12968,11 +12940,11 @@ dependencies = [
  "menu",
  "node_runtime",
  "parking_lot",
- "postage",
  "pretty_assertions",
  "project",
  "proto",
  "remote",
+ "rpc",
  "schemars",
  "serde",
  "serde_json",

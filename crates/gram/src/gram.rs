@@ -4425,8 +4425,7 @@ mod tests {
             repl::init(app_state.fs.clone(), cx);
             repl::notebook::init(cx);
             tasks_ui::init(cx);
-            project::debugger::breakpoint_store::BreakpointStore::init(&app_state.client.clone().into());
-            project::debugger::dap_store::DapStore::init(&app_state.client.clone().into(), cx);
+            project::debugger::dap_store::DapStore::init(None, cx);
             debugger_ui::init(cx);
             initialize_workspace(app_state.clone(), cx);
             search::init(cx);

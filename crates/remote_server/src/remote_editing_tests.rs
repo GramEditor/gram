@@ -1806,15 +1806,11 @@ fn build_project(ssh: Entity<RemoteClient>, cx: &mut TestAppContext) -> Entity<P
         }
     });
 
-    let client = cx.update(|cx| Client::new(FakeHttpClient::with_404_response(), cx));
+    let client = Client::new(FakeHttpClient::with_404_response());
 
     let node = NodeRuntime::unavailable();
     let languages = Arc::new(LanguageRegistry::test(cx.executor()));
     let fs = FakeFs::new(cx.executor());
-
-    cx.update(|cx| {
-        Project::init(&client, cx);
-    });
 
     cx.update(|cx| Project::remote(ssh, client, node, languages, fs, cx))
 }

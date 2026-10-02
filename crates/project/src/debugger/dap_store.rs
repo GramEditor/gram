@@ -107,7 +107,7 @@ pub struct PersistedAdapterOptions {
 }
 
 impl DapStore {
-    pub fn init(client: &AnyProtoClient, cx: &mut App) {
+    pub fn init(client: Option<&AnyProtoClient>, cx: &mut App) {
         static ADD_LOCATORS: Once = Once::new();
         ADD_LOCATORS.call_once(|| {
             let registry = DapRegistry::global(cx);
@@ -118,9 +118,11 @@ impl DapStore {
             registry.add_locator(Arc::new(locators::python::PythonLocator));
             registry.add_locator(Arc::new(locators::zig::ZigLocator));
         });
-        client.add_entity_request_handler(Self::handle_run_debug_locator);
-        client.add_entity_request_handler(Self::handle_get_debug_adapter_binary);
-        client.add_entity_message_handler(Self::handle_log_to_debug_console);
+        if let Some(client) = client {
+            client.add_entity_request_handler(Self::handle_run_debug_locator);
+            client.add_entity_request_handler(Self::handle_get_debug_adapter_binary);
+            client.add_entity_message_handler(Self::handle_log_to_debug_console);
+        }
     }
 
     #[expect(clippy::too_many_arguments)]

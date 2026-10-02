@@ -25,10 +25,7 @@ pub use toast_layer::{ToastAction, ToastLayer, ToastView};
 
 use anyhow::{Context as _, Result, anyhow};
 use app_actions::Spawn;
-use client::{
-    Client, ErrorExt, TypedEnvelope,
-    proto::{self, ErrorCode, PanelId},
-};
+use client::Client;
 use collections::{FxHasher, HashMap, HashSet, hash_map};
 use dock::{Dock, DockPosition, PanelButtons, PanelHandle, RESIZE_HANDLE_SIZE};
 use futures::{
@@ -67,13 +64,16 @@ pub use persistence::{
     DB as WORKSPACE_DB, WorkspaceDb, delete_unloaded_items,
     model::{ItemId, SerializedWorkspaceLocation},
 };
-use postage::stream::Stream;
 use project::{
     DirectoryLister, Project, ProjectEntryId, ProjectPath, ResolvedPath, Worktree, WorktreeId,
     debugger::{breakpoint_store::BreakpointStoreEvent, session::ThreadStatus},
     toolchain_store::ToolchainStoreEvent,
 };
 use remote::{RemoteClientDelegate, RemoteConnection, RemoteConnectionOptions, remote_client::ConnectionIdentifier};
+use rpc::{
+    ErrorExt, TypedEnvelope,
+    proto::{self, ErrorCode, PanelId},
+};
 use schemars::JsonSchema;
 use serde::Deserialize;
 use session::AppSession;
@@ -799,9 +799,9 @@ struct GlobalAppState(Weak<AppState>);
 
 impl Global for GlobalAppState {}
 
+#[derive(Default)]
 pub struct WorkspaceStore {
     workspaces: HashSet<WindowHandle<Workspace>>,
-    _subscriptions: Vec<client::Subscription>,
 }
 
 impl AppState {
@@ -830,9 +830,9 @@ impl AppState {
         let fs = fs::FakeFs::new(cx.background_executor().clone());
         let languages = Arc::new(LanguageRegistry::test(cx.background_executor().clone()));
         let http_client = http_client::FakeHttpClient::with_404_response();
-        let client = Client::new(http_client, cx);
+        let client = Client::new(http_client);
         let session = cx.new(|cx| AppSession::new(Session::test(), cx));
-        let workspace_store = cx.new(|cx| WorkspaceStore::new(client.clone(), cx));
+        let workspace_store = cx.new(|_| WorkspaceStore::new());
 
         theme::init(theme::LoadThemes::JustBase, cx);
 
@@ -1160,17 +1160,6 @@ impl Workspace {
         let window_handle = window.window_handle().downcast::<Workspace>().unwrap();
         app_state.workspace_store.update(cx, |store, _| {
             store.workspaces.insert(window_handle);
-        });
-
-        let mut connection_status = app_state.client.status();
-        let _observe_connection_status = cx.spawn_in(window, async move |this, cx| {
-            connection_status.next().await;
-            let mut stream = Stream::map(connection_status, drop);
-
-            while stream.recv().await.is_some() {
-                this.update(cx, |_, cx| cx.notify())?;
-            }
-            anyhow::Ok(())
         });
 
         cx.emit(Event::WorkspaceCreated(weak_handle.clone()));
@@ -4821,7 +4810,7 @@ impl Workspace {
         use session::Session;
 
         let client = project.read(cx).client();
-        let workspace_store = cx.new(|cx| WorkspaceStore::new(client.clone(), cx));
+        let workspace_store = cx.new(|_| WorkspaceStore::new());
         let session = cx.new(|cx| AppSession::new(Session::test(), cx));
         window.activate_window();
         let app_state = Arc::new(AppState {
@@ -5648,10 +5637,9 @@ impl Render for Workspace {
 }
 
 impl WorkspaceStore {
-    pub fn new(client: Arc<Client>, cx: &mut Context<Self>) -> Self {
+    pub fn new() -> Self {
         Self {
             workspaces: Default::default(),
-            _subscriptions: vec![client.add_request_handler(cx.weak_entity(), Self::handle_follow)],
         }
     }
 

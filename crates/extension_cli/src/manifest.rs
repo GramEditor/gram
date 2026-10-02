@@ -1,7 +1,6 @@
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use strum::EnumString;
 
@@ -44,18 +43,4 @@ pub enum ExtensionProvides {
     IndexedDocsProviders,
     Snippets,
     DebugAdapters,
-}
-
-#[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
-pub struct ExtensionMetadata {
-    pub id: Arc<str>,
-    #[serde(flatten)]
-    pub manifest: ExtensionApiManifest,
-    pub published_at: DateTime<Utc>,
-    pub download_count: u64,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct GetExtensionsResponse {
-    pub data: Vec<ExtensionMetadata>,
 }
