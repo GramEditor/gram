@@ -7,6 +7,14 @@
       "appearance": "light",
       "name": "Rosé Pine Dawn",
       "style": {
+        "accents": [
+          "#b4637a",
+          "#ea9d34",
+          "#d7827e",
+          "#286983",
+          "#56949f",
+          "#907aa9"
+        ],
         "editor.foreground": "#575279",
         "editor.background": "#faf4ed",
         "editor.gutter.background": "#faf4ed",
@@ -22,18 +30,20 @@
         "editor.document_highlight.write_background": "#9893a566",
         "editor.subheader.background": "#fffaf3",
         "editor.highlighted_line.background": "#fffaf3",
+        "search.match_background": "#ea9d344d",
+        "search.active_match_background": "#ea9d3480",
         "ghost_element.active": "#797593",
         "ghost_element.hover": "#dfdad9",
         "ghost_element.selected": "#cecacd",
         "ghost_element.background": "#f4ede8",
-        "border": "#fffaf3",
-        "border.variant": "#fffaf3",
+        "border": "#dfdad9",
+        "border.variant": "#cecacd",
         "border.focused": "#fffaf3",
         "border.selected": "#fffaf3",
         "border.transparent": "transparent",
         "border.disabled": "#fffaf3",
         "text": "#575279",
-        "text.muted": "#9893a5",
+        "text.muted": "#797593",
         "text.placeholder": "#9893a5",
         "text.disabled": "#9893a5",
         "text.accent": "#56949f",
@@ -69,11 +79,11 @@
         "error.background": "#f4ede8",
         "error.border": "#b4637a",
         "info": "#286983",
-        "scrollbar.thumb.background": "#dfdad94d",
-        "scrollbar.thumb.hover_background": "#fffaf34d",
-        "scrollbar.thumb.border": "#f4ede84d",
+        "scrollbar.thumb.background": "#9893a5",
+        "scrollbar.thumb.hover_background": "#797593",
+        "scrollbar.thumb.border": "#9893a5",
         "scrollbar.track.background": "#00000000",
-        "scrollbar.track.border": "#f4ede84d",
+        "scrollbar.track.border": "#00000000",
         "terminal.background": "#faf4ed",
         "terminal.foreground": "#575279",
         "terminal.bright_foreground": "#575279",
@@ -136,6 +146,22 @@
         "version_control.ignored": "#9893a5",
         "version_control.conflict_marker.ours": "#ea9d3433",
         "version_control.conflict_marker.theirs": "#56949f33",
+        "vim.normal.background": "#56949f",
+        "vim.normal.foreground": "#faf4ed",
+        "vim.insert.background": "#286983",
+        "vim.insert.foreground": "#faf4ed",
+        "vim.replace.background": "#b4637a",
+        "vim.replace.foreground": "#faf4ed",
+        "vim.visual.background": "#907aa9",
+        "vim.visual.foreground": "#faf4ed",
+        "vim.visual_line.background": "#907aa9",
+        "vim.visual_line.foreground": "#faf4ed",
+        "vim.visual_block.background": "#907aa9",
+        "vim.visual_block.foreground": "#faf4ed",
+        "vim.helix_normal.background": "#56949f",
+        "vim.helix_normal.foreground": "#faf4ed",
+        "vim.helix_select.background": "#907aa9",
+        "vim.helix_select.foreground": "#faf4ed",
         "players": [
           {
             "cursor": "#575279",
@@ -165,7 +191,7 @@
         ],
         "syntax": {
           "attribute": {
-            "color": "#797593"
+            "color": "#907aa9"
           },
           "boolean": {
             "color": "#d7827e"
@@ -178,10 +204,16 @@
             "color": "#797593"
           },
           "constant": {
-            "color": "#575279"
+            "color": "#d7827e"
+          },
+          "constant.builtin": {
+            "color": "#d7827e"
+          },
+          "constant.macro": {
+            "color": "#d7827e"
           },
           "constructor": {
-            "color": "#b4637a"
+            "color": "#56949f"
           },
           "embedded": {
             "color": "#575279"
@@ -195,9 +227,27 @@
             "font_weight": 700
           },
           "enum": {
-            "color": "#286983"
+            "color": "#56949f"
           },
           "function": {
+            "color": "#d7827e"
+          },
+          "function.builtin": {
+            "color": "#d7827e"
+          },
+          "function.call": {
+            "color": "#d7827e"
+          },
+          "function.decorator": {
+            "color": "#907aa9"
+          },
+          "function.macro": {
+            "color": "#d7827e"
+          },
+          "function.method": {
+            "color": "#d7827e"
+          },
+          "function.method.call": {
             "color": "#d7827e"
           },
           "hint": {
@@ -206,8 +256,14 @@
           "keyword": {
             "color": "#286983"
           },
+          "keyword.modifier": {
+            "color": "#286983"
+          },
+          "keyword.preproc": {
+            "color": "#286983"
+          },
           "label": {
-            "color": "#d7827e"
+            "color": "#56949f"
           },
           "link_text": {
             "color": "#907aa9"
@@ -215,8 +271,14 @@
           "link_uri": {
             "color": "#286983"
           },
-          "number": {
+          "module": {
             "color": "#56949f"
+          },
+          "namespace": {
+            "color": "#56949f"
+          },
+          "number": {
+            "color": "#d7827e"
           },
           "operator": {
             "color": "#797593"
@@ -225,13 +287,13 @@
             "color": "#797593"
           },
           "preproc": {
-            "color": "#ea9d34"
+            "color": "#286983"
           },
           "primary": {
             "color": "#907aa9"
           },
           "property": {
-            "color": "#575279"
+            "color": "#907aa9"
           },
           "punctuation": {
             "color": "#797593"
@@ -246,26 +308,38 @@
             "color": "#797593",
             "font_weight": 700
           },
-          "ion.special": {
-            "color": "#286983"
+          "punctuation.special": {
+            "color": "#797593"
           },
           "string": {
             "color": "#ea9d34"
           },
           "string.escape": {
-            "color": "#ea9d34"
+            "color": "#907aa9"
           },
           "string.regex": {
-            "color": "#ea9d34"
+            "color": "#907aa9"
           },
           "string.special": {
-            "color": "#286983"
+            "color": "#907aa9"
           },
           "string.special.symbol": {
-            "color": "#286983"
+            "color": "#ea9d34"
           },
           "tag": {
+            "color": "#56949f"
+          },
+          "tag.doctype": {
+            "color": "#56949f"
+          },
+          "tag.attribute": {
             "color": "#907aa9"
+          },
+          "tag.delimiter": {
+            "color": "#797593"
+          },
+          "text": {
+            "color": "#575279"
           },
           "text.literal": {
             "color": "#ea9d34"
@@ -277,11 +351,59 @@
           "type": {
             "color": "#56949f"
           },
+          "type.builtin": {
+            "color": "#56949f"
+          },
+          "type.class": {
+            "color": "#56949f"
+          },
+          "type.class.definition": {
+            "color": "#56949f"
+          },
+          "type.definition": {
+            "color": "#56949f"
+          },
+          "type.enum": {
+            "color": "#56949f"
+          },
+          "type.enum.definition": {
+            "color": "#56949f"
+          },
+          "type.enum.member": {
+            "color": "#d7827e"
+          },
+          "type.event": {
+            "color": "#907aa9"
+          },
+          "type.interface": {
+            "color": "#56949f"
+          },
+          "type.interface.definition": {
+            "color": "#56949f"
+          },
+          "type.parameter": {
+            "color": "#56949f"
+          },
+          "type.parameter.definition": {
+            "color": "#56949f"
+          },
+          "type.struct": {
+            "color": "#56949f"
+          },
+          "type.struct.definition": {
+            "color": "#56949f"
+          },
           "variable": {
             "color": "#575279"
           },
+          "variable.builtin": {
+            "color": "#b4637a"
+          },
+          "variable.parameter": {
+            "color": "#907aa9"
+          },
           "variable.special": {
-            "color": "#56949f"
+            "color": "#b4637a"
           },
           "variant": {
             "color": "#d7827e"
