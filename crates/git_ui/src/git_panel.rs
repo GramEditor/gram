@@ -3265,8 +3265,8 @@ impl GitPanel {
 
         PopoverMenu::new(id.into())
             .trigger(
-                IconButton::new("overflow-menu-trigger", IconName::Ellipsis)
-                    .icon_size(IconSize::Small)
+                IconButton::new("overflow-menu-trigger", IconName::Menu)
+                    .icon_size(IconSize::Medium)
                     .icon_color(Color::Muted),
             )
             .menu(move |window, cx| {
@@ -3456,7 +3456,6 @@ impl GitPanel {
                 .child(
                     h_flex()
                         .gap_1()
-                        .child(self.render_overflow_menu("overflow_menu"))
                         .child(
                             panel_filled_button(text)
                                 .tooltip(Tooltip::for_action_title_in(
@@ -3475,7 +3474,8 @@ impl GitPanel {
                                             .ok();
                                     }
                                 }),
-                        ),
+                        )
+                        .child(self.render_overflow_menu("overflow_menu")),
                 ),
         )
     }
