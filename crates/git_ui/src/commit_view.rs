@@ -628,7 +628,18 @@ impl CommitView {
                                     .child(Icon::new(IconName::Diff).color(Color::Ignored).size(IconSize::XSmall))
                                     .children(commit_diff_stat),
                             )
-                            .child(h_flex().gap_1p5().children(commit.refs.iter().map(Chip::new))),
+                            .child(h_flex().flex_none().gap_0p5().children(
+                                commit.refs.iter().filter(|s| *s != "origin/HEAD").map(|s| {
+                                    if s.starts_with("HEAD -> ") {
+                                        Chip::new(s[8..].to_string())
+                                            .bg_color(cx.theme().status().success_background)
+                                            .border_color(cx.theme().status().success_border)
+                                    } else {
+                                        Chip::new(s)
+                                    }
+                                    .tooltip(Tooltip::text(s.clone()))
+                                }),
+                            )),
                     )
                     .child(
                         v_flex()

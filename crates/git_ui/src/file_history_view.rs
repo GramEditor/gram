@@ -11,7 +11,7 @@ use project::{
 use std::any::{Any, TypeId};
 
 use time::OffsetDateTime;
-use ui::{AvatarStyle, Chip, ListItem, WithScrollbar, prelude::*, render_avatar};
+use ui::{AvatarStyle, Chip, ListItem, Tooltip, WithScrollbar, prelude::*, render_avatar};
 use util::ResultExt;
 use workspace::{
     Item, Workspace,
@@ -371,25 +371,35 @@ impl FileHistoryView {
                                 .truncate(),
                         ),
                     )
-                    .when_some(pr_number, |this, pr| {
-                        this.child(h_flex().child(Chip::new(pr).bg_color(cx.theme().styles.colors.element_selected)))
-                    })
                     .child(
                         h_flex()
-                            .gap_1()
+                            .gap_0p5()
                             .ml_auto()
-                            .child(h_flex().flex_none().children(entry.refs.iter().map(|s| {
-                                Chip::new(if s.starts_with("HEAD -> ") {
-                                    s.chars().skip(8).take(16).collect::<String>()
+                            .when_some(pr_number, |this, pr| {
+                                this.child(
+                                    Chip::new(pr)
+                                        .bg_color(cx.theme().status().info_background)
+                                        .border_color(cx.theme().status().info_border)
+                                        .label_size(LabelSize::XSmall),
+                                )
+                            })
+                            .children(entry.refs.iter().filter(|s| *s != "origin/HEAD").map(|s| {
+                                if s.starts_with("HEAD -> ") {
+                                    Chip::new(s[8..].to_string())
+                                        .bg_color(cx.theme().status().success_background)
+                                        .border_color(cx.theme().status().success_border)
                                 } else {
-                                    s.chars().take(16).collect::<String>()
-                                })
-                            })))
-                            .child(
-                                h_flex()
-                                    .text_right()
-                                    .child(Label::new(timestamp).size(LabelSize::Small).color(Color::Muted)),
-                            ),
+                                    Chip::new(s)
+                                }
+                                .label_size(LabelSize::XSmall)
+                                .truncate()
+                                .tooltip(Tooltip::text(s.clone()))
+                            })),
+                    )
+                    .child(
+                        h_flex()
+                            .text_right()
+                            .child(Label::new(timestamp).size(LabelSize::Small).color(Color::Muted)),
                     ),
             )
             .on_click(cx.listener(move |this, _, window, cx| {
