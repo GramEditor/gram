@@ -2,11 +2,6 @@
 [alias]
 perf-compare = ["run", "--profile", "release-fast", "-p", "perf", "--config", "target.'cfg(true)'.rustflags=[\"--cfg\", \"perf_enabled\"]", "--", "compare"]
 perf-test = ["test", "--profile", "release-fast", "--lib", "--bins", "--tests", "--all-features", "--config", "target.'cfg(true)'.runner='cargo run -p perf --release'", "--config", "target.'cfg(true)'.rustflags=[\"--cfg\", \"perf_enabled\"]"]
-xtask = "run --package xtask --"
-
-# v0 mangling scheme provides more detailed backtraces around closures
-[build]
-rustflags = ["-C", "symbol-mangling-version=v0", "--cfg", "tokio_unstable"]
 
 [env]
 MACOSX_DEPLOYMENT_TARGET = "10.15.7"
