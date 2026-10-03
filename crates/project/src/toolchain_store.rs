@@ -1,6 +1,6 @@
 use std::{path::PathBuf, str::FromStr, sync::Arc};
 
-use anyhow::{Context as _, Result, bail};
+use anyhow::{Context as _, Result};
 
 use async_trait::async_trait;
 use collections::{BTreeMap, IndexSet};
@@ -11,7 +11,7 @@ use language::{
 };
 use rpc::{
     AnyProtoClient, TypedEnvelope,
-    proto::{self, ResolveToolchainResponse, resolve_toolchain_response::Response as ResolveResponsePayload},
+    proto,
 };
 use settings::WorktreeId;
 use task::Shell;
@@ -199,11 +199,9 @@ impl ToolchainStore {
         envelope: TypedEnvelope<proto::ActivateToolchain>,
         mut cx: AsyncApp,
     ) -> Result<proto::Ack> {
-        this.update(&mut cx, |this, cx| {
+        this.update(&mut cx, |this, cx| -> Result<_> {
             let language_name = LanguageName::from_proto(envelope.payload.language_name);
-            let Some(toolchain) = envelope.payload.toolchain else {
-                bail!("Missing `toolchain` in payload");
-            };
+            let toolchain = envelope.payload.toolchain;
             let toolchain = Toolchain {
                 name: toolchain.name.into(),
                 // todo(windows)
@@ -327,19 +325,16 @@ impl ToolchainStore {
                 this.resolve_toolchain(path, language_name, cx)
             })?
             .await;
-        let response = match toolchain {
+        Ok(match toolchain {
             Ok(toolchain) => {
                 let toolchain = proto::Toolchain {
                     name: toolchain.name.to_string(),
                     path: toolchain.path.to_string(),
                     raw_json: toolchain.as_json.to_string(),
                 };
-                ResolveResponsePayload::Toolchain(toolchain)
+                proto::ResolveToolchainResponse::Toolchain(toolchain)
             }
-            Err(e) => ResolveResponsePayload::Error(e.to_string()),
-        };
-        Ok(ResolveToolchainResponse {
-            response: Some(response),
+            Err(e) => proto::ResolveToolchainResponse::Error(e.to_string()),
         })
     }
 
@@ -568,11 +563,11 @@ impl RemoteToolchainStore {
                             project_id,
                             worktree_id: project_path.worktree_id.to_proto(),
                             language_name: toolchain.language_name.into(),
-                            toolchain: Some(proto::Toolchain {
+                            toolchain: proto::Toolchain {
                                 name: toolchain.name.into(),
                                 path: path.to_string_lossy().into_owned(),
                                 raw_json: toolchain.as_json.to_string(),
-                            }),
+                            },
                             path: Some(project_path.path.to_proto()),
                         })
                         .await
@@ -686,17 +681,15 @@ impl RemoteToolchainStore {
                 })
                 .await?;
 
-            let response = response.response.context("Failed to resolve toolchain via RPC")?;
-            use proto::resolve_toolchain_response::Response;
             match response {
-                Response::Toolchain(toolchain) => Ok(Toolchain {
+                proto::ResolveToolchainResponse::Toolchain(toolchain) => Ok(Toolchain {
                     language_name: language_name.clone(),
                     name: toolchain.name.into(),
                     path: toolchain.path.into(),
                     as_json: serde_json::Value::from_str(&toolchain.raw_json)
                         .context("Deserializing ResolveToolchain LSP response")?,
                 }),
-                Response::Error(error) => {
+                proto::ResolveToolchainResponse::Error(error) => {
                     anyhow::bail!("{error}");
                 }
             }

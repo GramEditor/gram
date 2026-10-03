@@ -479,9 +479,8 @@ impl RemoteImageStore {
         worktree_store: &Entity<WorktreeStore>,
         cx: &mut Context<Self>,
     ) -> Result<Option<Entity<ImageItem>>> {
-        use proto::create_image_for_peer::Variant;
         match envelope.payload.variant {
-            Some(Variant::State(state)) => {
+            proto::CreateImageForPeerVariant::State(state) => {
                 let image_id = ImageId::from(NonZeroU64::new(state.id).context("invalid image id")?);
 
                 self.loading_remote_images_by_id.insert(
@@ -494,7 +493,7 @@ impl RemoteImageStore {
                 );
                 Ok(None)
             }
-            Some(Variant::Chunk(chunk)) => {
+            proto::CreateImageForPeerVariant::Chunk(chunk) => {
                 let image_id = ImageId::from(NonZeroU64::new(chunk.image_id).context("invalid image id")?);
 
                 let loading = self
@@ -545,10 +544,6 @@ impl RemoteImageStore {
                 } else {
                     Ok(None)
                 }
-            }
-            None => {
-                log::warn!("Received CreateImageForPeer with no variant");
-                Ok(None)
             }
         }
     }

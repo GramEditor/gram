@@ -983,7 +983,7 @@ impl Buffer {
             id: self.remote_id().into(),
             file: self.file.as_ref().map(|f| f.to_proto(cx)),
             base_text: self.base_text().to_string(),
-            line_ending: proto::serialize_line_ending(self.line_ending()) as i32,
+            line_ending: proto::serialize_line_ending(self.line_ending()),
             saved_version: proto::serialize_version(&self.saved_version),
             saved_mtime: self.saved_mtime.map(|time| time.into()),
         }

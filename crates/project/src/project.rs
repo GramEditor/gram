@@ -2130,7 +2130,7 @@ impl Project {
                 }
 
                 match message {
-                    proto::update_language_server::Variant::MetadataUpdated(update) => {
+                    proto::UpdateLanguageServerVariant::MetadataUpdated(update) => {
                         self.lsp_store.update(cx, |lsp_store, _| {
                             if let Some(capabilities) = update
                                 .capabilities
@@ -2166,7 +2166,7 @@ impl Project {
                             }
                         });
                     }
-                    proto::update_language_server::Variant::RegisteredForBuffer(update) => {
+                    proto::UpdateLanguageServerVariant::RegisteredForBuffer(update) => {
                         if let Ok(buffer_id) = BufferId::new(update.buffer_id) {
                             cx.emit(Event::LanguageServerBufferRegistered {
                                 buffer_id,
@@ -3185,7 +3185,7 @@ impl Project {
             let request = proto::ListRemoteDirectory {
                 dev_server_id: REMOTE_SERVER_PROJECT_ID,
                 path: query,
-                config: Some(proto::ListRemoteDirectoryConfig { is_dir: true }),
+                config: proto::ListRemoteDirectoryConfig { is_dir: true },
             };
 
             let response = session.read(cx).proto_client().request(request);
@@ -3429,7 +3429,7 @@ impl Project {
             .collect();
         this.update(&mut cx, |_, cx| {
             cx.emit(Event::LanguageServerPrompt(LanguageServerPromptRequest {
-                level: proto_to_prompt(envelope.payload.level.context("Invalid prompt level")?),
+                level: proto_to_prompt(envelope.payload.level),
                 message: envelope.payload.message,
                 actions: actions.clone(),
                 lsp_name: envelope.payload.lsp_name,
@@ -4014,11 +4014,11 @@ impl Completion {
     }
 }
 
-fn proto_to_prompt(level: proto::language_server_prompt_request::Level) -> gpui::PromptLevel {
+fn proto_to_prompt(level: proto::LanguageServerPromptRequestLevel) -> gpui::PromptLevel {
     match level {
-        proto::language_server_prompt_request::Level::Info(_) => gpui::PromptLevel::Info,
-        proto::language_server_prompt_request::Level::Warning(_) => gpui::PromptLevel::Warning,
-        proto::language_server_prompt_request::Level::Critical(_) => gpui::PromptLevel::Critical,
+        proto::LanguageServerPromptRequestLevel::Info => gpui::PromptLevel::Info,
+        proto::LanguageServerPromptRequestLevel::Warning => gpui::PromptLevel::Warning,
+        proto::LanguageServerPromptRequestLevel::Critical => gpui::PromptLevel::Critical,
     }
 }
 

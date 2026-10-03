@@ -47,8 +47,7 @@ use parking_lot::Mutex;
 use pending_op::{PendingOp, PendingOpId, PendingOps, PendingOpsSummary};
 use postage::stream::Stream as _;
 use rpc::{
-    AnyProtoClient, TypedEnvelope,
-    proto::{self, git_reset, split_repository_update},
+    AnyProtoClient, TypedEnvelope, proto::{self, split_repository_update},
 };
 use serde::Deserialize;
 use settings::WorktreeId;
@@ -189,8 +188,8 @@ pub struct StatusEntry {
 impl StatusEntry {
     fn to_proto(&self) -> proto::StatusEntry {
         let simple_status = match self.status {
-            FileStatus::Ignored | FileStatus::Untracked => proto::GitStatus::Added as i32,
-            FileStatus::Unmerged { .. } => proto::GitStatus::Conflict as i32,
+            FileStatus::Ignored | FileStatus::Untracked => proto::GitStatus::Added,
+            FileStatus::Unmerged { .. } => proto::GitStatus::Conflict,
             FileStatus::Tracked(TrackedStatus {
                 index_status,
                 worktree_status,
@@ -204,7 +203,7 @@ impl StatusEntry {
         proto::StatusEntry {
             repo_path: self.repo_path.to_proto(),
             simple_status,
-            status: Some(status_to_proto(self.status)),
+            status: status_to_proto(self.status),
             diff_stat_added: self.diff_stat.map(|stat| stat.added),
             diff_stat_deleted: self.diff_stat.map(|stat| stat.deleted),
         }
@@ -216,7 +215,7 @@ impl TryFrom<proto::StatusEntry> for StatusEntry {
 
     fn try_from(value: proto::StatusEntry) -> Result<Self, Self::Error> {
         let repo_path = RepoPath::from_proto(&value.repo_path).context("invalid repo path")?;
-        let status = status_from_proto(value.simple_status, value.status)?;
+        let status = status_from_proto(value.simple_status, Some(value.status))?;
         let diff_stat = value
             .diff_stat_added
             .zip(value.diff_stat_deleted)
@@ -1106,10 +1105,10 @@ impl GitStore {
                             .request(proto::GetPermalinkToLine {
                                 project_id,
                                 buffer_id: buffer_id.into(),
-                                selection: Some(proto::Range {
+                                selection: proto::Range {
                                     start: selection.start as u64,
                                     end: selection.end as u64,
-                                }),
+                                },
                             })
                             .await?;
 
@@ -1733,9 +1732,9 @@ impl GitStore {
             .payload
             .options
             .as_ref()
-            .map(|_| match envelope.payload.options() {
-                proto::push::PushOptions::SetUpstream => git::repository::PushOptions::SetUpstream,
-                proto::push::PushOptions::Force => git::repository::PushOptions::Force,
+            .map(|options| match options {
+                proto::PushOptions::SetUpstream => git::repository::PushOptions::SetUpstream,
+                proto::PushOptions::Force => git::repository::PushOptions::Force,
             });
 
         let branch_name = envelope.payload.branch_name.into();
@@ -1928,7 +1927,7 @@ impl GitStore {
     ) -> Result<proto::Ack> {
         let repository_id = RepositoryId::from_proto(envelope.payload.repository_id);
         let repository_handle = Self::repository_for_request(&this, repository_id, &mut cx)?;
-        let hook = RunHook::from_proto(envelope.payload.hook).context("invalid hook")?;
+        let hook = git_hook_from_proto(envelope.payload.hook);
         repository_handle
             .update(&mut cx, |repository_handle, cx| repository_handle.run_hook(hook, cx))?
             .await??;
@@ -1988,9 +1987,7 @@ impl GitStore {
         Ok(proto::GetRemotesResponse {
             remotes: remotes
                 .into_iter()
-                .map(|remotes| proto::get_remotes_response::Remote {
-                    name: remotes.name.to_string(),
-                })
+                .map(|remotes| remotes.name.to_string())
                 .collect::<Vec<_>>(),
         })
     }
@@ -2311,9 +2308,9 @@ impl GitStore {
         let repository_id = RepositoryId::from_proto(envelope.payload.repository_id);
         let repository_handle = Self::repository_for_request(&this, repository_id, &mut cx)?;
 
-        let mode = match envelope.payload.mode() {
-            git_reset::ResetMode::Soft => ResetMode::Soft,
-            git_reset::ResetMode::Mixed => ResetMode::Mixed,
+        let mode = match envelope.payload.mode {
+            proto::GitResetMode::Soft => ResetMode::Soft,
+            proto::GitResetMode::Mixed => ResetMode::Mixed,
         };
 
         repository_handle
@@ -2425,9 +2422,9 @@ impl GitStore {
     ) -> Result<proto::GitDiffResponse> {
         let repository_id = RepositoryId::from_proto(envelope.payload.repository_id);
         let repository_handle = Self::repository_for_request(&this, repository_id, &mut cx)?;
-        let diff_type = match envelope.payload.diff_type() {
-            proto::git_diff::DiffType::HeadToIndex => DiffType::HeadToIndex,
-            proto::git_diff::DiffType::HeadToWorktree => DiffType::HeadToWorktree,
+        let diff_type = match envelope.payload.diff_type {
+            proto::GitDiffType::HeadToIndex => DiffType::HeadToIndex,
+            proto::GitDiffType::HeadToWorktree => DiffType::HeadToWorktree,
         };
 
         let mut diff = repository_handle
@@ -2474,9 +2471,9 @@ impl GitStore {
                 .map(|(path, status)| proto::TreeDiffStatus {
                     path: path.as_ref().to_proto(),
                     status: match status {
-                        TreeDiffStatus::Added => proto::tree_diff_status::Status::Added.into(),
-                        TreeDiffStatus::Modified { .. } => proto::tree_diff_status::Status::Modified.into(),
-                        TreeDiffStatus::Deleted { .. } => proto::tree_diff_status::Status::Deleted.into(),
+                        TreeDiffStatus::Added => proto::DiffStatus::Added.into(),
+                        TreeDiffStatus::Modified { .. } => proto::DiffStatus::Modified.into(),
+                        TreeDiffStatus::Deleted { .. } => proto::DiffStatus::Deleted.into(),
                     },
                     oid: match status {
                         TreeDiffStatus::Deleted { old } | TreeDiffStatus::Modified { old } => Some(old.to_string()),
@@ -2549,8 +2546,6 @@ impl GitStore {
             shared_diffs.entry(buffer_id).or_default().uncommitted = Some(diff.clone());
         })?;
         diff.read_with(&cx, |diff, cx| {
-            use proto::open_uncommitted_diff_response::Mode;
-
             let unstaged_diff = diff.secondary_diff();
             let index_snapshot = unstaged_diff.and_then(|diff| {
                 let diff = diff.read(cx);
@@ -2565,18 +2560,18 @@ impl GitStore {
                 committed_text = Some(committed_snapshot.text());
                 if let Some(index_text) = index_snapshot {
                     if index_text.remote_id() == committed_snapshot.remote_id() {
-                        mode = Mode::IndexMatchesHead;
+                        mode = proto::OpenUncommittedDiffResponseMode::IndexMatchesHead;
                         staged_text = None;
                     } else {
-                        mode = Mode::IndexAndHead;
+                        mode = proto::OpenUncommittedDiffResponseMode::IndexAndHead;
                         staged_text = Some(index_text.text());
                     }
                 } else {
-                    mode = Mode::IndexAndHead;
+                    mode = proto::OpenUncommittedDiffResponseMode::IndexAndHead;
                     staged_text = None;
                 }
             } else {
-                mode = Mode::IndexAndHead;
+                mode = proto::OpenUncommittedDiffResponseMode::IndexAndHead;
                 committed_text = None;
                 staged_text = index_snapshot.as_ref().map(|buffer| buffer.text());
             }
@@ -2634,8 +2629,7 @@ impl GitStore {
         let selection = {
             let proto_selection = envelope
                 .payload
-                .selection
-                .context("no selection to get permalink for defined")?;
+                .selection;
             proto_selection.start as u32..proto_selection.end as u32
         };
         let buffer = this.read_with(&cx, |this, cx| this.buffer_store.read(cx).get_existing(buffer_id))??;
@@ -2866,17 +2860,11 @@ impl BufferGitState {
         message: proto::UpdateDiffBases,
         cx: &mut Context<Self>,
     ) {
-        use proto::update_diff_bases::Mode;
-
-        let Ok(mode) = Mode::try_from(message.mode) else {
-            return;
-        };
-
-        let diff_bases_change = match mode {
-            Mode::HeadOnly => DiffBasesChange::Head(message.committed_text),
-            Mode::IndexOnly => DiffBasesChange::Index(message.staged_text),
-            Mode::IndexMatchesHead => DiffBasesChange::Both(message.committed_text),
-            Mode::IndexAndHead => DiffBasesChange::Each {
+        let diff_bases_change = match message.mode {
+            proto::UpdateDiffBasesMode::HeadOnly => DiffBasesChange::Head(message.committed_text),
+            proto::UpdateDiffBasesMode::IndexOnly => DiffBasesChange::Index(message.staged_text),
+            proto::UpdateDiffBasesMode::IndexMatchesHead => DiffBasesChange::Both(message.committed_text),
+            proto::UpdateDiffBasesMode::IndexAndHead => DiffBasesChange::Each {
                 index: message.staged_text,
                 head: message.committed_text,
             },
@@ -3585,16 +3573,14 @@ impl Repository {
 
                         let downstream_client = git_store.downstream_client();
                         diff_state.update(cx, |diff_state, cx| {
-                            use proto::update_diff_bases::Mode;
-
                             if let Some((diff_bases_change, (client, project_id))) =
                                 diff_bases_change.clone().zip(downstream_client)
                             {
                                 let (staged_text, committed_text, mode) = match diff_bases_change {
-                                    DiffBasesChange::Index(index) => (index, None, Mode::IndexOnly),
-                                    DiffBasesChange::Head(head) => (None, head, Mode::HeadOnly),
-                                    DiffBasesChange::Each { index, head } => (index, head, Mode::IndexAndHead),
-                                    DiffBasesChange::Both(text) => (None, text, Mode::IndexMatchesHead),
+                                    DiffBasesChange::Index(index) => (index, None, proto::UpdateDiffBasesMode::IndexOnly),
+                                    DiffBasesChange::Head(head) => (None, head, proto::UpdateDiffBasesMode::HeadOnly),
+                                    DiffBasesChange::Each { index, head } => (index, head, proto::UpdateDiffBasesMode::IndexAndHead),
+                                    DiffBasesChange::Both(text) => (None, text, proto::UpdateDiffBasesMode::IndexMatchesHead),
                                 };
                                 client
                                     .send(proto::UpdateDiffBases {
@@ -3602,7 +3588,7 @@ impl Repository {
                                         buffer_id: buffer_id.to_proto(),
                                         staged_text,
                                         committed_text,
-                                        mode: mode as i32,
+                                        mode,
                                     })
                                     .log_err();
                             }
@@ -3851,8 +3837,8 @@ impl Repository {
                             repository_id: id.to_proto(),
                             commit,
                             mode: match reset_mode {
-                                ResetMode::Soft => git_reset::ResetMode::Soft.into(),
-                                ResetMode::Mixed => git_reset::ResetMode::Mixed.into(),
+                                ResetMode::Soft => proto::GitResetMode::Soft.into(),
+                                ResetMode::Mixed => proto::GitResetMode::Mixed.into(),
                             },
                         })
                         .await?;
@@ -4549,7 +4535,7 @@ impl Repository {
                             .request(proto::RunGitHook {
                                 project_id,
                                 repository_id: id.to_proto(),
-                                hook: hook.to_proto(),
+                                hook: git_hook_to_proto(hook),
                             })
                             .await?;
 
@@ -4604,7 +4590,7 @@ impl Repository {
                             message: String::from(message),
                             name: name.map(String::from),
                             email: email.map(String::from),
-                            options: Some(proto::commit::CommitOptions {
+                            options: Some(proto::CommitOptions {
                                 amend: options.amend,
                                 signoff: options.signoff,
                             }),
@@ -4747,9 +4733,9 @@ impl Repository {
                                 remote_branch_name: remote_branch.to_string(),
                                 remote_name: remote.to_string(),
                                 options: options.map(|options| match options {
-                                    PushOptions::Force => proto::push::PushOptions::Force,
-                                    PushOptions::SetUpstream => proto::push::PushOptions::SetUpstream,
-                                } as i32),
+                                    PushOptions::Force => proto::PushOptions::Force,
+                                    PushOptions::SetUpstream => proto::PushOptions::SetUpstream,
+                                }),
                             })
                             .await
                             .context("sending push request")?;
@@ -4993,7 +4979,7 @@ impl Repository {
                         .remotes
                         .into_iter()
                         .map(|remotes| Remote {
-                            name: remotes.name.into(),
+                            name: remotes.into(),
                         })
                         .collect();
 
@@ -5123,12 +5109,12 @@ impl Repository {
                         .entries
                         .into_iter()
                         .filter_map(|entry| {
-                            let status = match entry.status() {
-                                proto::tree_diff_status::Status::Added => TreeDiffStatus::Added,
-                                proto::tree_diff_status::Status::Modified => TreeDiffStatus::Modified {
+                            let status = match entry.status {
+                                proto::DiffStatus::Added => TreeDiffStatus::Added,
+                                proto::DiffStatus::Modified => TreeDiffStatus::Modified {
                                     old: git::Oid::from_str(&entry.oid.context("missing oid").log_err()?).log_err()?,
                                 },
-                                proto::tree_diff_status::Status::Deleted => TreeDiffStatus::Deleted {
+                                proto::DiffStatus::Deleted => TreeDiffStatus::Deleted {
                                     old: git::Oid::from_str(&entry.oid.context("missing oid").log_err()?).log_err()?,
                                 },
                             };
@@ -5156,8 +5142,8 @@ impl Repository {
                             project_id,
                             repository_id: id.to_proto(),
                             diff_type: match diff_type {
-                                DiffType::HeadToIndex => proto::git_diff::DiffType::HeadToIndex.into(),
-                                DiffType::HeadToWorktree => proto::git_diff::DiffType::HeadToWorktree.into(),
+                                DiffType::HeadToIndex => proto::GitDiffType::HeadToIndex.into(),
+                                DiffType::HeadToWorktree => proto::GitDiffType::HeadToWorktree.into(),
                             },
                         })
                         .await?;
@@ -5575,18 +5561,16 @@ impl Repository {
                     anyhow::Ok(diff_bases_change)
                 }
                 RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
-                    use proto::open_uncommitted_diff_response::Mode;
-
                     let response = client
                         .request(proto::OpenUncommittedDiff {
                             project_id,
                             buffer_id: buffer_id.to_proto(),
                         })
                         .await?;
-                    let mode = Mode::try_from(response.mode).context("Invalid mode")?;
+                    let mode = proto::OpenUncommittedDiffResponseMode::try_from(response.mode).context("Invalid mode")?;
                     let bases = match mode {
-                        Mode::IndexMatchesHead => DiffBasesChange::Both(response.committed_text),
-                        Mode::IndexAndHead => DiffBasesChange::Each {
+                        proto::OpenUncommittedDiffResponseMode::IndexMatchesHead => DiffBasesChange::Both(response.committed_text),
+                        proto::OpenUncommittedDiffResponseMode::IndexAndHead => DiffBasesChange::Each {
                             head: response.committed_text,
                             index: response.staged_text,
                         },
@@ -5873,7 +5857,7 @@ fn serialize_blame_buffer_response(blame: Option<git::blame::Blame>) -> proto::B
         .collect::<Vec<_>>();
 
     proto::BlameBufferResponse {
-        blame_response: Some(proto::blame_buffer_response::BlameResponse { entries, messages }),
+        blame_response: Some(proto::BlameResponse { entries, messages }),
     }
 }
 
@@ -6080,12 +6064,9 @@ async fn compute_snapshot(
     Ok((snapshot, events))
 }
 
-fn status_from_proto(simple_status: i32, status: Option<proto::GitFileStatus>) -> anyhow::Result<FileStatus> {
-    use proto::git_file_status::Variant;
-
-    let Some(variant) = status.and_then(|status| status.variant) else {
-        let code = proto::GitStatus::try_from(simple_status)
-            .with_context(|| format!("Invalid git status code: {simple_status}"))?;
+fn status_from_proto(simple_status: proto::GitStatus, status: Option<proto::GitFileStatus>) -> anyhow::Result<FileStatus> {
+    let Some(variant) = status else {
+        let code = proto::GitStatus::from(simple_status);
         let result = match code {
             proto::GitStatus::Added => TrackedStatus {
                 worktree_status: StatusCode::Added,
@@ -6107,18 +6088,18 @@ fn status_from_proto(simple_status: i32, status: Option<proto::GitFileStatus>) -
                 index_status: StatusCode::Unmodified,
             }
             .into(),
-            _ => anyhow::bail!("Invalid code for simple status: {simple_status}"),
+            _ => anyhow::bail!("Invalid code for simple status: {simple_status:?}"),
         };
         return Ok(result);
     };
 
     let result = match variant {
-        Variant::Untracked(_) => FileStatus::Untracked,
-        Variant::Ignored(_) => FileStatus::Ignored,
-        Variant::Unmerged(unmerged) => {
-            let [first_head, second_head] = [unmerged.first_head, unmerged.second_head].map(|head| {
+        proto::GitFileStatus::Untracked => FileStatus::Untracked,
+        proto::GitFileStatus::Ignored => FileStatus::Ignored,
+        proto::GitFileStatus::Unmerged{ first_head, second_head } => {
+            let [first_head, second_head] = [first_head, second_head].map(|head| {
                 let code =
-                    proto::GitStatus::try_from(head).with_context(|| format!("Invalid git status code: {head}"))?;
+                    proto::GitStatus::try_from(head).with_context(|| format!("Invalid git status code: {head:?}"))?;
                 let result = match code {
                     proto::GitStatus::Added => UnmergedStatusCode::Added,
                     proto::GitStatus::Updated => UnmergedStatusCode::Updated,
@@ -6131,14 +6112,11 @@ fn status_from_proto(simple_status: i32, status: Option<proto::GitFileStatus>) -
             UnmergedStatus {
                 first_head,
                 second_head,
-            }
-            .into()
+            }.into()
         }
-        Variant::Tracked(tracked) => {
-            let [index_status, worktree_status] = [tracked.index_status, tracked.worktree_status].map(|status| {
-                let code =
-                    proto::GitStatus::try_from(status).with_context(|| format!("Invalid git status code: {status}"))?;
-                let result = match code {
+        proto::GitFileStatus::Tracked{ index_status, worktree_status } => {
+            let [index_status, worktree_status] = [index_status, worktree_status].map(|status| {
+                let result = match status {
                     proto::GitStatus::Modified => StatusCode::Modified,
                     proto::GitStatus::TypeChanged => StatusCode::TypeChanged,
                     proto::GitStatus::Added => StatusCode::Added,
@@ -6146,7 +6124,7 @@ fn status_from_proto(simple_status: i32, status: Option<proto::GitFileStatus>) -
                     proto::GitStatus::Renamed => StatusCode::Renamed,
                     proto::GitStatus::Copied => StatusCode::Copied,
                     proto::GitStatus::Unmodified => StatusCode::Unmodified,
-                    _ => anyhow::bail!("Invalid code for tracked status: {code:?}"),
+                    _ => anyhow::bail!("Invalid code for tracked status: {status:?}"),
                 };
                 Ok(result)
             });
@@ -6162,46 +6140,55 @@ fn status_from_proto(simple_status: i32, status: Option<proto::GitFileStatus>) -
 }
 
 fn status_to_proto(status: FileStatus) -> proto::GitFileStatus {
-    use proto::git_file_status::{Tracked, Unmerged, Variant};
-
-    let variant = match status {
-        FileStatus::Untracked => Variant::Untracked(Default::default()),
-        FileStatus::Ignored => Variant::Ignored(Default::default()),
+    match status {
+        FileStatus::Untracked => proto::GitFileStatus::Untracked,
+        FileStatus::Ignored => proto::GitFileStatus::Ignored,
         FileStatus::Unmerged(UnmergedStatus {
             first_head,
             second_head,
-        }) => Variant::Unmerged(Unmerged {
+        }) => proto::GitFileStatus::Unmerged {
             first_head: unmerged_status_to_proto(first_head),
             second_head: unmerged_status_to_proto(second_head),
-        }),
+        },
         FileStatus::Tracked(TrackedStatus {
             index_status,
             worktree_status,
-        }) => Variant::Tracked(Tracked {
+        }) => proto::GitFileStatus::Tracked {
             index_status: tracked_status_to_proto(index_status),
             worktree_status: tracked_status_to_proto(worktree_status),
-        }),
-    };
-    proto::GitFileStatus { variant: Some(variant) }
-}
-
-fn unmerged_status_to_proto(code: UnmergedStatusCode) -> i32 {
-    match code {
-        UnmergedStatusCode::Added => proto::GitStatus::Added as _,
-        UnmergedStatusCode::Deleted => proto::GitStatus::Deleted as _,
-        UnmergedStatusCode::Updated => proto::GitStatus::Updated as _,
+        },
     }
 }
 
-fn tracked_status_to_proto(code: StatusCode) -> i32 {
+fn unmerged_status_to_proto(code: UnmergedStatusCode) -> proto::GitStatus {
     match code {
-        StatusCode::Added => proto::GitStatus::Added as _,
-        StatusCode::Deleted => proto::GitStatus::Deleted as _,
-        StatusCode::Modified => proto::GitStatus::Modified as _,
-        StatusCode::Renamed => proto::GitStatus::Renamed as _,
-        StatusCode::TypeChanged => proto::GitStatus::TypeChanged as _,
-        StatusCode::Copied => proto::GitStatus::Copied as _,
-        StatusCode::Unmodified => proto::GitStatus::Unmodified as _,
+        UnmergedStatusCode::Added => proto::GitStatus::Added,
+        UnmergedStatusCode::Deleted => proto::GitStatus::Deleted,
+        UnmergedStatusCode::Updated => proto::GitStatus::Updated,
+    }
+}
+
+fn tracked_status_to_proto(code: StatusCode) -> proto::GitStatus {
+    match code {
+        StatusCode::Added => proto::GitStatus::Added,
+        StatusCode::Deleted => proto::GitStatus::Deleted,
+        StatusCode::Modified => proto::GitStatus::Modified,
+        StatusCode::Renamed => proto::GitStatus::Renamed,
+        StatusCode::TypeChanged => proto::GitStatus::TypeChanged,
+        StatusCode::Copied => proto::GitStatus::Copied,
+        StatusCode::Unmodified => proto::GitStatus::Unmodified,
+    }
+}
+
+fn git_hook_from_proto(hook: proto::GitHook) -> RunHook {
+    match hook {
+        proto::GitHook::PreCommit => RunHook::PreCommit,
+    }
+}
+
+fn git_hook_to_proto(hook: RunHook) -> proto::GitHook {
+    match hook {
+        RunHook::PreCommit => proto::GitHook::PreCommit,
     }
 }
 

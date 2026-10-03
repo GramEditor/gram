@@ -1,4 +1,4 @@
-use anyhow::{Context as _, Result};
+use anyhow::Result;
 use dap_types::{OutputEventCategory, OutputEventGroup, ScopePresentationHint, Source};
 use proto::{
     self, DapChecksum, DapChecksumAlgorithm, DapEvaluateContext, DapModule, DapScope, DapScopePresentationHint,
@@ -77,7 +77,7 @@ impl ProtoConversion for dap_types::Variable {
         Self::ProtoType {
             name: self.name.clone(),
             value: self.value.clone(),
-            r#type: self.type_.clone(),
+            dap_type: self.type_.clone(),
             evaluate_name: self.evaluate_name.clone(),
             variables_reference: self.variables_reference,
             named_variables: self.named_variables,
@@ -90,7 +90,7 @@ impl ProtoConversion for dap_types::Variable {
         Self {
             name: payload.name,
             value: payload.value,
-            type_: payload.r#type,
+            type_: payload.dap_type,
             evaluate_name: payload.evaluate_name,
             presentation_hint: None,
             variables_reference: payload.variables_reference,
@@ -165,7 +165,7 @@ impl ProtoConversion for dap_types::Checksum {
 
     fn from_proto(payload: Self::ProtoType) -> Self {
         Self {
-            algorithm: dap_types::ChecksumAlgorithm::from_proto(payload.algorithm()),
+            algorithm: dap_types::ChecksumAlgorithm::from_proto(payload.algorithm),
             checksum: payload.checksum,
         }
     }
@@ -190,7 +190,7 @@ impl ProtoConversion for dap_types::ChecksumAlgorithm {
             DapChecksumAlgorithm::Sha1 => dap_types::ChecksumAlgorithm::Sha1,
             DapChecksumAlgorithm::Sha256 => dap_types::ChecksumAlgorithm::Sha256,
             DapChecksumAlgorithm::Timestamp => dap_types::ChecksumAlgorithm::Timestamp,
-            DapChecksumAlgorithm::ChecksumAlgorithmUnspecified => unreachable!(),
+            DapChecksumAlgorithm::Unspecified => unreachable!(),
         }
     }
 }
@@ -272,12 +272,12 @@ impl ProtoConversion for dap_types::Module {
 
     fn to_proto(&self) -> Self::ProtoType {
         let id = match &self.id {
-            dap_types::ModuleId::Number(num) => proto::dap_module_id::Id::Number(*num),
-            dap_types::ModuleId::String(string) => proto::dap_module_id::Id::String(string.clone()),
+            dap_types::ModuleId::Number(num) => proto::DapModuleId::Number(*num),
+            dap_types::ModuleId::String(string) => proto::DapModuleId::String(string.clone()),
         };
 
         DapModule {
-            id: Some(proto::DapModuleId { id: Some(id) }),
+            id,
             name: self.name.clone(),
             path: self.path.clone(),
             is_optimized: self.is_optimized,
@@ -291,14 +291,9 @@ impl ProtoConversion for dap_types::Module {
     }
 
     fn from_proto(payload: Self::ProtoType) -> Result<Self> {
-        let id = match payload
-            .id
-            .context("All DapModule proto messages must have an id")?
-            .id
-            .context("All DapModuleID proto messages must have an id")?
-        {
-            proto::dap_module_id::Id::String(string) => dap_types::ModuleId::String(string),
-            proto::dap_module_id::Id::Number(num) => dap_types::ModuleId::Number(num),
+        let id = match payload.id {
+            proto::DapModuleId::String(string) => dap_types::ModuleId::String(string),
+            proto::DapModuleId::Number(num) => dap_types::ModuleId::Number(num),
         };
 
         Ok(Self {
@@ -439,14 +434,16 @@ impl ProtoConversion for dap_types::CompletionItem {
     }
 
     fn from_proto(payload: Self::ProtoType) -> Self {
-        let typ = payload.typ(); // todo(debugger): This might be a potential issue/bug because it defaults to a type when it's None
+        let typ = payload.typ.map(
+            |typ| dap_types::CompletionItemType::from_proto(typ)
+        );
 
         Self {
             label: payload.label,
             detail: payload.detail,
             sort_text: payload.sort_text,
             text: payload.text.clone(),
-            type_: Some(dap_types::CompletionItemType::from_proto(typ)),
+            type_: typ,
             start: payload.start,
             length: payload.length,
             selection_start: payload.selection_start,

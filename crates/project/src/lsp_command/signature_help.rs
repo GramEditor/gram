@@ -4,7 +4,7 @@ use gpui::{App, AppContext, Entity, FontWeight, HighlightStyle, SharedString};
 use language::LanguageRegistry;
 use lsp::LanguageServerId;
 use markdown::Markdown;
-use rpc::proto::{self, documentation};
+use rpc::proto;
 use util::maybe;
 
 #[derive(Debug)]
@@ -153,15 +153,15 @@ pub fn lsp_to_proto_signature(lsp_help: lsp::SignatureHelp) -> proto::SignatureH
                     .unwrap_or_default()
                     .into_iter()
                     .map(|parameter_info| proto::ParameterInformation {
-                        label: Some(match parameter_info.label {
-                            lsp::ParameterLabel::Simple(label) => proto::parameter_information::Label::Simple(label),
+                        label: match parameter_info.label {
+                            lsp::ParameterLabel::Simple(label) => proto::ParameterInformationLabel::Simple(label),
                             lsp::ParameterLabel::LabelOffsets(offsets) => {
-                                proto::parameter_information::Label::LabelOffsets(proto::LabelOffsets {
+                                proto::ParameterInformationLabel::Offsets(proto::LabelOffsets {
                                     start: offsets[0],
                                     end: offsets[1],
                                 })
                             }
-                        }),
+                        },
                         documentation: parameter_info.documentation.map(lsp_to_proto_documentation),
                     })
                     .collect(),
@@ -174,16 +174,14 @@ pub fn lsp_to_proto_signature(lsp_help: lsp::SignatureHelp) -> proto::SignatureH
 }
 
 fn lsp_to_proto_documentation(documentation: lsp::Documentation) -> proto::Documentation {
-    proto::Documentation {
-        content: Some(match documentation {
-            lsp::Documentation::String(string) => proto::documentation::Content::Value(string),
-            lsp::Documentation::MarkupContent(content) => {
-                proto::documentation::Content::MarkupContent(proto::MarkupContent {
-                    is_markdown: matches!(content.kind, lsp::MarkupKind::Markdown),
-                    value: content.value,
-                })
-            }
-        }),
+    match documentation {
+        lsp::Documentation::String(string) => proto::Documentation::Value(string),
+        lsp::Documentation::MarkupContent(content) => {
+            proto::Documentation::MarkupContent(proto::MarkupContent {
+                is_markdown: matches!(content.kind, lsp::MarkupKind::Markdown),
+                value: content.value,
+            })
+        }
     }
 }
 
@@ -194,22 +192,22 @@ pub fn proto_to_lsp_signature(proto_help: proto::SignatureHelp) -> lsp::Signatur
             .into_iter()
             .map(|signature| lsp::SignatureInformation {
                 label: signature.label,
-                documentation: signature.documentation.and_then(proto_to_lsp_documentation),
+                documentation: signature.documentation.map(proto_to_lsp_documentation),
                 parameters: Some(
                     signature
                         .parameters
                         .into_iter()
                         .filter_map(|parameter_info| {
                             Some(lsp::ParameterInformation {
-                                label: match parameter_info.label? {
-                                    proto::parameter_information::Label::Simple(string) => {
+                                label: match parameter_info.label {
+                                    proto::ParameterInformationLabel::Simple(string) => {
                                         lsp::ParameterLabel::Simple(string)
                                     }
-                                    proto::parameter_information::Label::LabelOffsets(offsets) => {
+                                    proto::ParameterInformationLabel::Offsets(offsets) => {
                                         lsp::ParameterLabel::LabelOffsets([offsets.start, offsets.end])
                                     }
                                 },
-                                documentation: parameter_info.documentation.and_then(proto_to_lsp_documentation),
+                                documentation: parameter_info.documentation.map(proto_to_lsp_documentation),
                             })
                         })
                         .collect(),
@@ -222,22 +220,24 @@ pub fn proto_to_lsp_signature(proto_help: proto::SignatureHelp) -> lsp::Signatur
     }
 }
 
-fn proto_to_lsp_documentation(documentation: proto::Documentation) -> Option<lsp::Documentation> {
+fn proto_to_lsp_documentation(documentation: proto::Documentation) -> lsp::Documentation {
     {
-        Some(match documentation.content? {
-            documentation::Content::Value(string) => lsp::Documentation::String(string),
-            documentation::Content::MarkupContent(markup) => lsp::Documentation::MarkupContent(if markup.is_markdown {
-                lsp::MarkupContent {
-                    kind: lsp::MarkupKind::Markdown,
-                    value: markup.value,
+        match documentation {
+            proto::Documentation::Value(string) => lsp::Documentation::String(string),
+            proto::Documentation::MarkupContent(markup) => lsp::Documentation::MarkupContent(
+                if markup.is_markdown {
+                    lsp::MarkupContent {
+                        kind: lsp::MarkupKind::Markdown,
+                        value: markup.value,
+                    }
+                } else {
+                    lsp::MarkupContent {
+                        kind: lsp::MarkupKind::PlainText,
+                        value: markup.value,
+                    }
                 }
-            } else {
-                lsp::MarkupContent {
-                    kind: lsp::MarkupKind::PlainText,
-                    value: markup.value,
-                }
-            }),
-        })
+            ),
+        }
     }
 }
 

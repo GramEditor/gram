@@ -296,7 +296,7 @@ impl HeadlessExtensionStore {
         envelope: TypedEnvelope<proto::InstallExtension>,
         mut cx: AsyncApp,
     ) -> Result<proto::Ack> {
-        let extension = envelope.payload.extension.context("Invalid InstallExtension request")?;
+        let extension = envelope.payload.extension;
 
         extensions
             .update(&mut cx, |extensions, cx| {

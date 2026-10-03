@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy, Hash)]
 pub struct PeerId {
     pub owner_id: u32,
     pub id: u32,

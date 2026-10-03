@@ -98,7 +98,7 @@ impl LspCommand for ExpandMacro {
         proto::LspExtExpandMacro {
             project_id,
             buffer_id: buffer.remote_id().into(),
-            position: Some(language::proto::serialize_anchor(&buffer.anchor_before(self.position))),
+            position: language::proto::serialize_anchor(&buffer.anchor_before(self.position)),
         }
     }
 
@@ -108,10 +108,7 @@ impl LspCommand for ExpandMacro {
         buffer: Entity<Buffer>,
         cx: AsyncApp,
     ) -> anyhow::Result<Self> {
-        let position = message
-            .position
-            .and_then(deserialize_anchor)
-            .context("invalid position")?;
+        let position = deserialize_anchor(message.position);
         Ok(Self {
             position: buffer.read_with(&cx, |buffer, _| position.to_point_utf16(buffer))?,
         })
@@ -224,7 +221,7 @@ impl LspCommand for OpenDocs {
         proto::LspExtOpenDocs {
             project_id,
             buffer_id: buffer.remote_id().into(),
-            position: Some(language::proto::serialize_anchor(&buffer.anchor_before(self.position))),
+            position: language::proto::serialize_anchor(&buffer.anchor_before(self.position)),
         }
     }
 
@@ -234,10 +231,7 @@ impl LspCommand for OpenDocs {
         buffer: Entity<Buffer>,
         cx: AsyncApp,
     ) -> anyhow::Result<Self> {
-        let position = message
-            .position
-            .and_then(deserialize_anchor)
-            .context("invalid position")?;
+        let position = deserialize_anchor(message.position);
         Ok(Self {
             position: buffer.read_with(&cx, |buffer, _| position.to_point_utf16(buffer))?,
         })
@@ -427,7 +421,7 @@ impl LspCommand for GoToParentModule {
         proto::LspExtGoToParentModule {
             project_id,
             buffer_id: buffer.remote_id().to_proto(),
-            position: Some(language::proto::serialize_anchor(&buffer.anchor_before(self.position))),
+            position: language::proto::serialize_anchor(&buffer.anchor_before(self.position)),
         }
     }
 
@@ -437,10 +431,7 @@ impl LspCommand for GoToParentModule {
         buffer: Entity<Buffer>,
         cx: AsyncApp,
     ) -> anyhow::Result<Self> {
-        let position = request
-            .position
-            .and_then(deserialize_anchor)
-            .context("bad request with bad position")?;
+        let position = deserialize_anchor(request.position);
         Ok(Self {
             position: buffer.read_with(&cx, |buffer, _| position.to_point_utf16(buffer))?,
         })
@@ -674,7 +665,7 @@ impl LspCommand for GetLspRunnables {
         _: AsyncApp,
     ) -> Result<Self> {
         let buffer_id = Self::buffer_id_from_proto(&message)?;
-        let position = message.position.and_then(deserialize_anchor);
+        let position = message.position.map(deserialize_anchor);
         Ok(Self { buffer_id, position })
     }
 

@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Copy)]
 pub struct Timestamp {
     pub seconds: u64,
     pub nanos: u32,
@@ -11,7 +11,7 @@ pub struct File {
     pub worktree_id: u64,
     pub entry_id: Option<u64>,
     pub path: String,
-    pub mtime: Timestamp,
+    pub mtime: Option<Timestamp>,
     pub is_deleted: bool,
     pub is_historic: bool,
 }
@@ -22,7 +22,7 @@ pub struct Entry {
     pub is_dir: bool,
     pub path: String,
     pub inode: u64,
-    pub mtime: Timestamp,
+    pub mtime: Option<Timestamp>,
     pub is_ignored: bool,
     pub is_external: bool,
     pub is_fifo: bool,

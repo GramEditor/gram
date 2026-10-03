@@ -132,14 +132,14 @@ impl FollowableItem for DebugSession {
         self.remote_id
     }
 
-    fn to_state_proto(&self, _window: &Window, _cx: &App) -> Option<proto::view::Variant> {
+    fn to_state_proto(&self, _window: &Window, _cx: &App) -> Option<proto::ViewVariant> {
         None
     }
 
     fn from_state_proto(
         _workspace: Entity<Workspace>,
         _remote_id: ViewId,
-        _state: &mut Option<proto::view::Variant>,
+        _state: &mut Option<proto::ViewVariant>,
         _window: &mut Window,
         _cx: &mut App,
     ) -> Option<gpui::Task<anyhow::Result<Entity<Self>>>> {
@@ -149,7 +149,7 @@ impl FollowableItem for DebugSession {
     fn add_event_to_update_proto(
         &self,
         _event: &Self::Event,
-        _update: &mut Option<proto::update_view::Variant>,
+        _update: &mut Option<proto::UpdateView>,
         _window: &Window,
         _cx: &App,
     ) -> bool {
@@ -161,7 +161,7 @@ impl FollowableItem for DebugSession {
     fn apply_update_proto(
         &mut self,
         _project: &Entity<project::Project>,
-        _message: proto::update_view::Variant,
+        _message: proto::UpdateView,
         _window: &mut Window,
         _cx: &mut Context<Self>,
     ) -> gpui::Task<anyhow::Result<()>> {

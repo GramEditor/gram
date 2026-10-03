@@ -230,7 +230,7 @@ impl BreakpointStore {
                 .breakpoints
                 .into_iter()
                 .filter_map(|breakpoint| {
-                    let position = language::proto::deserialize_anchor(breakpoint.position?)?;
+                    let position = language::proto::deserialize_anchor(breakpoint.position);
                     let session_state = breakpoint
                         .session_state
                         .iter()
@@ -242,7 +242,7 @@ impl BreakpointStore {
                             (SessionId::from_proto(*session_id), state)
                         })
                         .collect();
-                    let breakpoint = Breakpoint::from_proto(breakpoint)?;
+                    let breakpoint = Breakpoint::from_proto(breakpoint);
                     let bp = BreakpointWithPosition {
                         position,
                         bp: breakpoint,
@@ -273,14 +273,9 @@ impl BreakpointStore {
         let buffer = this
             .update(&mut cx, |this, cx| this.buffer_store.read(cx).get_by_path(&path))?
             .context("Could not find buffer for a given path")?;
-        let breakpoint = message
-            .payload
-            .breakpoint
-            .context("Breakpoint not present in RPC payload")?;
-        let position =
-            language::proto::deserialize_anchor(breakpoint.position.context("Anchor not present in RPC payload")?)
-                .context("Anchor deserialization failed")?;
-        let breakpoint = Breakpoint::from_proto(breakpoint).context("Could not deserialize breakpoint")?;
+        let breakpoint = message.payload.breakpoint;
+        let position = language::proto::deserialize_anchor(breakpoint.position);
+        let breakpoint = Breakpoint::from_proto(breakpoint);
 
         this.update(&mut cx, |this, cx| {
             this.toggle_breakpoint(
@@ -494,17 +489,15 @@ impl BreakpointStore {
             self.breakpoints.remove(&abs_path);
         }
         if let BreakpointStoreMode::Remote(remote) = &self.mode {
-            if let Some(breakpoint) = breakpoint
+            let breakpoint = breakpoint
                 .bp
-                .to_proto(&abs_path, &breakpoint.position, &HashMap::default())
-            {
-                cx.background_spawn(remote.upstream_client.request(proto::ToggleBreakpoint {
-                    project_id: remote.upstream_project_id,
-                    path: abs_path.to_str().map(ToOwned::to_owned).unwrap(),
-                    breakpoint: Some(breakpoint),
-                }))
-                .detach();
-            }
+                .to_proto(&abs_path, &breakpoint.position, &HashMap::default());
+            cx.background_spawn(remote.upstream_client.request(proto::ToggleBreakpoint {
+                project_id: remote.upstream_project_id,
+                path: abs_path.to_str().map(ToOwned::to_owned).unwrap(),
+                breakpoint,
+            }))
+            .detach();
         } else if let Some((client, project_id)) = &self.downstream_client {
             let breakpoints = self
                 .breakpoints
@@ -513,7 +506,7 @@ impl BreakpointStore {
                     breakpoint_set
                         .breakpoints
                         .iter()
-                        .filter_map(|bp| bp.bp.bp.to_proto(&abs_path, bp.position(), &bp.session_state))
+                        .map(|bp| bp.bp.bp.to_proto(&abs_path, bp.position(), &bp.session_state))
                         .collect()
                 })
                 .unwrap_or_default();
@@ -869,9 +862,9 @@ impl Breakpoint {
         _path: &Path,
         position: &text::Anchor,
         session_states: &HashMap<SessionId, BreakpointSessionState>,
-    ) -> Option<rpc::proto::Breakpoint> {
-        Some(rpc::proto::Breakpoint {
-            position: Some(serialize_text_anchor(position)),
+    ) -> rpc::proto::Breakpoint {
+        rpc::proto::Breakpoint {
+            position: serialize_text_anchor(position),
             state: match self.state {
                 BreakpointState::Enabled => proto::BreakpointState::Enabled.into(),
                 BreakpointState::Disabled => proto::BreakpointState::Disabled.into(),
@@ -891,11 +884,11 @@ impl Breakpoint {
                     )
                 })
                 .collect(),
-        })
+        }
     }
 
-    fn from_proto(breakpoint: rpc::proto::Breakpoint) -> Option<Self> {
-        Some(Self {
+    fn from_proto(breakpoint: rpc::proto::Breakpoint) -> Self {
+        Self {
             state: match proto::BreakpointState::try_from(breakpoint.state).ok() {
                 Some(proto::BreakpointState::Disabled) => BreakpointState::Disabled,
                 None | Some(proto::BreakpointState::Enabled) => BreakpointState::Enabled,
@@ -903,7 +896,7 @@ impl Breakpoint {
             message: breakpoint.message.map(Into::into),
             condition: breakpoint.condition.map(Into::into),
             hit_condition: breakpoint.hit_condition.map(Into::into),
-        })
+        }
     }
 
     #[inline]

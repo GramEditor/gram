@@ -247,7 +247,7 @@ impl Search {
                     } => {
                         let request = client.request(proto::FindSearchCandidates {
                             project_id: remote_id,
-                            query: Some(query.to_proto()),
+                            query: query.to_proto(),
                             limit: self.limit as _,
                         });
                         let weak_buffer_store = self.buffer_store.downgrade();

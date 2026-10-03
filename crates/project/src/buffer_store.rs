@@ -153,8 +153,8 @@ impl RemoteBufferStore {
         capability: Capability,
         cx: &mut Context<BufferStore>,
     ) -> Result<Option<Entity<Buffer>>> {
-        match envelope.payload.variant.context("missing variant")? {
-            proto::create_buffer_for_peer::Variant::State(mut state) => {
+        match envelope.payload.variant {
+            proto::CreateBufferForPeerVariant::State(mut state) => {
                 let buffer_id = BufferId::new(state.id)?;
 
                 let buffer_result = maybe!({
@@ -185,7 +185,7 @@ impl RemoteBufferStore {
                     }
                 }
             }
-            proto::create_buffer_for_peer::Variant::Chunk(chunk) => {
+            proto::CreateBufferForPeerVariant::Chunk(chunk) => {
                 let buffer_id = BufferId::new(chunk.buffer_id)?;
                 let buffer = self
                     .loading_remote_buffers_by_id
@@ -321,7 +321,7 @@ impl RemoteBufferStore {
         });
 
         cx.spawn(async move |this, cx| {
-            let response = request.await?.transaction.context("missing transaction")?;
+            let response = request.await?.transaction;
             this.update(cx, |this, cx| {
                 this.deserialize_project_transaction(response, push_to_history, cx)
             })?
@@ -366,7 +366,7 @@ impl LocalBufferStore {
                             .send(proto::UpdateBufferFile {
                                 project_id,
                                 buffer_id: buffer_id.to_proto(),
-                                file: Some(language::File::to_proto(&*new_file, cx)),
+                                file: language::File::to_proto(&*new_file, cx),
                             })
                             .log_err();
                     }
@@ -523,7 +523,7 @@ impl LocalBufferStore {
                     .send(proto::UpdateBufferFile {
                         project_id: *project_id,
                         buffer_id: buffer_id.to_proto(),
-                        file: Some(new_file.to_proto(cx)),
+                        file: new_file.to_proto(cx),
                     })
                     .ok();
             }
@@ -1013,7 +1013,7 @@ impl BufferStore {
                         buffer_id: buffer.remote_id().to_proto(),
                         version: serialize_version(&buffer.version()),
                         mtime: buffer.saved_mtime().map(|t| t.into()),
-                        line_ending: serialize_line_ending(buffer.line_ending()) as i32,
+                        line_ending: serialize_line_ending(buffer.line_ending()),
                     })
                     .log_err();
             }
@@ -1093,7 +1093,7 @@ impl BufferStore {
         this.update(&mut cx, |this, cx| {
             let payload = envelope.payload.clone();
             if let Some(buffer) = this.get_possibly_incomplete(buffer_id) {
-                let file = payload.file.context("invalid file")?;
+                let file = payload.file;
                 let worktree = this
                     .worktree_store
                     .read(cx)
@@ -1288,7 +1288,7 @@ impl BufferStore {
             this.serialize_project_transaction_for_peer(project_transaction, sender_id, cx)
         })?;
         Ok(proto::ReloadBuffersResponse {
-            transaction: Some(project_transaction),
+            transaction: project_transaction,
         })
     }
 
@@ -1326,8 +1326,8 @@ impl BufferStore {
 
             let initial_state = proto::CreateBufferForPeer {
                 project_id,
-                peer_id: Some(peer_id),
-                variant: Some(proto::create_buffer_for_peer::Variant::State(state)),
+                peer_id: peer_id,
+                variant: proto::CreateBufferForPeerVariant::State(state),
             };
 
             if client.send(initial_state).log_err().is_some() {
@@ -1338,12 +1338,12 @@ impl BufferStore {
                         let is_last = chunks.peek().is_none();
                         client.send(proto::CreateBufferForPeer {
                             project_id,
-                            peer_id: Some(peer_id),
-                            variant: Some(proto::create_buffer_for_peer::Variant::Chunk(proto::BufferChunk {
+                            peer_id: peer_id,
+                            variant: proto::CreateBufferForPeerVariant::Chunk(proto::BufferChunk {
                                 buffer_id: buffer_id.into(),
                                 operations: chunk,
                                 is_last,
-                            })),
+                            }),
                         })?;
                     }
                     anyhow::Ok(())

@@ -336,7 +336,7 @@ impl HeadlessProject {
                         project_id: REMOTE_SERVER_PROJECT_ID,
                         server_name: name.as_ref().map(|name| name.to_string()),
                         language_server_id: language_server_id.to_proto(),
-                        variant: Some(message.clone()),
+                        variant: message.clone(),
                     })
                     .log_err();
             }
@@ -353,7 +353,7 @@ impl HeadlessProject {
                 let request = self.session.request(proto::LanguageServerPromptRequest {
                     project_id: REMOTE_SERVER_PROJECT_ID,
                     actions: prompt.actions.iter().map(|action| action.title.to_string()).collect(),
-                    level: Some(prompt_to_proto(prompt)),
+                    level: prompt_to_proto(prompt),
                     lsp_name: prompt.lsp_name.clone(),
                     message: prompt.message.clone(),
                 });
@@ -497,7 +497,7 @@ impl HeadlessProject {
         let worktree_id = WorktreeId::from_proto(message.payload.worktree_id);
         let path = RelPath::from_proto(&message.payload.path)?;
         let project_id = message.payload.project_id;
-        use proto::create_image_for_peer::Variant;
+        use proto::CreateImageForPeerVariant;
 
         let (worktree_store, session) =
             this.read_with(&cx, |this, _| (this.worktree_store.clone(), this.session.clone()))?;
@@ -528,19 +528,19 @@ impl HeadlessProject {
 
         session.send(proto::CreateImageForPeer {
             project_id,
-            peer_id: Some(REMOTE_SERVER_PEER_ID),
-            variant: Some(Variant::State(state)),
+            peer_id: REMOTE_SERVER_PEER_ID,
+            variant: CreateImageForPeerVariant::State(state),
         })?;
 
         const CHUNK_SIZE: usize = 1024 * 1024; // 1MB chunks
         for chunk in content.chunks(CHUNK_SIZE) {
             session.send(proto::CreateImageForPeer {
                 project_id,
-                peer_id: Some(REMOTE_SERVER_PEER_ID),
-                variant: Some(Variant::Chunk(proto::ImageChunk {
+                peer_id: REMOTE_SERVER_PEER_ID,
+                variant: CreateImageForPeerVariant::Chunk(proto::ImageChunk {
                     image_id: image_id.to_proto(),
                     data: chunk.to_vec(),
-                })),
+                }),
             })?;
         }
 
@@ -586,12 +586,10 @@ impl HeadlessProject {
                 .try_global::<GlobalLogStore>()
                 .map(|global_log_store| global_log_store.0.clone())
                 .context("lsp logs store is missing")?;
-            let toggled_log_kind = match proto::toggle_lsp_logs::LogType::try_from(envelope.payload.log_type)
-                .context("invalid log type")?
-            {
-                proto::toggle_lsp_logs::LogType::Log => LogKind::Logs,
-                proto::toggle_lsp_logs::LogType::Trace => LogKind::Trace,
-                proto::toggle_lsp_logs::LogType::Rpc => LogKind::Rpc,
+            let toggled_log_kind = match envelope.payload.log_type {
+                proto::ToggleLspLogsType::Log => LogKind::Logs,
+                proto::ToggleLspLogsType::Trace => LogKind::Trace,
+                proto::ToggleLspLogsType::Rpc => LogKind::Rpc,
             };
             log_store.update(cx, |log_store, _| {
                 log_store.toggle_lsp_logs(server_id, envelope.payload.enabled, toggled_log_kind);
@@ -661,7 +659,7 @@ impl HeadlessProject {
         mut cx: AsyncApp,
     ) -> Result<proto::FindSearchCandidatesResponse> {
         let message = envelope.payload;
-        let query = SearchQuery::from_proto(message.query.context("missing query field")?, PathStyle::local())?;
+        let query = SearchQuery::from_proto(message.query, PathStyle::local())?;
         let results = this.update(&mut cx, |this, cx| {
             project::Search::local(
                 this.fs.clone(),
@@ -698,7 +696,7 @@ impl HeadlessProject {
     ) -> Result<proto::ListRemoteDirectoryResponse> {
         let fs = cx.read_entity(&this, |this, _| this.fs.clone())?;
         let expanded = PathBuf::from(shellexpand::tilde(&envelope.payload.path).to_string());
-        let check_info = envelope.payload.config.as_ref().is_some_and(|config| config.is_dir);
+        let check_info = envelope.payload.config.is_dir;
 
         let mut entries = Vec::new();
         let mut entry_info = Vec::new();
@@ -798,7 +796,7 @@ impl HeadlessProject {
         envelope: TypedEnvelope<proto::GetDirectoryEnvironment>,
         mut cx: AsyncApp,
     ) -> Result<proto::DirectoryEnvironment> {
-        let shell = task::shell_from_proto(envelope.payload.shell.context("missing shell")?)?;
+        let shell = task::shell_from_proto(envelope.payload.shell)?;
         let directory = PathBuf::from(envelope.payload.directory);
         let environment = this
             .update(&mut cx, |this, cx| {
@@ -814,16 +812,10 @@ impl HeadlessProject {
     }
 }
 
-fn prompt_to_proto(prompt: &project::LanguageServerPromptRequest) -> proto::language_server_prompt_request::Level {
+fn prompt_to_proto(prompt: &project::LanguageServerPromptRequest) -> proto::LanguageServerPromptRequestLevel {
     match prompt.level {
-        PromptLevel::Info => {
-            proto::language_server_prompt_request::Level::Info(proto::language_server_prompt_request::Info {})
-        }
-        PromptLevel::Warning => {
-            proto::language_server_prompt_request::Level::Warning(proto::language_server_prompt_request::Warning {})
-        }
-        PromptLevel::Critical => {
-            proto::language_server_prompt_request::Level::Critical(proto::language_server_prompt_request::Critical {})
-        }
+        PromptLevel::Info => proto::LanguageServerPromptRequestLevel::Info,
+        PromptLevel::Warning => proto::LanguageServerPromptRequestLevel::Warning,
+        PromptLevel::Critical => proto::LanguageServerPromptRequestLevel::Critical,
     }
 }

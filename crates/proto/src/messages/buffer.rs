@@ -78,7 +78,7 @@ pub struct BufferSaved {
     pub project_id: u64,
     pub buffer_id: u64,
     pub version: Vec<VectorClockEntry>,
-    pub mtime: Timestamp,
+    pub mtime: Option<Timestamp>,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -86,7 +86,7 @@ pub struct BufferReloaded {
     pub project_id: u64,
     pub buffer_id: u64,
     pub version: Vec<VectorClockEntry>,
-    pub mtime: Timestamp,
+    pub mtime: Option<Timestamp>,
     pub line_ending: LineEnding,
 }
 
@@ -125,8 +125,7 @@ pub struct BufferState {
     pub base_text: String,
     pub line_ending: LineEnding,
     pub saved_version: Vec<VectorClockEntry>,
-    pub saved_mtime: Timestamp,
-
+    pub saved_mtime: Option<Timestamp>,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -185,8 +184,8 @@ pub struct OperationUpdateSelections {
     pub replica_id: u32,
     pub lamport_timestamp: u32,
     pub selections: Vec<Selection>,
-    pub line_mode:     bool,
-    pub cursor_shape:     CursorShape,
+    pub line_mode: bool,
+    pub cursor_shape: CursorShape,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -275,7 +274,7 @@ pub struct UpdateDiagnostics {
     pub diagnostics: Vec<Diagnostic>,
 }
 
-#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Copy)]
 pub struct Anchor {
     pub replica_id: u32,
     pub timestamp: u32,
@@ -313,7 +312,7 @@ pub enum DiagnosticSourceKind {
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
-pub enum Severity {
+pub enum DiagnosticSeverity {
     #[default]
     None,
     Error,
@@ -330,7 +329,7 @@ pub struct Diagnostic {
     pub registration_id: Option<String>,
 
     pub source_kind: DiagnosticSourceKind,
-    pub severity: Severity,
+    pub severity: DiagnosticSeverity,
     pub message: String,
     pub code: Option<String>,
     pub group_id: u64,

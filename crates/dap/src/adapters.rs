@@ -196,9 +196,9 @@ pub struct DebugAdapterBinary {
 
 impl DebugAdapterBinary {
     pub fn from_proto(binary: proto::DebugAdapterBinary) -> anyhow::Result<Self> {
-        let request = match binary.launch_type() {
-            proto::debug_adapter_binary::LaunchType::Launch => StartDebuggingRequestArgumentsRequest::Launch,
-            proto::debug_adapter_binary::LaunchType::Attach => StartDebuggingRequestArgumentsRequest::Attach,
+        let request = match binary.launch_type {
+            proto::DebugAdapterBinaryLaunchType::Launch => StartDebuggingRequestArgumentsRequest::Launch,
+            proto::DebugAdapterBinaryLaunchType::Attach => StartDebuggingRequestArgumentsRequest::Attach,
         };
 
         Ok(DebugAdapterBinary {
@@ -222,8 +222,8 @@ impl DebugAdapterBinary {
             cwd: self.cwd.as_ref().map(|cwd| cwd.to_string_lossy().into_owned()),
             connection: self.connection.as_ref().map(|c| c.to_proto()),
             launch_type: match self.request_args.request {
-                StartDebuggingRequestArgumentsRequest::Launch => proto::debug_adapter_binary::LaunchType::Launch.into(),
-                StartDebuggingRequestArgumentsRequest::Attach => proto::debug_adapter_binary::LaunchType::Attach.into(),
+                StartDebuggingRequestArgumentsRequest::Launch => proto::DebugAdapterBinaryLaunchType::Launch.into(),
+                StartDebuggingRequestArgumentsRequest::Attach => proto::DebugAdapterBinaryLaunchType::Attach.into(),
             },
             configuration: self.request_args.configuration.to_string(),
         }

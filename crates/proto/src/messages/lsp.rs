@@ -240,7 +240,7 @@ pub struct ApplyCompletionAdditionalEdits {
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ApplyCompletionAdditionalEditsResponse {
-    pub transaction: Transaction,
+    pub transaction: Option<Transaction>,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
@@ -264,8 +264,8 @@ pub struct Completion {
     pub lsp_defaults: Option<Vec<u8>>,
     pub buffer_word_start: Option<Anchor>,
     pub buffer_word_end: Option<Anchor>,
-    pub old_insert_start: Anchor,
-    pub old_insert_end: Anchor,
+    pub old_insert_start: Option<Anchor>,
+    pub old_insert_end: Option<Anchor>,
     pub sort_text: Option<String>,
 }
 
@@ -398,8 +398,8 @@ pub struct PrepareRename {
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct PrepareRenameResponse {
     pub can_rename: bool,
-    pub start: Anchor,
-    pub end: Anchor,
+    pub start: Option<Anchor>,
+    pub end: Option<Anchor>,
     pub version: Vec<VectorClockEntry>,
     pub only_unprepared_rename_supported: bool,
 }
@@ -424,7 +424,7 @@ pub struct OnTypeFormatting {
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct OnTypeFormattingResponse {
-    pub transaction: Transaction,
+    pub transaction: Option<Transaction>,
 }
 
 
@@ -449,14 +449,14 @@ pub struct InlayHint {
     pub kind: Option<String>,
     pub padding_left: bool,
     pub padding_right: bool,
-    pub tooltip: InlayHintTooltip,
+    pub tooltip: Option<InlayHintTooltip>,
     pub resolve_state: ResolveState,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum InlayHintLabel {
     Value(String),
-    LabelParts(InlayHintLabelParts),
+    LabelParts(Vec<InlayHintLabelPart>),
 }
 impl Default for InlayHintLabel {
     fn default() -> Self {
@@ -465,18 +465,18 @@ impl Default for InlayHintLabel {
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct InlayHintLabelParts {
-    pub parts: Vec<InlayHintLabelPart>,
+pub struct InlayHintLabelLocation {
+    pub url: String,
+    pub range_start: PointUtf16,
+    pub range_end: PointUtf16,
+    pub server_id: u64,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct InlayHintLabelPart {
     pub value: String,
-    pub tooltip: InlayHintLabelPartTooltip,
-    pub location_url: Option<String>,
-    pub location_range_start: PointUtf16,
-    pub location_range_end: PointUtf16,
-    pub language_server_id: Option<u64>,
+    pub tooltip: Option<InlayHintLabelPartTooltip>,
+    pub location: Option<InlayHintLabelLocation>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -510,10 +510,15 @@ pub enum LspResolveState {
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct LspResolveInfo {
+    pub server_id: u64,
+    pub value: Option<String>,
+}
+
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ResolveState {
     pub state: LspResolveState,
-    pub lsp_value: Option<String>,
-    pub lsp_server_id: u64,
+    pub info: Option<LspResolveInfo>,
 }
 
 // This type is used to resolve more than just
@@ -531,12 +536,12 @@ pub struct ResolveCompletionDocumentation {
 pub struct ResolveCompletionDocumentationResponse {
     pub documentation: String,
     pub documentation_is_markdown: bool,
-    pub old_replace_start: Anchor,
-    pub old_replace_end: Anchor,
+    pub old_replace_start: Option<Anchor>,
+    pub old_replace_end: Option<Anchor>,
     pub new_text: String,
     pub lsp_completion: Vec<u8>,
-    pub old_insert_start: Anchor,
-    pub old_insert_end: Anchor,
+    pub old_insert_start: Option<Anchor>,
+    pub old_insert_end: Option<Anchor>,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -880,7 +885,7 @@ pub struct GetCompletions {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum CancelLanguageServerWorkVariant {
-    Buffer {
+    Buffers {
         buffer_ids: Vec<u64>,
     },
     Work {
@@ -890,7 +895,7 @@ pub enum CancelLanguageServerWorkVariant {
 }
 impl Default for CancelLanguageServerWorkVariant {
     fn default() -> Self {
-        Self::Buffer {
+        Self::Buffers {
             buffer_ids: Default::default(),
         }
     }
@@ -1043,11 +1048,15 @@ pub struct LspResponse {
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct AllLanguageServers {}
 
-#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum LanguageServerSelector {
-    #[default]
-    ServerId,
-    Name,
+    ServerId(u64),
+    Name(String),
+}
+impl Default for LanguageServerSelector {
+    fn default() -> Self {
+        Self::ServerId(0)
+    }
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -1106,7 +1115,7 @@ pub struct LspExtClearFlycheck {
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct LspDiagnosticRelatedInformation {
-    pub location_url: Option<String>,
+    pub location_url: String,
     pub location_range_start: PointUtf16,
     pub location_range_end: PointUtf16,
     pub message: String,

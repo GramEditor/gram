@@ -284,15 +284,21 @@ pub struct UpdateViewEditor {
     pub scroll_y: f64,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum UpdateViewVariant {
+    Editor(UpdateViewEditor),
+}
+impl Default for UpdateViewVariant {
+    fn default() -> Self {
+        Self::Editor(Default::default())
+    }
+}
+
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UpdateView {
     pub id: ViewId,
     pub leader_id: Option<PeerId>,
-
-    // In the original protobuf, this was the only member in a 'oneof'.
-    // If other UpdateView variants are needed later,
-    // it can be turned into an 'enum UpdateViewVariant'.
-    pub editor: UpdateViewEditor,
+    pub variant: UpdateViewVariant,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]

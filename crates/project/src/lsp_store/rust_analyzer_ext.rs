@@ -65,9 +65,9 @@ pub fn register_notifications(lsp_store: WeakEntity<LspStore>, language_server: 
                         cx.emit(LspStoreEvent::LanguageServerUpdate {
                             language_server_id: server_id,
                             name: Some(name.clone()),
-                            message: proto::update_language_server::Variant::StatusUpdate(proto::StatusUpdate {
+                            message: proto::UpdateLanguageServerVariant::StatusUpdate(proto::StatusUpdate {
                                 message,
-                                status: Some(proto::status_update::Status::Health(status as i32)),
+                                variant: proto::StatusUpdateVariant::Health(status),
                             }),
                         });
                     })

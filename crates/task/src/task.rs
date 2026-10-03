@@ -8,7 +8,6 @@ mod task_template;
 mod vscode_debug_format;
 mod vscode_format;
 
-use anyhow::Context as _;
 use collections::{HashMap, HashSet, hash_map};
 use gpui::SharedString;
 use serde::{Deserialize, Serialize};
@@ -311,11 +310,10 @@ pub struct TaskContext {
 pub struct RunnableTag(pub SharedString);
 
 pub fn shell_from_proto(proto: proto::Shell) -> anyhow::Result<Shell> {
-    let shell_type = proto.shell_type.context("invalid shell type")?;
-    let shell = match shell_type {
-        proto::shell::ShellType::System(_) => Shell::System,
-        proto::shell::ShellType::Program(program) => Shell::Program(program),
-        proto::shell::ShellType::WithArguments(program) => Shell::WithArguments {
+    let shell = match proto {
+        proto::Shell::System(_) => Shell::System,
+        proto::Shell::Program(program) => Shell::Program(program),
+        proto::Shell::WithArguments(program) => Shell::WithArguments {
             program: program.program,
             args: program.args,
             title_override: None,
@@ -325,17 +323,14 @@ pub fn shell_from_proto(proto: proto::Shell) -> anyhow::Result<Shell> {
 }
 
 pub fn shell_to_proto(shell: Shell) -> proto::Shell {
-    let shell_type = match shell {
-        Shell::System => proto::shell::ShellType::System(proto::System {}),
-        Shell::Program(program) => proto::shell::ShellType::Program(program),
+    match shell {
+        Shell::System => proto::Shell::System(proto::System {}),
+        Shell::Program(program) => proto::Shell::Program(program),
         Shell::WithArguments {
             program,
             args,
             title_override: _,
-        } => proto::shell::ShellType::WithArguments(proto::shell::WithArguments { program, args }),
-    };
-    proto::Shell {
-        shell_type: Some(shell_type),
+        } => proto::Shell::WithArguments(proto::ShellWithArguments { program, args }),
     }
 }
 

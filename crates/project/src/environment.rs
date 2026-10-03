@@ -255,7 +255,7 @@ impl ProjectEnvironment {
                     .proto_client()
                     .request(proto::GetDirectoryEnvironment {
                         project_id: REMOTE_SERVER_PROJECT_ID,
-                        shell: Some(shell_to_proto(shell.clone())),
+                        shell: shell_to_proto(shell.clone()),
                         directory: abs_path.to_string_lossy().to_string(),
                     });
                 cx.background_spawn(async move {

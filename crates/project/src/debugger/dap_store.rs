@@ -290,7 +290,7 @@ impl DapStore {
                     session_id: session_id.to_proto(),
                     project_id: remote.upstream_project_id,
                     worktree_id: worktree.read(cx).id().to_proto(),
-                    definition: Some(definition.to_proto()),
+                    definition: definition.to_proto(),
                 });
                 let remote = remote.remote_client.clone();
 
@@ -399,7 +399,7 @@ impl DapStore {
             DapStoreMode::Remote(remote) => {
                 let request = remote.upstream_client.request(proto::RunDebugLocators {
                     project_id: remote.upstream_project_id,
-                    build_command: Some(build_command.to_proto()),
+                    build_command: build_command.to_proto(),
                     locator: locator_name.to_owned(),
                 });
                 cx.background_spawn(async move {
@@ -753,7 +753,7 @@ impl DapStore {
         envelope: TypedEnvelope<proto::RunDebugLocators>,
         mut cx: AsyncApp,
     ) -> Result<proto::DebugRequest> {
-        let task = envelope.payload.build_command.context("missing definition")?;
+        let task = envelope.payload.build_command;
         let build_task = SpawnInTerminal::from_proto(task);
         let locator = envelope.payload.locator;
         let request = this
@@ -768,7 +768,7 @@ impl DapStore {
         envelope: TypedEnvelope<proto::GetDebugAdapterBinary>,
         mut cx: AsyncApp,
     ) -> Result<proto::DebugAdapterBinary> {
-        let definition = DebugTaskDefinition::from_proto(envelope.payload.definition.context("missing definition")?)?;
+        let definition = DebugTaskDefinition::from_proto(envelope.payload.definition)?;
         let (tx, mut rx) = mpsc::unbounded();
         let session_id = envelope.payload.session_id;
         cx.spawn({

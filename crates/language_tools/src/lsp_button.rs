@@ -701,61 +701,56 @@ impl LspButton {
             LspStoreEvent::LanguageServerUpdate {
                 language_server_id,
                 name,
-                message: proto::update_language_server::Variant::StatusUpdate(status_update),
-            } => match &status_update.status {
-                Some(proto::status_update::Status::Binary(binary_status)) => {
+                message: proto::UpdateLanguageServerVariant::StatusUpdate(status_update),
+            } => match &status_update.variant {
+                proto::StatusUpdateVariant::Binary(binary_status) => {
                     let Some(name) = name.as_ref() else {
                         return;
                     };
-                    if let Ok(binary_status) = proto::ServerBinaryStatus::try_from(*binary_status) {
-                        let binary_status = match binary_status {
-                            proto::ServerBinaryStatus::None => BinaryStatus::None,
-                            proto::ServerBinaryStatus::CheckingForUpdate => BinaryStatus::CheckingForUpdate,
-                            proto::ServerBinaryStatus::Downloading => BinaryStatus::Downloading,
-                            proto::ServerBinaryStatus::Starting => BinaryStatus::Starting,
-                            proto::ServerBinaryStatus::Stopping => BinaryStatus::Stopping,
-                            proto::ServerBinaryStatus::Stopped => BinaryStatus::Stopped,
-                            proto::ServerBinaryStatus::Failed => {
-                                let Some(error) = status_update.message.clone() else {
-                                    return;
-                                };
-                                BinaryStatus::Failed { error }
-                            }
-                        };
-                        self.server_state.update(cx, |state, _| {
-                            state.language_servers.update_binary_status(
-                                binary_status,
-                                status_update.message.as_deref(),
-                                name.clone(),
-                            );
-                        });
-                        updated = true;
+                    let binary_status = match binary_status {
+                        proto::ServerBinaryStatus::None => BinaryStatus::None,
+                        proto::ServerBinaryStatus::CheckingForUpdate => BinaryStatus::CheckingForUpdate,
+                        proto::ServerBinaryStatus::Downloading => BinaryStatus::Downloading,
+                        proto::ServerBinaryStatus::Starting => BinaryStatus::Starting,
+                        proto::ServerBinaryStatus::Stopping => BinaryStatus::Stopping,
+                        proto::ServerBinaryStatus::Stopped => BinaryStatus::Stopped,
+                        proto::ServerBinaryStatus::Failed => {
+                            let Some(error) = status_update.message.clone() else {
+                                return;
+                            };
+                            BinaryStatus::Failed { error }
+                        }
                     };
+                    self.server_state.update(cx, |state, _| {
+                        state.language_servers.update_binary_status(
+                            binary_status,
+                            status_update.message.as_deref(),
+                            name.clone(),
+                        );
+                    });
+                    updated = true;
                 }
-                Some(proto::status_update::Status::Health(health_status)) => {
-                    if let Ok(health) = proto::ServerHealth::try_from(*health_status) {
-                        let health = match health {
-                            proto::ServerHealth::Ok => ServerHealth::Ok,
-                            proto::ServerHealth::Warning => ServerHealth::Warning,
-                            proto::ServerHealth::Error => ServerHealth::Error,
-                        };
-                        self.server_state.update(cx, |state, _| {
-                            state.language_servers.update_server_health(
-                                *language_server_id,
-                                health,
-                                status_update.message.as_deref(),
-                                name.clone(),
-                            );
-                        });
-                        updated = true;
-                    }
+                proto::StatusUpdateVariant::Health(health_status) => {
+                    let health = match health_status {
+                        proto::ServerHealth::Ok => ServerHealth::Ok,
+                        proto::ServerHealth::Warning => ServerHealth::Warning,
+                        proto::ServerHealth::Error => ServerHealth::Error,
+                    };
+                    self.server_state.update(cx, |state, _| {
+                        state.language_servers.update_server_health(
+                            *language_server_id,
+                            health,
+                            status_update.message.as_deref(),
+                            name.clone(),
+                        );
+                    });
+                    updated = true;
                 }
-                None => {}
             },
             LspStoreEvent::LanguageServerUpdate {
                 language_server_id,
                 name,
-                message: proto::update_language_server::Variant::RegisteredForBuffer(update),
+                message: proto::UpdateLanguageServerVariant::RegisteredForBuffer(update),
                 ..
             } => {
                 self.server_state.update(cx, |state, cx| {

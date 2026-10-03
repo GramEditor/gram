@@ -11,9 +11,7 @@ use project::{
     project_settings::{NodeBinarySettings, ProjectSettings},
 };
 use proto::{
-    self, ServerBinaryStatus,
-    status_update::Status,
-    update_language_server::Variant::{RegisteredForBuffer, StatusUpdate},
+    self, ServerBinaryStatus, StatusUpdateVariant, UpdateLanguageServerVariant::{RegisteredForBuffer, StatusUpdate},
 };
 use settings::{BinarySettings, DapSettingsContent, Settings, SettingsStore};
 use ui::{
@@ -105,7 +103,7 @@ impl LspConfigView {
                     message: StatusUpdate(status_update),
                     ..
                 } => {
-                    if let Some(Status::Binary(binary_status_proto)) = &status_update.status
+                    if let StatusUpdateVariant::Binary(binary_status_proto) = &status_update.variant
                         && let Some(name) = name.as_ref()
                         && let Ok(binary_status) = ServerBinaryStatus::try_from(*binary_status_proto)
                     {

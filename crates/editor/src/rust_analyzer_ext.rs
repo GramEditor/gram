@@ -75,7 +75,7 @@ pub fn go_to_parent_module(editor: &mut Editor, _: &GoToParentModule, window: &m
             let request = proto::LspExtGoToParentModule {
                 project_id,
                 buffer_id: buffer_id.to_proto(),
-                position: Some(serialize_anchor(&trigger_anchor.text_anchor)),
+                position: serialize_anchor(&trigger_anchor.text_anchor),
             };
             let response = client
                 .request(request)
@@ -149,7 +149,7 @@ pub fn expand_macro_recursively(
             let request = proto::LspExtExpandMacro {
                 project_id,
                 buffer_id: buffer_id.to_proto(),
-                position: Some(serialize_anchor(&trigger_anchor.text_anchor)),
+                position: serialize_anchor(&trigger_anchor.text_anchor),
             };
             let response = client
                 .request(request)
@@ -231,7 +231,7 @@ pub fn open_docs(editor: &mut Editor, _: &OpenDocs, window: &mut Window, cx: &mu
             let request = proto::LspExtOpenDocs {
                 project_id,
                 buffer_id: buffer_id.to_proto(),
-                position: Some(serialize_anchor(&trigger_anchor.text_anchor)),
+                position: serialize_anchor(&trigger_anchor.text_anchor),
             };
             let response = client
                 .request(request)

@@ -1,4 +1,4 @@
-use anyhow::{Context as _, Result};
+use anyhow::Result;
 use collections::FxHashMap;
 use gpui::SharedString;
 use log as _;
@@ -119,35 +119,30 @@ pub enum DebugRequest {
 impl DebugRequest {
     pub fn to_proto(&self) -> proto::DebugRequest {
         match self {
-            DebugRequest::Launch(launch_request) => proto::DebugRequest {
-                request: Some(proto::debug_request::Request::DebugLaunchRequest(
-                    proto::DebugLaunchRequest {
-                        program: launch_request.program.clone(),
-                        cwd: launch_request
-                            .cwd
-                            .as_ref()
-                            .map(|cwd| cwd.to_string_lossy().into_owned()),
-                        args: launch_request.args.clone(),
-                        env: launch_request.env.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
-                    },
-                )),
-            },
-            DebugRequest::Attach(attach_request) => proto::DebugRequest {
-                request: Some(proto::debug_request::Request::DebugAttachRequest(
-                    proto::DebugAttachRequest {
-                        process_id: attach_request
-                            .process_id
-                            .expect("The process ID to be already filled out."),
-                    },
-                )),
-            },
+            DebugRequest::Launch(launch_request) => proto::DebugRequest::Launch(
+                proto::DebugLaunchRequest {
+                    program: launch_request.program.clone(),
+                    cwd: launch_request
+                        .cwd
+                        .as_ref()
+                        .map(|cwd| cwd.to_string_lossy().into_owned()),
+                    args: launch_request.args.clone(),
+                    env: launch_request.env.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
+                },
+            ),
+            DebugRequest::Attach(attach_request) => proto::DebugRequest::Attach(
+                proto::DebugAttachRequest {
+                    process_id: attach_request
+                        .process_id
+                        .expect("The process ID to be already filled out."),
+                },
+            ),
         }
     }
 
-    pub fn from_proto(val: proto::DebugRequest) -> Result<DebugRequest> {
-        let request = val.request.context("Missing debug request")?;
+    pub fn from_proto(request: proto::DebugRequest) -> Result<DebugRequest> {
         match request {
-            proto::debug_request::Request::DebugLaunchRequest(proto::DebugLaunchRequest {
+            proto::DebugRequest::Launch(proto::DebugLaunchRequest {
                 program,
                 cwd,
                 args,
@@ -159,7 +154,7 @@ impl DebugRequest {
                 env: env.into_iter().collect(),
             })),
 
-            proto::debug_request::Request::DebugAttachRequest(proto::DebugAttachRequest { process_id }) => {
+            proto::DebugRequest::Attach(proto::DebugAttachRequest { process_id }) => {
                 Ok(DebugRequest::Attach(AttachRequest {
                     process_id: Some(process_id),
                 }))

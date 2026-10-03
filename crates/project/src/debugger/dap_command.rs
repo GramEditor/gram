@@ -107,13 +107,10 @@ pub struct StepCommand {
 
 impl StepCommand {
     fn from_proto(message: proto::DapNextRequest) -> Self {
-        const LINE: i32 = proto::SteppingGranularity::Line as i32;
-        const INSTRUCTION: i32 = proto::SteppingGranularity::Instruction as i32;
-
         let granularity = message.granularity.map(|granularity| match granularity {
-            LINE => SteppingGranularity::Line,
-            INSTRUCTION => SteppingGranularity::Instruction,
-            _ => SteppingGranularity::Statement,
+            proto::SteppingGranularity::Line => SteppingGranularity::Line,
+            proto::SteppingGranularity::Instruction => SteppingGranularity::Instruction,
+            proto::SteppingGranularity::Statement => SteppingGranularity::Statement,
         });
 
         Self {
@@ -158,7 +155,7 @@ impl DapCommand for NextCommand {
 
     fn from_proto(request: &Self::ProtoRequest) -> Self {
         Self {
-            inner: StepCommand::from_proto(*request),
+            inner: StepCommand::from_proto(request.clone()),
         }
     }
 
@@ -172,7 +169,7 @@ impl DapCommand for NextCommand {
             client_id: debug_client_id.to_proto(),
             thread_id: self.inner.thread_id,
             single_thread: self.inner.single_thread,
-            granularity: self.inner.granularity.map(|gran| gran.to_proto() as i32),
+            granularity: self.inner.granularity.map(|gran| gran.to_proto()),
         }
     }
 
@@ -237,7 +234,7 @@ impl DapCommand for StepInCommand {
             client_id: debug_client_id.to_proto(),
             thread_id: self.inner.thread_id,
             single_thread: self.inner.single_thread,
-            granularity: self.inner.granularity.map(|gran| gran.to_proto() as i32),
+            granularity: self.inner.granularity.map(|gran| gran.to_proto()),
             target_id: None,
         }
     }
@@ -302,7 +299,7 @@ impl DapCommand for StepOutCommand {
             client_id: debug_client_id.to_proto(),
             thread_id: self.inner.thread_id,
             single_thread: self.inner.single_thread,
-            granularity: self.inner.granularity.map(|gran| gran.to_proto() as i32),
+            granularity: self.inner.granularity.map(|gran| gran.to_proto()),
         }
     }
 
@@ -369,7 +366,7 @@ impl DapCommand for StepBackCommand {
             client_id: debug_client_id.to_proto(),
             thread_id: self.inner.thread_id,
             single_thread: self.inner.single_thread,
-            granularity: self.inner.granularity.map(|gran| gran.to_proto() as i32),
+            granularity: self.inner.granularity.map(|gran| gran.to_proto()),
         }
     }
 
@@ -1301,7 +1298,7 @@ impl DapCommand for EvaluateCommand {
         Self {
             expression: request.expression.clone(),
             frame_id: request.frame_id,
-            context: Some(dap::EvaluateArgumentsContext::from_proto(request.context())),
+            context: request.context.map(dap::EvaluateArgumentsContext::from_proto),
             source: None,
         }
     }
@@ -1708,7 +1705,7 @@ impl DapCommand for LocationsCommand {
 
     fn response_to_proto(_: SessionId, response: Self::Response) -> Self::ProtoResponse {
         proto::DapLocationsResponse {
-            source: Some(response.source.to_proto()),
+            source: response.source.to_proto(),
             line: response.line,
             column: response.column,
             end_line: response.end_line,
@@ -1718,10 +1715,7 @@ impl DapCommand for LocationsCommand {
 
     fn response_from_proto(&self, response: Self::ProtoResponse) -> Result<Self::Response> {
         Ok(dap::LocationsResponse {
-            source: response
-                .source
-                .map(<dap::Source as ProtoConversion>::from_proto)
-                .context("Missing `source` field in Locations proto")?,
+            source: <dap::Source as ProtoConversion>::from_proto(response.source),
             line: response.line,
             column: response.column,
             end_line: response.end_line,

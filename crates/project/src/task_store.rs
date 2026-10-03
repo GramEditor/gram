@@ -66,10 +66,7 @@ impl TaskStore {
         envelope: TypedEnvelope<proto::TaskContextForLocation>,
         mut cx: AsyncApp,
     ) -> anyhow::Result<proto::TaskContext> {
-        let location = envelope
-            .payload
-            .location
-            .context("no location given for task context handling")?;
+        let location = envelope.payload.location;
         let (buffer_store, is_remote) = store.read_with(&cx, |store, _| {
             Ok(match store {
                 TaskStore::Functional(state) => (
@@ -95,14 +92,8 @@ impl TaskStore {
             )
         })?;
 
-        let start = location
-            .start
-            .and_then(deserialize_anchor)
-            .context("missing task context location start")?;
-        let end = location
-            .end
-            .and_then(deserialize_anchor)
-            .context("missing task context location end")?;
+        let start = deserialize_anchor(location.start);
+        let end = deserialize_anchor(location.end);
         let buffer = buffer_store
             .update(&mut cx, |buffer_store, cx| {
                 if is_remote {
@@ -374,11 +365,11 @@ fn remote_task_context_for_location(
         let buffer_id = cx.update(|cx| location.buffer.read(cx).remote_id().to_proto()).ok()?;
         let context_task = upstream_client.request(proto::TaskContextForLocation {
             project_id,
-            location: Some(proto::Location {
+            location: proto::Location {
                 buffer_id,
-                start: Some(serialize_anchor(&location.range.start)),
-                end: Some(serialize_anchor(&location.range.end)),
-            }),
+                start: serialize_anchor(&location.range.start),
+                end: serialize_anchor(&location.range.end),
+            },
             task_variables: remote_context.into_iter().map(|(k, v)| (k.to_string(), v)).collect(),
         });
         let task_context = context_task.await.log_err()?;

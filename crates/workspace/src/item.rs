@@ -959,25 +959,25 @@ pub enum Dedup {
 
 pub trait FollowableItem: Item {
     fn remote_id(&self) -> Option<ViewId>;
-    fn to_state_proto(&self, window: &Window, cx: &App) -> Option<proto::view::Variant>;
+    fn to_state_proto(&self, window: &Window, cx: &App) -> Option<proto::ViewVariant>;
     fn from_state_proto(
         project: Entity<Workspace>,
         id: ViewId,
-        state: &mut Option<proto::view::Variant>,
+        state: &mut Option<proto::ViewVariant>,
         window: &mut Window,
         cx: &mut App,
     ) -> Option<Task<Result<Entity<Self>>>>;
     fn add_event_to_update_proto(
         &self,
         event: &Self::Event,
-        update: &mut Option<proto::update_view::Variant>,
+        update: &mut Option<proto::UpdateView>,
         window: &Window,
         cx: &App,
     ) -> bool;
     fn apply_update_proto(
         &mut self,
         project: &Entity<Project>,
-        message: proto::update_view::Variant,
+        message: proto::UpdateView,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Task<Result<()>>;
@@ -987,18 +987,18 @@ pub trait FollowableItem: Item {
 
 pub trait FollowableItemHandle: ItemHandle {
     fn downgrade(&self) -> Box<dyn WeakFollowableItemHandle>;
-    fn to_state_proto(&self, window: &mut Window, cx: &mut App) -> Option<proto::view::Variant>;
+    fn to_state_proto(&self, window: &mut Window, cx: &mut App) -> Option<proto::ViewVariant>;
     fn add_event_to_update_proto(
         &self,
         event: &dyn Any,
-        update: &mut Option<proto::update_view::Variant>,
+        update: &mut Option<proto::UpdateView>,
         window: &mut Window,
         cx: &mut App,
     ) -> bool;
     fn apply_update_proto(
         &self,
         project: &Entity<Project>,
-        message: proto::update_view::Variant,
+        message: proto::UpdateView,
         window: &mut Window,
         cx: &mut App,
     ) -> Task<Result<()>>;
@@ -1011,14 +1011,14 @@ impl<T: FollowableItem> FollowableItemHandle for Entity<T> {
         Box::new(self.downgrade())
     }
 
-    fn to_state_proto(&self, window: &mut Window, cx: &mut App) -> Option<proto::view::Variant> {
+    fn to_state_proto(&self, window: &mut Window, cx: &mut App) -> Option<proto::ViewVariant> {
         self.read(cx).to_state_proto(window, cx)
     }
 
     fn add_event_to_update_proto(
         &self,
         event: &dyn Any,
-        update: &mut Option<proto::update_view::Variant>,
+        update: &mut Option<proto::UpdateView>,
         window: &mut Window,
         cx: &mut App,
     ) -> bool {
@@ -1032,7 +1032,7 @@ impl<T: FollowableItem> FollowableItemHandle for Entity<T> {
     fn apply_update_proto(
         &self,
         project: &Entity<Project>,
-        message: proto::update_view::Variant,
+        message: proto::UpdateView,
         window: &mut Window,
         cx: &mut App,
     ) -> Task<Result<()>> {

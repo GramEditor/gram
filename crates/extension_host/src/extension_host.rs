@@ -1390,7 +1390,7 @@ impl ExtensionStore {
                 .update(cx, |client, _cx| {
                     client.proto_client().request(proto::InstallExtension {
                         tmp_dir: dest_dir.into_proto(),
-                        extension: Some(missing_extension.clone()),
+                        extension: missing_extension.clone(),
                     })
                 })?
                 .await;

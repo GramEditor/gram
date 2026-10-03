@@ -343,17 +343,6 @@ impl RunHook {
             Self::PreCommit => "pre-commit",
         }
     }
-
-    pub fn to_proto(self) -> i32 {
-        self as i32
-    }
-
-    pub fn from_proto(value: i32) -> Option<Self> {
-        match value {
-            0 => Some(Self::PreCommit),
-            _ => None,
-        }
-    }
 }
 
 #[cfg(test)]
