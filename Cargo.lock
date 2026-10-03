@@ -8064,6 +8064,7 @@ dependencies = [
  "log",
  "parking_lot",
  "paths",
+ "postcard",
  "prost",
  "release_channel",
  "rpc",

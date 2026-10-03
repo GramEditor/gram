@@ -1161,7 +1161,7 @@ impl ChannelClient {
                         buffer.pop_front();
                     }
                 }
-                if let Some(proto::envelope::Payload::FlushBufferedMessages(_)) = &incoming.payload {
+                if let proto::Payload::FlushBufferedMessages(_) = &incoming.payload {
                     log::debug!("{}:ssh message received. name:FlushBufferedMessages", this.name);
                     {
                         let buffer = this.buffer.lock();
@@ -1175,7 +1175,7 @@ impl ChannelClient {
                     continue;
                 }
 
-                if let Some(proto::envelope::Payload::RemoteStarted(_)) = &incoming.payload {
+                if let proto::Payload::RemoteStarted(_) = &incoming.payload {
                     this.remote_started.set(());
                     let mut envelope = proto::Ack {}.into_envelope(0, Some(incoming.id), None);
                     envelope.id = this.next_message_id.fetch_add(1, SeqCst);
@@ -1190,9 +1190,7 @@ impl ChannelClient {
                     let sender = this.response_channels.lock().remove(&request_id);
                     if let Some(sender) = sender {
                         let (tx, rx) = oneshot::channel();
-                        if incoming.payload.is_some() {
-                            sender.send((incoming, tx)).ok();
-                        }
+                        sender.send((incoming, tx)).ok();
                         rx.await.ok();
                     }
                 } else if let Some(envelope) = build_typed_envelope(peer_id, Instant::now(), incoming) {
@@ -1332,7 +1330,7 @@ impl ChannelClient {
             }
 
             let response = rx.await.context("connection lost")?.0;
-            if let Some(proto::envelope::Payload::Error(error)) = &response.payload {
+            if let proto::Payload::Error(error) = &response.payload {
                 return Err(RpcError::from_proto(error, type_name));
             }
             Ok(response)
