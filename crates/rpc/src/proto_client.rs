@@ -218,7 +218,7 @@ impl AnyProtoClient {
             project_id,
             server_id,
             lsp_request_id: new_id.0,
-            request: Some(request.to_proto_query()),
+            request: request.to_proto_query(),
         };
         let request = self.request(query);
         let request_ids = self.0.request_ids.clone();
@@ -275,7 +275,7 @@ impl AnyProtoClient {
                 .into_iter()
                 .map(|(server_id, response)| proto::LspResponse {
                     server_id,
-                    response: Some(T::response_to_proto_query(response)),
+                    variant: T::response_to_proto_query(response),
                 })
                 .collect(),
         })
@@ -294,22 +294,22 @@ impl AnyProtoClient {
                 payload: responses
                     .into_iter()
                     .filter_map(|response| {
-                        use proto::lsp_response::Response;
+                        use proto::LspResponseVariant;
 
                         let server_id = response.server_id;
-                        let response = match response.response? {
-                            Response::GetReferencesResponse(response) => to_any_envelope(&envelope, response),
-                            Response::GetDocumentColorResponse(response) => to_any_envelope(&envelope, response),
-                            Response::GetHoverResponse(response) => to_any_envelope(&envelope, response),
-                            Response::GetCodeActionsResponse(response) => to_any_envelope(&envelope, response),
-                            Response::GetSignatureHelpResponse(response) => to_any_envelope(&envelope, response),
-                            Response::GetCodeLensResponse(response) => to_any_envelope(&envelope, response),
-                            Response::GetDocumentDiagnosticsResponse(response) => to_any_envelope(&envelope, response),
-                            Response::GetDefinitionResponse(response) => to_any_envelope(&envelope, response),
-                            Response::GetDeclarationResponse(response) => to_any_envelope(&envelope, response),
-                            Response::GetTypeDefinitionResponse(response) => to_any_envelope(&envelope, response),
-                            Response::GetImplementationResponse(response) => to_any_envelope(&envelope, response),
-                            Response::InlayHintsResponse(response) => to_any_envelope(&envelope, response),
+                        let response = match response.variant {
+                            LspResponseVariant::GetReferencesResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::GetDocumentColorResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::GetHoverResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::GetCodeActionsResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::GetSignatureHelpResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::GetCodeLensResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::GetDocumentDiagnosticsResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::GetDefinitionResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::GetDeclarationResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::GetTypeDefinitionResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::GetImplementationResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::InlayHintsResponse(response) => to_any_envelope(&envelope, response),
                         };
                         Some(proto::ProtoLspResponse { server_id, response })
                     })
