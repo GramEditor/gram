@@ -45,7 +45,7 @@ use gpui::{
     linear_color_stop, linear_gradient, outline, point, px, quad, relative, size, solid_background, transparent_black,
 };
 use itertools::Itertools;
-use language::{IndentGuideSettings, language_settings::ShowWhitespaceSetting};
+use language::{File, IndentGuideSettings, language_settings::ShowWhitespaceSetting};
 use markdown::Markdown;
 use multi_buffer::{
     Anchor, ExcerptId, ExcerptInfo, ExpandExcerptDirection, ExpandInfo, MultiBufferPoint, MultiBufferRow, RowInfo,
@@ -77,11 +77,11 @@ use std::{
 use sum_tree::Bias;
 use text::{BufferId, SelectionGoal};
 use theme::{ActiveTheme, Appearance, BufferLineHeight, PlayerColor};
-use ui::utils::ensure_minimum_contrast;
 use ui::{
-    ButtonLike, ContextMenu, Indicator, KeyBinding, POPOVER_Y_PADDING, Tooltip, prelude::*, right_click_menu,
+    ButtonLike, ContextMenu, Indicator, POPOVER_Y_PADDING, PopoverMenu, Tooltip, prelude::*, right_click_menu,
     scrollbars::ShowScrollbar, text_for_keystroke,
 };
+use ui::{SplitButton, utils::ensure_minimum_contrast};
 use unicode_segmentation::UnicodeSegmentation;
 use util::post_inc;
 use util::{RangeExt, ResultExt, debug_panic};
@@ -3524,14 +3524,16 @@ impl EditorElement {
             .unwrap_or_default();
         let file = for_excerpt.buffer.file();
         let can_open_excerpts = editor.can_open_excerpt_buffer(&for_excerpt.buffer);
-        let can_open_current_file = is_read_only
-            && file.is_some_and(|file| {
-                editor
-                    .project
-                    .as_ref()
-                    .and_then(|project| project.read(cx).worktree_for_id(file.worktree_id(cx), cx))
-                    .is_some_and(|worktree| worktree.read(cx).entry_for_path(file.path()).is_some())
-            });
+        let open_current_file = file
+            .filter(|file| {
+                is_read_only
+                    && editor
+                        .project
+                        .as_ref()
+                        .and_then(|project| project.read(cx).worktree_for_id(file.worktree_id(cx), cx))
+                        .is_some_and(|worktree| worktree.read(cx).entry_for_path(file.path()).is_some())
+            })
+            .cloned();
         let path_style = file.map(|file| file.path_style(cx));
         let relative_path = for_excerpt.buffer.resolve_file_path(include_root, cx).or_else(|| {
             multi_buffer
@@ -3693,87 +3695,20 @@ impl EditorElement {
                                         ))
                                     })
                             }))
-                            .when(can_open_current_file && is_selected && relative_path.is_some(), |el| {
-                                el.child(
-                                    Button::new("open-current-file-button", "Open Current File")
-                                        .style(ButtonStyle::OutlinedGhost)
-                                        .on_click(window.listener_for(&self.editor, {
-                                            let file = file.cloned();
-
-                                            move |editor, _: &ClickEvent, window, cx| {
-                                                let Some(file) = file.clone() else {
-                                                    return;
-                                                };
-                                                let Some(workspace) = editor.workspace() else {
-                                                    return;
-                                                };
-
-                                                let project_path = ProjectPath {
-                                                    path: file.path().clone(),
-                                                    worktree_id: file.worktree_id(cx),
-                                                };
-
-                                                let open_task = workspace.update(cx, |workspace, cx| {
-                                                    workspace.open_path(project_path, None, true, window, cx)
-                                                });
-
-                                                // attempt jump to the focused line number,
-                                                let head_anchor = editor.selections.newest_anchor().head();
-                                                let multibuffer = editor.buffer().read(cx);
-                                                let point = head_anchor
-                                                    .text_anchor
-                                                    .buffer_id
-                                                    .and_then(|buffer_id| multibuffer.buffer(buffer_id))
-                                                    .map(|buffer| {
-                                                        let buffer_snapshot = buffer.read(cx).snapshot();
-                                                        language::ToPoint::to_point(
-                                                            &head_anchor.text_anchor,
-                                                            &buffer_snapshot,
-                                                        )
-                                                    })
-                                                    .unwrap_or_default();
-
-                                                cx.spawn_in(window, async move |_, cx| {
-                                                    let item = open_task.await?;
-
-                                                    if let Some(opened_editor) = item.downcast::<Editor>() {
-                                                        opened_editor.update_in(cx, |editor, window, cx| {
-                                                            let snapshot = editor.buffer().read(cx).snapshot(cx);
-                                                            let point = snapshot.clip_point(point, text::Bias::Left);
-                                                            editor.change_selections(
-                                                                Some(Autoscroll::center()).into(),
-                                                                window,
-                                                                cx,
-                                                                |selections| {
-                                                                    selections.select_ranges([point..point]);
-                                                                },
-                                                            );
-                                                        })?;
-                                                    }
-
-                                                    anyhow::Ok(())
-                                                })
-                                                .detach_and_notify_err(window, cx);
-                                            }
-                                        })),
-                                )
-                            })
-                            .when(can_open_excerpts && is_selected && relative_path.is_some(), |el| {
-                                el.child(
-                                    Button::new("open-file-button", "Open File")
-                                        .style(ButtonStyle::OutlinedGhost)
-                                        .key_binding(KeyBinding::for_action_in(&OpenExcerpts, &focus_handle, cx))
-                                        .on_click(window.listener_for(&self.editor, {
-                                            let jump_data = jump_data.clone();
-                                            move |editor, e: &ClickEvent, window, cx| {
-                                                editor.open_excerpts_common(
-                                                    Some(jump_data.clone()),
-                                                    e.modifiers().secondary(),
-                                                    window,
-                                                    cx,
-                                                );
-                                            }
-                                        })),
+                            .when(is_selected && relative_path.is_some(), |this1| {
+                                this1.when_some(
+                                    self.render_file_header_menu(
+                                        is_read_only,
+                                        open_current_file,
+                                        if can_open_excerpts {
+                                            Some(jump_data.clone())
+                                        } else {
+                                            None
+                                        },
+                                        window,
+                                        cx,
+                                    ),
+                                    |this, element| this.child(element),
                                 )
                             })
                             .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
@@ -3893,6 +3828,135 @@ impl EditorElement {
                     menu.context(menu_context)
                 })
             })
+    }
+
+    fn render_file_header_menu(
+        &self,
+        is_read_only: bool,
+        current_file: Option<Arc<dyn File>>,
+        jump_excerpts: Option<JumpData>,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> Option<impl IntoElement> {
+        let can_open_current_file = current_file.is_some();
+        let can_open_excerpts = jump_excerpts.is_some();
+        if !can_open_current_file && !can_open_excerpts {
+            return None;
+        }
+        let title = if can_open_current_file || !is_read_only {
+            "Open File"
+        } else {
+            "View File"
+        };
+        Some(SplitButton::new(
+            ButtonLike::new_rounded_left(ElementId::Name(format!("file-split-button-left-{}", title).into()))
+                .size(ButtonSize::Default)
+                .child(Label::new(title).size(LabelSize::Small).mr_0p5())
+                .tooltip({
+                    let file_name = current_file
+                        .as_ref()
+                        .map(|file| file.file_name(cx).to_string())
+                        .unwrap_or("".into());
+                    move |_window, cx| {
+                        Tooltip::with_meta(
+                            if can_open_current_file {
+                                "Open the current file unless it has been removed."
+                            } else if is_read_only {
+                                "Open a read-only view of the file at the given commit."
+                            } else {
+                                "Open the file at the current line."
+                            },
+                            if can_open_current_file {
+                                None
+                            } else {
+                                Some(&OpenExcerpts)
+                            },
+                            file_name.clone(),
+                            cx,
+                        )
+                    }
+                })
+                .on_click(window.listener_for(&self.editor, {
+                    move |editor, e: &ClickEvent, window, cx| {
+                        if can_open_current_file {
+                            let Some(file) = current_file.clone() else {
+                                return;
+                            };
+                            let Some(workspace) = editor.workspace() else {
+                                return;
+                            };
+
+                            let project_path = ProjectPath {
+                                path: file.path().clone(),
+                                worktree_id: file.worktree_id(cx),
+                            };
+
+                            let open_task = workspace.update(cx, |workspace, cx| {
+                                workspace.open_path(project_path, None, true, window, cx)
+                            });
+
+                            // attempt jump to the focused line number,
+                            let head_anchor = editor.selections.newest_anchor().head();
+                            let multibuffer = editor.buffer().read(cx);
+                            let point = head_anchor
+                                .text_anchor
+                                .buffer_id
+                                .and_then(|buffer_id| multibuffer.buffer(buffer_id))
+                                .map(|buffer| {
+                                    let buffer_snapshot = buffer.read(cx).snapshot();
+                                    language::ToPoint::to_point(&head_anchor.text_anchor, &buffer_snapshot)
+                                })
+                                .unwrap_or_default();
+
+                            cx.spawn_in(window, async move |_, cx| {
+                                let item = open_task.await?;
+
+                                if let Some(opened_editor) = item.downcast::<Editor>() {
+                                    opened_editor.update_in(cx, |editor, window, cx| {
+                                        let snapshot = editor.buffer().read(cx).snapshot(cx);
+                                        let point = snapshot.clip_point(point, text::Bias::Left);
+                                        editor.change_selections(
+                                            Some(Autoscroll::center()).into(),
+                                            window,
+                                            cx,
+                                            |selections| {
+                                                selections.select_ranges([point..point]);
+                                            },
+                                        );
+                                    })?;
+                                }
+
+                                anyhow::Ok(())
+                            })
+                            .detach_and_notify_err(window, cx);
+                        } else {
+                            editor.open_excerpts_common(jump_excerpts.clone(), e.modifiers().secondary(), window, cx);
+                        }
+                    }
+                })),
+            PopoverMenu::new(format!("file-split-button-menu-{}", title))
+                .trigger(
+                    ButtonLike::new_rounded_right("file-split-button-right")
+                        .layer(ui::ElevationIndex::ModalSurface)
+                        .size(ButtonSize::None)
+                        .child(
+                            h_flex()
+                                .px_1()
+                                .h_full()
+                                .justify_center()
+                                .border_l_1()
+                                .border_color(cx.theme().colors().border)
+                                .child(Icon::new(IconName::ChevronDown).size(IconSize::XSmall)),
+                        ),
+                )
+                .menu(move |window, cx| {
+                    Some(ContextMenu::build(window, cx, |context_menu, _, _| {
+                        context_menu.action("View File", Box::new(OpenExcerpts))
+                    }))
+                })
+                .anchor(Corner::TopRight)
+                .into_any_element(),
+        ))
     }
 
     fn render_blocks(
