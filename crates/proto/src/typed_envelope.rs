@@ -31,9 +31,9 @@ pub trait RequestMessage: EnvelopedMessage {
 pub trait LspRequestMessage: EnvelopedMessage {
     type Response: EnvelopedMessage;
 
-    fn to_proto_query(self) -> crate::lsp_query::Request;
+    fn to_proto_query(self) -> crate::LspQueryRequest;
 
-    fn response_to_proto_query(response: Self::Response) -> crate::lsp_response::Response;
+    fn response_to_proto_query(response: Self::Response) -> crate::LspResponseVariant;
 
     fn buffer_id(&self) -> u64;
 

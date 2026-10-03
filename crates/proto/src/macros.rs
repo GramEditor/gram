@@ -3,7 +3,7 @@ macro_rules! messages {
     ($(($name:ident, $priority:ident)),* $(,)?) => {
         pub fn build_typed_envelope(sender_id: PeerId, received_at: std::time::Instant, envelope: Envelope) -> Option<Box<dyn AnyTypedEnvelope>> {
             match envelope.payload {
-                $(Some(envelope::Payload::$name(payload)) => {
+                $(Payload::$name(payload) => {
                     Some(Box::new(TypedEnvelope {
                         sender_id,
                         original_sender_id: envelope.original_sender_id,
@@ -31,13 +31,13 @@ macro_rules! messages {
                         id,
                         responding_to,
                         original_sender_id,
-                        payload: Some(envelope::Payload::$name(self)),
+                        payload: Payload::$name(self),
                         ack_id: None,
                     }
                 }
 
                 fn from_envelope(envelope: Envelope) -> Option<Self> {
-                    if let Some(envelope::Payload::$name(msg)) = envelope.payload {
+                    if let Payload::$name(msg) = envelope.payload {
                         Some(msg)
                     } else {
                         None
@@ -76,12 +76,12 @@ macro_rules! lsp_messages {
         $(impl LspRequestMessage for $request_name {
             type Response = $response_name;
 
-            fn to_proto_query(self) -> $crate::lsp_query::Request {
-                $crate::lsp_query::Request::$request_name(self)
+            fn to_proto_query(self) -> $crate::LspQueryRequest {
+                $crate::LspQueryRequest::$request_name(self)
             }
 
-            fn response_to_proto_query(response: Self::Response) -> $crate::lsp_response::Response {
-                $crate::lsp_response::Response::$response_name(response)
+            fn response_to_proto_query(response: Self::Response) -> $crate::LspResponseVariant {
+                $crate::LspResponseVariant::$response_name(response)
             }
 
             fn buffer_id(&self) -> u64 {

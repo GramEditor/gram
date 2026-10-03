@@ -160,7 +160,7 @@ impl RpcError {
     pub fn from_proto(error: &crate::Error, request: &str) -> anyhow::Error {
         RpcError {
             request: Some(request.to_string()),
-            code: error.code(),
+            code: error.code,
             msg: error.message.clone(),
             tags: error.tags.clone(),
         }
@@ -203,7 +203,7 @@ impl ErrorExt for RpcError {
 
     fn to_proto(&self) -> crate::Error {
         crate::Error {
-            code: self.code as i32,
+            code: self.code,
             message: self.msg.clone(),
             tags: self.tags.clone(),
         }

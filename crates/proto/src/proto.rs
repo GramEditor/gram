@@ -3,18 +3,18 @@
 pub mod error;
 mod macros;
 mod typed_envelope;
+mod messages;
 
 pub use error::*;
 pub use prost::{DecodeError, Message};
 use std::{
     cmp,
-    fmt::Debug,
     iter, mem,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 pub use typed_envelope::*;
 
-include!(concat!(env!("OUT_DIR"), "/gram.messages.rs"));
+pub use messages::*;
 
 pub const REMOTE_SERVER_PEER_ID: PeerId = PeerId { owner_id: 0, id: 0 };
 pub const REMOTE_SERVER_PROJECT_ID: u64 = 0;
