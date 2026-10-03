@@ -26,7 +26,7 @@ pub use task::*;
 pub use toolchain::*;
 pub use worktree::*;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Envelope {
     pub id: u32,
     pub responding_to: Option<u32>,
@@ -35,26 +35,27 @@ pub struct Envelope {
     pub payload: Payload,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Hello {
     peer_id: PeerId
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Ping {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Ack {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Error {
     pub message: String,
     pub code: ErrorCode,
     pub tags: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum ErrorCode {
+    #[default]
     Internal,
     Disconnected,
     SignedOut,
@@ -72,21 +73,21 @@ pub enum ErrorCode {
     CommitFailed,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct EndStream {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Test {
     pub id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct FlushBufferedMessages {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct FlushBufferedMessagesResponse {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RemoteStarted {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -439,4 +440,9 @@ pub enum Payload {
 
     GitCommitHistory(GitCommitHistory),
     GitCommitHistoryResponse(GitCommitHistoryResponse),
+}
+impl Default for Payload {
+    fn default() -> Self {
+        Self::Hello(Default::default())
+    }
 }

@@ -1,3 +1,4 @@
+use std::default::Default;
 use serde::{Serialize, Deserialize};
 
 use crate::messages::buffer::{Anchor, EditorAnchor, Selection};
@@ -6,74 +7,74 @@ use crate::messages::git::{Branch, StatusEntry};
 use crate::messages::lsp::LanguageServer;
 use crate::messages::worktree::{Entry, WorktreeMetadata};
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct CreateRoom {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct CreateRoomResponse {
     pub room: Room,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct JoinRoom {
     pub id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct JoinRoomResponse {
     pub room: Room,
     pub channel_id: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RejoinRoom {
     pub id: u64,
     pub reshared_projects: Vec<UpdateProject>,
     pub rejoined_projects: Vec<RejoinProject>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RejoinRemoteProjects {
     pub rejoined_projects: Vec<RejoinProject>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RejoinRemoteProjectsResponse {
     pub rejoined_projects: Vec<RejoinedProject>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RejoinProject {
     pub id: u64,
     pub worktrees: Vec<RejoinWorktree>,
     pub repositories: Vec<RejoinRepository>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RejoinWorktree {
     pub id: u64,
     pub scan_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RejoinRepository {
     pub id: u64,
     pub scan_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RejoinRoomResponse {
     pub room: Room,
     pub reshared_projects: Vec<ResharedProject>,
     pub rejoined_projects: Vec<RejoinedProject>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ResharedProject {
     pub id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RejoinedProject {
     pub id: u64,
     pub worktrees: Vec<WorktreeMetadata>,
@@ -81,10 +82,10 @@ pub struct RejoinedProject {
     pub language_server_capabilities: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct LeaveRoom {}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Room {
     pub id: u64,
     pub participants: Vec<Participant>,
@@ -93,7 +94,7 @@ pub struct Room {
     pub livekit_room: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Participant {
     pub user_id: u64,
     pub peer_id: PeerId,
@@ -102,20 +103,20 @@ pub struct Participant {
     pub participant_index: u32,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct PendingParticipant {
     pub user_id: u64,
     pub calling_user_id: u64,
     pub initial_project_id: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ParticipantProject {
     pub id: u64,
     pub worktree_root_names: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Follower {
     pub leader_id: PeerId,
     pub follower_id: PeerId,
@@ -128,18 +129,24 @@ pub enum ParticipantLocation {
     UnsharedProject,
     External,
 }
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+impl Default for ParticipantLocation {
+    fn default() -> Self {
+        Self::SharedProject(Default::default())
+    }
+}
+
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UpdateParticipantLocation {
     pub room_id: u64,
     pub location: ParticipantLocation,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RoomUpdated {
     pub room: Room,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ShareProject {
     pub room_id: u64,
     pub worktrees: Vec<WorktreeMetadata>,
@@ -147,30 +154,30 @@ pub struct ShareProject {
     pub windows_paths: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ShareProjectResponse {
     pub project_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UnshareProject {
     pub project_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UpdateProject {
     pub project_id: u64,
     pub worktrees: Vec<WorktreeMetadata>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct JoinProject {
     pub project_id: u64,
     pub committer_email: Option<String>,
     pub committer_name: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct JoinProjectResponse {
     pub project_id: u64,
     pub replica_id: u32,
@@ -180,12 +187,12 @@ pub struct JoinProjectResponse {
     pub windows_paths: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct LeaveProject {
     pub project_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UpdateWorktree {
     pub project_id: u64,
     pub worktree_id: u64,
@@ -200,7 +207,7 @@ pub struct UpdateWorktree {
 }
 
 // deprecated
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RepositoryEntry {
     pub repository_id: u64,
     pub updated_statuses: Vec<StatusEntry>,
@@ -209,29 +216,29 @@ pub struct RepositoryEntry {
     pub branch_summary: Option<Branch>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetUsers {
     pub user_ids: Vec<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct FuzzySearchUsers {
     pub query: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UsersResponse {
     pub users: Vec<User>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Follow {
     pub room_id: u64,
     pub project_id: Option<u64>,
     pub leader_id: PeerId,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct FollowResponse {
     pub active_view: View,
     // TODO: Remove after version 0.145.x stabilizes.
@@ -239,33 +246,34 @@ pub struct FollowResponse {
     pub views: Vec<View>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Unfollow {
     pub room_id: u64,
     pub project_id: Option<u64>,
     pub leader_id: PeerId,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ViewId {
     pub creator: PeerId,
     pub id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UpdateActiveView {
     pub id: Option<ViewId>,
     pub leader_id: Option<PeerId>,
     pub view: View,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum PanelId {
+    #[default]
     AssistantPanel,
     DebugPanel,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UpdateViewEditor {
     pub inserted_excerpts: Vec<ExcerptInsertion>,
     pub deleted_excerpts: Vec<u64>,
@@ -276,7 +284,7 @@ pub struct UpdateViewEditor {
     pub scroll_y: f64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UpdateView {
     pub id: ViewId,
     pub leader_id: Option<PeerId>,
@@ -287,7 +295,7 @@ pub struct UpdateView {
     pub editor: UpdateViewEditor,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ViewEditor {
     pub singleton: bool,
     pub title: Option<String>,
@@ -299,7 +307,7 @@ pub struct ViewEditor {
     pub scroll_y: f64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ViewContextEditor {
     pub context_id: String,
     pub editor: ViewEditor,
@@ -310,8 +318,13 @@ pub enum ViewVariant {
     Editor(ViewEditor),
     ContextEditor(ViewContextEditor),
 }
+impl Default for ViewVariant {
+    fn default() -> Self {
+        Self::Editor(Default::default())
+    }
+}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct View {
     pub id: ViewId,
     pub leader_id: Option<PeerId>,
@@ -319,13 +332,13 @@ pub struct View {
     pub variant: ViewVariant,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ExcerptInsertion {
     pub excerpt: Excerpt,
     pub previous_excerpt_id: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Excerpt {
     pub id: u64,
     pub buffer_id: u64,

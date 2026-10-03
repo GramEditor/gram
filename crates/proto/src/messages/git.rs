@@ -3,14 +3,15 @@ use serde::{Serialize, Deserialize};
 use crate::messages::buffer::{Range, VectorClockEntry};
 use crate::messages::worktree::ProjectPath;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitBranchesResponse {
     pub branches: Vec<Branch>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum UpdateDiffBasesMode {
     // No client is using the unstaged diff.
+    #[default]
     HeadOnly,
     // No client is using the diff from HEAD.
     IndexOnly,
@@ -23,7 +24,7 @@ pub enum UpdateDiffBasesMode {
     IndexAndHead,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UpdateDiffBases {
     pub project_id: u64,
     pub buffer_id: u64,
@@ -32,37 +33,38 @@ pub struct UpdateDiffBases {
     pub mode: UpdateDiffBasesMode,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct OpenUnstagedDiff {
     pub project_id: u64,
     pub buffer_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct OpenUnstagedDiffResponse {
     pub staged_text: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct OpenUncommittedDiff {
     pub project_id: u64,
     pub buffer_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum OpenUncommittedDiffResponseMode {
+    #[default]
     IndexMatchesHead,
     IndexAndHead,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct OpenUncommittedDiffResponse {
     pub staged_text: Option<String>,
     pub committed_text: Option<String>,
     pub mode: OpenUncommittedDiffResponseMode,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct SetIndexText {
     pub project_id: u64,
     pub repository_id: u64,
@@ -70,19 +72,19 @@ pub struct SetIndexText {
     pub text: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetPermalinkToLine {
     pub project_id: u64,
     pub buffer_id: u64,
     pub selection: Range,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetPermalinkToLineResponse {
     pub permalink: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Branch {
     pub is_head: bool,
     pub ref_name: String,
@@ -91,19 +93,19 @@ pub struct Branch {
     pub most_recent_commit: Option<CommitSummary>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitUpstream {
     pub ref_name: String,
     pub tracking: Option<UpstreamTracking>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UpstreamTracking {
     pub ahead: u64,
     pub behind: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct CommitSummary {
     pub sha: String,
     pub subject: String,
@@ -111,20 +113,20 @@ pub struct CommitSummary {
     pub author_name: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitBranches {
     pub project_id: u64,
     pub repository: ProjectPath,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UpdateGitBranch {
     pub project_id: u64,
     pub branch_name: String,
     pub repository: ProjectPath,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UpdateRepository {
     pub project_id: u64,
     pub id: u64,
@@ -143,14 +145,15 @@ pub struct UpdateRepository {
     pub remote_origin_url: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RemoveRepository {
     pub project_id: u64,
     pub id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum GitStatus {
+    #[default]
     Added,
     Modified,
     Conflict,
@@ -162,8 +165,9 @@ pub enum GitStatus {
     Unmodified,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum GitFileStatus {
+    #[default]
     Untracked,
     Ignored,
     Unmerged {
@@ -176,27 +180,27 @@ pub enum GitFileStatus {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitGetBranches {
     pub project_id: u64,
     pub repository_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitCreateBranch {
     pub project_id: u64,
     pub repository_id: u64,
     pub branch_name: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitChangeBranch {
     pub project_id: u64,
     pub repository_id: u64,
     pub branch_name: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitRenameBranch {
     pub project_id: u64,
     pub repository_id: u64,
@@ -204,7 +208,7 @@ pub struct GitRenameBranch {
     pub new_name: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitCreateRemote {
     pub project_id: u64,
     pub repository_id: u64,
@@ -212,76 +216,77 @@ pub struct GitCreateRemote {
     pub remote_url: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitRemoveRemote {
     pub project_id: u64,
     pub repository_id: u64,
     pub remote_name: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitDeleteBranch {
     pub project_id: u64,
     pub repository_id: u64,
     pub branch_name: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum GitDiffType {
+    #[default]
     HeadToWorktree,
     HeadToIndex,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitDiff {
     pub project_id: u64,
     pub repository_id: u64,
     pub diff_type: GitDiffType,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitDiffResponse {
     pub diff: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitInit {
     pub project_id: u64,
     pub abs_path: String,
     pub fallback_branch_name: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitClone {
     pub project_id: u64,
     pub abs_path: String,
     pub remote_repo: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitCloneResponse {
     pub success: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct CheckForPushedCommits {
     pub project_id: u64,
     pub repository_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct CheckForPushedCommitsResponse {
     pub pushed_to: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitShow {
     pub project_id: u64,
     pub repository_id: u64,
     pub commit: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitCommitDetails {
     pub sha: String,
     pub message: String,
@@ -291,19 +296,19 @@ pub struct GitCommitDetails {
     pub refs: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct LoadCommitDiff {
     pub project_id: u64,
     pub repository_id: u64,
     pub commit: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct LoadCommitDiffResponse {
     pub files: Vec<CommitFile>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct CommitFile {
     pub path: String,
     pub old_text: Option<String>,
@@ -311,13 +316,14 @@ pub struct CommitFile {
     pub is_binary: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum GitResetMode {
+    #[default]
     Soft,
     Mixed,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitReset {
     pub project_id: u64,
     pub repository_id: u64,
@@ -325,7 +331,7 @@ pub struct GitReset {
     pub mode: GitResetMode,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitCheckoutFiles {
     pub project_id: u64,
     pub repository_id: u64,
@@ -333,7 +339,7 @@ pub struct GitCheckoutFiles {
     pub paths: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitFileHistory {
     pub project_id: u64,
     pub repository_id: u64,
@@ -342,13 +348,13 @@ pub struct GitFileHistory {
     pub limit: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitFileHistoryResponse {
     pub entries: Vec<FileHistoryEntry>,
     pub path: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitCommitHistory {
     pub project_id: u64,
     pub repository_id: u64,
@@ -357,13 +363,13 @@ pub struct GitCommitHistory {
     pub limit: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitCommitHistoryResponse {
     pub entries: Vec<FileHistoryEntry>,
     pub path: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct FileHistoryEntry {
     pub sha: String,
     pub subject: String,
@@ -374,7 +380,7 @@ pub struct FileHistoryEntry {
     pub refs: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct StatusEntry {
     pub repo_path: String,
     pub simple_status: GitStatus,
@@ -383,7 +389,7 @@ pub struct StatusEntry {
     pub diff_stat_deleted: Option<u32>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct StashEntry {
     pub oid: Vec<u8>,
     pub message: String,
@@ -392,55 +398,55 @@ pub struct StashEntry {
     pub timestamp: i64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Stage {
     pub project_id: u64,
     pub repository_id: u64,
     pub paths: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Unstage {
     pub project_id: u64,
     pub repository_id: u64,
     pub paths: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Stash {
     pub project_id: u64,
     pub repository_id: u64,
     pub paths: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct StashPop {
     pub project_id: u64,
     pub repository_id: u64,
     pub stash_index: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct StashApply {
     pub project_id: u64,
     pub repository_id: u64,
     pub stash_index: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct StashDrop {
     pub project_id: u64,
     pub repository_id: u64,
     pub stash_index: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct CommitOptions {
     pub amend: bool,
     pub signoff: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Commit {
     pub project_id: u64,
     pub repository_id: u64,
@@ -451,19 +457,20 @@ pub struct Commit {
     pub askpass_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct OpenCommitMessageBuffer {
     pub project_id: u64,
     pub repository_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum PushOptions {
+    #[default]
     SetUpstream,
     Force,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Push {
     pub project_id: u64,
     pub repository_id: u64,
@@ -474,7 +481,7 @@ pub struct Push {
     pub remote_branch_name: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Fetch {
     pub project_id: u64,
     pub repository_id: u64,
@@ -482,7 +489,7 @@ pub struct Fetch {
     pub remote: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetRemotes {
     pub project_id: u64,
     pub repository_id: u64,
@@ -490,12 +497,12 @@ pub struct GetRemotes {
     pub is_push: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetRemotesResponse {
     pub remotes: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Pull {
     pub project_id: u64,
     pub repository_id: u64,
@@ -505,20 +512,20 @@ pub struct Pull {
     pub rebase: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RemoteMessageResponse {
     pub stdout: String,
     pub stderr: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct BlameBuffer {
     pub project_id: u64,
     pub buffer_id: u64,
     pub version: Vec<VectorClockEntry>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct BlameEntry {
     pub sha: Vec<u8>,
 
@@ -542,42 +549,42 @@ pub struct BlameEntry {
     pub filename: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct CommitMessage {
     pub oid: Vec<u8>,
     pub message: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct CommitPermalink {
     pub oid: Vec<u8>,
     pub permalink: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct BlameResponse {
     pub entries: Vec<BlameEntry>,
     pub messages: Vec<CommitMessage>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct BlameBufferResponse {
     pub blame_response: Option<BlameResponse>,
 
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetDefaultBranch {
     pub project_id: u64,
     pub repository_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetDefaultBranchResponse {
     pub branch: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetTreeDiff {
     pub project_id: u64,
     pub repository_id: u64,
@@ -586,56 +593,57 @@ pub struct GetTreeDiff {
     pub head: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetTreeDiffResponse {
     pub entries: Vec<TreeDiffStatus>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum DiffStatus {
+    #[default]
     Added,
     Modified,
     Deleted,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct TreeDiffStatus {
     pub status: DiffStatus,
     pub path: String,
     pub oid: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetBlobContent {
     pub project_id: u64,
     pub repository_id: u64,
     pub oid: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetBlobContentResponse {
     pub content: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitGetWorktrees {
     pub project_id: u64,
     pub repository_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitWorktreesResponse {
     pub worktrees: Vec<Worktree>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Worktree {
     pub path: String,
     pub ref_name: String,
     pub sha: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GitCreateWorktree {
     pub project_id: u64,
     pub repository_id: u64,
@@ -644,12 +652,13 @@ pub struct GitCreateWorktree {
     pub commit: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum GitHook {
+    #[default]
     PreCommit,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RunGitHook {
     pub project_id: u64,
     pub repository_id: u64,

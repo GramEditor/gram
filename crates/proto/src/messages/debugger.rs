@@ -1,16 +1,18 @@
 use std::collections::HashMap;
+use std::default::Default;
 use serde::{Serialize, Deserialize};
 
 use crate::messages::task::SpawnInTerminal;
 use crate::messages::buffer::Anchor;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum BreakpointState {
+    #[default]
     Enabled,
     Disabled,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Breakpoint {
     pub position: Anchor,
     pub state: BreakpointState,
@@ -20,46 +22,48 @@ pub struct Breakpoint {
     pub session_state: HashMap<u64, BreakpointSessionState>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct BreakpointSessionState {
     pub id: u64,
     pub verified: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct BreakpointsForFile {
     pub project_id: u64,
     pub path: String,
     pub breakpoints: Vec<Breakpoint>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ToggleBreakpoint {
     pub project_id: u64,
     pub path: String,
     pub breakpoint: Breakpoint,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum DapThreadStatus {
+    #[default]
     Running,
     Stopped,
     Exited,
     Ended,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum VariablesArgumentsFilter {
+    #[default]
     Indexed,
     Named,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ValueFormat {
     pub hex: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct VariablesRequest {
     pub project_id: u64,
     pub client_id: u64,
@@ -70,21 +74,22 @@ pub struct VariablesRequest {
     pub format: Option<ValueFormat>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum SteppingGranularity {
+    #[default]
     Statement,
     Line,
     Instruction,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapLocationsRequest {
     pub project_id: u64,
     pub session_id: u64,
     pub location_reference: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapLocationsResponse {
     pub source: DapSource,
     pub line: u64,
@@ -93,8 +98,9 @@ pub struct DapLocationsResponse {
     pub end_column: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum DapEvaluateContext {
+    #[default]
     Repl,
     Watch,
     Hover,
@@ -103,7 +109,7 @@ pub enum DapEvaluateContext {
     EvaluateUnknown,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapEvaluateRequest {
     pub project_id: u64,
     pub client_id: u64,
@@ -112,7 +118,7 @@ pub struct DapEvaluateRequest {
     pub context: Option<DapEvaluateContext>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapEvaluateResponse {
     pub result: String,
     pub evaluate_type: Option<String>,
@@ -123,7 +129,7 @@ pub struct DapEvaluateResponse {
 }
 
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapCompletionRequest {
     pub project_id: u64,
     pub client_id: u64,
@@ -133,8 +139,9 @@ pub struct DapCompletionRequest {
     pub column: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum DapCompletionItemType {
+    #[default]
     Method,
     Function,
     Constructor,
@@ -156,7 +163,7 @@ pub enum DapCompletionItemType {
     Customcolor,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapCompletionItem {
     pub label: String,
     pub text: Option<String>,
@@ -169,25 +176,25 @@ pub struct DapCompletionItem {
     pub selection_length: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapCompletionResponse {
     pub client_id: u64,
     pub completions: Vec<DapCompletionItem>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapScopesRequest {
     pub project_id: u64,
     pub client_id: u64,
     pub stack_frame_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapScopesResponse {
     pub scopes: Vec<DapScope>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapSetVariableValueRequest {
     pub project_id: u64,
     pub client_id: u64,
@@ -196,7 +203,7 @@ pub struct DapSetVariableValueRequest {
     pub variables_reference: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapSetVariableValueResponse {
     pub client_id: u64,
     pub value: String,
@@ -207,14 +214,14 @@ pub struct DapSetVariableValueResponse {
     pub memory_reference: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapPauseRequest {
     pub project_id: u64,
     pub client_id: u64,
     pub thread_id: i64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapDisconnectRequest {
     pub project_id: u64,
     pub client_id: u64,
@@ -223,59 +230,59 @@ pub struct DapDisconnectRequest {
     pub suspend_debuggee: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapTerminateThreadsRequest {
     pub project_id: u64,
     pub client_id: u64,
     pub thread_ids: Vec<i64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapThreadsRequest {
     pub project_id: u64,
     pub client_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapThreadsResponse {
     pub threads: Vec<DapThread>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapTerminateRequest {
     pub project_id: u64,
     pub client_id: u64,
     pub restart: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapRestartRequest {
     pub project_id: u64,
     pub client_id: u64,
     pub raw_args: Vec<u8>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapRestartStackFrameRequest {
     pub project_id: u64,
     pub client_id: u64,
     pub stack_frame_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ToggleIgnoreBreakpoints {
     pub project_id: u64,
     pub session_id: u32,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct IgnoreBreakpointState {
     pub project_id: u64,
     pub session_id: u64,
     pub ignore: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapNextRequest {
     pub project_id: u64,
     pub client_id: u64,
@@ -284,7 +291,7 @@ pub struct DapNextRequest {
     pub granularity: Option<SteppingGranularity>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapStepInRequest {
     pub project_id: u64,
     pub client_id: u64,
@@ -294,7 +301,7 @@ pub struct DapStepInRequest {
     pub granularity: Option<SteppingGranularity>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapStepOutRequest {
     pub project_id: u64,
     pub client_id: u64,
@@ -303,7 +310,7 @@ pub struct DapStepOutRequest {
     pub granularity: Option<SteppingGranularity>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapStepBackRequest {
     pub project_id: u64,
     pub client_id: u64,
@@ -312,7 +319,7 @@ pub struct DapStepBackRequest {
     pub granularity: Option<SteppingGranularity>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapContinueRequest {
     pub project_id: u64,
     pub client_id: u64,
@@ -320,37 +327,37 @@ pub struct DapContinueRequest {
     pub single_thread: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapContinueResponse {
     pub client_id: u64,
     pub all_threads_continued: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapModulesRequest {
     pub project_id: u64,
     pub client_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapModulesResponse {
     pub client_id: u64,
     pub modules: Vec<DapModule>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapLoadedSourcesRequest {
     pub project_id: u64,
     pub client_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapLoadedSourcesResponse {
     pub client_id: u64,
     pub sources: Vec<DapSource>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapStackTraceRequest {
     pub project_id: u64,
     pub client_id: u64,
@@ -359,12 +366,12 @@ pub struct DapStackTraceRequest {
     pub stack_trace_levels: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapStackTraceResponse {
     pub frames: Vec<DapStackFrame>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapStackFrame {
     pub id: u64,
     pub name: String,
@@ -379,20 +386,20 @@ pub struct DapStackFrame {
     pub presentation_hint: Option<DapStackPresentationHint>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DebuggerLoadedSourceList {
     pub client_id: u64,
     pub sources: Vec<DapSource>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapVariables {
     pub client_id: u64,
     pub variables: Vec<DapVariable>,
 }
 
 // Remote Debugging: Dap Types
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapVariable {
     pub name: String,
     pub value: String,
@@ -404,13 +411,13 @@ pub struct DapVariable {
     pub memory_reference: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapThread {
     pub id: i64,
     pub name: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapScope {
     pub name: String,
     pub presentation_hint: Option<DapScopePresentationHint>,
@@ -425,7 +432,7 @@ pub struct DapScope {
     pub end_column: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapSource {
     pub name: Option<String>,
     pub path: Option<String>,
@@ -437,8 +444,9 @@ pub struct DapSource {
     pub checksums: Vec<DapChecksum>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum DapOutputCategory {
+    #[default]
     ConsoleOutput,
     Important,
     Stdout,
@@ -446,14 +454,15 @@ pub enum DapOutputCategory {
     Unknown,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum DapOutputEventGroup {
+    #[default]
     Start,
     StartCollapsed,
     End,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapOutputEvent {
     pub output: String,
     pub category: Option<DapOutputCategory>,
@@ -464,8 +473,9 @@ pub struct DapOutputEvent {
     pub column: Option<u32>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum DapChecksumAlgorithm {
+    #[default]
     Unspecified,
     Md5,
     Sha1,
@@ -473,14 +483,15 @@ pub enum DapChecksumAlgorithm {
     Timestamp,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapChecksum {
     pub algorithm: DapChecksumAlgorithm,
     pub checksum: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum DapScopePresentationHint {
+    #[default]
     Arguments,
     Locals,
     Registers,
@@ -488,23 +499,25 @@ pub enum DapScopePresentationHint {
     ScopeUnknown,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum DapSourcePresentationHint {
+    #[default]
     SourceNormal,
     Emphasize,
     Deemphasize,
     SourceUnknown,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum DapStackPresentationHint {
+    #[default]
     StackNormal,
     Label,
     Subtle,
     StackUnknown,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapModule {
     pub id: DapModuleId,
     pub name: String,
@@ -518,7 +531,7 @@ pub struct DapModule {
     pub address_range: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DebugTaskDefinition {
     pub adapter: String,
     pub label: String,
@@ -526,14 +539,14 @@ pub struct DebugTaskDefinition {
     pub tcp_connection: Option<TcpHost>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct TcpHost {
     pub port: Option<u32>,
     pub host: Option<String>,
     pub timeout: Option<u64>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DebugLaunchRequest {
     pub program: String,
     pub cwd: Option<String>,
@@ -541,7 +554,7 @@ pub struct DebugLaunchRequest {
     pub env: HashMap<String, String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DebugAttachRequest {
     pub process_id: u32,
 }
@@ -551,8 +564,13 @@ pub enum DapModuleId {
     Number(u32),
     String(String),
 }
+impl Default for DapModuleId {
+    fn default() -> Self {
+        Self::Number(Default::default())
+    }
+}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetDebugAdapterBinary {
     pub project_id: u64,
     pub session_id: u64,
@@ -560,13 +578,14 @@ pub struct GetDebugAdapterBinary {
     pub worktree_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum DebugAdapterBinaryLaunchType {
+    #[default]
     Attach,
     Launch,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DebugAdapterBinary {
     pub command: Option<String>,
     pub arguments: Vec<String>,
@@ -577,7 +596,7 @@ pub struct DebugAdapterBinary {
     pub launch_type: DebugAdapterBinaryLaunchType,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct RunDebugLocators {
     pub project_id: u64,
     pub build_command: SpawnInTerminal,
@@ -589,8 +608,13 @@ pub enum DebugRequest {
     Launch(DebugLaunchRequest),
     Attach(DebugAttachRequest),
 }
+impl Default for DebugRequest {
+    fn default() -> Self {
+        Self::Launch(Default::default())
+    }
+}
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DebugScenario {
     pub label: String,
     pub adapter: String,
@@ -600,24 +624,24 @@ pub struct DebugScenario {
     pub configuration: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct LogToDebugConsole {
     pub project_id: u64,
     pub session_id: u64,
     pub message: String,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetProcesses {
     pub project_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetProcessesResponse {
     pub processes: Vec<ProcessInfo>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ProcessInfo {
     pub pid: u32,
     pub name: String,
