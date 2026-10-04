@@ -384,8 +384,8 @@ impl FileHistoryView {
                                 )
                             })
                             .children(entry.refs.iter().filter(|s| *s != "origin/HEAD").map(|s| {
-                                if s.starts_with("HEAD -> ") {
-                                    Chip::new(s[8..].to_string())
+                                if let Some(stripped) = s.strip_prefix("HEAD -> ") {
+                                    Chip::new(stripped.to_string())
                                         .bg_color(cx.theme().status().success_background)
                                         .border_color(cx.theme().status().success_border)
                                 } else {

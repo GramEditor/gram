@@ -106,9 +106,8 @@ impl LspConfigView {
                 } => {
                     if let StatusUpdateVariant::Binary(binary_status_proto) = &status_update.variant
                         && let Some(name) = name.as_ref()
-                        && let Ok(binary_status) = ServerBinaryStatus::try_from(*binary_status_proto)
                     {
-                        let status = match binary_status {
+                        let status = match *binary_status_proto {
                             ServerBinaryStatus::None => BinaryStatus::None,
                             ServerBinaryStatus::CheckingForUpdate => BinaryStatus::CheckingForUpdate,
                             ServerBinaryStatus::Downloading => BinaryStatus::Downloading,
