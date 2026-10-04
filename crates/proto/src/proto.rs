@@ -2,13 +2,12 @@
 
 pub mod error;
 mod macros;
-mod typed_envelope;
 mod messages;
+mod typed_envelope;
 
 pub use error::*;
 use std::{
-    cmp,
-    iter, mem,
+    cmp, iter, mem,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 pub use typed_envelope::*;

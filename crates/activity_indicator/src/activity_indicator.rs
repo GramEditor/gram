@@ -132,7 +132,7 @@ impl ActivityIndicator {
                                     }
                                 };
                                 LanguageServerStatusUpdate::Binary(binary_status)
-                            },
+                            }
                             proto::StatusUpdateVariant::Health(health_status) => {
                                 let health = match health_status {
                                     proto::ServerHealth::Ok => ServerHealth::Ok,

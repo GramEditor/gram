@@ -1,9 +1,9 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::default::Default;
-use serde::{Serialize, Deserialize};
 
-use crate::messages::task::SpawnInTerminal;
 use crate::messages::buffer::Anchor;
+use crate::messages::task::SpawnInTerminal;
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum BreakpointState {
@@ -127,7 +127,6 @@ pub struct DapEvaluateResponse {
     pub indexed_variables: Option<u64>,
     pub memory_reference: Option<String>,
 }
-
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct DapCompletionRequest {

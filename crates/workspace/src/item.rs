@@ -8,12 +8,12 @@ use crate::{
     workspace_settings::{AutosaveSetting, WorkspaceSettings},
 };
 use anyhow::Result;
-use rpc::proto;
 use gpui::{
     Action, AnyElement, AnyEntity, AnyView, App, AppContext, Context, Entity, EntityId, EventEmitter, FocusHandle,
     Focusable, Font, HighlightStyle, Pixels, Point, Render, SharedString, Task, WeakEntity, Window,
 };
 use project::{Project, ProjectEntryId, ProjectPath};
+use rpc::proto;
 pub use settings::{
     ActivateOnClose, ClosePosition, RegisterSetting, Settings, SettingsLocation, ShowCloseButton, ShowDiagnostics,
 };

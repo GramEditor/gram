@@ -1,5 +1,5 @@
+use serde::{Deserialize, Serialize};
 use std::default::Default;
-use serde::{Serialize, Deserialize};
 
 use crate::messages::core::PeerId;
 use crate::messages::worktree::File;

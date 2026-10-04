@@ -119,24 +119,20 @@ pub enum DebugRequest {
 impl DebugRequest {
     pub fn to_proto(&self) -> proto::DebugRequest {
         match self {
-            DebugRequest::Launch(launch_request) => proto::DebugRequest::Launch(
-                proto::DebugLaunchRequest {
-                    program: launch_request.program.clone(),
-                    cwd: launch_request
-                        .cwd
-                        .as_ref()
-                        .map(|cwd| cwd.to_string_lossy().into_owned()),
-                    args: launch_request.args.clone(),
-                    env: launch_request.env.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
-                },
-            ),
-            DebugRequest::Attach(attach_request) => proto::DebugRequest::Attach(
-                proto::DebugAttachRequest {
-                    process_id: attach_request
-                        .process_id
-                        .expect("The process ID to be already filled out."),
-                },
-            ),
+            DebugRequest::Launch(launch_request) => proto::DebugRequest::Launch(proto::DebugLaunchRequest {
+                program: launch_request.program.clone(),
+                cwd: launch_request
+                    .cwd
+                    .as_ref()
+                    .map(|cwd| cwd.to_string_lossy().into_owned()),
+                args: launch_request.args.clone(),
+                env: launch_request.env.iter().map(|(k, v)| (k.clone(), v.clone())).collect(),
+            }),
+            DebugRequest::Attach(attach_request) => proto::DebugRequest::Attach(proto::DebugAttachRequest {
+                process_id: attach_request
+                    .process_id
+                    .expect("The process ID to be already filled out."),
+            }),
         }
     }
 

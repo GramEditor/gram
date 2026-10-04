@@ -434,9 +434,7 @@ impl ProtoConversion for dap_types::CompletionItem {
     }
 
     fn from_proto(payload: Self::ProtoType) -> Self {
-        let typ = payload.typ.map(
-            |typ| dap_types::CompletionItemType::from_proto(typ)
-        );
+        let typ = payload.typ.map(|typ| dap_types::CompletionItemType::from_proto(typ));
 
         Self {
             label: payload.label,

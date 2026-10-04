@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetNotifications {

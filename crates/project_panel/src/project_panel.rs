@@ -7,7 +7,6 @@ use app_actions::{
     project_panel::{Toggle, ToggleFocus},
     workspace::OpenWithSystem,
 };
-use rpc::{ErrorCode, ErrorExt};
 use collections::{BTreeSet, HashMap, hash_map};
 use command_palette_hooks::CommandPaletteFilter;
 use db::kvp::KEY_VALUE_STORE;
@@ -41,6 +40,7 @@ use project::{
 };
 use project_panel_settings::ProjectPanelSettings;
 use rayon::slice::ParallelSliceMut;
+use rpc::{ErrorCode, ErrorExt};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use settings::{

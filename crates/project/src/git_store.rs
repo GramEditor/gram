@@ -47,7 +47,8 @@ use parking_lot::Mutex;
 use pending_op::{PendingOp, PendingOpId, PendingOps, PendingOpsSummary};
 use postage::stream::Stream as _;
 use rpc::{
-    AnyProtoClient, TypedEnvelope, proto::{self, split_repository_update},
+    AnyProtoClient, TypedEnvelope,
+    proto::{self, split_repository_update},
 };
 use serde::Deserialize;
 use settings::WorktreeId;
@@ -1728,14 +1729,10 @@ impl GitStore {
         let askpass_id = envelope.payload.askpass_id;
         let askpass = make_remote_delegate(this, envelope.payload.project_id, repository_id, askpass_id, &mut cx);
 
-        let options = envelope
-            .payload
-            .options
-            .as_ref()
-            .map(|options| match options {
-                proto::PushOptions::SetUpstream => git::repository::PushOptions::SetUpstream,
-                proto::PushOptions::Force => git::repository::PushOptions::Force,
-            });
+        let options = envelope.payload.options.as_ref().map(|options| match options {
+            proto::PushOptions::SetUpstream => git::repository::PushOptions::SetUpstream,
+            proto::PushOptions::Force => git::repository::PushOptions::Force,
+        });
 
         let branch_name = envelope.payload.branch_name.into();
         let remote_branch_name = envelope.payload.remote_branch_name.into();
@@ -2627,9 +2624,7 @@ impl GitStore {
         let buffer_id = BufferId::new(envelope.payload.buffer_id)?;
         // let version = deserialize_version(&envelope.payload.version);
         let selection = {
-            let proto_selection = envelope
-                .payload
-                .selection;
+            let proto_selection = envelope.payload.selection;
             proto_selection.start as u32..proto_selection.end as u32
         };
         let buffer = this.read_with(&cx, |this, cx| this.buffer_store.read(cx).get_existing(buffer_id))??;
@@ -3577,10 +3572,16 @@ impl Repository {
                                 diff_bases_change.clone().zip(downstream_client)
                             {
                                 let (staged_text, committed_text, mode) = match diff_bases_change {
-                                    DiffBasesChange::Index(index) => (index, None, proto::UpdateDiffBasesMode::IndexOnly),
+                                    DiffBasesChange::Index(index) => {
+                                        (index, None, proto::UpdateDiffBasesMode::IndexOnly)
+                                    }
                                     DiffBasesChange::Head(head) => (None, head, proto::UpdateDiffBasesMode::HeadOnly),
-                                    DiffBasesChange::Each { index, head } => (index, head, proto::UpdateDiffBasesMode::IndexAndHead),
-                                    DiffBasesChange::Both(text) => (None, text, proto::UpdateDiffBasesMode::IndexMatchesHead),
+                                    DiffBasesChange::Each { index, head } => {
+                                        (index, head, proto::UpdateDiffBasesMode::IndexAndHead)
+                                    }
+                                    DiffBasesChange::Both(text) => {
+                                        (None, text, proto::UpdateDiffBasesMode::IndexMatchesHead)
+                                    }
                                 };
                                 client
                                     .send(proto::UpdateDiffBases {
@@ -4978,9 +4979,7 @@ impl Repository {
                     let remotes = response
                         .remotes
                         .into_iter()
-                        .map(|remotes| Remote {
-                            name: remotes.into(),
-                        })
+                        .map(|remotes| Remote { name: remotes.into() })
                         .collect();
 
                     Ok(remotes)
@@ -5567,9 +5566,12 @@ impl Repository {
                             buffer_id: buffer_id.to_proto(),
                         })
                         .await?;
-                    let mode = proto::OpenUncommittedDiffResponseMode::try_from(response.mode).context("Invalid mode")?;
+                    let mode =
+                        proto::OpenUncommittedDiffResponseMode::try_from(response.mode).context("Invalid mode")?;
                     let bases = match mode {
-                        proto::OpenUncommittedDiffResponseMode::IndexMatchesHead => DiffBasesChange::Both(response.committed_text),
+                        proto::OpenUncommittedDiffResponseMode::IndexMatchesHead => {
+                            DiffBasesChange::Both(response.committed_text)
+                        }
                         proto::OpenUncommittedDiffResponseMode::IndexAndHead => DiffBasesChange::Each {
                             head: response.committed_text,
                             index: response.staged_text,
@@ -6064,7 +6066,10 @@ async fn compute_snapshot(
     Ok((snapshot, events))
 }
 
-fn status_from_proto(simple_status: proto::GitStatus, status: Option<proto::GitFileStatus>) -> anyhow::Result<FileStatus> {
+fn status_from_proto(
+    simple_status: proto::GitStatus,
+    status: Option<proto::GitFileStatus>,
+) -> anyhow::Result<FileStatus> {
     let Some(variant) = status else {
         let code = proto::GitStatus::from(simple_status);
         let result = match code {
@@ -6096,7 +6101,10 @@ fn status_from_proto(simple_status: proto::GitStatus, status: Option<proto::GitF
     let result = match variant {
         proto::GitFileStatus::Untracked => FileStatus::Untracked,
         proto::GitFileStatus::Ignored => FileStatus::Ignored,
-        proto::GitFileStatus::Unmerged{ first_head, second_head } => {
+        proto::GitFileStatus::Unmerged {
+            first_head,
+            second_head,
+        } => {
             let [first_head, second_head] = [first_head, second_head].map(|head| {
                 let code =
                     proto::GitStatus::try_from(head).with_context(|| format!("Invalid git status code: {head:?}"))?;
@@ -6112,9 +6120,13 @@ fn status_from_proto(simple_status: proto::GitStatus, status: Option<proto::GitF
             UnmergedStatus {
                 first_head,
                 second_head,
-            }.into()
+            }
+            .into()
         }
-        proto::GitFileStatus::Tracked{ index_status, worktree_status } => {
+        proto::GitFileStatus::Tracked {
+            index_status,
+            worktree_status,
+        } => {
             let [index_status, worktree_status] = [index_status, worktree_status].map(|status| {
                 let result = match status {
                     proto::GitStatus::Modified => StatusCode::Modified,

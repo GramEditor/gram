@@ -1,5 +1,5 @@
+use serde::{Deserialize, Serialize};
 use std::default::Default;
-use serde::{Serialize, Deserialize};
 
 use crate::messages::core::PeerId;
 use crate::messages::worktree::{File, ProjectPath, Timestamp};
@@ -200,7 +200,7 @@ pub struct OperationUpdateCompletionTriggers {
 pub struct OperationUpdateLineEnding {
     pub replica_id: u32,
     pub lamport_timestamp: u32,
-    pub line_ending:     LineEnding,
+    pub line_ending: LineEnding,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]

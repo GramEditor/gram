@@ -1,7 +1,6 @@
 use std::{path::PathBuf, sync::Arc};
 
 use anyhow::{Context as _, Result};
-use rpc::{TypedEnvelope, proto};
 use collections::{HashMap, HashSet};
 use extension::{
     Extension, ExtensionDebugAdapterProviderProxy, ExtensionHostProxy, ExtensionLanguageProxy,
@@ -14,6 +13,7 @@ use http_client::HttpClient;
 use language::{LanguageConfig, LanguageName, LanguageQueries, LoadedLanguage};
 use lsp::LanguageServerName;
 use node_runtime::NodeRuntime;
+use rpc::{TypedEnvelope, proto};
 
 use crate::wasm_host::{WasmExtension, WasmHost};
 

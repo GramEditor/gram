@@ -350,9 +350,7 @@ async fn update_editor_from_message(
 
                 let adjacent_excerpts = iter::from_fn(|| {
                     let insertion = insertions.peek()?;
-                    if insertion.previous_excerpt_id.is_none()
-                        && insertion.excerpt.buffer_id == u64::from(buffer_id)
-                    {
+                    if insertion.previous_excerpt_id.is_none() && insertion.excerpt.buffer_id == u64::from(buffer_id) {
                         Some(insertions.next()?.excerpt)
                     } else {
                         None
@@ -419,11 +417,7 @@ async fn update_editor_from_message(
     Ok(())
 }
 
-fn serialize_excerpt(
-    buffer_id: BufferId,
-    id: &ExcerptId,
-    range: &ExcerptRange<language::Anchor>,
-) -> proto::Excerpt {
+fn serialize_excerpt(buffer_id: BufferId, id: &ExcerptId, range: &ExcerptRange<language::Anchor>) -> proto::Excerpt {
     proto::Excerpt {
         id: id.to_proto(),
         buffer_id: buffer_id.into(),
@@ -473,10 +467,7 @@ fn deserialize_selection(selection: proto::Selection) -> Selection<Anchor> {
 
 fn deserialize_anchor(anchor: proto::EditorAnchor) -> Anchor {
     let excerpt_id = ExcerptId::from_proto(anchor.excerpt_id);
-    Anchor::in_buffer(
-        excerpt_id,
-        language::proto::deserialize_anchor(anchor.anchor),
-    )
+    Anchor::in_buffer(excerpt_id, language::proto::deserialize_anchor(anchor.anchor))
 }
 
 impl Item for Editor {

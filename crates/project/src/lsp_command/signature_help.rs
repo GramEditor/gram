@@ -176,12 +176,10 @@ pub fn lsp_to_proto_signature(lsp_help: lsp::SignatureHelp) -> proto::SignatureH
 fn lsp_to_proto_documentation(documentation: lsp::Documentation) -> proto::Documentation {
     match documentation {
         lsp::Documentation::String(string) => proto::Documentation::Value(string),
-        lsp::Documentation::MarkupContent(content) => {
-            proto::Documentation::MarkupContent(proto::MarkupContent {
-                is_markdown: matches!(content.kind, lsp::MarkupKind::Markdown),
-                value: content.value,
-            })
-        }
+        lsp::Documentation::MarkupContent(content) => proto::Documentation::MarkupContent(proto::MarkupContent {
+            is_markdown: matches!(content.kind, lsp::MarkupKind::Markdown),
+            value: content.value,
+        }),
     }
 }
 
@@ -224,19 +222,17 @@ fn proto_to_lsp_documentation(documentation: proto::Documentation) -> lsp::Docum
     {
         match documentation {
             proto::Documentation::Value(string) => lsp::Documentation::String(string),
-            proto::Documentation::MarkupContent(markup) => lsp::Documentation::MarkupContent(
-                if markup.is_markdown {
-                    lsp::MarkupContent {
-                        kind: lsp::MarkupKind::Markdown,
-                        value: markup.value,
-                    }
-                } else {
-                    lsp::MarkupContent {
-                        kind: lsp::MarkupKind::PlainText,
-                        value: markup.value,
-                    }
+            proto::Documentation::MarkupContent(markup) => lsp::Documentation::MarkupContent(if markup.is_markdown {
+                lsp::MarkupContent {
+                    kind: lsp::MarkupKind::Markdown,
+                    value: markup.value,
                 }
-            ),
+            } else {
+                lsp::MarkupContent {
+                    kind: lsp::MarkupKind::PlainText,
+                    value: markup.value,
+                }
+            }),
         }
     }
 }

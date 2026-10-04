@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 mod app;
 mod buffer;
@@ -37,7 +37,7 @@ pub struct Envelope {
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Hello {
-    peer_id: PeerId
+    peer_id: PeerId,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -424,7 +424,6 @@ pub enum Payload {
     OpenImageByPath(OpenImageByPath),
     OpenImageResponse(OpenImageResponse),
     CreateImageForPeer(CreateImageForPeer),
-
 
     GitFileHistory(GitFileHistory),
     GitFileHistoryResponse(GitFileHistoryResponse),

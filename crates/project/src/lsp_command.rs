@@ -9,7 +9,6 @@ use crate::{
 };
 use anyhow::{Context as _, Result};
 use async_trait::async_trait;
-use rpc::proto::{self, PeerId};
 use clock::Global;
 use collections::HashMap;
 use futures::future;
@@ -27,6 +26,7 @@ use lsp::{
     CompletionListItemDefaultsEditRange, CompletionTriggerKind, DocumentHighlightKind, LanguageServer,
     LanguageServerId, LinkedEditingRangeServerCapabilities, OneOf, RenameOptions, ServerCapabilities,
 };
+use rpc::proto::{self, PeerId};
 use serde_json::Value;
 use signature_help::{lsp_to_proto_signature, proto_to_lsp_signature};
 use std::{cmp::Reverse, collections::hash_map, mem, ops::Range, path::Path, str::FromStr, sync::Arc};
@@ -1181,10 +1181,7 @@ pub fn location_link_to_proto(
         buffer_id,
     };
 
-    proto::LocationLink {
-        origin,
-        target,
-    }
+    proto::LocationLink { origin, target }
 }
 
 #[async_trait(?Send)]
@@ -2782,48 +2779,38 @@ impl InlayHints {
                     label_parts
                         .into_iter()
                         .map(|label_part| {
-                            let location = label_part
-                                .location
-                                .as_ref()
-                                .map(|(server_id, location)| {
-                                    let range_start = point_from_lsp(location.range.start).0;
-                                    let range_end = point_from_lsp(location.range.end).0;
-                                    proto::InlayHintLabelLocation {
-                                        url: location.uri.to_string(),
-                                        range_start: proto::PointUtf16 {
-                                            row: range_start.row,
-                                            column: range_start.column,
-                                        },
-                                        range_end: proto::PointUtf16 {
-                                            row: range_end.row,
-                                            column: range_end.column,
-                                        },
-                                        server_id: server_id.0 as u64,
-                                    }
-                                });
+                            let location = label_part.location.as_ref().map(|(server_id, location)| {
+                                let range_start = point_from_lsp(location.range.start).0;
+                                let range_end = point_from_lsp(location.range.end).0;
+                                proto::InlayHintLabelLocation {
+                                    url: location.uri.to_string(),
+                                    range_start: proto::PointUtf16 {
+                                        row: range_start.row,
+                                        column: range_start.column,
+                                    },
+                                    range_end: proto::PointUtf16 {
+                                        row: range_end.row,
+                                        column: range_end.column,
+                                    },
+                                    server_id: server_id.0 as u64,
+                                }
+                            });
                             proto::InlayHintLabelPart {
                                 value: label_part.value,
-                                tooltip: label_part.tooltip.map(|tooltip| {
-                                    match tooltip {
-                                        InlayHintLabelPartTooltip::String(s) => {
-                                            proto::InlayHintLabelPartTooltip::Value(s)
-                                        }
-                                        InlayHintLabelPartTooltip::MarkupContent(markup_content) => {
-                                            proto::InlayHintLabelPartTooltip::MarkupContent(
-                                                proto::MarkupContent {
-                                                    is_markdown: markup_content.kind
-                                                        == HoverBlockKind::Markdown,
-                                                    value: markup_content.value,
-                                                },
-                                            )
-                                        }
+                                tooltip: label_part.tooltip.map(|tooltip| match tooltip {
+                                    InlayHintLabelPartTooltip::String(s) => proto::InlayHintLabelPartTooltip::Value(s),
+                                    InlayHintLabelPartTooltip::MarkupContent(markup_content) => {
+                                        proto::InlayHintLabelPartTooltip::MarkupContent(proto::MarkupContent {
+                                            is_markdown: markup_content.kind == HoverBlockKind::Markdown,
+                                            value: markup_content.value,
+                                        })
                                     }
                                 }),
                                 location,
                             }
                         })
-                        .collect()
-                )
+                        .collect(),
+                ),
             },
             kind: response_hint.kind.map(|kind| kind.name().to_string()),
             tooltip: response_hint.tooltip.map(|response_tooltip| match response_tooltip {
@@ -2878,9 +2865,7 @@ impl InlayHints {
                         label_parts.push(InlayHintLabelPart {
                             value: part.value,
                             tooltip: part.tooltip.map(|tooltip| match tooltip {
-                                proto::InlayHintLabelPartTooltip::Value(s) => {
-                                    InlayHintLabelPartTooltip::String(s)
-                                }
+                                proto::InlayHintLabelPartTooltip::Value(s) => InlayHintLabelPartTooltip::String(s),
                                 proto::InlayHintLabelPartTooltip::MarkupContent(markup_content) => {
                                     InlayHintLabelPartTooltip::MarkupContent(MarkupContent {
                                         kind: if markup_content.is_markdown {
@@ -2900,8 +2885,14 @@ impl InlayHints {
                                             uri: lsp::Uri::from_str(&location.url)
                                                 .context("invalid uri in hint part {part:?}")?,
                                             range: lsp::Range::new(
-                                                point_to_lsp(PointUtf16::new(location.range_start.row, location.range_start.column)),
-                                                point_to_lsp(PointUtf16::new(location.range_end.row, location.range_end.column)),
+                                                point_to_lsp(PointUtf16::new(
+                                                    location.range_start.row,
+                                                    location.range_start.column,
+                                                )),
+                                                point_to_lsp(PointUtf16::new(
+                                                    location.range_end.row,
+                                                    location.range_end.column,
+                                                )),
                                             ),
                                         },
                                     )),

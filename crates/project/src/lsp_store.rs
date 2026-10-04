@@ -42,7 +42,6 @@ use crate::{
 };
 use anyhow::{Context as _, Result, anyhow};
 use async_trait::async_trait;
-use rpc::{TypedEnvelope, proto};
 use clock::Global;
 use collections::{BTreeMap, BTreeSet, HashMap, HashSet, btree_map};
 use futures::{
@@ -86,6 +85,7 @@ use rpc::{
     AnyProtoClient, ErrorCode, ErrorExt as _,
     proto::{LspRequestId, LspRequestMessage as _},
 };
+use rpc::{TypedEnvelope, proto};
 use serde::Serialize;
 use serde_json::Value;
 use settings::{Settings, SettingsLocation, SettingsStore};
@@ -4019,18 +4019,12 @@ impl LspStore {
                         buffer_id,
                         only_servers: only_register_servers
                             .into_iter()
-                            .map(|selector| {
-                                match selector {
-                                    LanguageServerSelector::Id(language_server_id) => {
-                                        proto::LanguageServerSelector::ServerId(
-                                            language_server_id.to_proto(),
-                                        )
-                                    }
-                                    LanguageServerSelector::Name(language_server_name) => {
-                                        proto::LanguageServerSelector::Name(
-                                            language_server_name.to_string(),
-                                        )
-                                    }
+                            .map(|selector| match selector {
+                                LanguageServerSelector::Id(language_server_id) => {
+                                    proto::LanguageServerSelector::ServerId(language_server_id.to_proto())
+                                }
+                                LanguageServerSelector::Name(language_server_name) => {
+                                    proto::LanguageServerSelector::Name(language_server_name.to_string())
                                 }
                             })
                             .collect(),
@@ -4614,10 +4608,7 @@ impl LspStore {
             };
             let buffer_store = self.buffer_store();
             cx.spawn(async move |_, cx| {
-                let response = upstream_client
-                    .request(request)
-                    .await?
-                    .transaction;
+                let response = upstream_client.request(request).await?.transaction;
 
                 buffer_store
                     .update(cx, |buffer_store, cx| {
@@ -8521,14 +8512,12 @@ impl LspStore {
 
             if let Some((_, project_id)) = &lsp_store.downstream_client {
                 match &mut diagnostics_summary {
-                    Some(diagnostics_summary) => {
-                        diagnostics_summary.more_summaries.push(proto::DiagnosticSummary {
-                            path: project_path.path.as_ref().to_proto(),
-                            language_server_id: server_id.0 as u64,
-                            error_count: summary.error_count as u32,
-                            warning_count: summary.warning_count as u32,
-                        })
-                    }
+                    Some(diagnostics_summary) => diagnostics_summary.more_summaries.push(proto::DiagnosticSummary {
+                        path: project_path.path.as_ref().to_proto(),
+                        language_server_id: server_id.0 as u64,
+                        error_count: summary.error_count as u32,
+                        warning_count: summary.warning_count as u32,
+                    }),
                     None => {
                         diagnostics_summary = Some(proto::UpdateDiagnosticSummary {
                             project_id: *project_id,
@@ -8638,11 +8627,7 @@ impl LspStore {
                 }
 
                 proto::UpdateLanguageServerVariant::WorkEnd(payload) => {
-                    lsp_store.on_lsp_work_end(
-                        language_server_id,
-                        ProgressToken::from_proto(payload.token),
-                        cx,
-                    );
+                    lsp_store.on_lsp_work_end(language_server_id, ProgressToken::from_proto(payload.token), cx);
                 }
 
                 proto::UpdateLanguageServerVariant::DiskBasedDiagnosticsUpdating(_) => {
@@ -9497,14 +9482,12 @@ impl LspStore {
                     .payload
                     .only_servers
                     .into_iter()
-                    .map(|selector| {
-                        match selector {
-                            proto::LanguageServerSelector::ServerId(server_id) => {
-                                LanguageServerSelector::Id(LanguageServerId::from_proto(server_id))
-                            }
-                            proto::LanguageServerSelector::Name(name) => {
-                                LanguageServerSelector::Name(LanguageServerName(SharedString::from(name)))
-                            }
+                    .map(|selector| match selector {
+                        proto::LanguageServerSelector::ServerId(server_id) => {
+                            LanguageServerSelector::Id(LanguageServerId::from_proto(server_id))
+                        }
+                        proto::LanguageServerSelector::Name(name) => {
+                            LanguageServerSelector::Name(LanguageServerName(SharedString::from(name)))
                         }
                     })
                     .collect(),
@@ -9535,14 +9518,12 @@ impl LspStore {
                             .payload
                             .also_servers
                             .into_iter()
-                            .map(|selector| {
-                                match selector {
-                                    proto::LanguageServerSelector::ServerId(server_id) => {
-                                        LanguageServerSelector::Id(LanguageServerId::from_proto(server_id))
-                                    }
-                                    proto::LanguageServerSelector::Name(name) => {
-                                        LanguageServerSelector::Name(LanguageServerName(SharedString::from(name)))
-                                    }
+                            .map(|selector| match selector {
+                                proto::LanguageServerSelector::ServerId(server_id) => {
+                                    LanguageServerSelector::Id(LanguageServerId::from_proto(server_id))
+                                }
+                                proto::LanguageServerSelector::Name(name) => {
+                                    LanguageServerSelector::Name(LanguageServerName(SharedString::from(name)))
                                 }
                             })
                             .collect(),
@@ -9562,14 +9543,16 @@ impl LspStore {
     ) -> Result<proto::Ack> {
         lsp_store.update(&mut cx, |lsp_store, cx| {
             match envelope.payload.variant {
-                proto::CancelLanguageServerWorkVariant::Buffers{ buffer_ids } => {
+                proto::CancelLanguageServerWorkVariant::Buffers { buffer_ids } => {
                     let buffers = lsp_store.buffer_ids_to_buffers(buffer_ids.into_iter(), cx);
                     lsp_store.cancel_language_server_work_for_buffers(buffers, cx);
                 }
-                proto::CancelLanguageServerWorkVariant::Work{ language_server_id, token } => {
+                proto::CancelLanguageServerWorkVariant::Work {
+                    language_server_id,
+                    token,
+                } => {
                     let server_id = LanguageServerId::from_proto(language_server_id);
-                    let token = token
-                        .map(|token| ProgressToken::from_proto(token));
+                    let token = token.map(|token| ProgressToken::from_proto(token));
                     lsp_store.cancel_language_server_work(server_id, token, cx);
                 }
             }
@@ -10029,14 +10012,12 @@ impl LspStore {
                 buffer_ids: buffers.into_iter().map(|b| b.read(cx).remote_id().to_proto()).collect(),
                 only_servers: only_restart_servers
                     .into_iter()
-                    .map(|selector| {
-                        match selector {
-                            LanguageServerSelector::Id(language_server_id) => {
-                                proto::LanguageServerSelector::ServerId(language_server_id.to_proto())
-                            }
-                            LanguageServerSelector::Name(language_server_name) => {
-                                proto::LanguageServerSelector::Name(language_server_name.to_string())
-                            }
+                    .map(|selector| match selector {
+                        LanguageServerSelector::Id(language_server_id) => {
+                            proto::LanguageServerSelector::ServerId(language_server_id.to_proto())
+                        }
+                        LanguageServerSelector::Name(language_server_name) => {
+                            proto::LanguageServerSelector::Name(language_server_name.to_string())
                         }
                     })
                     .collect(),
@@ -10080,14 +10061,12 @@ impl LspStore {
                 buffer_ids: buffers.into_iter().map(|b| b.read(cx).remote_id().to_proto()).collect(),
                 also_servers: also_stop_servers
                     .into_iter()
-                    .map(|selector| {
-                        match selector {
-                            LanguageServerSelector::Id(language_server_id) => {
-                                proto::LanguageServerSelector::ServerId(language_server_id.to_proto())
-                            }
-                            LanguageServerSelector::Name(language_server_name) => {
-                                proto::LanguageServerSelector::Name(language_server_name.to_string())
-                            }
+                    .map(|selector| match selector {
+                        LanguageServerSelector::Id(language_server_id) => {
+                            proto::LanguageServerSelector::ServerId(language_server_id.to_proto())
+                        }
+                        LanguageServerSelector::Name(language_server_name) => {
+                            proto::LanguageServerSelector::Name(language_server_name.to_string())
                         }
                     })
                     .collect(),
@@ -10939,18 +10918,9 @@ impl LspStore {
 
     pub(crate) fn serialize_code_action(action: &CodeAction) -> proto::CodeAction {
         let (kind, lsp_action) = match &action.lsp_action {
-            LspAction::Action(code_action) => (
-                proto::CodeActionKind::Action,
-                serde_json::to_vec(code_action).unwrap(),
-            ),
-            LspAction::Command(command) => (
-                proto::CodeActionKind::Command,
-                serde_json::to_vec(command).unwrap(),
-            ),
-            LspAction::CodeLens(code_lens) => (
-                proto::CodeActionKind::CodeLens,
-                serde_json::to_vec(code_lens).unwrap(),
-            ),
+            LspAction::Action(code_action) => (proto::CodeActionKind::Action, serde_json::to_vec(code_action).unwrap()),
+            LspAction::Command(command) => (proto::CodeActionKind::Command, serde_json::to_vec(command).unwrap()),
+            LspAction::CodeLens(code_lens) => (proto::CodeActionKind::CodeLens, serde_json::to_vec(code_lens).unwrap()),
         };
 
         proto::CodeAction {
@@ -12497,9 +12467,7 @@ impl LanguageServerLogType {
                         LogLevel::Log
                     }
                 };
-                proto::LanguageServerLogType::Log(proto::LogMessage {
-                    level,
-                })
+                proto::LanguageServerLogType::Log(proto::LogMessage { level })
             }
             Self::Trace { verbose_info } => proto::LanguageServerLogType::Trace(proto::TraceMessage {
                 verbose_info: verbose_info.to_owned(),
@@ -12519,14 +12487,12 @@ impl LanguageServerLogType {
         use proto::LogMessageLevel;
         use proto::RpcMessage;
         match log_type {
-            proto::LanguageServerLogType::Log(message_type) => {
-                Self::Log(match message_type.level {
-                    LogMessageLevel::Error => MessageType::ERROR,
-                    LogMessageLevel::Warning => MessageType::WARNING,
-                    LogMessageLevel::Info => MessageType::INFO,
-                    LogMessageLevel::Log => MessageType::LOG,
-                })
-            }
+            proto::LanguageServerLogType::Log(message_type) => Self::Log(match message_type.level {
+                LogMessageLevel::Error => MessageType::ERROR,
+                LogMessageLevel::Warning => MessageType::WARNING,
+                LogMessageLevel::Info => MessageType::INFO,
+                LogMessageLevel::Log => MessageType::LOG,
+            }),
             proto::LanguageServerLogType::Trace(trace_message) => Self::Trace {
                 verbose_info: trace_message.verbose_info,
             },

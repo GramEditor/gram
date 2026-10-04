@@ -11,7 +11,8 @@ use project::{
     project_settings::{NodeBinarySettings, ProjectSettings},
 };
 use proto::{
-    self, ServerBinaryStatus, StatusUpdateVariant, UpdateLanguageServerVariant::{RegisteredForBuffer, StatusUpdate},
+    self, ServerBinaryStatus, StatusUpdateVariant,
+    UpdateLanguageServerVariant::{RegisteredForBuffer, StatusUpdate},
 };
 use settings::{BinarySettings, DapSettingsContent, Settings, SettingsStore};
 use ui::{

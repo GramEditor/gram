@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::messages::buffer::{Anchor, AnchorRange, Location, ProjectTransaction, Transaction, VectorClockEntry};
 
@@ -34,7 +34,7 @@ pub struct GetTypeDefinition {
     pub buffer_id: u64,
     pub position: Anchor,
     pub version: Vec<VectorClockEntry>,
- }
+}
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetTypeDefinitionResponse {
@@ -47,7 +47,7 @@ pub struct GetImplementation {
     pub buffer_id: u64,
     pub position: Anchor,
     pub version: Vec<VectorClockEntry>,
- }
+}
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetImplementationResponse {
@@ -60,7 +60,7 @@ pub struct GetReferences {
     pub buffer_id: u64,
     pub position: Anchor,
     pub version: Vec<VectorClockEntry>,
- }
+}
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetReferencesResponse {
@@ -71,9 +71,9 @@ pub struct GetReferencesResponse {
 pub struct GetDocumentHighlights {
     pub project_id: u64,
     pub buffer_id: u64,
-    pub position:  Anchor,
+    pub position: Anchor,
     pub version: Vec<VectorClockEntry>,
- }
+}
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetDocumentHighlightsResponse {
@@ -426,7 +426,6 @@ pub struct OnTypeFormatting {
 pub struct OnTypeFormattingResponse {
     pub transaction: Option<Transaction>,
 }
-
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct LinkedEditingRange {
@@ -935,14 +934,12 @@ pub struct GetDocumentColor {
     pub project_id: u64,
     pub buffer_id: u64,
     pub version: Vec<VectorClockEntry>,
-
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct GetDocumentColorResponse {
     pub colors: Vec<ColorInformation>,
     pub version: Vec<VectorClockEntry>,
-
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -1195,5 +1192,4 @@ pub struct ToggleLspLogs {
     pub log_type: ToggleLspLogsType,
     pub server_id: u64,
     pub enabled: bool,
-
 }

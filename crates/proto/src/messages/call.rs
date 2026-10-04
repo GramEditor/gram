@@ -1,5 +1,5 @@
+use serde::{Deserialize, Serialize};
 use std::default::Default;
-use serde::{Serialize, Deserialize};
 
 use crate::messages::buffer::{Anchor, EditorAnchor, Selection};
 use crate::messages::core::{PeerId, User};
@@ -200,7 +200,7 @@ pub struct UpdateWorktree {
     pub updated_entries: Vec<Entry>,
     pub removed_entries: Vec<u64>,
     pub updated_repositories: Vec<RepositoryEntry>, // deprecated
-    pub removed_repositories: Vec<u64>, // deprecated
+    pub removed_repositories: Vec<u64>,             // deprecated
     pub scan_id: u64,
     pub is_last_update: bool,
     pub abs_path: String,

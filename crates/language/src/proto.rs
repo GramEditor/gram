@@ -33,26 +33,22 @@ pub fn serialize_line_ending(message: text::LineEnding) -> proto::LineEnding {
 /// Serializes a [`crate::Operation`] to be sent over RPC.
 pub fn serialize_operation(operation: &crate::Operation) -> proto::Operation {
     match operation {
-        crate::Operation::Buffer(text::Operation::Edit(edit)) => {
-            proto::Operation::Edit(serialize_edit_operation(edit))
-        }
+        crate::Operation::Buffer(text::Operation::Edit(edit)) => proto::Operation::Edit(serialize_edit_operation(edit)),
 
-        crate::Operation::Buffer(text::Operation::Undo(undo)) => {
-            proto::Operation::Undo(proto::OperationUndo {
-                replica_id: undo.timestamp.replica_id.as_u16() as u32,
-                lamport_timestamp: undo.timestamp.value,
-                version: serialize_version(&undo.version),
-                counts: undo
-                    .counts
-                    .iter()
-                    .map(|(edit_id, count)| proto::UndoCount {
-                        replica_id: edit_id.replica_id.as_u16() as u32,
-                        lamport_timestamp: edit_id.value,
-                        count: *count,
-                    })
-                    .collect(),
-            })
-        }
+        crate::Operation::Buffer(text::Operation::Undo(undo)) => proto::Operation::Undo(proto::OperationUndo {
+            replica_id: undo.timestamp.replica_id.as_u16() as u32,
+            lamport_timestamp: undo.timestamp.value,
+            version: serialize_version(&undo.version),
+            counts: undo
+                .counts
+                .iter()
+                .map(|(edit_id, count)| proto::UndoCount {
+                    replica_id: edit_id.replica_id.as_u16() as u32,
+                    lamport_timestamp: edit_id.value,
+                    count: *count,
+                })
+                .collect(),
+        }),
 
         crate::Operation::UpdateSelections {
             selections,
@@ -252,10 +248,7 @@ pub fn serialize_anchor_range(range: Range<Anchor>) -> proto::AnchorRange {
 
 /// Deserializes an [`Range<Anchor>`] from the RPC representation.
 pub fn deserialize_anchor_range(range: proto::AnchorRange) -> Result<Range<Anchor>> {
-    Ok(
-        deserialize_anchor(range.start)
-            ..deserialize_anchor(range.end),
-    )
+    Ok(deserialize_anchor(range.start)..deserialize_anchor(range.end))
 }
 
 /// Deserializes an [`crate::Operation`] from the RPC representation.
@@ -288,14 +281,12 @@ pub fn deserialize_operation(message: proto::Operation) -> Result<crate::Operati
             let selections = message
                 .selections
                 .into_iter()
-                .map(|selection| {
-                    Selection {
-                        id: selection.id as usize,
-                        start: deserialize_anchor(selection.start.anchor),
-                        end: deserialize_anchor(selection.end.anchor),
-                        reversed: selection.reversed,
-                        goal: SelectionGoal::None,
-                    }
+                .map(|selection| Selection {
+                    id: selection.id as usize,
+                    start: deserialize_anchor(selection.start.anchor),
+                    end: deserialize_anchor(selection.end.anchor),
+                    reversed: selection.reversed,
+                    goal: SelectionGoal::None,
                 })
                 .collect::<Vec<_>>();
 
@@ -440,7 +431,7 @@ pub fn deserialize_anchor(anchor: proto::Anchor) -> Anchor {
         None => None,
         // The only "error" is if buffer ID is 0,
         // which we'll just treat as a missing buffer
-        Some(id) => BufferId::new(id).ok()
+        Some(id) => BufferId::new(id).ok(),
     };
     Anchor {
         timestamp: clock::Lamport {

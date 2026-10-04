@@ -299,16 +299,30 @@ impl AnyProtoClient {
                         let server_id = response.server_id;
                         let response = match response.variant {
                             LspResponseVariant::GetReferencesResponse(response) => to_any_envelope(&envelope, response),
-                            LspResponseVariant::GetDocumentColorResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::GetDocumentColorResponse(response) => {
+                                to_any_envelope(&envelope, response)
+                            }
                             LspResponseVariant::GetHoverResponse(response) => to_any_envelope(&envelope, response),
-                            LspResponseVariant::GetCodeActionsResponse(response) => to_any_envelope(&envelope, response),
-                            LspResponseVariant::GetSignatureHelpResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::GetCodeActionsResponse(response) => {
+                                to_any_envelope(&envelope, response)
+                            }
+                            LspResponseVariant::GetSignatureHelpResponse(response) => {
+                                to_any_envelope(&envelope, response)
+                            }
                             LspResponseVariant::GetCodeLensResponse(response) => to_any_envelope(&envelope, response),
-                            LspResponseVariant::GetDocumentDiagnosticsResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::GetDocumentDiagnosticsResponse(response) => {
+                                to_any_envelope(&envelope, response)
+                            }
                             LspResponseVariant::GetDefinitionResponse(response) => to_any_envelope(&envelope, response),
-                            LspResponseVariant::GetDeclarationResponse(response) => to_any_envelope(&envelope, response),
-                            LspResponseVariant::GetTypeDefinitionResponse(response) => to_any_envelope(&envelope, response),
-                            LspResponseVariant::GetImplementationResponse(response) => to_any_envelope(&envelope, response),
+                            LspResponseVariant::GetDeclarationResponse(response) => {
+                                to_any_envelope(&envelope, response)
+                            }
+                            LspResponseVariant::GetTypeDefinitionResponse(response) => {
+                                to_any_envelope(&envelope, response)
+                            }
+                            LspResponseVariant::GetImplementationResponse(response) => {
+                                to_any_envelope(&envelope, response)
+                            }
                             LspResponseVariant::InlayHintsResponse(response) => to_any_envelope(&envelope, response),
                         };
                         Some(proto::ProtoLspResponse { server_id, response })

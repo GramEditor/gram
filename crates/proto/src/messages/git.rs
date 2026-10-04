@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::messages::buffer::{Range, VectorClockEntry};
 use crate::messages::worktree::ProjectPath;
@@ -570,7 +570,6 @@ pub struct BlameResponse {
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct BlameBufferResponse {
     pub blame_response: Option<BlameResponse>,
-
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]

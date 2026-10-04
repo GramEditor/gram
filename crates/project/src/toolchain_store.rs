@@ -9,10 +9,7 @@ use gpui::{App, AppContext as _, AsyncApp, Context, Entity, EventEmitter, Subscr
 use language::{
     LanguageName, LanguageRegistry, LanguageToolchainStore, ManifestDelegate, Toolchain, ToolchainList, ToolchainScope,
 };
-use rpc::{
-    AnyProtoClient, TypedEnvelope,
-    proto,
-};
+use rpc::{AnyProtoClient, TypedEnvelope, proto};
 use settings::WorktreeId;
 use task::Shell;
 use util::{ResultExt as _, rel_path::RelPath};
