@@ -596,7 +596,7 @@ impl SettingsObserver {
                         worktree_id,
                         path: path.to_proto(),
                         content: Some(content),
-                        kind: Some(local_settings_kind_to_proto(LocalSettingsKind::Settings).into()),
+                        kind: Some(local_settings_kind_to_proto(LocalSettingsKind::Settings)),
                     })
                     .log_err();
             }
@@ -607,7 +607,7 @@ impl SettingsObserver {
                         worktree_id,
                         path: path.to_proto(),
                         content: Some(content),
-                        kind: Some(local_settings_kind_to_proto(LocalSettingsKind::Editorconfig).into()),
+                        kind: Some(local_settings_kind_to_proto(LocalSettingsKind::Editorconfig)),
                     })
                     .log_err();
             }
@@ -945,7 +945,7 @@ impl SettingsObserver {
                         worktree_id: remote_worktree_id.to_proto(),
                         path: directory.to_proto(),
                         content: file_content.clone(),
-                        kind: Some(local_settings_kind_to_proto(kind).into()),
+                        kind: Some(local_settings_kind_to_proto(kind)),
                     })
                     .log_err();
             }

@@ -19,7 +19,7 @@ pub const MESSAGE_LEN_SIZE: usize = size_of::<MessageLen>();
 // Values 6 and 7 are unused. The 3 low bits in 0x47 ('G') is 111, or 7.
 // So by starting the magic byte with 'G', we're starting it with a byte
 // which Protobuf will read as an invalid wire type.
-const MAGIC: &'static [u8] = b"GRAM";
+const MAGIC: &[u8] = b"GRAM";
 
 pub fn message_len_from_buffer(buffer: &[u8]) -> MessageLen {
     MessageLen::from_le_bytes(buffer.try_into().unwrap())

@@ -1229,9 +1229,7 @@ impl BufferStore {
         let buffer_id = BufferId::new(envelope.payload.buffer_id)?;
         let version = deserialize_version(&envelope.payload.version);
         let mtime = envelope.payload.mtime.map(|time| time.into());
-        let line_ending = deserialize_line_ending(
-            proto::LineEnding::try_from(envelope.payload.line_ending).context("missing line ending")?,
-        );
+        let line_ending = deserialize_line_ending(envelope.payload.line_ending);
         this.update(&mut cx, |this, cx| {
             if let Some(buffer) = this.get_possibly_incomplete(buffer_id) {
                 buffer.update(cx, |buffer, cx| {
@@ -1326,7 +1324,7 @@ impl BufferStore {
 
             let initial_state = proto::CreateBufferForPeer {
                 project_id,
-                peer_id: peer_id,
+                peer_id,
                 variant: proto::CreateBufferForPeerVariant::State(state),
             };
 
@@ -1338,7 +1336,7 @@ impl BufferStore {
                         let is_last = chunks.peek().is_none();
                         client.send(proto::CreateBufferForPeer {
                             project_id,
-                            peer_id: peer_id,
+                            peer_id,
                             variant: proto::CreateBufferForPeerVariant::Chunk(proto::BufferChunk {
                                 buffer_id: buffer_id.into(),
                                 operations: chunk,

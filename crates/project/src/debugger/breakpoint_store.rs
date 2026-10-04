@@ -229,7 +229,7 @@ impl BreakpointStore {
                 .payload
                 .breakpoints
                 .into_iter()
-                .filter_map(|breakpoint| {
+                .map(|breakpoint| {
                     let position = language::proto::deserialize_anchor(breakpoint.position);
                     let session_state = breakpoint
                         .session_state
@@ -248,7 +248,7 @@ impl BreakpointStore {
                         bp: breakpoint,
                     };
 
-                    Some(StatefulBreakpoint { bp, session_state })
+                    StatefulBreakpoint { bp, session_state }
                 })
                 .collect();
 
@@ -866,8 +866,8 @@ impl Breakpoint {
         rpc::proto::Breakpoint {
             position: serialize_text_anchor(position),
             state: match self.state {
-                BreakpointState::Enabled => proto::BreakpointState::Enabled.into(),
-                BreakpointState::Disabled => proto::BreakpointState::Disabled.into(),
+                BreakpointState::Enabled => proto::BreakpointState::Enabled,
+                BreakpointState::Disabled => proto::BreakpointState::Disabled,
             },
             message: self.message.as_ref().map(|s| String::from(s.as_ref())),
             condition: self.condition.as_ref().map(|s| String::from(s.as_ref())),
@@ -889,9 +889,9 @@ impl Breakpoint {
 
     fn from_proto(breakpoint: rpc::proto::Breakpoint) -> Self {
         Self {
-            state: match proto::BreakpointState::try_from(breakpoint.state).ok() {
-                Some(proto::BreakpointState::Disabled) => BreakpointState::Disabled,
-                None | Some(proto::BreakpointState::Enabled) => BreakpointState::Enabled,
+            state: match breakpoint.state {
+                proto::BreakpointState::Disabled => BreakpointState::Disabled,
+                proto::BreakpointState::Enabled => BreakpointState::Enabled,
             },
             message: breakpoint.message.map(Into::into),
             condition: breakpoint.condition.map(Into::into),

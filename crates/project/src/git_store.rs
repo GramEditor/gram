@@ -2468,9 +2468,9 @@ impl GitStore {
                 .map(|(path, status)| proto::TreeDiffStatus {
                     path: path.as_ref().to_proto(),
                     status: match status {
-                        TreeDiffStatus::Added => proto::DiffStatus::Added.into(),
-                        TreeDiffStatus::Modified { .. } => proto::DiffStatus::Modified.into(),
-                        TreeDiffStatus::Deleted { .. } => proto::DiffStatus::Deleted.into(),
+                        TreeDiffStatus::Added => proto::DiffStatus::Added,
+                        TreeDiffStatus::Modified { .. } => proto::DiffStatus::Modified,
+                        TreeDiffStatus::Deleted { .. } => proto::DiffStatus::Deleted,
                     },
                     oid: match status {
                         TreeDiffStatus::Deleted { old } | TreeDiffStatus::Modified { old } => Some(old.to_string()),
@@ -2576,7 +2576,7 @@ impl GitStore {
             proto::OpenUncommittedDiffResponse {
                 committed_text,
                 staged_text,
-                mode: mode.into(),
+                mode,
             }
         })
     }
@@ -3838,8 +3838,8 @@ impl Repository {
                             repository_id: id.to_proto(),
                             commit,
                             mode: match reset_mode {
-                                ResetMode::Soft => proto::GitResetMode::Soft.into(),
-                                ResetMode::Mixed => proto::GitResetMode::Mixed.into(),
+                                ResetMode::Soft => proto::GitResetMode::Soft,
+                                ResetMode::Mixed => proto::GitResetMode::Mixed,
                             },
                         })
                         .await?;
@@ -5141,8 +5141,8 @@ impl Repository {
                             project_id,
                             repository_id: id.to_proto(),
                             diff_type: match diff_type {
-                                DiffType::HeadToIndex => proto::GitDiffType::HeadToIndex.into(),
-                                DiffType::HeadToWorktree => proto::GitDiffType::HeadToWorktree.into(),
+                                DiffType::HeadToIndex => proto::GitDiffType::HeadToIndex,
+                                DiffType::HeadToWorktree => proto::GitDiffType::HeadToWorktree,
                             },
                         })
                         .await?;
@@ -5566,8 +5566,7 @@ impl Repository {
                             buffer_id: buffer_id.to_proto(),
                         })
                         .await?;
-                    let mode =
-                        proto::OpenUncommittedDiffResponseMode::try_from(response.mode).context("Invalid mode")?;
+                    let mode = response.mode;
                     let bases = match mode {
                         proto::OpenUncommittedDiffResponseMode::IndexMatchesHead => {
                             DiffBasesChange::Both(response.committed_text)
@@ -6071,7 +6070,7 @@ fn status_from_proto(
     status: Option<proto::GitFileStatus>,
 ) -> anyhow::Result<FileStatus> {
     let Some(variant) = status else {
-        let code = proto::GitStatus::from(simple_status);
+        let code = simple_status;
         let result = match code {
             proto::GitStatus::Added => TrackedStatus {
                 worktree_status: StatusCode::Added,
@@ -6106,8 +6105,7 @@ fn status_from_proto(
             second_head,
         } => {
             let [first_head, second_head] = [first_head, second_head].map(|head| {
-                let code =
-                    proto::GitStatus::try_from(head).with_context(|| format!("Invalid git status code: {head:?}"))?;
+                let code = head;
                 let result = match code {
                     proto::GitStatus::Added => UnmergedStatusCode::Added,
                     proto::GitStatus::Updated => UnmergedStatusCode::Updated,

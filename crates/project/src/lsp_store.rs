@@ -209,7 +209,7 @@ impl FormatTrigger {
         }
     }
 
-    fn to_proto(&self) -> proto::FormatTrigger {
+    fn to_proto(self) -> proto::FormatTrigger {
         match self {
             FormatTrigger::Manual => proto::FormatTrigger::Manual,
             FormatTrigger::Save => proto::FormatTrigger::Save,
@@ -4219,7 +4219,7 @@ impl LspStore {
                     .send(proto::UpdateDiagnosticSummary {
                         project_id: downstream_project_id,
                         worktree_id: worktree.id().to_proto(),
-                        summary: summary,
+                        summary,
                         more_summaries: summaries.collect(),
                     })
                     .log_err();
@@ -4808,7 +4808,7 @@ impl LspStore {
                 project_id,
                 buffer_id: buffer.read(cx).remote_id().into(),
                 language_server_id: server_id.0 as u64,
-                hint: InlayHints::project_to_proto_hint(hint.clone()),
+                hint: InlayHints::project_to_proto_hint(hint),
             };
             cx.background_spawn(async move {
                 let response = upstream_client
@@ -8410,15 +8410,13 @@ impl LspStore {
                     .payload
                     .only_servers
                     .into_iter()
-                    .filter_map(|selector| {
-                        Some(match selector {
-                            proto::LanguageServerSelector::ServerId(server_id) => {
-                                LanguageServerSelector::Id(LanguageServerId::from_proto(server_id))
-                            }
-                            proto::LanguageServerSelector::Name(name) => {
-                                LanguageServerSelector::Name(LanguageServerName(SharedString::from(name)))
-                            }
-                        })
+                    .map(|selector| match selector {
+                        proto::LanguageServerSelector::ServerId(server_id) => {
+                            LanguageServerSelector::Id(LanguageServerId::from_proto(server_id))
+                        }
+                        proto::LanguageServerSelector::Name(name) => {
+                            LanguageServerSelector::Name(LanguageServerName(SharedString::from(name)))
+                        }
                     })
                     .collect(),
                 false,
@@ -9552,7 +9550,7 @@ impl LspStore {
                     token,
                 } => {
                     let server_id = LanguageServerId::from_proto(language_server_id);
-                    let token = token.map(|token| ProgressToken::from_proto(token));
+                    let token = token.map(ProgressToken::from_proto);
                     lsp_store.cancel_language_server_work(server_id, token, cx);
                 }
             }

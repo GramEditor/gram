@@ -41,16 +41,16 @@ pub struct System {}
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum RevealStrategy {
     #[default]
-    RevealAlways,
-    RevealNever,
+    Always,
+    Never,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum HideStrategy {
     #[default]
-    HideAlways,
-    HideNever,
-    HideOnSuccess,
+    Always,
+    Never,
+    OnSuccess,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]

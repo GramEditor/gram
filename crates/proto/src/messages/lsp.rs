@@ -1015,6 +1015,10 @@ pub struct LspQueryResponse {
     pub responses: Vec<LspResponse>,
 }
 
+// Macros rely on the structs and enum values having the same name,
+// the message structs all make sense to end in Response,
+// so disable Clippy's enum_variant_names lint
+#[allow(clippy::enum_variant_names)]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum LspResponseVariant {
     GetHoverResponse(GetHoverResponse),

@@ -195,18 +195,14 @@ pub fn proto_to_lsp_signature(proto_help: proto::SignatureHelp) -> lsp::Signatur
                     signature
                         .parameters
                         .into_iter()
-                        .filter_map(|parameter_info| {
-                            Some(lsp::ParameterInformation {
-                                label: match parameter_info.label {
-                                    proto::ParameterInformationLabel::Simple(string) => {
-                                        lsp::ParameterLabel::Simple(string)
-                                    }
-                                    proto::ParameterInformationLabel::Offsets(offsets) => {
-                                        lsp::ParameterLabel::LabelOffsets([offsets.start, offsets.end])
-                                    }
-                                },
-                                documentation: parameter_info.documentation.map(proto_to_lsp_documentation),
-                            })
+                        .map(|parameter_info| lsp::ParameterInformation {
+                            label: match parameter_info.label {
+                                proto::ParameterInformationLabel::Simple(string) => lsp::ParameterLabel::Simple(string),
+                                proto::ParameterInformationLabel::Offsets(offsets) => {
+                                    lsp::ParameterLabel::LabelOffsets([offsets.start, offsets.end])
+                                }
+                            },
+                            documentation: parameter_info.documentation.map(proto_to_lsp_documentation),
                         })
                         .collect(),
                 ),

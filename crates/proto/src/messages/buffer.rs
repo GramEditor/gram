@@ -260,10 +260,10 @@ pub struct EditorAnchor {
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 pub enum CursorShape {
     #[default]
-    CursorBar,
-    CursorBlock,
-    CursorUnderscore,
-    CursorHollow,
+    Bar,
+    Block,
+    Underscore,
+    Hollow,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]

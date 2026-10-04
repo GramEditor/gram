@@ -1286,7 +1286,7 @@ impl DapCommand for EvaluateCommand {
             project_id: upstream_project_id,
             expression: self.expression.clone(),
             frame_id: self.frame_id,
-            context: self.context.clone().map(|context| context.to_proto().into()),
+            context: self.context.clone().map(|context| context.to_proto()),
         }
     }
 

@@ -543,9 +543,7 @@ impl LspCommand for PerformRename {
         let transaction = lsp_store.buffer_store().update(cx, |buffer_store, cx| {
             buffer_store.serialize_project_transaction_for_peer(response, peer_id, cx)
         });
-        proto::PerformRenameResponse {
-            transaction: transaction,
-        }
+        proto::PerformRenameResponse { transaction }
     }
 
     async fn response_from_proto(
@@ -1433,10 +1431,10 @@ impl LspCommand for GetDocumentHighlights {
                 start: serialize_anchor(&highlight.range.start),
                 end: serialize_anchor(&highlight.range.end),
                 kind: match highlight.kind {
-                    DocumentHighlightKind::TEXT => proto::DocumentHighlightKind::Text.into(),
-                    DocumentHighlightKind::WRITE => proto::DocumentHighlightKind::Write.into(),
-                    DocumentHighlightKind::READ => proto::DocumentHighlightKind::Read.into(),
-                    _ => proto::DocumentHighlightKind::Text.into(),
+                    DocumentHighlightKind::TEXT => proto::DocumentHighlightKind::Text,
+                    DocumentHighlightKind::WRITE => proto::DocumentHighlightKind::Write,
+                    DocumentHighlightKind::READ => proto::DocumentHighlightKind::Read,
+                    _ => proto::DocumentHighlightKind::Text,
                 },
             })
             .collect();
@@ -1457,11 +1455,10 @@ impl LspCommand for GetDocumentHighlights {
             buffer
                 .update(&mut cx, |buffer, _| buffer.wait_for_anchors([start, end]))?
                 .await?;
-            let kind = match proto::DocumentHighlightKind::try_from(highlight.kind) {
-                Ok(proto::DocumentHighlightKind::Text) => DocumentHighlightKind::TEXT,
-                Ok(proto::DocumentHighlightKind::Read) => DocumentHighlightKind::READ,
-                Ok(proto::DocumentHighlightKind::Write) => DocumentHighlightKind::WRITE,
-                Err(..) => DocumentHighlightKind::TEXT,
+            let kind = match highlight.kind {
+                proto::DocumentHighlightKind::Text => DocumentHighlightKind::TEXT,
+                proto::DocumentHighlightKind::Read => DocumentHighlightKind::READ,
+                proto::DocumentHighlightKind::Write => DocumentHighlightKind::WRITE,
             };
             highlights.push(DocumentHighlight {
                 range: start..end,
@@ -2908,20 +2905,18 @@ impl InlayHints {
             padding_left: message_hint.padding_left,
             padding_right: message_hint.padding_right,
             kind: message_hint.kind.as_deref().and_then(InlayHintKind::from_name),
-            tooltip: message_hint.tooltip.and_then(|tooltip| {
-                Some(match tooltip {
-                    proto::InlayHintTooltip::Value(s) => InlayHintTooltip::String(s),
-                    proto::InlayHintTooltip::MarkupContent(markup_content) => {
-                        InlayHintTooltip::MarkupContent(MarkupContent {
-                            kind: if markup_content.is_markdown {
-                                HoverBlockKind::Markdown
-                            } else {
-                                HoverBlockKind::PlainText
-                            },
-                            value: markup_content.value,
-                        })
-                    }
-                })
+            tooltip: message_hint.tooltip.map(|tooltip| match tooltip {
+                proto::InlayHintTooltip::Value(s) => InlayHintTooltip::String(s),
+                proto::InlayHintTooltip::MarkupContent(markup_content) => {
+                    InlayHintTooltip::MarkupContent(MarkupContent {
+                        kind: if markup_content.is_markdown {
+                            HoverBlockKind::Markdown
+                        } else {
+                            HoverBlockKind::PlainText
+                        },
+                        value: markup_content.value,
+                    })
+                }
             }),
             resolve_state,
         })
@@ -3404,10 +3399,10 @@ impl LspCommand for LinkedEditingRange {
         let items: Vec<Range<Anchor>> = message
             .items
             .into_iter()
-            .filter_map(|range| {
+            .map(|range| {
                 let start = deserialize_anchor(range.start);
                 let end = deserialize_anchor(range.end);
-                Some(start..end)
+                start..end
             })
             .collect();
         for range in &items {
@@ -3497,16 +3492,16 @@ impl GetDocumentDiagnostics {
         let tags = diagnostic
             .tags
             .into_iter()
-            .filter_map(|tag| match proto::LspDiagnosticTag::try_from(tag) {
-                Ok(proto::LspDiagnosticTag::Unnecessary) => Some(lsp::DiagnosticTag::UNNECESSARY),
-                Ok(proto::LspDiagnosticTag::Deprecated) => Some(lsp::DiagnosticTag::DEPRECATED),
+            .filter_map(|tag| match tag {
+                proto::LspDiagnosticTag::Unnecessary => Some(lsp::DiagnosticTag::UNNECESSARY),
+                proto::LspDiagnosticTag::Deprecated => Some(lsp::DiagnosticTag::DEPRECATED),
                 _ => None,
             })
             .collect::<Vec<_>>();
 
         Ok(lsp::Diagnostic {
             range: language::range_to_lsp(range)?,
-            severity: match proto::LspDiagnosticSeverity::try_from(diagnostic.severity).unwrap() {
+            severity: match diagnostic.severity {
                 proto::LspDiagnosticSeverity::Error => Some(lsp::DiagnosticSeverity::ERROR),
                 proto::LspDiagnosticSeverity::Warning => Some(lsp::DiagnosticSeverity::WARNING),
                 proto::LspDiagnosticSeverity::Information => Some(lsp::DiagnosticSeverity::INFORMATION),
@@ -3994,12 +3989,12 @@ impl LspCommand for GetDocumentColor {
         Ok(message
             .colors
             .into_iter()
-            .filter_map(|color| {
+            .map(|color| {
                 let start = color.lsp_range_start;
                 let start = PointUtf16::new(start.row, start.column);
                 let end = color.lsp_range_end;
                 let end = PointUtf16::new(end.row, end.column);
-                Some(DocumentColor {
+                DocumentColor {
                     resolved: false,
                     color_presentations: Vec::new(),
                     lsp_range: lsp::Range {
@@ -4012,7 +4007,7 @@ impl LspCommand for GetDocumentColor {
                         blue: color.blue,
                         alpha: color.alpha,
                     },
-                })
+                }
             })
             .collect())
     }

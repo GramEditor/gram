@@ -293,7 +293,7 @@ impl AnyProtoClient {
                 received_at: envelope.received_at,
                 payload: responses
                     .into_iter()
-                    .filter_map(|response| {
+                    .map(|response| {
                         use proto::LspResponseVariant;
 
                         let server_id = response.server_id;
@@ -325,7 +325,7 @@ impl AnyProtoClient {
                             }
                             LspResponseVariant::InlayHintsResponse(response) => to_any_envelope(&envelope, response),
                         };
-                        Some(proto::ProtoLspResponse { server_id, response })
+                        proto::ProtoLspResponse { server_id, response }
                     })
                     .collect(),
             })))

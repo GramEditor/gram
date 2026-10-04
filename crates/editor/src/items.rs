@@ -216,7 +216,7 @@ impl FollowableItem for Editor {
         _: &Window,
         cx: &App,
     ) -> bool {
-        let update = update.get_or_insert_with(|| Default::default());
+        let update = update.get_or_insert_with(Default::default);
 
         match &mut update.variant {
             proto::UpdateViewVariant::Editor(update) => match event {

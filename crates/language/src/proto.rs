@@ -1,7 +1,7 @@
 //! Handles conversions of `language` items to and from the [`rpc`] protocol.
 
 use crate::{CursorShape, Diagnostic, DiagnosticSourceKind, diagnostic_set::DiagnosticEntry};
-use anyhow::{Context as _, Result};
+use anyhow::Result;
 use clock::ReplicaId;
 use gpui::SharedString;
 use lsp::{DiagnosticSeverity, LanguageServerId};
@@ -171,20 +171,20 @@ pub fn serialize_selection(selection: &Selection<Anchor>) -> proto::Selection {
 /// Serializes a [`CursorShape`] to be sent over RPC.
 pub fn serialize_cursor_shape(cursor_shape: &CursorShape) -> proto::CursorShape {
     match cursor_shape {
-        CursorShape::Bar => proto::CursorShape::CursorBar,
-        CursorShape::Block => proto::CursorShape::CursorBlock,
-        CursorShape::Underline => proto::CursorShape::CursorUnderscore,
-        CursorShape::Hollow => proto::CursorShape::CursorHollow,
+        CursorShape::Bar => proto::CursorShape::Bar,
+        CursorShape::Block => proto::CursorShape::Block,
+        CursorShape::Underline => proto::CursorShape::Underscore,
+        CursorShape::Hollow => proto::CursorShape::Hollow,
     }
 }
 
 /// Deserializes a [`CursorShape`] from the RPC representation.
 pub fn deserialize_cursor_shape(cursor_shape: proto::CursorShape) -> CursorShape {
     match cursor_shape {
-        proto::CursorShape::CursorBar => CursorShape::Bar,
-        proto::CursorShape::CursorBlock => CursorShape::Block,
-        proto::CursorShape::CursorUnderscore => CursorShape::Underline,
-        proto::CursorShape::CursorHollow => CursorShape::Hollow,
+        proto::CursorShape::Bar => CursorShape::Bar,
+        proto::CursorShape::Block => CursorShape::Block,
+        proto::CursorShape::Underscore => CursorShape::Underline,
+        proto::CursorShape::Hollow => CursorShape::Hollow,
     }
 }
 
@@ -297,9 +297,7 @@ pub fn deserialize_operation(message: proto::Operation) -> Result<crate::Operati
                 },
                 selections: Arc::from(selections),
                 line_mode: message.line_mode,
-                cursor_shape: deserialize_cursor_shape(
-                    proto::CursorShape::try_from(message.cursor_shape).context("Missing cursor shape")?,
-                ),
+                cursor_shape: deserialize_cursor_shape(message.cursor_shape),
             }
         }
         proto::Operation::UpdateDiagnostics(message) => crate::Operation::UpdateDiagnostics {
@@ -323,9 +321,7 @@ pub fn deserialize_operation(message: proto::Operation) -> Result<crate::Operati
                 replica_id: ReplicaId::new(message.replica_id as u16),
                 value: message.lamport_timestamp,
             },
-            line_ending: deserialize_line_ending(
-                proto::LineEnding::try_from(message.line_ending).context("missing line_ending")?,
-            ),
+            line_ending: deserialize_line_ending(message.line_ending),
         },
     })
 }
@@ -396,7 +392,7 @@ pub fn deserialize_diagnostics(diagnostics: Vec<proto::Diagnostic>) -> Arc<[Diag
                 range: deserialize_anchor(diagnostic.start)..deserialize_anchor(diagnostic.end),
                 diagnostic: Diagnostic {
                     source: diagnostic.source,
-                    severity: match proto::DiagnosticSeverity::try_from(diagnostic.severity).ok()? {
+                    severity: match diagnostic.severity {
                         proto::DiagnosticSeverity::Error => DiagnosticSeverity::ERROR,
                         proto::DiagnosticSeverity::Warning => DiagnosticSeverity::WARNING,
                         proto::DiagnosticSeverity::Information => DiagnosticSeverity::INFORMATION,
@@ -413,7 +409,7 @@ pub fn deserialize_diagnostics(diagnostics: Vec<proto::Diagnostic>) -> Arc<[Diag
                     is_unnecessary: diagnostic.is_unnecessary,
                     underline: diagnostic.underline,
                     registration_id: diagnostic.registration_id.map(SharedString::from),
-                    source_kind: match proto::DiagnosticSourceKind::try_from(diagnostic.source_kind).ok()? {
+                    source_kind: match diagnostic.source_kind {
                         proto::DiagnosticSourceKind::Pulled => DiagnosticSourceKind::Pulled,
                         proto::DiagnosticSourceKind::Pushed => DiagnosticSourceKind::Pushed,
                         proto::DiagnosticSourceKind::Other => DiagnosticSourceKind::Other,
@@ -439,7 +435,7 @@ pub fn deserialize_anchor(anchor: proto::Anchor) -> Anchor {
             value: anchor.timestamp,
         },
         offset: anchor.offset as usize,
-        bias: match proto::Bias::from(anchor.bias) {
+        bias: match anchor.bias {
             proto::Bias::Left => Bias::Left,
             proto::Bias::Right => Bias::Right,
         },
