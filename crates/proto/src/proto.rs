@@ -6,7 +6,6 @@ mod typed_envelope;
 mod messages;
 
 pub use error::*;
-pub use prost::{DecodeError, Message};
 use std::{
     cmp,
     iter, mem,

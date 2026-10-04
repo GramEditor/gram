@@ -13,12 +13,7 @@ path = "src/proto.rs"
 
 [dependencies]
 anyhow.workspace = true
-prost.workspace = true
 serde.workspace = true
-
-[build-dependencies]
-prost-build.workspace = true
-protobuf-src.workspace = true
 
 [features]
 test-support = []

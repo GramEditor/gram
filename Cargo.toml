@@ -400,9 +400,6 @@ postage = { version = "0.5.0", features = ["blocking", "futures-traits", "loggin
 pretty_assertions = { version = "1.4.1", features = ["std", "unstable"] }
 proc-macro2 = "1.0.107"
 profiling = "1.0.18"
-prost = "0.14.4"
-prost-build = "0.14.4"
-protobuf-src = "2.1.1"
 pulldown-cmark = { version = "0.13.4", default-features = false }
 quote = "1.0.47"
 rand = "0.10.3"
@@ -606,7 +603,6 @@ ignored-paths = ["crates/extension_api/wit/since*/settings.rs"]
 [patch.crates-io]
 async-task = { git = "https://github.com/smol-rs/async-task", rev = "f98b30bb047426104c23b81e1c2fa083b177a567" }
 calloop = { git = "https://github.com/zed-industries/calloop", rev = "eb6b4fd17b9af5ecc226546bdd04185391b3e265" }
-protobuf-src = { git = "https://codeberg.org/GramEditor/rust-protobuf-native", rev = "a70e2d9986e931f2b883b661bf8f4471c5398b7e" }
 
 [profile.dev]
 opt-level = 1
