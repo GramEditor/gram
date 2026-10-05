@@ -60,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ensure that SoftWrap being set to None does not cause wrapping (#572) by @nitbook
 - Pull in patches for notify crate from Zed
 - Fix image rendering when image changes size (#604) by @Emilinya
-- Fix rerun last debug (zed#58828) 
+- Fix rerun last debug (zed#58828) (#610) by @rdnvndr 
 
 ## [3.3.0] - 2026-08-25
 
