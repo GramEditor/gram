@@ -1,7 +1,7 @@
 use crate::branch_picker::{self, BranchList};
 use crate::git_panel::{GitPanel, commit_message_editor};
 use git::repository::CommitOptions;
-use git::{Amend, Commit, Signoff};
+use git::{Amend, Commit, Signoff, Verify};
 use panel::{panel_button, panel_editor_style};
 use settings::Settings;
 use theme::ThemeSettings;
@@ -267,6 +267,7 @@ impl CommitModal {
                     let git_panel = git_panel_entity.read(cx);
                     let amend_enabled = git_panel.amend_pending();
                     let signoff_enabled = git_panel.signoff_enabled();
+                    let verify_enabled = git_panel.verify_enabled();
                     let has_previous_commit = git_panel.head_commit(cx).is_some();
 
                     Some(ContextMenu::build(window, cx, |context_menu, _, _| {
@@ -306,6 +307,20 @@ impl CommitModal {
                                     }
                                 },
                             )
+                            .toggleable_entry(
+                                "Enable Git Hooks",
+                                verify_enabled,
+                                IconPosition::Start,
+                                Some(Box::new(Verify)),
+                                {
+                                    let git_panel = git_panel_entity.clone();
+                                    move |window, cx| {
+                                        git_panel.update(cx, |git_panel, cx| {
+                                            git_panel.toggle_verify_enabled(&Verify, window, cx);
+                                        })
+                                    }
+                                },
+                            )
                     }))
                 }
             })
@@ -314,23 +329,33 @@ impl CommitModal {
     }
 
     pub fn render_footer(&self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let (can_commit, tooltip, commit_label, active_repo, is_amend_pending, is_signoff_enabled, workspace) =
-            self.git_panel.update(cx, |git_panel, cx| {
-                let (can_commit, tooltip) = git_panel.configure_commit_button(cx);
-                let title = git_panel.commit_button_title();
-                let active_repo = git_panel.active_repository.clone();
-                let is_amend_pending = git_panel.amend_pending();
-                let is_signoff_enabled = git_panel.signoff_enabled();
-                (
-                    can_commit,
-                    tooltip,
-                    title,
-                    active_repo,
-                    is_amend_pending,
-                    is_signoff_enabled,
-                    git_panel.workspace.clone(),
-                )
-            });
+        let (
+            can_commit,
+            tooltip,
+            commit_label,
+            active_repo,
+            is_amend_pending,
+            is_signoff_enabled,
+            is_verify_enabled,
+            workspace,
+        ) = self.git_panel.update(cx, |git_panel, cx| {
+            let (can_commit, tooltip) = git_panel.configure_commit_button(cx);
+            let title = git_panel.commit_button_title();
+            let active_repo = git_panel.active_repository.clone();
+            let is_amend_pending = git_panel.amend_pending();
+            let is_signoff_enabled = git_panel.signoff_enabled();
+            let is_verify_enabled = git_panel.verify_enabled();
+            (
+                can_commit,
+                tooltip,
+                title,
+                active_repo,
+                is_amend_pending,
+                is_signoff_enabled,
+                is_verify_enabled,
+                git_panel.workspace.clone(),
+            )
+        });
 
         let branch = active_repo
             .as_ref()
@@ -411,6 +436,7 @@ impl CommitModal {
                                     CommitOptions {
                                         amend: is_amend_pending,
                                         signoff: is_signoff_enabled,
+                                        verify: is_verify_enabled,
                                     },
                                     window,
                                     cx,

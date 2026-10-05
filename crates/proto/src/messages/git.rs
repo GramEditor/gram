@@ -444,6 +444,7 @@ pub struct StashDrop {
 pub struct CommitOptions {
     pub amend: bool,
     pub signoff: bool,
+    pub verify: bool,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone, Debug, PartialEq)]

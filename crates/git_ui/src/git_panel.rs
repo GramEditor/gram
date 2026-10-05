@@ -24,7 +24,7 @@ use git::repository::{
 };
 use git::stash::GitStash;
 use git::status::{DiffStat, StageStatus};
-use git::{Amend, Signoff, ToggleStaged, repository::RepoPath, status::FileStatus};
+use git::{Amend, Signoff, ToggleStaged, Verify, repository::RepoPath, status::FileStatus};
 use git::{
     ExpandCommitEditor, GitHostingProviderRegistry, RestoreTrackedFiles, StageAll, StashAll, StashApply, StashPop,
     ToggleFillCommitEditor, TrashUntrackedFiles, UnstageAll,
@@ -215,6 +215,10 @@ pub enum Event {
     Focus,
 }
 
+const fn default_true() -> bool {
+    true
+}
+
 #[derive(Serialize, Deserialize)]
 struct SerializedGitPanel {
     width: Option<Pixels>,
@@ -222,6 +226,8 @@ struct SerializedGitPanel {
     amend_pending: bool,
     #[serde(default)]
     signoff_enabled: bool,
+    #[serde(default = "default_true")]
+    verify_enabled: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
@@ -590,6 +596,7 @@ pub struct GitPanel {
     amend_pending: bool,
     original_commit_message: Option<String>,
     signoff_enabled: bool,
+    verify_enabled: bool,
     pending_serialization: Task<()>,
     pub(crate) project: Entity<Project>,
     scroll_handle: UniformListScrollHandle,
@@ -747,6 +754,7 @@ impl GitPanel {
                 amend_pending: false,
                 original_commit_message: None,
                 signoff_enabled: false,
+                verify_enabled: true,
                 pending_serialization: Task::ready(()),
                 single_staged_entry: None,
                 single_tracked_entry: None,
@@ -851,6 +859,7 @@ impl GitPanel {
         let width = self.width;
         let amend_pending = self.amend_pending;
         let signoff_enabled = self.signoff_enabled;
+        let verify_enabled = self.verify_enabled;
 
         self.pending_serialization = cx.spawn(async move |git_panel, cx| {
             cx.background_executor().timer(SERIALIZATION_THROTTLE_TIME).await;
@@ -876,6 +885,7 @@ impl GitPanel {
                                 width,
                                 amend_pending,
                                 signoff_enabled,
+                                verify_enabled,
                             })?,
                         )
                         .await?;
@@ -1937,6 +1947,7 @@ impl GitPanel {
                 CommitOptions {
                     amend: false,
                     signoff: self.signoff_enabled,
+                    verify: self.verify_enabled,
                 },
                 window,
                 cx,
@@ -1975,6 +1986,7 @@ impl GitPanel {
                         CommitOptions {
                             amend: true,
                             signoff: self.signoff_enabled,
+                            verify: self.verify_enabled,
                         },
                         window,
                         cx,
@@ -3314,6 +3326,7 @@ impl GitPanel {
                 let has_previous_commit = self.head_commit(cx).is_some();
                 let amend = self.amend_pending();
                 let signoff = self.signoff_enabled;
+                let verify_enabled = self.verify_enabled;
 
                 move |window, cx| {
                     Some(ContextMenu::build(window, cx, |context_menu, _, _| {
@@ -3339,6 +3352,13 @@ impl GitPanel {
                                 IconPosition::Start,
                                 Some(Box::new(Signoff)),
                                 move |window, cx| window.dispatch_action(Box::new(Signoff), cx),
+                            )
+                            .toggleable_entry(
+                                "Enable Git Hooks",
+                                verify_enabled,
+                                IconPosition::Start,
+                                Some(Box::new(Verify)),
+                                move |window, cx| window.dispatch_action(Box::new(Verify), cx),
                             )
                     }))
                 }
@@ -3606,6 +3626,7 @@ impl GitPanel {
         let commit_tooltip_focus_handle = self.commit_editor.focus_handle(cx);
         let amend = self.amend_pending();
         let signoff = self.signoff_enabled;
+        let verify = self.verify_enabled;
 
         let label_color = if self.pending_commit.is_some() {
             Color::Disabled
@@ -3629,7 +3650,7 @@ impl GitPanel {
                         move |_, window, cx| {
                             git_panel
                                 .update(cx, |git_panel, cx| {
-                                    git_panel.commit_changes(CommitOptions { amend, signoff }, window, cx);
+                                    git_panel.commit_changes(CommitOptions { amend, signoff, verify }, window, cx);
                                 })
                                 .ok();
                         }
@@ -3643,9 +3664,10 @@ impl GitPanel {
                                     tooltip,
                                     Some(if amend { &git::Amend } else { &git::Commit }),
                                     format!(
-                                        "git commit{}{}",
+                                        "git commit{}{}{}",
                                         if amend { " --amend" } else { "" },
-                                        if signoff { " --signoff" } else { "" }
+                                        if signoff { " --signoff" } else { "" },
+                                        if !verify { " --no-verify" } else { "" }
                                     ),
                                     &handle.clone(),
                                     cx,
@@ -4506,6 +4528,20 @@ impl GitPanel {
         self.set_signoff_enabled(!self.signoff_enabled, cx);
     }
 
+    pub fn verify_enabled(&self) -> bool {
+        self.verify_enabled
+    }
+
+    pub fn set_verify_enabled(&mut self, value: bool, cx: &mut Context<Self>) {
+        self.verify_enabled = value;
+        self.serialize(cx);
+        cx.notify();
+    }
+
+    pub fn toggle_verify_enabled(&mut self, _: &Verify, _window: &mut Window, cx: &mut Context<Self>) {
+        self.set_verify_enabled(!self.verify_enabled, cx);
+    }
+
     pub async fn load(workspace: WeakEntity<Workspace>, mut cx: AsyncWindowContext) -> anyhow::Result<Entity<Self>> {
         let serialized_panel = match workspace
             .read_with(&cx, |workspace, _| Self::serialization_key(workspace))
@@ -4533,6 +4569,7 @@ impl GitPanel {
                     panel.width = serialized_panel.width;
                     panel.amend_pending = serialized_panel.amend_pending;
                     panel.signoff_enabled = serialized_panel.signoff_enabled;
+                    panel.verify_enabled = serialized_panel.verify_enabled;
                     cx.notify();
                 })
             }
@@ -4599,6 +4636,7 @@ impl Render for GitPanel {
                     .on_action(cx.listener(GitPanel::on_commit))
                     .on_action(cx.listener(GitPanel::on_amend))
                     .on_action(cx.listener(GitPanel::toggle_signoff_enabled))
+                    .on_action(cx.listener(GitPanel::toggle_verify_enabled))
                     .on_action(cx.listener(Self::stage_all))
                     .on_action(cx.listener(Self::unstage_all))
                     .on_action(cx.listener(Self::stage_selected))

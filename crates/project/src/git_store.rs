@@ -24,7 +24,7 @@ use futures::{
     stream::FuturesOrdered,
 };
 use git::{
-    BuildPermalinkParams, GitHostingProviderRegistry, Oid, RunHook,
+    BuildPermalinkParams, GitHostingProviderRegistry, Oid,
     blame::Blame,
     parse_git_remote_url,
     repository::{
@@ -514,7 +514,6 @@ impl GitStore {
         client.add_entity_request_handler(Self::handle_stash_apply);
         client.add_entity_request_handler(Self::handle_stash_drop);
         client.add_entity_request_handler(Self::handle_commit);
-        client.add_entity_request_handler(Self::handle_run_hook);
         client.add_entity_request_handler(Self::handle_reset);
         client.add_entity_request_handler(Self::handle_show);
         client.add_entity_request_handler(Self::handle_load_commit_diff);
@@ -1917,20 +1916,6 @@ impl GitStore {
         Ok(proto::Ack {})
     }
 
-    async fn handle_run_hook(
-        this: Entity<Self>,
-        envelope: TypedEnvelope<proto::RunGitHook>,
-        mut cx: AsyncApp,
-    ) -> Result<proto::Ack> {
-        let repository_id = RepositoryId::from_proto(envelope.payload.repository_id);
-        let repository_handle = Self::repository_for_request(&this, repository_id, &mut cx)?;
-        let hook = git_hook_from_proto(envelope.payload.hook);
-        repository_handle
-            .update(&mut cx, |repository_handle, cx| repository_handle.run_hook(hook, cx))?
-            .await??;
-        Ok(proto::Ack {})
-    }
-
     async fn handle_commit(
         this: Entity<Self>,
         envelope: TypedEnvelope<proto::Commit>,
@@ -1955,6 +1940,7 @@ impl GitStore {
                     CommitOptions {
                         amend: options.amend,
                         signoff: options.signoff,
+                        verify: options.verify,
                     },
                     askpass,
                     cx,
@@ -4522,49 +4508,20 @@ impl Repository {
         })
     }
 
-    pub fn run_hook(&mut self, hook: RunHook, _cx: &mut App) -> oneshot::Receiver<Result<()>> {
-        let id = self.id;
-        self.send_job(
-            Some(format!("git hook {}", hook.as_str()).into()),
-            move |git_repo, _cx| async move {
-                match git_repo {
-                    RepositoryState::Local(LocalRepositoryState {
-                        backend, environment, ..
-                    }) => backend.run_hook(hook, environment.clone()).await,
-                    RepositoryState::Remote(RemoteRepositoryState { project_id, client }) => {
-                        client
-                            .request(proto::RunGitHook {
-                                project_id,
-                                repository_id: id.to_proto(),
-                                hook: git_hook_to_proto(hook),
-                            })
-                            .await?;
-
-                        Ok(())
-                    }
-                }
-            },
-        )
-    }
-
     pub fn commit(
         &mut self,
         message: SharedString,
         name_and_email: Option<(SharedString, SharedString)>,
         options: CommitOptions,
         askpass: AskPassDelegate,
-        cx: &mut App,
+        _cx: &mut App,
     ) -> oneshot::Receiver<Result<()>> {
         let id = self.id;
         let askpass_delegates = self.askpass_delegates.clone();
         let askpass_id = util::post_inc(&mut self.latest_askpass_id);
-
-        let rx = self.run_hook(RunHook::PreCommit, cx);
         let git_store = self.git_store.clone();
 
         self.send_job(Some("git commit".into()), move |git_repo, mut cx| async move {
-            rx.await??;
-
             match git_repo {
                 RepositoryState::Local(LocalRepositoryState {
                     backend, environment, ..
@@ -4594,6 +4551,7 @@ impl Repository {
                             options: Some(proto::CommitOptions {
                                 amend: options.amend,
                                 signoff: options.signoff,
+                                verify: options.verify,
                             }),
                             askpass_id,
                         })
@@ -6187,18 +6145,6 @@ fn tracked_status_to_proto(code: StatusCode) -> proto::GitStatus {
         StatusCode::TypeChanged => proto::GitStatus::TypeChanged,
         StatusCode::Copied => proto::GitStatus::Copied,
         StatusCode::Unmodified => proto::GitStatus::Unmodified,
-    }
-}
-
-fn git_hook_from_proto(hook: proto::GitHook) -> RunHook {
-    match hook {
-        proto::GitHook::PreCommit => RunHook::PreCommit,
-    }
-}
-
-fn git_hook_to_proto(hook: RunHook) -> proto::GitHook {
-    match hook {
-        RunHook::PreCommit => proto::GitHook::PreCommit,
     }
 }
 
