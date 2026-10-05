@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add settings-alias support (#581) by @nitbook
 - Add 'open current file' button (#583) by @nicoco
 - Side-by-side Git diff view (#565) by @iskrant_x
+- Add toggle to enable/disable git hooks + fix running commit-msg hook (#594) by @nicoco
 
 ## Removed
 
