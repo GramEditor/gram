@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update bundled git version to 2.53.0 (Mac OS)
 - Fit image to view on first paint (#589) by @Emilinya
 - Highlight tracked files even when .gitignore ignores everything (#598) by @frafav
+- Replace protobuf with postcard (#608) by @xmort
 
 ## Fixed
 
