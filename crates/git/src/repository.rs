@@ -1006,8 +1006,22 @@ pub async fn get_git_committer(cx: &AsyncApp) -> GitCommitter {
     );
 
     cx.background_spawn(async move {
-        let name = git.run(&["config", "--global", "user.name"]).await.log_err();
-        let email = git.run(&["config", "--global", "user.email"]).await.log_err();
+        let name = match git.run(&["config", "--get", "user.name"]).await {
+            Ok(name) => Some(name),
+            Err(_) => git
+                .run(&["config", "--global", "user.name"])
+                .await
+                .context("git config user.name")
+                .log_err(),
+        };
+        let email = match git.run(&["config", "--get", "user.email"]).await {
+            Ok(email) => Some(email),
+            Err(_) => git
+                .run(&["config", "--global", "user.email"])
+                .await
+                .context("git config user.email")
+                .log_err(),
+        };
         GitCommitter { name, email }
     })
     .await
