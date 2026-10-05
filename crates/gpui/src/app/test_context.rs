@@ -163,10 +163,9 @@ impl TestAppContext {
     }
 
     /// Schedules all windows to be redrawn on the next effect cycle.
-    pub fn refresh(&mut self) -> Result<()> {
+    pub fn refresh(&mut self) {
         let mut app = self.app.borrow_mut();
         app.refresh_windows();
-        Ok(())
     }
 
     /// Returns an executor (for running tasks in the background)

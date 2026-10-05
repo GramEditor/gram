@@ -104,8 +104,7 @@ fn main() -> Result<()> {
 
     let converter = VsCodeThemeConverter::new(vscode_theme, theme_metadata, IndexMap::default());
 
-    let theme = converter.convert()?;
-    let mut theme = serde_json::to_value(theme).unwrap();
+    let mut theme = serde_json::to_value(converter.convert()).unwrap();
     theme.as_object_mut().unwrap().insert(
         "$schema".to_string(),
         serde_json::Value::String(GRAM_THEME_SCHEMA_URL.to_string()),

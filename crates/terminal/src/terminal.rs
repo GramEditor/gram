@@ -331,7 +331,7 @@ impl TerminalBuilder {
         alternate_scroll: AlternateScroll,
         max_scroll_history_lines: Option<usize>,
         window_id: u64,
-    ) -> Result<TerminalBuilder> {
+    ) -> TerminalBuilder {
         // Create a display-only terminal (no actual PTY).
         let default_cursor_style = AlacCursorStyle::from(cursor_shape);
         let scrolling_history = max_scroll_history_lines
@@ -392,7 +392,7 @@ impl TerminalBuilder {
             event_loop_task: Task::ready(Ok(())),
         };
 
-        Ok(TerminalBuilder { terminal, events_rx })
+        TerminalBuilder { terminal, events_rx }
     }
 
     pub fn new(
@@ -1995,7 +1995,7 @@ impl Terminal {
 
     pub fn pid(&self) -> Option<sysinfo::Pid> {
         match &self.terminal_type {
-            TerminalType::Pty { info, .. } => info.pid(),
+            TerminalType::Pty { info, .. } => Some(info.pid()),
             TerminalType::DisplayOnly => None,
         }
     }
@@ -2329,9 +2329,7 @@ mod tests {
         });
 
         let terminal = cx.new(|cx| {
-            TerminalBuilder::new_display_only(CursorShape::default(), AlternateScroll::On, None, 0)
-                .unwrap()
-                .subscribe(cx)
+            TerminalBuilder::new_display_only(CursorShape::default(), AlternateScroll::On, None, 0).subscribe(cx)
         });
 
         terminal.update(cx, |terminal, cx| {
@@ -2709,9 +2707,7 @@ mod tests {
     #[gpui::test]
     async fn test_write_output_converts_lf_to_crlf(cx: &mut TestAppContext) {
         let terminal = cx.new(|cx| {
-            TerminalBuilder::new_display_only(CursorShape::default(), AlternateScroll::On, None, 0)
-                .unwrap()
-                .subscribe(cx)
+            TerminalBuilder::new_display_only(CursorShape::default(), AlternateScroll::On, None, 0).subscribe(cx)
         });
 
         // Test simple LF conversion
@@ -2750,9 +2746,7 @@ mod tests {
     #[gpui::test]
     async fn test_write_output_preserves_existing_crlf(cx: &mut TestAppContext) {
         let terminal = cx.new(|cx| {
-            TerminalBuilder::new_display_only(CursorShape::default(), AlternateScroll::On, None, 0)
-                .unwrap()
-                .subscribe(cx)
+            TerminalBuilder::new_display_only(CursorShape::default(), AlternateScroll::On, None, 0).subscribe(cx)
         });
 
         // Test that existing CRLF doesn't get doubled
@@ -2782,9 +2776,7 @@ mod tests {
     #[gpui::test]
     async fn test_write_output_preserves_bare_cr(cx: &mut TestAppContext) {
         let terminal = cx.new(|cx| {
-            TerminalBuilder::new_display_only(CursorShape::default(), AlternateScroll::On, None, 0)
-                .unwrap()
-                .subscribe(cx)
+            TerminalBuilder::new_display_only(CursorShape::default(), AlternateScroll::On, None, 0).subscribe(cx)
         });
 
         // Test that bare CR (without LF) is preserved

@@ -80,7 +80,7 @@ async fn test_lsp_log_view(cx: &mut TestAppContext) {
 
     log_view.update(&mut cx, |view, cx| {
         assert_eq!(
-            view.menu_items(cx).unwrap(),
+            view.menu_items(cx),
             &[LogMenuItem {
                 server_id: language_server.server.server_id(),
                 server_name: LanguageServerName("the-rust-language-server".into()),

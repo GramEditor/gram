@@ -611,7 +611,7 @@ impl Render for CodeCell {
                                             Some(div().child(message.clone()).into_any_element())
                                         }
                                         Output::Table { content, .. } => Some(content.clone().into_any_element()),
-                                        Output::ErrorOutput(error_view) => error_view.render(window, cx),
+                                        Output::ErrorOutput(error_view) => Some(error_view.render(window, cx)),
                                         Output::ClearOutputWaitMarker => None,
                                     };
 

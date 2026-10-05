@@ -1823,15 +1823,12 @@ impl Editor {
                             if snapshot.remote_id() == *id && focus_handle.is_focused(window) {
                                 for (range, snippet) in snippet_edits {
                                     let buffer_range = language::range_from_lsp(*range).to_offset(&snapshot);
-                                    editor
-                                        .insert_snippet(
-                                            &[MultiBufferOffset(buffer_range.start)
-                                                ..MultiBufferOffset(buffer_range.end)],
-                                            snippet.clone(),
-                                            window,
-                                            cx,
-                                        )
-                                        .ok();
+                                    editor.insert_snippet(
+                                        &[MultiBufferOffset(buffer_range.start)..MultiBufferOffset(buffer_range.end)],
+                                        snippet.clone(),
+                                        window,
+                                        cx,
+                                    );
                                 }
                             }
                         }
@@ -5466,7 +5463,7 @@ impl Editor {
         self.transact(window, cx, |editor, window, cx| {
             if let Some(mut snippet) = snippet {
                 snippet.text = new_text.to_string();
-                editor.insert_snippet(&ranges, snippet, window, cx).log_err();
+                editor.insert_snippet(&ranges, snippet, window, cx);
             } else {
                 editor.buffer.update(cx, |multi_buffer, cx| {
                     let auto_indent = match completion.insert_text_mode {
@@ -5580,15 +5577,12 @@ impl Editor {
         let quick_launch = action.quick_launch;
         let mut context_menu = self.context_menu.borrow_mut();
         if let Some(CodeContextMenu::CodeActions(code_actions)) = context_menu.as_ref() {
-            if code_actions.deployed_from == action.deployed_from {
-                // Toggle if we're selecting the same one
-                *context_menu = None;
-                cx.notify();
+            let selecting_same = code_actions.deployed_from == action.deployed_from;
+
+            *context_menu = None;
+            cx.notify();
+            if selecting_same {
                 return;
-            } else {
-                // Otherwise, clear it and start a new one
-                *context_menu = None;
-                cx.notify();
             }
         }
         drop(context_menu);
@@ -7235,7 +7229,7 @@ impl Editor {
         snippet: Snippet,
         window: &mut Window,
         cx: &mut Context<Self>,
-    ) -> Result<()> {
+    ) {
         struct Tabstop<T> {
             is_end_tabstop: bool,
             ranges: Vec<Range<T>>,
@@ -7374,7 +7368,6 @@ impl Editor {
                 }
             }
         }
-        Ok(())
     }
 
     pub fn move_to_next_snippet_tabstop(&mut self, window: &mut Window, cx: &mut Context<Self>) -> bool {
@@ -11784,7 +11777,8 @@ impl Editor {
             bail!("`name` or `snippet` is required")
         };
 
-        self.insert_snippet(&insertion_ranges, snippet, window, cx)
+        self.insert_snippet(&insertion_ranges, snippet, window, cx);
+        Ok(())
     }
 
     fn select_match_ranges(

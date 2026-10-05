@@ -385,14 +385,17 @@ impl KeyBindingContextPredicate {
         }
     }
 
+    #[expect(clippy::unnecessary_wraps, reason = "This function must be of the `Op` type.")]
     fn new_or(self, other: Self) -> Result<Self> {
         Ok(Self::Or(Box::new(self), Box::new(other)))
     }
 
+    #[expect(clippy::unnecessary_wraps, reason = "This function must be of the `Op` type.")]
     fn new_and(self, other: Self) -> Result<Self> {
         Ok(Self::And(Box::new(self), Box::new(other)))
     }
 
+    #[expect(clippy::unnecessary_wraps, reason = "This function must be of the `Op` type.")]
     fn new_child(self, other: Self) -> Result<Self> {
         Ok(Self::Descendant(Box::new(self), Box::new(other)))
     }

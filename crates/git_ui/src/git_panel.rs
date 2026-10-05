@@ -1995,11 +1995,10 @@ impl GitPanel {
                     return true;
                 }
             }
-            false
         } else {
             cx.propagate();
-            false
         }
+        false
     }
     pub fn head_commit(&self, cx: &App) -> Option<CommitDetails> {
         self.active_repository

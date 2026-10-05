@@ -1614,7 +1614,7 @@ impl LspCommand for GetDocumentSymbols {
     ) -> Result<Vec<DocumentSymbol>> {
         let mut symbols = Vec::with_capacity(message.symbols.len());
         for serialized_symbol in message.symbols {
-            fn deserialize_symbol_with_children(serialized_symbol: proto::DocumentSymbol) -> Result<DocumentSymbol> {
+            fn deserialize_symbol_with_children(serialized_symbol: proto::DocumentSymbol) -> DocumentSymbol {
                 let kind = unsafe { mem::transmute::<i32, lsp::SymbolKind>(serialized_symbol.kind) };
 
                 let start = serialized_symbol.start;
@@ -1623,7 +1623,7 @@ impl LspCommand for GetDocumentSymbols {
                 let selection_start = serialized_symbol.selection_start;
                 let selection_end = serialized_symbol.selection_end;
 
-                Ok(DocumentSymbol {
+                DocumentSymbol {
                     name: serialized_symbol.name,
                     kind,
                     range: Unclipped(PointUtf16::new(start.row, start.column))
@@ -1633,12 +1633,12 @@ impl LspCommand for GetDocumentSymbols {
                     children: serialized_symbol
                         .children
                         .into_iter()
-                        .filter_map(|symbol| deserialize_symbol_with_children(symbol).ok())
+                        .map(deserialize_symbol_with_children)
                         .collect::<Vec<_>>(),
-                })
+                }
             }
 
-            symbols.push(deserialize_symbol_with_children(serialized_symbol)?);
+            symbols.push(deserialize_symbol_with_children(serialized_symbol));
         }
 
         Ok(symbols)
@@ -2648,7 +2648,7 @@ impl LspCommand for OnTypeFormatting {
         _: AsyncApp,
     ) -> Result<Option<Transaction>> {
         match message.transaction {
-            Some(transaction) => Ok(Some(language::proto::deserialize_transaction(transaction)?)),
+            Some(transaction) => Ok(Some(language::proto::deserialize_transaction(transaction))),
             None => Ok(None),
         }
     }

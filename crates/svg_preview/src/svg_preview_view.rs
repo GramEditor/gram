@@ -127,7 +127,7 @@ impl SvgPreviewView {
         cx: &mut Context<Self>,
     ) {
         if let Some(Ok(image)) = mem::replace(&mut self.current_svg, image) {
-            window.drop_image(image).ok();
+            window.drop_image(image);
         }
         cx.notify();
     }

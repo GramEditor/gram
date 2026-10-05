@@ -73,7 +73,8 @@ impl CosmicTextSystem {
 
 impl PlatformTextSystem for CosmicTextSystem {
     fn add_fonts(&self, fonts: Vec<Cow<'static, [u8]>>) -> Result<()> {
-        self.0.write().add_fonts(fonts)
+        self.0.write().add_fonts(fonts);
+        Ok(())
     }
 
     fn all_font_names(&self) -> Vec<String> {
@@ -134,7 +135,7 @@ impl PlatformTextSystem for CosmicTextSystem {
     }
 
     fn advance(&self, font_id: FontId, glyph_id: GlyphId) -> Result<Size<f32>> {
-        self.0.read().advance(font_id, glyph_id)
+        Ok(self.0.read().advance(font_id, glyph_id))
     }
 
     fn glyph_for_char(&self, font_id: FontId, ch: char) -> Option<GlyphId> {
@@ -168,7 +169,7 @@ impl CosmicTextSystemState {
     }
 
     #[profiling::function]
-    fn add_fonts(&mut self, fonts: Vec<Cow<'static, [u8]>>) -> Result<()> {
+    fn add_fonts(&mut self, fonts: Vec<Cow<'static, [u8]>>) {
         let db = self.font_system.db_mut();
         for bytes in fonts {
             match bytes {
@@ -180,7 +181,6 @@ impl CosmicTextSystemState {
                 }
             }
         }
-        Ok(())
     }
 
     fn font_id(&mut self, font: &Font) -> Result<FontId> {
@@ -229,8 +229,7 @@ impl CosmicTextSystemState {
             anyhow::bail!("unusable font");
         };
 
-        let fallbacks =
-            self.create_fallback_chain(&font.features, &font.weight, &font.style, font.fallbacks.as_ref())?;
+        let fallbacks = self.create_fallback_chain(&font.features, &font.weight, &font.style, font.fallbacks.as_ref());
         let font_id = FontId(self.loaded_fonts.len());
         let coords = calculate_coords(&cosmic_font, weight);
         let weight = calculate_weight(&cosmic_font, face_weight, weight);
@@ -252,9 +251,9 @@ impl CosmicTextSystemState {
         weight: &FontWeight,
         style: &FontStyle,
         fallbacks: Option<&FontFallbacks>,
-    ) -> Result<Arc<[(FontId, SharedString)]>> {
+    ) -> Arc<[(FontId, SharedString)]> {
         let Some(fallbacks) = fallbacks.as_ref().filter(|f| !f.fallback_list().is_empty()) else {
-            return Ok(Arc::from(Vec::new()));
+            return Arc::from(Vec::new());
         };
 
         let mut chain: Vec<(FontId, SharedString)> = Vec::new();
@@ -278,18 +277,18 @@ impl CosmicTextSystemState {
                 Err(_) => continue,
             }
         }
-        Ok(Arc::from(chain))
+        Arc::from(chain)
     }
 
-    fn advance(&self, font_id: FontId, glyph_id: GlyphId) -> Result<Size<f32>> {
+    fn advance(&self, font_id: FontId, glyph_id: GlyphId) -> Size<f32> {
         let glyph_metrics = {
             let loaded_font = self.loaded_font(font_id);
             loaded_font.font.as_swash().glyph_metrics(&loaded_font.coords)
         };
-        Ok(Size {
+        Size {
             width: glyph_metrics.advance_width(glyph_id.0 as u16),
             height: glyph_metrics.advance_height(glyph_id.0 as u16),
-        })
+        }
     }
 
     fn glyph_for_char(&self, font_id: FontId, ch: char) -> Option<GlyphId> {

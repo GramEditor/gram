@@ -457,6 +457,10 @@ fn add_vscode_user_data_paths(paths: &mut Vec<PathBuf>, product_name: &str) {
 }
 
 #[cfg(any(test, feature = "test-support"))]
+#[expect(
+    clippy::unnecessary_wraps,
+    reason = "The other version of this function can actually return None."
+)]
 pub fn global_gitignore_path() -> Option<PathBuf> {
     Some(home_dir().join(".config").join("git").join("ignore"))
 }

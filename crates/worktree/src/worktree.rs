@@ -791,7 +791,7 @@ impl Worktree {
     ) -> Option<Task<Result<()>>> {
         let task = match self {
             Worktree::Local(this) => this.delete_entry(entry_id, trash, cx),
-            Worktree::Remote(this) => this.delete_entry(entry_id, trash, cx),
+            Worktree::Remote(this) => Some(this.delete_entry(entry_id, trash, cx)),
         }?;
 
         let entry = match &*self {
@@ -865,11 +865,7 @@ impl Worktree {
         }
     }
 
-    pub fn expand_all_for_entry(
-        &mut self,
-        entry_id: ProjectEntryId,
-        cx: &Context<Worktree>,
-    ) -> Option<Task<Result<()>>> {
+    pub fn expand_all_for_entry(&mut self, entry_id: ProjectEntryId, cx: &Context<Worktree>) -> Task<Result<()>> {
         match self {
             Worktree::Local(this) => this.expand_all_for_entry(entry_id, cx),
             Worktree::Remote(this) => {
@@ -877,7 +873,7 @@ impl Worktree {
                     project_id: this.project_id,
                     entry_id: entry_id.to_proto(),
                 });
-                Some(cx.spawn(async move |this, cx| {
+                cx.spawn(async move |this, cx| {
                     let response = response.await?;
                     this.update(cx, |this, _| {
                         this.as_remote_mut()
@@ -886,7 +882,7 @@ impl Worktree {
                     })?
                     .await?;
                     Ok(())
-                }))
+                })
             }
         }
     }
@@ -1005,7 +1001,7 @@ impl Worktree {
         let task = this.update(&mut cx, |this, cx| {
             this.expand_all_for_entry(ProjectEntryId::from_proto(request.entry_id), cx)
         })?;
-        task.context("no such entry")?.await?;
+        task.await?;
         let scan_id = this.read_with(&cx, |this, _| this.scan_id())?;
         Ok(proto::ExpandAllForProjectEntryResponse {
             worktree_scan_id: scan_id as u64,
@@ -1717,13 +1713,13 @@ impl LocalWorktree {
         }))
     }
 
-    fn expand_all_for_entry(&self, entry_id: ProjectEntryId, cx: &Context<Worktree>) -> Option<Task<Result<()>>> {
+    fn expand_all_for_entry(&self, entry_id: ProjectEntryId, cx: &Context<Worktree>) -> Task<Result<()>> {
         let path = self.entry_for_id(entry_id).unwrap().path.clone();
         let mut rx = self.add_path_prefix_to_scan(path);
-        Some(cx.background_spawn(async move {
+        cx.background_spawn(async move {
             rx.next().await;
             Ok(())
-        }))
+        })
     }
 
     pub fn refresh_entries_for_paths(&self, paths: Vec<Arc<RelPath>>) -> barrier::Receiver {
@@ -1956,13 +1952,13 @@ impl RemoteWorktree {
         })
     }
 
-    fn delete_entry(&self, entry_id: ProjectEntryId, trash: bool, cx: &Context<Worktree>) -> Option<Task<Result<()>>> {
+    fn delete_entry(&self, entry_id: ProjectEntryId, trash: bool, cx: &Context<Worktree>) -> Task<Result<()>> {
         let response = self.client.request(proto::DeleteProjectEntry {
             project_id: self.project_id,
             entry_id: entry_id.to_proto(),
             use_trash: trash,
         });
-        Some(cx.spawn(async move |this, cx| {
+        cx.spawn(async move |this, cx| {
             let response = response.await?;
             let scan_id = response.worktree_scan_id as usize;
 
@@ -1977,7 +1973,7 @@ impl RemoteWorktree {
                 snapshot.delete_entry(entry_id);
                 this.snapshot = snapshot.clone();
             })
-        }))
+        })
     }
 
     // fn rename_entry(
@@ -4639,17 +4635,14 @@ impl BackgroundScanner {
         self.process_pending_watches().await;
     }
 
-    fn remove_repo_path(&self, path: Arc<RelPath>, snapshot: &mut LocalSnapshot) -> Option<()> {
+    fn remove_repo_path(&self, path: Arc<RelPath>, snapshot: &mut LocalSnapshot) {
         if !path.components().any(|component| component == DOT_GIT)
             && let Some(local_repo) = snapshot.local_repo_for_work_directory_path(&path)
         {
             let id = local_repo.work_directory_id;
             log::debug!("remove repo path: {:?}", path);
             snapshot.git_repositories.remove(&id);
-            return Some(());
         }
-
-        Some(())
     }
 
     async fn update_ignore_statuses_for_paths(

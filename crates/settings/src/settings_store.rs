@@ -847,7 +847,7 @@ impl SettingsStore {
         Ok(())
     }
 
-    pub fn set_extension_settings(&mut self, content: ExtensionsSettingsContent, cx: &mut App) -> Result<()> {
+    pub fn set_extension_settings(&mut self, content: ExtensionsSettingsContent, cx: &mut App) {
         self.extension_settings = Some(Box::new(SettingsContent {
             project: ProjectSettingsContent {
                 all_languages: content.all_languages,
@@ -856,11 +856,10 @@ impl SettingsStore {
             ..Default::default()
         }));
         self.recompute_values(None, cx);
-        Ok(())
     }
 
     /// Add or remove a set of local settings via a JSON string.
-    pub fn clear_local_settings(&mut self, root_id: WorktreeId, cx: &mut App) -> Result<()> {
+    pub fn clear_local_settings(&mut self, root_id: WorktreeId, cx: &mut App) {
         self.local_settings
             .retain(|(worktree_id, _), _| worktree_id != &root_id);
         self.raw_editorconfig_settings
@@ -869,7 +868,6 @@ impl SettingsStore {
             setting_value.clear_local_values(root_id);
         }
         self.recompute_values(Some((root_id, RelPath::empty())), cx);
-        Ok(())
     }
 
     pub fn local_settings(

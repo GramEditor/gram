@@ -424,7 +424,7 @@ impl RemoteClient {
 
         Some(async move {
             if let Some(shutdown_request) = shutdown_request {
-                client.send(shutdown_request).log_err();
+                client.send(shutdown_request);
                 // We wait 50ms instead of waiting for a response, because
                 // waiting for a response would require us to wait on the main thread
                 // which we want to avoid in an `on_app_quit` callback.
@@ -1301,9 +1301,9 @@ impl ChannelClient {
         .await
     }
 
-    fn send<T: EnvelopedMessage>(&self, payload: T) -> Result<()> {
+    fn send<T: EnvelopedMessage>(&self, payload: T) {
         log::debug!("ssh send name:{}", T::NAME);
-        self.send_dynamic(payload.into_envelope(0, None, None))
+        self.send_dynamic(payload.into_envelope(0, None, None));
     }
 
     fn request_dynamic(
@@ -1318,17 +1318,12 @@ impl ChannelClient {
         response_channels_lock.insert(MessageId(envelope.id), tx);
         drop(response_channels_lock);
 
-        let result = if use_buffer {
+        if use_buffer {
             self.send_buffered(envelope)
         } else {
             self.send_unbuffered(envelope)
         };
         async move {
-            if let Err(error) = &result {
-                log::error!("failed to send message: {error}");
-                anyhow::bail!("failed to send message: {error}");
-            }
-
             let response = rx.await.context("connection lost")?.0;
             if let proto::Payload::Error(error) = &response.payload {
                 return Err(RpcError::from_proto(error, type_name));
@@ -1337,24 +1332,22 @@ impl ChannelClient {
         }
     }
 
-    pub fn send_dynamic(&self, mut envelope: proto::Envelope) -> Result<()> {
+    pub fn send_dynamic(&self, mut envelope: proto::Envelope) {
         envelope.id = self.next_message_id.fetch_add(1, SeqCst);
-        self.send_buffered(envelope)
+        self.send_buffered(envelope);
     }
 
-    fn send_buffered(&self, mut envelope: proto::Envelope) -> Result<()> {
+    fn send_buffered(&self, mut envelope: proto::Envelope) {
         envelope.ack_id = Some(self.max_received.load(SeqCst));
         self.buffer.lock().push_back(envelope.clone());
         // ignore errors on send (happen while we're reconnecting)
         // assume that the global "disconnected" overlay is sufficient.
         self.outgoing_tx.lock().unbounded_send(envelope).ok();
-        Ok(())
     }
 
-    fn send_unbuffered(&self, mut envelope: proto::Envelope) -> Result<()> {
+    fn send_unbuffered(&self, mut envelope: proto::Envelope) {
         envelope.ack_id = Some(self.max_received.load(SeqCst));
         self.outgoing_tx.lock().unbounded_send(envelope).ok();
-        Ok(())
     }
 }
 
@@ -1368,11 +1361,13 @@ impl ProtoClient for ChannelClient {
     }
 
     fn send(&self, envelope: proto::Envelope, _message_type: &'static str) -> Result<()> {
-        self.send_dynamic(envelope)
+        self.send_dynamic(envelope);
+        Ok(())
     }
 
-    fn send_response(&self, envelope: Envelope, _message_type: &'static str) -> anyhow::Result<()> {
-        self.send_dynamic(envelope)
+    fn send_response(&self, envelope: Envelope, _message_type: &'static str) -> Result<()> {
+        self.send_dynamic(envelope);
+        Ok(())
     }
 
     fn message_handler_set(&self) -> &Mutex<ProtoMessageHandlerSet> {

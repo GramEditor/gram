@@ -749,12 +749,11 @@ impl SshRemoteConnection {
         let server_mode = shell_kind.try_quote(&server_mode).context("shell quoting")?;
         let dst_path = dst_path.display(self.path_style());
         let dst_path = shell_kind.try_quote(&dst_path).context("shell quoting")?;
+        let orig_tmp_path = shell_kind.try_quote(&orig_tmp_path).context("shell quoting")?;
         let script = if let Some(tmp_path) = orig_tmp_path.strip_suffix(".gz") {
-            let orig_tmp_path = shell_kind.try_quote(&orig_tmp_path).context("shell quoting")?;
-            let tmp_path = shell_kind.try_quote(&tmp_path).context("shell quoting")?;
+            let tmp_path = shell_kind.try_quote(tmp_path).context("shell quoting")?;
             format!("gunzip -f {orig_tmp_path} && chmod {server_mode} {tmp_path} && mv {tmp_path} {dst_path}",)
         } else {
-            let orig_tmp_path = shell_kind.try_quote(&orig_tmp_path).context("shell quoting")?;
             format!("chmod {server_mode} {orig_tmp_path} && mv {orig_tmp_path} {dst_path}",)
         };
         let args = shell_kind.args_for_shell(false, script.to_string());

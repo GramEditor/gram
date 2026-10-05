@@ -94,8 +94,8 @@ impl ElpAdapter {
     const SERVER_NAME: LanguageServerName = LanguageServerName::new_static("elp");
     const OTP_VERSION: &str = "28";
 
-    fn server_path(container: &Path) -> Option<PathBuf> {
-        Some(container.join("elp"))
+    fn server_path(container: &Path) -> PathBuf {
+        container.join("elp")
     }
 }
 
@@ -191,8 +191,7 @@ impl LspInstaller for ElpAdapter {
         } = version;
 
         let destination_path = container_dir.join(format!("elp-{version_name}"));
-        let server_path =
-            Self::server_path(&destination_path).ok_or_else(|| anyhow!("Could not determine server path"))?;
+        let server_path = Self::server_path(&destination_path);
 
         let binary = LanguageServerBinary {
             path: server_path.clone(),
@@ -225,7 +224,7 @@ impl LspInstaller for ElpAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        find_cached_server_binary(&container_dir, Some("elp-"), async |path| Self::server_path(path))
+        find_cached_server_binary(&container_dir, Some("elp-"), async |path| Some(Self::server_path(path)))
             .await
             .map(|path| LanguageServerBinary {
                 path,

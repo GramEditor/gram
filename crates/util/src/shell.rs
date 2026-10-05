@@ -363,11 +363,10 @@ impl ShellKind {
                         if !is_start {
                             text.push(')');
                         }
-                        &source[end + 1..]
                     } else {
                         text.push_str("${}");
-                        &source[end + 1..]
                     }
+                    &source[end + 1..]
                 } else {
                     text.push_str("${");
                     source

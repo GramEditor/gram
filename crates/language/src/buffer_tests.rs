@@ -2859,7 +2859,7 @@ fn test_serialization(cx: &mut gpui::App) {
     let ops = cx.background_executor().block(buffer1.read(cx).serialize_ops(None, cx));
     let buffer2 = cx.new(|cx| {
         let mut buffer = Buffer::from_proto(ReplicaId::new(1), Capability::ReadWrite, state, None).unwrap();
-        buffer.apply_ops(ops.into_iter().map(|op| proto::deserialize_operation(op).unwrap()), cx);
+        buffer.apply_ops(ops.into_iter().map(proto::deserialize_operation), cx);
         buffer
     });
     assert_eq!(buffer2.read(cx).text(), "abcDF");
@@ -3182,7 +3182,7 @@ fn test_random_collaboration(cx: &mut App, mut rng: StdRng) {
                 .background_executor()
                 .block(base_buffer.read(cx).serialize_ops(None, cx));
             let mut buffer = Buffer::from_proto(ReplicaId::new(i as u16), Capability::ReadWrite, state, None).unwrap();
-            buffer.apply_ops(ops.into_iter().map(|op| proto::deserialize_operation(op).unwrap()), cx);
+            buffer.apply_ops(ops.into_iter().map(proto::deserialize_operation), cx);
             buffer.set_group_interval(Duration::from_millis(rng.random_range(0..=200)));
             let network = network.clone();
             cx.subscribe(&cx.entity(), move |buffer, _, event, _| {
@@ -3292,10 +3292,7 @@ fn test_random_collaboration(cx: &mut App, mut rng: StdRng) {
                 new_buffer = Some(cx.new(|cx| {
                     let mut new_buffer =
                         Buffer::from_proto(new_replica_id, Capability::ReadWrite, old_buffer_state, None).unwrap();
-                    new_buffer.apply_ops(
-                        old_buffer_ops.into_iter().map(|op| deserialize_operation(op).unwrap()),
-                        cx,
-                    );
+                    new_buffer.apply_ops(old_buffer_ops.into_iter().map(deserialize_operation), cx);
                     log::info!(
                         "New replica {:?} text: {:?}",
                         new_buffer.replica_id(),
@@ -3328,7 +3325,7 @@ fn test_random_collaboration(cx: &mut App, mut rng: StdRng) {
                             .lock()
                             .receive(new_replica_id)
                             .into_iter()
-                            .map(|op| proto::deserialize_operation(op).unwrap());
+                            .map(proto::deserialize_operation);
                         if ops.len() > 0 {
                             log::info!(
                                 "peer {:?} (version: {:?}) applying {} ops from the network. {:?}",
@@ -3357,7 +3354,7 @@ fn test_random_collaboration(cx: &mut App, mut rng: StdRng) {
                     .lock()
                     .receive(replica_id)
                     .into_iter()
-                    .map(|op| proto::deserialize_operation(op).unwrap());
+                    .map(proto::deserialize_operation);
                 if ops.len() > 0 {
                     log::info!(
                         "peer {:?} (version: {:?}) applying {} ops from the network. {:?}",

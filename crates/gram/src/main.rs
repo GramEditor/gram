@@ -299,6 +299,7 @@ pub fn main() {
 
     let (open_listener, mut open_rx) = OpenListener::new();
 
+    #[allow(clippy::branches_sharing_code)]
     let failed_single_instance_check =
         if std::env::var("GRAM_STATELESS").is_ok() || *release_channel::RELEASE_CHANNEL == ReleaseChannel::Dev {
             false

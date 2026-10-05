@@ -64,10 +64,10 @@ impl QuickActionBar {
         let session = match session {
             SessionSupport::ActiveSession(session) => session,
             SessionSupport::Inactive(spec) => {
-                return self.render_repl_launch_menu(spec, cx);
+                return Some(self.render_repl_launch_menu(spec, cx));
             }
             SessionSupport::RequiresSetup(language) => {
-                return self.render_repl_setup(language.as_ref(), cx);
+                return Some(self.render_repl_setup(language.as_ref(), cx));
             }
             SessionSupport::Unsupported => return None,
         };
@@ -89,8 +89,8 @@ impl QuickActionBar {
                     let editor = editor.clone();
 
                     menu.map(|menu| {
+                        let status = status.clone();
                         if status.is_connected() {
-                            let status = status.clone();
                             menu.custom_row(move |_window, _cx| {
                                 h_flex()
                                     .child(
@@ -106,14 +106,13 @@ impl QuickActionBar {
                             .custom_row(move |_window, _cx| {
                                 h_flex()
                                     .child(
-                                        Label::new(status.clone().to_string())
+                                        Label::new(status.to_string())
                                             .size(LabelSize::Small)
                                             .color(Color::Muted),
                                     )
                                     .into_any_element()
                             })
                         } else {
-                            let status = status.clone();
                             menu.custom_row(move |_window, _cx| {
                                 h_flex()
                                     .child(
@@ -249,22 +248,20 @@ impl QuickActionBar {
         &self,
         kernel_specification: KernelSpecification,
         cx: &mut Context<Self>,
-    ) -> Option<AnyElement> {
+    ) -> AnyElement {
         let tooltip: SharedString = SharedString::from(format!("Start REPL for {}", kernel_specification.name()));
 
-        Some(
-            h_flex()
-                .child(self.render_kernel_selector(cx))
-                .child(
-                    IconButton::new("toggle_repl_icon", IconName::ReplNeutral)
-                        .size(ButtonSize::Compact)
-                        .icon_color(Color::Muted)
-                        .style(ButtonStyle::Subtle)
-                        .tooltip(Tooltip::text(tooltip))
-                        .on_click(|_, window, cx| window.dispatch_action(Box::new(repl::Run {}), cx)),
-                )
-                .into_any_element(),
-        )
+        h_flex()
+            .child(self.render_kernel_selector(cx))
+            .child(
+                IconButton::new("toggle_repl_icon", IconName::ReplNeutral)
+                    .size(ButtonSize::Compact)
+                    .icon_color(Color::Muted)
+                    .style(ButtonStyle::Subtle)
+                    .tooltip(Tooltip::text(tooltip))
+                    .on_click(|_, window, cx| window.dispatch_action(Box::new(repl::Run {}), cx)),
+            )
+            .into_any_element()
     }
 
     pub fn render_kernel_selector(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -332,23 +329,21 @@ impl QuickActionBar {
         .into_any_element()
     }
 
-    pub fn render_repl_setup(&self, language: &str, cx: &mut Context<Self>) -> Option<AnyElement> {
+    pub fn render_repl_setup(&self, language: &str, cx: &mut Context<Self>) -> AnyElement {
         let tooltip: SharedString = SharedString::from(format!("Setup Gram REPL for {language}"));
-        Some(
-            h_flex()
-                .gap(DynamicSpacing::Base06.rems(cx))
-                .child(self.render_kernel_selector(cx))
-                .child(
-                    IconButton::new("toggle_repl_icon", IconName::ReplNeutral)
-                        .style(ButtonStyle::Subtle)
-                        .shape(ui::IconButtonShape::Square)
-                        .icon_size(ui::IconSize::Small)
-                        .icon_color(Color::Muted)
-                        .tooltip(Tooltip::text(tooltip))
-                        .on_click(|_, _window, cx| cx.open_url(&format!("{GRAM_REPL_DOCUMENTATION}#installation"))),
-                )
-                .into_any_element(),
-        )
+        h_flex()
+            .gap(DynamicSpacing::Base06.rems(cx))
+            .child(self.render_kernel_selector(cx))
+            .child(
+                IconButton::new("toggle_repl_icon", IconName::ReplNeutral)
+                    .style(ButtonStyle::Subtle)
+                    .shape(ui::IconButtonShape::Square)
+                    .icon_size(ui::IconSize::Small)
+                    .icon_color(Color::Muted)
+                    .tooltip(Tooltip::text(tooltip))
+                    .on_click(|_, _window, cx| cx.open_url(&format!("{GRAM_REPL_DOCUMENTATION}#installation"))),
+            )
+            .into_any_element()
     }
 }
 

@@ -1008,8 +1008,7 @@ impl MacWindow {
         let main_window = app.mainWindow();
         if allows_automatic_window_tabbing && !main_window.is_none() && main_window.as_ref() != Some(&nswindow) {
             let main_window_is_fullscreen = nswindow.styleMask().contains(NSWindowStyleMask::FullScreen);
-            let user_tabbing_preference =
-                Self::get_user_tabbing_preference().unwrap_or(UserTabbingPreference::InFullScreen);
+            let user_tabbing_preference = Self::get_user_tabbing_preference();
             let should_add_as_tab = user_tabbing_preference == UserTabbingPreference::Always
                 || user_tabbing_preference == UserTabbingPreference::InFullScreen && main_window_is_fullscreen;
 
@@ -1077,7 +1076,7 @@ impl MacWindow {
         window_handles
     }
 
-    pub fn get_user_tabbing_preference() -> Option<UserTabbingPreference> {
+    pub fn get_user_tabbing_preference() -> UserTabbingPreference {
         let defaults = NSUserDefaults::standardUserDefaults();
         let domain = ns_string!("NSGlobalDomain");
         let key = ns_string!("AppleWindowTabbingMode");
@@ -1090,9 +1089,9 @@ impl MacWindow {
             .unwrap_or_default();
 
         match value.as_ref() {
-            "manual" => Some(UserTabbingPreference::Never),
-            "always" => Some(UserTabbingPreference::Always),
-            _ => Some(UserTabbingPreference::InFullScreen),
+            "manual" => UserTabbingPreference::Never,
+            "always" => UserTabbingPreference::Always,
+            _ => UserTabbingPreference::InFullScreen,
         }
     }
 }

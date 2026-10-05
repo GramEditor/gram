@@ -8263,10 +8263,8 @@ mod tests {
                 workspace.update_in(cx, |workspace, window, cx| {
                     if workspace.active_modal::<TestModal>(cx).is_some() {
                         workspace.toggle_modal(window, cx, TestModal::new);
-                        workspace.toggle_modal(window, cx, TestModal::new);
-                    } else {
-                        workspace.toggle_modal(window, cx, TestModal::new);
                     }
+                    workspace.toggle_modal(window, cx, TestModal::new);
                 })
             }
         };

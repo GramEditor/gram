@@ -208,7 +208,7 @@ impl Output {
             Self::Image { content, .. } => Some(content.clone().into_any_element()),
             Self::Message(message) => Some(div().child(message.clone()).into_any_element()),
             Self::Table { content, .. } => Some(content.clone().into_any_element()),
-            Self::ErrorOutput(error_view) => error_view.render(window, cx),
+            Self::ErrorOutput(error_view) => Some(error_view.render(window, cx)),
             Self::ClearOutputWaitMarker => None,
         };
 

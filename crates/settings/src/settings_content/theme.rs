@@ -145,14 +145,17 @@ impl From<f32> for Decoration {
     }
 }
 
+#[expect(clippy::unnecessary_wraps, reason = "This is a default for an optional value.")]
 fn default_font_features() -> Option<FontFeatures> {
     Some(FontFeatures::default())
 }
 
+#[expect(clippy::unnecessary_wraps, reason = "This is a default for an optional value.")]
 fn default_font_fallbacks() -> Option<FontFallbacks> {
     Some(FontFallbacks::default())
 }
 
+#[expect(clippy::unnecessary_wraps, reason = "This is a default for an optional value.")]
 fn default_buffer_font_weight() -> Option<FontWeight> {
     Some(FontWeight::default())
 }

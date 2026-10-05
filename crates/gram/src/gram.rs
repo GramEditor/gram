@@ -272,15 +272,15 @@ fn bind_on_window_closed(cx: &mut App) -> Option<gpui::Subscription> {
     }
 }
 
-fn get_window_decorations(cx: &mut App) -> Option<gpui::WindowDecorations> {
-    Some(match std::env::var("GRAM_WINDOW_DECORATIONS") {
+fn get_window_decorations(cx: &mut App) -> gpui::WindowDecorations {
+    match std::env::var("GRAM_WINDOW_DECORATIONS") {
         Ok(val) if val == "server" => gpui::WindowDecorations::Server,
         Ok(val) if val == "client" => gpui::WindowDecorations::Client,
         _ => match WorkspaceSettings::get_global(cx).window_decorations {
             settings::WindowDecorations::Server => gpui::WindowDecorations::Server,
             settings::WindowDecorations::Client => gpui::WindowDecorations::Client,
         },
-    })
+    }
 }
 
 pub fn build_window_options(display_uuid: Option<Uuid>, cx: &mut App) -> WindowOptions {
@@ -308,7 +308,7 @@ pub fn build_window_options(display_uuid: Option<Uuid>, cx: &mut App) -> WindowO
         display_id: display.map(|display| display.id()),
         window_background: cx.theme().window_background_appearance(),
         app_id: Some(app_id.to_owned()),
-        window_decorations,
+        window_decorations: Some(window_decorations),
         window_min_size: Some(gpui::Size {
             width: px(360.0),
             height: px(240.0),
@@ -1151,7 +1151,7 @@ fn open_about(cx: &mut App) {
             window_background: cx.theme().window_background_appearance(),
             kind: WindowKind::Normal,
             app_id: Some(ReleaseChannel::global(cx).app_id().to_owned()),
-            window_decorations,
+            window_decorations: Some(window_decorations),
             ..Default::default()
         },
         |window, cx| {

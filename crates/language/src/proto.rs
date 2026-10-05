@@ -1,7 +1,6 @@
 //! Handles conversions of `language` items to and from the [`rpc`] protocol.
 
 use crate::{CursorShape, Diagnostic, DiagnosticSourceKind, diagnostic_set::DiagnosticEntry};
-use anyhow::Result;
 use clock::ReplicaId;
 use gpui::SharedString;
 use lsp::{DiagnosticSeverity, LanguageServerId};
@@ -247,13 +246,13 @@ pub fn serialize_anchor_range(range: Range<Anchor>) -> proto::AnchorRange {
 }
 
 /// Deserializes an [`Range<Anchor>`] from the RPC representation.
-pub fn deserialize_anchor_range(range: proto::AnchorRange) -> Result<Range<Anchor>> {
-    Ok(deserialize_anchor(range.start)..deserialize_anchor(range.end))
+pub fn deserialize_anchor_range(range: proto::AnchorRange) -> Range<Anchor> {
+    deserialize_anchor(range.start)..deserialize_anchor(range.end)
 }
 
 /// Deserializes an [`crate::Operation`] from the RPC representation.
-pub fn deserialize_operation(message: proto::Operation) -> Result<crate::Operation> {
-    Ok(match message {
+pub fn deserialize_operation(message: proto::Operation) -> crate::Operation {
+    match message {
         proto::Operation::Edit(edit) => {
             crate::Operation::Buffer(text::Operation::Edit(deserialize_edit_operation(edit)))
         }
@@ -323,7 +322,7 @@ pub fn deserialize_operation(message: proto::Operation) -> Result<crate::Operati
             },
             line_ending: deserialize_line_ending(message.line_ending),
         },
-    })
+    }
 }
 
 /// Deserializes an [`EditOperation`] from the RPC representation.
@@ -444,7 +443,7 @@ pub fn deserialize_anchor(anchor: proto::Anchor) -> Anchor {
 }
 
 /// Returns a `[clock::Lamport`] timestamp for the given [`proto::Operation`].
-pub fn lamport_timestamp_for_operation(operation: &proto::Operation) -> Option<clock::Lamport> {
+pub fn lamport_timestamp_for_operation(operation: &proto::Operation) -> clock::Lamport {
     let (replica_id, value) = match operation {
         proto::Operation::Edit(op) => (op.replica_id, op.lamport_timestamp),
         proto::Operation::Undo(op) => (op.replica_id, op.lamport_timestamp),
@@ -454,10 +453,10 @@ pub fn lamport_timestamp_for_operation(operation: &proto::Operation) -> Option<c
         proto::Operation::UpdateLineEnding(op) => (op.replica_id, op.lamport_timestamp),
     };
 
-    Some(clock::Lamport {
+    clock::Lamport {
         replica_id: ReplicaId::new(replica_id as u16),
         value,
-    })
+    }
 }
 
 /// Serializes a [`Transaction`] to be sent over RPC.
@@ -470,12 +469,12 @@ pub fn serialize_transaction(transaction: &Transaction) -> proto::Transaction {
 }
 
 /// Deserializes a [`Transaction`] from the RPC representation.
-pub fn deserialize_transaction(transaction: proto::Transaction) -> Result<Transaction> {
-    Ok(Transaction {
+pub fn deserialize_transaction(transaction: proto::Transaction) -> Transaction {
+    Transaction {
         id: deserialize_timestamp(transaction.id),
         edit_ids: transaction.edit_ids.into_iter().map(deserialize_timestamp).collect(),
         start: deserialize_version(&transaction.start),
-    })
+    }
 }
 
 /// Serializes a [`clock::Lamport`] timestamp to be sent over RPC.

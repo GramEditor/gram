@@ -1,4 +1,4 @@
-use anyhow::{Context as _, Result, anyhow};
+use anyhow::anyhow;
 use collections::HashMap;
 use gpui::{Context, Entity, Window};
 use multi_buffer::{BufferOffset, MultiBuffer, ToOffset};
@@ -95,7 +95,7 @@ pub(crate) fn generate_auto_close_edits(
     ranges: &[Range<Anchor>],
     config: &JsxTagAutoCloseConfig,
     state: Vec<JsxTagCompletionState>,
-) -> Result<Vec<(Range<Anchor>, String)>> {
+) -> Vec<(Range<Anchor>, String)> {
     let mut edits = Vec::with_capacity(state.len());
     for auto_edit in state {
         let edited_range = ranges[auto_edit.edit_index].clone();
@@ -295,7 +295,7 @@ pub(crate) fn generate_auto_close_edits(
         let edit_range = edit_anchor..edit_anchor;
         edits.push((edit_range, format!("</{}>", tag_name)));
     }
-    Ok(edits)
+    edits
 }
 
 pub(crate) fn refresh_enabled_in_any_buffer(
@@ -468,10 +468,6 @@ pub(crate) fn handle_from(
                     }
                 })
                 .await;
-
-            let edits = edits
-                .context("Auto-close Operation Failed - Failed to compute edits")
-                .log_err()?;
 
             if edits.is_empty() {
                 return Some(());

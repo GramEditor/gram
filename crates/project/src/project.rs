@@ -1702,7 +1702,7 @@ impl Project {
         let worktree = self.worktree_for_id(worktree_id, cx)?;
         let task = worktree.update(cx, |worktree, cx| worktree.expand_all_for_entry(entry_id, cx));
         Some(cx.spawn(async move |this, cx| {
-            task.context("no task")?.await?;
+            task.await?;
             this.update(cx, |_, cx| {
                 cx.emit(Event::ExpandedAllForEntry(worktree_id, entry_id));
             })?;
@@ -1713,9 +1713,7 @@ impl Project {
     pub fn rejoined(&mut self, message: proto::RejoinedProject, message_id: u32, cx: &mut Context<Self>) -> Result<()> {
         cx.update_global::<SettingsStore, _>(|store, cx| {
             for worktree_metadata in &message.worktrees {
-                store
-                    .clear_local_settings(WorktreeId::from_proto(worktree_metadata.id), cx)
-                    .log_err();
+                store.clear_local_settings(WorktreeId::from_proto(worktree_metadata.id), cx);
             }
         });
 
@@ -1957,7 +1955,7 @@ impl Project {
         self.buffer_store.read(cx).get_by_path(path)
     }
 
-    fn register_buffer(&mut self, buffer: &Entity<Buffer>, cx: &mut Context<Self>) -> Result<()> {
+    fn register_buffer(&mut self, buffer: &Entity<Buffer>, cx: &mut Context<Self>) {
         {
             let mut remotely_created_models = self.remotely_created_models.lock();
             if remotely_created_models.retain_count > 0 {
@@ -1971,8 +1969,6 @@ impl Project {
             this.on_buffer_event(buffer, event, cx);
         })
         .detach();
-
-        Ok(())
     }
 
     pub fn open_image(
@@ -2046,7 +2042,7 @@ impl Project {
     fn on_buffer_store_event(&mut self, _: Entity<BufferStore>, event: &BufferStoreEvent, cx: &mut Context<Self>) {
         match event {
             BufferStoreEvent::BufferAdded(buffer) => {
-                self.register_buffer(buffer, cx).log_err();
+                self.register_buffer(buffer, cx);
             }
             BufferStoreEvent::BufferDropped(buffer_id) => {
                 if let Some(ref remote_client) = self.remote_client {
@@ -3390,9 +3386,7 @@ impl Project {
             if envelope.message_id > this.join_project_response_message_id {
                 cx.update_global::<SettingsStore, _>(|store, cx| {
                     for worktree_metadata in &envelope.payload.worktrees {
-                        store
-                            .clear_local_settings(WorktreeId::from_proto(worktree_metadata.id), cx)
-                            .log_err();
+                        store.clear_local_settings(WorktreeId::from_proto(worktree_metadata.id), cx);
                     }
                 });
 

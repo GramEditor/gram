@@ -193,24 +193,14 @@ impl RemoteBufferStore {
                     .cloned()
                     .with_context(|| format!("received chunk for buffer {} without initial state", chunk.buffer_id))?;
 
-                let result = maybe!({
-                    let operations = chunk
-                        .operations
-                        .into_iter()
-                        .map(language::proto::deserialize_operation)
-                        .collect::<Result<Vec<_>>>()?;
-                    buffer.update(cx, |buffer, cx| buffer.apply_ops(operations, cx));
-                    anyhow::Ok(())
-                });
+                let operations = chunk
+                    .operations
+                    .into_iter()
+                    .map(language::proto::deserialize_operation)
+                    .collect::<Vec<_>>();
+                buffer.update(cx, |buffer, cx| buffer.apply_ops(operations, cx));
 
-                if let Err(error) = result {
-                    self.loading_remote_buffers_by_id.remove(&buffer_id);
-                    if let Some(listeners) = self.remote_buffer_listeners.remove(&buffer_id) {
-                        for listener in listeners {
-                            listener.send(Err(error.cloned())).ok();
-                        }
-                    }
-                } else if chunk.is_last {
+                if chunk.is_last {
                     self.loading_remote_buffers_by_id.remove(&buffer_id);
 
                     if let Some(senders) = self.remote_buffer_listeners.remove(&buffer_id) {
@@ -238,7 +228,7 @@ impl RemoteBufferStore {
                 let buffer = this
                     .update(cx, |this, cx| this.wait_for_remote_buffer(buffer_id, cx))?
                     .await?;
-                let transaction = language::proto::deserialize_transaction(transaction)?;
+                let transaction = language::proto::deserialize_transaction(transaction);
                 project_transaction.0.insert(buffer, transaction);
             }
 
@@ -1033,7 +1023,7 @@ impl BufferStore {
             .operations
             .into_iter()
             .map(language::proto::deserialize_operation)
-            .collect::<Result<Vec<_>, _>>()?;
+            .collect::<Vec<_>>();
         this.update(&mut cx, |this, cx| {
             match this.opened_buffers.entry(buffer_id) {
                 hash_map::Entry::Occupied(mut e) => match e.get_mut() {

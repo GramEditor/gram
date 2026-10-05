@@ -11087,17 +11087,15 @@ async fn test_snippet_placeholder_choices(cx: &mut TestAppContext) {
     editor.update_in(cx, |editor, window, cx| {
         let snippet = Snippet::parse("type ${1|,i32,u32|} = $2").unwrap();
 
-        editor
-            .insert_snippet(
-                &insertion_ranges
-                    .iter()
-                    .map(|range| MultiBufferOffset(range.start)..MultiBufferOffset(range.end))
-                    .collect::<Vec<_>>(),
-                snippet,
-                window,
-                cx,
-            )
-            .unwrap();
+        editor.insert_snippet(
+            &insertion_ranges
+                .iter()
+                .map(|range| MultiBufferOffset(range.start)..MultiBufferOffset(range.end))
+                .collect::<Vec<_>>(),
+            snippet,
+            window,
+            cx,
+        );
 
         fn assert(editor: &mut Editor, cx: &mut Context<Editor>, marked_text: &str) {
             let (expected_text, selection_ranges) = marked_text_ranges(marked_text, false);
@@ -11152,17 +11150,15 @@ async fn test_snippet_tabstop_navigation_with_placeholders(cx: &mut TestAppConte
     editor.update_in(cx, |editor, window, cx| {
         let snippet = Snippet::parse("type ${1|,i32,u32|} = $2; $3").unwrap();
 
-        editor
-            .insert_snippet(
-                &insertion_ranges
-                    .iter()
-                    .map(|range| MultiBufferOffset(range.start)..MultiBufferOffset(range.end))
-                    .collect::<Vec<_>>(),
-                snippet,
-                window,
-                cx,
-            )
-            .unwrap();
+        editor.insert_snippet(
+            &insertion_ranges
+                .iter()
+                .map(|range| MultiBufferOffset(range.start)..MultiBufferOffset(range.end))
+                .collect::<Vec<_>>(),
+            snippet,
+            window,
+            cx,
+        );
 
         assert_state(
             editor,
@@ -11225,7 +11221,7 @@ async fn test_snippet_tabstop_navigation_with_placeholders(cx: &mut TestAppConte
             .map(|s| s.range())
             .collect::<Vec<_>>();
 
-        editor.insert_snippet(&insertion_ranges, snippet, window, cx).unwrap();
+        editor.insert_snippet(&insertion_ranges, snippet, window, cx);
 
         assert_state(editor, cx, "fn «» = value;•");
 
@@ -11273,7 +11269,7 @@ async fn test_snippets(cx: &mut TestAppContext) {
             .iter()
             .map(|s| s.range())
             .collect::<Vec<_>>();
-        editor.insert_snippet(&insertion_ranges, snippet, window, cx).unwrap();
+        editor.insert_snippet(&insertion_ranges, snippet, window, cx);
     });
 
     cx.assert_editor_state(indoc! {"
@@ -11347,7 +11343,7 @@ async fn test_snippet_indentation(cx: &mut TestAppContext) {
             .iter()
             .map(|s| s.range())
             .collect::<Vec<_>>();
-        editor.insert_snippet(&insertion_ranges, snippet, window, cx).unwrap();
+        editor.insert_snippet(&insertion_ranges, snippet, window, cx);
     });
 
     cx.assert_editor_state(indoc! {"
@@ -15240,6 +15236,11 @@ async fn test_word_completions_disabled_with_no_provider(cx: &mut TestAppContext
     });
 }
 
+#[expect(
+    clippy::unnecessary_wraps,
+    reason = "This us a utility function for creating values for the \
+    `lsp::CompletionItem` `text_edit` field, which is optional."
+)]
 fn gen_text_edit(params: &CompletionParams, text: &str) -> Option<lsp::CompletionTextEdit> {
     let position = || lsp::Position {
         line: params.text_document_position.position.line,

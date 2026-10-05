@@ -1583,14 +1583,12 @@ impl WorkspaceDb {
                 for (position, group) in children.iter().enumerate() {
                     Self::save_pane_group(conn, workspace_id, group, Some((group_id, position)))?
                 }
-
-                Ok(())
             }
             SerializedPaneGroup::Pane(pane) => {
                 Self::save_pane(conn, workspace_id, pane, parent)?;
-                Ok(())
             }
         }
+        Ok(())
     }
 
     fn save_pane(

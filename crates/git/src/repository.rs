@@ -166,7 +166,7 @@ impl CommitDataReader {
     }
 }
 
-fn parse_cat_file_commit(sha: Oid, content: &str) -> Option<GraphCommitData> {
+fn parse_cat_file_commit(sha: Oid, content: &str) -> GraphCommitData {
     let mut parents = SmallVec::new();
     let mut author_name = SharedString::default();
     let mut author_email = SharedString::default();
@@ -202,14 +202,14 @@ fn parse_cat_file_commit(sha: Oid, content: &str) -> Option<GraphCommitData> {
         }
     }
 
-    Some(GraphCommitData {
+    GraphCommitData {
         sha,
         parents,
         author_name,
         author_email,
         commit_timestamp,
         subject: subject.unwrap_or_default(),
-    })
+    }
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
@@ -1545,7 +1545,7 @@ impl GitRepository for RealGitRepository {
 
                 let input = String::from_utf8_lossy(&output.stdout);
 
-                let mut branches = parse_branch_input(&input)?;
+                let mut branches = parse_branch_input(&input);
                 if branches.is_empty() {
                     let args = vec!["symbolic-ref", "--quiet", "HEAD"];
 
@@ -2596,7 +2596,7 @@ async fn read_single_commit_response(
     stdout.read_exact(&mut newline).await?;
 
     let content_str = String::from_utf8_lossy(&content);
-    parse_cat_file_commit(*sha, &content_str).ok_or_else(|| anyhow!("failed to parse commit {}", sha))
+    Ok(parse_cat_file_commit(*sha, &content_str))
 }
 
 fn parse_initial_graph_output<'a>(lines: impl Iterator<Item = &'a str>) -> Vec<Arc<InitialGraphCommitData>> {
@@ -2963,7 +2963,7 @@ impl MapSeekTarget<RepoPath> for RepoPathDescendants<'_> {
     }
 }
 
-fn parse_branch_input(input: &str) -> Result<Vec<Branch>> {
+fn parse_branch_input(input: &str) -> Vec<Branch> {
     let mut branches = Vec::new();
     for line in input.split('\n') {
         if line.is_empty() {
@@ -3019,7 +3019,7 @@ fn parse_branch_input(input: &str) -> Result<Vec<Branch>> {
         })
     }
 
-    Ok(branches)
+    branches
 }
 
 fn parse_upstream_track(upstream_track: &str) -> Result<UpstreamTracking> {
@@ -3431,7 +3431,7 @@ mod tests {
         #[allow(clippy::octal_escapes)]
         let input = "*\0060964da10574cd9bf06463a53bf6e0769c5c45e\0\0refs/heads/zed-patches\0refs/remotes/origin/zed-patches\0\01733187470\0John Doe\0generated protobuf\n";
         assert_eq!(
-            parse_branch_input(input).unwrap(),
+            parse_branch_input(input),
             vec![Branch {
                 is_head: true,
                 ref_name: "refs/heads/zed-patches".into(),
@@ -3455,7 +3455,7 @@ mod tests {
         #[allow(clippy::octal_escapes)]
         let input = " \090012116c03db04344ab10d50348553aa94f1ea0\0refs/heads/broken\n \0eb0cae33272689bd11030822939dd2701c52f81e\0895951d681e5561478c0acdd6905e8aacdfd2249\0refs/heads/dev\0\0\01762948725\0Gram\0Add feature\n*\0895951d681e5561478c0acdd6905e8aacdfd2249\0\0refs/heads/main\0\0\01762948695\0Gram\0Initial commit\n";
 
-        let branches = parse_branch_input(input).unwrap();
+        let branches = parse_branch_input(input);
         assert_eq!(branches.len(), 2);
         assert_eq!(
             branches,

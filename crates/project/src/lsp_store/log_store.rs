@@ -338,7 +338,7 @@ impl LogStore {
         worktree_id: Option<WorktreeId>,
         server: Option<Arc<LanguageServer>>,
         cx: &mut Context<Self>,
-    ) -> Option<&mut LanguageServerState> {
+    ) -> &mut LanguageServerState {
         let server_state = self.language_servers.entry(server_id).or_insert_with(|| {
             cx.notify();
             LanguageServerState {
@@ -370,7 +370,7 @@ impl LogStore {
             }));
         }
 
-        Some(server_state)
+        server_state
     }
 
     pub fn add_language_server_log(
@@ -591,19 +591,13 @@ impl LogStore {
         }
     }
 
-    fn on_io(
-        &mut self,
-        language_server_id: LanguageServerId,
-        io_kind: IoKind,
-        message: &str,
-        cx: &mut Context<Self>,
-    ) -> Option<()> {
+    fn on_io(&mut self, language_server_id: LanguageServerId, io_kind: IoKind, message: &str, cx: &mut Context<Self>) {
         let is_received = match io_kind {
             IoKind::StdOut => true,
             IoKind::StdIn => false,
             IoKind::StdErr => {
                 self.add_language_server_log(language_server_id, MessageType::LOG, message, cx);
-                return Some(());
+                return;
             }
         };
 
@@ -615,7 +609,6 @@ impl LogStore {
 
         self.add_language_server_rpc(language_server_id, kind, message, cx);
         cx.notify();
-        Some(())
     }
 
     fn emit_event(&mut self, e: Event, cx: &mut Context<Self>) {

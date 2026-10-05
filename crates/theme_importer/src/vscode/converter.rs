@@ -1,4 +1,3 @@
-use anyhow::Result;
 use collections::IndexMap;
 use strum::IntoEnumIterator;
 use theme::{
@@ -45,14 +44,14 @@ impl VsCodeThemeConverter {
         }
     }
 
-    pub fn convert(self) -> Result<ThemeContent> {
+    pub fn convert(self) -> ThemeContent {
         let appearance = self.theme_metadata.appearance.into();
 
-        let status_colors = self.convert_status_colors()?;
-        let theme_colors = self.convert_theme_colors()?;
-        let syntax_theme = self.convert_syntax_theme()?;
+        let status_colors = self.convert_status_colors();
+        let theme_colors = self.convert_theme_colors();
+        let syntax_theme = self.convert_syntax_theme();
 
-        Ok(ThemeContent {
+        ThemeContent {
             name: self.theme_metadata.name,
             appearance,
             style: ThemeStyleContent {
@@ -63,10 +62,10 @@ impl VsCodeThemeConverter {
                 players: Vec::new(),
                 syntax: syntax_theme,
             },
-        })
+        }
     }
 
-    fn convert_status_colors(&self) -> Result<StatusColorsContent> {
+    fn convert_status_colors(&self) -> StatusColorsContent {
         let vscode_colors = &self.theme.colors;
 
         let vscode_base_status_colors = StatusColorsContent {
@@ -74,7 +73,7 @@ impl VsCodeThemeConverter {
             ..Default::default()
         };
 
-        Ok(StatusColorsContent {
+        StatusColorsContent {
             conflict: vscode_colors.git_decoration.conflicting_resource_foreground.clone(),
             created: vscode_colors.editor_gutter.added_background.clone(),
             deleted: vscode_colors.editor_gutter.deleted_background.clone(),
@@ -99,10 +98,10 @@ impl VsCodeThemeConverter {
             warning_background: vscode_colors.editor_warning.background.clone(),
             warning_border: vscode_colors.editor_warning.border.clone(),
             ..Default::default()
-        })
+        }
     }
 
-    fn convert_theme_colors(&self) -> Result<ThemeColorsContent> {
+    fn convert_theme_colors(&self) -> ThemeColorsContent {
         let vscode_colors = &self.theme.colors;
 
         let vscode_panel_border = vscode_colors.panel.border.clone();
@@ -118,7 +117,7 @@ impl VsCodeThemeConverter {
             .and_then(|token_color| token_color.settings.foreground.as_ref())
             .cloned();
 
-        Ok(ThemeColorsContent {
+        ThemeColorsContent {
             border: vscode_panel_border.clone(),
             border_variant: vscode_panel_border.clone(),
             border_focused: vscode_colors.focus_border.clone(),
@@ -193,10 +192,10 @@ impl VsCodeThemeConverter {
             terminal_ansi_bright_white: vscode_colors.terminal.ansi_bright_white.clone(),
             link_text_hover: vscode_colors.text_link.active_foreground.clone(),
             ..Default::default()
-        })
+        }
     }
 
-    fn convert_syntax_theme(&self) -> Result<IndexMap<String, HighlightStyleContent>> {
+    fn convert_syntax_theme(&self) -> IndexMap<String, HighlightStyleContent> {
         let mut highlight_styles = IndexMap::default();
 
         for syntax_token in GramSyntaxToken::iter() {
@@ -252,6 +251,6 @@ impl VsCodeThemeConverter {
             highlight_styles.insert(syntax_token.to_string(), highlight_style);
         }
 
-        Ok(highlight_styles)
+        highlight_styles
     }
 }

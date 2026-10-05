@@ -136,24 +136,24 @@ impl DebugRequest {
         }
     }
 
-    pub fn from_proto(request: proto::DebugRequest) -> Result<DebugRequest> {
+    pub fn from_proto(request: proto::DebugRequest) -> DebugRequest {
         match request {
             proto::DebugRequest::Launch(proto::DebugLaunchRequest {
                 program,
                 cwd,
                 args,
                 env,
-            }) => Ok(DebugRequest::Launch(LaunchRequest {
+            }) => DebugRequest::Launch(LaunchRequest {
                 program,
                 cwd: cwd.map(From::from),
                 args,
                 env: env.into_iter().collect(),
-            })),
+            }),
 
             proto::DebugRequest::Attach(proto::DebugAttachRequest { process_id }) => {
-                Ok(DebugRequest::Attach(AttachRequest {
+                DebugRequest::Attach(AttachRequest {
                     process_id: Some(process_id),
-                }))
+                })
             }
         }
     }

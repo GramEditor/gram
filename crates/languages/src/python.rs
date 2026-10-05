@@ -162,7 +162,7 @@ impl TyLspAdapter {
 impl TyLspAdapter {
     const SERVER_NAME: LanguageServerName = LanguageServerName::new_static("ty");
 
-    fn build_asset_name() -> Result<(String, String)> {
+    fn build_asset_name() -> (String, String) {
         let arch = match consts::ARCH {
             "x86" => "i686",
             _ => consts::ARCH,
@@ -174,7 +174,7 @@ impl TyLspAdapter {
         };
         let asset_name = format!("ty-{arch}-{os}.{suffix}");
         let asset_stem = format!("ty-{arch}-{os}");
-        Ok((asset_stem, asset_name))
+        (asset_stem, asset_name)
     }
 }
 
@@ -259,7 +259,7 @@ impl LspInstaller for TyLspAdapter {
         _: &mut AsyncApp,
     ) -> Result<Self::BinaryVersion> {
         let release = latest_github_release("astral-sh/ty", true, false, delegate.http_client()).await?;
-        let (_, asset_name) = Self::build_asset_name()?;
+        let (_, asset_name) = Self::build_asset_name();
         let asset = release
             .assets
             .into_iter()
@@ -316,7 +316,7 @@ impl LspInstaller for TyLspAdapter {
         async_fs::create_dir_all(&destination_path).await?;
 
         let server_path = match Self::GITHUB_ASSET_KIND {
-            AssetKind::TarGz | AssetKind::Gz => destination_path.join(Self::build_asset_name()?.0).join("ty"),
+            AssetKind::TarGz | AssetKind::Gz => destination_path.join(Self::build_asset_name().0).join("ty"),
             AssetKind::Zip => destination_path.clone().join("ty.exe"),
         };
 
@@ -354,12 +354,12 @@ impl LspInstaller for TyLspAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        find_cached_server_binary(&container_dir, None, async |path| match Self::build_asset_name() {
-            Ok(name) => Some(match TyLspAdapter::GITHUB_ASSET_KIND {
+        find_cached_server_binary(&container_dir, None, async |path| {
+            let name = Self::build_asset_name();
+            Some(match TyLspAdapter::GITHUB_ASSET_KIND {
                 AssetKind::TarGz | AssetKind::Gz => path.join(name.0).join("ty"),
                 AssetKind::Zip => path.join("ty.exe"),
-            }),
-            Err(_) => None,
+            })
         })
         .await
         .map(|path| LanguageServerBinary {
@@ -705,7 +705,7 @@ impl ContextProvider for PythonContextProvider {
             let toolchain = (PYTHON_ACTIVE_TOOLCHAIN_PATH, active_toolchain);
 
             Ok(task::TaskVariables::from_iter(
-                test_target.into_iter().chain(module_target).chain([toolchain]),
+                test_target.into_iter().chain([module_target]).chain([toolchain]),
             ))
         })
     }
@@ -863,15 +863,13 @@ impl PythonContextProvider {
         Some((PYTHON_TEST_TARGET_TASK_VARIABLE.clone(), pytest_target_str))
     }
 
-    fn build_module_target(&self, variables: &task::TaskVariables) -> Result<(VariableName, String)> {
+    fn build_module_target(&self, variables: &task::TaskVariables) -> (VariableName, String) {
         let python_module_name = variables
             .get(&VariableName::RelativeFile)
             .and_then(python_module_name_from_relative_path)
             .unwrap_or_default();
 
-        let module_target = (PYTHON_MODULE_NAME_TASK_VARIABLE.clone(), python_module_name);
-
-        Ok(module_target)
+        (PYTHON_MODULE_NAME_TASK_VARIABLE.clone(), python_module_name)
     }
 }
 
@@ -2130,7 +2128,7 @@ impl RuffLspAdapter {
         RuffLspAdapter { fs }
     }
 
-    fn build_asset_name() -> Result<(String, String)> {
+    fn build_asset_name() -> (String, String) {
         let arch = match consts::ARCH {
             "x86" => "i686",
             _ => consts::ARCH,
@@ -2142,7 +2140,7 @@ impl RuffLspAdapter {
         };
         let asset_name = format!("ruff-{arch}-{os}.{suffix}");
         let asset_stem = format!("ruff-{arch}-{os}");
-        Ok((asset_stem, asset_name))
+        (asset_stem, asset_name)
     }
 }
 
@@ -2241,7 +2239,7 @@ impl LspInstaller for RuffLspAdapter {
         _: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
         let release = latest_github_release("astral-sh/ruff", true, false, delegate.http_client()).await?;
-        let (_, asset_name) = Self::build_asset_name()?;
+        let (_, asset_name) = Self::build_asset_name();
         let asset = release
             .assets
             .into_iter()
@@ -2267,7 +2265,7 @@ impl LspInstaller for RuffLspAdapter {
         } = latest_version;
         let destination_path = container_dir.join(format!("ruff-{name}"));
         let server_path = match Self::GITHUB_ASSET_KIND {
-            AssetKind::TarGz | AssetKind::Gz => destination_path.join(Self::build_asset_name()?.0).join("ruff"),
+            AssetKind::TarGz | AssetKind::Gz => destination_path.join(Self::build_asset_name().0).join("ruff"),
             AssetKind::Zip => destination_path.clone().join("ruff.exe"),
         };
 
@@ -2349,7 +2347,7 @@ impl LspInstaller for RuffLspAdapter {
 
             let path = last.context("no cached binary")?;
             let path = match Self::GITHUB_ASSET_KIND {
-                AssetKind::TarGz | AssetKind::Gz => path.join(Self::build_asset_name()?.0).join("ruff"),
+                AssetKind::TarGz | AssetKind::Gz => path.join(Self::build_asset_name().0).join("ruff"),
                 AssetKind::Zip => path.join("ruff.exe"),
             };
 

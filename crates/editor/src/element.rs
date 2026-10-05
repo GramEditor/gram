@@ -3178,14 +3178,13 @@ impl EditorElement {
             }
             while i < boundaries_len && boundaries[i].pos == current_boundary_pos {
                 let active_range = &boundaries[i];
+                let idx = active_range.index;
                 if active_range.is_start {
-                    let idx = active_range.index;
                     let pos = active_ranges
                         .binary_search_by_key(&idx, |(i, _)| *i)
                         .unwrap_or_else(|p| p);
                     active_ranges.insert(pos, (idx, active_range.color));
                 } else {
-                    let idx = active_range.index;
                     if let Ok(pos) = active_ranges.binary_search_by_key(&idx, |(i, _)| *i) {
                         active_ranges.remove(pos);
                     }

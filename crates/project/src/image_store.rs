@@ -418,12 +418,11 @@ impl ImageStore {
         self.state.reload_images(images, cx)
     }
 
-    fn add_image(&mut self, image: Entity<ImageItem>, cx: &mut Context<ImageStore>) -> Result<()> {
+    fn add_image(&mut self, image: Entity<ImageItem>, cx: &mut Context<ImageStore>) {
         let image_id = image.read(cx).id;
         self.opened_images.insert(image_id, image.downgrade());
         cx.subscribe(&image, Self::on_image_event).detach();
         cx.emit(ImageStoreEvent::ImageAdded(image));
-        Ok(())
     }
 
     fn on_image_event(&mut self, image: Entity<ImageItem>, event: &ImageItemEvent, cx: &mut Context<Self>) {
@@ -453,7 +452,7 @@ impl ImageStore {
                     this.loaded_images.insert(image_id, image)
                 });
 
-                self.add_image(image, cx)?;
+                self.add_image(image, cx);
             }
         }
 
@@ -576,7 +575,7 @@ impl ImageStoreImpl for Entity<LocalImageStore> {
             let image_id = cx.read_entity(&entity, |model, _| model.id)?;
 
             this.update(cx, |this, cx| {
-                image_store.update(cx, |image_store, cx| image_store.add_image(entity.clone(), cx))??;
+                image_store.update(cx, |image_store, cx| image_store.add_image(entity.clone(), cx))?;
                 this.local_image_ids_by_path.insert(
                     ProjectPath {
                         worktree_id: file.worktree_id(cx),

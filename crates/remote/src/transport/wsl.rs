@@ -167,7 +167,7 @@ impl WslRemoteConnection {
                     super::build_remote_server_from_source(&self.platform, delegate.as_ref(), cx).await?
                 {
                     let tmp_path = paths::remote_wsl_server_dir_relative().join(
-                        &RelPath::unix(&format!(
+                        RelPath::unix(&format!(
                             "download-{}-{}",
                             std::process::id(),
                             remote_server_path.file_name().unwrap().to_string_lossy()

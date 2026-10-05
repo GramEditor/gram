@@ -404,7 +404,7 @@ impl DapStore {
                 });
                 cx.background_spawn(async move {
                     let response = request.await?;
-                    DebugRequest::from_proto(response)
+                    Ok(DebugRequest::from_proto(response))
                 })
             }
         }

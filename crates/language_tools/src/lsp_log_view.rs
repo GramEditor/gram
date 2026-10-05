@@ -313,7 +313,7 @@ impl LspLogView {
         (editor, vec![editor_subscription, search_subscription])
     }
 
-    pub(crate) fn menu_items<'a>(&'a self, cx: &'a App) -> Option<Vec<LogMenuItem>> {
+    pub(crate) fn menu_items<'a>(&'a self, cx: &'a App) -> Vec<LogMenuItem> {
         let log_store = self.log_store.read(cx);
 
         let unknown_server = LanguageServerName::new_static("unknown server");
@@ -372,7 +372,7 @@ impl LspLogView {
             .collect::<Vec<_>>();
         rows.sort_by_key(|row| row.server_id);
         rows.dedup_by_key(|row| row.server_id);
-        Some(rows)
+        rows
     }
 
     fn show_logs_for_server(&mut self, server_id: LanguageServerId, window: &mut Window, cx: &mut Context<Self>) {
@@ -790,7 +790,7 @@ impl Render for LspLogToolbarItemView {
         };
 
         let (menu_rows, current_server_id) = log_view.update(cx, |log_view, cx| {
-            let menu_rows = log_view.menu_items(cx).unwrap_or_default();
+            let menu_rows = log_view.menu_items(cx);
             let current_server_id = log_view.current_server_id;
             (menu_rows, current_server_id)
         });

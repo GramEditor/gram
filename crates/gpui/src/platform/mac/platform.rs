@@ -813,10 +813,8 @@ impl Platform for MacPlatform {
                             let urls = panel2.URLs();
                             for i in 0..urls.count() {
                                 let url = urls.objectAtIndex(i);
-                                if url.isFileURL()
-                                    && let Ok(path) = ns_url_to_path(&url)
-                                {
-                                    result.push(path)
+                                if url.isFileURL() {
+                                    result.push(ns_url_to_path(&url))
                                 }
                             }
                             Some(result)
@@ -871,10 +869,8 @@ impl Platform for MacPlatform {
                             return;
                         };
                         if url.isFileURL() {
-                            result = (unsafe { ns_url_to_path(&url) }).ok().map(|mut result| {
-                                let Some(filename) = result.file_name() else {
-                                    return result;
-                                };
+                            let mut path = unsafe { ns_url_to_path(&url) };
+                            if let Some(filename) = path.file_name() {
                                 let chunks = filename.as_bytes().split(|&b| b == b'.').collect::<Vec<_>>();
 
                                 // https://github.com/zed-industries/zed/issues/16969
@@ -892,10 +888,10 @@ impl Platform for MacPlatform {
                                         &filename.as_bytes()[..chunks[0].len() + 1 + chunks[1].len()],
                                     )
                                     .to_owned();
-                                    result.set_file_name(&new_filename);
+                                    path.set_file_name(&new_filename);
                                 }
-                                result
-                            })
+                            }
+                            result = Some(path);
                         }
                     }
 
@@ -1026,7 +1022,7 @@ impl Platform for MacPlatform {
         let url = bundle
             .URLForAuxiliaryExecutable(&name)
             .context("Bundled executable not found")?;
-        unsafe { ns_url_to_path(&url) }
+        Ok(unsafe { ns_url_to_path(&url) })
     }
 
     /// Match cursor style to one of the styles available
@@ -1105,11 +1101,11 @@ fn path_from_objc(path: &NSString) -> PathBuf {
     PathBuf::from(&path.to_string())
 }
 
-unsafe fn ns_url_to_path(url: &NSURL) -> Result<PathBuf> {
+unsafe fn ns_url_to_path(url: &NSURL) -> PathBuf {
     let path = url.fileSystemRepresentation();
-    Ok(PathBuf::from(OsStr::from_bytes(unsafe {
+    PathBuf::from(OsStr::from_bytes(unsafe {
         CStr::from_ptr(NonNull::as_ptr(path)).to_bytes()
-    })))
+    }))
 }
 
 #[link(name = "Carbon", kind = "framework")]

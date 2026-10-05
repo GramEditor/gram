@@ -579,18 +579,20 @@ features = [
 ]
 
 [workspace.lints.clippy]
-dbg_macro = "deny"
-declare_interior_mutable_const = "deny"
-disallowed_methods = "deny"
+todo = "warn"
+dbg_macro = "warn"
+redundant_clone = "warn"
+unnecessary_wraps = "warn"
+disallowed_methods = "warn"
+branches_sharing_code = "warn"
+declare_interior_mutable_const = "warn"
 # We often have large enum variants yet we rarely actually bother with splitting them up.
 large_enum_variant = "allow"
 let_underscore_future = "allow"
 # Boolean expressions can be hard to read, requiring only the minimal form gets in the way
 nonminimal_bool = "allow"
-redundant_clone = "deny"
 # Motivation: We use `vec![a..b]` a lot when dealing with ranges in text, so warning on this rule produces a lot of noise.
 single_range_in_vec_init = "allow"
-todo = "deny"
 # in Rust it can be very tedious to reduce argument count without running afoul of the borrow checker.
 too_many_arguments = "allow"
 # Individual rules that have violations in the codebase:

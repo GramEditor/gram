@@ -8,7 +8,7 @@ use rust_embed::RustEmbed;
 use settings::SettingsStore;
 use smol::stream::StreamExt;
 use std::{str, sync::Arc};
-use util::{ResultExt, asset_str};
+use util::asset_str;
 
 pub use language::*;
 
@@ -446,14 +446,12 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
             if language_settings != prev_language_settings {
                 cx.update(|cx| {
                     SettingsStore::update_global(cx, |settings, cx| {
-                        settings
-                            .set_extension_settings(
-                                settings::ExtensionsSettingsContent {
-                                    all_languages: language_settings.clone(),
-                                },
-                                cx,
-                            )
-                            .log_err();
+                        settings.set_extension_settings(
+                            settings::ExtensionsSettingsContent {
+                                all_languages: language_settings.clone(),
+                            },
+                            cx,
+                        );
                     });
                 })?;
                 prev_language_settings = language_settings;

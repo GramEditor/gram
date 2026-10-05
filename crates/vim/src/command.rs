@@ -1646,6 +1646,7 @@ fn commands(cx: &App) -> &Vec<VimCommand> {
     &COMMANDS.get_or_init(|| VimCommands(generate_commands(cx))).0
 }
 
+#[expect(clippy::unnecessary_wraps, reason = "`VimCommands::range` expects an optional.")]
 fn act_on_range(action: Box<dyn Action>, range: &CommandRange) -> Option<Box<dyn Action>> {
     Some(
         WithRange {
@@ -1657,6 +1658,7 @@ fn act_on_range(action: Box<dyn Action>, range: &CommandRange) -> Option<Box<dyn
     )
 }
 
+#[expect(clippy::unnecessary_wraps, reason = "`VimCommands::range` expects an optional.")]
 fn select_range(action: Box<dyn Action>, range: &CommandRange) -> Option<Box<dyn Action>> {
     Some(
         WithRange {

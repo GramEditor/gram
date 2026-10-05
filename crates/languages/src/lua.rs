@@ -48,8 +48,8 @@ impl LuaLspAdapter {
         Some(format!("lua-language-server-{}-{}", Self::OS_NAME, arch))
     }
 
-    fn server_path(container: &Path) -> Option<PathBuf> {
-        Some(container.join("bin").join(with_exe("lua-language-server")))
+    fn server_path(container: &Path) -> PathBuf {
+        container.join("bin").join(with_exe("lua-language-server"))
     }
 }
 
@@ -130,7 +130,7 @@ impl LspInstaller for LuaLspAdapter {
         } = version;
 
         let destination_path = container_dir.join(format!("lua-language-server-{version_name}"));
-        let server_path = Self::server_path(&destination_path).ok_or_else(|| anyhow!("Unsupported architecture"))?;
+        let server_path = Self::server_path(&destination_path);
 
         let binary = LanguageServerBinary {
             path: server_path.clone(),
@@ -164,7 +164,7 @@ impl LspInstaller for LuaLspAdapter {
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
         find_cached_server_binary(&container_dir, Some("lua-language-server-"), async |path| {
-            Self::server_path(path)
+            Some(Self::server_path(path))
         })
         .await
         .map(|path| LanguageServerBinary {

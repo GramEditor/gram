@@ -3220,7 +3220,7 @@ impl Window {
     }
 
     /// Removes an image from the sprite atlas.
-    pub fn drop_image(&mut self, data: Arc<RenderImage>) -> Result<()> {
+    pub fn drop_image(&mut self, data: Arc<RenderImage>) {
         for frame_index in 0..data.frame_count() {
             let params = RenderImageParams {
                 image_id: data.id,
@@ -3229,8 +3229,6 @@ impl Window {
 
             self.sprite_atlas.remove(&params.clone().into());
         }
-
-        Ok(())
     }
 
     /// Add a node to the layout tree for the current frame. Takes the `Style` of the element for which

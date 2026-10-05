@@ -674,7 +674,7 @@ impl SettingsObserver {
                 .detach(),
             WorktreeStoreEvent::Removed(_, worktree_id) => {
                 cx.update_global::<SettingsStore, _>(|store, cx| {
-                    store.clear_local_settings(*worktree_id, cx).log_err();
+                    store.clear_local_settings(*worktree_id, cx);
                 });
             }
             _ => {}

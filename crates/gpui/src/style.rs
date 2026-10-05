@@ -560,7 +560,7 @@ impl Style {
     pub fn has_opaque_background(&self) -> bool {
         self.background
             .as_ref()
-            .is_some_and(|fill| fill.color().is_some_and(|color| !color.is_transparent()))
+            .is_some_and(|fill| !fill.color().is_transparent())
     }
 
     /// Get the text style in this element style.
@@ -636,7 +636,7 @@ impl Style {
 
         window.paint_shadows(bounds, corner_radii, &self.box_shadow);
 
-        let background_color = self.background.as_ref().and_then(Fill::color);
+        let background_color = self.background.as_ref().map(Fill::color);
         if background_color.is_some_and(|color| !color.is_transparent()) {
             let mut border_color = match background_color {
                 Some(color) => match color.tag {
@@ -810,12 +810,10 @@ pub enum Fill {
 }
 
 impl Fill {
-    /// Unwrap this fill into a solid color, if it is one.
-    ///
-    /// If the fill is not a solid color, this method returns `None`.
-    pub fn color(&self) -> Option<Background> {
+    /// Unwrap this fill into a solid color.
+    pub fn color(&self) -> Background {
         match self {
-            Fill::Color(color) => Some(*color),
+            Fill::Color(color) => *color,
         }
     }
 }

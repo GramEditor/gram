@@ -376,27 +376,13 @@ impl TextLayout {
                 };
                 let len = text.len();
 
-                let Some(lines) = window
-                    .text_system()
-                    .shape_text(
-                        text,
-                        font_size,
-                        &runs,
-                        wrap_width,            // Wrap if we know the width.
-                        text_style.line_clamp, // Limit the number of lines if line_clamp is set.
-                    )
-                    .log_err()
-                else {
-                    element_state.0.borrow_mut().replace(TextLayoutInner {
-                        lines: Default::default(),
-                        len: 0,
-                        line_height,
-                        wrap_width,
-                        size: Some(Size::default()),
-                        bounds: None,
-                    });
-                    return Size::default();
-                };
+                let lines = window.text_system().shape_text(
+                    text,
+                    font_size,
+                    &runs,
+                    wrap_width,            // Wrap if we know the width.
+                    text_style.line_clamp, // Limit the number of lines if line_clamp is set.
+                );
 
                 let mut size: Size<Pixels> = Size::default();
                 for line in &lines {
@@ -750,8 +736,8 @@ impl Element for InteractiveText {
 
                 let text_layout = text_layout.clone();
                 let mouse_down = interactive_state.mouse_down_index.clone();
+                let hitbox = hitbox.clone();
                 if let Some(mouse_down_index) = mouse_down.get() {
-                    let hitbox = hitbox.clone();
                     let clickable_ranges = mem::take(&mut self.clickable_ranges);
                     window.on_mouse_event(move |event: &MouseUpEvent, phase, window: &mut Window, cx| {
                         if phase == DispatchPhase::Bubble && hitbox.is_hovered(window) {
@@ -772,7 +758,6 @@ impl Element for InteractiveText {
                         }
                     });
                 } else {
-                    let hitbox = hitbox.clone();
                     window.on_mouse_event(move |event: &MouseDownEvent, phase, window, _| {
                         if phase == DispatchPhase::Bubble
                             && hitbox.is_hovered(window)

@@ -208,12 +208,10 @@ impl TaskTemplate {
         }
         .lines()
         .fold(String::new(), |mut string, line| {
-            if string.is_empty() {
-                string.push_str(line);
-            } else {
+            if !string.is_empty() {
                 string.push_str("\\n");
-                string.push_str(line);
             }
+            string.push_str(line);
             string
         });
 

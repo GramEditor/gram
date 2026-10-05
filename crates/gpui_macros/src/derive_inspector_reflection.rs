@@ -233,47 +233,47 @@ fn try_expand_macro(macro_item: &syn::TraitItemMacro) -> Option<Vec<TraitItem>> 
         "gpui_macros::style_helpers" | "style_helpers" => {
             let tokens = macro_item.mac.tokens.clone();
             let expanded = crate::styles::style_helpers(TokenStream::from(tokens));
-            parse_expanded_items(expanded)
+            Some(parse_expanded_items(expanded))
         }
         "gpui_macros::visibility_style_methods" | "visibility_style_methods" => {
             let tokens = macro_item.mac.tokens.clone();
             let expanded = crate::styles::visibility_style_methods(TokenStream::from(tokens));
-            parse_expanded_items(expanded)
+            Some(parse_expanded_items(expanded))
         }
         "gpui_macros::margin_style_methods" | "margin_style_methods" => {
             let tokens = macro_item.mac.tokens.clone();
             let expanded = crate::styles::margin_style_methods(TokenStream::from(tokens));
-            parse_expanded_items(expanded)
+            Some(parse_expanded_items(expanded))
         }
         "gpui_macros::padding_style_methods" | "padding_style_methods" => {
             let tokens = macro_item.mac.tokens.clone();
             let expanded = crate::styles::padding_style_methods(TokenStream::from(tokens));
-            parse_expanded_items(expanded)
+            Some(parse_expanded_items(expanded))
         }
         "gpui_macros::position_style_methods" | "position_style_methods" => {
             let tokens = macro_item.mac.tokens.clone();
             let expanded = crate::styles::position_style_methods(TokenStream::from(tokens));
-            parse_expanded_items(expanded)
+            Some(parse_expanded_items(expanded))
         }
         "gpui_macros::overflow_style_methods" | "overflow_style_methods" => {
             let tokens = macro_item.mac.tokens.clone();
             let expanded = crate::styles::overflow_style_methods(TokenStream::from(tokens));
-            parse_expanded_items(expanded)
+            Some(parse_expanded_items(expanded))
         }
         "gpui_macros::cursor_style_methods" | "cursor_style_methods" => {
             let tokens = macro_item.mac.tokens.clone();
             let expanded = crate::styles::cursor_style_methods(TokenStream::from(tokens));
-            parse_expanded_items(expanded)
+            Some(parse_expanded_items(expanded))
         }
         "gpui_macros::border_style_methods" | "border_style_methods" => {
             let tokens = macro_item.mac.tokens.clone();
             let expanded = crate::styles::border_style_methods(TokenStream::from(tokens));
-            parse_expanded_items(expanded)
+            Some(parse_expanded_items(expanded))
         }
         "gpui_macros::box_shadow_style_methods" | "box_shadow_style_methods" => {
             let tokens = macro_item.mac.tokens.clone();
             let expanded = crate::styles::box_shadow_style_methods(TokenStream::from(tokens));
-            parse_expanded_items(expanded)
+            Some(parse_expanded_items(expanded))
         }
         _ => None,
     }
@@ -287,7 +287,7 @@ fn path_to_string(path: &Path) -> String {
         .join("::")
 }
 
-fn parse_expanded_items(expanded: TokenStream) -> Option<Vec<TraitItem>> {
+fn parse_expanded_items(expanded: TokenStream) -> Vec<TraitItem> {
     let tokens = TokenStream2::from(expanded);
 
     // Try to parse the expanded tokens as trait items
@@ -298,5 +298,5 @@ fn parse_expanded_items(expanded: TokenStream) -> Option<Vec<TraitItem>> {
         }
     };
 
-    Some(dummy_trait.items)
+    dummy_trait.items
 }

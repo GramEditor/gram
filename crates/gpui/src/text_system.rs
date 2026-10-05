@@ -396,7 +396,7 @@ impl WindowTextSystem {
         runs: &[TextRun],
         wrap_width: Option<Pixels>,
         line_clamp: Option<usize>,
-    ) -> Result<SmallVec<[WrappedLine; 1]>> {
+    ) -> SmallVec<[WrappedLine; 1]> {
         let mut runs = runs.iter().filter(|run| run.len > 0).cloned().peekable();
         let mut font_runs = self.font_runs_pool.lock().pop().unwrap_or_default();
 
@@ -506,7 +506,7 @@ impl WindowTextSystem {
 
         self.font_runs_pool.lock().push(font_runs);
 
-        Ok(lines)
+        lines
     }
 
     pub(crate) fn finish_frame(&self) {

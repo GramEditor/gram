@@ -77,11 +77,7 @@ fn test_remote(cx: &mut App) {
             .background_executor()
             .block(host_buffer.read(cx).serialize_ops(None, cx));
         let mut buffer = Buffer::from_proto(ReplicaId::REMOTE_SERVER, Capability::ReadWrite, state, None).unwrap();
-        buffer.apply_ops(
-            ops.into_iter()
-                .map(|op| language::proto::deserialize_operation(op).unwrap()),
-            cx,
-        );
+        buffer.apply_ops(ops.into_iter().map(language::proto::deserialize_operation), cx);
         buffer
     });
     let multibuffer = cx.new(|cx| MultiBuffer::singleton(guest_buffer.clone(), cx));

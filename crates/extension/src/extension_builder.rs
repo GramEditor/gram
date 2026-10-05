@@ -580,11 +580,10 @@ impl ExtensionBuilder {
                     };
                     if output.starts_with(&wasm_encoder::Component::HEADER) {
                         parent.push(ComponentSectionId::Component as u8);
-                        output.encode(&mut parent);
                     } else {
                         parent.push(ComponentSectionId::CoreModule as u8);
-                        output.encode(&mut parent);
                     }
+                    output.encode(&mut parent);
                     output = parent;
                 }
                 _ => {}

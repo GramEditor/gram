@@ -474,19 +474,21 @@ impl ContextProvider for GoContextProvider {
 
         let _subtest_name = variables.get(&VariableName::Custom(Cow::Borrowed("_subtest_name")));
 
-        let go_subtest_variable = extract_subtest_name(_subtest_name.unwrap_or(""))
-            .map(|subtest_name| (GO_SUBTEST_NAME_TASK_VARIABLE.clone(), subtest_name));
+        let go_subtest_variable = Some((
+            GO_SUBTEST_NAME_TASK_VARIABLE.clone(),
+            extract_subtest_name(_subtest_name.unwrap_or("")),
+        ));
 
         let _table_test_case_name = variables.get(&VariableName::Custom(Cow::Borrowed("_table_test_case_name")));
 
         let go_table_test_case_variable = _table_test_case_name
-            .and_then(extract_subtest_name)
+            .map(extract_subtest_name)
             .map(|case_name| (GO_TABLE_TEST_CASE_NAME_TASK_VARIABLE.clone(), case_name));
 
         let _suite_name = variables.get(&VariableName::Custom(Cow::Borrowed("_suite_name")));
 
         let go_suite_variable = _suite_name
-            .and_then(extract_subtest_name)
+            .map(extract_subtest_name)
             .map(|suite_name| (GO_SUITE_NAME_TASK_VARIABLE.clone(), suite_name));
 
         Task::ready(Ok(TaskVariables::from_iter(
@@ -688,7 +690,7 @@ impl ContextProvider for GoContextProvider {
     }
 }
 
-fn extract_subtest_name(input: &str) -> Option<String> {
+fn extract_subtest_name(input: &str) -> String {
     let content = if input.starts_with('`') && input.ends_with('`') {
         input.trim_matches('`')
     } else {
@@ -700,11 +702,9 @@ fn extract_subtest_name(input: &str) -> Option<String> {
         .map(|c| if c.is_whitespace() { '_' } else { c })
         .collect::<String>();
 
-    Some(
-        GO_ESCAPE_SUBTEST_NAME_REGEX
-            .replace_all(&processed, |caps: &regex::Captures| format!("\\{}", &caps[0]))
-            .to_string(),
-    )
+    GO_ESCAPE_SUBTEST_NAME_REGEX
+        .replace_all(&processed, |caps: &regex::Captures| format!("\\{}", &caps[0]))
+        .to_string()
 }
 
 #[cfg(test)]
@@ -1395,20 +1395,20 @@ mod tests {
         // Interpreted string literal
         let input_double_quoted = r#""subtest with double quotes""#;
         let result = extract_subtest_name(input_double_quoted);
-        assert_eq!(result, Some(r#"subtest_with_double_quotes"#.to_string()));
+        assert_eq!(result, r#"subtest_with_double_quotes"#.to_string());
 
         let input_double_quoted_with_backticks = r#""test with `backticks` inside""#;
         let result = extract_subtest_name(input_double_quoted_with_backticks);
-        assert_eq!(result, Some(r#"test_with_`backticks`_inside"#.to_string()));
+        assert_eq!(result, r#"test_with_`backticks`_inside"#.to_string());
 
         // Raw string literal
         let input_with_backticks = r#"`subtest with backticks`"#;
         let result = extract_subtest_name(input_with_backticks);
-        assert_eq!(result, Some(r#"subtest_with_backticks"#.to_string()));
+        assert_eq!(result, r#"subtest_with_backticks"#.to_string());
 
         let input_raw_with_quotes = r#"`test with "quotes" and other chars`"#;
         let result = extract_subtest_name(input_raw_with_quotes);
-        assert_eq!(result, Some(r#"test_with_\"quotes\"_and_other_chars"#.to_string()));
+        assert_eq!(result, r#"test_with_\"quotes\"_and_other_chars"#.to_string());
 
         let input_multiline = r#"`subtest with
         multiline
@@ -1416,11 +1416,11 @@ mod tests {
         let result = extract_subtest_name(input_multiline);
         assert_eq!(
             result,
-            Some(r#"subtest_with_________multiline_________backticks"#.to_string())
+            r#"subtest_with_________multiline_________backticks"#.to_string()
         );
 
         let input_with_double_quotes = r#"`test with "double quotes"`"#;
         let result = extract_subtest_name(input_with_double_quotes);
-        assert_eq!(result, Some(r#"test_with_\"double_quotes\""#.to_string()));
+        assert_eq!(result, r#"test_with_\"double_quotes\""#.to_string());
     }
 }

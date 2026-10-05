@@ -531,28 +531,28 @@ impl Object {
         match self {
             Object::Word { ignore_punctuation } => {
                 let count = times.unwrap_or(1);
-                if around {
+                let range = if around {
                     around_word(map, relative_to, ignore_punctuation, count)
                 } else {
-                    in_word(map, relative_to, ignore_punctuation, count).map(|range| {
-                        // For iw with count > 1, vim includes trailing whitespace
-                        if count > 1 {
-                            let spans_multiple_lines = range.start.row() != range.end.row();
-                            expand_to_include_whitespace(map, range, !spans_multiple_lines)
-                        } else {
-                            range
-                        }
-                    })
-                }
+                    let range = in_word(map, relative_to, ignore_punctuation, count);
+                    // For iw with count > 1, vim includes trailing whitespace
+                    if count > 1 {
+                        let spans_multiple_lines = range.start.row() != range.end.row();
+                        expand_to_include_whitespace(map, range, !spans_multiple_lines)
+                    } else {
+                        range
+                    }
+                };
+                Some(range)
             }
             Object::Subword { ignore_punctuation } => {
                 if around {
                     around_subword(map, relative_to, ignore_punctuation)
                 } else {
-                    in_subword(map, relative_to, ignore_punctuation)
+                    Some(in_subword(map, relative_to, ignore_punctuation))
                 }
             }
-            Object::Sentence => sentence(map, relative_to, around),
+            Object::Sentence => Some(sentence(map, relative_to, around)),
             //change others later
             Object::Paragraph => paragraph(map, relative_to, around, times.unwrap_or(1)),
             Object::Quotes => surrounding_markers(map, relative_to, around, self.is_multiline(), '\'', '\''),
@@ -689,8 +689,8 @@ impl Object {
                 },
             ),
             Object::Argument => argument(map, relative_to, around),
-            Object::IndentObj { include_below } => indent(map, relative_to, around, include_below),
-            Object::EntireFile => entire_file(map),
+            Object::IndentObj { include_below } => Some(indent(map, relative_to, around, include_below)),
+            Object::EntireFile => Some(entire_file(map)),
         }
     }
 
@@ -721,7 +721,7 @@ fn in_word(
     relative_to: DisplayPoint,
     ignore_punctuation: bool,
     times: usize,
-) -> Option<Range<DisplayPoint>> {
+) -> Range<DisplayPoint> {
     // Use motion::right so that we consider the character under the cursor when looking for the start
     let classifier = map
         .buffer_snapshot()
@@ -759,14 +759,10 @@ fn in_word(
         end = next_end;
     }
 
-    Some(start..end)
+    start..end
 }
 
-fn in_subword(
-    map: &DisplaySnapshot,
-    relative_to: DisplayPoint,
-    ignore_punctuation: bool,
-) -> Option<Range<DisplayPoint>> {
+fn in_subword(map: &DisplaySnapshot, relative_to: DisplayPoint, ignore_punctuation: bool) -> Range<DisplayPoint> {
     let offset = relative_to.to_offset(map, Bias::Left);
     // Use motion::right so that we consider the character under the cursor when looking for the start
     let classifier = map
@@ -804,7 +800,7 @@ fn in_subword(
         is_word_end || is_subword_end(left, right, "._-")
     });
 
-    Some(start..end)
+    start..end
 }
 
 pub fn surrounding_html_tag(
@@ -898,7 +894,7 @@ fn around_word(
     relative_to: DisplayPoint,
     ignore_punctuation: bool,
     times: usize,
-) -> Option<Range<DisplayPoint>> {
+) -> Range<DisplayPoint> {
     let offset = relative_to.to_offset(map, Bias::Left);
     let classifier = map
         .buffer_snapshot()
@@ -952,27 +948,26 @@ fn around_containing_word(
     relative_to: DisplayPoint,
     ignore_punctuation: bool,
     times: usize,
-) -> Option<Range<DisplayPoint>> {
-    in_word(map, relative_to, ignore_punctuation, times).map(|range| {
-        let spans_multiple_lines = range.start.row() != range.end.row();
-        let stop_at_newline = !spans_multiple_lines;
+) -> Range<DisplayPoint> {
+    let range = in_word(map, relative_to, ignore_punctuation, times);
+    let spans_multiple_lines = range.start.row() != range.end.row();
+    let stop_at_newline = !spans_multiple_lines;
 
-        let line_start = DisplayPoint::new(range.start.row(), 0);
-        let is_first_word = map
-            .buffer_chars_at(line_start.to_offset(map, Bias::Left))
-            .take_while(|(ch, offset)| offset < &range.start.to_offset(map, Bias::Left) && ch.is_whitespace())
-            .count()
-            > 0;
+    let line_start = DisplayPoint::new(range.start.row(), 0);
+    let is_first_word = map
+        .buffer_chars_at(line_start.to_offset(map, Bias::Left))
+        .take_while(|(ch, offset)| offset < &range.start.to_offset(map, Bias::Left) && ch.is_whitespace())
+        .count()
+        > 0;
 
-        if is_first_word {
-            // For first word on line, trim indentation
-            let mut expanded = expand_to_include_whitespace(map, range.clone(), stop_at_newline);
-            expanded.start = range.start;
-            expanded
-        } else {
-            expand_to_include_whitespace(map, range, stop_at_newline)
-        }
-    })
+    if is_first_word {
+        // For first word on line, trim indentation
+        let mut expanded = expand_to_include_whitespace(map, range.clone(), stop_at_newline);
+        expanded.start = range.start;
+        expanded
+    } else {
+        expand_to_include_whitespace(map, range, stop_at_newline)
+    }
 }
 
 fn around_next_word(
@@ -980,7 +975,7 @@ fn around_next_word(
     relative_to: DisplayPoint,
     ignore_punctuation: bool,
     times: usize,
-) -> Option<Range<DisplayPoint>> {
+) -> Range<DisplayPoint> {
     let classifier = map
         .buffer_snapshot()
         .char_classifier_at(relative_to.to_point(map))
@@ -1020,11 +1015,11 @@ fn around_next_word(
         end = next_end;
     }
 
-    Some(start..end)
+    start..end
 }
 
-fn entire_file(map: &DisplaySnapshot) -> Option<Range<DisplayPoint>> {
-    Some(DisplayPoint::zero()..map.max_point())
+fn entire_file(map: &DisplaySnapshot) -> Range<DisplayPoint> {
+    DisplayPoint::zero()..map.max_point()
 }
 
 fn text_object(map: &DisplaySnapshot, relative_to: DisplayPoint, target: TextObject) -> Option<Range<DisplayPoint>> {
@@ -1212,12 +1207,7 @@ fn argument(map: &DisplaySnapshot, relative_to: DisplayPoint, around: bool) -> O
     }
 }
 
-fn indent(
-    map: &DisplaySnapshot,
-    relative_to: DisplayPoint,
-    around: bool,
-    include_below: bool,
-) -> Option<Range<DisplayPoint>> {
+fn indent(map: &DisplaySnapshot, relative_to: DisplayPoint, around: bool, include_below: bool) -> Range<DisplayPoint> {
     let point = relative_to.to_point(map);
     let row = point.row;
 
@@ -1261,10 +1251,10 @@ fn indent(
     let end_len = map.buffer_snapshot().line_len(MultiBufferRow(end_row));
     let start = map.point_to_display_point(Point::new(start_row, 0), Bias::Right);
     let end = map.point_to_display_point(Point::new(end_row, end_len), Bias::Left);
-    Some(start..end)
+    start..end
 }
 
-fn sentence(map: &DisplaySnapshot, relative_to: DisplayPoint, around: bool) -> Option<Range<DisplayPoint>> {
+fn sentence(map: &DisplaySnapshot, relative_to: DisplayPoint, around: bool) -> Range<DisplayPoint> {
     let mut start = None;
     let relative_offset = relative_to.to_offset(map, Bias::Left);
     let mut previous_end = relative_offset;
@@ -1316,7 +1306,7 @@ fn sentence(map: &DisplaySnapshot, relative_to: DisplayPoint, around: bool) -> O
         range = expand_to_include_whitespace(map, range, false);
     }
 
-    Some(range)
+    range
 }
 
 fn is_possible_sentence_start(character: char) -> bool {

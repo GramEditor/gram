@@ -1270,11 +1270,10 @@ impl SyntaxMapMatchesLayer<'_> {
                 self.next_captures.extend_from_slice(mat.captures);
                 self.next_pattern_index = mat.pattern_index;
                 self.has_next = true;
-                return;
             } else {
                 self.has_next = false;
-                return;
             }
+            return;
         }
     }
 

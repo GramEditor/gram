@@ -745,9 +745,9 @@ impl TerminalElement {
         }
     }
 
-    fn rem_size(&self, cx: &mut App) -> Option<Pixels> {
+    fn rem_size(&self, cx: &mut App) -> Pixels {
         let settings = ThemeSettings::get_global(cx).clone();
-        Some(settings.buffer_font_size(cx))
+        settings.buffer_font_size(cx)
     }
 }
 
@@ -1093,7 +1093,7 @@ impl Element for TerminalElement {
                         );
                         let origin = bounds.origin + point(px(0.), target_line as f32 * dimensions.line_height())
                             - point(px(0.), scroll_top);
-                        window.with_rem_size(rem_size, |window| {
+                        window.with_rem_size(Some(rem_size), |window| {
                             element.prepaint_as_root(origin, available_space, window, cx);
                         });
                         Some(element)

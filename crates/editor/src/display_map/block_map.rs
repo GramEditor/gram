@@ -1331,11 +1331,9 @@ impl BlockSnapshot {
                 {
                     break;
                 }
+                cursor.next();
                 if let Some(block) = &transform.block {
-                    cursor.next();
                     return Some((start_row, block));
-                } else {
-                    cursor.next();
                 }
             }
             None

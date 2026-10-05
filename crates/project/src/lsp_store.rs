@@ -3794,7 +3794,7 @@ impl LspStore {
     fn on_buffer_store_event(&mut self, _: Entity<BufferStore>, event: &BufferStoreEvent, cx: &mut Context<Self>) {
         match event {
             BufferStoreEvent::BufferAdded(buffer) => {
-                self.on_buffer_added(buffer, cx).log_err();
+                self.on_buffer_added(buffer, cx);
             }
             BufferStoreEvent::BufferChangedFilePath { buffer, old_file } => {
                 let buffer_id = buffer.read(cx).remote_id();
@@ -3904,7 +3904,7 @@ impl LspStore {
         }
     }
 
-    fn on_buffer_added(&mut self, buffer: &Entity<Buffer>, cx: &mut Context<Self>) -> Result<()> {
+    fn on_buffer_added(&mut self, buffer: &Entity<Buffer>, cx: &mut Context<Self>) {
         buffer.read(cx).set_language_registry(self.languages.clone());
 
         cx.subscribe(buffer, |this, buffer, event, cx| {
@@ -3916,8 +3916,6 @@ impl LspStore {
         if let Some(local) = self.as_local_mut() {
             local.initialize_buffer(buffer, cx);
         }
-
-        Ok(())
     }
 
     pub(crate) fn register_buffer_with_language_servers(
@@ -5010,12 +5008,11 @@ impl LspStore {
                 version: serialize_version(&buffer.read(cx).version()),
             };
             cx.background_spawn(async move {
-                client
+                Ok(client
                     .request(request)
                     .await?
                     .transaction
-                    .map(language::proto::deserialize_transaction)
-                    .transpose()
+                    .map(language::proto::deserialize_transaction))
             })
         } else if let Some(local) = self.as_local_mut() {
             let buffer_id = buffer.read(cx).remote_id();
@@ -6131,7 +6128,7 @@ impl LspStore {
                 };
 
                 if let Some(transaction) = client.request(request).await?.transaction {
-                    let transaction = language::proto::deserialize_transaction(transaction)?;
+                    let transaction = language::proto::deserialize_transaction(transaction);
                     buffer_handle
                         .update(cx, |buffer, _| {
                             buffer.wait_for_edits(transaction.edit_ids.iter().copied())
@@ -9777,12 +9774,12 @@ impl LspStore {
                 let mut ranges_map = BTreeMap::new();
                 for buffer_range in &envelope.payload.buffer_ranges {
                     let buffer_id = BufferId::new(buffer_range.buffer_id)?;
-                    let ranges: Result<Vec<_>> = buffer_range
+                    let ranges: Vec<_> = buffer_range
                         .ranges
                         .iter()
-                        .map(|range| deserialize_anchor_range(range.clone()).context("invalid anchor range"))
+                        .map(|range| deserialize_anchor_range(range.clone()))
                         .collect();
-                    ranges_map.insert(buffer_id, ranges?);
+                    ranges_map.insert(buffer_id, ranges);
                 }
                 LspFormatTarget::Ranges(ranges_map)
             };

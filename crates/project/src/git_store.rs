@@ -1631,7 +1631,7 @@ impl GitStore {
             repo.update(cx, {
                 let update = update.clone();
                 |repo, cx| repo.apply_remote_update(update, cx)
-            })?;
+            });
 
             this.active_repo_id.get_or_insert_with(|| {
                 cx.emit(GitStoreEvent::ActiveRepositoryChanged(Some(id)));
@@ -5253,11 +5253,7 @@ impl Repository {
         })
     }
 
-    pub(crate) fn apply_remote_update(
-        &mut self,
-        update: proto::UpdateRepository,
-        cx: &mut Context<Self>,
-    ) -> Result<()> {
+    pub(crate) fn apply_remote_update(&mut self, update: proto::UpdateRepository, cx: &mut Context<Self>) {
         let conflicted_paths = TreeSet::from_ordered_entries(
             update
                 .current_merge_conflicts
@@ -5307,7 +5303,6 @@ impl Repository {
             self.snapshot.scan_id = update.scan_id;
         }
         self.clear_pending_ops(cx);
-        Ok(())
     }
 
     pub fn compare_checkpoints(

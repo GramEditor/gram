@@ -264,7 +264,6 @@ where
 
                     node.bounds = node.bounds.union(&bounds);
                     node.max_order = cmp::max(node.max_order, order);
-                    break;
                 } else {
                     // Node is full, create new internal with [best_leaf, new_leaf]
                     let sibling_bounds = self.nodes[best_child_idx].bounds.clone();
@@ -301,8 +300,8 @@ where
                             children.indices.swap(best_child_pos, children_len - 1);
                         }
                     }
-                    break;
                 }
+                break;
             } else {
                 // Best child is internal, continue descent
                 current_idx = best_child_idx;

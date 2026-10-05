@@ -309,8 +309,8 @@ pub struct TaskContext {
 #[derive(Clone, Debug)]
 pub struct RunnableTag(pub SharedString);
 
-pub fn shell_from_proto(proto: proto::Shell) -> anyhow::Result<Shell> {
-    let shell = match proto {
+pub fn shell_from_proto(proto: proto::Shell) -> Shell {
+    match proto {
         proto::Shell::System(_) => Shell::System,
         proto::Shell::Program(program) => Shell::Program(program),
         proto::Shell::WithArguments(program) => Shell::WithArguments {
@@ -318,8 +318,7 @@ pub fn shell_from_proto(proto: proto::Shell) -> anyhow::Result<Shell> {
             args: program.args,
             title_override: None,
         },
-    };
-    Ok(shell)
+    }
 }
 
 pub fn shell_to_proto(shell: Shell) -> proto::Shell {

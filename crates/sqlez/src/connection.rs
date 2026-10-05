@@ -254,13 +254,12 @@ impl Drop for Connection {
 
 #[cfg(test)]
 mod test {
-    use anyhow::Result;
     use indoc::indoc;
 
     use crate::connection::Connection;
 
     #[test]
-    fn string_round_trips() -> Result<()> {
+    fn string_round_trips() {
         let connection = Connection::open_memory(Some("string_round_trips"));
         connection
             .exec(indoc! {"
@@ -278,8 +277,6 @@ mod test {
             connection.select_row("SELECT text FROM text;").unwrap()().unwrap(),
             Some(text.to_string())
         );
-
-        Ok(())
     }
 
     #[test]

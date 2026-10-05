@@ -728,11 +728,10 @@ impl PickerDelegate for BranchListDelegate {
                                 name: query.clone(),
                                 url: url.clone(),
                             }];
-                            picker.delegate.selected_index = 0;
                         } else {
                             picker.delegate.matches = Vec::new();
-                            picker.delegate.selected_index = 0;
                         }
+                        picker.delegate.selected_index = 0;
                         picker.delegate.last_query = query;
                         return;
                     }

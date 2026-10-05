@@ -804,21 +804,19 @@ mod tests {
             };
 
             let text = "aa bbb cccc ddddd eeee".into();
-            let lines = text_system
-                .shape_text(
-                    text,
-                    px(16.),
-                    &[
-                        normal.with_len(4),
-                        bold.with_len(5),
-                        normal.with_len(6),
-                        bold.with_len(1),
-                        normal.with_len(7),
-                    ],
-                    Some(px(72.)),
-                    None,
-                )
-                .unwrap();
+            let lines = text_system.shape_text(
+                text,
+                px(16.),
+                &[
+                    normal.with_len(4),
+                    bold.with_len(5),
+                    normal.with_len(6),
+                    bold.with_len(1),
+                    normal.with_len(7),
+                ],
+                Some(px(72.)),
+                None,
+            );
 
             assert_eq!(
                 lines[0].layout.wrap_boundaries(),

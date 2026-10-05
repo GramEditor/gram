@@ -1595,14 +1595,12 @@ impl SearchableItem for Editor {
                             .await
                             .into_iter()
                             .map(|match_range| {
+                                let start = search_buffer.anchor_after(search_range.start + match_range.start);
+                                let end = search_buffer.anchor_before(search_range.start + match_range.end);
                                 if let Some(deleted_hunk_anchor) = deleted_hunk_anchor {
-                                    let start = search_buffer.anchor_after(search_range.start + match_range.start);
-                                    let end = search_buffer.anchor_before(search_range.start + match_range.end);
                                     deleted_hunk_anchor.with_diff_base_anchor(start)
                                         ..deleted_hunk_anchor.with_diff_base_anchor(end)
                                 } else {
-                                    let start = search_buffer.anchor_after(search_range.start + match_range.start);
-                                    let end = search_buffer.anchor_before(search_range.start + match_range.end);
                                     Anchor::range_in_buffer(excerpt_id, start..end)
                                 }
                             }),
