@@ -75,6 +75,7 @@ anyhow.workspace = true
 app_actions.workspace = true
 askpass.workspace = true
 assets.workspace = true
+async-std.workspace = true
 bitcode.workspace = true
 breadcrumbs.workspace = true
 chrono.workspace = true
