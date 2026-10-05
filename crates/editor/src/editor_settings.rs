@@ -4,9 +4,9 @@ use gpui::App;
 use language::CursorShape;
 use project::project_settings::DiagnosticSeverity;
 pub use settings::{
-    CurrentLineHighlight, DelayMs, DisplayIn, DocumentColorsRenderMode, DoubleClickInMultibuffer,
-    GoToDefinitionFallback, HideMouseMode, MinimapThumb, MinimapThumbBorder, MultiCursorModifier, ScrollBeyondLastLine,
-    ScrollbarDiagnostics, SeedQuerySetting, ShowMinimap, SnippetSortOrder,
+    CompletionMenuItemKind, CurrentLineHighlight, DelayMs, DisplayIn, DocumentColorsRenderMode,
+    DoubleClickInMultibuffer, GoToDefinitionFallback, HideMouseMode, MinimapThumb, MinimapThumbBorder,
+    MultiCursorModifier, ScrollBeyondLastLine, ScrollbarDiagnostics, SeedQuerySetting, ShowMinimap, SnippetSortOrder,
 };
 use settings::{LineNumberScale, RegisterSetting, RelativeLineNumbers, Settings, SupertabFallback, SyncKillRing};
 use ui::scrollbars::{ScrollbarVisibility, ShowScrollbar};
@@ -58,6 +58,7 @@ pub struct EditorSettings {
     pub lsp_document_colors: DocumentColorsRenderMode,
     pub minimum_contrast_for_highlights: f32,
     pub completion_menu_scrollbar: ShowScrollbar,
+    pub completion_menu_item_kind: CompletionMenuItemKind,
     pub supertab_fallback: SupertabFallback,
     pub sync_kill_ring: SyncKillRing,
     pub line_number_scale: LineNumberScale,
@@ -298,6 +299,7 @@ impl Settings for EditorSettings {
             lsp_document_colors: editor.lsp_document_colors.unwrap(),
             minimum_contrast_for_highlights: editor.minimum_contrast_for_highlights.unwrap().0,
             completion_menu_scrollbar: editor.completion_menu_scrollbar.map(Into::into).unwrap(),
+            completion_menu_item_kind: editor.completion_menu_item_kind.unwrap(),
             supertab_fallback: editor.supertab_fallback.unwrap(),
             sync_kill_ring: editor.sync_kill_ring.unwrap(),
             line_number_scale: editor.line_number_scale.unwrap(),

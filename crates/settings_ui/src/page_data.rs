@@ -6550,6 +6550,20 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             files: USER,
         }),
         SettingsPageItem::SettingItem(SettingItem {
+            title: "Completion Menu Item Kind",
+            description: "How to display the LSP item kind (function, method, variable, etc.) of each entry in the completions menu.",
+            aliases: None,
+            field: Box::new(SettingField {
+                json_path: Some("editor.completion_menu_item_kind"),
+                pick: |settings_content| settings_content.editor.completion_menu_item_kind.as_ref(),
+                write: |settings_content, value| {
+                    settings_content.editor.completion_menu_item_kind = value;
+                },
+            }),
+            metadata: None,
+            files: USER,
+        }),
+        SettingsPageItem::SettingItem(SettingItem {
             title: "Supertab Mode",
             description: "What the Supertab action should do when not completing.",
             aliases: None,

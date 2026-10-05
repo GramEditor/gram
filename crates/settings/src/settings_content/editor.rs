@@ -218,6 +218,16 @@ pub struct EditorSettingsContent {
     ///    "never" (default)
     pub completion_menu_scrollbar: Option<ShowScrollbar>,
 
+    /// How to display the LSP item kind (function, method, variable, etc.)
+    /// of each entry in the completions menu.
+    ///
+    /// - "off": do not display item kinds (default).
+    /// - "symbol": display a single-letter badge, colorized based on the
+    ///   active syntax theme.
+    ///
+    /// Default: off
+    pub completion_menu_item_kind: Option<CompletionMenuItemKind>,
+
     /// What should Supertab do when not completing?
     ///
     /// 1. Tab: Insert a literal tab character (default).
@@ -237,6 +247,27 @@ pub struct EditorSettingsContent {
     // 2. Small
     // 3. XSmall
     pub line_number_scale: Option<LineNumberScale>,
+}
+
+#[derive(
+    Debug,
+    Default,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    MergeFrom,
+    PartialEq,
+    Eq,
+    strum::VariantArray,
+    strum::VariantNames,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum CompletionMenuItemKind {
+    #[default]
+    Off,
+    Symbol,
 }
 
 #[derive(

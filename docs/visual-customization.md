@@ -393,6 +393,10 @@ TBD: Centered layout related settings
   "lsp_document_colors": "inlay",        // none, inlay, border, background
   // When to show the scrollbar in the completion menu.
   "completion_menu_scrollbar": "never", // auto, system, always, never
+  // How to display the LSP item kind (function, method, variable, etc.)
+  // of each entry in the completions menu. "symbol" shows a syntax-colored
+  // single-letter badge.
+  "completion_menu_item_kind": "off", // off, symbol
   // What should the Supertab action do when not completing?
   "supertab_fallback": "tab", // tab, indent
   // Sync the kill ring (emacs mode)
