@@ -300,7 +300,7 @@ async-io = "2.6.0"
 async-lock = "3.4.2"
 async-pipe = { git = "https://github.com/zed-industries/async-pipe-rs", rev = "82d00a04211cf4e1236029aa03e6b6ce2a74c553" }
 async-recursion = "1.1.1"
-async-tar = "0.5.1"
+async-tar = "0.6.1"
 async-task = "4.7.1"
 async-trait = "0.1.92"
 async_zip = { version = "0.0.18", features = ["deflate", "deflate64"] }
