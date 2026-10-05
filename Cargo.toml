@@ -438,7 +438,7 @@ swash = "0.2.10"
 syn = { version = "2.0.119", features = ["clone-impls", "derive", "extra-traits", "full", "parsing", "printing", "proc-macro", "visit-mut"] }
 sys-locale = "0.3.2"
 sysinfo = "0.38.4"
-taffy = "0.11.0"
+taffy = "0.14.0"
 tempfile = "3.27.0"
 tendril = "0.4.3"
 thiserror = "2.0.21"

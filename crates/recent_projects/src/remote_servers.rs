@@ -1974,6 +1974,9 @@ impl RemoteServerProjects {
                                     modal_section.paint(window, cx);
                                 },
                             )
+                            .absolute()
+                            .top_0()
+                            .left_0()
                             .size_full(),
                         )
                         .vertical_scrollbar_for(&state.scroll_handle, window, cx),

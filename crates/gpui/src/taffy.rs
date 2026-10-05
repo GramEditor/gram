@@ -6,7 +6,7 @@ use collections::{FxHashMap, FxHashSet};
 use stacksafe::{StackSafe, stacksafe};
 use std::{fmt::Debug, ops::Range};
 use taffy::{
-    TaffyTree, TraversePartialTree as _,
+    TaffyTree, TraversePartialTree as _, compute_leaf_layout,
     geometry::{Point as TaffyPoint, Rect as TaffyRect, Size as TaffySize},
     prelude::{max_content, min_content},
     style::AvailableSpace as TaffyAvailableSpace,
@@ -177,31 +177,37 @@ impl TaffyLayoutEngine {
         let available_space = size(transform(available_space.width), transform(available_space.height));
 
         self.taffy
-            .compute_layout_with_measure(
-                id.into(),
-                available_space.into(),
-                |known_dimensions, available_space, _id, node_context, _style| {
-                    let Some(node_context) = node_context else {
-                        return taffy::geometry::Size::default();
-                    };
+            .compute_layout_with_measure(id.into(), available_space.into(), |inputs, _id, node_context, style| {
+                compute_leaf_layout(
+                    inputs,
+                    style,
+                    |_, _| 0.0,
+                    |known_dimensions, available_space| {
+                        let Some(node_context) = node_context else {
+                            return taffy::geometry::Size::default();
+                        };
 
-                    let known_dimensions = Size {
-                        width: known_dimensions.width.map(|e| Pixels(e / scale_factor)),
-                        height: known_dimensions.height.map(|e| Pixels(e / scale_factor)),
-                    };
+                        let known_dimensions = Size {
+                            width: known_dimensions.width.map(|e| Pixels(e / scale_factor)),
+                            height: known_dimensions.height.map(|e| Pixels(e / scale_factor)),
+                        };
 
-                    let available_space: Size<AvailableSpace> = available_space.into();
-                    let untransform = |ev: AvailableSpace| match ev {
-                        AvailableSpace::Definite(pixels) => AvailableSpace::Definite(Pixels(pixels.0 / scale_factor)),
-                        AvailableSpace::MinContent => AvailableSpace::MinContent,
-                        AvailableSpace::MaxContent => AvailableSpace::MaxContent,
-                    };
-                    let available_space = size(untransform(available_space.width), untransform(available_space.height));
+                        let available_space: Size<AvailableSpace> = available_space.into();
+                        let untransform = |ev: AvailableSpace| match ev {
+                            AvailableSpace::Definite(pixels) => {
+                                AvailableSpace::Definite(Pixels(pixels.0 / scale_factor))
+                            }
+                            AvailableSpace::MinContent => AvailableSpace::MinContent,
+                            AvailableSpace::MaxContent => AvailableSpace::MaxContent,
+                        };
+                        let available_space =
+                            size(untransform(available_space.width), untransform(available_space.height));
 
-                    let a: Size<Pixels> = (node_context.measure)(known_dimensions, available_space, window, cx);
-                    size(a.width.0 * scale_factor, a.height.0 * scale_factor).into()
-                },
-            )
+                        let a: Size<Pixels> = (node_context.measure)(known_dimensions, available_space, window, cx);
+                        size(a.width.0 * scale_factor, a.height.0 * scale_factor).into()
+                    },
+                )
+            })
             .expect(EXPECT_MESSAGE);
     }
 
