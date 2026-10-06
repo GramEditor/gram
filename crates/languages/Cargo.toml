@@ -83,6 +83,7 @@ tree-sitter-typescript = { workspace = true, optional = true }
 tree-sitter-xml = { workspace = true, optional = true }
 tree-sitter-yaml = { workspace = true, optional = true }
 tree-sitter-zig = { workspace = true, optional = true }
+tokio-util.workspace = true
 url.workspace = true
 util.workspace = true
 

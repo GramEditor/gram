@@ -4,6 +4,7 @@ use anyhow::{Context, Result};
 use async_compression::futures::bufread::GzipDecoder;
 use futures::{AsyncRead, AsyncSeek, AsyncSeekExt, AsyncWrite, io::BufReader};
 use sha2::{Digest, Sha256};
+use tokio_util::compat::FuturesAsyncReadCompatExt;
 
 use crate::{HttpClient, github::AssetKind};
 
@@ -117,7 +118,7 @@ async fn stream_file_archive(
 
 async fn extract_tar_gz(destination_path: &Path, url: &str, from: impl AsyncRead + Unpin) -> Result<(), anyhow::Error> {
     let decompressed_bytes = GzipDecoder::new(BufReader::new(from));
-    let archive = async_tar::Archive::new(decompressed_bytes);
+    let archive = async_tar::Archive::new(decompressed_bytes.compat());
     archive
         .unpack(&destination_path)
         .await

@@ -14,6 +14,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use settings::WorktreeId;
 use smol::fs::File;
+use tokio_util::compat::FuturesAsyncReadCompatExt;
 use std::{
     borrow::Borrow,
     ffi::OsStr,
@@ -285,7 +286,7 @@ pub async fn download_adapter_from_github(
     match file_type {
         DownloadedFileType::GzipTar => {
             let decompressed_bytes = GzipDecoder::new(BufReader::new(response.body_mut()));
-            let archive = Archive::new(decompressed_bytes);
+            let archive = Archive::new(decompressed_bytes.compat());
             archive.unpack(&version_path).await?;
         }
         DownloadedFileType::Zip | DownloadedFileType::Vsix => {

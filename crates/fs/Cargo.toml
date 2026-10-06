@@ -33,6 +33,8 @@ smol.workspace = true
 tempfile.workspace = true
 text.workspace = true
 trash.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
 util.workspace = true
 
 [dev-dependencies]

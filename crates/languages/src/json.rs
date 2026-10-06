@@ -19,6 +19,7 @@ use smol::{
     fs::{self},
     io::BufReader,
 };
+use tokio_util::compat::FuturesAsyncReadCompatExt;
 use std::{
     borrow::Cow,
     env::consts,
@@ -390,7 +391,7 @@ impl LspInstaller for NodeVersionAdapter {
                 extract_zip(&destination_container_path, response.body_mut()).await?;
             } else if version.url.ends_with(".tar.gz") {
                 let decompressed_bytes = GzipDecoder::new(BufReader::new(response.body_mut()));
-                let archive = Archive::new(decompressed_bytes);
+                let archive = Archive::new(decompressed_bytes.compat());
                 archive.unpack(&destination_container_path).await?;
             }
 

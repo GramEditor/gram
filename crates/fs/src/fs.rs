@@ -1,6 +1,7 @@
 pub mod fs_watcher;
 
 use parking_lot::Mutex;
+use tokio_util::compat::FuturesAsyncReadCompatExt;
 use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 use std::time::Instant;
 use util::maybe;
@@ -58,7 +59,9 @@ use git::{
 };
 
 #[cfg(any(test, feature = "test-support"))]
-use smol::io::AsyncReadExt;
+use smol::io::AsyncReadExt as _;
+#[cfg(any(test, feature = "test-support"))]
+use tokio::io::AsyncReadExt as _;
 #[cfg(any(test, feature = "test-support"))]
 use std::ffi::OsStr;
 
@@ -98,7 +101,7 @@ pub trait Fs: Send + Sync {
     async fn create_symlink(&self, path: &Path, target: PathBuf) -> Result<()>;
     async fn create_file(&self, path: &Path, options: CreateOptions) -> Result<()>;
     async fn create_file_with(&self, path: &Path, content: Pin<&mut (dyn AsyncRead + Send)>) -> Result<()>;
-    async fn extract_tar_file(&self, path: &Path, content: Archive<Pin<&mut (dyn AsyncRead + Send)>>) -> Result<()>;
+    async fn extract_tar_file(&self, path: &Path, content: Pin<&mut (dyn AsyncRead + Send)>) -> Result<()>;
     async fn copy_file(&self, source: &Path, target: &Path, options: CopyOptions) -> Result<()>;
     async fn rename(&self, source: &Path, target: &Path, options: RenameOptions) -> Result<()>;
     async fn remove_dir(&self, path: &Path, options: RemoveOptions) -> Result<()>;
@@ -577,8 +580,9 @@ impl Fs for RealFs {
         Ok(())
     }
 
-    async fn extract_tar_file(&self, path: &Path, content: Archive<Pin<&mut (dyn AsyncRead + Send)>>) -> Result<()> {
-        content.unpack(path).await?;
+    async fn extract_tar_file(&self, path: &Path, content: Pin<&mut (dyn AsyncRead + Send)>) -> Result<()> {
+        let archive = Archive::new(content.compat());
+        archive.unpack(path).await?;
         Ok(())
     }
 
@@ -2274,8 +2278,9 @@ impl Fs for FakeFs {
         Ok(())
     }
 
-    async fn extract_tar_file(&self, path: &Path, content: Archive<Pin<&mut (dyn AsyncRead + Send)>>) -> Result<()> {
-        let mut entries = content.entries()?;
+    async fn extract_tar_file(&self, path: &Path, content: Pin<&mut (dyn AsyncRead + Send)>) -> Result<()> {
+        let archive = Archive::new(content.compat());
+        let mut entries = archive.entries()?;
         while let Some(entry) = entries.next().await {
             let mut entry = entry?;
             if entry.header().entry_type().is_file() {

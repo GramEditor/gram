@@ -524,7 +524,6 @@ dependencies = [
  "async-global-executor",
  "async-io",
  "async-lock",
- "async-process",
  "crossbeam-utils",
  "futures-channel",
  "futures-core",
@@ -547,11 +546,12 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6affe71e5b6180fb5eaf9e8127a243694baf6ae1120c199227167302f56c14b"
 dependencies = [
- "async-std",
  "filetime",
  "futures-core",
  "libc",
  "redox_syscall 0.7.5",
+ "tokio",
+ "tokio-stream",
  "xattr",
 ]
 
@@ -1868,6 +1868,7 @@ dependencies = [
  "smallvec",
  "smol",
  "task",
+ "tokio-util",
  "util",
  "zlog",
 ]
@@ -3047,6 +3048,8 @@ dependencies = [
  "smol",
  "tempfile",
  "text",
+ "tokio",
+ "tokio-util",
  "trash",
  "util",
  "windows 0.61.3",
@@ -3655,7 +3658,6 @@ dependencies = [
  "ashpd",
  "askpass",
  "assets",
- "async-std",
  "bitcode",
  "breadcrumbs",
  "chrono",
@@ -3950,6 +3952,7 @@ dependencies = [
  "serde_json",
  "sha2 0.10.9",
  "tempfile",
+ "tokio-util",
  "url",
  "util",
 ]
@@ -4977,6 +4980,7 @@ dependencies = [
  "task",
  "terminal",
  "theme",
+ "tokio-util",
  "toml 1.1.6+spec-1.1.0",
  "tree-sitter",
  "tree-sitter-bash",
@@ -5820,6 +5824,7 @@ dependencies = [
  "serde",
  "serde_json",
  "smol",
+ "tokio-util",
  "util",
  "watch",
  "which",
@@ -10097,6 +10102,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-stream"
+version = "0.1.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3d06f0b082ba57c26b79407372e57cf2a1e28124f78e9479fe80322cf53420b"
+dependencies = [
+ "futures-core",
+ "pin-project-lite",
+ "tokio",
+]
+
+[[package]]
 name = "tokio-util"
 version = "0.7.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10104,6 +10120,7 @@ checksum = "494815d09bf52b5548659851081238f0ca39ff638363907596da739561c62c52"
 dependencies = [
  "bytes",
  "futures-core",
+ "futures-io",
  "futures-sink",
  "libc",
  "pin-project-lite",

@@ -8,6 +8,7 @@ use semver::Version;
 use serde::Deserialize;
 use smol::io::BufReader;
 use smol::{fs, lock::Mutex};
+use tokio_util::compat::FuturesAsyncReadCompatExt;
 use std::fmt::Display;
 use std::{
     env::{self, consts},
@@ -517,7 +518,7 @@ impl ManagedNodeRuntime {
             match archive_type {
                 ArchiveType::TarGz => {
                     let decompressed_bytes = GzipDecoder::new(BufReader::new(response.body_mut()));
-                    let archive = Archive::new(decompressed_bytes);
+                    let archive = Archive::new(decompressed_bytes.compat());
                     archive.unpack(&node_containing_dir).await?;
                 }
                 ArchiveType::Zip => extract_zip(&node_containing_dir, body).await?,
