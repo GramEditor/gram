@@ -994,7 +994,7 @@ impl X11Client {
                                 keystroke.key_char = None;
                                 state.pre_edit_text =
                                     compose_state.utf8().or(crate::Keystroke::underlying_dead_key(keysym));
-                                let pre_edit = state.pre_edit_text.clone().unwrap_or(String::default());
+                                let pre_edit = state.pre_edit_text.clone().unwrap_or_default();
                                 drop(state);
                                 window.handle_ime_preedit(pre_edit);
                                 state = self.0.borrow_mut();
@@ -1577,8 +1577,10 @@ impl LinuxClient for X11Client {
 
         let window_ids = reply
             .value
-            .chunks_exact(4)
-            .filter_map(|chunk| chunk.try_into().ok().map(u32::from_ne_bytes))
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .map(|bytes| u32::from_ne_bytes(*bytes))
             .collect::<Vec<xproto::Window>>();
 
         let mut handles = Vec::new();
@@ -1907,8 +1909,10 @@ fn check_gtk_frame_extents_supported(xcb_connection: &XCBConnection, atoms: &Xcb
 
     let supported_atom_ids: Vec<u32> = supported_atoms
         .value
-        .chunks_exact(4)
-        .filter_map(|chunk| chunk.try_into().ok().map(u32::from_ne_bytes))
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .map(|bytes| u32::from_ne_bytes(*bytes))
         .collect();
 
     supported_atom_ids.contains(&atoms._GTK_FRAME_EXTENTS)

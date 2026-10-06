@@ -139,7 +139,7 @@ impl WaylandSurfaceState {
             };
 
             let layer_surface = layer_shell.get_layer_surface(
-                &surface,
+                surface,
                 None,
                 options.layer.into(),
                 options.namespace.clone(),
@@ -177,7 +177,7 @@ impl WaylandSurfaceState {
         }
 
         // All other WindowKinds result in a regular xdg surface
-        let xdg_surface = globals.wm_base.get_xdg_surface(&surface, &globals.qh, surface.id());
+        let xdg_surface = globals.wm_base.get_xdg_surface(surface, &globals.qh, surface.id());
 
         let toplevel = xdg_surface.get_toplevel(&globals.qh, surface.id());
         if params.kind == WindowKind::Floating {
@@ -306,10 +306,10 @@ impl WaylandWindowState {
             WgpuRenderer::new(gpu_context, &raw_window, config)?
         };
 
-        if let WaylandSurfaceState::Xdg(ref xdg_state) = surface_state {
-            if let Some(title) = options.titlebar.and_then(|titlebar| titlebar.title) {
-                xdg_state.toplevel.set_title(title.to_string());
-            }
+        if let WaylandSurfaceState::Xdg(ref xdg_state) = surface_state
+            && let Some(title) = options.titlebar.and_then(|titlebar| titlebar.title)
+        {
+            xdg_state.toplevel.set_title(title.to_string());
         }
 
         Ok(Self {
@@ -377,6 +377,7 @@ impl WaylandWindowState {
 }
 
 pub(crate) struct WaylandWindow(pub WaylandWindowStatePtr);
+#[allow(clippy::enum_variant_names)]
 pub enum ImeInput {
     InsertText(String),
     SetMarkedText(String),
@@ -782,14 +783,13 @@ impl WaylandWindowStatePtr {
                     self.rescale(scale as f32);
                 }
             }
-            wl_surface::Event::PreferredBufferScale { factor } => {
+            wl_surface::Event::PreferredBufferScale { factor }
                 // We use `WpFractionalScale` instead to set the scale if it's available
-                if state.globals.fractional_scale_manager.is_none() {
+                if state.globals.fractional_scale_manager.is_none() => {
                     state.surface.set_buffer_scale(factor);
                     drop(state);
                     self.rescale(factor as f32);
                 }
-            }
             _ => {}
         }
     }
@@ -926,9 +926,10 @@ where
     <S as TryFrom<u32>>::Error: 'a,
 {
     states
-        .chunks_exact(4)
-        .flat_map(TryInto::<[u8; 4]>::try_into)
-        .map(u32::from_ne_bytes)
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .map(|bytes| u32::from_ne_bytes(*bytes))
         .flat_map(S::try_from)
 }
 

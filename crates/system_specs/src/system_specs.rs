@@ -121,7 +121,7 @@ fn try_determine_available_gpus() -> Option<String> {
         any(target_os = "linux", target_os = "freebsd") => {
             #[allow(clippy::disallowed_methods, reason = "we are not running in an executor")]
             std::process::Command::new("vulkaninfo")
-                .args(&["--summary"])
+                .args(["--summary"])
                 .output()
                 .ok()
                 .map(|output| {

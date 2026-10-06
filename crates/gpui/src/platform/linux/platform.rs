@@ -69,7 +69,7 @@ impl<T> ResultExt for anyhow::Result<T> {
                                     format!("{e:?}. See docs/linux.md for troubleshooting steps.").as_str(),
                                 ))
                                 .priority(Priority::High)
-                                .icon(ashpd::desktop::Icon::with_names(&["dialog-question-symbolic"])),
+                                .icon(ashpd::desktop::Icon::with_names(["dialog-question-symbolic"])),
                         ),
                     )
                 }) {

@@ -137,7 +137,7 @@ fn fail_to_open_window(e: anyhow::Error, _cx: &mut App) {
                                 format!("{e:?}. See gram://docs/linux for troubleshooting steps.").as_str(),
                             ))
                             .priority(Priority::High)
-                            .icon(ashpd::desktop::Icon::with_names(&["dialog-question-symbolic"])),
+                            .icon(ashpd::desktop::Icon::with_names(["dialog-question-symbolic"])),
                     )
                     .await
                     .ok();

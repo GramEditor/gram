@@ -64,7 +64,7 @@ pub(crate) fn pressed_button_from_mask(button_mask: u32) -> Option<MouseButton> 
     })
 }
 
-pub(crate) fn get_valuator_axis_index(valuator_mask: &Vec<u32>, valuator_number: u16) -> Option<usize> {
+pub(crate) fn get_valuator_axis_index(valuator_mask: &[u32], valuator_number: u16) -> Option<usize> {
     // XInput valuator masks have a 1 at the bit indexes corresponding to each
     // valuator present in this event's axisvalues. Axisvalues is ordered from
     // lowest valuator number to highest, so counting bits before the 1 bit for
@@ -77,7 +77,7 @@ pub(crate) fn get_valuator_axis_index(valuator_mask: &Vec<u32>, valuator_number:
 }
 
 /// Returns the number of 1 bits in `bit_vec` for all bits where `i < bit_index`.
-fn popcount_upto_bit_index(bit_vec: &Vec<u32>, bit_index: u16) -> u32 {
+fn popcount_upto_bit_index(bit_vec: &[u32], bit_index: u16) -> u32 {
     let array_index = bit_index as usize / 32;
     let popcount: u32 = bit_vec
         .get(array_index)
@@ -92,7 +92,7 @@ fn popcount_upto_bit_index(bit_vec: &Vec<u32>, bit_index: u16) -> u32 {
     }
 }
 
-fn bit_is_set_in_vec(bit_vec: &Vec<u32>, bit_index: u16) -> bool {
+fn bit_is_set_in_vec(bit_vec: &[u32], bit_index: u16) -> bool {
     let array_index = bit_index as usize / 32;
     bit_vec
         .get(array_index)
@@ -120,27 +120,27 @@ mod tests {
 
     #[test]
     fn test_get_valuator_axis_index() {
-        assert!(get_valuator_axis_index(&vec![0b11], 0) == Some(0));
-        assert!(get_valuator_axis_index(&vec![0b11], 1) == Some(1));
-        assert!(get_valuator_axis_index(&vec![0b11], 2) == None);
+        assert_eq!(get_valuator_axis_index(&[0b11], 0), Some(0));
+        assert_eq!(get_valuator_axis_index(&[0b11], 1), Some(1));
+        assert_eq!(get_valuator_axis_index(&[0b11], 2), None);
 
-        assert!(get_valuator_axis_index(&vec![0b100], 0) == None);
-        assert!(get_valuator_axis_index(&vec![0b100], 1) == None);
-        assert!(get_valuator_axis_index(&vec![0b100], 2) == Some(0));
-        assert!(get_valuator_axis_index(&vec![0b100], 3) == None);
+        assert_eq!(get_valuator_axis_index(&[0b100], 0), None);
+        assert_eq!(get_valuator_axis_index(&[0b100], 1), None);
+        assert_eq!(get_valuator_axis_index(&[0b100], 2), Some(0));
+        assert_eq!(get_valuator_axis_index(&[0b100], 3), None);
 
-        assert!(get_valuator_axis_index(&vec![0b1010, 0], 0) == None);
-        assert!(get_valuator_axis_index(&vec![0b1010, 0], 1) == Some(0));
-        assert!(get_valuator_axis_index(&vec![0b1010, 0], 2) == None);
-        assert!(get_valuator_axis_index(&vec![0b1010, 0], 3) == Some(1));
+        assert_eq!(get_valuator_axis_index(&[0b1010, 0], 0), None);
+        assert_eq!(get_valuator_axis_index(&[0b1010, 0], 1), Some(0));
+        assert_eq!(get_valuator_axis_index(&[0b1010, 0], 2), None);
+        assert_eq!(get_valuator_axis_index(&[0b1010, 0], 3), Some(1));
 
-        assert!(get_valuator_axis_index(&vec![0b1010, 0b1], 0) == None);
-        assert!(get_valuator_axis_index(&vec![0b1010, 0b1], 1) == Some(0));
-        assert!(get_valuator_axis_index(&vec![0b1010, 0b1], 2) == None);
-        assert!(get_valuator_axis_index(&vec![0b1010, 0b1], 3) == Some(1));
-        assert!(get_valuator_axis_index(&vec![0b1010, 0b1], 32) == Some(2));
-        assert!(get_valuator_axis_index(&vec![0b1010, 0b1], 33) == None);
+        assert_eq!(get_valuator_axis_index(&[0b1010, 0b1], 0), None);
+        assert_eq!(get_valuator_axis_index(&[0b1010, 0b1], 1), Some(0));
+        assert_eq!(get_valuator_axis_index(&[0b1010, 0b1], 2), None);
+        assert_eq!(get_valuator_axis_index(&[0b1010, 0b1], 3), Some(1));
+        assert_eq!(get_valuator_axis_index(&[0b1010, 0b1], 32), Some(2));
+        assert_eq!(get_valuator_axis_index(&[0b1010, 0b1], 33), None);
 
-        assert!(get_valuator_axis_index(&vec![0b1010, 0b101], 34) == Some(3));
+        assert_eq!(get_valuator_axis_index(&[0b1010, 0b101], 34), Some(3));
     }
 }

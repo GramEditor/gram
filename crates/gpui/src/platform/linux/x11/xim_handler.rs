@@ -3,6 +3,7 @@ use std::default::Default;
 use x11rb::protocol::{Event, xproto};
 use xim::{AHashMap, AttributeName, Client, ClientError, ClientHandler, InputStyle};
 
+#[allow(clippy::enum_variant_names)]
 pub enum XimCallbackEvent {
     XimXEvent(x11rb::protocol::Event),
     XimPreeditEvent(xproto::Window, String),

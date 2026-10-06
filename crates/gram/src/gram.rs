@@ -248,6 +248,7 @@ pub fn init(cx: &mut App) {
     });
 }
 
+#[allow(clippy::unnecessary_wraps, reason = "Returns an optional on macos.")]
 fn bind_on_window_closed(cx: &mut App) -> Option<gpui::Subscription> {
     #[cfg(target_os = "macos")]
     {

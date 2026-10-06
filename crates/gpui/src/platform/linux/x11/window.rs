@@ -928,8 +928,10 @@ impl X11WindowStatePtr {
 
         let atoms = reply
             .value
-            .chunks_exact(4)
-            .map(|chunk| u32::from_ne_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
+            .as_chunks::<4>()
+            .0
+            .iter()
+            .map(|bytes| u32::from_ne_bytes(*bytes));
 
         state.active = false;
         state.fullscreen = false;

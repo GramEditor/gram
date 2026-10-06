@@ -339,7 +339,7 @@ impl WaylandClientStatePtr {
             }
             changed
         } else {
-            let changed = &UNKNOWN_KEYBOARD_LAYOUT_NAME != state.keyboard_layout.name();
+            let changed = UNKNOWN_KEYBOARD_LAYOUT_NAME != state.keyboard_layout.name();
             if changed {
                 state.keyboard_layout = LinuxKeyboardLayout::new(UNKNOWN_KEYBOARD_LAYOUT_NAME);
             }
@@ -1289,7 +1289,7 @@ impl Dispatch<wl_keyboard::WlKeyboard, ()> for WaylandClientStatePtr {
                                 xkb::Status::Composing => {
                                     keystroke.key_char = None;
                                     state.pre_edit_text = compose.utf8().or(Keystroke::underlying_dead_key(keysym));
-                                    let pre_edit = state.pre_edit_text.clone().unwrap_or(String::default());
+                                    let pre_edit = state.pre_edit_text.clone().unwrap_or_default();
                                     drop(state);
                                     focused_window.handle_ime(ImeInput::SetMarkedText(pre_edit));
                                     state = client.borrow_mut();
@@ -1746,34 +1746,32 @@ impl Dispatch<wl_pointer::WlPointer, ()> for WaylandClientStatePtr {
                     _ => unreachable!(),
                 }
             }
-            wl_pointer::Event::Frame => {
-                if state.scroll_event_received {
-                    state.scroll_event_received = false;
-                    let continuous = state.continuous_scroll_delta.take();
-                    let discrete = state.discrete_scroll_delta.take();
-                    if let Some(continuous) = continuous {
-                        if let Some(window) = state.mouse_focused_window.clone() {
-                            let input = PlatformInput::ScrollWheel(ScrollWheelEvent {
-                                position: state.mouse_location.unwrap(),
-                                delta: ScrollDelta::Pixels(continuous),
-                                modifiers: state.modifiers,
-                                touch_phase: TouchPhase::Moved,
-                            });
-                            drop(state);
-                            window.handle_input(input);
-                        }
-                    } else if let Some(discrete) = discrete
-                        && let Some(window) = state.mouse_focused_window.clone()
-                    {
+            wl_pointer::Event::Frame if state.scroll_event_received => {
+                state.scroll_event_received = false;
+                let continuous = state.continuous_scroll_delta.take();
+                let discrete = state.discrete_scroll_delta.take();
+                if let Some(continuous) = continuous {
+                    if let Some(window) = state.mouse_focused_window.clone() {
                         let input = PlatformInput::ScrollWheel(ScrollWheelEvent {
                             position: state.mouse_location.unwrap(),
-                            delta: ScrollDelta::Lines(discrete),
+                            delta: ScrollDelta::Pixels(continuous),
                             modifiers: state.modifiers,
                             touch_phase: TouchPhase::Moved,
                         });
                         drop(state);
                         window.handle_input(input);
                     }
+                } else if let Some(discrete) = discrete
+                    && let Some(window) = state.mouse_focused_window.clone()
+                {
+                    let input = PlatformInput::ScrollWheel(ScrollWheelEvent {
+                        position: state.mouse_location.unwrap(),
+                        delta: ScrollDelta::Lines(discrete),
+                        modifiers: state.modifiers,
+                        touch_phase: TouchPhase::Moved,
+                    });
+                    drop(state);
+                    window.handle_input(input);
                 }
             }
             _ => {}

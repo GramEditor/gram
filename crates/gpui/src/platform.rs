@@ -104,29 +104,25 @@ pub(crate) fn current_platform(headless: bool) -> Rc<dyn Platform> {
         return Rc::new(HeadlessClient::new());
     }
 
-    #[cfg(all(feature = "wayland", feature = "x11"))]
-    {
-        if std::env::var("XDG_SESSION_TYPE").ok().as_deref() == Some("wayland")
-            || std::env::var("WAYLAND_DISPLAY").is_ok()
-        {
-            return Rc::new(WaylandClient::new());
+    cfg_select! {
+        all(feature = "wayland", feature = "x11") => {
+            if std::env::var("XDG_SESSION_TYPE").ok().as_deref() == Some("wayland")
+                || std::env::var("WAYLAND_DISPLAY").is_ok()
+            {
+                Rc::new(WaylandClient::new())
+            } else {
+                Rc::new(X11Client::new().expect("Failed to initialize X11 client"))
+            }
+        },
+        all(feature = "wayland", not(feature = "x11")) => {
+            Rc::new(WaylandClient::new())
+        },
+        all(not(feature = "wayland"), feature = "x11") => {
+            Rc::new(X11Client::new().expect("Failed to initialize X11 client"))
+        },
+        not(any(feature = "wayland", feature = "x11")) => {
+            Rc::new(HeadlessClient::new())
         }
-        return Rc::new(X11Client::new().expect("Failed to initialize X11 client"));
-    }
-
-    #[cfg(all(feature = "wayland", not(feature = "x11")))]
-    {
-        return Rc::new(WaylandClient::new());
-    }
-
-    #[cfg(all(feature = "x11", not(feature = "wayland")))]
-    {
-        return Rc::new(X11Client::new().expect("Failed to initialize X11 client"));
-    }
-
-    #[cfg(not(any(feature = "wayland", feature = "x11")))]
-    {
-        Rc::new(HeadlessClient::new())
     }
 }
 
