@@ -1,9 +1,9 @@
 pub mod fs_watcher;
 
 use parking_lot::Mutex;
-use tokio_util::compat::FuturesAsyncReadCompatExt;
 use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 use std::time::Instant;
+use tokio_util::compat::FuturesAsyncReadCompatExt;
 use util::maybe;
 
 use anyhow::{Context as _, Result, anyhow};
@@ -61,9 +61,9 @@ use git::{
 #[cfg(any(test, feature = "test-support"))]
 use smol::io::AsyncReadExt as _;
 #[cfg(any(test, feature = "test-support"))]
-use tokio::io::AsyncReadExt as _;
-#[cfg(any(test, feature = "test-support"))]
 use std::ffi::OsStr;
+#[cfg(any(test, feature = "test-support"))]
+use tokio::io::AsyncReadExt as _;
 
 #[cfg(any(test, feature = "test-support"))]
 pub use fake_git_repo::{LOAD_HEAD_TEXT_TASK, LOAD_INDEX_TEXT_TASK};

@@ -14,7 +14,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use settings::WorktreeId;
 use smol::fs::File;
-use tokio_util::compat::FuturesAsyncReadCompatExt;
 use std::{
     borrow::Borrow,
     ffi::OsStr,
@@ -25,6 +24,7 @@ use std::{
     sync::Arc,
 };
 use task::{DebugScenario, GramDebugConfig, TcpArgumentsTemplate};
+use tokio_util::compat::FuturesAsyncReadCompatExt;
 use util::{archive::extract_zip, rel_path::RelPath};
 
 use crate::settings::DapSettings;

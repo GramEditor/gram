@@ -19,7 +19,6 @@ use smol::{
     fs::{self},
     io::BufReader,
 };
-use tokio_util::compat::FuturesAsyncReadCompatExt;
 use std::{
     borrow::Cow,
     env::consts,
@@ -29,6 +28,7 @@ use std::{
     sync::Arc,
 };
 use task::{TaskTemplate, TaskTemplates, VariableName};
+use tokio_util::compat::FuturesAsyncReadCompatExt;
 use util::{
     ResultExt, archive::extract_zip, fs::remove_matching, maybe, merge_json_value_into, paths::PathStyle,
     rel_path::RelPath,

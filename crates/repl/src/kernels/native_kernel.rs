@@ -10,8 +10,8 @@ use jupyter_protocol::{
     ExecutionState, JupyterKernelspec, JupyterMessage, JupyterMessageContent, KernelInfoReply,
     connection_info::{ConnectionInfo, Transport},
 };
-use project::Fs;
 use jupyter_zmq_client::dirs;
+use project::Fs;
 use smol::{net::TcpListener, process::Command};
 use std::{
     env,
@@ -153,9 +153,12 @@ impl NativeRunningKernel {
             let mut iopub_socket =
                 jupyter_zmq_client::create_client_iopub_connection(&connection_info, "", &session_id).await?;
             let peer_identity = jupyter_zmq_client::peer_identity_for_session(&session_id)?;
-            let mut shell_socket =
-                jupyter_zmq_client::create_client_shell_connection_with_identity(&connection_info, &session_id, peer_identity)
-                    .await?;
+            let mut shell_socket = jupyter_zmq_client::create_client_shell_connection_with_identity(
+                &connection_info,
+                &session_id,
+                peer_identity,
+            )
+            .await?;
             let mut control_socket =
                 jupyter_zmq_client::create_client_control_connection(&connection_info, &session_id).await?;
 

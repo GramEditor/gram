@@ -35,9 +35,9 @@
 
 use editor::{Editor, MultiBuffer};
 use gpui::{AnyElement, ClipboardItem, Entity, EventEmitter, Render, WeakEntity};
-use language::Buffer;
-use jupyter_zmq_client::{ExecutionState, JupyterMessageContent};
 use jupyter_protocol::{MimeBundle, MimeType};
+use jupyter_zmq_client::{ExecutionState, JupyterMessageContent};
+use language::Buffer;
 use ui::{CommonAnimationExt, CopyButton, IconButton, Tooltip, prelude::*};
 
 mod image;

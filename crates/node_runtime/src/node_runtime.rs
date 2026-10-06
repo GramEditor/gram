@@ -8,7 +8,6 @@ use semver::Version;
 use serde::Deserialize;
 use smol::io::BufReader;
 use smol::{fs, lock::Mutex};
-use tokio_util::compat::FuturesAsyncReadCompatExt;
 use std::fmt::Display;
 use std::{
     env::{self, consts},
@@ -19,6 +18,7 @@ use std::{
     process::Output,
     sync::Arc,
 };
+use tokio_util::compat::FuturesAsyncReadCompatExt;
 use util::ResultExt;
 use util::archive::extract_zip;
 
