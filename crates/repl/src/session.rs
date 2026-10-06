@@ -22,7 +22,7 @@ use futures::FutureExt as _;
 use gpui::{Context, Entity, EventEmitter, Render, Subscription, Task, WeakEntity, Window, div, prelude::*};
 use language::Point;
 use project::Fs;
-use runtimelib::{
+use jupyter_zmq_client::{
     ExecuteRequest, ExecutionState, InterruptRequest, JupyterMessage, JupyterMessageContent, ShutdownRequest,
 };
 use std::{env::temp_dir, ops::Range, sync::Arc, time::Duration};

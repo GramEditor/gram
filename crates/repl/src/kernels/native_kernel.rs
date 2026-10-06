@@ -11,7 +11,7 @@ use jupyter_protocol::{
     connection_info::{ConnectionInfo, Transport},
 };
 use project::Fs;
-use runtimelib::dirs;
+use jupyter_zmq_client::dirs;
 use smol::{net::TcpListener, process::Command};
 use std::{
     env,
@@ -151,13 +151,13 @@ impl NativeRunningKernel {
             let session_id = Uuid::new_v4().to_string();
 
             let mut iopub_socket =
-                runtimelib::create_client_iopub_connection(&connection_info, "", &session_id).await?;
-            let peer_identity = runtimelib::peer_identity_for_session(&session_id)?;
+                jupyter_zmq_client::create_client_iopub_connection(&connection_info, "", &session_id).await?;
+            let peer_identity = jupyter_zmq_client::peer_identity_for_session(&session_id)?;
             let mut shell_socket =
-                runtimelib::create_client_shell_connection_with_identity(&connection_info, &session_id, peer_identity)
+                jupyter_zmq_client::create_client_shell_connection_with_identity(&connection_info, &session_id, peer_identity)
                     .await?;
             let mut control_socket =
-                runtimelib::create_client_control_connection(&connection_info, &session_id).await?;
+                jupyter_zmq_client::create_client_control_connection(&connection_info, &session_id).await?;
 
             let (request_tx, mut request_rx) = futures::channel::mpsc::channel::<JupyterMessage>(100);
 

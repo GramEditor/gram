@@ -457,6 +457,7 @@ impl project::ProjectItem for NotebookItem {
                 let notebook = match notebook {
                     Ok(nbformat::Notebook::V3(notebook)) => nbformat::upgrade_v3_notebook(notebook)?,
                     Ok(nbformat::Notebook::V4(notebook)) => notebook,
+                    Ok(nbformat::Notebook::V4QuirksMode(notebook)) => notebook.notebook().clone(),
                     // 4.1 - 4.4 are converted to 4.5
                     Ok(nbformat::Notebook::Legacy(legacy_notebook)) => {
                         // TODO: Decide if we want to mutate the notebook by including Cell IDs
@@ -464,6 +465,8 @@ impl project::ProjectItem for NotebookItem {
 
                         nbformat::upgrade_legacy_notebook(legacy_notebook)?
                     }
+                    // The notebook enum is marked non-exhaustive
+                    Ok(_) => anyhow::bail!("Parsed unknown notebook version!"),
                     // Bad notebooks and notebooks v4.0 and below are not supported
                     Err(e) => {
                         anyhow::bail!("Failed to parse notebook: {:?}", e);

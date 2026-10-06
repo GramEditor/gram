@@ -55,8 +55,7 @@
 //! display(df)
 //! ```
 use gpui::{AnyElement, ClipboardItem, TextRun};
-use runtimelib::datatable::TableSchema;
-use runtimelib::media::datatable::TabularDataResource;
+use jupyter_protocol::{TabularDataResource, datatable::TableSchema};
 use serde_json::Value;
 use settings::Settings;
 use theme::ThemeSettings;
@@ -195,16 +194,16 @@ impl TableView {
             .zip(self.widths.iter())
             .map(|(field, width)| {
                 let container = match field.field_type {
-                    runtimelib::datatable::FieldType::String => div(),
+                    jupyter_protocol::datatable::FieldType::String => div(),
 
-                    runtimelib::datatable::FieldType::Number
-                    | runtimelib::datatable::FieldType::Integer
-                    | runtimelib::datatable::FieldType::Date
-                    | runtimelib::datatable::FieldType::Time
-                    | runtimelib::datatable::FieldType::Datetime
-                    | runtimelib::datatable::FieldType::Year
-                    | runtimelib::datatable::FieldType::Duration
-                    | runtimelib::datatable::FieldType::Yearmonth => v_flex().items_end(),
+                    jupyter_protocol::datatable::FieldType::Number
+                    | jupyter_protocol::datatable::FieldType::Integer
+                    | jupyter_protocol::datatable::FieldType::Date
+                    | jupyter_protocol::datatable::FieldType::Time
+                    | jupyter_protocol::datatable::FieldType::Datetime
+                    | jupyter_protocol::datatable::FieldType::Year
+                    | jupyter_protocol::datatable::FieldType::Duration
+                    | jupyter_protocol::datatable::FieldType::Yearmonth => v_flex().items_end(),
 
                     _ => div(),
                 };

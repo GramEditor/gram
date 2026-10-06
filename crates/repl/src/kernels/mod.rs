@@ -16,7 +16,7 @@ pub use remote_kernels::*;
 
 use anyhow::Result;
 use jupyter_protocol::JupyterKernelspec;
-use runtimelib::{ExecutionState, JupyterMessage, KernelInfoReply};
+use jupyter_zmq_client::{ExecutionState, JupyterMessage, KernelInfoReply};
 use ui::{Icon, IconName, SharedString};
 use util::rel_path::RelPath;
 

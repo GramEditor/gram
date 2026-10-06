@@ -36,7 +36,8 @@
 use editor::{Editor, MultiBuffer};
 use gpui::{AnyElement, ClipboardItem, Entity, EventEmitter, Render, WeakEntity};
 use language::Buffer;
-use runtimelib::{ExecutionState, JupyterMessageContent, MimeBundle, MimeType};
+use jupyter_zmq_client::{ExecutionState, JupyterMessageContent};
+use jupyter_protocol::{MimeBundle, MimeType};
 use ui::{CommonAnimationExt, CopyButton, IconButton, Tooltip, prelude::*};
 
 mod image;
@@ -391,7 +392,7 @@ impl ExecutionView {
             }
             JupyterMessageContent::ExecuteReply(reply) => {
                 for payload in reply.payload.iter() {
-                    if let runtimelib::Payload::Page { data, .. } = payload {
+                    if let jupyter_zmq_client::Payload::Page { data, .. } = payload {
                         let output = Output::new(data, None, window, cx);
                         self.outputs.push(output);
                     }
