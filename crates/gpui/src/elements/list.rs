@@ -646,7 +646,7 @@ impl StateInner {
         let mut rendered_focused_item = false;
 
         let available_item_space = size(
-            available_width.map_or(AvailableSpace::MaxContent, AvailableSpace::Definite),
+            available_width.map_or(AvailableSpace::MinContent, AvailableSpace::Definite),
             AvailableSpace::MinContent,
         );
 

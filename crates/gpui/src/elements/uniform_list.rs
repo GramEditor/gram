@@ -616,7 +616,7 @@ impl UniformList {
             return Size::default();
         };
         let available_space = size(
-            list_width.map_or(AvailableSpace::MaxContent, AvailableSpace::Definite),
+            list_width.map_or(AvailableSpace::MinContent, AvailableSpace::Definite),
             AvailableSpace::MinContent,
         );
         item_to_measure.layout_as_root(available_space, window, cx)

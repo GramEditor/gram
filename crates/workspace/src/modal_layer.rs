@@ -193,9 +193,8 @@ impl Render for ModalLayer {
             )
             .child(
                 v_flex()
-                    .w_full()
-                    .max_h_full()
-                    .pt_20()
+                    .h(px(0.0))
+                    .top_20()
                     .flex()
                     .flex_col()
                     .items_center()

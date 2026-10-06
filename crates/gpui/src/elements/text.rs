@@ -309,7 +309,6 @@ struct TextLayoutInner {
     lines: SmallVec<[WrappedLine; 1]>,
     line_height: Pixels,
     wrap_width: Option<Pixels>,
-    truncate_width: Option<Pixels>,
     size: Option<Size<Pixels>>,
     bounds: Option<Bounds<Pixels>>,
 }
@@ -361,36 +360,17 @@ impl TextLayout {
                 // 2. wrap_width matches (or both are None)
                 // 3. truncate_width is None (if truncate_width is Some, we need to re-layout
                 //    because the previous layout may have been computed without truncation)
-                // 4. the cached layout was not truncated
                 if let Some(text_layout) = element_state.0.borrow().as_ref()
                     && let Some(size) = text_layout.size
                     && (wrap_width.is_none() || wrap_width == text_layout.wrap_width)
                     && truncate_width.is_none()
-                    && text_layout.truncate_width.is_none()
                 {
                     return size;
                 }
 
                 let mut line_wrapper = cx.text_system().line_wrapper(text_style.font(), font_size);
                 let (text, runs) = if let Some(truncate_width) = truncate_width {
-                    if let Some(unclipped) = window
-                        .text_system()
-                        .shape_text(text.clone(), font_size, &runs, None, None)
-                        .log_err()
-                        && unclipped
-                            .iter()
-                            .all(|line| line.size(line_height).width <= truncate_width)
-                    {
-                        (text.clone(), Cow::Borrowed(&*runs))
-                    } else {
-                        line_wrapper.truncate_line(
-                            text.clone(),
-                            truncate_width,
-                            &truncation_affix,
-                            &runs,
-                            truncate_from,
-                        )
-                    }
+                    line_wrapper.truncate_line(text.clone(), truncate_width, &truncation_affix, &runs, truncate_from)
                 } else {
                     (text.clone(), Cow::Borrowed(&*runs))
                 };
@@ -412,7 +392,6 @@ impl TextLayout {
                         len: 0,
                         line_height,
                         wrap_width,
-                        truncate_width,
                         size: Some(Size::default()),
                         bounds: None,
                     });
@@ -431,7 +410,6 @@ impl TextLayout {
                     len,
                     line_height,
                     wrap_width,
-                    truncate_width,
                     size: Some(size),
                     bounds: None,
                 });
