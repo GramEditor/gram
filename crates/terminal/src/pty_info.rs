@@ -30,12 +30,12 @@ impl ProcessIdGetter {
         }
     }
 
-    fn pid(&self) -> Pid {
+    fn pid(&self) -> Option<Pid> {
         let pid = unsafe { libc::tcgetpgrp(self.handle) };
         if pid < 0 {
-            return Pid::from_u32(self.fallback_pid);
+            return Some(Pid::from_u32(self.fallback_pid));
         }
-        Pid::from_u32(pid as u32)
+        Some(Pid::from_u32(pid as u32))
     }
 }
 
@@ -110,10 +110,10 @@ impl PtyProcessInfo {
         let pid = self.pid_getter.pid();
         if self
             .system
-            .refresh_processes_specifics(sysinfo::ProcessesToUpdate::Some(&[pid]), true, self.refresh_kind)
+            .refresh_processes_specifics(sysinfo::ProcessesToUpdate::Some(&[pid?]), true, self.refresh_kind)
             == 1
         {
-            self.system.process(pid)
+            self.system.process(pid?)
         } else {
             None
         }
@@ -126,7 +126,7 @@ impl PtyProcessInfo {
 
     #[cfg(unix)]
     pub(crate) fn kill_current_process(&mut self) -> bool {
-        unsafe { libc::killpg(self.pid_getter.pid().as_u32() as i32, libc::SIGKILL) == 0 }
+        unsafe { libc::killpg(self.pid_getter.pid().unwrap().as_u32() as i32, libc::SIGKILL) == 0 }
     }
 
     #[cfg(not(unix))]
@@ -170,6 +170,6 @@ impl PtyProcessInfo {
     }
 
     pub fn pid(&self) -> Pid {
-        self.pid_getter.pid()
+        self.pid_getter.pid().unwrap()
     }
 }
