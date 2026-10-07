@@ -17,6 +17,13 @@ file:
 You can manually trigger completions with `ctrl-space` or by triggering the
 `editor::ShowCompletions` action from the command palette.
 
+The code completions can optionally show a text icon to show what kind of item
+it is. e.g. Function / Property / Constant etc. Defaults to `"Off"` Enable with:
+
+```json
+"completion_menu_item_kind": "symbol"
+```
+
 For more information, see:
 
 - [Configuring Supported Languages](./configuring-languages.md)
