@@ -435,7 +435,13 @@ pub fn execute_run(
                 )
             };
 
-            let node_runtime = NodeRuntime::new(http_client.clone(), Some(shell_env_loaded_rx), node_settings_rx);
+            let tokio_handle = gpui_tokio::Tokio::handle(cx);
+            let node_runtime = NodeRuntime::new(
+                http_client.clone(),
+                Some(shell_env_loaded_rx),
+                node_settings_rx,
+                Some(tokio_handle),
+            );
 
             let mut languages = LanguageRegistry::new(cx.background_executor().clone());
             languages.set_language_server_download_dir(paths::languages_dir().clone());

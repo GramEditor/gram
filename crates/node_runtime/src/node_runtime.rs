@@ -49,6 +49,7 @@ struct NodeRuntimeState {
     last_options: Option<NodeBinaryOptions>,
     options: watch::Receiver<Option<NodeBinaryOptions>>,
     shell_env_loaded: Shared<oneshot::Receiver<()>>,
+    tokio_handle: Option<tokio::runtime::Handle>,
 }
 
 impl NodeRuntime {
@@ -56,6 +57,7 @@ impl NodeRuntime {
         http: Arc<dyn HttpClient>,
         shell_env_loaded: Option<oneshot::Receiver<()>>,
         options: watch::Receiver<Option<NodeBinaryOptions>>,
+        tokio_handle: Option<tokio::runtime::Handle>,
     ) -> Self {
         NodeRuntime(Arc::new(Mutex::new(NodeRuntimeState {
             http,
@@ -63,6 +65,7 @@ impl NodeRuntime {
             last_options: None,
             options,
             shell_env_loaded: shell_env_loaded.unwrap_or(oneshot::channel().1).shared(),
+            tokio_handle,
         })))
     }
 
@@ -73,6 +76,7 @@ impl NodeRuntime {
             last_options: None,
             options: watch::channel(Some(NodeBinaryOptions::default())).1,
             shell_env_loaded: oneshot::channel().1.shared(),
+            tokio_handle: None,
         })))
     }
 
@@ -148,7 +152,7 @@ impl NodeRuntime {
                     "`node.ignore_system_version` is `true` in settings".to_string(),
                 ),
             };
-            match ManagedNodeRuntime::install_if_needed(&state.http).await {
+            match ManagedNodeRuntime::install_if_needed(state.tokio_handle.as_ref(), &state.http).await {
                 Ok(instance) => {
                     log::log!(
                         log_level,
@@ -424,7 +428,7 @@ impl ManagedNodeRuntime {
     #[cfg(windows)]
     const NPM_PATH: &str = "node_modules/npm/bin/npm-cli.js";
 
-    async fn install_if_needed(http: &Arc<dyn HttpClient>) -> Result<Self> {
+    async fn install_if_needed(handle: Option<&tokio::runtime::Handle>, http: &Arc<dyn HttpClient>) -> Result<Self> {
         log::info!("Node runtime install_if_needed");
 
         let os = match consts::OS {
@@ -519,7 +523,9 @@ impl ManagedNodeRuntime {
                 ArchiveType::TarGz => {
                     let decompressed_bytes = GzipDecoder::new(BufReader::new(response.body_mut()));
                     let archive = Archive::new(decompressed_bytes.compat());
-                    archive.unpack(&node_containing_dir).await?;
+                    let unpack = archive.unpack(&node_containing_dir);
+                    let handle = handle.context("a tokio handle")?;
+                    tokio_util::context::TokioContext::new(unpack, handle.clone()).await?
                 }
                 ArchiveType::Zip => extract_zip(&node_containing_dir, body).await?,
             }

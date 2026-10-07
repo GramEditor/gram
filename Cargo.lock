@@ -5754,6 +5754,7 @@ dependencies = [
  "serde",
  "serde_json",
  "smol",
+ "tokio",
  "tokio-util",
  "util",
  "watch",
