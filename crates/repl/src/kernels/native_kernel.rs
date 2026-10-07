@@ -150,17 +150,28 @@ impl NativeRunningKernel {
 
             let session_id = Uuid::new_v4().to_string();
 
-            let mut iopub_socket =
-                jupyter_zmq_client::create_client_iopub_connection(&connection_info, "", &session_id).await?;
-            let peer_identity = jupyter_zmq_client::peer_identity_for_session(&session_id)?;
-            let mut shell_socket = jupyter_zmq_client::create_client_shell_connection_with_identity(
-                &connection_info,
-                &session_id,
-                peer_identity,
+            let handle = cx.update(|_, cx| gpui_tokio::Tokio::handle(cx))?;
+
+            let mut iopub_socket = gpui_tokio::Tokio::new_context(
+                handle.clone(),
+                jupyter_zmq_client::create_client_iopub_connection(&connection_info, "", &session_id),
             )
             .await?;
-            let mut control_socket =
-                jupyter_zmq_client::create_client_control_connection(&connection_info, &session_id).await?;
+            let peer_identity = jupyter_zmq_client::peer_identity_for_session(&session_id)?;
+            let mut shell_socket = gpui_tokio::Tokio::new_context(
+                handle.clone(),
+                jupyter_zmq_client::create_client_shell_connection_with_identity(
+                    &connection_info,
+                    &session_id,
+                    peer_identity,
+                ),
+            )
+            .await?;
+            let mut control_socket = gpui_tokio::Tokio::new_context(
+                handle.clone(),
+                jupyter_zmq_client::create_client_control_connection(&connection_info, &session_id),
+            )
+            .await?;
 
             let (request_tx, mut request_rx) = futures::channel::mpsc::channel::<JupyterMessage>(100);
 
@@ -443,7 +454,7 @@ pub async fn local_kernel_specifications(fs: Arc<dyn Fs>) -> Result<Vec<LocalKer
     }
 
     // Search for kernels inside the base python environment
-    let command = util::command::new_smol_command("python")
+    let command = util::command::new_smol_command("python3")
         .arg("-c")
         .arg("import sys; print(sys.prefix)")
         .output()

@@ -7963,6 +7963,7 @@ dependencies = [
  "file_icons",
  "futures",
  "gpui",
+ "gpui_tokio",
  "http_client",
  "image",
  "indoc",
