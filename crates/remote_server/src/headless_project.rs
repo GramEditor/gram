@@ -88,6 +88,7 @@ impl HeadlessProject {
     ) -> Self {
         debug_adapter_extension::init(proxy.clone(), cx);
         languages::init(languages.clone(), fs.clone(), node_runtime.clone(), cx);
+        gpui_tokio::init(cx);
 
         let worktree_store = cx.new(|cx| {
             let mut store = WorktreeStore::local(true, fs.clone());
