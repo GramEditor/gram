@@ -942,7 +942,11 @@ impl ExtensionImports for WasmState {
                 DownloadedFileType::GzipTar => {
                     let body = GzipDecoder::new(body);
                     futures::pin_mut!(body);
-                    self.host.fs.extract_tar_file(&destination_path, body).await?;
+                    gpui_tokio::Tokio::new_context(
+                        self.host.tokio_handle.clone(),
+                        self.host.fs.extract_tar_file(&destination_path, body),
+                    )
+                    .await?;
                 }
                 DownloadedFileType::Zip => {
                     futures::pin_mut!(body);

@@ -61,6 +61,7 @@ pub struct WasmHost {
     pub(crate) granted_capabilities: Vec<ExtensionCapability>,
     _main_thread_message_task: Task<()>,
     main_thread_message_tx: mpsc::UnboundedSender<MainThreadCall>,
+    tokio_handle: tokio::runtime::Handle,
 }
 
 #[derive(Clone, Debug)]
@@ -472,6 +473,7 @@ impl WasmHost {
             granted_capabilities: extension_settings.granted_capabilities.clone(),
             _main_thread_message_task: task,
             main_thread_message_tx: tx,
+            tokio_handle: gpui_tokio::Tokio::handle(cx),
         })
     }
 

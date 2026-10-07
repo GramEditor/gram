@@ -530,7 +530,11 @@ impl ExtensionImports for WasmState {
                     body.read_to_end(&mut tar_gz_bytes).await?;
                     let body = GzipDecoder::new(BufReader::new(tar_gz_bytes.as_slice()));
                     futures::pin_mut!(body);
-                    self.host.fs.extract_tar_file(&destination_path, body).await?;
+                    gpui_tokio::Tokio::new_context(
+                        self.host.tokio_handle.clone(),
+                        self.host.fs.extract_tar_file(&destination_path, body),
+                    )
+                    .await?;
                 }
                 DownloadedFileType::Zip => {
                     futures::pin_mut!(body);
