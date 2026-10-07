@@ -659,7 +659,7 @@ where
                 let name = self.name();
                 return (
                     Err(anyhow::anyhow!(
-                        "Download disabled for language server '{}'. Ensure that you have 'Allow npm install' enabled.",
+                        "Download disabled for language server '{}'. Ensure that you have 'Allow binary download' enabled.",
                         name.0
                     )),
                     None,
