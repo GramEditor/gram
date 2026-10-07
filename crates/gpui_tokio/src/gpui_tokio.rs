@@ -1,6 +1,8 @@
 use std::future::Future;
 
 use gpui::{App, AppContext, Global, ReadGlobal, Task};
+use tokio::runtime::Handle;
+use tokio_util::context::TokioContext;
 use util::defer;
 
 pub use tokio::task::JoinError;
@@ -21,17 +23,17 @@ pub fn init(cx: &mut App) {
 }
 
 /// Initializes the Tokio wrapper using a Tokio runtime handle.
-pub fn init_from_handle(cx: &mut App, handle: tokio::runtime::Handle) {
+pub fn init_from_handle(cx: &mut App, handle: Handle) {
     cx.set_global(GlobalTokio::new(RuntimeHolder::Shared(handle)));
 }
 
 enum RuntimeHolder {
     Owned(tokio::runtime::Runtime),
-    Shared(tokio::runtime::Handle),
+    Shared(Handle),
 }
 
 impl RuntimeHolder {
-    pub fn handle(&self) -> &tokio::runtime::Handle {
+    pub fn handle(&self) -> &Handle {
         match self {
             RuntimeHolder::Owned(runtime) => runtime.handle(),
             RuntimeHolder::Shared(handle) => handle,
@@ -98,7 +100,11 @@ impl Tokio {
         })
     }
 
-    pub fn handle(cx: &App) -> tokio::runtime::Handle {
+    pub fn new_context<F: Future>(handle: Handle, future: F) -> TokioContext<F> {
+        TokioContext::new(future, handle)
+    }
+
+    pub fn handle(cx: &App) -> Handle {
         GlobalTokio::global(cx).runtime.handle().clone()
     }
 }

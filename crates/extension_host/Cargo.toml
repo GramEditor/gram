@@ -17,7 +17,6 @@ name = "extension_compilation_benchmark"
 [dependencies]
 anyhow.workspace = true
 async-compression.workspace = true
-async-tar.workspace = true
 async-trait.workspace = true
 client.workspace = true
 collections.workspace = true

@@ -505,6 +505,7 @@ impl DebugAdapter for JsDebugAdapter {
                     version,
                     adapters::DownloadedFileType::GzipTar,
                     delegate.as_ref(),
+                    cx,
                 )
                 .await?;
             } else {

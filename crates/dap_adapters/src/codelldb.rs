@@ -322,7 +322,7 @@ impl DebugAdapter for CodeLldbDebugAdapter {
         user_args: Option<Vec<String>>,
         user_env: Option<HashMap<String, String>>,
         settings: &DapSettings,
-        _: &mut AsyncApp,
+        cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
         if user_installed_path.is_none() && settings.ignore_system_version {
             anyhow::bail!("No user provided codelldb binary and ignore_system_version not set");
@@ -345,6 +345,7 @@ impl DebugAdapter for CodeLldbDebugAdapter {
                         version.clone(),
                         adapters::DownloadedFileType::Vsix,
                         delegate.as_ref(),
+                        cx,
                     )
                     .await?;
                     let version_path = adapter_path.join(format!("{}_{}", Self::ADAPTER_NAME, version.tag_name));

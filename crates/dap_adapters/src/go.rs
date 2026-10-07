@@ -57,7 +57,7 @@ impl GoDebugAdapter {
             url: asset.browser_download_url.clone(),
         })
     }
-    async fn install_shim(&self, delegate: &Arc<dyn DapDelegate>) -> anyhow::Result<PathBuf> {
+    async fn install_shim(&self, delegate: &Arc<dyn DapDelegate>, cx: &mut AsyncApp) -> anyhow::Result<PathBuf> {
         if let Some(path) = self.shim_path.get().cloned() {
             return Ok(path);
         }
@@ -68,7 +68,7 @@ impl GoDebugAdapter {
         } else {
             DownloadedFileType::GzipTar
         };
-        download_adapter_from_github("delve-shim-dap".into(), asset.clone(), ty, delegate.as_ref()).await?;
+        download_adapter_from_github("delve-shim-dap".into(), asset.clone(), ty, delegate.as_ref(), cx).await?;
 
         let path = paths::debug_adapters_dir()
             .join("delve-shim-dap")
@@ -392,7 +392,7 @@ impl DebugAdapter for GoDebugAdapter {
         user_args: Option<Vec<String>>,
         user_env: Option<HashMap<String, String>>,
         settings: &DapSettings,
-        _cx: &mut AsyncApp,
+        cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
         let adapter_path = paths::debug_adapters_dir().join(Self::ADAPTER_NAME);
         let dlv_path = adapter_path.join("dlv");
@@ -463,7 +463,7 @@ impl DebugAdapter for GoDebugAdapter {
             let (host, port, timeout) = crate::configure_tcp_connection(connection_options.clone()).await?;
             connection = Some(TcpArguments { host, port, timeout });
         } else {
-            let minidelve_path = self.install_shim(delegate).await?;
+            let minidelve_path = self.install_shim(delegate, cx).await?;
             let (host, port, _) = crate::configure_tcp_connection(TcpArgumentsTemplate::default()).await?;
             command = Some(minidelve_path.to_string_lossy().into_owned());
             connection = None;

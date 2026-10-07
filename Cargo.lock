@@ -13,7 +13,6 @@ dependencies = [
  "futures",
  "gpui",
  "language",
- "log",
  "project",
  "proto",
  "smallvec",
@@ -1790,6 +1789,7 @@ dependencies = [
  "fs",
  "futures",
  "gpui",
+ "gpui_tokio",
  "http_client",
  "language",
  "libc",
@@ -2633,7 +2633,6 @@ version = "3.3.0"
 dependencies = [
  "anyhow",
  "async-compression",
- "async-tar",
  "async-trait",
  "client",
  "collections",
@@ -3564,6 +3563,7 @@ dependencies = [
  "anyhow",
  "gpui",
  "tokio",
+ "tokio-util",
  "util",
 ]
 
@@ -4754,6 +4754,7 @@ dependencies = [
  "fuzzy",
  "globset",
  "gpui",
+ "gpui_tokio",
  "http_client",
  "imara-diff",
  "indoc",
@@ -10008,6 +10009,7 @@ dependencies = [
  "futures-core",
  "futures-io",
  "futures-sink",
+ "futures-util",
  "libc",
  "pin-project-lite",
  "tokio",

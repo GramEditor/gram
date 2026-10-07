@@ -603,9 +603,13 @@ where
         } else {
             log::debug!("downloading language server {:?}", name.0);
             delegate.update_status(name.clone(), BinaryStatus::Downloading);
+            let handle = cx.update(|cx| gpui_tokio::Tokio::handle(cx))?;
             let binary = cx
                 .background_executor()
-                .await_on_background(self.fetch_server_binary(latest_version, container_dir, delegate.as_ref()))
+                .await_on_background(gpui_tokio::Tokio::new_context(
+                    handle,
+                    self.fetch_server_binary(latest_version, container_dir, delegate.as_ref()),
+                ))
                 .await;
 
             delegate.update_status(name.clone(), BinaryStatus::None);

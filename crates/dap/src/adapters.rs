@@ -253,6 +253,7 @@ pub async fn download_adapter_from_github(
     github_version: AdapterVersion,
     file_type: DownloadedFileType,
     delegate: &dyn DapDelegate,
+    cx: &mut AsyncApp,
 ) -> Result<PathBuf> {
     let adapter_path = paths::debug_adapters_dir().join(adapter_name.as_ref());
     let version_path = adapter_path.join(format!("{}_{}", adapter_name, github_version.tag_name));
@@ -287,7 +288,10 @@ pub async fn download_adapter_from_github(
         DownloadedFileType::GzipTar => {
             let decompressed_bytes = GzipDecoder::new(BufReader::new(response.body_mut()));
             let archive = Archive::new(decompressed_bytes.compat());
-            archive.unpack(&version_path).await?;
+            let handle = cx.update(|cx| gpui_tokio::Tokio::handle(cx))?;
+            cx.background_executor()
+                .await_on_background(gpui_tokio::Tokio::new_context(handle, archive.unpack(&version_path)))
+                .await?;
         }
         DownloadedFileType::Zip | DownloadedFileType::Vsix => {
             let zip_path = version_path.with_extension("zip");
