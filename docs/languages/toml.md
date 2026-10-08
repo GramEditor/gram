@@ -7,14 +7,16 @@ TOML support is built into the editor.
 
 - Crate: [adot-tree-sitter-toml](https://crates.io/crates/adot-tree-sitter-toml)
 
-There is LSP support via [Taplo](https://taplo.tamasfe.dev), but it is disabled
-by default. To enable the LSP, add this to your `settings.jsonc`:
+LSP support defaults to [Tombi](https://github.com/tombi-toml/tombi).
+
+There is also support via [Taplo](https://taplo.tamasfe.dev), but it is disabled
+by default. To use Taplo instead, change this in your `settings.jsonc`:
 
 ```json
 {
   "languages": {
     "TOML": {
-      "language_servers": ["taplo", "..."],
+      "language_servers": ["!tombi", "taplo", "..."],
     },
   },
 }

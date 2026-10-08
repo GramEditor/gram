@@ -1756,7 +1756,7 @@
       },
     },
     "TOML": {
-      "language_servers": ["!taplo", "..."],
+      "language_servers": ["!taplo", "tombi", "..."],
     },
     "TSX": {
       "language_servers": ["!typescript-language-server", "vtsls", "..."],

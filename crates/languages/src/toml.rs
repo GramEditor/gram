@@ -14,21 +14,24 @@ pub struct TomlLspAdapter;
 
 #[cfg(target_os = "macos")]
 impl TomlLspAdapter {
-    const OS_NAME: &str = "darwin";
+    const GITHUB_ASSET_KIND: AssetKind = AssetKind::TarGz;
+    const OS_NAME: &str = "apple-darwin";
 }
 
 #[cfg(target_os = "linux")]
 impl TomlLspAdapter {
-    const OS_NAME: &str = "linux";
+    const GITHUB_ASSET_KIND: AssetKind = AssetKind::TarGz;
+    const OS_NAME: &str = "unknown-linux-musl";
 }
 
 #[cfg(target_os = "windows")]
 impl TomlLspAdapter {
-    const OS_NAME: &str = "windows";
+    const GITHUB_ASSET_KIND: AssetKind = AssetKind::Zip;
+    const OS_NAME: &str = "pc-windows-msvc";
 }
 
 impl TomlLspAdapter {
-    const SERVER_NAME: LanguageServerName = LanguageServerName::new_static("taplo");
+    const SERVER_NAME: LanguageServerName = LanguageServerName::new_static("tombi");
 }
 
 impl LspInstaller for TomlLspAdapter {
@@ -40,7 +43,7 @@ impl LspInstaller for TomlLspAdapter {
         _: Option<Toolchain>,
         _: &AsyncApp,
     ) -> Option<LanguageServerBinary> {
-        let path = delegate.which("taplo".as_ref()).await?;
+        let path = delegate.which("tombi".as_ref()).await?;
         Some(LanguageServerBinary {
             path,
             arguments: vec!["lsp".into(), "stdio".into()],
@@ -51,19 +54,33 @@ impl LspInstaller for TomlLspAdapter {
     async fn fetch_latest_server_version(
         &self,
         delegate: &dyn LspAdapterDelegate,
-        pre_release: bool,
+        _pre_release: bool,
         _cx: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        let release = latest_github_release("tamasfe/taplo", true, pre_release, delegate.http_client()).await?;
+        let release = latest_github_release("tombi-toml/tombi", false, false, delegate.http_client()).await?;
+
+        let binary_version = release
+            .tag_name
+            .strip_prefix("v")
+            .unwrap_or(&release.tag_name)
+            .to_owned();
 
         let arch = match std::env::consts::ARCH {
-            "aarch64" => "aarch64",
-            "x86_64" => "x86_64",
-            "x86" => "x86",
+            "aarch64" | "x86" | "x86_64" => std::env::consts::ARCH,
             other => return Err(anyhow!("unsupported architecture: {}", other)),
         };
 
-        let asset_name = format!("taplo-{}-{}.gz", Self::OS_NAME, arch);
+        let asset_name = format!(
+            "tombi-cli-{}-{}-{}.{}",
+            binary_version,
+            arch,
+            Self::OS_NAME,
+            match Self::GITHUB_ASSET_KIND {
+                AssetKind::TarGz => "tar.gz",
+                AssetKind::Zip => "zip",
+                _ => unreachable!(),
+            }
+        );
 
         let asset = release
             .assets
@@ -72,7 +89,7 @@ impl LspInstaller for TomlLspAdapter {
             .ok_or_else(|| anyhow!("no matching asset found for {}", asset_name))?;
 
         Ok(GitHubLspBinaryVersion {
-            name: release.tag_name.clone(),
+            name: binary_version,
             url: asset.browser_download_url.clone(),
             digest: None,
         })
@@ -90,7 +107,14 @@ impl LspInstaller for TomlLspAdapter {
             digest: expected_digest,
         } = version;
 
-        let path = container_dir.join(format!("taplo-{version_name}"));
+        let arch = match std::env::consts::ARCH {
+            "aarch64" | "x86" | "x86_64" => std::env::consts::ARCH,
+            other => return Err(anyhow!("unsupported architecture: {}", other)),
+        };
+
+        // The archive contains a top-level directory with this name.
+        let asset_dir = format!("tombi-cli-{version_name}-{}-{}", arch, Self::OS_NAME);
+        let path = container_dir.join(&asset_dir).join("tombi");
 
         let binary = LanguageServerBinary {
             path: path.clone(),
@@ -106,8 +130,8 @@ impl LspInstaller for TomlLspAdapter {
             &*delegate.http_client(),
             &url,
             expected_digest.as_deref(),
-            &path,
-            AssetKind::Gz,
+            &container_dir, // extract into container_dir
+            Self::GITHUB_ASSET_KIND,
         )
         .await?;
 
@@ -122,13 +146,16 @@ impl LspInstaller for TomlLspAdapter {
         container_dir: PathBuf,
         _: &dyn LspAdapterDelegate,
     ) -> Option<LanguageServerBinary> {
-        find_cached_server_binary(&container_dir, Some("taplo-"), async |path| Some(path.into()))
-            .await
-            .map(|path| LanguageServerBinary {
-                path,
-                arguments: vec!["lsp".into(), "stdio".into()],
-                env: None,
-            })
+        find_cached_server_binary(&container_dir, Some("tombi-cli-"), async |path| {
+            let binary = path.join("tombi");
+            if binary.is_file() { Some(binary) } else { None }
+        })
+        .await
+        .map(|path| LanguageServerBinary {
+            path,
+            arguments: vec!["lsp".into()],
+            env: None,
+        })
     }
 }
 
