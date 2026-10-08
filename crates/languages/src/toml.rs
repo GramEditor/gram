@@ -110,7 +110,9 @@ impl LspInstaller for TomlLspAdapter {
         } = version;
 
         let arch = match std::env::consts::ARCH {
-            "aarch64" | "x86" | "x86_64" => std::env::consts::ARCH,
+            "aarch64" => "aarch64",
+            "x86" => "x86",
+            "x86_64" => "x86_64",
             other => return Err(anyhow!("unsupported architecture: {}", other)),
         };
 
