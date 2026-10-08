@@ -31,7 +31,7 @@ use gram::{
 };
 use node_runtime::{NodeBinaryOptions, NodeRuntime};
 use parking_lot::Mutex;
-use project::project_settings::ProjectSettings;
+use project::{debugger::dap_store::DapStore, project_settings::ProjectSettings};
 use recent_projects::{SshSettings, open_remote_project};
 use release_channel::{AppCommitSha, AppVersion, ReleaseChannel};
 use session::{AppSession, Session};
@@ -476,6 +476,7 @@ pub fn main() {
         );
 
         gram::init(cx);
+        DapStore::init(None, cx);
         debugger_ui::init(cx);
         debugger_tools::init(cx);
 
