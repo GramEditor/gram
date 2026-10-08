@@ -30,6 +30,8 @@ impl ProcessIdGetter {
         }
     }
 
+    // Windows needs Option<Pid> (see below)
+    #[allow(clippy::unnecessary_wraps)]
     fn pid(&self) -> Option<Pid> {
         let pid = unsafe { libc::tcgetpgrp(self.handle) };
         if pid < 0 {
