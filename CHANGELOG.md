@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Side-by-side Git diff view (#565) by @iskrant_x
 - Add toggle to enable/disable git hooks + fix running commit-msg hook (#594) by @nicoco
 - Add 'completion_menu_item_kind' option to display text icons for completion items. In the settings either 'off' or 'symbol'. Default 'off' (#623) by @CubeOfShame
+- Add tombi as an LSP and formatter for TOML (#626) (#616) by @psy-q
 
 ## Removed
 
