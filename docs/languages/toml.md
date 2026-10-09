@@ -24,7 +24,7 @@ To only enable `taplo`:
 ```json
   "languages": {
     "TOML": {
-      "language_servers": ["tombi", "!taplo", "..."]
+      "language_servers": ["taplo", "!tombi", "..."]
     },
   }
 ```
@@ -34,7 +34,7 @@ Tombi additionally supports being used as a formatter (enabled by default). If y
 ```json
   "languages": {
     "TOML": {
-      "language_servers": ["!tombi", "taplo", "..."]
+      "language_servers": ["taplo", "!tombi", "..."]
       "formatter": "prettier",
       "format_on_save": "off",
     },
