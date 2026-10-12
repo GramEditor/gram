@@ -2976,8 +2976,7 @@ impl Pane {
         window: &mut Window,
         cx: &mut Context<Pane>,
     ) -> AnyElement {
-        let tab_bar = self
-            .configure_tab_bar_start(TabBar::new("tab_bar"), navigate_backward, navigate_forward, window, cx)
+        self.configure_tab_bar_start(TabBar::new("tab_bar"), navigate_backward, navigate_forward, window, cx)
             .children(pinned_tabs.len().ne(&0).then(|| {
                 let max_scroll = self.tab_bar_scroll_handle.max_offset().width;
                 // We need to check both because offset returns delta values even when the scroll handle is not scrollable
@@ -2994,8 +2993,8 @@ impl Pane {
                             .border_color(cx.theme().colors().border)
                     })
             }))
-            .child(self.render_unpinned_tabs_container(unpinned_tabs, tab_count, cx));
-        tab_bar.into_any_element()
+            .child(self.render_unpinned_tabs_container(unpinned_tabs, tab_count, cx))
+            .into_any_element()
     }
 
     fn render_two_row_tab_bar(
