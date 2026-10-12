@@ -1,6 +1,7 @@
 use crate::commit::parse_git_diff_name_status;
 use crate::stash::GitStash;
 use crate::status::{DiffTreeType, GitStatus, StatusCode, TreeDiff};
+use crate::submodule::{Submodule, parse_submodule};
 use crate::{Oid, SHORT_SHA_LENGTH};
 use anyhow::{Context as _, Result, anyhow, bail};
 use collections::HashMap;
@@ -836,6 +837,15 @@ pub trait GitRepository: Send + Sync {
     ) -> BoxFuture<'_, Result<()>>;
 
     fn commit_data_reader(&self) -> Result<CommitDataReader>;
+
+    /// Returns the size of the git opject with the given path in HEAD, if it exists.
+    fn object_head_size(&self, path: Arc<RelPath>) -> Task<Result<usize>>;
+
+    /// Returns the submodule with the given path, if it exists.
+    fn submodule(&self, submodule: Arc<RelPath>) -> Task<Result<Submodule>>;
+
+    /// Returns the commit the given submodule points at in HEAD, if it exists.
+    fn submodule_head(&self, submodule: Arc<RelPath>) -> Task<Result<Oid>>;
 }
 
 pub enum DiffType {
@@ -2517,6 +2527,79 @@ impl GitRepository for RealGitRepository {
         Ok(CommitDataReader {
             request_tx,
             _task: task,
+        })
+    }
+
+    fn submodule(&self, submodule: Arc<RelPath>) -> Task<Result<Submodule>> {
+        let git = self.git_binary_in_worktree();
+
+        self.executor.spawn(async move {
+            let git = git?;
+
+            let submodule_path = submodule.as_unix_str();
+            let submodule_output = git
+                .build_command(["submodule", "status", submodule_path])
+                .output()
+                .await?;
+            if !submodule_output.status.success() {
+                let stderr = String::from_utf8_lossy(&submodule_output.stderr);
+                anyhow::bail!("git submodules failed: {stderr}");
+            }
+
+            let status_output = git
+                .build_command(["-C", submodule_path, "status", "--porcelain"])
+                .output()
+                .await?;
+            if !status_output.status.success() {
+                let stderr = String::from_utf8_lossy(&status_output.stderr);
+                anyhow::bail!("git submodules failed: {stderr}");
+            }
+
+            parse_submodule(&submodule_output.stdout, &status_output.stdout)
+        })
+    }
+
+    fn submodule_head(&self, submodule: Arc<RelPath>) -> Task<Result<Oid>> {
+        let git = self.git_binary_in_worktree();
+
+        self.executor.spawn(async move {
+            let git = git?;
+            let submodule_path = submodule.as_unix_str();
+            let oid_str = git
+                .run(&["ls-tree", "HEAD", submodule_path, "-d", "--object-only"])
+                .await?;
+            oid_str.parse()
+        })
+    }
+
+    fn object_head_size(&self, path: Arc<RelPath>) -> Task<Result<usize>> {
+        let git = self.git_binary_in_worktree();
+
+        self.executor.spawn(async move {
+            let git = git?;
+            let head_sha = git.run(&["rev-parse", "HEAD"]).await?;
+            let object_path = path.as_unix_str();
+            let cat_file_input = format!("{}:{}", head_sha, object_path);
+
+            let mut child = git
+                .build_command(["cat-file", "--batch-check=\"%(objectsize)\""])
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()?;
+            let mut stdin = child.stdin.take().context("cat-file stdin is not piped")?;
+            stdin.write_all(cat_file_input.as_bytes()).await?;
+            drop(stdin);
+
+            let cat_file_output = child.output().await?;
+            if !cat_file_output.status.success() {
+                let stderr = String::from_utf8_lossy(&cat_file_output.stderr);
+                anyhow::bail!("git cat-file failed: {stderr}");
+            }
+
+            let size_str = std::str::from_utf8(&cat_file_output.stdout)?;
+            let size_str = size_str.trim().trim_start_matches('"').trim_end_matches('"');
+            Ok(size_str.parse()?)
         })
     }
 }

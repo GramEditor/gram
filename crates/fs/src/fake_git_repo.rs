@@ -793,6 +793,18 @@ impl GitRepository for FakeGitRepository {
     fn commit_data_reader(&self) -> Result<CommitDataReader> {
         anyhow::bail!("commit_data_reader not supported for FakeGitRepository")
     }
+
+    fn object_head_size(&self, _path: Arc<RelPath>) -> Task<Result<usize>> {
+        unimplemented!()
+    }
+
+    fn submodule(&self, _submodule: Arc<RelPath>) -> Task<Result<git::submodule::Submodule>> {
+        unimplemented!()
+    }
+
+    fn submodule_head(&self, _submodule: Arc<RelPath>) -> Task<Result<Oid>> {
+        unimplemented!()
+    }
 }
 
 #[cfg(test)]

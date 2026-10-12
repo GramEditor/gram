@@ -5,6 +5,7 @@ mod remote;
 pub mod repository;
 pub mod stash;
 pub mod status;
+pub mod submodule;
 
 pub use crate::hosting_provider::*;
 pub use crate::remote::*;
