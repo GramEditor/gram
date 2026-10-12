@@ -544,9 +544,13 @@ impl VsCodeSettings {
                 _ => None,
             }),
             show_nav_history_buttons: None,
-            show_tab_bar_buttons: self
-                .read_str("workbench.editor.editorActionsLocation")
-                .and_then(|str| if str == "hidden" { Some(false) } else { None }),
+            show_tab_bar_buttons: self.read_str("workbench.editor.editorActionsLocation").and_then(|str| {
+                if str == "hidden" {
+                    Some(ShowTabBarButtonOptions::Never)
+                } else {
+                    None
+                }
+            }),
             show_pinned_tabs_in_separate_row: None,
         })
     }

@@ -27,7 +27,7 @@ use parking_lot::Mutex;
 use project::{DirectoryLister, Project, ProjectEntryId, ProjectPath, WorktreeId};
 use schemars::JsonSchema;
 use serde::Deserialize;
-use settings::{Settings, SettingsStore};
+use settings::{Settings, SettingsStore, ShowTabBarButtonOptions};
 use std::{
     any::Any,
     cmp, fmt, mem,
@@ -363,7 +363,7 @@ pub struct Pane {
     render_tab_bar_buttons:
         Rc<dyn Fn(&mut Pane, &mut Window, &mut Context<Pane>) -> (Option<AnyElement>, Option<AnyElement>)>,
     render_tab_bar: Rc<dyn Fn(&mut Pane, &mut Window, &mut Context<Pane>) -> AnyElement>,
-    show_tab_bar_buttons: bool,
+    show_tab_bar_buttons: ShowTabBarButtonOptions,
     max_tabs: Option<NonZeroUsize>,
     use_max_tabs: bool,
     _subscriptions: Vec<Subscription>,
@@ -2956,7 +2956,9 @@ impl Pane {
                 tab_bar.start_child(navigate_backward).start_child(navigate_forward)
             })
             .map(|tab_bar| {
-                if self.show_tab_bar_buttons {
+                if self.show_tab_bar_buttons == ShowTabBarButtonOptions::Always
+                    || self.show_tab_bar_buttons == ShowTabBarButtonOptions::OnPaneFocus
+                {
                     let render_tab_buttons = self.render_tab_bar_buttons.clone();
                     let (left_children, right_children) = render_tab_buttons(self, window, cx);
                     tab_bar.start_children(left_children).end_children(right_children)
@@ -3546,9 +3548,13 @@ fn default_render_tab_bar_buttons(
     window: &mut Window,
     cx: &mut Context<Pane>,
 ) -> (Option<AnyElement>, Option<AnyElement>) {
-    if !pane.has_focus(window, cx) && !pane.context_menu_focused(window, cx) {
+    if pane.show_tab_bar_buttons == ShowTabBarButtonOptions::OnPaneFocus
+        && !pane.has_focus(window, cx)
+        && !pane.context_menu_focused(window, cx)
+    {
         return (None, None);
     }
+
     let (can_clone, can_split_move) = match pane.active_item() {
         Some(active_item) if active_item.can_split(cx) => (true, false),
         Some(_) => (false, pane.items_len() > 1),

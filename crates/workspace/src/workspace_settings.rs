@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use settings::StatusBarPosition;
 pub use settings::{
     AutosaveSetting, BottomDockLayout, EncodingDisplayOptions, InactiveOpacity, PaneSplitDirectionHorizontal,
-    PaneSplitDirectionVertical, RegisterSetting, RestoreOnStartupBehavior, Settings,
+    PaneSplitDirectionVertical, RegisterSetting, RestoreOnStartupBehavior, Settings, ShowTabBarButtonOptions,
 };
 use ui::rems_from_px;
 
@@ -84,7 +84,7 @@ pub struct ActivePanelModifiers {
 pub struct TabBarSettings {
     pub show: bool,
     pub show_nav_history_buttons: bool,
-    pub show_tab_bar_buttons: bool,
+    pub show_tab_bar_buttons: ShowTabBarButtonOptions,
     pub show_pinned_tabs_in_separate_row: bool,
 }
 

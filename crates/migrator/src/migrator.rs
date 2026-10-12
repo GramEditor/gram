@@ -124,6 +124,7 @@ pub fn migrate_settings(text: &str) -> Result<Option<String>> {
     let migrations: &[MigrationType] = &[
         MigrationType::Json(migrations::m_0001::removed_settings),
         MigrationType::Json(migrations::m_0001::rename_status_bar_show),
+        MigrationType::Json(migrations::m_0001::migrate_show_tab_bar_buttons),
     ];
     run_migrations(text, migrations)
 }
