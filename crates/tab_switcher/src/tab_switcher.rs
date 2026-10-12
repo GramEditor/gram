@@ -734,6 +734,7 @@ impl PickerDelegate for TabSwitcherDelegate {
             selected: true,
             preview: tab_match.preview,
             deemphasized: false,
+            max_title_len: None,
         };
         let label = tab_match.item.tab_content(params, window, cx);
 

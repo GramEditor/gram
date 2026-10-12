@@ -121,6 +121,9 @@ pub struct TabContentParams {
     pub preview: bool,
     /// Tab content should be deemphasized when active pane does not have focus.
     pub deemphasized: bool,
+    /// Maximum number of characters to render for the tab title, if the tab
+    /// renders its title with a single label.
+    pub max_title_len: Option<usize>,
 }
 
 impl TabContentParams {
@@ -157,6 +160,10 @@ pub trait Item: Focusable + EventEmitter<Self::Event> + Render + Sized {
     /// `tab_content_text`.
     fn tab_content(&self, params: TabContentParams, _window: &Window, cx: &App) -> AnyElement {
         let text = self.tab_content_text(params.detail.unwrap_or_default(), cx);
+        let text = match params.max_title_len {
+            Some(max_len) => util::truncate_and_trailoff(&text, max_len).into(),
+            None => text,
+        };
 
         Label::new(text).color(params.text_color()).into_any_element()
     }

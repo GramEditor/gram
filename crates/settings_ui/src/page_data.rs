@@ -3280,6 +3280,22 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                     files: USER,
                 }),
                 SettingsPageItem::SettingItem(SettingItem {
+                    title: "Wrap Tabs",
+                    description: "Wrap tabs onto additional rows when the tab bar overflows.",
+                    aliases: None,
+                    field: Box::new(SettingField {
+                        json_path: Some("tab_bar.wrap_tabs"),
+                        pick: |settings_content| {
+                            settings_content.tab_bar.as_ref()?.wrap_tabs.as_ref()
+                        },
+                        write: |settings_content, value| {
+                            settings_content.tab_bar.get_or_insert_default().wrap_tabs = value;
+                        },
+                    }),
+                    metadata: None,
+                    files: USER,
+                }),
+                SettingsPageItem::SettingItem(SettingItem {
                     title: "Show Navigation History Buttons",
                     description: "Show the navigation history buttons in the tab bar.",
                     aliases: None,

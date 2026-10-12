@@ -552,6 +552,7 @@ impl VsCodeSettings {
                 }
             }),
             show_pinned_tabs_in_separate_row: None,
+            wrap_tabs: self.read_bool("workbench.editor.wrapTabs"),
         })
     }
 

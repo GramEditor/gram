@@ -1222,7 +1222,9 @@ or
 "tab_bar": {
   "show": true,
   "show_nav_history_buttons": true,
-  "show_tab_bar_buttons": "on_pane_focus"
+  "show_tab_bar_buttons": "on_pane_focus",
+  "show_pinned_tabs_in_separate_row": false,
+  "wrap_tabs": false
 }
 ```
 
@@ -1251,6 +1253,28 @@ or
 - Description: When to show the tab bar buttons.
 - Setting: `show_tab_bar_buttons`
 - Default: `on_pane_focus`
+
+**Options**
+
+`boolean` values
+
+### Pinned Tabs in Separate Row
+
+- Description: Whether or not pinned tabs appear in a top row and unpinned
+  tabs in a bottom row. When disabled, all tabs appear in a single row.
+- Setting: `show_pinned_tabs_in_separate_row`
+- Default: `false`
+
+**Options**
+
+`boolean` values
+
+### Wrap Tabs
+
+- Description: Whether to wrap tabs onto additional rows instead of scrolling
+  horizontally when the tab bar overflows.
+- Setting: `wrap_tabs`
+- Default: `false`
 
 **Options**
 
