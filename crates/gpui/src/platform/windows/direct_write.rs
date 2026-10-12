@@ -438,8 +438,8 @@ impl DirectWriteState {
 
     fn select_font(&mut self, target_font: &Font) -> Option<FontId> {
         unsafe {
+            let family = self.system_ui_font_name.clone();
             if target_font.family == ".SystemUIFont" {
-                let family = self.system_ui_font_name.clone();
                 self.find_font_id(
                     family.as_ref(),
                     target_font.weight,
@@ -448,7 +448,6 @@ impl DirectWriteState {
                     target_font.fallbacks.as_ref(),
                 )
             } else {
-                let family = self.system_ui_font_name.clone();
                 self.find_font_id(
                     font_name_with_fallbacks(target_font.family.as_ref(), family.as_ref()),
                     target_font.weight,
@@ -1084,16 +1083,12 @@ impl DirectWriteState {
         }
 
         // Convert from premultiplied to straight alpha
-        for chunk in rasterized.chunks_exact_mut(4) {
-            let b = chunk[0] as f32;
-            let g = chunk[1] as f32;
-            let r = chunk[2] as f32;
-            let a = chunk[3] as f32;
-            if a > 0.0 {
-                let inv_a = 255.0 / a;
-                chunk[0] = (b * inv_a).clamp(0.0, 255.0) as u8;
-                chunk[1] = (g * inv_a).clamp(0.0, 255.0) as u8;
-                chunk[2] = (r * inv_a).clamp(0.0, 255.0) as u8;
+        for [b, g, r, a] in rasterized.as_chunks_mut().0 {
+            if *a > 0 {
+                let inv_a = 255.0 / f32::from(*a);
+                *b = (f32::from(*b) * inv_a).clamp(0.0, 255.0) as u8;
+                *g = (f32::from(*g) * inv_a).clamp(0.0, 255.0) as u8;
+                *r = (f32::from(*r) * inv_a).clamp(0.0, 255.0) as u8;
             }
         }
 
@@ -1509,9 +1504,9 @@ impl<'a> StringIndexConverter<'a> {
     }
 }
 
-impl Into<DWRITE_FONT_STYLE> for FontStyle {
-    fn into(self) -> DWRITE_FONT_STYLE {
-        match self {
+impl From<FontStyle> for DWRITE_FONT_STYLE {
+    fn from(val: FontStyle) -> Self {
+        match val {
             FontStyle::Normal => DWRITE_FONT_STYLE_NORMAL,
             FontStyle::Italic => DWRITE_FONT_STYLE_ITALIC,
             FontStyle::Oblique => DWRITE_FONT_STYLE_OBLIQUE,
@@ -1530,9 +1525,9 @@ impl From<DWRITE_FONT_STYLE> for FontStyle {
     }
 }
 
-impl Into<DWRITE_FONT_WEIGHT> for FontWeight {
-    fn into(self) -> DWRITE_FONT_WEIGHT {
-        DWRITE_FONT_WEIGHT(self.0 as i32)
+impl From<FontWeight> for DWRITE_FONT_WEIGHT {
+    fn from(val: FontWeight) -> Self {
+        DWRITE_FONT_WEIGHT(val.0 as i32)
     }
 }
 

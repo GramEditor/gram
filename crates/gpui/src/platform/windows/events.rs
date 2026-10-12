@@ -42,20 +42,20 @@ impl WindowsWindowInner {
             WM_ACTIVATE => self.handle_activate_msg(wparam),
             WM_CREATE => self.handle_create_msg(handle),
             WM_MOVE => self.handle_move_msg(handle, lparam),
-            WM_SIZE => self.handle_size_msg(wparam, lparam),
+            WM_SIZE => Some(self.handle_size_msg(wparam, lparam)),
             WM_GETMINMAXINFO => self.handle_get_min_max_info_msg(lparam),
             WM_ENTERSIZEMOVE | WM_ENTERMENULOOP => self.handle_size_move_loop(handle),
             WM_EXITSIZEMOVE | WM_EXITMENULOOP => self.handle_size_move_loop_exit(handle),
             WM_TIMER => self.handle_timer_msg(handle, wparam),
             WM_NCCALCSIZE => self.handle_calc_client_size(handle, wparam, lparam),
-            WM_DPICHANGED => self.handle_dpi_changed_msg(handle, wparam, lparam),
+            WM_DPICHANGED => Some(self.handle_dpi_changed_msg(handle, wparam, lparam)),
             WM_DISPLAYCHANGE => self.handle_display_change_msg(handle),
             WM_NCHITTEST => self.handle_hit_test_msg(handle, lparam),
             WM_PAINT => self.handle_paint_msg(handle),
             WM_CLOSE => self.handle_close_msg(),
-            WM_DESTROY => self.handle_destroy_msg(handle),
-            WM_MOUSEMOVE => self.handle_mouse_move_msg(handle, lparam, wparam),
-            WM_MOUSELEAVE | WM_NCMOUSELEAVE => self.handle_mouse_leave_msg(),
+            WM_DESTROY => Some(self.handle_destroy_msg(handle)),
+            WM_MOUSEMOVE => Some(self.handle_mouse_move_msg(handle, lparam, wparam)),
+            WM_MOUSELEAVE | WM_NCMOUSELEAVE => Some(self.handle_mouse_leave_msg()),
             WM_NCMOUSEMOVE => self.handle_nc_mouse_move_msg(handle, lparam),
             // Treat double click as a second single click, since we track the double clicks ourselves.
             // If you don't interact with any elements, this will fall through to the windows default
@@ -68,29 +68,29 @@ impl WindowsWindowInner {
             WM_NCLBUTTONUP => self.handle_nc_mouse_up_msg(handle, MouseButton::Left, wparam, lparam),
             WM_NCRBUTTONUP => self.handle_nc_mouse_up_msg(handle, MouseButton::Right, wparam, lparam),
             WM_NCMBUTTONUP => self.handle_nc_mouse_up_msg(handle, MouseButton::Middle, wparam, lparam),
-            WM_LBUTTONDOWN => self.handle_mouse_down_msg(handle, MouseButton::Left, lparam),
-            WM_RBUTTONDOWN => self.handle_mouse_down_msg(handle, MouseButton::Right, lparam),
-            WM_MBUTTONDOWN => self.handle_mouse_down_msg(handle, MouseButton::Middle, lparam),
-            WM_XBUTTONDOWN => self.handle_xbutton_msg(handle, wparam, lparam, Self::handle_mouse_down_msg),
-            WM_LBUTTONUP => self.handle_mouse_up_msg(handle, MouseButton::Left, lparam),
-            WM_RBUTTONUP => self.handle_mouse_up_msg(handle, MouseButton::Right, lparam),
-            WM_MBUTTONUP => self.handle_mouse_up_msg(handle, MouseButton::Middle, lparam),
-            WM_XBUTTONUP => self.handle_xbutton_msg(handle, wparam, lparam, Self::handle_mouse_up_msg),
-            WM_MOUSEWHEEL => self.handle_mouse_wheel_msg(handle, wparam, lparam),
-            WM_MOUSEHWHEEL => self.handle_mouse_horizontal_wheel_msg(handle, wparam, lparam),
+            WM_LBUTTONDOWN => Some(self.handle_mouse_down_msg(handle, MouseButton::Left, lparam)),
+            WM_RBUTTONDOWN => Some(self.handle_mouse_down_msg(handle, MouseButton::Right, lparam)),
+            WM_MBUTTONDOWN => Some(self.handle_mouse_down_msg(handle, MouseButton::Middle, lparam)),
+            WM_XBUTTONDOWN => Some(self.handle_xbutton_msg(handle, wparam, lparam, Self::handle_mouse_down_msg)),
+            WM_LBUTTONUP => Some(self.handle_mouse_up_msg(handle, MouseButton::Left, lparam)),
+            WM_RBUTTONUP => Some(self.handle_mouse_up_msg(handle, MouseButton::Right, lparam)),
+            WM_MBUTTONUP => Some(self.handle_mouse_up_msg(handle, MouseButton::Middle, lparam)),
+            WM_XBUTTONUP => Some(self.handle_xbutton_msg(handle, wparam, lparam, Self::handle_mouse_up_msg)),
+            WM_MOUSEWHEEL => Some(self.handle_mouse_wheel_msg(handle, wparam, lparam)),
+            WM_MOUSEHWHEEL => Some(self.handle_mouse_horizontal_wheel_msg(handle, wparam, lparam)),
             WM_SYSKEYUP => self.handle_syskeyup_msg(wparam, lparam),
-            WM_KEYUP => self.handle_keyup_msg(wparam, lparam),
-            WM_GPUI_KEYDOWN => self.handle_keydown_msg(wparam, lparam),
+            WM_KEYUP => Some(self.handle_keyup_msg(wparam, lparam)),
+            WM_GPUI_KEYDOWN => Some(self.handle_keydown_msg(wparam, lparam)),
             WM_CHAR => self.handle_char_msg(wparam),
-            WM_IME_STARTCOMPOSITION => self.handle_ime_position(handle),
+            WM_IME_STARTCOMPOSITION => Some(self.handle_ime_position(handle)),
             WM_IME_COMPOSITION => self.handle_ime_composition(handle, lparam),
             WM_SETCURSOR => self.handle_set_cursor(handle, lparam),
             WM_SETTINGCHANGE => self.handle_system_settings_changed(handle, wparam, lparam),
-            WM_INPUTLANGCHANGE => self.handle_input_language_changed(),
+            WM_INPUTLANGCHANGE => Some(self.handle_input_language_changed()),
             WM_SHOWWINDOW => self.handle_window_visibility_changed(handle, wparam),
-            WM_GPUI_CURSOR_STYLE_CHANGED => self.handle_cursor_changed(lparam),
+            WM_GPUI_CURSOR_STYLE_CHANGED => Some(self.handle_cursor_changed(lparam)),
             WM_GPUI_FORCE_UPDATE_WINDOW => self.draw_window(handle, true),
-            WM_GPUI_GPU_DEVICE_LOST => self.handle_device_lost(lparam),
+            WM_GPUI_GPU_DEVICE_LOST => Some(self.handle_device_lost(lparam)),
             _ => None,
         };
         if let Some(n) = handled {
@@ -149,14 +149,14 @@ impl WindowsWindowInner {
         Some(0)
     }
 
-    fn handle_size_msg(&self, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
+    fn handle_size_msg(&self, wparam: WPARAM, lparam: LPARAM) -> isize {
         // Don't resize the renderer when the window is minimized, but record that it was minimized so
         // that on restore the swap chain can be recreated via `update_drawable_size_even_if_unchanged`.
         if wparam.0 == SIZE_MINIMIZED as usize {
             self.state
                 .restore_from_minimized
                 .set(self.state.callbacks.request_frame.take());
-            return Some(0);
+            return 0;
         }
 
         let width = lparam.loword().max(1) as i32;
@@ -172,7 +172,7 @@ impl WindowsWindowInner {
         }
 
         self.handle_size_change(new_size, scale_factor, should_resize_renderer);
-        Some(0)
+        0
     }
 
     fn handle_size_change(&self, device_size: Size<DevicePixels>, scale_factor: f32, should_resize_renderer: bool) {
@@ -230,7 +230,7 @@ impl WindowsWindowInner {
         if should_close { None } else { Some(0) }
     }
 
-    fn handle_destroy_msg(&self, handle: HWND) -> Option<isize> {
+    fn handle_destroy_msg(&self, handle: HWND) -> isize {
         let callback = { self.state.callbacks.close.take() };
         if let Some(callback) = callback {
             callback();
@@ -244,14 +244,14 @@ impl WindowsWindowInner {
             )
             .log_err();
         }
-        Some(0)
+        0
     }
 
-    fn handle_mouse_move_msg(&self, handle: HWND, lparam: LPARAM, wparam: WPARAM) -> Option<isize> {
+    fn handle_mouse_move_msg(&self, handle: HWND, lparam: LPARAM, wparam: WPARAM) -> isize {
         self.start_tracking_mouse(handle, TME_LEAVE);
 
         let Some(mut func) = self.state.callbacks.input.take() else {
-            return Some(1);
+            return 1;
         };
         let scale_factor = self.state.scale_factor.get();
 
@@ -273,17 +273,17 @@ impl WindowsWindowInner {
         let handled = !func(input).propagate;
         self.state.callbacks.input.set(Some(func));
 
-        if handled { Some(0) } else { Some(1) }
+        if handled { 0 } else { 1 }
     }
 
-    fn handle_mouse_leave_msg(&self) -> Option<isize> {
+    fn handle_mouse_leave_msg(&self) -> isize {
         self.state.hovered.set(false);
         if let Some(mut callback) = self.state.callbacks.hovered_status_change.take() {
             callback(false);
             self.state.callbacks.hovered_status_change.set(Some(callback));
         }
 
-        Some(0)
+        0
     }
 
     fn handle_syskeyup_msg(&self, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
@@ -301,7 +301,7 @@ impl WindowsWindowInner {
 
     // It's a known bug that you can't trigger `ctrl-shift-0`. See:
     // https://superuser.com/questions/1455762/ctrl-shift-number-key-combination-has-stopped-working-for-a-few-numbers
-    fn handle_keydown_msg(&self, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
+    fn handle_keydown_msg(&self, wparam: WPARAM, lparam: LPARAM) -> isize {
         let Some(input) = handle_key_event(wparam, lparam, &self.state, |keystroke, prefer_character_input| {
             PlatformInput::KeyDown(KeyDownEvent {
                 keystroke,
@@ -309,35 +309,35 @@ impl WindowsWindowInner {
                 prefer_character_input,
             })
         }) else {
-            return Some(1);
+            return 1;
         };
 
         let Some(mut func) = self.state.callbacks.input.take() else {
-            return Some(1);
+            return 1;
         };
 
         let handled = !func(input).propagate;
 
         self.state.callbacks.input.set(Some(func));
 
-        if handled { Some(0) } else { Some(1) }
+        if handled { 0 } else { 1 }
     }
 
-    fn handle_keyup_msg(&self, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
+    fn handle_keyup_msg(&self, wparam: WPARAM, lparam: LPARAM) -> isize {
         let Some(input) = handle_key_event(wparam, lparam, &self.state, |keystroke, _| {
             PlatformInput::KeyUp(KeyUpEvent { keystroke })
         }) else {
-            return Some(1);
+            return 1;
         };
 
         let Some(mut func) = self.state.callbacks.input.take() else {
-            return Some(1);
+            return 1;
         };
 
         let handled = !func(input).propagate;
         self.state.callbacks.input.set(Some(func));
 
-        if handled { Some(0) } else { Some(1) }
+        if handled { 0 } else { 1 }
     }
 
     fn handle_char_msg(&self, wparam: WPARAM) -> Option<isize> {
@@ -349,11 +349,11 @@ impl WindowsWindowInner {
         Some(0)
     }
 
-    fn handle_mouse_down_msg(&self, handle: HWND, button: MouseButton, lparam: LPARAM) -> Option<isize> {
+    fn handle_mouse_down_msg(&self, handle: HWND, button: MouseButton, lparam: LPARAM) -> isize {
         unsafe { SetCapture(handle) };
 
         let Some(mut func) = self.state.callbacks.input.take() else {
-            return Some(1);
+            return 1;
         };
         let x = lparam.signed_loword();
         let y = lparam.signed_hiword();
@@ -371,14 +371,14 @@ impl WindowsWindowInner {
         let handled = !func(input).propagate;
         self.state.callbacks.input.set(Some(func));
 
-        if handled { Some(0) } else { Some(1) }
+        if handled { 0 } else { 1 }
     }
 
-    fn handle_mouse_up_msg(&self, _handle: HWND, button: MouseButton, lparam: LPARAM) -> Option<isize> {
+    fn handle_mouse_up_msg(&self, _handle: HWND, button: MouseButton, lparam: LPARAM) -> isize {
         unsafe { ReleaseCapture().log_err() };
 
         let Some(mut func) = self.state.callbacks.input.take() else {
-            return Some(1);
+            return 1;
         };
         let x = lparam.signed_loword() as f32;
         let y = lparam.signed_hiword() as f32;
@@ -394,7 +394,7 @@ impl WindowsWindowInner {
         let handled = !func(input).propagate;
         self.state.callbacks.input.set(Some(func));
 
-        if handled { Some(0) } else { Some(1) }
+        if handled { 0 } else { 1 }
     }
 
     fn handle_xbutton_msg(
@@ -402,21 +402,21 @@ impl WindowsWindowInner {
         handle: HWND,
         wparam: WPARAM,
         lparam: LPARAM,
-        handler: impl Fn(&Self, HWND, MouseButton, LPARAM) -> Option<isize>,
-    ) -> Option<isize> {
+        handler: impl Fn(&Self, HWND, MouseButton, LPARAM) -> isize,
+    ) -> isize {
         let nav_dir = match wparam.hiword() {
             XBUTTON1 => NavigationDirection::Back,
             XBUTTON2 => NavigationDirection::Forward,
-            _ => return Some(1),
+            _ => return 1,
         };
         handler(self, handle, MouseButton::Navigate(nav_dir), lparam)
     }
 
-    fn handle_mouse_wheel_msg(&self, handle: HWND, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
+    fn handle_mouse_wheel_msg(&self, handle: HWND, wparam: WPARAM, lparam: LPARAM) -> isize {
         let modifiers = current_modifiers();
 
         let Some(mut func) = self.state.callbacks.input.take() else {
-            return Some(1);
+            return 1;
         };
         let scale_factor = self.state.scale_factor.get();
         let wheel_scroll_amount = match modifiers.shift {
@@ -448,12 +448,12 @@ impl WindowsWindowInner {
         let handled = !func(input).propagate;
         self.state.callbacks.input.set(Some(func));
 
-        if handled { Some(0) } else { Some(1) }
+        if handled { 0 } else { 1 }
     }
 
-    fn handle_mouse_horizontal_wheel_msg(&self, handle: HWND, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
+    fn handle_mouse_horizontal_wheel_msg(&self, handle: HWND, wparam: WPARAM, lparam: LPARAM) -> isize {
         let Some(mut func) = self.state.callbacks.input.take() else {
-            return Some(1);
+            return 1;
         };
         let scale_factor = self.state.scale_factor.get();
         let wheel_scroll_chars = self.system_settings().mouse_wheel_settings.wheel_scroll_chars.get();
@@ -476,7 +476,7 @@ impl WindowsWindowInner {
         let handled = !func(event).propagate;
         self.state.callbacks.input.set(Some(func));
 
-        if handled { Some(0) } else { Some(1) }
+        if handled { 0 } else { 1 }
     }
 
     fn retrieve_caret_position(&self) -> Option<POINT> {
@@ -492,11 +492,11 @@ impl WindowsWindowInner {
         })
     }
 
-    fn handle_ime_position(&self, handle: HWND) -> Option<isize> {
+    fn handle_ime_position(&self, handle: HWND) -> isize {
         if let Some(caret_position) = self.retrieve_caret_position() {
             self.update_ime_position(handle, caret_position);
         }
-        Some(0)
+        0
     }
 
     pub(crate) fn update_ime_position(&self, handle: HWND, caret_position: POINT) {
@@ -632,7 +632,7 @@ impl WindowsWindowInner {
         }
     }
 
-    fn handle_dpi_changed_msg(&self, handle: HWND, wparam: WPARAM, lparam: LPARAM) -> Option<isize> {
+    fn handle_dpi_changed_msg(&self, handle: HWND, wparam: WPARAM, lparam: LPARAM) -> isize {
         let new_dpi = wparam.loword() as f32;
 
         let is_maximized = self.state.is_maximized();
@@ -694,7 +694,7 @@ impl WindowsWindowInner {
             }
         }
 
-        Some(0)
+        0
     }
 
     /// The following conditions will trigger this event:
@@ -847,7 +847,6 @@ impl WindowsWindowInner {
             if handled {
                 return Some(0);
             }
-        } else {
         };
 
         // Since these are handled in handle_nc_mouse_up_msg we must prevent the default window proc
@@ -891,7 +890,6 @@ impl WindowsWindowInner {
             if handled {
                 return Some(0);
             }
-        } else {
         }
 
         let last_pressed = self.state.nc_button_pressed.take();
@@ -925,7 +923,7 @@ impl WindowsWindowInner {
         None
     }
 
-    fn handle_cursor_changed(&self, lparam: LPARAM) -> Option<isize> {
+    fn handle_cursor_changed(&self, lparam: LPARAM) -> isize {
         let had_cursor = self.state.current_cursor.get().is_some();
 
         self.state.current_cursor.set(if lparam.0 == 0 {
@@ -938,7 +936,7 @@ impl WindowsWindowInner {
             unsafe { SetCursor(self.state.current_cursor.get()) };
         }
 
-        Some(0)
+        0
     }
 
     fn handle_set_cursor(&self, handle: HWND, lparam: LPARAM) -> Option<isize> {
@@ -1000,7 +998,7 @@ impl WindowsWindowInner {
         Some(0)
     }
 
-    fn handle_input_language_changed(&self) -> Option<isize> {
+    fn handle_input_language_changed(&self) -> isize {
         unsafe {
             PostMessageW(
                 Some(self.platform_window_handle),
@@ -1010,7 +1008,7 @@ impl WindowsWindowInner {
             )
             .log_err();
         }
-        Some(0)
+        0
     }
 
     fn handle_window_visibility_changed(&self, handle: HWND, wparam: WPARAM) -> Option<isize> {
@@ -1020,13 +1018,13 @@ impl WindowsWindowInner {
         None
     }
 
-    fn handle_device_lost(&self, lparam: LPARAM) -> Option<isize> {
+    fn handle_device_lost(&self, lparam: LPARAM) -> isize {
         let devices = lparam.0 as *const DirectXDevices;
         let devices = unsafe { &*devices };
-        if let Err(err) = self.state.renderer.borrow_mut().handle_device_lost(&devices) {
+        if let Err(err) = self.state.renderer.borrow_mut().handle_device_lost(devices) {
             panic!("Device lost: {err}");
         }
-        Some(0)
+        0
     }
 
     #[inline]

@@ -254,7 +254,7 @@ impl WindowsWindowInner {
                         unsafe { GetWindowRect(this.hwnd, &mut rc) }
                             .context("failed to get window rect")
                             .log_err();
-                        let _ = this.state.fullscreen.set(Some(StyleAndBounds {
+                        this.state.fullscreen.set(Some(StyleAndBounds {
                             style,
                             x: rc.left,
                             y: rc.top,
@@ -611,24 +611,15 @@ impl PlatformWindow for WindowsWindow {
             .executor
             .spawn(async move {
                 unsafe {
-                    let mut config = TASKDIALOGCONFIG::default();
-                    config.cbSize = std::mem::size_of::<TASKDIALOGCONFIG>() as _;
-                    config.hwndParent = handle;
-                    let title;
-                    let main_icon;
-                    match level {
-                        crate::PromptLevel::Info => {
-                            title = windows::core::w!("Info");
-                            main_icon = TD_INFORMATION_ICON;
-                        }
-                        crate::PromptLevel::Warning => {
-                            title = windows::core::w!("Warning");
-                            main_icon = TD_WARNING_ICON;
-                        }
-                        crate::PromptLevel::Critical => {
-                            title = windows::core::w!("Critical");
-                            main_icon = TD_ERROR_ICON;
-                        }
+                    let mut config = TASKDIALOGCONFIG {
+                        cbSize: std::mem::size_of::<TASKDIALOGCONFIG>() as _,
+                        hwndParent: handle,
+                        ..Default::default()
+                    };
+                    let (title, main_icon) = match level {
+                        crate::PromptLevel::Info => (windows::core::w!("Info"), TD_INFORMATION_ICON),
+                        crate::PromptLevel::Warning => (windows::core::w!("Warning"), TD_WARNING_ICON),
+                        crate::PromptLevel::Critical => (windows::core::w!("Critical"), TD_ERROR_ICON),
                     };
                     config.pszWindowTitle = title;
                     config.Anonymous1.pszMainIcon = main_icon;
@@ -1086,6 +1077,7 @@ struct StyleAndBounds {
 }
 
 #[repr(C)]
+#[allow(clippy::upper_case_acronyms)]
 struct WINDOWCOMPOSITIONATTRIBDATA {
     attrib: u32,
     pv_data: *mut std::ffi::c_void,
@@ -1319,10 +1311,7 @@ fn dwm_set_window_composition_attribute(hwnd: HWND, backdrop_type: u32) {
             &backdrop_type as *const _ as *const _,
             std::mem::size_of_val(&backdrop_type) as u32,
         );
-
-        if !result.is_ok() {
-            return;
-        }
+        let _ = result;
     }
 }
 

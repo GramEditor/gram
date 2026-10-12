@@ -303,7 +303,11 @@ impl DirectXRenderer {
                 PrimitiveBatch::PolychromeSprites { texture_id, sprites } => {
                     self.draw_polychrome_sprites(texture_id, sprites)
                 }
-                PrimitiveBatch::Surfaces(surfaces) => self.draw_surfaces(surfaces),
+                PrimitiveBatch::Surfaces(_surfaces) => {
+                    // We used to have a call to an empty function here, not sure why:
+                    // self.draw_surfaces(surfaces);
+                    Ok(())
+                }
             }
             .context(format!(
                 "scene too large:\
@@ -380,7 +384,8 @@ impl DirectXRenderer {
             D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP,
             4,
             shadows.len() as u32,
-        )
+        );
+        Ok(())
     }
 
     fn draw_quads(&mut self, quads: &[Quad]) -> Result<()> {
@@ -398,7 +403,8 @@ impl DirectXRenderer {
             D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP,
             4,
             quads.len() as u32,
-        )
+        );
+        Ok(())
     }
 
     fn draw_paths_to_intermediate(&mut self, paths: &[Path<ScaledPixels>]) -> Result<()> {
@@ -444,7 +450,7 @@ impl DirectXRenderer {
             D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
             vertices.len() as u32,
             1,
-        )?;
+        );
 
         // Resolve MSAA to non-MSAA intermediate texture
         unsafe {
@@ -505,7 +511,8 @@ impl DirectXRenderer {
             slice::from_ref(&self.globals.global_params_buffer),
             slice::from_ref(&self.globals.sampler),
             sprites.len() as u32,
-        )
+        );
+        Ok(())
     }
 
     fn draw_underlines(&mut self, underlines: &[Underline]) -> Result<()> {
@@ -524,7 +531,8 @@ impl DirectXRenderer {
             D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP,
             4,
             underlines.len() as u32,
-        )
+        );
+        Ok(())
     }
 
     fn draw_monochrome_sprites(&mut self, texture_id: AtlasTextureId, sprites: &[MonochromeSprite]) -> Result<()> {
@@ -545,7 +553,8 @@ impl DirectXRenderer {
             slice::from_ref(&self.globals.global_params_buffer),
             slice::from_ref(&self.globals.sampler),
             sprites.len() as u32,
-        )
+        );
+        Ok(())
     }
 
     fn draw_subpixel_sprites(&mut self, texture_id: AtlasTextureId, sprites: &[SubpixelSprite]) -> Result<()> {
@@ -557,7 +566,7 @@ impl DirectXRenderer {
 
         self.pipelines
             .subpixel_sprites
-            .update_buffer(&devices.device, &devices.device_context, &sprites)?;
+            .update_buffer(&devices.device, &devices.device_context, sprites)?;
         let texture_view = self.atlas.get_texture_view(texture_id);
         self.pipelines.subpixel_sprites.draw_with_texture(
             &devices.device_context,
@@ -566,7 +575,8 @@ impl DirectXRenderer {
             slice::from_ref(&self.globals.global_params_buffer),
             slice::from_ref(&self.globals.sampler),
             sprites.len() as u32,
-        )
+        );
+        Ok(())
     }
 
     fn draw_polychrome_sprites(&mut self, texture_id: AtlasTextureId, sprites: &[PolychromeSprite]) -> Result<()> {
@@ -587,13 +597,7 @@ impl DirectXRenderer {
             slice::from_ref(&self.globals.global_params_buffer),
             slice::from_ref(&self.globals.sampler),
             sprites.len() as u32,
-        )
-    }
-
-    fn draw_surfaces(&mut self, surfaces: &[PaintSurface]) -> Result<()> {
-        if surfaces.is_empty() {
-            return Ok(());
-        }
+        );
         Ok(())
     }
 
@@ -916,7 +920,7 @@ impl<T> PipelineState<T> {
         topology: D3D_PRIMITIVE_TOPOLOGY,
         vertex_count: u32,
         instance_count: u32,
-    ) -> Result<()> {
+    ) {
         set_pipeline_state(
             device_context,
             slice::from_ref(&self.view),
@@ -930,7 +934,6 @@ impl<T> PipelineState<T> {
         unsafe {
             device_context.DrawInstanced(vertex_count, instance_count, 0, 0);
         }
-        Ok(())
     }
 
     fn draw_with_texture(
@@ -941,7 +944,7 @@ impl<T> PipelineState<T> {
         global_params: &[Option<ID3D11Buffer>],
         sampler: &[Option<ID3D11SamplerState>],
         instance_count: u32,
-    ) -> Result<()> {
+    ) {
         set_pipeline_state(
             device_context,
             slice::from_ref(&self.view),
@@ -959,7 +962,6 @@ impl<T> PipelineState<T> {
 
             device_context.DrawInstanced(4, instance_count, 0, 0);
         }
-        Ok(())
     }
 }
 
@@ -1388,6 +1390,7 @@ pub(crate) mod shader_resources {
     }
 
     impl<'t> RawShaderBytes<'t> {
+        #[cfg_attr(not(debug_assertions), expect(clippy::unnecessary_wraps))]
         pub(crate) fn new(module: ShaderModule, target: ShaderTarget) -> Result<Self> {
             #[cfg(not(debug_assertions))]
             {
@@ -1477,7 +1480,7 @@ pub(crate) mod shader_resources {
             let mut compile_blob = None;
             let mut error_blob = None;
             let shader_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join(&format!("src/platform/windows/{}", shader_name))
+                .join(format!("src/platform/windows/{}", shader_name))
                 .canonicalize()?;
 
             let entry_point = PCSTR::from_raw(entry.as_ptr());

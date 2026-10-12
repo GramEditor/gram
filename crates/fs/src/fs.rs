@@ -3314,7 +3314,7 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let file = temp_dir.path().join("test (1).txt");
         let file = SanitizedPath::new(&file);
-        std::fs::write(&file, "test").unwrap();
+        std::fs::write(file, "test").unwrap();
 
         let canonicalized = fs.canonicalize(file.as_path()).await;
         assert!(canonicalized.is_ok());

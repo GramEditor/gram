@@ -120,7 +120,7 @@ fn send_args_to_instance(args: &Args) -> anyhow::Result<()> {
         let mut urls = vec![];
         let mut diff_paths = vec![];
         for path in args.paths_or_urls.iter() {
-            match std::fs::canonicalize(&path) {
+            match std::fs::canonicalize(path) {
                 Ok(path) => paths.push(path.to_string_lossy().into_owned()),
                 Err(error) => {
                     if path.starts_with("gram://")
