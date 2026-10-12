@@ -317,9 +317,9 @@ TBD: Centered layout related settings
 
   // Customize the tab bar appearance
   "tab_bar": {
-    "show": true,                     // Show/hide the tab bar
-    "show_nav_history_buttons": true, // Show/hide history buttons on tab bar
-    "show_tab_bar_buttons": true      // Show hide buttons (new, split, zoom)
+    "show": true,                           // Show/hide the tab bar
+    "show_nav_history_buttons": true,       // Show/hide history buttons on tab bar
+    "show_tab_bar_buttons": "on_pane_focus" // When to show tab bar buttons (new, split, zoom)
   },
   "tabs": {
     "git_status": false,              // Color to show git status
