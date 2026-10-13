@@ -160,12 +160,18 @@ If a tarball is available for your architecture at the
 ./install.sh
 ```
 
-This downloads and installs the latest Gram release to `$HOME/.local`. For a
+This downloads and installs the latest Gram release to `$HOME/.local`.
+The installer registers the application launcher under `share/applications` and
+copies the bundled icons into `share/icons/hicolor`, so menus and running
+windows can resolve Gram's icon. With `--prefix`, the command symlink and our installation are installed under that prefix instead. For a
 system-wide installation, use the `--prefix` argument:
 
 ```bash
-./install.sh --prefix /usr/local ./gram-linux-x86_64-1.1.0.tar.gz
+./install.sh --prefix /usr/local ./gram-linux-x86_64-VERSION.tar.gz
 ```
+
+Replace `VERSION` with the release version. A nonstandard prefix must be included
+in the desktop's data search path for its launcher and icons to be discoverable.
 
 ## From Source
 

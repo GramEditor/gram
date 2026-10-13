@@ -109,17 +109,37 @@ if [ "$channel" != "stable" ]; then
   appid="app.liten.Gram-Dev"
 fi
 mkdir -p "$GRAM_INSTALL_PREFIX/gram$suffix.app"
-mkdir -p "$GRAM_INSTALL_PREFIX/bin" "$GRAM_INSTALL_PREFIX/share/applications"
+mkdir -p "$GRAM_INSTALL_PREFIX/bin" "$GRAM_INSTALL_PREFIX/share/applications" "$GRAM_INSTALL_PREFIX/share/icons"
 tar -xzf "$GRAM_BUNDLE_FILE" -C "$GRAM_INSTALL_PREFIX/"
 
-ln -sf "$GRAM_INSTALL_PREFIX/gram$suffix.app/bin/gram" "$HOME/.local/bin/gram"
+ln -sf "$GRAM_INSTALL_PREFIX/gram$suffix.app/bin/gram" "$GRAM_INSTALL_PREFIX/bin/gram"
 
 desktop_file_path="$GRAM_INSTALL_PREFIX/share/applications/${appid}.desktop"
 src_dir="$GRAM_INSTALL_PREFIX/gram$suffix.app/share/applications"
-cp "$src_dir/gram${suffix}.desktop" "${desktop_file_path}"
+desktop_source="$src_dir/$appid.desktop"
+install -m644 "$desktop_source" "$desktop_file_path"
 
-sed -i -e "s|Icon=gram|Icon=$GRAM_INSTALL_PREFIX/gram$suffix.app/share/icons/hicolor/512x512/apps/gram.png|g" "${desktop_file_path}"
-sed -i -e "s|Exec=gram|Exec=$GRAM_INSTALL_PREFIX/gram$suffix.app/bin/gram|g" "${desktop_file_path}"
+# Keep Icon as a theme name and install icons in the standard theme directories.
+icon_theme_dir="$GRAM_INSTALL_PREFIX/share/icons/hicolor"
+bundle_icons="$GRAM_INSTALL_PREFIX/gram$suffix.app/share/icons/hicolor"
+install -Dm644 "$bundle_icons/scalable/apps/$appid.svg" "$icon_theme_dir/scalable/apps/$appid.svg"
+install -Dm644 "$bundle_icons/symbolic/apps/$appid-symbolic.svg" "$icon_theme_dir/symbolic/apps/$appid-symbolic.svg"
+# Notify cached icon lookups that the theme contents changed.
+touch "$icon_theme_dir"
+
+gram_executable="$GRAM_INSTALL_PREFIX/gram$suffix.app/bin/gram"
+# Quote the executable for desktop Exec keys, then escape sed replacements.
+exec_value=$(printf '%s' "$gram_executable" | sed -e 's/\\/\\\\\\\\/g' -e 's/["`$]/\\\\&/g')
+exec_value="\"$exec_value\""
+exec_value=$(printf '%s' "$exec_value" | sed 's/[\\&|]/\\&/g')
+tryexec_value=$(printf '%s' "$gram_executable" | sed -e 's/\\/\\\\/g' -e 's/[\\&|]/\\&/g')
+sed -i -e "s|^Exec=gram |Exec=$exec_value |" \
+       -e "s|^TryExec=gram$|TryExec=$tryexec_value|" "$desktop_file_path"
+
+if command -v update-desktop-database >/dev/null 2>&1; then
+  update-desktop-database "$GRAM_INSTALL_PREFIX/share/applications" ||\
+    printf '%s\n' 'Warning: could not refresh the desktop database.' >&2
+fi
 
 echo "Installation to $GRAM_INSTALL_PREFIX complete."
 

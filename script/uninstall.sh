@@ -60,8 +60,25 @@ linux() {
     # Remove the binary symlink
     rm -f "$HOME/.local/bin/gram"
 
-    # Remove the .desktop file
-    rm -f "$HOME/.local/share/applications/gram$suffix.desktop"
+    app_id="app.liten.Gram"
+    if [ "$channel" = "dev" ]; then
+        app_id="app.liten.Gram-Dev"
+    fi
+
+    # Remove desktop integration installed by the current installer.
+    rm -f "$HOME/.local/share/applications/$app_id.desktop"
+    rm -f "$HOME/.local/share/icons/hicolor/scalable/apps/$app_id.svg"
+    rm -f "$HOME/.local/share/icons/hicolor/symbolic/apps/$app_id-symbolic.svg"
+
+    # Refresh icon lookup without creating a missing theme directory.
+    if [ -d "$HOME/.local/share/icons/hicolor" ]; then
+        touch "$HOME/.local/share/icons/hicolor"
+    fi
+
+    if [ -d "$HOME/.local/share/applications" ] && command -v update-desktop-database >/dev/null 2>&1; then
+        update-desktop-database "$HOME/.local/share/applications" ||\
+            printf '%s\n' 'Warning: could not refresh the desktop database.' >&2
+    fi
 
     # Remove the database directory for this channel
     rm -rf "$HOME/.local/share/gram/db/0-$suffix"
