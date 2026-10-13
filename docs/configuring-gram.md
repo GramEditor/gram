@@ -1222,7 +1222,7 @@ or
 "tab_bar": {
   "show": true,
   "show_nav_history_buttons": true,
-  "show_tab_bar_buttons": true
+  "show_tab_bar_buttons": "on_pane_focus"
 }
 ```
 
@@ -1248,9 +1248,9 @@ or
 
 ### Tab Bar Buttons
 
-- Description: Whether or not to show the tab bar buttons.
+- Description: When to show the tab bar buttons.
 - Setting: `show_tab_bar_buttons`
-- Default: `true`
+- Default: `on_pane_focus`
 
 **Options**
 

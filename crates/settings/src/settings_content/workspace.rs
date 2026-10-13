@@ -428,6 +428,28 @@ pub enum RestoreOnStartupBehavior {
     Launchpad,
 }
 
+#[derive(
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Default,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    MergeFrom,
+    Debug,
+    strum::VariantArray,
+    strum::VariantNames,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum ShowTabBarButtonOptions {
+    #[default]
+    OnPaneFocus,
+    Always,
+    Never,
+}
+
 #[with_fallible_options]
 #[derive(Clone, Default, Serialize, Deserialize, JsonSchema, MergeFrom, Debug, PartialEq)]
 pub struct TabBarSettingsContent {
@@ -441,8 +463,8 @@ pub struct TabBarSettingsContent {
     pub show_nav_history_buttons: Option<bool>,
     /// Whether or not to show the tab bar buttons.
     ///
-    /// Default: true
-    pub show_tab_bar_buttons: Option<bool>,
+    /// Default: OnPaneFocus
+    pub show_tab_bar_buttons: Option<ShowTabBarButtonOptions>,
     /// Whether or not to show pinned tabs in a separate row.
     /// When enabled, pinned tabs appear in a top row and unpinned tabs in a bottom row.
     ///

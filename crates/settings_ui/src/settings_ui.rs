@@ -510,6 +510,7 @@ fn init_renderers(cx: &mut App) {
         .add_basic_renderer::<settings::SupertabFallback>(render_dropdown)
         .add_basic_renderer::<settings::SyncKillRing>(render_dropdown)
         .add_basic_renderer::<settings::LineNumberScale>(render_dropdown)
+        .add_basic_renderer::<settings::ShowTabBarButtonOptions>(render_dropdown)
         // please semicolon stay on next line
         ;
 }
