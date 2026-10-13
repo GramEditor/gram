@@ -176,10 +176,10 @@ impl TerminalPanel {
                         move |window, cx| {
                             ContextMenu::build(window, cx, |menu, _, _| {
                                 menu.when_some(split_context.clone(), |menu, split_context| menu.context(split_context))
-                                    .action("Split Right", SplitRight::default().boxed_clone())
-                                    .action("Split Left", SplitLeft::default().boxed_clone())
-                                    .action("Split Up", SplitUp::default().boxed_clone())
-                                    .action("Split Down", SplitDown::default().boxed_clone())
+                                    .action("Split Right", SplitRight.boxed_clone())
+                                    .action("Split Left", SplitLeft.boxed_clone())
+                                    .action("Split Up", SplitUp.boxed_clone())
+                                    .action("Split Down", SplitDown.boxed_clone())
                             })
                             .into()
                         }
