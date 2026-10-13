@@ -191,13 +191,21 @@ fi
 
 export DO_STARTUP_NOTIFY="true"
 export APP_CLI="gram"
-export APP_ICON="app.liten.Gram"
+export APP_ID="app.liten.Gram"
 export APP_ARGS="%U"
 if [[ "$channel" == "dev" ]]; then
     export APP_NAME="Gram Dev"
+    export APP_ID="app.liten.Gram-Dev"
 else
     export APP_NAME="Gram"
 fi
+
+export APP_ICON="$APP_ID"
+
+write_desktop_file() {
+    envsubst <"crates/gram/resources/gram.desktop.in" \
+        | sed "s/^StartupWMClass=.*/StartupWMClass=$APP_ID/" > "$1"
+}
 
 suffix=""
 if [ "$channel" != "stable" ]; then
@@ -233,12 +241,16 @@ if [ "$DO_TARBALL" = "true" ]; then
 
     mkdir -p "${gram_dir}/share/icons/hicolor/scalable/apps"
     mkdir -p "${gram_dir}/share/icons/hicolor/symbolic/apps"
-    cp "crates/gram/resources/app.liten.Gram.svg" "${gram_dir}/share/icons/hicolor/scalable/apps/app.liten.Gram.svg"
-    cp "crates/gram/resources/app.liten.Gram-symbolic.svg" "${gram_dir}/share/icons/hicolor/symbolic/apps/app.liten.Gram-symbolic.svg"
+    icon="crates/gram/resources/app.liten.Gram.svg"
+    if [[ "$channel" == "dev" ]]; then
+        icon="crates/gram/resources/app.liten.Gram.Devel.svg"
+    fi
+    cp "$icon" "${gram_dir}/share/icons/hicolor/scalable/apps/$APP_ID.svg"
+    cp "crates/gram/resources/app.liten.Gram-symbolic.svg" "${gram_dir}/share/icons/hicolor/symbolic/apps/$APP_ID-symbolic.svg"
 
     mkdir -p "${gram_dir}/share/applications"
-    envsubst <"crates/gram/resources/gram.desktop.in" >"${gram_dir}/share/applications/gram-editor${suffix}.desktop"
-    chmod +x "${gram_dir}/share/applications/gram-editor${suffix}.desktop"
+    write_desktop_file "${gram_dir}/share/applications/$APP_ID.desktop"
+    chmod +x "${gram_dir}/share/applications/$APP_ID.desktop"
 
     cp "assets/licenses.md" "${gram_dir}/licenses.md"
 
@@ -254,7 +266,9 @@ fi
 
 # Bundle .deb package
 if [ "$DO_DEB" = "true" ]; then
-    envsubst <"crates/gram/resources/gram.desktop.in" >"crates/gram/resources/gram.desktop"
+    # Native package metadata installs the common application icon.
+    export APP_ICON="app.liten.Gram"
+    write_desktop_file "crates/gram/resources/gram.desktop"
     CARGO_TARGET_DIR="${target_dir}/${target_triple}" cargo deb -p gram --no-build --compress-type xz
 
     # Bundle AppImage from .deb package
@@ -269,7 +283,9 @@ fi
 
 # Bundle .rpm package
 if [ "$DO_RPM" = "true" ]; then
-    envsubst <"crates/gram/resources/gram.desktop.in" >"crates/gram/resources/gram.desktop"
+    # Native package metadata installs the common application icon.
+    export APP_ICON="app.liten.Gram"
+    write_desktop_file "crates/gram/resources/gram.desktop"
     cargo generate-rpm -p crates/gram --target-dir "${target_dir}/${target_triple}" --payload-compress "${GRAM_RPM_COMPRESSION:=zstd}"
 fi
 

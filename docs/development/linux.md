@@ -137,7 +137,12 @@ Gram has two main binaries:
   with the values required. This file should also be renamed to
   `$APP_ID.desktop` so that the file
   [follows the FreeDesktop standards](https://github.com/zed-industries/zed/issues/12707#issuecomment-2168742761).
-  You should also make this desktop file executable (`chmod 755`).
+  Use `app.liten.Gram` for stable builds and `app.liten.Gram-Dev` for
+  development builds, matching the window application ID and `StartupWMClass`.
+  Desktop entries installed under `share/applications` can use mode `644`.
+- Install application icons under `share/icons/hicolor/scalable/apps` and
+  symbolic icons under `share/icons/hicolor/symbolic/apps`. Keep `Icon` as an
+  icon name so the desktop can look it up through the selected icon theme.
 - You will need to ensure that the necessary libraries are installed. You can
   get the current list by
   [inspecting the built binary](https://github.com/zed-industries/zed/blob/935cf542aebf55122ce6ed1c91d0fe8711970c82/script/bundle-linux#L65-L67)
