@@ -19,6 +19,7 @@ key to your Codeberg account so that it can verify the commits.
 ### Compliance
 
 - [ ] I have read and agree to the [Gram Code of Conduct](https://codeberg.org/GramEditor/gram/src/branch/main/CODE_OF_CONDUCT.md).
+- [ ] I have signed my commits using an GPG or SSH key (see above).
 
 ### Rust changes
 
@@ -27,7 +28,15 @@ key to your Codeberg account so that it can verify the commits.
 - [ ] `cargo check --workspace --all-targets --locked` passes.
 - [ ] `cargo fmt --all -- --check` passes.
 - [ ] `./script/clippy` passes.
-- [ ] `cargo nextest run --workspace --locked` passes (optional).
+- [ ] The test suite passes (optional).
+
+### Tests
+
+Running `cargo test` works but is slow, `cargo-nextest` is faster.
+
+Installation instructions: <https://nexte.st/docs/installation/from-source/>
+
+Run `cargo nextest run --workspace --locked`. All the tests should either pass or be skipped.
 
 ### Documentation
 
