@@ -32,7 +32,7 @@ use project::ContextProviderWithTasks;
 use remote::RemoteClient;
 use rpc::proto;
 use serde::{Deserialize, Serialize};
-use std::fs::{copy, create_dir_all, read_dir, read_link};
+use std::fs::{copy, create_dir_all, read_dir};
 use std::ops::RangeInclusive;
 use std::{
     cmp::Ordering,
@@ -1465,7 +1465,7 @@ async fn copy_dir(from: &Path, to: &Path) -> Result<()> {
         }
         if filetype.is_symlink() {
             #[cfg(not(target_os = "windows"))]
-            std::os::unix::fs::symlink(read_link(entry.path())?, to.join(entry.file_name()))?;
+            std::os::unix::fs::symlink(std::fs::read_link(entry.path())?, to.join(entry.file_name()))?;
             #[cfg(target_os = "windows")]
             log::error!("Skipping symlink {:?}", entry.path());
         } else if filetype.is_dir() {

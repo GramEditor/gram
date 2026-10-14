@@ -74,7 +74,7 @@ fn main() {
         // Depending on the security applied to the computer, winresource might fail
         // fetching the RC path. Therefore, we add a way to explicitly specify the
         // toolkit path, allowing winresource to use a valid RC path.
-        if let Some(explicit_rc_toolkit_path) = std::env::var("GRAM_RC_TOOLKIT_PATH").ok() {
+        if let Ok(explicit_rc_toolkit_path) = std::env::var("GRAM_RC_TOOLKIT_PATH") {
             res.set_toolkit_path(explicit_rc_toolkit_path.as_str());
         }
         res.set_icon(icon.to_str().unwrap());

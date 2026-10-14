@@ -6,7 +6,7 @@ use anyhow::{Result, anyhow};
 use async_trait::async_trait;
 use gpui::AsyncApp;
 use http_client::github::AssetKind;
-use http_client::github::{GitHubLspBinaryVersion, latest_github_release};
+use http_client::github::GitHubLspBinaryVersion;
 use http_client::github_download::download_server_binary;
 pub use language::*;
 use lsp::LanguageServerBinary;
@@ -92,6 +92,7 @@ impl ElpAdapter {
 
 impl ElpAdapter {
     const SERVER_NAME: LanguageServerName = LanguageServerName::new_static("elp");
+    #[cfg(not(target_os = "windows"))]
     const OTP_VERSION: &str = "28";
 
     fn server_path(container: &Path) -> PathBuf {
@@ -120,11 +121,11 @@ impl LspInstaller for ElpAdapter {
     #[cfg(target_os = "windows")]
     async fn fetch_latest_server_version(
         &self,
-        delegate: &dyn LspAdapterDelegate,
-        pre_release: bool,
+        _delegate: &dyn LspAdapterDelegate,
+        _pre_release: bool,
         _cx: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        return Err(anyhow!("ELP is not supported on Windows"));
+        Err(anyhow!("ELP is not supported on Windows"))
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -135,7 +136,7 @@ impl LspInstaller for ElpAdapter {
         _cx: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
         log::info!("trying github download for ELP...");
-        let release = latest_github_release(
+        let release = http_client::github::latest_github_release(
             "WhatsApp/erlang-language-platform",
             pre_release,
             true,

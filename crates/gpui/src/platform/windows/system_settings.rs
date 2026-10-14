@@ -80,7 +80,7 @@ impl MouseWheelSettings {
             )
         };
 
-        if result.log_err() != None && self.wheel_scroll_chars.get() != value {
+        if result.log_err().is_some() && self.wheel_scroll_chars.get() != value {
             self.wheel_scroll_chars.set(value);
         }
     }
@@ -96,7 +96,7 @@ impl MouseWheelSettings {
             )
         };
 
-        if result.log_err() != None && self.wheel_scroll_lines.get() != value {
+        if result.log_err().is_some() && self.wheel_scroll_lines.get() != value {
             self.wheel_scroll_lines.set(value);
         }
     }

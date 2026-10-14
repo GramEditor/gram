@@ -127,7 +127,7 @@ fn add_dock_menu(list: &ICustomDestinationList, dock_menus: &[(SharedString, Sha
 fn add_recent_folders(
     list: &ICustomDestinationList,
     entries: &[SmallVec<[PathBuf; 2]>],
-    removed: &Vec<SmallVec<[PathBuf; 2]>>,
+    removed: &[SmallVec<[PathBuf; 2]>],
 ) -> anyhow::Result<()> {
     unsafe {
         let tasks: IObjectCollection = CoCreateInstance(&EnumerableObjectCollection, None, CLSCTX_INPROC_SERVER)?;

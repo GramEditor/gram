@@ -12,7 +12,6 @@ use std::{
 use ::util::{ResultExt, paths::SanitizedPath};
 use anyhow::{Context as _, Result, anyhow};
 use futures::channel::oneshot::{self, Receiver};
-use itertools::Itertools;
 use parking_lot::RwLock;
 use smallvec::SmallVec;
 use windows::{
@@ -20,8 +19,7 @@ use windows::{
     Win32::{
         Foundation::*,
         Graphics::{Direct3D11::ID3D11Device, Gdi::*},
-        Security::Credentials::*,
-        System::{Com::*, LibraryLoader::*, Ole::*, SystemInformation::*},
+        System::{Com::*, LibraryLoader::*, Ole::*},
         UI::{Input::KeyboardAndMouse::*, Shell::*, WindowsAndMessaging::*},
     },
     core::*,
@@ -320,18 +318,17 @@ impl WindowsPlatform {
                 let vsync_provider = VSyncProvider::new();
                 loop {
                     vsync_provider.wait_for_vsync();
-                    if check_device_lost(&directx_device.device)
-                        || invalidate_devices.fetch_and(false, Ordering::Acquire)
-                    {
-                        if let Err(err) = handle_gpu_device_lost(
+                    if (check_device_lost(&directx_device.device)
+                        || invalidate_devices.fetch_and(false, Ordering::Acquire))
+                        && let Err(err) = handle_gpu_device_lost(
                             &mut directx_device,
                             platform_window.as_raw(),
                             validation_number,
                             &all_windows,
                             &text_system,
-                        ) {
-                            panic!("Device lost: {err}");
-                        }
+                        )
+                    {
+                        panic!("Device lost: {err}");
                     }
                     let Some(all_windows) = all_windows.upgrade() else {
                         break;
@@ -695,17 +692,18 @@ impl WindowsPlatformInner {
             log::error!("Wrong validation number while processing message: {message}");
             return None;
         }
-        match message {
+        let out = match message {
             WM_GPUI_CLOSE_ONE_WINDOW => {
                 self.close_one_window(HWND(lparam.0 as _));
-                Some(0)
+                0
             }
             WM_GPUI_TASK_DISPATCHED_ON_MAIN_THREAD => self.run_foreground_task(),
             WM_GPUI_DOCK_MENU_ACTION => self.handle_dock_action_event(lparam.0 as _),
             WM_GPUI_KEYBOARD_LAYOUT_CHANGED => self.handle_keyboard_layout_change(),
             WM_GPUI_GPU_DEVICE_LOST => self.handle_device_lost(lparam),
             _ => unreachable!(),
-        }
+        };
+        Some(out)
     }
 
     fn close_one_window(&self, target_window: HWND) -> bool {
@@ -721,7 +719,7 @@ impl WindowsPlatformInner {
     }
 
     #[inline]
-    fn run_foreground_task(&self) -> Option<isize> {
+    fn run_foreground_task(&self) -> isize {
         const MAIN_TASK_TIMEOUT: u128 = 10;
 
         let start = std::time::Instant::now();
@@ -752,12 +750,14 @@ impl WindowsPlatformInner {
                     }
                     // Allow the main loop to process other gpui events before going back into `run_foreground_task`
                     unsafe {
-                        if let Err(_) = PostMessageW(
+                        if PostMessageW(
                             Some(self.dispatcher.platform_window_handle.as_raw()),
                             WM_GPUI_TASK_DISPATCHED_ON_MAIN_THREAD,
                             WPARAM(self.validation_number),
                             LPARAM(0),
-                        ) {
+                        )
+                        .is_err()
+                        {
                             self.dispatcher.wake_posted.store(false, Ordering::Release);
                         };
                     }
@@ -782,10 +782,10 @@ impl WindowsPlatformInner {
             }
         }
 
-        Some(0)
+        0
     }
 
-    fn handle_dock_action_event(&self, action_idx: usize) -> Option<isize> {
+    fn handle_dock_action_event(&self, action_idx: usize) -> isize {
         let Some(action) = self
             .state
             .jump_list
@@ -795,24 +795,24 @@ impl WindowsPlatformInner {
             .map(|dock_menu| dock_menu.action.boxed_clone())
         else {
             log::error!("Dock menu for index {action_idx} not found");
-            return Some(1);
+            return 1;
         };
         self.with_callback(|callbacks| &callbacks.app_menu_action, |callback| callback(&*action));
-        Some(0)
+        0
     }
 
-    fn handle_keyboard_layout_change(&self) -> Option<isize> {
+    fn handle_keyboard_layout_change(&self) -> isize {
         self.with_callback(|callbacks| &callbacks.keyboard_layout_change, |callback| callback());
-        Some(0)
+        0
     }
 
-    fn handle_device_lost(&self, lparam: LPARAM) -> Option<isize> {
+    fn handle_device_lost(&self, lparam: LPARAM) -> isize {
         let directx_devices = lparam.0 as *const DirectXDevices;
         let directx_devices = unsafe { &*directx_devices };
         self.state.directx_devices.borrow_mut().take();
         *self.state.directx_devices.borrow_mut() = Some(directx_devices.clone());
 
-        Some(0)
+        0
     }
 }
 
@@ -1069,7 +1069,7 @@ fn handle_gpu_device_lost(
     }
 
     if let Some(text_system) = text_system.upgrade() {
-        text_system.handle_gpu_lost(&directx_devices)?;
+        text_system.handle_gpu_lost(directx_devices)?;
     }
     if let Some(all_windows) = all_windows.upgrade() {
         for window in all_windows.read().iter() {

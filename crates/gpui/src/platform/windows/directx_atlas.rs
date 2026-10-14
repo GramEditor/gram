@@ -149,26 +149,11 @@ impl DirectXAtlasState {
             height: DevicePixels(16384),
         };
         let size = min_size.min(&MAX_ATLAS_SIZE).max(&DEFAULT_ATLAS_SIZE);
-        let pixel_format;
-        let bind_flag;
-        let bytes_per_pixel;
-        match kind {
-            AtlasTextureKind::Monochrome => {
-                pixel_format = DXGI_FORMAT_R8_UNORM;
-                bind_flag = D3D11_BIND_SHADER_RESOURCE;
-                bytes_per_pixel = 1;
-            }
-            AtlasTextureKind::Polychrome => {
-                pixel_format = DXGI_FORMAT_B8G8R8A8_UNORM;
-                bind_flag = D3D11_BIND_SHADER_RESOURCE;
-                bytes_per_pixel = 4;
-            }
-            AtlasTextureKind::Subpixel => {
-                pixel_format = DXGI_FORMAT_R8G8B8A8_UNORM;
-                bind_flag = D3D11_BIND_SHADER_RESOURCE;
-                bytes_per_pixel = 4;
-            }
-        }
+        let (pixel_format, bind_flag, bytes_per_pixel) = match kind {
+            AtlasTextureKind::Monochrome => (DXGI_FORMAT_R8_UNORM, D3D11_BIND_SHADER_RESOURCE, 1),
+            AtlasTextureKind::Polychrome => (DXGI_FORMAT_B8G8R8A8_UNORM, D3D11_BIND_SHADER_RESOURCE, 4),
+            AtlasTextureKind::Subpixel => (DXGI_FORMAT_R8G8B8A8_UNORM, D3D11_BIND_SHADER_RESOURCE, 4),
+        };
         let texture_desc = D3D11_TEXTURE2D_DESC {
             Width: size.width.0 as u32,
             Height: size.height.0 as u32,
@@ -226,9 +211,9 @@ impl DirectXAtlasState {
 
     fn texture(&self, id: AtlasTextureId) -> &DirectXAtlasTexture {
         match id.kind {
-            crate::AtlasTextureKind::Monochrome => &self.monochrome_textures[id.index as usize].as_ref().unwrap(),
-            crate::AtlasTextureKind::Polychrome => &self.polychrome_textures[id.index as usize].as_ref().unwrap(),
-            crate::AtlasTextureKind::Subpixel => &self.subpixel_textures[id.index as usize].as_ref().unwrap(),
+            crate::AtlasTextureKind::Monochrome => self.monochrome_textures[id.index as usize].as_ref().unwrap(),
+            crate::AtlasTextureKind::Polychrome => self.polychrome_textures[id.index as usize].as_ref().unwrap(),
+            crate::AtlasTextureKind::Subpixel => self.subpixel_textures[id.index as usize].as_ref().unwrap(),
         }
     }
 }

@@ -72,7 +72,7 @@ pub fn init(cx: &mut App) {
                     "#};
 
                     let _ = cx
-                        .prompt(gpui::PromptLevel::Critical, "Invalid path", Some(&message), &["Ok"])
+                        .prompt(gpui::PromptLevel::Critical, "Invalid path", Some(message), &["Ok"])
                         .await;
                     return;
                 }

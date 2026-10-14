@@ -5772,7 +5772,7 @@ pub fn open_paths(
     let mut best_match = None;
     let mut open_visible = OpenVisible::All;
     #[cfg(target_os = "windows")]
-    let wsl_path = abs_paths.iter().find_map(|p| util::paths::WslPath::from_path(p));
+    let wsl_path = abs_paths.iter().find_map(util::paths::WslPath::from_path);
 
     cx.spawn(async move |cx| {
         if open_options.open_new_workspace != Some(true) {
