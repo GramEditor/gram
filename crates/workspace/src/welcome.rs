@@ -361,12 +361,18 @@ impl Render for WelcomePage {
                                 .gap_4()
                                 .child(Vector::square(image, rems_from_px(90.0_f32)))
                                 .child(
-                                    v_flex().child(Headline::new("Gram").size(HeadlineSize::Large)).child(
-                                        Label::new(r#"What cannot be mended must be transcended."#)
-                                            .size(LabelSize::Default)
+                                    v_flex()
+                                        .gap_1()
+                                        .child(Headline::new("Gram").size(HeadlineSize::Large))
+                                        .child(
+                                            Label::new(
+                                                "“What cannot be mended must be transcended.”\n- Ursula K. Le Guin",
+                                            )
+                                            .line_height_style(LineHeightStyle::UiLabel)
+                                            .size(LabelSize::Small)
                                             .color(Color::Muted)
                                             .italic(),
-                                    ),
+                                        ),
                                 ),
                         )
                         .child(first_section.render(Default::default(), &self.focus_handle, cx))

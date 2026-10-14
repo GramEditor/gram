@@ -1000,7 +1000,7 @@ fn initialize_pane(workspace: &Workspace, pane: &Entity<Pane>, window: &mut Wind
 fn open_about(cx: &mut App) {
     const GRAM_UPDATE_EXPLANATION: &str = match option_env!("GRAM_UPDATE_EXPLANATION") {
         Some(text) => text,
-        None => "What cannot be mended\nmust be transcended.",
+        None => "“What cannot be mended must be transcended.” - Ursula K. Le Guin",
     };
 
     struct AboutWindow {
@@ -1060,20 +1060,33 @@ fn open_about(cx: &mut App) {
                     .child(
                         v_flex()
                             .w_full()
-                            .gap_2()
+                            .gap_4()
                             .items_center()
-                            .child(Vector::square(image, rems(4.)))
-                            .child(Headline::new(self.headline.clone()).size(HeadlineSize::Small))
-                            .child(Label::new(GRAM_UPDATE_EXPLANATION).italic().size(LabelSize::XSmall))
                             .child(
-                                ButtonLink::new("gram-editor.com", "https://gram-editor.com")
-                                    .label_size(LabelSize::XSmall),
+                                h_flex()
+                                    .w_full()
+                                    .justify_center()
+                                    .mb_4()
+                                    .gap_4()
+                                    .child(Vector::square(image, rems(4.)))
+                                    .child(
+                                        v_flex()
+                                            .gap_1()
+                                            .text_left()
+                                            .child(Headline::new(self.headline.clone()).size(HeadlineSize::XSmall))
+                                            .child(
+                                                Label::new(GRAM_UPDATE_EXPLANATION)
+                                                    .line_height_style(LineHeightStyle::UiLabel)
+                                                    .size(LabelSize::XSmall)
+                                                    .color(Color::Muted)
+                                                    .italic(),
+                                            ),
+                                    ),
                             )
                             .when_some(self.commit.clone(), |this, commit| {
                                 this.child(
                                     h_flex()
                                         .gap_2()
-                                        .child(Label::new("Commit").color(Color::Muted).size(LabelSize::XSmall))
                                         .child(Label::new(commit.clone()).inline_code(cx).size(LabelSize::XSmall))
                                         .child(CopyButton::new("about-commit-version", commit).custom_on_click({
                                             let commit = self.commit.clone();
@@ -1091,13 +1104,20 @@ fn open_about(cx: &mut App) {
                                 )
                             })
                             .child(
-                                Label::new(
-                                    "Copyright (C) 2026 The Gram Project\
-                               Gram comes with ABSOLUTELY NO WARRANTY; for details see Help > License.\
-                               This is free software, and you are welcome to redistribute it\
+                                div().child(
+                                    Label::new(
+                                        "Copyright (C) 2026 The Gram Project\n\
+                               Gram comes with ABSOLUTELY NO WARRANTY; for details see Help > License.\n\
+                               This is free software, and you are welcome to redistribute it\n\
                                under certain conditions; see Help > License for details.",
-                                )
-                                .size(LabelSize::XSmall),
+                                    )
+                                    .color(Color::Muted)
+                                    .size(LabelSize::XSmall),
+                                ),
+                            )
+                            .child(
+                                ButtonLink::new("gram-editor.com", "https://gram-editor.com")
+                                    .label_size(LabelSize::XSmall),
                             ),
                     )
                     .child(

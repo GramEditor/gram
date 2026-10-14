@@ -228,11 +228,17 @@ impl Render for Onboarding {
                                     .justify_between()
                                     .child(
                                         h_flex().gap_4().child(Vector::square(image, rems(6.))).child(
-                                            v_flex().child(Headline::new("Gram").size(HeadlineSize::Large)).child(
-                                                Label::new(r#"What cannot be mended must be transcended."#)
-                                                    .size(LabelSize::Default)
-                                                    .color(Color::Muted)
-                                                    .italic(),
+                                            v_flex()
+                                                .gap_1()
+                                                .child(Headline::new("Gram").size(HeadlineSize::Large))
+                                                .child(
+                                                Label::new(
+                                                    "“What cannot be mended must be transcended.”\n- Ursula K. Le Guin",
+                                                )
+                                                .size(LabelSize::Small)
+                                                .line_height_style(LineHeightStyle::UiLabel)
+                                                .color(Color::Muted)
+                                                .italic(),
                                             ),
                                         ),
                                     )
