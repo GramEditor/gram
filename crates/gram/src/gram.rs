@@ -167,12 +167,12 @@ pub fn init(cx: &mut App) {
     .on_action(|_: &workspace::RevealLogInFileManager, cx| {
         cx.reveal_path(paths::log_file().as_path());
     })
-    .on_action(|_: &app_actions::OpenLicenses, cx| {
+    .on_action(|_: &app_actions::ViewLicense, cx| {
         with_active_or_new_workspace(cx, |workspace, window, cx| {
             open_bundled_file(
                 workspace,
                 asset_str::<Assets>("licenses.md"),
-                "Open Source License Attribution",
+                "License Information",
                 "Markdown",
                 window,
                 cx,
@@ -1089,7 +1089,16 @@ fn open_about(cx: &mut App) {
                                             }
                                         })),
                                 )
-                            }),
+                            })
+                            .child(
+                                Label::new(
+                                    "Copyright (C) 2026 The Gram Project\
+                               Gram comes with ABSOLUTELY NO WARRANTY; for details see Help > License.\
+                               This is free software, and you are welcome to redistribute it\
+                               under certain conditions; see Help > License for details.",
+                                )
+                                .size(LabelSize::XSmall),
+                            ),
                     )
                     .child(
                         h_flex().w_full().gap_1().child(

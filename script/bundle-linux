@@ -157,9 +157,6 @@ if command -v rustup >/dev/null 2>&1; then
     rustup target add "$remote_server_triple"
 fi
 
-# Generate the licenses first, so they can be baked into the binaries
-script/generate-licenses
-
 if command -v clang &>/dev/null; then
     CC=${CC:+$(which clang)}
     export CC

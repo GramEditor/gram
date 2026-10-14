@@ -238,7 +238,7 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
         Menu {
             name: "Help".into(),
             items: vec![
-                MenuItem::action("View Dependency Licenses", app_actions::OpenLicenses),
+                MenuItem::action("License", app_actions::ViewLicense),
                 MenuItem::action("Show Welcome", onboarding::ShowWelcome),
                 MenuItem::separator(),
                 MenuItem::action(

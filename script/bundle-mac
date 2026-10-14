@@ -104,9 +104,6 @@ fi
 
 if [[ "$do_build" = "true" ]]; then
 
-    # Generate the licenses first, so they can be baked into the binaries
-    script/generate-licenses
-
     rustup target add "$target_triple"
 
     echo "Compiling gram binaries"
@@ -245,7 +242,7 @@ function sign_app_binaries() {
         ln -s /Applications "${dmg_source_directory}"
 
         echo "Creating final DMG at ${dmg_file_path} using ${dmg_source_directory}"
-        hdiutil create -volname Gram -srcfolder "${dmg_source_directory}" -ov -format UDZO "${dmg_file_path}"
+        diskutil image create from --volumeName Gram --format UDZO "${dmg_source_directory}" "${dmg_file_path}"
 
         # If someone runs this bundle script locally, a symlink will be placed in `dmg_source_directory`.
         # This symlink causes CPU issues with Gram if the Gram codebase is the project being worked on, so we simply remove it for now.
