@@ -1,5 +1,6 @@
 use anyhow::{Result, anyhow};
 use async_trait::async_trait;
+use collections::HashMap;
 use gpui::AsyncApp;
 use http_client::github::{AssetKind, GitHubLspBinaryVersion, latest_github_release};
 use http_client::github_download::download_server_binary;
@@ -66,8 +67,8 @@ impl LspInstaller for TombiLspAdapter {
         let path = delegate.which("tombi".as_ref()).await?;
         Some(LanguageServerBinary {
             path,
-            arguments: vec!["lsp".into(), "stdio".into()],
-            env: None,
+            arguments: vec!["lsp".into(), "-v".into()],
+            env: Some(HashMap::from_iter([("NO_COLOR".into(), "true".into())])),
         })
     }
 
@@ -177,8 +178,8 @@ impl LspInstaller for TombiLspAdapter {
         .await
         .map(|path| LanguageServerBinary {
             path,
-            arguments: vec!["lsp".into()],
-            env: None,
+            arguments: vec!["lsp".into(), "-v".into()],
+            env: Some(HashMap::from_iter([("NO_COLOR".into(), "true".into())])),
         })
     }
 }
