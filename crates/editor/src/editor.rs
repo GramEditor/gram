@@ -112,7 +112,9 @@ use language::{
     language_settings::{
         self, LanguageSettings, LspInsertMode, RewrapBehavior, WordsCompletionMode, language_settings,
     },
-    point_from_lsp, point_to_lsp, text_diff_with_options,
+    point_from_lsp, point_to_lsp,
+    runnable::RunnableRange,
+    text_diff_with_options,
 };
 use linked_editing_ranges::refresh_linked_ranges;
 use lsp::{
@@ -13077,7 +13079,7 @@ impl Editor {
     fn fetch_runnable_ranges(
         snapshot: &DisplaySnapshot,
         range: Range<Anchor>,
-    ) -> Vec<(Range<MultiBufferOffset>, language::RunnableRange)> {
+    ) -> Vec<(Range<MultiBufferOffset>, RunnableRange)> {
         snapshot.buffer_snapshot().runnable_ranges(range).collect()
     }
 
@@ -13085,7 +13087,7 @@ impl Editor {
         project: Entity<Project>,
         snapshot: DisplaySnapshot,
         prefer_lsp: bool,
-        runnable_ranges: Vec<(Range<MultiBufferOffset>, language::RunnableRange)>,
+        runnable_ranges: Vec<(Range<MultiBufferOffset>, RunnableRange)>,
         cx: AsyncWindowContext,
     ) -> Task<Vec<((BufferId, BufferRow), RunnableTasks)>> {
         cx.spawn(async move |cx| {

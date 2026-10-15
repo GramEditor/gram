@@ -14,6 +14,7 @@ pub mod language_settings;
 mod manifest;
 mod outline;
 pub mod proto;
+pub mod runnable;
 mod syntax_map;
 mod task_context;
 mod text_diff;
@@ -74,7 +75,7 @@ pub use lsp::{LanguageServerId, LanguageServerName};
 pub use manifest::{ManifestDelegate, ManifestName, ManifestProvider, ManifestQuery};
 pub use outline::*;
 pub use syntax_map::{OwnedSyntaxLayer, SyntaxLayer, SyntaxMapMatches, ToTreeSitterPoint, TreeSitterOptions};
-pub use task_context::{ContextLocation, ContextProvider, RunnableRange};
+pub use task_context::{ContextLocation, ContextProvider};
 pub use text::{AnchorRangeExt, LineEnding};
 pub use text_diff::{DiffOptions, text_diff, text_diff_with_options, unified_diff, word_diff_ranges};
 pub use toolchain::{
@@ -1325,12 +1326,16 @@ struct RedactionConfig {
 enum RunnableCapture {
     Named(SharedString),
     Run,
+    RunItem,
 }
 
 struct RunnableConfig {
     pub query: Query,
     /// A mapping from capture indice to capture kind
     pub extra_captures: Vec<RunnableCapture>,
+    /// `true` if the query uses `@run_item`, the marker for matches that
+    /// emit multiple runnables.
+    pub supports_grouped_runnables: bool,
 }
 
 struct OverrideConfig {
@@ -1513,11 +1518,20 @@ impl Language {
             .iter()
             .map(|&name| match name {
                 "run" => RunnableCapture::Run,
+                "run_item" => RunnableCapture::RunItem,
                 name => RunnableCapture::Named(name.to_string().into()),
             })
             .collect();
 
-        grammar.runnable_config = Some(RunnableConfig { extra_captures, query });
+        let supports_grouped_runnables = extra_captures
+            .iter()
+            .any(|capture| matches!(capture, RunnableCapture::RunItem));
+
+        grammar.runnable_config = Some(RunnableConfig {
+            extra_captures,
+            query,
+            supports_grouped_runnables,
+        });
 
         Ok(self)
     }

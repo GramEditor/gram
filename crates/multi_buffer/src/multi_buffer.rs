@@ -26,6 +26,7 @@ use language::{
     Language, LanguageScope, OffsetRangeExt, OffsetUtf16, Outline, OutlineItem, Point, PointUtf16, Selection,
     TextDimension, TextObject, ToOffset as _, ToPoint as _, TransactionId, TreeSitterOptions, Unclipped,
     language_settings::{LanguageSettings, language_settings},
+    runnable::RunnableRange,
 };
 
 #[cfg(any(test, feature = "test-support"))]
@@ -5533,7 +5534,7 @@ impl MultiBufferSnapshot {
     pub fn runnable_ranges(
         &self,
         range: Range<Anchor>,
-    ) -> impl Iterator<Item = (Range<MultiBufferOffset>, language::RunnableRange)> + '_ {
+    ) -> impl Iterator<Item = (Range<MultiBufferOffset>, RunnableRange)> + '_ {
         let range = range.start.to_offset(self)..range.end.to_offset(self);
         self.lift_buffer_metadata(range, move |buffer, range| {
             Some(
