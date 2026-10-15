@@ -782,11 +782,18 @@ impl Vim {
             let selections = editor.selections.all::<Point>(&display_snapshot);
             let (skip_points, skip_ranges) = Self::selection_skip_offsets(buffer_snapshot, &selections);
 
+            // Get the primary cursor position for alternating forward/backward labeling
+            let cursor_offset = selections
+                .first()
+                .map(|s| buffer_snapshot.point_to_offset(s.head()))
+                .unwrap_or(start_offset);
+
             let accent = HelixSettings::get_global(cx).jump_label_accent;
             Self::build_helix_jump_ui_data(
                 buffer_snapshot,
                 start_offset,
                 end_offset,
+                cursor_offset,
                 accent,
                 &skip_points,
                 &skip_ranges,
@@ -798,6 +805,7 @@ impl Vim {
         buffer: &MultiBufferSnapshot,
         start_offset: MultiBufferOffset,
         end_offset: MultiBufferOffset,
+        cursor_offset: MultiBufferOffset,
         accent: Hsla,
         skip_points: &[MultiBufferOffset],
         skip_ranges: &[Range<MultiBufferOffset>],
@@ -805,11 +813,102 @@ impl Vim {
         if start_offset >= end_offset {
             return HelixJumpUiData::default();
         }
-        let mut labels = Vec::new();
-        let mut highlights = Vec::new();
-        let mut blocks = Vec::new();
 
+        // First pass: collect all word candidates without assigning labels
+        let candidates = Self::collect_jump_candidates(buffer, start_offset, end_offset, skip_points, skip_ranges);
+
+        if candidates.is_empty() {
+            return HelixJumpUiData::default();
+        }
+
+        // Partition candidates into forward (>= cursor) and backward (< cursor)
+        let mut forward: Vec<_> = candidates
+            .iter()
+            .filter(|c| c.word_start >= cursor_offset)
+            .cloned()
+            .collect();
+        let mut backward: Vec<_> = candidates
+            .iter()
+            .filter(|c| c.word_start < cursor_offset)
+            .cloned()
+            .collect();
+
+        // Sort forward by distance from cursor (ascending)
+        forward.sort_by_key(|c| c.word_start.0);
+        // Sort backward by distance from cursor (descending, so closest first)
+        backward.sort_by_key(|c| std::cmp::Reverse(c.word_start.0));
+
+        // Interleave: forward gets even indices (aa, ac, ae...), backward gets odd (ab, ad, af...)
         let limit = HELIX_JUMP_ALPHABET.len() * HELIX_JUMP_ALPHABET.len();
+        let mut ordered_candidates = Vec::with_capacity(forward.len() + backward.len());
+        let mut fwd_iter = forward.into_iter();
+        let mut bwd_iter = backward.into_iter();
+
+        loop {
+            if ordered_candidates.len() >= limit {
+                break;
+            }
+            if let Some(fwd) = fwd_iter.next() {
+                ordered_candidates.push(fwd);
+            } else if bwd_iter.len() == 0 {
+                break;
+            }
+
+            if ordered_candidates.len() >= limit {
+                break;
+            }
+            if let Some(bwd) = bwd_iter.next() {
+                ordered_candidates.push(bwd);
+            } else if fwd_iter.len() == 0 {
+                break;
+            }
+        }
+
+        // Now assign labels and build UI data
+        let mut labels = Vec::with_capacity(ordered_candidates.len());
+        let mut highlights = Vec::with_capacity(ordered_candidates.len());
+        let mut blocks = Vec::with_capacity(ordered_candidates.len());
+
+        for (label_index, candidate) in ordered_candidates.into_iter().enumerate() {
+            let start_anchor = buffer.anchor_after(candidate.word_start);
+            let end_anchor = buffer.anchor_after(candidate.word_end);
+            let first_two_anchor = buffer.anchor_after(candidate.first_two_end);
+
+            highlights.push(start_anchor..first_two_anchor);
+
+            let label = [
+                HELIX_JUMP_ALPHABET[label_index / HELIX_JUMP_ALPHABET.len()],
+                HELIX_JUMP_ALPHABET[label_index % HELIX_JUMP_ALPHABET.len()],
+            ];
+
+            labels.push(HelixJumpLabel {
+                label,
+                range: start_anchor..end_anchor,
+            });
+
+            blocks.push(Self::jump_label_block(start_anchor, label, accent, label_index));
+        }
+
+        // Sort highlights by position - the editor's binary search expects them sorted
+        highlights.sort_by(|a, b| a.start.cmp(&b.start, buffer));
+
+        HelixJumpUiData {
+            labels,
+            highlights,
+            blocks,
+        }
+    }
+
+    fn collect_jump_candidates(
+        buffer: &MultiBufferSnapshot,
+        start_offset: MultiBufferOffset,
+        end_offset: MultiBufferOffset,
+        skip_points: &[MultiBufferOffset],
+        skip_ranges: &[Range<MultiBufferOffset>],
+    ) -> Vec<JumpCandidate> {
+        let mut candidates = Vec::new();
+        let limit = HELIX_JUMP_ALPHABET.len() * HELIX_JUMP_ALPHABET.len();
+
         let mut offset = start_offset;
         let mut in_word = false;
         let mut word_start = start_offset;
@@ -836,20 +935,14 @@ impl Vim {
                     if char_count >= 2
                         && !Self::should_skip_jump_candidate(word_start, absolute, skip_points, skip_ranges)
                     {
-                        Self::finalize_jump_candidate(
-                            buffer,
+                        candidates.push(JumpCandidate {
                             word_start,
-                            absolute,
+                            word_end: absolute,
                             first_two_end,
-                            char_count,
-                            accent,
-                            &mut labels,
-                            &mut highlights,
-                            &mut blocks,
-                        );
+                        });
                     }
                     in_word = false;
-                    if labels.len() == limit {
+                    if candidates.len() >= limit {
                         break 'chunks;
                     }
                 }
@@ -859,27 +952,17 @@ impl Vim {
 
         if in_word
             && char_count >= 2
-            && labels.len() < limit
+            && candidates.len() < limit
             && !Self::should_skip_jump_candidate(word_start, end_offset, skip_points, skip_ranges)
         {
-            Self::finalize_jump_candidate(
-                buffer,
+            candidates.push(JumpCandidate {
                 word_start,
-                end_offset,
+                word_end: end_offset,
                 first_two_end,
-                char_count,
-                accent,
-                &mut labels,
-                &mut highlights,
-                &mut blocks,
-            );
+            });
         }
 
-        HelixJumpUiData {
-            labels,
-            highlights,
-            blocks,
-        }
+        candidates
     }
 
     fn selection_skip_offsets(
@@ -921,42 +1004,7 @@ impl Vim {
                 .any(|range| range.start < word_end && word_start < range.end)
     }
 
-    fn finalize_jump_candidate(
-        buffer: &MultiBufferSnapshot,
-        word_start: MultiBufferOffset,
-        word_end: MultiBufferOffset,
-        first_two_end: MultiBufferOffset,
-        char_count: usize,
-        accent: Hsla,
-        labels: &mut Vec<HelixJumpLabel>,
-        highlights: &mut Vec<Range<Anchor>>,
-        blocks: &mut Vec<BlockProperties<Anchor>>,
-    ) {
-        if char_count < 2 || word_start >= word_end {
-            return;
-        }
-
-        let start_anchor = buffer.anchor_after(word_start);
-        let end_anchor = buffer.anchor_after(word_end);
-        let first_two_anchor = buffer.anchor_after(first_two_end);
-
-        highlights.push(start_anchor..first_two_anchor);
-
-        let label_index = labels.len();
-        let label = [
-            HELIX_JUMP_ALPHABET[label_index / HELIX_JUMP_ALPHABET.len()],
-            HELIX_JUMP_ALPHABET[label_index % HELIX_JUMP_ALPHABET.len()],
-        ];
-
-        labels.push(HelixJumpLabel {
-            label,
-            range: start_anchor..end_anchor,
-        });
-
-        blocks.push(Self::jump_label_block(start_anchor, label, accent));
-    }
-
-    fn jump_label_block(anchor: Anchor, label: [char; 2], accent: Hsla) -> BlockProperties<Anchor> {
+    fn jump_label_block(anchor: Anchor, label: [char; 2], accent: Hsla, label_index: usize) -> BlockProperties<Anchor> {
         let text: SharedString = label.iter().collect::<String>().into();
         BlockProperties {
             placement: BlockPlacement::Near(anchor),
@@ -972,7 +1020,7 @@ impl Vim {
                     )
                     .into_any_element()
             }),
-            priority: 0,
+            priority: label_index,
         }
     }
 
@@ -1045,6 +1093,14 @@ const HELIX_JUMP_ALPHABET: &[char; 26] = &[
 
 fn is_jump_word_char(ch: char) -> bool {
     ch == '_' || ch.is_alphanumeric()
+}
+
+/// A word candidate for jump labels, before label assignment.
+#[derive(Clone)]
+struct JumpCandidate {
+    word_start: MultiBufferOffset,
+    word_end: MultiBufferOffset,
+    first_two_end: MultiBufferOffset,
 }
 
 #[derive(Default)]
