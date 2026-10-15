@@ -7,8 +7,8 @@ mod surround;
 
 use editor::display_map::{BlockContext, BlockPlacement, BlockProperties, BlockStyle, DisplayRow, DisplaySnapshot};
 use editor::{
-    Anchor, DisplayPoint, Editor, EditorSettings, HideMouseCursorOrigin, MultiBufferOffset,
-    SelectionEffects, ToOffset, ToPoint, movement,
+    Anchor, DisplayPoint, Editor, EditorSettings, HideMouseCursorOrigin, MultiBufferOffset, SelectionEffects, ToOffset,
+    ToPoint, movement,
 };
 use gpui::actions;
 use gpui::{Context, Hsla, Window};
@@ -18,15 +18,13 @@ use search::{BufferSearchBar, SearchOptions};
 use settings::{RegisterSetting, Settings};
 use text::{Bias, SelectionGoal};
 use ui::prelude::*;
-use workspace::searchable::FilteredSearchRange;
-use workspace::searchable::{self, Direction};
+use workspace::searchable::{self, Direction, FilteredSearchRange};
 
 use crate::motion::{self, MotionKind};
-use crate::state::{Operator, SearchState};
+use crate::state::SearchState;
 use crate::{
     PushHelixSurroundAdd, PushHelixSurroundDelete, PushHelixSurroundReplace, Vim,
     motion::{Motion, right},
-    state::Mode,
     state::{HelixJumpBehaviour, HelixJumpLabel, Mode, Operator},
 };
 use std::{ops::Range, sync::Arc};
@@ -782,8 +780,7 @@ impl Vim {
             let end_offset = buffer_snapshot.point_to_offset(end_point);
 
             let selections = editor.selections.all::<Point>(&display_snapshot);
-            let (skip_points, skip_ranges) =
-                Self::selection_skip_offsets(buffer_snapshot, &selections);
+            let (skip_points, skip_ranges) = Self::selection_skip_offsets(buffer_snapshot, &selections);
 
             let accent = HelixSettings::get_global(cx).jump_label_accent;
             Self::build_helix_jump_ui_data(
@@ -799,11 +796,11 @@ impl Vim {
 
     fn build_helix_jump_ui_data(
         buffer: &MultiBufferSnapshot,
-        start_offset: usize,
-        end_offset: usize,
+        start_offset: MultiBufferOffset,
+        end_offset: MultiBufferOffset,
         accent: Hsla,
-        skip_points: &[usize],
-        skip_ranges: &[Range<usize>],
+        skip_points: &[MultiBufferOffset],
+        skip_ranges: &[Range<MultiBufferOffset>],
     ) -> HelixJumpUiData {
         if start_offset >= end_offset {
             return HelixJumpUiData::default();
@@ -837,12 +834,7 @@ impl Vim {
 
                 if !is_word && in_word {
                     if char_count >= 2
-                        && !Self::should_skip_jump_candidate(
-                            word_start,
-                            absolute,
-                            skip_points,
-                            skip_ranges,
-                        )
+                        && !Self::should_skip_jump_candidate(word_start, absolute, skip_points, skip_ranges)
                     {
                         Self::finalize_jump_candidate(
                             buffer,
@@ -893,7 +885,7 @@ impl Vim {
     fn selection_skip_offsets(
         buffer: &MultiBufferSnapshot,
         selections: &[Selection<Point>],
-    ) -> (Vec<usize>, Vec<Range<usize>>) {
+    ) -> (Vec<MultiBufferOffset>, Vec<Range<MultiBufferOffset>>) {
         let mut skip_points = Vec::with_capacity(selections.len());
         let mut skip_ranges = Vec::new();
 
@@ -915,10 +907,10 @@ impl Vim {
     }
 
     fn should_skip_jump_candidate(
-        word_start: usize,
-        word_end: usize,
-        skip_points: &[usize],
-        skip_ranges: &[Range<usize>],
+        word_start: MultiBufferOffset,
+        word_end: MultiBufferOffset,
+        skip_points: &[MultiBufferOffset],
+        skip_ranges: &[Range<MultiBufferOffset>],
     ) -> bool {
         skip_points
             .iter()
@@ -931,9 +923,9 @@ impl Vim {
 
     fn finalize_jump_candidate(
         buffer: &MultiBufferSnapshot,
-        word_start: usize,
-        word_end: usize,
-        first_two_end: usize,
+        word_start: MultiBufferOffset,
+        word_end: MultiBufferOffset,
+        first_two_end: MultiBufferOffset,
         char_count: usize,
         accent: Hsla,
         labels: &mut Vec<HelixJumpLabel>,
@@ -1903,6 +1895,6 @@ mod test {
         assert!(
             matches!(cx.active_operator(), Some(Operator::HelixJump { .. })),
             "expected HelixJump operator to be active"
-        );
+        )
     }
 }
