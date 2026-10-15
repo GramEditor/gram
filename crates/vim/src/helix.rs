@@ -720,11 +720,17 @@ impl Vim {
     }
 
     pub fn helix_jump_to_word(&mut self, _: &HelixJumpToWord, window: &mut Window, cx: &mut Context<Self>) {
-        self.start_helix_jump(HelixJumpBehaviour::Move, window, cx);
+        let behaviour = if self.mode.is_visual() {
+            HelixJumpBehaviour::Extend
+        } else {
+            HelixJumpBehaviour::Move
+        };
+        self.start_helix_jump(behaviour, window, cx);
     }
 
     fn start_helix_jump(&mut self, behaviour: HelixJumpBehaviour, window: &mut Window, cx: &mut Context<Self>) {
-        let Some(data) = self.collect_helix_jump_data(window, cx) else {
+        let is_visual = self.mode.is_visual();
+        let Some(data) = self.collect_helix_jump_data(is_visual, window, cx) else {
             return;
         };
 
@@ -748,7 +754,12 @@ impl Vim {
         );
     }
 
-    fn collect_helix_jump_data(&mut self, window: &mut Window, cx: &mut Context<Self>) -> Option<HelixJumpUiData> {
+    fn collect_helix_jump_data(
+        &mut self,
+        is_visual: bool,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Option<HelixJumpUiData> {
         self.update_editor(cx, |_, editor, cx| {
             let snapshot = editor.snapshot(window, cx);
             let display_snapshot = &snapshot.display_snapshot;
@@ -780,7 +791,7 @@ impl Vim {
             let end_offset = buffer_snapshot.point_to_offset(end_point);
 
             let selections = editor.selections.all::<Point>(&display_snapshot);
-            let (skip_points, skip_ranges) = Self::selection_skip_offsets(buffer_snapshot, &selections);
+            let (skip_points, skip_ranges) = Self::selection_skip_offsets(buffer_snapshot, &selections, is_visual);
 
             // Get the primary cursor position for alternating forward/backward labeling
             let cursor_offset = selections
@@ -968,6 +979,7 @@ impl Vim {
     fn selection_skip_offsets(
         buffer: &MultiBufferSnapshot,
         selections: &[Selection<Point>],
+        is_visual: bool,
     ) -> (Vec<MultiBufferOffset>, Vec<Range<MultiBufferOffset>>) {
         let mut skip_points = Vec::with_capacity(selections.len());
         let mut skip_ranges = Vec::new();
@@ -976,7 +988,8 @@ impl Vim {
             let head_offset = buffer.point_to_offset(selection.head());
             skip_points.push(head_offset);
 
-            if selection.start != selection.end {
+            // In visual mode, don't skip ranges so we can shrink the selection
+            if !is_visual && selection.start != selection.end {
                 let mut start = buffer.point_to_offset(selection.start);
                 let mut end = buffer.point_to_offset(selection.end);
                 if start > end {
