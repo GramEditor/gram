@@ -1957,7 +1957,7 @@ mod test {
     async fn test_helix_jump_starts_operator(cx: &mut gpui::TestAppContext) {
         let mut cx = VimTestContext::new(cx, true).await;
         cx.enable_helix();
-        cx.set_state("hello world\njump labels", Mode::HelixNormal);
+        cx.set_state("ˇhello world\njump labels", Mode::HelixNormal);
 
         cx.simulate_keystrokes("g w");
 
