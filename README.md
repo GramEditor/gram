@@ -29,6 +29,17 @@ to push anything potentially malicious, distracting or confusing at them.
 
 </div>
 
+## Community
+
+> [!IMPORTANT]
+>
+> Join our community-managed chat forum for Gram using XMPP at
+> [gram@rooms.slidge.im](xmpp:gram@rooms.slidge.im?join). Any XMPP client should
+> be able to connect, and there is a basic
+> [web UI available](https://slidge.im/gram/#/guest?join=gram@rooms.slidge.im).
+> There are chat logs available in an
+> [online archive](https://rooms.slidge.im:5281/muc_log/gram) as well.
+
 ## Features
 
 It has a lot of things going for it:
