@@ -67,6 +67,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pull in patches for notify crate from Zed
 - Fix image rendering when image changes size (#604) by @Emilinya
 - Fix rerun last debug (zed#58828) (#610) by @rdnvndr 
+- Fix Debug Test for Go subtests (zed#53680)
+- Fix table test detection in large files (zed#57277)
+- Support emitting multiple runnables from a single tree-sitter match (zed#57276)
 
 ## [3.3.0] - 2026-08-25
 
