@@ -2,6 +2,7 @@
   (#set! injection.language "comment"))
 
 ; SQL -----------------------------------------------------------------------------
+
 ([
     ; function calls
     (call
@@ -17,7 +18,8 @@
         (string
           (string_content)
           @injection.content)
-        @injection.host))
+        ; FIXME: require backport
+        @_injection.host))
     ; string variables
     ((comment) @_comment
       .
@@ -27,6 +29,7 @@
           (string
             (string_content)
             @injection.content)
-          @injection.host)))]
+          ; FIXME: require backport
+          @_injection.host)))]
   (#match? @_comment "^(#|#\\s+)(?i:sql)\\s*$")
   (#set! injection.language "sql"))
