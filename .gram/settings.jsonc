@@ -6,7 +6,7 @@
       "formatter": "prettier",
     },
     "TOML": {
-      "formatter": "language_server",
+      "formatter": "prettier",
       "format_on_save": "off",
     },
     "YAML": {
