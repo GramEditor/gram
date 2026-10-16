@@ -236,6 +236,7 @@ pub(crate) fn gram_default_dark() -> Theme {
                 vim_visual_background: crate::blue().dark().step_12(),
                 vim_visual_line_background: crate::blue().dark().step_12(),
                 vim_visual_block_background: crate::blue().dark().step_12(),
+                vim_helix_jump_label_foreground: red,
                 vim_helix_normal_background: SystemColors::default().transparent,
                 vim_helix_select_background: crate::green().dark().step_12(),
                 vim_mode_text: SystemColors::default().transparent,

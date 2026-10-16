@@ -15,8 +15,9 @@ use gpui::{Context, Font, Hsla, Pixels, Window, WindowTextSystem};
 use language::{CharClassifier, CharKind, Point, Selection};
 use multi_buffer::MultiBufferSnapshot;
 use search::{BufferSearchBar, SearchOptions};
-use settings::{RegisterSetting, Settings};
+use settings::Settings;
 use text::{Bias, SelectionGoal};
+use theme::ActiveTheme as _;
 use ui::prelude::*;
 use workspace::searchable::{self, Direction, FilteredSearchRange};
 
@@ -28,13 +29,6 @@ use crate::{
     state::{HelixJumpBehaviour, HelixJumpLabel, Mode, Operator},
 };
 use std::{ops::Range, sync::Arc};
-
-pub(crate) const HELIX_JUMP_ACCENT: Hsla = Hsla {
-    h: 0.0,
-    s: 0.78,
-    l: 0.55,
-    a: 1.0,
-};
 
 actions!(
     vim,
@@ -803,13 +797,13 @@ impl Vim {
             let font = style.text.font();
             let font_size = style.text.font_size.to_pixels(window.rem_size());
 
-            let accent = HelixSettings::get_global(cx).jump_label_accent;
+            let label_color = cx.theme().colors().vim_helix_jump_label_foreground;
             Self::build_helix_jump_ui_data(
                 buffer_snapshot,
                 start_offset,
                 end_offset,
                 cursor_offset,
-                accent,
+                label_color,
                 &skip_points,
                 &skip_ranges,
                 window.text_system(),
@@ -824,7 +818,7 @@ impl Vim {
         start_offset: MultiBufferOffset,
         end_offset: MultiBufferOffset,
         cursor_offset: MultiBufferOffset,
-        accent: Hsla,
+        label_color: Hsla,
         skip_points: &[MultiBufferOffset],
         skip_ranges: &[Range<MultiBufferOffset>],
         text_system: &WindowTextSystem,
@@ -994,7 +988,7 @@ impl Vim {
                 blocks.push(Self::jump_label_block(
                     start_anchor,
                     label,
-                    accent,
+                    label_color,
                     label_index,
                     font.clone(),
                     font_size,
@@ -1192,7 +1186,7 @@ impl Vim {
             blocks.push(Self::jump_label_block(
                 start_anchor,
                 label,
-                accent,
+                label_color,
                 label_index,
                 font.clone(),
                 font_size,
@@ -1394,20 +1388,6 @@ impl Vim {
                     );
                 })
             });
-        }
-    }
-}
-
-#[derive(RegisterSetting)]
-struct HelixSettings {
-    jump_label_accent: Hsla,
-}
-
-impl Settings for HelixSettings {
-    fn from_settings(content: &settings::SettingsContent) -> Self {
-        let helix = content.helix.clone().unwrap_or_default();
-        Self {
-            jump_label_accent: helix.jump_label_accent.unwrap_or(HELIX_JUMP_ACCENT),
         }
     }
 }

@@ -172,6 +172,8 @@ pub struct ThemeColors {
     pub vim_visual_line_background: Hsla,
     /// Background color for Vim Visual Block mode indicator.
     pub vim_visual_block_background: Hsla,
+    /// Foreground color for Helix jump labels.
+    pub vim_helix_jump_label_foreground: Hsla,
     /// Background color for Vim Helix Normal mode indicator.
     pub vim_helix_normal_background: Hsla,
     /// Background color for Vim Helix Select mode indicator.
