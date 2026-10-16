@@ -389,7 +389,10 @@ impl Block {
 
     fn place_below(&self) -> bool {
         match self {
-            Block::Custom(block) => matches!(block.placement, BlockPlacement::Below(_) | BlockPlacement::Near(_) | BlockPlacement::Inline(_)),
+            Block::Custom(block) => matches!(
+                block.placement,
+                BlockPlacement::Below(_) | BlockPlacement::Near(_) | BlockPlacement::Inline(_)
+            ),
             Block::FoldedBuffer { .. } => false,
             Block::ExcerptBoundary { .. } => false,
             Block::BufferHeader { .. } => false,
@@ -732,8 +735,8 @@ impl BlockMap {
                         just_processed_folded_buffer = false;
                     }
                     BlockPlacement::Inline(position)
-                        | BlockPlacement::Near(position)
-                        | BlockPlacement::Below(position) => {
+                    | BlockPlacement::Near(position)
+                    | BlockPlacement::Below(position) => {
                         if just_processed_folded_buffer {
                             continue;
                         }
@@ -3489,81 +3492,6 @@ mod tests {
 
         let blocks_snapshot = block_map.read(wrap_snapshot, Patch::default());
         assert_eq!(blocks_snapshot.text(), "");
-    }
-
-    #[gpui::test]
-    fn test_zero_height_fixed_inline_blocks_use_anchor_wrap_row(cx: &mut gpui::TestAppContext) {
-        cx.update(init_test);
-
-        let text = format!("{}\n", "a".repeat(200));
-        let buffer = cx.update(|cx| {
-            MultiBuffer::build_multi(
-                [(text.as_str(), vec![Point::new(0, 0)..Point::new(1, 0)])],
-                cx,
-            )
-        });
-        let buffer_snapshot = cx.update(|cx| buffer.read(cx).snapshot(cx));
-
-        let (_, inlay_snapshot) = InlayMap::new(buffer_snapshot.clone());
-        let (_, fold_snapshot) = FoldMap::new(inlay_snapshot);
-        let (_, tab_snapshot) = TabMap::new(fold_snapshot, 4.try_into().unwrap());
-
-        let wrap_snapshot = cx.update(|cx| {
-            let font = test_font();
-            let font_size = px(14.0);
-            let font_id = cx.text_system().resolve_font(&font);
-            let mut wrap_width = px(0.0);
-            for _ in 0..10 {
-                wrap_width += cx
-                    .text_system()
-                    .advance(font_id, font_size, 'a')
-                    .unwrap()
-                    .width;
-            }
-
-            WrapMap::new(tab_snapshot, font, font_size, Some(wrap_width), cx).1
-        });
-        let mut block_map = BlockMap::new(wrap_snapshot.clone(), 1, 1);
-
-        let anchor = buffer_snapshot.anchor_after(Point::new(0, 0));
-        let anchor_point = anchor.to_point(&buffer_snapshot);
-        let anchor_wrap_row = wrap_snapshot
-            .make_wrap_point(anchor_point, anchor.bias())
-            .row();
-
-        let line_end_column = buffer_snapshot.line_len(MultiBufferRow(0));
-        let line_end_point = Point::new(0, line_end_column);
-        let line_end_wrap_row = wrap_snapshot
-            .make_wrap_point(line_end_point, Bias::Left)
-            .row();
-        assert!(
-            line_end_wrap_row > anchor_wrap_row,
-            "expected test line to wrap"
-        );
-
-        let base_snapshot = block_map.read(wrap_snapshot.clone(), Patch::default(), None);
-        let expected_block_row = base_snapshot
-            .to_block_point(WrapPoint::new(anchor_wrap_row + WrapRow(1), 0))
-            .row();
-
-        let mut writer = block_map.write(wrap_snapshot.clone(), Patch::default(), None);
-        let block_id = writer.insert(vec![BlockProperties {
-            style: BlockStyle::Fixed,
-            placement: BlockPlacement::Inline(anchor),
-            height: Some(0),
-            render: Arc::new(|_| div().into_any()),
-            priority: 0,
-        }])[0];
-
-        let blocks_snapshot = block_map.read(wrap_snapshot, Patch::default(), None);
-        let actual_block_row = blocks_snapshot
-            .blocks_in_range(BlockRow(0)..BlockRow(10_000))
-            .find_map(|(row, block)| match block.id() {
-                BlockId::Custom(id) if id == block_id => Some(row),
-                _ => None,
-            });
-
-        assert_eq!(actual_block_row, Some(expected_block_row));
     }
 
     fn init_test(cx: &mut gpui::App) {

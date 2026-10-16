@@ -3324,9 +3324,8 @@ impl EditorElement {
             Block::Custom(custom) => {
                 let block_start = custom.start().to_point(snapshot.buffer_snapshot());
                 let block_end = custom.end().to_point(snapshot.buffer_snapshot());
-                if (block.place_near() || block.is_inline())
-                        && snapshot.is_line_folded(MultiBufferRow(block_start.row))
-                    {
+                if (block.place_near() || block.is_inline()) && snapshot.is_line_folded(MultiBufferRow(block_start.row))
+                {
                     return None;
                 }
                 let align_to = block_start.to_display_point(snapshot);

@@ -777,13 +777,9 @@ mod tests {
             ..Default::default()
         };
 
-        let fallback_refinement =
-            theme_colors_refinement(&ThemeColorsContent::default(), &status_colors);
+        let fallback_refinement = theme_colors_refinement(&ThemeColorsContent::default(), &status_colors);
 
-        assert_eq!(
-            fallback_refinement.vim_helix_jump_label_foreground,
-            Some(status_error)
-        );
+        assert_eq!(fallback_refinement.vim_helix_jump_label_foreground, Some(status_error));
 
         let override_refinement = theme_colors_refinement(
             &ThemeColorsContent {
