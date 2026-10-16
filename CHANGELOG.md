@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Added
 
+- Add Helix "Amp Jump" (g w) feature (zed#43733)
 - Add `tab_bar.show_pinned_tabs_in_separate_row` setting to display pinned and unpinned tabs in separate rows (zed#46573)
 - Add Repology notes in docs (#470) by @koru
 - Bundle OpenMoji as emoji fallback (#478)
@@ -66,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ensure that SoftWrap being set to None does not cause wrapping (#572) by @nitbook
 - Pull in patches for notify crate from Zed
 - Fix image rendering when image changes size (#604) by @Emilinya
-- Fix rerun last debug (zed#58828) (#610) by @rdnvndr 
+- Fix rerun last debug (zed#58828) (#610) by @rdnvndr
 - Fix Debug Test for Go subtests (zed#53680)
 - Fix table test detection in large files (zed#57277)
 - Support emitting multiple runnables from a single tree-sitter match (zed#57276)
