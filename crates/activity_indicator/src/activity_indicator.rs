@@ -707,6 +707,7 @@ impl Render for ActivityIndicator {
                                 );
                             } else {
                                 if let Some(progress_message) = work.progress.message.as_ref() {
+                                    title.reserve(progress_message.len() + 2);
                                     title.push_str(": ");
                                     title.push_str(progress_message);
                                 }

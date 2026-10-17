@@ -2,13 +2,10 @@
 #![allow(unused)]
 
 fn main() {
-    let target = std::env::var("CARGO_CFG_TARGET_OS");
     println!("cargo::rustc-check-cfg=cfg(gles)");
 
-    if let Ok("windows") = target.as_deref() {
-        #[cfg(target_os = "windows")]
-        windows::build();
-    };
+    #[cfg(target_os = "windows")]
+    windows::build();
 }
 
 #[cfg(target_os = "windows")]

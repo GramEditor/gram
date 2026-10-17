@@ -11,17 +11,11 @@ fn main() {
     if cfg!(target_os = "macos") {
         println!("cargo:rustc-env=MACOSX_DEPLOYMENT_TARGET=10.15.7");
 
-        // Weakly link ReplayKit to ensure Gram can be used on macOS 10.15+.
-        println!("cargo:rustc-link-arg=-Wl,-weak_framework,ReplayKit");
-
         // Seems to be required to enable Swift concurrency
         println!("cargo:rustc-link-arg=-Wl,-rpath,/usr/lib/swift");
 
         // Register exported Objective-C selectors, protocols, etc
         println!("cargo:rustc-link-arg=-Wl,-ObjC");
-
-        // weak link to support Catalina
-        println!("cargo:rustc-link-arg=-Wl,-weak_framework,ScreenCaptureKit");
     }
 
     // Populate git sha environment variable if git is available

@@ -82,7 +82,7 @@ pub enum DiffHunkSecondaryStatus {
     NoSecondaryHunk,
     /// We are unstaging
     SecondaryHunkAdditionPending,
-    /// We are stagind
+    /// We are staging
     SecondaryHunkRemovalPending,
 }
 
