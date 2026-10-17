@@ -185,7 +185,7 @@ if [[ -n $pacman ]]; then
         base-devel
         pacman-contrib
     )
-    $maysudo "$pacman" -Syu --needed --noconfirm "${deps[@]}"
+    $maysudo "$pacman" -S --needed "${deps[@]}"
     finalize
     exit 0
 fi
