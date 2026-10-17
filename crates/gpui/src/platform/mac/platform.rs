@@ -12,7 +12,7 @@ use dispatch2::DispatchQueue;
 use futures::channel::oneshot;
 use itertools::Itertools;
 use objc2::{
-    DefinedClass, MainThreadMarker, MainThreadOnly, define_class, msg_send,
+    DefinedClass, MainThreadMarker, MainThreadOnly, available, define_class, msg_send,
     rc::Retained,
     runtime::{AnyObject, ProtocolObject},
     sel,
@@ -689,7 +689,12 @@ impl Platform for MacPlatform {
 
     fn activate(&self) {
         let app = NSApplication::sharedApplication(MainThreadMarker::new().unwrap());
-        app.activate();
+        if available!(macos = 14.0) {
+            app.activate();
+        } else {
+            #[allow(deprecated)]
+            app.activateIgnoringOtherApps(false);
+        }
     }
 
     fn hide(&self) {
