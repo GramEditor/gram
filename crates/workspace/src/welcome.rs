@@ -225,17 +225,8 @@ impl WelcomePage {
         }
     }
 
-    fn select_next(&mut self, _: &SelectNext, window: &mut Window, cx: &mut Context<Self>) {
-        window.focus_next(cx);
-        cx.notify();
-    }
-
-    fn select_previous(&mut self, _: &SelectPrevious, window: &mut Window, cx: &mut Context<Self>) {
-        window.focus_prev(cx);
-        cx.notify();
-    }
-
-    fn open_recent_project(&mut self, action: &OpenRecentProject, window: &mut Window, cx: &mut Context<Self>) {
+    // See `crates/workspace/src/pane.rs`. `Pane` is registering the listener for this.
+    pub fn open_recent_project(&mut self, action: &OpenRecentProject, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(recent_workspaces) = &self.recent_workspaces
             && let Some((_workspace_id, location, paths)) = recent_workspaces.get(action.index)
         {
@@ -263,6 +254,16 @@ impl WelcomePage {
                 action.index
             );
         }
+    }
+
+    fn select_next(&mut self, _: &SelectNext, window: &mut Window, cx: &mut Context<Self>) {
+        window.focus_next(cx);
+        cx.notify();
+    }
+
+    fn select_previous(&mut self, _: &SelectPrevious, window: &mut Window, cx: &mut Context<Self>) {
+        window.focus_prev(cx);
+        cx.notify();
     }
 
     fn render_recent_project_section(&self, recent_projects: Vec<impl IntoElement>) -> impl IntoElement {
@@ -339,7 +340,6 @@ impl Render for WelcomePage {
             .track_focus(&self.focus_handle(cx))
             .on_action(cx.listener(Self::select_previous))
             .on_action(cx.listener(Self::select_next))
-            .on_action(cx.listener(Self::open_recent_project))
             .size_full()
             .justify_center()
             .overflow_hidden()
