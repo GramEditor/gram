@@ -1,6 +1,6 @@
 use crate::{
-    GLOBAL_THREAD_TIMINGS, PlatformDispatcher, RunnableVariant, THREAD_TIMINGS, TaskLabel, TaskTiming,
-    ThreadTaskTimings,
+    GLOBAL_THREAD_TIMINGS, MAX_TASK_TIMINGS, PlatformDispatcher, RunnableVariant, THREAD_TIMINGS, TaskLabel,
+    TaskTiming, ThreadTaskTimings,
 };
 use calloop::{
     EventLoop,
@@ -161,6 +161,9 @@ impl LinuxDispatcher {
                 return;
             }
 
+            if timings.len() >= MAX_TASK_TIMINGS {
+                timings.pop_front();
+            }
             timings.push_back(timing);
         });
     }

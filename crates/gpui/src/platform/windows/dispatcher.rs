@@ -15,8 +15,8 @@ use windows::{
 };
 
 use crate::{
-    GLOBAL_THREAD_TIMINGS, HWND, PlatformDispatcher, RunnableVariant, SafeHwnd, THREAD_TIMINGS, TaskLabel, TaskTiming,
-    ThreadTaskTimings, WM_GPUI_TASK_DISPATCHED_ON_MAIN_THREAD,
+    GLOBAL_THREAD_TIMINGS, HWND, MAX_TASK_TIMINGS, PlatformDispatcher, RunnableVariant, SafeHwnd, THREAD_TIMINGS,
+    TaskLabel, TaskTiming, ThreadTaskTimings, WM_GPUI_TASK_DISPATCHED_ON_MAIN_THREAD,
 };
 
 pub(crate) struct WindowsDispatcher {
@@ -117,6 +117,9 @@ impl WindowsDispatcher {
                 return;
             }
 
+            if timings.len() >= MAX_TASK_TIMINGS {
+                timings.pop_front();
+            }
             timings.push_back(timing);
         });
     }
