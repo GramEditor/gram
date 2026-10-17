@@ -10,6 +10,7 @@ use crate::{
     move_item,
     notifications::NotifyResultExt,
     toolbar::Toolbar,
+    welcome::OpenRecentProject,
     workspace_settings::{AutosaveSetting, TabBarSettings, WorkspaceSettings},
 };
 use anyhow::Result;
@@ -4324,6 +4325,15 @@ impl Render for Pane {
             .size_full()
             .flex_none()
             .overflow_hidden()
+            .on_action(cx.listener(|pane: &mut Pane, action: &OpenRecentProject, window, cx| {
+                // Fix #508: ensure that OpenRecentProject listener is going to always be in the element tree
+                // by placing it here.
+                if let Some(welcome) = &pane.welcome_page {
+                    welcome.update(cx, |page, cx| {
+                        page.open_recent_project(action, window, cx);
+                    });
+                }
+            }))
             .on_action(cx.listener(|pane, _: &SplitLeft, _, cx| pane.split(SplitDirection::Left, cx)))
             .on_action(cx.listener(|pane, _: &SplitUp, _, cx| pane.split(SplitDirection::Up, cx)))
             .on_action(cx.listener(|pane, _: &SplitHorizontal, _, cx| pane.split(SplitDirection::horizontal(cx), cx)))
