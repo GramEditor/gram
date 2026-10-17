@@ -1,6 +1,6 @@
 use crate::{
-    GLOBAL_THREAD_TIMINGS, PlatformDispatcher, RunnableMeta, RunnableVariant, THREAD_TIMINGS, TaskLabel, TaskTiming,
-    ThreadTaskTimings,
+    GLOBAL_THREAD_TIMINGS, MAX_TASK_TIMINGS, PlatformDispatcher, RunnableMeta, RunnableVariant, THREAD_TIMINGS,
+    TaskLabel, TaskTiming, ThreadTaskTimings,
 };
 
 use async_task::Runnable;
@@ -110,6 +110,9 @@ extern "C" fn trampoline(runnable: *mut c_void) {
             return;
         }
 
+        if timings.len() >= MAX_TASK_TIMINGS {
+            timings.pop_front();
+        }
         timings.push_back(timing);
     });
 

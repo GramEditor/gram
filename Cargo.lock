@@ -1063,12 +1063,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "circular-buffer"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "662f6b21c6e889ee4e3f449e197c40f03603472fcd40c709093d386e3dca07cf"
-
-[[package]]
 name = "clap"
 version = "4.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3470,7 +3464,6 @@ dependencies = [
  "bytemuck",
  "calloop",
  "calloop-wayland-source",
- "circular-buffer",
  "collections",
  "cosmic-text",
  "ctor",
@@ -7252,7 +7245,6 @@ dependencies = [
  "async-trait",
  "base64 0.22.1",
  "buffer_diff",
- "circular-buffer",
  "client",
  "clock",
  "collections",

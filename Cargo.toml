@@ -316,7 +316,6 @@ calloop = "0.14.3"
 calloop-wayland-source = "0.4.1"
 chardetng = "1.0.0"
 chrono = { version = "0.4.45", features = ["clock", "oldtime", "serde", "std", "wasmbind"] }
-circular-buffer = "2.0.1"
 clap = { version = "4.6.7", features = ["color", "derive", "error-context", "help", "std", "suggestions", "usage", "wrap_help"] }
 codebook-tree-sitter-typst = "0.12.1"
 command-fds = "0.3.3"

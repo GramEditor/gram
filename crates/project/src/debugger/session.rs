@@ -46,7 +46,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use smol::net::{TcpListener, TcpStream};
 use std::any::TypeId;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, VecDeque};
 use std::net::Ipv4Addr;
 use std::ops::RangeInclusive;
 use std::path::PathBuf;
@@ -663,7 +663,7 @@ pub struct Session {
     modules: Vec<dap::Module>,
     loaded_sources: Vec<dap::Source>,
     output_token: OutputToken,
-    output: Box<circular_buffer::FixedCircularBuffer<dap::OutputEvent, MAX_TRACKED_OUTPUT_EVENTS>>,
+    output: VecDeque<dap::OutputEvent>,
     threads: IndexMap<ThreadId, Thread>,
     thread_states: ThreadStates,
     watchers: HashMap<SharedString, Watcher>,
@@ -829,7 +829,7 @@ impl Session {
                 stack_frames: Default::default(),
                 thread_states: ThreadStates::default(),
                 output_token: OutputToken(0),
-                output: circular_buffer::FixedCircularBuffer::boxed(),
+                output: VecDeque::with_capacity(MAX_TRACKED_OUTPUT_EVENTS),
                 requests: HashMap::default(),
                 modules: Vec::default(),
                 loaded_sources: Vec::default(),
@@ -1609,6 +1609,9 @@ impl Session {
     }
 
     fn push_output(&mut self, event: OutputEvent) {
+        if self.output.len() == MAX_TRACKED_OUTPUT_EVENTS {
+            self.output.pop_front();
+        }
         self.output.push_back(event);
         self.output_token.0 += 1;
     }

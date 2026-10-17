@@ -1,4 +1,11 @@
-use std::{cell::LazyCell, hash::Hash, hash::Hasher, sync::Arc, thread::ThreadId, time::Instant};
+use std::{
+    cell::LazyCell,
+    collections::VecDeque,
+    hash::{Hash, Hasher},
+    sync::Arc,
+    thread::ThreadId,
+    time::Instant,
+};
 
 use collections::FxHasher;
 use serde::{Deserialize, Serialize};
@@ -137,11 +144,13 @@ impl<'a> SerializedThreadTaskTimings<'a> {
     }
 }
 
-// Allow 20mb of task timing entries
-const MAX_TASK_TIMINGS: usize = (20 * 1024 * 1024) / core::mem::size_of::<TaskTiming>();
+// Allow 16MiB of task timing entries.
+// VecDeque grows by doubling its capacity when full, so keep this a power of 2 to avoid wasting
+// memory.
+pub(crate) const MAX_TASK_TIMINGS: usize = (16 * 1024 * 1024) / core::mem::size_of::<TaskTiming>();
 
-pub(crate) type TaskTimings = circular_buffer::FixedCircularBuffer<TaskTiming, MAX_TASK_TIMINGS>;
-pub(crate) type GuardedTaskTimings = spin::Mutex<ThreadTimings>;
+type TaskTimings = VecDeque<TaskTiming>;
+type GuardedTaskTimings = spin::Mutex<ThreadTimings>;
 
 pub(crate) struct GlobalThreadTimings {
     pub thread_id: ThreadId,
@@ -174,7 +183,7 @@ thread_local! {
 pub(crate) struct ThreadTimings {
     pub thread_name: Option<String>,
     pub thread_id: ThreadId,
-    pub timings: Box<TaskTimings>,
+    pub timings: TaskTimings,
 }
 
 impl ThreadTimings {
@@ -182,7 +191,7 @@ impl ThreadTimings {
         ThreadTimings {
             thread_name,
             thread_id,
-            timings: TaskTimings::boxed(),
+            timings: TaskTimings::new(),
         }
     }
 }
