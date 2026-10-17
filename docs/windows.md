@@ -2,7 +2,10 @@
 
 ## Installing Gram
 
-Currently, Gram can only be installed on Windows by building
+There are now basic Windows binaries provided with the [Codeberg
+releases](https://codeberg.org/GramEditor/gram/releases).
+
+Otherwise, the editor can be installed by building
 [from source](./development/windows.md).
 
 ## Uninstall
