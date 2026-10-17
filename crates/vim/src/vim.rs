@@ -1561,12 +1561,11 @@ impl Vim {
         let state = self.helix_jump_ui.take();
         self.update_editor(cx, move |_, editor, cx| {
             editor.clear_highlights::<HelixJumpHighlight>(cx);
-            if let Some(state) = state {
-                if !state.block_ids.is_empty() {
+            if let Some(state) = state
+                && !state.block_ids.is_empty() {
                     let block_ids: HashSet<_> = state.block_ids.into_iter().collect();
                     editor.remove_blocks(block_ids, None, cx);
                 }
-            }
         });
     }
 

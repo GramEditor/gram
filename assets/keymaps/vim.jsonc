@@ -348,8 +348,8 @@
     "context": "Editor && mode == full && vim_mode == insert && !(showing_code_actions || showing_completions)",
     "bindings": {
       "enter": "editor::Newline",
-      "tab": "editor::Tab"
-    }
+      "tab": "editor::Tab",
+    },
   },
   {
     "context": "vim_mode == insert",
@@ -511,11 +511,11 @@
       "shift-h": "pane::ActivatePreviousItem", // not a helix default
       "g w": "vim::HelixJumpToWord",
       "g .": "vim::HelixGotoLastModification",
-      "g o": "editor::ToggleSelectedDiffHunks", // Zed specific
-      "g shift-o": "git::ToggleStaged", // Zed specific
-      "g shift-r": "git::Restore", // Zed specific
-      "g u": "git::StageAndNext", // Zed specific
-      "g shift-u": "git::UnstageAndNext", // Zed specific
+      "g o": "editor::ToggleSelectedDiffHunks", // Gram specific
+      "g shift-o": "git::ToggleStaged", // Gram specific
+      "g shift-r": "git::Restore", // Gram specific
+      "g u": "git::StageAndNext", // Gram specific
+      "g shift-u": "git::UnstageAndNext", // Gram specific
 
       // Window mode
       "space w v": "pane::SplitDown",

@@ -784,7 +784,7 @@ impl Vim {
             let start_offset = buffer_snapshot.point_to_offset(start_point);
             let end_offset = buffer_snapshot.point_to_offset(end_point);
 
-            let selections = editor.selections.all::<Point>(&display_snapshot);
+            let selections = editor.selections.all::<Point>(display_snapshot);
             let (skip_points, skip_ranges) = Self::selection_skip_offsets(buffer_snapshot, &selections, is_visual);
 
             // Get the primary cursor position for alternating forward/backward labeling

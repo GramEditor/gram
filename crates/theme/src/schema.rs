@@ -766,6 +766,8 @@ pub(crate) fn try_parse_color(color: &str) -> anyhow::Result<Hsla> {
 
 #[cfg(test)]
 mod tests {
+    use settings::ThemeColorsContent;
+
     use super::*;
 
     #[test]
