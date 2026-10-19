@@ -6,7 +6,7 @@ use gpui::{
 };
 use project::{
     Project, ProjectPath,
-    git_store::{GitStore, Repository},
+    git_store::{GitStore, GitStoreEvent, Repository, RepositoryEvent},
 };
 use std::any::{Any, TypeId};
 
@@ -88,6 +88,7 @@ impl FileHistoryView {
                                 git_store.clone(),
                                 repo.clone(),
                                 workspace.weak_handle(),
+                                window,
                                 cx,
                             )
                         });
@@ -115,11 +116,23 @@ impl FileHistoryView {
         git_store: WeakEntity<GitStore>,
         repository: Entity<Repository>,
         workspace: WeakEntity<Workspace>,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
         let focus_handle = cx.focus_handle();
         let scroll_handle = UniformListScrollHandle::new();
         let has_more = history.entries.len() >= PAGE_SIZE;
+        let repository_id = repository.read(cx).snapshot().id;
+
+        if let Some(git_store) = git_store.upgrade() {
+            cx.subscribe_in(&git_store, window, move |this, _, event, window, cx| match event {
+                GitStoreEvent::RepositoryUpdated(id, repo_event, _) if *id == repository_id => {
+                    this.on_repository_event(repo_event, window, cx);
+                }
+                _ => {}
+            })
+            .detach();
+        }
 
         Self {
             history,
@@ -418,6 +431,15 @@ impl FileHistoryView {
             path.as_unix_str().to_string().into()
         } else {
             "Git History".into()
+        }
+    }
+
+    fn on_repository_event(&mut self, event: &RepositoryEvent, window: &mut Window, cx: &mut Context<Self>) {
+        match event {
+            RepositoryEvent::StatusesChanged | RepositoryEvent::MergeHeadsChanged | RepositoryEvent::BranchChanged => {
+                self.refresh(window, cx);
+            }
+            _ => {}
         }
     }
 }

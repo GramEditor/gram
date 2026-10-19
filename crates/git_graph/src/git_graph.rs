@@ -627,15 +627,17 @@ impl GitGraph {
                 });
 
                 self.graph_data.max_commit_count = AllCommitCount::Loaded(*commit_count);
+                cx.notify();
             }
             RepositoryEvent::BranchChanged => {
                 self.graph_data.clear();
                 cx.notify();
             }
+            RepositoryEvent::StatusesChanged | RepositoryEvent::MergeHeadsChanged => {
+                cx.notify();
+            }
             _ => {}
         }
-
-        cx.notify();
     }
 
     fn render_badge(&self, name: &SharedString, accent_color: gpui::Hsla) -> impl IntoElement {

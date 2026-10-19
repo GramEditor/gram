@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add tombi as an LSP and formatter for TOML (#626) (#616) by @psy-q
 - Rework show_tab_bar_buttons setting to allow always showing (#637) by @sir_nacnud
 - Add setting to wrap tabs onto multiple rows (#643) by @kbilkis
+- Refresh file history view on repository change
 
 ## Removed
 
