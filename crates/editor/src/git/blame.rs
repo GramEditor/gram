@@ -226,15 +226,10 @@ impl GitBlame {
 
         let git_store = project.read(cx).git_store().clone();
         let git_store_subscription = cx.subscribe(&git_store, move |this, _, event, cx| match event {
-            GitStoreEvent::RepositoryUpdated(_, event, _) => match event {
-                StatusesChanged | MergeHeadsChanged | BranchChanged => {
-                    log::debug!("Repository updated. Regenerating blame data...",);
-                    this.generate(cx);
-                }
-                _ => {}
-            },
-            GitStoreEvent::RepositoryAdded | GitStoreEvent::RepositoryRemoved(_) => {
-                log::debug!("Repository added/removed. Regenerating blame data...",);
+            GitStoreEvent::RepositoryUpdated(_, StatusesChanged | MergeHeadsChanged | BranchChanged, _)
+            | GitStoreEvent::RepositoryAdded
+            | GitStoreEvent::RepositoryRemoved(_) => {
+                log::debug!("Repository changed. Regenerating blame data...",);
                 this.generate(cx);
             }
             _ => {}

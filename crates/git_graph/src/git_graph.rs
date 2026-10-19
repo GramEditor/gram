@@ -563,7 +563,7 @@ impl GitGraph {
                 }
             }
             GitStoreEvent::ActiveRepositoryChanged(_) => {
-                this.graph_data.clear();
+                this.clear_graph();
                 cx.notify();
             }
             _ => {}
@@ -615,6 +615,13 @@ impl GitGraph {
         }
     }
 
+    fn clear_graph(&mut self) {
+        self.graph_data.clear();
+        self.selected_entry_idx = None;
+        self.selected_commit_diff = None;
+        self._commit_diff_task = None;
+    }
+
     fn on_repository_event(&mut self, repository: Entity<Repository>, event: &RepositoryEvent, cx: &mut Context<Self>) {
         match event {
             RepositoryEvent::GitGraphCountUpdated(_, commit_count) => {
@@ -629,11 +636,11 @@ impl GitGraph {
                 self.graph_data.max_commit_count = AllCommitCount::Loaded(*commit_count);
                 cx.notify();
             }
-            RepositoryEvent::BranchChanged => {
-                self.graph_data.clear();
+            RepositoryEvent::BranchChanged | RepositoryEvent::MergeHeadsChanged => {
+                self.clear_graph();
                 cx.notify();
             }
-            RepositoryEvent::StatusesChanged | RepositoryEvent::MergeHeadsChanged => {
+            RepositoryEvent::StatusesChanged => {
                 cx.notify();
             }
             _ => {}

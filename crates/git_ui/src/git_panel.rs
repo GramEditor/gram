@@ -714,7 +714,8 @@ impl GitPanel {
                         _,
                         RepositoryEvent::StatusesChanged
                         | RepositoryEvent::BranchChanged
-                        | RepositoryEvent::MergeHeadsChanged,
+                        | RepositoryEvent::MergeHeadsChanged
+                        | RepositoryEvent::StashEntriesChanged,
                         true,
                     )
                     | GitStoreEvent::RepositoryAdded
