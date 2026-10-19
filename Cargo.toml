@@ -501,7 +501,7 @@ wax = "0.7.0"
 wayland-backend = { version = "0.3.17", features = ["client_system", "dlopen"] }
 wayland-client = "0.31.15"
 wayland-cursor = "0.31.14"
-wayland-protocols = { version = "0.31.2", features = ["client", "staging", "unstable"] }
+wayland-protocols = { version = "0.32.13", features = ["client", "staging", "unstable"] }
 wayland-protocols-plasma = { version = "0.2.0", features = ["client"] }
 wayland-protocols-wlr = { version = "0.3.12", features = ["client"] }
 wgpu = "30.0.1"

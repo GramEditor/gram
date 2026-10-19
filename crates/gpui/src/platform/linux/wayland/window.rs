@@ -13,6 +13,7 @@ use raw_window_handle as rwh;
 use wayland_backend::client::ObjectId;
 use wayland_client::WEnum;
 use wayland_client::{Proxy, protocol::wl_surface};
+use wayland_protocols::ext::background_effect::v1::client::ext_background_effect_surface_v1;
 use wayland_protocols::wp::viewporter::client::wp_viewport;
 use wayland_protocols::xdg::decoration::zv1::client::zxdg_toplevel_decoration_v1;
 use wayland_protocols::xdg::shell::client::xdg_surface;
@@ -20,7 +21,6 @@ use wayland_protocols::xdg::shell::client::xdg_toplevel::{self};
 use wayland_protocols::{
     wp::fractional_scale::v1::client::wp_fractional_scale_v1, xdg::shell::client::xdg_toplevel::XdgToplevel,
 };
-use wayland_protocols_plasma::blur::client::org_kde_kwin_blur;
 use wayland_protocols_wlr::layer_shell::v1::client::zwlr_layer_surface_v1;
 
 use crate::{
@@ -93,7 +93,7 @@ pub struct WaylandWindowState {
     pub surface: wl_surface::WlSurface,
     app_id: Option<String>,
     appearance: WindowAppearance,
-    blur: Option<org_kde_kwin_blur::OrgKdeKwinBlur>,
+    background_effects: Option<ext_background_effect_surface_v1::ExtBackgroundEffectSurfaceV1>,
     viewport: Option<wp_viewport::WpViewport>,
     outputs: HashMap<ObjectId, Output>,
     display: Option<(ObjectId, Output)>,
@@ -317,7 +317,7 @@ impl WaylandWindowState {
             acknowledged_first_configure: false,
             surface,
             app_id: None,
-            blur: None,
+            background_effects: None,
             viewport,
             globals,
             outputs: HashMap::default(),
@@ -393,9 +393,9 @@ impl Drop for WaylandWindow {
 
         state.renderer.destroy();
 
-        // Destroy blur first, this has no dependencies.
-        if let Some(blur) = &state.blur {
-            blur.release();
+        // Destroy background effects, this has no dependencies.
+        if let Some(background_effects) = &state.background_effects {
+            background_effects.destroy();
         }
 
         // Decorations must be destroyed before the xdg state.
@@ -561,10 +561,7 @@ impl WaylandWindowStatePtr {
             let mut state = self.state.borrow_mut();
             state.surface_state.ack_configure(serial);
 
-            let window_geometry = inset_by_tiling(state.bounds.map_origin(|_| px(0.0)), state.inset(), state.tiling)
-                .map(|v| v.0 as i32)
-                .map_size(|v| if v <= 0 { 1 } else { v });
-
+            let window_geometry = window_geometry_region(&state);
             state.surface_state.set_geometry(
                 window_geometry.origin.x,
                 window_geometry.origin.y,
@@ -856,6 +853,22 @@ impl WaylandWindowStatePtr {
             let state = self.state.borrow();
             if let Some(viewport) = &state.viewport {
                 viewport.set_destination(size.width.0 as i32, size.height.0 as i32);
+            }
+
+            // reset effects region
+            if let Some(background_effects) = &state.background_effects {
+                let window_geometry = window_geometry_region(&state);
+                let region = state.globals.compositor.create_region(&state.globals.qh, ());
+                region.add(
+                    window_geometry.origin.x,
+                    window_geometry.origin.y,
+                    window_geometry.size.width,
+                    window_geometry.size.height,
+                );
+
+                background_effects.set_blur_region(Some(&region));
+
+                region.destroy();
             }
         }
     }
@@ -1308,15 +1321,14 @@ fn update_window(mut state: RefMut<WaylandWindowState>) {
     let opaque = !state.is_transparent();
 
     state.renderer.update_transparency(!opaque);
-    let mut opaque_area = state.window_bounds.map(|v| v.0 as i32);
-    opaque_area.inset(state.inset().0 as i32);
+    let window_geometry = window_geometry_region(&state);
 
     let region = state.globals.compositor.create_region(&state.globals.qh, ());
     region.add(
-        opaque_area.origin.x,
-        opaque_area.origin.y,
-        opaque_area.size.width,
-        opaque_area.size.height,
+        window_geometry.origin.x,
+        window_geometry.origin.y,
+        window_geometry.size.width,
+        window_geometry.size.height,
     );
 
     // Note that rounded corners make this rectangle API hard to work with.
@@ -1332,22 +1344,28 @@ fn update_window(mut state: RefMut<WaylandWindowState>) {
         state.surface.set_opaque_region(None);
     }
 
-    if let Some(ref blur_manager) = state.globals.blur_manager {
+    if let Some(background_effects_manager) = &state.globals.background_effects_manager {
+        // Currently, the ext_background_effect protocol only includes the blur feature.
         if state.background_appearance == WindowBackgroundAppearance::Blurred {
-            if state.blur.is_none() {
-                let blur = blur_manager.create(&state.surface, &state.globals.qh, ());
-                state.blur = Some(blur);
+            if state.background_effects.is_none() {
+                let background_effects =
+                    background_effects_manager.get_background_effect(&state.surface, &state.globals.qh, ());
+                state.background_effects = Some(background_effects);
             }
-            state.blur.as_ref().unwrap().commit();
+
+            state
+                .background_effects
+                .as_ref()
+                .unwrap()
+                .set_blur_region(Some(&region));
         } else {
             // It probably doesn't hurt to clear the blur for opaque windows
-            blur_manager.unset(&state.surface);
-            if let Some(b) = state.blur.take() {
-                b.release()
+            if let Some(b) = state.background_effects.take() {
+                b.set_blur_region(None);
+                b.destroy();
             }
         }
     }
-
     region.destroy();
 }
 
@@ -1377,7 +1395,7 @@ impl ResizeEdge {
 
 /// The configuration event is in terms of the window geometry, which we are constantly
 /// updating to account for the client decorations. But that's not the area we want to render
-/// to, due to our intrusize CSD. So, here we calculate the 'actual' size, by adding back in the insets
+/// to, due to our intrusive CSD. So, here we calculate the 'actual' size, by adding back in the insets
 fn compute_outer_size(inset: Pixels, new_size: Option<Size<Pixels>>, tiling: Tiling) -> Option<Size<Pixels>> {
     new_size.map(|mut new_size| {
         if !tiling.top {
@@ -1414,4 +1432,10 @@ fn inset_by_tiling(mut bounds: Bounds<Pixels>, inset: Pixels, tiling: Tiling) ->
     }
 
     bounds
+}
+
+fn window_geometry_region(state: &WaylandWindowState) -> Bounds<i32> {
+    inset_by_tiling(state.bounds.map_origin(|_| px(0.0)), state.inset(), state.tiling)
+        .map(|v| v.0 as i32)
+        .map_size(|v| if v <= 0 { 1 } else { v })
 }
