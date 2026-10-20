@@ -39,6 +39,7 @@ impl DisplayLink {
             );
             frame_requests.set_context(data);
             frame_requests.set_event_handler_f(callback);
+            frame_requests.resume();
 
             let display_link = sys::DisplayLink::new(
                 display_id,
@@ -55,7 +56,6 @@ impl DisplayLink {
 
     pub fn start(&mut self) -> Result<()> {
         unsafe {
-            self.frame_requests.resume();
             self.display_link.as_mut().unwrap().start()?;
         }
         Ok(())
@@ -63,7 +63,6 @@ impl DisplayLink {
 
     pub fn stop(&mut self) -> Result<()> {
         unsafe {
-            self.frame_requests.suspend();
             self.display_link.as_mut().unwrap().stop()?;
         }
         Ok(())
@@ -82,7 +81,6 @@ impl Drop for DisplayLink {
         // We might also want to upgrade to CADisplayLink, but that requires dropping old macOS support.
         std::mem::forget(self.display_link.take());
         self.frame_requests.cancel();
-        self.frame_requests.resume();
     }
 }
 
