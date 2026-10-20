@@ -22,6 +22,7 @@ EOF
 # Ubuntu, Debian, Mint, Kali, Pop!_OS, Raspbian, etc.
 apt=$(command -v apt-get || true)
 if [[ -n $apt ]]; then
+    cat /etc/os-release
     deps=(
         gcc
         g++
@@ -47,6 +48,8 @@ if [[ -n $apt ]]; then
     )
     if (grep -qP 'PRETTY_NAME="(Debian|Raspbian).+13' /etc/os-release); then
         # libstdc++-14-dev is in build-essential
+        deps+=(mold)
+    elif (grep -qP 'PRETTY_NAME="(Ubuntu).+26' /etc/os-release); then
         deps+=(mold)
     elif (grep -qP 'PRETTY_NAME="(Linux Mint 22|.+24\.(04|10))' /etc/os-release); then
         deps+=(mold libstdc++-14-dev)
