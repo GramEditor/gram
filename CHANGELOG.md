@@ -55,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fit image to view on first paint (#589) by @Emilinya
 - Highlight tracked files even when .gitignore ignores everything (#598) by @frafav
 - Replace protobuf with postcard (#608) by @xmort
-- Replace kde-blur protocol with ext-background-effect protocol(#336) by @ycna07
+- Replace kde-blur protocol with ext-background-effect protocol (#336) (#666) by @ycna07
 
 ## Fixed
 
