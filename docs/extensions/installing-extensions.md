@@ -42,6 +42,11 @@ On Chimera Linux, you will need to install `wasm-component-ld` and `wasi-clang`.
 
 On Manjaro, you will need `rust-wasm` and `wasi-compiler-rt`.
 
+On Mac OS, you will need `rustup`, but it is not recommended to install it via
+Homebrew as users have reported problems compiling extensions with the Homebrew
+version. It is possible that compilation may work if the `rust-wasm` Homebrew
+package is installed, but this is not verified.
+
 ## Installing Local Extensions
 
 From the extensions page, click the `Install Local` button (or the {#action
