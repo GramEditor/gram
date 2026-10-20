@@ -4,91 +4,132 @@ See also [Repology](https://repology.org/project/gram/versions).
 
 ## Distro Packages
 
-The preferred way to install is via adding a Gram repository file and installing
-from it. This provides the user with automatic updates once new packages are
-released. See instructions below. Alternatively, Gram provides prebuilt `.deb`
-and `.rpm` packages as release assets which can be downloaded at
+The preferred installation method is adding the Gram repository for automatic
+updates. Alternatively, prebuilt `.deb` and `.rpm` packages are available as
+release assets at
 [Gram releases](https://codeberg.org/GramEditor/gram/releases).
 
+### Alpine
+
+Alpine Linux provides official packages in the
+[testing](https://pkgs.alpinelinux.org/package/edge/testing/x86_64/gram)
+repository. Enable the testing repository, then run:
+
+```bash
+doas apk add gram@testing
+```
+
+### Arch
+
+Arch Linux provides official packages in the
+[extra](https://archlinux.org/packages/extra/x86_64/gram) repository.
+
+```bash
+sudo pacman -S gram
+```
+
+Alternatively, build and install a development snapshot from the AUR:
+[`gram-git`](https://aur.archlinux.org/packages/gram-git). Verify AUR package
+integrity yourself.
+
 ### Debian/Ubuntu
+
+Requires Debian 12 (Bookworm), Ubuntu 24.04 (Noble), or later.
 
 ```bash
 # Add the repository key
 sudo curl https://codeberg.org/api/packages/GramEditor/debian/repository.key -o /etc/apt/keyrings/forgejo-GramEditor.asc
-# Add the repository file
+# Add the repository
 echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/forgejo-GramEditor.asc] https://codeberg.org/api/packages/GramEditor/debian gram release" | sudo tee -a /etc/apt/sources.list.d/gram.list
 # Update package cache and install
 sudo apt update && sudo apt install gram
 ```
 
-Requires Debian 12 (Bookworm)/Ubuntu 24.04 (noble) or later.
-
 ### Fedora/RHEL/Rocky/Alma
+
+Requires Fedora 42, RHEL 10.1, Rocky 10.1, Alma 10.1, or later.
+
+#### Codeberg Repository
 
 ```bash
 sudo dnf config-manager addrepo --from-repofile="https://codeberg.org/api/packages/GramEditor/rpm.repo"
 sudo dnf install gram
 ```
 
-**Note**: At the time of this writing RPM package signing does not work. In
-order to be able to install Gram you need to set `gpgcheck=0` inside
-`/etc/yum.repos.d/rpm.repo`.
+> [!NOTE]
+>
+> RPM package signing is currently non-functional. To install Gram, set
+> `gpgcheck=0` in `/etc/yum.repos.d/rpm.repo`.
 
-Requires Fedora 42/RHEL 10.1/Rocky 10.1/Alma 10.1 or later.
+#### Terra Repository
+
+```bash
+sudo dnf install --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release && sudo dnf install gram
+
+# For immutable/atomic editions
+curl -fsSL https://github.com/terrapkg/subatomic-repos/raw/main/terra.repo | pkexec tee /etc/yum.repos.d/terra.repo
+sudo rpm-ostree install terra-release && sudo dnf install gram
+```
+
+### Gentoo
+
+> [!NOTE]
+>
+> Gentoo packages are provided via Gram's overlay. For more information and
+> installation methods, see
+> [Gram's overlay repository](https://codeberg.org/GramEditor/gram-gentoo).
+
+```bash
+sudo eselect repository add gram git https://codeberg.org/GramEditor/gram-gentoo.git
+sudo emerge --sync gram
+sudo emerge -av app-editors/gram
+```
+
+### Nix
+
+See: <https://github.com/NixOS/nixpkgs/tree/master/pkgs/by-name/gr/gram>.
+
+#### Modern Nix (Recommended)
+
+```bash
+# Temporary environment
+nix shell nixpkgs#gram
+
+# User profile installation
+nix profile add nixpkgs#gram
+```
+
+#### NixOS Configuration
+
+```nix
+environment.systemPackages = [
+  pkgs.gram
+];
+```
+
+#### Legacy Nix (Channels)
+
+```bash
+# On NixOS
+nix-env -iA nixos.gram
+
+# On non-NixOS Linux
+nix-env -iA nixpkgs.gram
+```
 
 ### OpenSUSE
+
+Requires Leap 16 (or Tumbleweed/Slowroll) or later.
 
 ```bash
 sudo zypper addrepo https://codeberg.org/api/packages/GramEditor/rpm.repo
 sudo zypper install gram
 ```
 
-**Note**: At the time of this writing RPM package signing does not work. In
-order to be able to install Gram you need to set `gpgcheck=0` inside
-`/etc/yum.repos.d/rpm.repo`.
-
-Requires Leap 16 (or Tumbleweed/Slowroll) or later.
-
-### Arch
-
-Arch Linux publishes official packages for Gram in their
-[extra](https://archlinux.org/packages/extra/x86_64/gram/) repository.
-
-```bash
-sudo pacman -S gram
-```
-
-Alternatively, to build and install a development snapshot from the latest Git
-HEAD, build the VCS package from the aur:
-[`gram-git`](https://aur.archlinux.org/packages/gram-git). If you install
-packages from the AUR, it is your responsibility to verify their integrity
-yourself.
-
-### Alpine
-
-Alpine Linux publishes official packages for Gram in their
-[testing](https://pkgs.alpinelinux.org/package/edge/testing/x86_64/gram)
-repository. Follow the
-[instructions](https://wiki.alpinelinux.org/wiki/Repositories#Using_testing_repository)
-to enable the testing repository, then run
-
-```bash
-doas apk add gram@testing
-```
-
-### Gentoo GNU/Linux
-
-Gentoo provided by Gram's overlay.
-
-```bash
-# replace doas if you using sudo
-doas eselect repository add gram git https://codeberg.org/GramEditor/gram-gentoo.git
-doas emerge --sync gram
-doas emerge -av app-editors/gram
-```
-
-**Note**: For more information about Gentoo package and installation ways go to
-[Gram's overlay repo](https://codeberg.org/GramEditor/gram-gentoo).
+> [!NOTE]
+>
+> RPM package signing is currently non-functional. To install Gram, set
+> `gpgcheck=0` in `/etc/yum.repos.d/rpm.repo`.
 
 ### Solus
 
@@ -98,9 +139,8 @@ sudo eopkg install gram
 
 ## Flatpak
 
-Gram provides a prebuilt flatpak as a release asset. It can be downloaded from
-at [Gram releases](https://codeberg.org/GramEditor/gram/releases) and installed
-by running:
+Prebuilt Flatpaks are available as release assets at
+[Gram releases](https://codeberg.org/GramEditor/gram/releases). Install via:
 
 ```bash
 flatpak install /path/to/app.liten.Gram-x86_64-${version}.flatpak
@@ -108,9 +148,8 @@ flatpak install /path/to/app.liten.Gram-x86_64-${version}.flatpak
 
 ## From Tarball
 
-If there is a tarball available for your architecture at the
-[Gram Codeberg](https://codeberg.org/GramEditor/gram/releases) repository, you
-can follow these instructions:
+If a tarball is available for your architecture at the
+[Gram releases](https://codeberg.org/GramEditor/gram/releases) repository:
 
 1. Download the
    [install.sh](https://codeberg.org/GramEditor/gram/raw/branch/main/script/install.sh)
@@ -121,8 +160,8 @@ can follow these instructions:
 ./install.sh
 ```
 
-This will download latest release of Gram and install Gram to `$HOME/.local`. To
-install system-wide, use the `--prefix PREFIX` argument:
+This downloads and installs the latest Gram release to `$HOME/.local`. For a
+system-wide installation, use the `--prefix` argument:
 
 ```bash
 ./install.sh --prefix /usr/local ./gram-linux-x86_64-1.1.0.tar.gz
@@ -130,191 +169,148 @@ install system-wide, use the `--prefix PREFIX` argument:
 
 ## From Source
 
-Gram is open source, and you can install from source. See
-[developer notes](./development/linux.md) for instructions.
+Gram is open source. See [developer notes](./development/linux.md) for build
+instructions.
 
 ## Troubleshooting
 
-### Graphics issues
+### Graphics Issues
 
-#### Gram fails to open windows
+#### Gram fails to open a window
 
-Gram requires a GPU to run effectively. Under the hood, it uses
-[Vulkan](https://www.vulkan.org/) to communicate with the GPU. If you are seeing
-problems with performance or Gram fails to load, it is possible that Vulkan is
-the culprit.
+Gram requires a GPU and uses [Vulkan](https://www.vulkan.org) for rendering. If
+Gram fails to load or perform well, Vulkan may be the cause.
 
-If you see a notification saying
-`Gram failed to open a window: NoSupportedDeviceFound` this means that Vulkan
-cannot find a compatible GPU. Try running
-[vkcube](https://github.com/krh/vkcube) (usually available as part of the
-`vulkaninfo` or `vulkan-tools` package on various distributions) to troubleshoot
-where the issue is coming from like so:
+A `Gram failed to open a window: NoSupportedDeviceFound` error indicates Vulkan
+cannot find a compatible GPU. Run [`vkcube`](https://github.com/krh/vkcube)
+command (usually in the `vulkaninfo` or `vulkan-tools` package) to troubleshoot.
 
-```text
-vkcube
-```
+> [!NOTE]
+>
+> Test both X11 and Wayland modes by running `vkcube -m x11` or `vkcube -m
+> wayland`. Some distributions use `vkcube-wayland` for Wayland.
 
-> **_Note_**: Try running in both X11 and wayland modes by running
-> `vkcube -m [x11|wayland]`. Some versions of `vkcube` use `vkcube` to run in
-> X11 and `vkcube-wayland` to run in wayland.
+This outputs your graphics setup and displays a rotating cube. If it fails,
+install Vulkan-compatible GPU drivers. Note that some hardware lacks Vulkan
+support.
 
-This should output a line describing your current graphics setup and show a
-rotating cube. If this does not work, you should be able to fix it by installing
-Vulkan compatible GPU drivers, however in some cases there is no Vulkan support
-yet.
+Check which GPU Gram uses by searching for `Using GPU: ...` in
+`~/.local/share/gram/logs/Gram.log`.
 
-You can find out which graphics card Gram is using by looking in the Gram log
-(`~/.local/share/gram/logs/Gram.log`) for `Using GPU: ...`.
+Errors like `ERROR_INITIALIZATION_FAILED`, `GPU Crashed`, or
+`ERROR_SURFACE_LOST_KHR` may be resolved by installing different GPU drivers or
+selecting a different GPU (see
+[#14225](https://github.com/zed-industries/zed/issues/14225)).
 
-If you see errors like `ERROR_INITIALIZATION_FAILED` or `GPU Crashed` or
-`ERROR_SURFACE_LOST_KHR` then you may be able to work around this by installing
-different drivers for your GPU, or by selecting a different GPU to run on. (See
-[#14225](https://github.com/zed-industries/zed/issues/14225))
+- **PRIME**: On some systems, set `/etc/prime-discrete` to `on` (force discrete)
+  or `off` (force integrated).
+- **DRI_PRIME**: Set the environment variable `DRI_PRIME=1` when running Gram to
+  force the discrete GPU.
+- **AMD Long Lines**: If Gram crashes when selecting long lines on an AMD GPU,
+  set `GRAM_PATH_SAMPLE_COUNT=0` (see
+  [#26143](https://github.com/zed-industries/zed/issues/26143)).
+- **AMD Broken Pipe**: If you encounter a 'Broken Pipe' error on AMD, try using
+  RADV or Mesa drivers (see
+  [#13880](https://github.com/zed-industries/zed/issues/13880)).
+- **AMDVLK**: If Gram consistently fails to launch with the default `amdvlk`
+  driver (e.g., on Omarchy, see
+  [#28851](https://github.com/zed-industries/zed/issues/28851)), remove `amdvlk`
+  and `lib32-amdvlk`, and install `vulkan-radeon` instead (see
+  [#14141](https://github.com/zed-industries/zed/issues/14141)).
 
-On some systems the file `/etc/prime-discrete` can be used to enforce the use of
-a discrete GPU using [PRIME](https://wiki.archlinux.org/title/PRIME). Depending
-on the details of your setup, you may need to change the contents of this file
-to "on" (to force discrete graphics) or "off" (to force integrated graphics).
-
-On others, you may be able to the environment variable `DRI_PRIME=1` when
-running Gram to force the use of the discrete GPU.
-
-If you're using an AMD GPU and Gram crashes when selecting long lines, try
-setting the `GRAM_PATH_SAMPLE_COUNT=0` environment variable. (See
-[#26143](https://github.com/zed-industries/zed/issues/26143))
-
-If you're using an AMD GPU, you might get a 'Broken Pipe' error. Try using the
-RADV or Mesa drivers. (See
-[#13880](https://github.com/zed-industries/zed/issues/13880))
-
-If you are using `amdvlk`, the default open-source AMD graphics driver, you may
-find that Gram consistently fails to launch. This is a known issue for some
-users, for example on Omarchy (see issue
-[#28851](https://github.com/zed-industries/zed/issues/28851)). To fix this, you
-will need to use a different driver. We recommend removing the `amdvlk` and
-`lib32-amdvlk` packages and installing `vulkan-radeon` instead (see issue
-[#14141](https://github.com/zed-industries/zed/issues/14141)).
-
-For more information, the
-[Arch guide to Vulkan](https://wiki.archlinux.org/title/Vulkan) has some good
-steps that translate well to most distributions.
+For more details, refer to the
+[Arch Linux Vulkan guide](https://wiki.archlinux.org/title/Vulkan).
 
 #### Forcing Gram to use a specific GPU
 
-There are a few different ways to force Gram to use a specific GPU:
-
-##### Option A
-
-You can use the `GRAM_DEVICE_ID={device_id}` environment variable to specify the
-device ID of the GPU you wish to have Gram use.
-
-You can obtain the device ID of your GPU by running `lspci -nn | grep VGA` which
-will output each GPU on one line like:
+**Option A: Environment Variable** Use `GRAM_DEVICE_ID={device_id}` to specify
+the GPU. Find the device ID via `lspci -nn | grep VGA`:
 
 ```bash
 08:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA104 [GeForce RTX 3070] [10de:2484] (rev a1)
 ```
 
-where the device ID here is `2484`. This value is in hexadecimal, so to force
-Gram to use this specific GPU you would set the environment variable like so:
+The device ID is `2484` (hexadecimal). Force Gram to use it:
 
 ```bash
 GRAM_DEVICE_ID=0x2484 gram
 ```
 
-Make sure to export the variable if you choose to define it globally in a
-`.bashrc` or similar.
+Export this variable in `.bashrc` or similar if defining it globally.
 
-##### Option B
+**Option B: Mesa Device Select** If using Mesa, list available GPUs:
 
-If you are using Mesa, you can run
-`MESA_VK_DEVICE_SELECT=list gram --foreground` to get a list of available GPUs
-and then export `MESA_VK_DEVICE_SELECT=xxxx:yyyy` to choose a specific device.
-Furthermore, you can fallback to xwayland with an additional export of
-`WAYLAND_DISPLAY=""`.
+```bash
+MESA_VK_DEVICE_SELECT=list gram --foreground
+```
 
-##### Option C
+Then export `MESA_VK_DEVICE_SELECT=xxxx:yyyy` to choose a specific device. To
+fallback to Xwayland, additionally export `WAYLAND_DISPLAY=""`.
 
-Using [vkdevicechooser](https://github.com/jiriks74/vkdevicechooser).
+**Option C: VKDeviceChooser** Use
+[vkdevicechooser](https://github.com/jiriks74/vkdevicechooser).
 
-#### Generating debug reports
+#### Generating Debug Reports
 
-Passing the `--system-specs` flag to Gram like
+Pass `--system-specs` to print system specifications:
 
 ```bash
 gram --system-specs
 ```
 
-will print the system specs to the terminal.
-
-The editor log is usually located at `~/.local/share/gram/logs/Gram.log`.
-
-To generate a clean log file for debugging graphics issues, run:
+The editor log is located at `~/.local/share/gram/logs/Gram.log`. To generate a
+clean log for debugging graphics issues:
 
 ```bash
 truncate -s 0 ~/.local/share/gram/logs/Gram.log # Clear the log file
 GRAM_LOG=wgpu=info gram .
 cat ~/.local/share/gram/logs/Gram.log
-# copy the output
+# Copy the output
 ```
 
-Or, if you have the Gram cli setup, you can do
+Or, if the Gram CLI is set up:
 
 ```bash
 GRAM_LOG=wgpu=info /path/to/gram/cli --foreground .
-# copy the output
+# Copy the output
 ```
 
-### Forcing X11 scale factor
+### Forcing X11 Scale Factor
 
-On X11 systems, Gram automatically detects the appropriate scale factor for
-high-DPI displays. The scale factor is determined using the following priority
-order:
+On X11, Gram automatically detects the scale factor for high-DPI displays using
+this priority:
 
 1. `GPUI_X11_SCALE_FACTOR` environment variable (if set)
-2. `Xft.dpi` from X resources database (xrdb)
-3. Automatic detection via RandR based on monitor resolution and physical size
+2. `Xft.dpi` from the X resources database (xrdb)
+3. Automatic detection via RandR (monitor resolution and physical size)
 
-If you want to customize the scale factor beyond what Gram detects
-automatically, you have several options:
+To customize the scale factor:
 
-#### Check your current scale factor
+#### Check Current Scale Factor
 
-You can verify if you have `Xft.dpi` set:
+Verify if `Xft.dpi` is set:
 
 ```bash
 xrdb -query | grep Xft.dpi
 ```
 
-If this command returns no output, Gram is using RandR (X11's monitor management
-extension) to automatically calculate the scale factor based on your monitor's
-reported resolution and physical dimensions.
+If empty, Gram uses RandR for automatic calculation.
 
 #### Option 1: Set Xft.dpi (X Resources Database)
 
-`Xft.dpi` is a standard X11 setting that many applications use for consistent
-font and UI scaling. Setting this ensures Gram scales the same way as other X11
-applications that respect this setting.
-
-Edit or create the `~/.Xresources` file:
+`Xft.dpi` ensures consistent scaling across X11 applications. Edit or create
+`~/.Xresources`:
 
 ```bash
 vim ~/.Xresources
 ```
 
-Add this line with your desired DPI:
+Add your desired DPI (e.g., `96` for 1x, `144` for 1.5x, `192` for 2x, `288` for
+3x):
 
-```bash
+```ini
 Xft.dpi: 96
 ```
-
-Common DPI values:
-
-- `96` for standard 1x scaling
-- `144` for 1.5x scaling
-- `192` for 2x scaling
-- `288` for 3x scaling
 
 Load the configuration:
 
@@ -322,46 +318,38 @@ Load the configuration:
 xrdb -merge ~/.Xresources
 ```
 
-Restart Gram for the changes to take effect.
+Restart Gram.
 
-#### Option 2: Use the GPUI_X11_SCALE_FACTOR environment variable
+#### Option 2: Use GPUI_X11_SCALE_FACTOR
 
-This Gram-specific environment variable directly sets the scale factor,
-bypassing all automatic detection.
+This Gram-specific variable bypasses automatic detection.
 
 ```bash
 GPUI_X11_SCALE_FACTOR=1.5 gram
 ```
 
-You can use decimal values (e.g., `1.25`, `1.5`, `2.0`) or set
-`GPUI_X11_SCALE_FACTOR=randr` to force RandR-based detection even when `Xft.dpi`
-is set.
+Accepts decimal values (e.g., `1.25`, `1.5`, `2.0`) or `randr` to force RandR
+detection even if `Xft.dpi` is set. Add to your shell profile or desktop entry
+to make it permanent.
 
-To make this permanent, add it to your shell profile or desktop entry.
+#### Option 3: Adjust System-Wide RandR DPI
 
-#### Option 3: Adjust system-wide RandR DPI
-
-This changes the reported DPI for your entire X11 session, affecting how RandR
-calculates scaling for all applications that use it.
-
-Add this to your `.xprofile` or `.xinitrc`:
+This changes the reported DPI for the entire X11 session. Add to `.xprofile` or
+`.xinitrc`:
 
 ```bash
 xrandr --dpi 192
 ```
 
-Replace `192` with your desired DPI value. This affects the system globally and
-will be used by Gram's automatic RandR detection when `Xft.dpi` is not set.
+Replace `192` with your desired DPI.
 
-### Font rendering parameters
+### Font Rendering Parameters
 
-On Linux, the `GRAM_FONTS_GAMMA` and `GRAM_FONTS_GRAYSCALE_ENHANCED_CONTRAST`
-environment variables are read for the values to use for font rendering.
+On Linux, Gram reads the following environment variables for font rendering:
 
-`GRAM_FONTS_GAMMA` corresponds to
-[getgamma](https://learn.microsoft.com/en-us/windows/win32/api/dwrite/nf-dwrite-idwriterenderingparams-getgamma)
-values. Allowed range [1.0, 2.2], other values are clipped. Default: 1.8
-
-`GRAM_FONTS_GRAYSCALE_ENHANCED_CONTRAST` corresponds to
-[getgrayscaleenhancedcontrast](https://learn.microsoft.com/en-us/windows/win32/api/dwrite_1/nf-dwrite_1-idwriterenderingparams1-getgrayscaleenhancedcontrast)
-values. Allowed range: [0.0, ..), other values are clipped. Default: 1.0
+- `GRAM_FONTS_GAMMA`: Corresponds to
+  [GetGamma](https://learn.microsoft.com/en-us/windows/win32/api/dwrite/nf-dwrite-idwriterenderingparams-getgamma)
+  values. Allowed range: `[1.0, 2.2]` (others are clipped). Default: `1.8`.
+- `GRAM_FONTS_GRAYSCALE_ENHANCED_CONTRAST`: Corresponds to
+  [GetGrayscaleEnhancedContrast](https://learn.microsoft.com/en-us/windows/win32/api/dwrite_1/nf-dwrite_1-idwriterenderingparams1-getgrayscaleenhancedcontrast)
+  values. Allowed range: `[0.0, ∞)` (others are clipped). Default: `1.0`.
