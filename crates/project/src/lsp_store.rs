@@ -705,7 +705,7 @@ impl LocalLspStore {
                                 // We've already queried workspace configuration of this URI.
                                 continue;
                             };
-                            let workspace_config = Self::workspace_configuration_for_adapter(
+                            let mut workspace_config = Self::workspace_configuration_for_adapter(
                                 adapter.clone(),
                                 &delegate,
                                 toolchain_for_id.clone(),
@@ -713,6 +713,17 @@ impl LocalLspStore {
                                 &mut cx,
                             )
                             .await?;
+
+                            let override_settings = cx
+                                .update(|cx| {
+                                    language_server_settings(delegate.as_ref(), &adapter.name(), cx)
+                                        .and_then(|settings| settings.settings.clone())
+                                })
+                                .unwrap_or_default();
+                            if let Some(settings) = override_settings {
+                                merge_json_value_into(settings, &mut workspace_config);
+                            }
+
                             new_scope_uri.insert(workspace_config);
                         }
 
