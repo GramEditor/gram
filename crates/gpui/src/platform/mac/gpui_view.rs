@@ -266,6 +266,11 @@ define_class!(
             self.handle_view_event(event)
         }
 
+        #[unsafe(method(mouseDownCanMoveWindow:))]
+        fn handle_mouse_down_can_move_window(&self, _: &NSEvent) -> bool {
+            false
+        }
+
         #[unsafe(method(pressureChangeWithEvent:))]
         fn handle_pressure_change_with_event(&self, event: &NSEvent) {
             self.handle_view_event(event)

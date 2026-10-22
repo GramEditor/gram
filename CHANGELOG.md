@@ -74,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix table test detection in large files (zed#57277)
 - Support emitting multiple runnables from a single tree-sitter match (zed#57276)
 - Fix crash in `start_display_link` (zed#50875) (#669)
+- Fix double-clicking to maximize window on Mac
 
 ## [3.3.0] - 2026-08-25
 
