@@ -768,6 +768,7 @@ pub struct TerminalContent {
     pub last_hovered_word: Option<HoveredWord>,
     pub scrolled_to_top: bool,
     pub scrolled_to_bottom: bool,
+    pub bottom_row_occupied: bool,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -794,6 +795,7 @@ impl Default for TerminalContent {
             last_hovered_word: None,
             scrolled_to_top: false,
             scrolled_to_bottom: false,
+            bottom_row_occupied: false,
         }
     }
 }
@@ -1366,8 +1368,27 @@ impl Terminal {
 
     ///Resize the terminal and the PTY.
     pub fn set_size(&mut self, new_bounds: TerminalBounds) {
-        if self.last_content.terminal_bounds != new_bounds {
-            self.events.push_back(InternalEvent::Resize(new_bounds))
+        let mut new_bounds = new_bounds;
+        new_bounds.bounds.size.height = cmp::max(new_bounds.line_height, new_bounds.height());
+        new_bounds.bounds.size.width = cmp::max(new_bounds.cell_width, new_bounds.width());
+
+        let old_bounds = self.last_content.terminal_bounds;
+        self.last_content.terminal_bounds = new_bounds;
+
+        // Avoid spamming PTY resizes on pixel-level size changes (e.g. while dragging edges),
+        // since those can generate excessive SIGWINCH/reflows and cause visible flicker.
+        let requires_resize = old_bounds.num_lines() != new_bounds.num_lines()
+            || old_bounds.num_columns() != new_bounds.num_columns()
+            || old_bounds.cell_width != new_bounds.cell_width
+            || old_bounds.line_height != new_bounds.line_height;
+
+        if !requires_resize {
+            return;
+        }
+
+        match self.events.back_mut() {
+            Some(InternalEvent::Resize(pending_bounds)) => *pending_bounds = new_bounds,
+            _ => self.events.push_back(InternalEvent::Resize(new_bounds)),
         }
     }
 
@@ -1557,6 +1578,14 @@ impl Terminal {
             None
         };
 
+        let bottom_line = term.screen_lines() as i32 - 1 - content.display_offset as i32;
+        let bottom_row_occupied = content.cursor.point.line.0 >= bottom_line
+            || cells
+                .iter()
+                .rev()
+                .take_while(|cell| cell.point.line >= bottom_line)
+                .any(|cell| cell.cell.c != ' ');
+
         TerminalContent {
             cells,
             mode: content.mode,
@@ -1569,6 +1598,7 @@ impl Terminal {
             last_hovered_word: last_content.last_hovered_word.clone(),
             scrolled_to_top: content.display_offset == term.history_size(),
             scrolled_to_bottom: content.display_offset == 0,
+            bottom_row_occupied,
         }
     }
 
@@ -2665,6 +2695,35 @@ mod tests {
             .c,
             cells[9][9]
         );
+    }
+
+    #[gpui::test]
+    async fn test_set_size_coalesces_pixel_only_changes(_cx: &mut TestAppContext) {
+        let builder = TerminalBuilder::new_display_only(CursorShape::Block, AlternateScroll::On, None, 0);
+        let mut terminal = builder.terminal;
+
+        let base_bounds = TerminalBounds {
+            cell_width: Pixels::from(10.),
+            line_height: Pixels::from(10.),
+            bounds: bounds(Point::default(), size(Pixels::from(100.), Pixels::from(100.))),
+        };
+
+        terminal.set_size(base_bounds);
+        terminal.events.clear();
+        assert_eq!(terminal.last_content.terminal_bounds, base_bounds);
+
+        // Pixel-only change: height grows by 1px but still the same number of rows/cols.
+        let mut pixel_changed = base_bounds;
+        pixel_changed.bounds.size.height = Pixels::from(101.);
+        terminal.set_size(pixel_changed);
+        assert!(terminal.events.is_empty());
+        assert_eq!(terminal.last_content.terminal_bounds, pixel_changed);
+
+        // Grid change: height increases enough to add a row.
+        let mut grid_changed = base_bounds;
+        grid_changed.bounds.size.height = Pixels::from(110.);
+        terminal.set_size(grid_changed);
+        assert!(matches!(terminal.events.back(), Some(InternalEvent::Resize(_))));
     }
 
     fn get_cells(size: TerminalBounds, rng: &mut ThreadRng) -> Vec<Vec<char>> {
