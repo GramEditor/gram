@@ -49,7 +49,7 @@ impl SvgRenderer {
                     for font_path in font_paths {
                         if font_path.ends_with(".ttf") {
                             let bytes = assets.load(&font_path).unwrap().unwrap();
-                            fontdb.load_font_data(bytes.into());
+                            fontdb.load_font_source(usvg::fontdb::Source::Binary(Arc::new(bytes)));
                         }
                     }
                     fontdb.set_serif_family(font_name_with_fallbacks(".GramSans", "Fira Sans"));
