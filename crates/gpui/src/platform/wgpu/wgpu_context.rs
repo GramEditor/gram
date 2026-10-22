@@ -34,6 +34,8 @@ impl WgpuContext {
         #[cfg(not(target_os = "macos"))]
         let flags = wgpu::InstanceFlags::default();
 
+        let backends = wgpu::Backends::from_env().unwrap_or(backends);
+
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
             backends,
             flags,
