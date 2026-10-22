@@ -188,6 +188,15 @@ impl<T: Clone + Debug + Default + PartialEq + Negate> Negate for Point<T> {
     }
 }
 
+impl<T: Clone + Debug + Default + PartialEq> From<Size<T>> for Point<T> {
+    fn from(size: Size<T>) -> Self {
+        Self {
+            x: size.width,
+            y: size.height,
+        }
+    }
+}
+
 impl Point<Pixels> {
     /// Scales the point by a given factor, which is typically derived from the resolution
     /// of a target display to ensure proper sizing of UI elements.

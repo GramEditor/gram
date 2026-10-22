@@ -895,7 +895,6 @@ impl Element for TerminalElement {
                 let (dimensions, line_height_px) = {
                     let rem_size = window.rem_size();
                     let font_pixels = text_style.font_size.to_pixels(rem_size);
-                    // TODO: line_height should be an f32 not an AbsoluteLength.
                     let line_height = f32::from(font_pixels) * line_height.to_pixels(rem_size);
                     let font_id = cx.text_system().resolve_font(&text_style.font());
 
@@ -985,43 +984,69 @@ impl Element for TerminalElement {
                 // then have that representation be converted to the appropriate highlight data structure
 
                 let content_mode = self.terminal_view.read(cx).content_mode(window, cx);
-                let (rects, batched_text_runs) = match content_mode {
-                    ContentMode::Scrollable => {
-                        // In scrollable mode, the terminal already provides cells
-                        // that are correctly positioned for the current viewport
-                        // based on its display_offset. We don't need additional filtering.
-                        TerminalElement::layout_grid(
-                            cells.iter().cloned(),
-                            0,
-                            &text_style,
-                            last_hovered_word
-                                .as_ref()
-                                .map(|last_hovered_word| (link_style, &last_hovered_word.word_match)),
-                            minimum_contrast,
-                            cx,
-                        )
-                    }
-                    ContentMode::Inline { .. } => {
-                        let intersection = window.content_mask().bounds.intersect(&bounds);
-                        let start_row = (intersection.top() - bounds.top()) / line_height_px;
-                        let end_row = start_row + intersection.size.height / line_height_px;
-                        let line_range = (start_row as i32)..=(end_row as i32);
 
-                        TerminalElement::layout_grid(
-                            cells
-                                .iter()
-                                .skip_while(|i| &i.point.line < line_range.start())
-                                .take_while(|i| &i.point.line <= line_range.end())
-                                .cloned(),
-                            *line_range.start(),
-                            &text_style,
-                            last_hovered_word
-                                .as_ref()
-                                .map(|last_hovered_word| (link_style, &last_hovered_word.word_match)),
-                            minimum_contrast,
-                            cx,
-                        )
-                    }
+                // Calculate the intersection of the terminal's bounds with the current
+                // content mask (the visible viewport after all parent clipping).
+                // This allows us to only render cells that are actually visible, which is
+                // critical for performance when terminals are inside scrollable containers
+                // like the Agent Panel thread view.
+                //
+                // This optimization is analogous to the editor optimization in PR #45077
+                // which fixed performance issues with large AutoHeight editors inside Lists.
+                let visible_bounds = window.content_mask().bounds;
+                let intersection = visible_bounds.intersect(&bounds);
+
+                // If the terminal is entirely outside the viewport, skip all cell processing.
+                // This handles the case where the terminal has been scrolled past (above or
+                // below the viewport), similar to the editor fix in PR #45077 where start_row
+                // could exceed max_row when the editor was positioned above the viewport.
+                let (rects, batched_text_runs) = if intersection.size.height <= px(0.)
+                    || intersection.size.width <= px(0.)
+                {
+                    (Vec::new(), Vec::new())
+                } else if intersection == bounds {
+                    // Fast path: terminal fully visible, no clipping needed.
+                    // Avoid grouping/allocation overhead by streaming cells directly.
+                    TerminalElement::layout_grid(
+                        cells.iter().cloned(),
+                        0,
+                        &text_style,
+                        last_hovered_word
+                            .as_ref()
+                            .map(|last_hovered_word| (link_style, &last_hovered_word.word_match)),
+                        minimum_contrast,
+                        cx,
+                    )
+                } else {
+                    // Calculate which screen rows are visible based on pixel positions.
+                    // This works for both Scrollable and Inline modes because we filter
+                    // by screen position (enumerated line group index), not by the cell's
+                    // internal line number (which can be negative in Scrollable mode for
+                    // scrollback history).
+                    let rows_above_viewport =
+                        f32::from((intersection.top() - bounds.top()).max(px(0.)) / line_height_px) as usize;
+                    let visible_row_count = f32::from((intersection.size.height / line_height_px).ceil()) as usize + 1;
+
+                    TerminalElement::layout_grid(
+                        // Group cells by line and filter to only the visible screen rows.
+                        // skip() and take() work on enumerated line groups (screen position),
+                        // making this work regardless of the actual cell.point.line values.
+                        cells
+                            .iter()
+                            .chunk_by(|c| c.point.line)
+                            .into_iter()
+                            .skip(rows_above_viewport)
+                            .take(visible_row_count)
+                            .flat_map(|(_, line_cells)| line_cells)
+                            .cloned(),
+                        rows_above_viewport as i32,
+                        &text_style,
+                        last_hovered_word
+                            .as_ref()
+                            .map(|last_hovered_word| (link_style, &last_hovered_word.word_match)),
+                        minimum_contrast,
+                        cx,
+                    )
                 };
 
                 // Layout cursor. Rectangle is used for IME, so we should lay it out even

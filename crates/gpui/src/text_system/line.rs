@@ -199,6 +199,7 @@ fn paint_line(
     window: &mut Window,
     cx: &mut App,
 ) -> Result<()> {
+    let origin = point(origin.x.round(), origin.y);
     let line_bounds = Bounds::new(
         origin,
         size(layout.width, line_height * (wrap_boundaries.len() as f32 + 1.)),
