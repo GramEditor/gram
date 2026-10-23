@@ -96,8 +96,11 @@ use gpui::{
     Focusable, FontId, FontWeight, FutureExt as _, Global, HighlightStyle, Hsla, KeyContext, Modifiers, MouseButton,
     MouseDownEvent, MouseMoveEvent, PaintQuad, ParentElement, Pixels, PressureStage, Render, ScrollHandle,
     SharedString, Size, Styled, Subscription, Task, TextRun, TextStyle, TextStyleRefinement, UTF16Selection,
-    UnderlineStyle, UniformListScrollHandle, WeakEntity, WeakFocusHandle, Window, animation::SmoothAnimation, div,
-    point, prelude::*, px, relative, size,
+    UnderlineStyle, UniformListScrollHandle, WeakEntity, WeakFocusHandle, Window,
+    animation::{GlobalSmoothScroll, SmoothAnimation},
+    div, point,
+    prelude::*,
+    px, relative, size,
 };
 use hover_links::{HoverLink, HoveredLinkState, find_file};
 use hover_popover::{HoverState, hide_hover};
@@ -285,6 +288,19 @@ pub enum CompletionTrigger {
 
 pub fn init(cx: &mut App) {
     cx.set_global(GlobalBlameRenderer(Arc::new(())));
+
+    let update_smooth_scroll = |cx: &mut App| {
+        let settings = EditorSettings::get_global(cx);
+        cx.set_global(GlobalSmoothScroll {
+            duration: if settings.smooth_scroll.enabled {
+                Some(Duration::from_millis(settings.smooth_scroll.duration.0))
+            } else {
+                None
+            },
+        });
+    };
+    update_smooth_scroll(cx);
+    cx.observe_global::<SettingsStore>(update_smooth_scroll).detach();
 
     workspace::register_project_item::<Editor>(cx);
     workspace::register_serializable_item::<Editor>(cx);
