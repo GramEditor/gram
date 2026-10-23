@@ -77,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix double-clicking to maximize window on Mac
 - Fix blurry UI elements when using fractional display scaling (zed#54728)
 - Reduce terminal flicker on resize (zed#47195)
+- Fix window not opening when using GL backend on Linux(#364)(#672) by @ycna07
 
 ## [3.3.0] - 2026-08-25
 
