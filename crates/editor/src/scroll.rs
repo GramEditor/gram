@@ -169,7 +169,6 @@ pub struct ScrollManager {
     forbid_vertical_scroll: bool,
     minimap_thumb_state: Option<ScrollbarThumbState>,
     pub(crate) animation: Option<SmoothAnimation>,
-    pub(crate) animation_duration: Duration,
     pub(crate) local: bool,
 }
 
@@ -191,7 +190,6 @@ impl ScrollManager {
             forbid_vertical_scroll: false,
             minimap_thumb_state: None,
             animation: None,
-            animation_duration: Duration::from_millis(editor_settings.smooth_scroll.duration.0),
             local: true,
         }
     }
@@ -227,12 +225,17 @@ impl ScrollManager {
         self.sticky_header_line_count = count;
     }
 
-    pub fn start_animation(&mut self, current: gpui::Point<ScrollOffset>, target: gpui::Point<ScrollOffset>) {
+    pub fn start_animation(
+        &mut self,
+        duration: Duration,
+        current: gpui::Point<ScrollOffset>,
+        target: gpui::Point<ScrollOffset>,
+    ) {
         self.local = true;
         if let Some(animation) = self.animation.as_mut() {
             animation.restart(target);
         } else {
-            self.animation = Some(SmoothAnimation::new(self.animation_duration, current, target));
+            self.animation = Some(SmoothAnimation::new(duration, current, target));
         }
     }
 

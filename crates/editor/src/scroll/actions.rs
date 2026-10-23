@@ -1,11 +1,10 @@
 use super::Axis;
 use crate::{
-    Autoscroll, Editor, EditorMode, EditorSettings, NextScreen, NextScrollCursorCenterTopBottom,
+    Autoscroll, Editor, EditorMode, NextScreen, NextScrollCursorCenterTopBottom,
     SCROLL_CENTER_TOP_BOTTOM_DEBOUNCE_TIMEOUT, ScrollCursorBottom, ScrollCursorCenter, ScrollCursorCenterTopBottom,
     ScrollCursorTop, display_map::DisplayRow, scroll::ScrollOffset,
 };
-use gpui::{Context, Point, Window};
-use settings::Settings;
+use gpui::{Context, Point, Window, animation::GlobalSmoothScroll};
 
 impl Editor {
     pub fn next_screen(&mut self, _: &NextScreen, window: &mut Window, cx: &mut Context<Editor>) {
@@ -31,16 +30,15 @@ impl Editor {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let smooth_scroll_enabled = EditorSettings::get_global(cx).smooth_scroll.enabled;
-        if !smooth_scroll_enabled {
+        if let Some(duration) = GlobalSmoothScroll::duration(cx) {
+            let current_position = self.scroll_position(cx);
+            self.scroll_manager.update_ongoing_scroll(axis);
+            self.scroll_manager
+                .start_animation(duration, current_position, scroll_position);
+        } else {
             self.scroll_manager.update_ongoing_scroll(axis);
             self.set_scroll_position(scroll_position, window, cx);
-            return;
         }
-
-        let current_position = self.scroll_position(cx);
-        self.scroll_manager.update_ongoing_scroll(axis);
-        self.scroll_manager.start_animation(current_position, scroll_position);
 
         cx.notify();
     }
