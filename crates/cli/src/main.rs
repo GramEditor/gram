@@ -8,7 +8,7 @@
 )]
 
 use anyhow::{Context as _, Result};
-use clap::Parser;
+use clap::{CommandFactory as _, Parser};
 use cli::{CliRequest, CliResponse, IpcHandshake, ipc::IpcOneShotServer};
 use parking_lot::Mutex;
 use std::{
@@ -84,6 +84,11 @@ struct Args {
     /// Print Gram's version and the app path.
     #[arg(short, long)]
     version: bool,
+    /// Generate a shell completion script for the given shell and print it to stdout.
+    ///
+    /// Example: `gram --completions fish > ~/.config/fish/conf.d/gram.fish`
+    #[arg(long, value_enum, value_name = "SHELL")]
+    completions: Option<clap_complete::Shell>,
     /// Run gram in the foreground (useful for debugging)
     #[arg(long)]
     foreground: bool,
@@ -349,6 +354,14 @@ fn main() -> Result<()> {
         }
     }
     let args = Args::parse();
+
+    // `gram --completions <SHELL>` prints a shell completion script and exits.
+    if let Some(shell) = args.completions {
+        let mut command = Args::command();
+        let name = command.get_name().to_string();
+        clap_complete::generate(shell, &mut command, name, &mut std::io::stdout());
+        return Ok(());
+    }
 
     // `gram --askpass` Makes gram operate in nc/netcat mode for use with askpass
     if let Some(socket) = &args.askpass {
