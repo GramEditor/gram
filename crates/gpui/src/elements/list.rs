@@ -10,7 +10,9 @@
 use crate::{
     AnyElement, App, AvailableSpace, Bounds, ContentMask, DispatchPhase, Edges, Element, EntityId, FocusHandle,
     GlobalElementId, Hitbox, HitboxBehavior, InspectorElementId, IntoElement, Overflow, Pixels, Point, ScrollDelta,
-    ScrollWheelEvent, Size, Style, StyleRefinement, Styled, Window, point, px, size,
+    ScrollWheelEvent, Size, Style, StyleRefinement, Styled, Window,
+    animation::{GlobalSmoothScroll, SmoothAnimation},
+    point, px, size,
 };
 use collections::VecDeque;
 use refineable::Refineable as _;
@@ -68,6 +70,7 @@ struct StateInner {
     scrollbar_drag_start_height: Option<Pixels>,
     measuring_behavior: ListMeasuringBehavior,
     pending_scroll: Option<PendingScrollFraction>,
+    animation: Option<SmoothAnimation>,
 }
 
 /// Keeps track of a fractional scroll position within an item for restoration
@@ -228,6 +231,7 @@ impl ListState {
             scrollbar_drag_start_height: None,
             measuring_behavior: ListMeasuringBehavior::default(),
             pending_scroll: None,
+            animation: None,
         })));
         this.splice(0..0, item_count);
         this
@@ -251,6 +255,7 @@ impl ListState {
             state.measuring_behavior.reset();
             state.logical_scroll_top = None;
             state.scrollbar_drag_start_height = None;
+            state.animation = None;
             state.items.summary().count
         };
 
@@ -381,6 +386,7 @@ impl ListState {
             item_ix: cursor.start().count,
             offset_in_item: new_pixel_offset - cursor.start().height,
         });
+        state.animation = None;
     }
 
     /// Scroll the list to the given offset
@@ -393,6 +399,7 @@ impl ListState {
         }
 
         state.logical_scroll_top = Some(scroll_top);
+        state.animation = None;
     }
 
     /// Scroll the list to the given item, such that the item is fully visible.
@@ -423,6 +430,7 @@ impl ListState {
         }
 
         state.logical_scroll_top = Some(scroll_top);
+        state.animation = None;
     }
 
     /// Get the bounds for the given item in window coordinates, if it's
@@ -462,6 +470,7 @@ impl ListState {
     pub fn scrollbar_drag_started(&self) {
         let mut state = self.0.borrow_mut();
         state.scrollbar_drag_start_height = Some(state.items.summary().height);
+        state.animation = None;
     }
 
     /// Called when the user stops dragging the scrollbar.
@@ -473,7 +482,9 @@ impl ListState {
 
     /// Set the offset from the scrollbar
     pub fn set_offset_from_scrollbar(&self, point: Point<Pixels>) {
-        self.0.borrow_mut().set_offset_from_scrollbar(point);
+        let mut state = self.0.borrow_mut();
+        state.set_offset_from_scrollbar(point);
+        state.animation = None;
     }
 
     /// Returns the maximum scroll offset according to the items we have measured.
@@ -535,9 +546,39 @@ impl StateInner {
             return;
         }
 
-        let padding = self.last_padding.unwrap_or_default();
-        let scroll_max = (self.items.summary().height + padding.top + padding.bottom - height).max(px(0.));
-        let new_scroll_top = (self.scroll_top(scroll_top) - delta.y).max(px(0.)).min(scroll_max);
+        let scroll_max = self.scroll_max(height);
+
+        if let Some(duration) = GlobalSmoothScroll::duration(cx) {
+            let max_y = f64::from(scroll_max);
+            let delta_y = f64::from(delta.y);
+            if let Some(animation) = self.animation.as_mut() {
+                animation.restart(point(0., (animation.current.y + delta_y).min(max_y)));
+            } else {
+                self.animation = Some(SmoothAnimation::new(
+                    duration,
+                    point(0., 0.),
+                    point(0., delta_y.min(max_y)),
+                ));
+            }
+        } else {
+            self.scroll_internal(delta.y, scroll_top, scroll_max, height, window, cx);
+        }
+
+        cx.notify(current_view);
+    }
+
+    /// Called either by scroll() or update_scroll_animation() to actually
+    /// update the scroll position and notify the scroll handler.
+    fn scroll_internal(
+        &mut self,
+        delta: Pixels,
+        scroll_top: &ListOffset,
+        scroll_max: Pixels,
+        height: Pixels,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        let new_scroll_top = (self.scroll_top(scroll_top) - delta).max(px(0.)).min(scroll_max);
 
         if self.alignment == ListAlignment::Bottom && new_scroll_top == scroll_max {
             self.logical_scroll_top = None;
@@ -553,20 +594,44 @@ impl StateInner {
             });
         }
 
-        if let Some(handler) = self.scroll_handler.as_mut() {
-            let visible_range = Self::visible_range(&self.items, height, scroll_top);
-            handler(
-                &ListScrollEvent {
-                    visible_range,
-                    count: self.items.summary().count,
-                    is_scrolled: self.logical_scroll_top.is_some(),
-                },
-                window,
-                cx,
-            );
+        let Some(handler) = self.scroll_handler.as_mut() else {
+            return;
+        };
+        let visible_range = Self::visible_range(&self.items, height, scroll_top);
+        handler(
+            &ListScrollEvent {
+                visible_range,
+                count: self.items.summary().count,
+                is_scrolled: self.logical_scroll_top.is_some(),
+            },
+            window,
+            cx,
+        );
+    }
+
+    fn update_scroll_animation(&mut self, height: Pixels, window: &mut Window, cx: &mut App) {
+        let Some(animation) = self.animation.as_mut() else {
+            return;
+        };
+
+        let previous = animation.current;
+        let (current, at_target) = animation.update();
+        if at_target {
+            self.animation = None;
+            return;
         }
 
-        cx.notify(current_view);
+        let delta = current.y - previous.y;
+        let scroll_top = self.logical_scroll_top();
+        let scroll_max = self.scroll_max(height);
+
+        self.scroll_internal(delta.into(), &scroll_top, scroll_max, height, window, cx);
+        window.request_animation_frame();
+    }
+
+    fn scroll_max(&self, height: Pixels) -> Pixels {
+        let padding = self.last_padding.unwrap_or_default();
+        (self.items.summary().height + padding.top + padding.bottom - height).max(px(0.))
     }
 
     fn logical_scroll_top(&self) -> ListOffset {
@@ -1051,12 +1116,16 @@ impl Element for List {
 
             state.items = new_items;
             state.measuring_behavior.reset();
+            state.animation = None;
+        } else {
+            state.update_scroll_animation(bounds.size.height, window, cx);
         }
 
         let padding = style.padding.to_pixels(bounds.size.into(), window.rem_size());
         let layout = match state.prepaint_items(bounds, padding, true, &mut self.render_item, window, cx) {
             Ok(layout) => layout,
             Err(autoscroll_request) => {
+                state.animation = None;
                 state.logical_scroll_top = Some(autoscroll_request);
                 state
                     .prepaint_items(bounds, padding, false, &mut self.render_item, window, cx)
