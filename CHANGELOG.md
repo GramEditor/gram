@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.4.0] - 2026-10-23
 
+## Fixed
+
+- Fix Linux installation and packaging (#640) by @Usman2
+
 ## Added
 
 - Add 'open current file' button (#583) by @nicoco
