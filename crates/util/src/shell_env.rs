@@ -150,9 +150,9 @@ async fn capture_windows(
 ) -> Result<collections::HashMap<String, String>> {
     use std::process::Stdio;
 
+    let shell_kind = ShellKind::new(shell_path, true);
     let binary_path = super::get_shell_safe_binary_path(shell_kind)?;
 
-    let shell_kind = ShellKind::new(shell_path, true);
     let mut cmd = crate::command::new_smol_command(shell_path);
     cmd.args(args);
     let cmd = match shell_kind {
@@ -164,7 +164,7 @@ async fn capture_windows(
                 &format!(
                     "cd '{}'; '{}' --printenv",
                     directory.try_shell_safe(shell_kind)?,
-                    binary_path.display()
+                    binary_path,
                 ),
             ]),
         ShellKind::PowerShell => cmd.args([
@@ -174,7 +174,7 @@ async fn capture_windows(
             &format!(
                 "Set-Location '{}'; & '{}' --printenv",
                 directory.try_shell_safe(shell_kind)?,
-                binary_path.display()
+                binary_path,
             ),
         ]),
         ShellKind::Elvish => cmd.args([
@@ -182,7 +182,7 @@ async fn capture_windows(
             &format!(
                 "cd '{}'; '{}' --printenv",
                 directory.try_shell_safe(shell_kind)?,
-                binary_path.display()
+                binary_path,
             ),
         ]),
         ShellKind::Nushell => cmd.args([
@@ -194,7 +194,7 @@ async fn capture_windows(
                     .command_prefix()
                     .map(|prefix| prefix.to_string())
                     .unwrap_or_default(),
-                binary_path.display()
+                binary_path,
             ),
         ]),
         ShellKind::Cmd => cmd.args([
@@ -202,7 +202,7 @@ async fn capture_windows(
             "cd",
             &directory.try_shell_safe(shell_kind)?,
             "&&",
-            &binary_path.display().to_string(),
+            &binary_path,
             "--printenv",
         ]),
     }
