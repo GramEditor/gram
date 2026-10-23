@@ -3,6 +3,7 @@ use std::path::Path;
 use anyhow::{Context as _, Result};
 use collections::HashMap;
 
+use crate::paths::PathExt;
 use crate::shell::ShellKind;
 
 pub fn print_env() {
@@ -34,7 +35,7 @@ async fn capture_unix(
 ) -> Result<collections::HashMap<String, String>> {
     use std::os::unix::process::CommandExt;
 
-    use crate::{command::new_std_command, paths::PathExt};
+    use crate::command::new_std_command;
 
     let shell_kind = ShellKind::new(shell_path, false);
     let binary_path = super::get_shell_safe_binary_path(shell_kind)?;
