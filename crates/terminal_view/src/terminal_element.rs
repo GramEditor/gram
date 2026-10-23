@@ -1036,54 +1036,53 @@ impl Element for TerminalElement {
                 // This handles the case where the terminal has been scrolled past (above or
                 // below the viewport), similar to the editor fix in PR #45077 where start_row
                 // could exceed max_row when the editor was positioned above the viewport.
-                let (rects, batched_text_runs) = if intersection.size.height <= px(0.)
-                    || intersection.size.width <= px(0.)
-                {
-                    (Vec::new(), Vec::new())
-                } else if intersection == content_bounds {
-                    // Fast path: terminal fully visible, no clipping needed.
-                    // Avoid grouping/allocation overhead by streaming cells directly.
-                    TerminalElement::layout_grid(
-                        cells.iter().cloned(),
-                        0,
-                        &text_style,
-                        last_hovered_word
-                            .as_ref()
-                            .map(|last_hovered_word| (link_style, &last_hovered_word.word_match)),
-                        minimum_contrast,
-                        cx,
-                    )
-                } else {
-                    // Calculate which screen rows are visible based on pixel positions.
-                    // This works for both Scrollable and Inline modes because we filter
-                    // by screen position (enumerated line group index), not by the cell's
-                    // internal line number (which can be negative in Scrollable mode for
-                    // scrollback history).
-                    let rows_above_viewport =
-                        ((intersection.top() - content_bounds.top()).max(px(0.)) / line_height_px) as usize;
-                    let visible_row_count = (intersection.size.height / line_height_px).ceil() as usize + 1;
+                let (rects, batched_text_runs) =
+                    if intersection.size.height <= px(0.) || intersection.size.width <= px(0.) {
+                        (Vec::new(), Vec::new())
+                    } else if intersection == content_bounds {
+                        // Fast path: terminal fully visible, no clipping needed.
+                        // Avoid grouping/allocation overhead by streaming cells directly.
+                        TerminalElement::layout_grid(
+                            cells.iter().cloned(),
+                            0,
+                            &text_style,
+                            last_hovered_word
+                                .as_ref()
+                                .map(|last_hovered_word| (link_style, &last_hovered_word.word_match)),
+                            minimum_contrast,
+                            cx,
+                        )
+                    } else {
+                        // Calculate which screen rows are visible based on pixel positions.
+                        // This works for both Scrollable and Inline modes because we filter
+                        // by screen position (enumerated line group index), not by the cell's
+                        // internal line number (which can be negative in Scrollable mode for
+                        // scrollback history).
+                        let rows_above_viewport =
+                            ((intersection.top() - content_bounds.top()).max(px(0.)) / line_height_px) as usize;
+                        let visible_row_count = (intersection.size.height / line_height_px).ceil() as usize + 1;
 
-                    TerminalElement::layout_grid(
-                        // Group cells by line and filter to only the visible screen rows.
-                        // skip() and take() work on enumerated line groups (screen position),
-                        // making this work regardless of the actual cell.point.line values.
-                        cells
-                            .iter()
-                            .chunk_by(|c| c.point.line)
-                            .into_iter()
-                            .skip(rows_above_viewport)
-                            .take(visible_row_count)
-                            .flat_map(|(_, line_cells)| line_cells)
-                            .cloned(),
-                        rows_above_viewport as i32,
-                        &text_style,
-                        last_hovered_word
-                            .as_ref()
-                            .map(|last_hovered_word| (link_style, &last_hovered_word.word_match)),
-                        minimum_contrast,
-                        cx,
-                    )
-                };
+                        TerminalElement::layout_grid(
+                            // Group cells by line and filter to only the visible screen rows.
+                            // skip() and take() work on enumerated line groups (screen position),
+                            // making this work regardless of the actual cell.point.line values.
+                            cells
+                                .iter()
+                                .chunk_by(|c| c.point.line)
+                                .into_iter()
+                                .skip(rows_above_viewport)
+                                .take(visible_row_count)
+                                .flat_map(|(_, line_cells)| line_cells)
+                                .cloned(),
+                            rows_above_viewport as i32,
+                            &text_style,
+                            last_hovered_word
+                                .as_ref()
+                                .map(|last_hovered_word| (link_style, &last_hovered_word.word_match)),
+                            minimum_contrast,
+                            cx,
+                        )
+                    };
 
                 // Layout cursor. Rectangle is used for IME, so we should lay it out even
                 // if we don't end up showing it.

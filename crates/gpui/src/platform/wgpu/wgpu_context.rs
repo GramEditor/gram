@@ -1,4 +1,6 @@
 use anyhow::Context as _;
+#[cfg(not(target_os = "macos"))]
+use raw_window_handle::HasDisplayHandle;
 use std::sync::Arc;
 use util::ResultExt;
 
@@ -11,7 +13,48 @@ pub struct WgpuContext {
 }
 
 impl WgpuContext {
-    pub fn new() -> anyhow::Result<Self> {
+    fn instance_descriptor() -> wgpu::InstanceDescriptor {
+        #[cfg(target_os = "macos")]
+        let backends = wgpu::Backends::METAL;
+        #[cfg(not(target_os = "macos"))]
+        /// `WGPU_BACKEND` environment override.
+        let backends = wgpu::Backends::from_env().unwrap_or(wgpu::Backends::VULKAN | wgpu::Backends::GL);
+
+        #[cfg(target_os = "macos")]
+        let flags = wgpu::InstanceFlags::default() - wgpu::InstanceFlags::VALIDATION_INDIRECT_CALL;
+        #[cfg(not(target_os = "macos"))]
+        let flags = wgpu::InstanceFlags::default();
+
+        wgpu::InstanceDescriptor {
+            backends,
+            flags,
+            backend_options: wgpu::BackendOptions::default(),
+            memory_budget_thresholds: wgpu::MemoryBudgetThresholds::default(),
+            display: None,
+        }
+    }
+
+    /// Creates a `wgpu::Instance` using gpui's platform defaults.
+    ///
+    /// The `display` handle is required on Linux (Vulkan/GL) so that window
+    /// surfaces are created from the same instance that selected the adapter.
+    #[cfg(not(target_os = "macos"))]
+    pub fn create_instance<D>(display: D) -> wgpu::Instance
+    where
+        D: HasDisplayHandle + std::fmt::Debug + Send + Sync + 'static,
+    {
+        wgpu::Instance::new(Self::instance_descriptor().with_display_handle(Box::new(display)))
+    }
+
+    /// Creates a `wgpu::Instance` for backends that don't need a display handle
+    /// (Metal on macOS).
+    #[cfg(target_os = "macos")]
+    pub fn create_instance() -> wgpu::Instance {
+        wgpu::Instance::new(Self::instance_descriptor())
+    }
+
+    /// `instance` must be the same one used to create window surfaces.
+    pub fn new(instance: wgpu::Instance) -> anyhow::Result<Self> {
         let device_id_filter = match std::env::var("GRAM_DEVICE_ID") {
             Ok(val) => parse_pci_id(&val)
                 .context("Failed to parse device ID from `GRAM_DEVICE_ID` environment variable")
@@ -23,26 +66,6 @@ impl WgpuContext {
                 None
             }
         };
-
-        #[cfg(any(target_os = "windows", target_os = "linux", target_os = "freebsd"))]
-        let backends = wgpu::Backends::VULKAN | wgpu::Backends::GL;
-        #[cfg(target_os = "macos")]
-        let backends = wgpu::Backends::METAL;
-
-        #[cfg(target_os = "macos")]
-        let flags = wgpu::InstanceFlags::default() - wgpu::InstanceFlags::VALIDATION_INDIRECT_CALL;
-        #[cfg(not(target_os = "macos"))]
-        let flags = wgpu::InstanceFlags::default();
-
-        let backends = wgpu::Backends::from_env().unwrap_or(backends);
-
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends,
-            flags,
-            backend_options: wgpu::BackendOptions::default(),
-            memory_budget_thresholds: wgpu::MemoryBudgetThresholds::default(),
-            display: None,
-        });
 
         let adapter = smol::block_on(Self::select_adapter(&instance, device_id_filter))?;
 

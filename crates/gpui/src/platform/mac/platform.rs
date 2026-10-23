@@ -372,7 +372,12 @@ impl MacPlatform {
             renderer_context: if headless {
                 None
             } else {
-                Some(WgpuContext::new().context("Unable to init GPU context").unwrap())
+                let instance = WgpuContext::create_instance();
+                Some(
+                    WgpuContext::new(instance)
+                        .context("Unable to init GPU context")
+                        .unwrap(),
+                )
             },
             general_pasteboard: Pasteboard::general(),
             find_pasteboard: Pasteboard::find(),

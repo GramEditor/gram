@@ -498,7 +498,7 @@ wasmparser = "0.221.3"
 wasmtime = { version = "36.0.18", default-features = false, features = ["async", "component-model", "cranelift", "demangle", "incremental-cache", "parallel-compilation", "runtime"] }
 wasmtime-wasi = "36.0.18"
 wax = "0.7.0"
-wayland-backend = { version = "0.3.17", features = ["client_system", "dlopen"] }
+wayland-backend = { version = "0.3.17", features = ["client_system", "dlopen","rwh_06"] }
 wayland-client = "0.31.15"
 wayland-cursor = "0.31.14"
 wayland-protocols = { version = "0.32.13", features = ["client", "staging", "unstable"] }
