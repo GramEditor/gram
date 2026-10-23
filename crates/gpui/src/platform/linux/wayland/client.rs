@@ -508,7 +508,8 @@ impl WaylandClient {
             .unwrap();
 
         // This could be unified with the notification handling in gram/main:fail_to_open_window.
-        let gpu_context = WgpuContext::new().notify_err("Unable to init GPU context");
+        let gpu_context =
+            WgpuContext::new(WgpuContext::create_instance(conn.backend())).notify_err("Unable to init GPU context");
 
         let seat = seat.unwrap();
         let globals = Globals::new(globals, common.foreground_executor.clone(), qh.clone(), seat.clone());

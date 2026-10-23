@@ -213,11 +213,22 @@ fn find_visuals(xcb: &XCBConnection, screen_index: usize) -> VisualSet {
     set
 }
 
-struct RawWindow {
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct RawWindow {
     connection: *mut c_void,
     screen_id: usize,
     window_id: u32,
     visual_id: u32,
+}
+impl RawWindow {
+    pub(crate) fn new(connection: *mut c_void, screen_id: usize, window_id: u32, visual_id: u32) -> Self {
+        Self {
+            connection,
+            screen_id,
+            window_id,
+            visual_id,
+        }
+    }
 }
 
 // Safety: The raw pointers in RawWindow point to X11 connection

@@ -1,4 +1,7 @@
-use crate::{Capslock, LinuxDispatcher, ResultExt as _, RunnableVariant, TaskTiming, xcb_flush};
+use crate::{
+    Capslock, LinuxDispatcher, ResultExt as _, RunnableVariant, TaskTiming, platform::linux::x11::window::RawWindow,
+    xcb_flush,
+};
 use anyhow::{Context as _, anyhow};
 use ashpd::WindowIdentifier;
 use calloop::{
@@ -419,7 +422,12 @@ impl X11Client {
         let layout_name = xkb_state.get_keymap().layout_get_name(layout_idx).to_string();
         let keyboard_layout = LinuxKeyboardLayout::new(layout_name.into());
 
-        let gpu_context = WgpuContext::new().notify_err("Unable to init GPU context");
+        // borrow rawWindow so that we dont need impl rawdisplay
+        // We use a properly initialized RawWindow when creating the surface.
+        // so window_id visual_id here is just ok
+        let raw_window = RawWindow::new(xcb_connection.get_raw_xcb_connection(), x_root_index, 0, 0);
+        let instance = WgpuContext::create_instance(raw_window);
+        let gpu_context = WgpuContext::new(instance).notify_err("Unable to init GPU context");
 
         let resource_database =
             x11rb::resource_manager::new_from_default(&xcb_connection).context("Failed to create resource database")?;
