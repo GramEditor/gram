@@ -77,7 +77,7 @@ jobs:
       matrix:
         include:
           - arch: x86_64
-            runner: ubuntu-latest # v24.04
+            runner: ubuntu-24.04 # v24.04
             artifact_name: linux-x86_64
           - arch: aarch64
             runner: ubuntu-24.04-arm
