@@ -17,8 +17,7 @@ impl WgpuContext {
         #[cfg(target_os = "macos")]
         let backends = wgpu::Backends::METAL;
         #[cfg(not(target_os = "macos"))]
-        /// `WGPU_BACKEND` environment override.
-        let backends = wgpu::Backends::from_env().unwrap_or(wgpu::Backends::VULKAN | wgpu::Backends::GL);
+        let backends = wgpu::Backends::VULKAN | wgpu::Backends::GL;
 
         #[cfg(target_os = "macos")]
         let flags = wgpu::InstanceFlags::default() - wgpu::InstanceFlags::VALIDATION_INDIRECT_CALL;
@@ -26,7 +25,7 @@ impl WgpuContext {
         let flags = wgpu::InstanceFlags::default();
 
         wgpu::InstanceDescriptor {
-            backends,
+            backends: wgpu::Backends::from_env().unwrap_or(backends),
             flags,
             backend_options: wgpu::BackendOptions::default(),
             memory_budget_thresholds: wgpu::MemoryBudgetThresholds::default(),
@@ -34,9 +33,9 @@ impl WgpuContext {
         }
     }
 
-    /// Creates a `wgpu::Instance` using gpui's platform defaults.
+    /// Creates a `wgpu::Instance`.
     ///
-    /// The `display` handle is required on Linux (Vulkan/GL) so that window
+    /// The `display` handle is required on Linux (GLES) so that window
     /// surfaces are created from the same instance that selected the adapter.
     #[cfg(not(target_os = "macos"))]
     pub fn create_instance<D>(display: D) -> wgpu::Instance
@@ -46,8 +45,7 @@ impl WgpuContext {
         wgpu::Instance::new(Self::instance_descriptor().with_display_handle(Box::new(display)))
     }
 
-    /// Creates a `wgpu::Instance` for backends that don't need a display handle
-    /// (Metal on macOS).
+    /// Creates a `wgpu::Instance` for backends that don't need a display handle.
     #[cfg(target_os = "macos")]
     pub fn create_instance() -> wgpu::Instance {
         wgpu::Instance::new(Self::instance_descriptor())
