@@ -11,33 +11,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Added
 
-- Add Helix "Amp Jump" (g w) feature (zed#43733)
-- Add `tab_bar.show_pinned_tabs_in_separate_row` setting to display pinned and unpinned tabs in separate rows (zed#46573)
-- Add Repology notes in docs (#470) by @koru
-- Bundle OpenMoji as emoji fallback (#478)
-- If a server binary is not found, suggest a command to install it (#485) by @xmort
-- Generate color for each commit author
-- Implement clipboard file and image copy for MacOS (#487) by @rockisch
-- Allow disabling 'auto focus on paste' (#487) by @rockisch
-- Handle '#' links in Markdown preview (#514) by @rockisch
-- Language support for Typst via tinymist (#517) by @theDoctor
-- Add support for C23 keyword 'constexpr' (#522) by @mgrave
-- Add code outline support for diff files (#524) by @jqslr
-- Add smart sort for project panel: mod.rs sorts first (#541) by @patchunwrap
-- Highlight TODO/NOTE/WARN: comments in builtin languages (#534) by @nitbook
-- Configure debug adapter permissions in language server config view
-- Add refs information to commit history views
-- Add 'refresh git history' button (#575) by @nicoco
-- Add settings-alias support (#581) by @nitbook
 - Add 'open current file' button (#583) by @nicoco
-- Side-by-side Git diff view (#565) by @iskrant_x
-- Add toggle to enable/disable git hooks + fix running commit-msg hook (#594) by @nicoco
-- Add 'completion_menu_item_kind' option to display text icons for completion items. In the settings either 'off' or 'symbol'. Default 'off' (#623) by @CubeOfShame
-- Add tombi as an LSP and formatter for TOML (#626) (#616) by @psy-q
-- Rework show_tab_bar_buttons setting to allow always showing (#637) by @sir_nacnud
-- Add setting to wrap tabs onto multiple rows (#643) by @kbilkis
-- Refresh file history view on repository change
+- Add 'refresh git history' button (#575) by @nicoco
+- Add Helix "Amp Jump" (g w) feature (zed#43733) (#659) by @yilmazer
+- Add Repology notes in docs (#470) by @koru
+- Add `completion_menu_item_kind` option to display text icons for completion items. (#623) by @CubeOfShame
+- Add code outline support for diff files (#524) by @jqslr
 - Add generate shell completions via cli by @ycna07
+- Add refs information to commit history views
+- Add setting to show pinned tabs in a separate row (zed#46573) (#633) by @kbilkis
+- Add setting to wrap tabs onto multiple rows (#643) by @kbilkis
+- Add settings-alias support (#581) by @nitbook
+- Add side-by-side Git diff view (#565) by @iskrant_x
+- Add smart sort for project panel: mod.rs sorts first (#541) by @patchunwrap
+- Add support for C23 keyword 'constexpr' (#522) by @mgrave
+- Add toggle to enable/disable git hooks + fix running commit-msg hook (#594) by @nicoco
+- Add tombi as an LSP and formatter for TOML (#626) (#616) by @psy-q
+- Allow disabling 'auto focus on paste' (#487) by @rockisch
+- Bundle OpenMoji as emoji fallback (#478)
+- Configure debug adapter permissions in language server config view
+- Generate color for each commit author
+- Handle '#' links in Markdown preview (#514) by @rockisch
+- Highlight TODO/NOTE/WARN: comments in builtin languages (#534) by @nitbook
+- If a server binary is not found, suggest a command to install it (#485) by @xmort
+- Implement clipboard file and image copy for MacOS (#487) by @rockisch
+- Language support for Typst via tinymist (#517) by @theDoctor
+- Refresh file history view on repository change
+- Rework show_tab_bar_buttons setting to allow always showing (#637) by @sir_nacnud
 
 ## Removed
 
@@ -45,40 +45,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changed
 
-- Update mermaid renderer to improve layout (#476) by @sbuzzard
+- Adopt SciActive's human contribution policy (#495) by @helinos, policy by @hperrin
 - Clean up formatting in docs (#490) by @koru
-- Adopt SciActive's human contribution policy (#495) by @helinos
-  Policy by @hperrin
-- Require permission to download or use extension-provided LSPs
-- Require permission to download or use extension-provided DAPs
-- Update Zig tree-sitter queries (#553) by @koru
-- Update bundled git version to 2.53.0 (Mac OS)
 - Fit image to view on first paint (#589) by @Emilinya
 - Highlight tracked files even when .gitignore ignores everything (#598) by @frafav
-- Replace protobuf with postcard (#608) by @xmort
 - Replace kde-blur protocol with ext-background-effect protocol (#336) (#666) by @ycna07
+- Replace protobuf with postcard (#608) by @xmort
+- Require permission to download or use extension-provided DAPs
+- Require permission to download or use extension-provided LSPs
+- Update Zig tree-sitter queries (#553) by @koru
+- Update bundled git version to 2.53.0 (Mac OS)
+- Update mermaid renderer to improve layout (#476) by @sbuzzard
 
 ## Fixed
 
-- Fix XDG Desktop menu: rename to gram-editor.desktop (#469) (#474) by @koru
-- Fix compiling extensions with symlinks in the source tree (#494)
-- Require language servers from extensions to have full permissions before running (#507)
+- SECURITY: Update webpki-root-certs and rustls-webpki to fix eMudhra root certs
 - Distinguish between errors better for remove server binary (#521) by @nitbook
-- When creating new X11WindowState also change `_NET_WM_NAME` property (#548) by @sir_nacnud
-- Fix diagnostics batches stopping at paths without a worktree (zed#64017)
-- Raise open file soft limit at startup on Unix (zed#64034)
 - Ensure that SoftWrap being set to None does not cause wrapping (#572) by @nitbook
-- Pull in patches for notify crate from Zed
+- Fix Debug Test for Go subtests (zed#53680)
+- Fix XDG Desktop menu: rename to gram-editor.desktop (#469) (#474) by @koru
+- Fix blurry UI elements when using fractional display scaling (zed#54728)
+- Fix compiling extensions with symlinks in the source tree (#494)
+- Fix crash in `start_display_link` (zed#50875) (#669)
+- Fix diagnostics batches stopping at paths without a worktree (zed#64017)
+- Fix double-clicking to maximize window on Mac
 - Fix image rendering when image changes size (#604) by @Emilinya
 - Fix rerun last debug (zed#58828) (#610) by @rdnvndr
-- Fix Debug Test for Go subtests (zed#53680)
 - Fix table test detection in large files (zed#57277)
-- Support emitting multiple runnables from a single tree-sitter match (zed#57276)
-- Fix crash in `start_display_link` (zed#50875) (#669)
-- Fix double-clicking to maximize window on Mac
-- Fix blurry UI elements when using fractional display scaling (zed#54728)
-- Reduce terminal flicker on resize (zed#47195)
 - Fix window not opening when using GL backend on Linux(#364)(#672) by @ycna07
+- Pull in patches for notify crate from Zed
+- Raise open file soft limit at startup on Unix (zed#64034)
+- Reduce terminal flicker on resize (zed#47195)
+- Require language servers from extensions to have full permissions before running (#507)
+- Support emitting multiple runnables from a single tree-sitter match (zed#57276)
+- When creating new X11WindowState also change `_NET_WM_NAME` property (#548) by @sir_nacnud
 
 ## [3.3.0] - 2026-08-25
 
