@@ -9,11 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.4.0] - 2026-10-23
+## [3.4.1] - 2026-10-23
 
 ## Fixed
 
+- Build Linux binaries on Ubuntu 24.04
 - Fix Linux installation and packaging (#640) by @Usman2
+
+## [3.4.0] - 2026-10-23
 
 ## Added
 

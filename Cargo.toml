@@ -145,7 +145,7 @@ members = [
 default-members = ["crates/gram"]
 
 [workspace.package]
-version = "3.4.0"
+version = "3.4.1"
 edition = "2024"
 rust-version = "1.95"
 description = "A code editor for humanoid apes and grumpy toads"
