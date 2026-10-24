@@ -8,8 +8,6 @@ extern crate self as gpui;
 
 #[macro_use]
 mod action;
-/// Utilities for animating UI elements.
-pub mod animation;
 mod app;
 mod arena;
 mod asset_cache;
@@ -37,6 +35,8 @@ mod scene;
 pub mod scroll;
 mod shared_string;
 mod shared_uri;
+/// Utilities for animating UI elements.
+pub mod smooth;
 mod style;
 mod styled;
 mod subscription;

@@ -10,11 +10,10 @@
 use crate::{
     AnyElement, App, AvailableSpace, Axis, Bounds, ContentMask, DispatchPhase, Edges, Element, EntityId, FocusHandle,
     GlobalElementId, Hitbox, HitboxBehavior, InspectorElementId, IntoElement, Overflow, Pixels, Point, ScrollDelta,
-    ScrollWheelEvent, Size, Style, StyleRefinement, Styled, Window,
-    animation::SmoothAnimation,
-    point, px,
+    ScrollWheelEvent, Size, Style, StyleRefinement, Styled, Window, point, px,
     scroll::{GlobalScrollSettings, OngoingScroll},
     size,
+    smooth::SmoothAnimation,
 };
 use collections::VecDeque;
 use refineable::Refineable as _;

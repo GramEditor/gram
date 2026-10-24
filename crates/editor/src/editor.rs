@@ -96,13 +96,12 @@ use gpui::{
     Focusable, FontId, FontWeight, FutureExt as _, Global, HighlightStyle, Hsla, KeyContext, Modifiers, MouseButton,
     MouseDownEvent, MouseMoveEvent, PaintQuad, ParentElement, Pixels, PressureStage, Render, ScrollHandle,
     SharedString, Size, Styled, Subscription, Task, TextRun, TextStyle, TextStyleRefinement, UTF16Selection,
-    UnderlineStyle, UniformListScrollHandle, WeakEntity, WeakFocusHandle, Window,
-    animation::SmoothAnimation,
-    div, point,
+    UnderlineStyle, UniformListScrollHandle, WeakEntity, WeakFocusHandle, Window, div, point,
     prelude::*,
     px, relative,
     scroll::{GlobalScrollSettings, OngoingScroll},
     size,
+    smooth::SmoothAnimation,
 };
 use hover_links::{HoverLink, HoveredLinkState, find_file};
 use hover_popover::{HoverState, hide_hover};

@@ -12,8 +12,8 @@ use crate::{
 };
 pub use autoscroll::{Autoscroll, AutoscrollStrategy};
 use core::fmt::Debug;
-use gpui::animation::SmoothAnimation;
 use gpui::scroll::OngoingScroll;
+use gpui::smooth::SmoothAnimation;
 use gpui::{Along, App, Axis, Context, Task, Window, point};
 use language::language_settings::{AllLanguageSettings, SoftWrap};
 use language::{Bias, Point};
