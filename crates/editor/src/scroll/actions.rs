@@ -4,7 +4,7 @@ use crate::{
     SCROLL_CENTER_TOP_BOTTOM_DEBOUNCE_TIMEOUT, ScrollCursorBottom, ScrollCursorCenter, ScrollCursorCenterTopBottom,
     ScrollCursorTop, display_map::DisplayRow, scroll::ScrollOffset,
 };
-use gpui::{Context, Point, Window, animation::GlobalSmoothScroll};
+use gpui::{Context, Point, Window, scroll::GlobalScrollSettings};
 
 impl Editor {
     pub fn next_screen(&mut self, _: &NextScreen, window: &mut Window, cx: &mut Context<Editor>) {
@@ -30,7 +30,7 @@ impl Editor {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if let Some(duration) = GlobalSmoothScroll::duration(cx) {
+        if let Some(duration) = GlobalScrollSettings::duration(cx) {
             let current_position = self.scroll_position(cx);
             self.scroll_manager.update_ongoing_scroll(axis);
             self.scroll_manager

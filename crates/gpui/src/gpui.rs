@@ -33,6 +33,8 @@ mod platform;
 pub mod prelude;
 mod profiler;
 mod scene;
+/// Global scroll settings.
+pub mod scroll;
 mod shared_string;
 mod shared_uri;
 mod style;

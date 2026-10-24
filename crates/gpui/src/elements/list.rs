@@ -8,11 +8,13 @@
 //! If all of your elements are the same height, see [`crate::UniformList`] for a simpler API
 
 use crate::{
-    AnyElement, App, AvailableSpace, Bounds, ContentMask, DispatchPhase, Edges, Element, EntityId, FocusHandle,
+    AnyElement, App, AvailableSpace, Axis, Bounds, ContentMask, DispatchPhase, Edges, Element, EntityId, FocusHandle,
     GlobalElementId, Hitbox, HitboxBehavior, InspectorElementId, IntoElement, Overflow, Pixels, Point, ScrollDelta,
     ScrollWheelEvent, Size, Style, StyleRefinement, Styled, Window,
-    animation::{GlobalSmoothScroll, SmoothAnimation},
-    point, px, size,
+    animation::SmoothAnimation,
+    point, px,
+    scroll::{GlobalScrollSettings, OngoingScroll},
+    size,
 };
 use collections::VecDeque;
 use refineable::Refineable as _;
@@ -71,6 +73,7 @@ struct StateInner {
     measuring_behavior: ListMeasuringBehavior,
     pending_scroll: Option<PendingScrollFraction>,
     animation: Option<SmoothAnimation>,
+    ongoing_scroll: OngoingScroll,
 }
 
 /// Keeps track of a fractional scroll position within an item for restoration
@@ -232,6 +235,7 @@ impl ListState {
             measuring_behavior: ListMeasuringBehavior::default(),
             pending_scroll: None,
             animation: None,
+            ongoing_scroll: OngoingScroll::new(),
         })));
         this.splice(0..0, item_count);
         this
@@ -536,6 +540,8 @@ impl StateInner {
         scroll_top: &ListOffset,
         height: Pixels,
         delta: Point<Pixels>,
+        axis: Option<Axis>,
+        precise: bool,
         current_view: EntityId,
         window: &mut Window,
         cx: &mut App,
@@ -546,21 +552,17 @@ impl StateInner {
             return;
         }
 
-        let scroll_max = self.scroll_max(height);
+        self.ongoing_scroll.update(axis);
 
-        if let Some(duration) = GlobalSmoothScroll::duration(cx) {
-            let max_y = f64::from(scroll_max);
+        if !precise && let Some(duration) = GlobalScrollSettings::duration(cx) {
             let delta_y = f64::from(delta.y);
             if let Some(animation) = self.animation.as_mut() {
-                animation.restart(point(0., (animation.current.y + delta_y).min(max_y)));
+                animation.restart(point(0., animation.current.y + delta_y));
             } else {
-                self.animation = Some(SmoothAnimation::new(
-                    duration,
-                    point(0., 0.),
-                    point(0., delta_y.min(max_y)),
-                ));
+                self.animation = Some(SmoothAnimation::new(duration, point(0., 0.), point(0., delta_y)));
             }
         } else {
+            let scroll_max = self.scroll_max(height);
             self.scroll_internal(delta.y, scroll_top, scroll_max, height, window, cx);
         }
 
@@ -1159,15 +1161,44 @@ impl Element for List {
         let height = bounds.size.height;
         let scroll_top = prepaint.layout.scroll_top;
         let hitbox_id = prepaint.hitbox.id;
-        let mut accumulated_scroll_delta = ScrollDelta::default();
         window.on_mouse_event(move |event: &ScrollWheelEvent, phase, window, cx| {
             if phase == DispatchPhase::Bubble && hitbox_id.should_handle_scroll(window) {
-                accumulated_scroll_delta = accumulated_scroll_delta.coalesce(event.delta);
-                let pixel_delta = accumulated_scroll_delta.pixel_delta(px(20.));
-                list_state
-                    .0
-                    .borrow_mut()
-                    .scroll(&scroll_top, height, pixel_delta, current_view, window, cx)
+                let text_style = window.text_style();
+                let font_id = window.text_system().resolve_font(&text_style.font());
+                let font_size = text_style.font_size.to_pixels(window.rem_size());
+                let line_height = text_style.line_height.to_pixels(font_size.into(), window.rem_size());
+                let em_advance = window.text_system().em_advance(font_id, font_size).unwrap();
+                let scroll_sensitivity = GlobalScrollSettings::scroll_sensitivity(cx);
+                let fast_scroll_sensitivity = GlobalScrollSettings::fast_scroll_sensitivity(cx);
+
+                let scroll_sensitivity = if event.modifiers.alt {
+                    fast_scroll_sensitivity
+                } else {
+                    scroll_sensitivity
+                };
+                let (delta, axis) = match event.delta {
+                    ScrollDelta::Pixels(mut pixels) => {
+                        // Trackpad
+                        let axis = list_state.0.borrow().ongoing_scroll.filter(&mut pixels);
+                        (pixels, axis)
+                    }
+                    ScrollDelta::Lines(lines) => {
+                        // Not trackpad
+                        let pixels = point(lines.x * em_advance, lines.y * line_height);
+                        (pixels, None)
+                    }
+                };
+                let pixel_delta = delta * scroll_sensitivity;
+                list_state.0.borrow_mut().scroll(
+                    &scroll_top,
+                    height,
+                    pixel_delta,
+                    axis,
+                    event.delta.precise(),
+                    current_view,
+                    window,
+                    cx,
+                )
             }
         });
     }

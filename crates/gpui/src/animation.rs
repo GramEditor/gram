@@ -1,21 +1,6 @@
 use std::time::{Duration, Instant};
 
-use crate::{App, Global, Point};
-
-/// Smooth scroll setting.
-pub struct GlobalSmoothScroll {
-    /// Configured duration of the animation.
-    pub duration: Option<Duration>,
-}
-
-impl Global for GlobalSmoothScroll {}
-
-impl GlobalSmoothScroll {
-    /// Some(duration) if smooth scroll is configured, None if disabled.
-    pub fn duration(cx: &App) -> Option<Duration> {
-        cx.try_global::<Self>().and_then(|setting| setting.duration)
-    }
-}
+use crate::Point;
 
 /// Exponential smoothing point to point animation.
 /// See https://lisyarus.github.io/blog/posts/exponential-smoothing.html

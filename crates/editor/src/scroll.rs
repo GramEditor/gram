@@ -13,20 +13,17 @@ use crate::{
 pub use autoscroll::{Autoscroll, AutoscrollStrategy};
 use core::fmt::Debug;
 use gpui::animation::SmoothAnimation;
-use gpui::{Along, App, Axis, Context, Pixels, Task, Window, point, px};
+use gpui::scroll::OngoingScroll;
+use gpui::{Along, App, Axis, Context, Task, Window, point};
 use language::language_settings::{AllLanguageSettings, SoftWrap};
 use language::{Bias, Point};
 pub use scroll_amount::ScrollAmount;
 use settings::Settings;
-use std::{
-    cmp::Ordering,
-    time::{Duration, Instant},
-};
+use std::{cmp::Ordering, time::Duration};
 use ui::scrollbars::ScrollbarAutoHide;
 use util::ResultExt;
 use workspace::{ItemId, WorkspaceId};
 
-pub const SCROLL_EVENT_SEPARATION: Duration = Duration::from_millis(28);
 const SCROLLBAR_SHOW_INTERVAL: Duration = Duration::from_secs(1);
 
 pub struct WasScrolled(pub(crate) bool);
@@ -60,64 +57,6 @@ impl ScrollAnchor {
 
     pub fn top_row(&self, buffer: &MultiBufferSnapshot) -> u32 {
         self.anchor.to_point(buffer).row
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-pub struct OngoingScroll {
-    last_event: Instant,
-    axis: Option<Axis>,
-}
-
-impl OngoingScroll {
-    fn new() -> Self {
-        Self {
-            last_event: Instant::now() - SCROLL_EVENT_SEPARATION,
-            axis: None,
-        }
-    }
-
-    pub fn filter(&self, delta: &mut gpui::Point<Pixels>) -> Option<Axis> {
-        const UNLOCK_PERCENT: f32 = 1.9;
-        const UNLOCK_LOWER_BOUND: Pixels = px(6.);
-        let mut axis = self.axis;
-
-        let x = delta.x.abs();
-        let y = delta.y.abs();
-        let duration = Instant::now().duration_since(self.last_event);
-        if duration > SCROLL_EVENT_SEPARATION {
-            //New ongoing scroll will start, determine axis
-            axis = if x <= y {
-                Some(Axis::Vertical)
-            } else {
-                Some(Axis::Horizontal)
-            };
-        } else if x.max(y) >= UNLOCK_LOWER_BOUND {
-            //Check if the current ongoing will need to unlock
-            match axis {
-                Some(Axis::Vertical) if x > y && x >= y * UNLOCK_PERCENT => {
-                    axis = None;
-                }
-
-                Some(Axis::Horizontal) if y > x && y >= x * UNLOCK_PERCENT => {
-                    axis = None;
-                }
-
-                _ => {}
-            }
-        }
-
-        match axis {
-            Some(Axis::Vertical) => {
-                *delta = point(px(0.), delta.y);
-            }
-            Some(Axis::Horizontal) => {
-                *delta = point(delta.x, px(0.));
-            }
-            None => {}
-        }
-
-        axis
     }
 }
 
@@ -209,8 +148,7 @@ impl ScrollManager {
     }
 
     pub fn update_ongoing_scroll(&mut self, axis: Option<Axis>) {
-        self.ongoing.last_event = Instant::now();
-        self.ongoing.axis = axis;
+        self.ongoing.update(axis);
     }
 
     pub fn scroll_position(&self, snapshot: &DisplaySnapshot) -> gpui::Point<ScrollOffset> {

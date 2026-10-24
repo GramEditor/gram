@@ -97,10 +97,12 @@ use gpui::{
     MouseDownEvent, MouseMoveEvent, PaintQuad, ParentElement, Pixels, PressureStage, Render, ScrollHandle,
     SharedString, Size, Styled, Subscription, Task, TextRun, TextStyle, TextStyleRefinement, UTF16Selection,
     UnderlineStyle, UniformListScrollHandle, WeakEntity, WeakFocusHandle, Window,
-    animation::{GlobalSmoothScroll, SmoothAnimation},
+    animation::SmoothAnimation,
     div, point,
     prelude::*,
-    px, relative, size,
+    px, relative,
+    scroll::{GlobalScrollSettings, OngoingScroll},
+    size,
 };
 use hover_links::{HoverLink, HoveredLinkState, find_file};
 use hover_popover::{HoverState, hide_hover};
@@ -147,7 +149,7 @@ use project::{
 };
 use rand::seq::SliceRandom;
 use rpc::{ErrorCode, ErrorExt};
-use scroll::{Autoscroll, OngoingScroll, ScrollAnchor, ScrollManager};
+use scroll::{Autoscroll, ScrollAnchor, ScrollManager};
 use selections_collection::{MutableSelectionsCollection, SelectionsCollection};
 use serde::{Deserialize, Serialize};
 use settings::{
@@ -291,12 +293,14 @@ pub fn init(cx: &mut App) {
 
     let update_smooth_scroll = |cx: &mut App| {
         let settings = EditorSettings::get_global(cx);
-        cx.set_global(GlobalSmoothScroll {
+        cx.set_global(GlobalScrollSettings {
             duration: if settings.smooth_scroll.enabled {
                 Some(Duration::from_millis(settings.smooth_scroll.duration.0))
             } else {
                 None
             },
+            scroll_sensitivity: settings.scroll_sensitivity,
+            fast_scroll_sensitivity: settings.fast_scroll_sensitivity,
         });
     };
     update_smooth_scroll(cx);
