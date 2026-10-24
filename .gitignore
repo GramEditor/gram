@@ -6,7 +6,6 @@
 **/*.db
 **/*~lock~
 **/.direnv
-**/book/*
 **/cargo-target
 **/target
 **/venv
@@ -44,5 +43,4 @@ xcuserdata/
 /node_modules/
 /plugins/bin
 /script/node_modules
-/se.ziran.gram*.json
 /snap
