@@ -131,17 +131,6 @@ world extension {
     export labels-for-completions: func(language-server-id: string, completions: list<completion>) -> result<list<option<code-label>>, string>;
     export labels-for-symbols: func(language-server-id: string, symbols: list<symbol>) -> result<list<option<code-label>>, string>;
 
-
-    /// Returns a list of packages as suggestions to be included in the `/docs`
-    /// search results.
-    ///
-    /// This can be used to provide completions for known packages (e.g., from the
-    /// local project or a registry) before a package has been indexed.
-    export suggest-docs-packages: func(provider-name: string) -> result<list<string>, string>;
-
-    /// Indexes the docs for the specified package.
-    export index-docs: func(provider-name: string, package-name: string, database: borrow<key-value-store>) -> result<_, string>;
-
     /// Returns a configured debug adapter binary for a given debug task.
     export get-dap-binary: func(adapter-name: string, config: debug-task-definition, user-installed-path: option<string>, worktree: borrow<worktree>) -> result<debug-adapter-binary, string>;
     /// Returns the kind of a debug scenario (launch or attach).

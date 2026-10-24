@@ -8,7 +8,7 @@ use dap::settings::DapSettings;
 use dap::{DebugRequest, StartDebuggingRequestArgumentsRequest};
 use extension::{
     CodeLabel, Command, Completion, DebugAdapterBinary, DebugTaskDefinition, ExtensionCapability, ExtensionHostProxy,
-    KeyValueStoreDelegate, Symbol, WorktreeDelegate,
+    Symbol, WorktreeDelegate,
 };
 use fs::{Fs, normalize_path};
 use futures::future::LocalBoxFuture;
@@ -241,42 +241,6 @@ impl extension::Extension for WasmExtension {
                     .map_err(|err| store.data().extension_error(err))?;
 
                 Ok(labels.into_iter().map(|label| label.map(Into::into)).collect())
-            }
-            .boxed()
-        })
-        .await?
-    }
-
-    async fn suggest_docs_packages(&self, provider: Arc<str>) -> Result<Vec<String>> {
-        self.call(|extension, store| {
-            async move {
-                let packages = extension
-                    .call_suggest_docs_packages(store, provider.as_ref())
-                    .await?
-                    .map_err(|err| store.data().extension_error(err))?;
-
-                Ok(packages)
-            }
-            .boxed()
-        })
-        .await?
-    }
-
-    async fn index_docs(
-        &self,
-        provider: Arc<str>,
-        package_name: Arc<str>,
-        kv_store: Arc<dyn KeyValueStoreDelegate>,
-    ) -> Result<()> {
-        self.call(|extension, store| {
-            async move {
-                let kv_store_resource = store.data_mut().table.push(kv_store)?;
-                extension
-                    .call_index_docs(store, provider.as_ref(), package_name.as_ref(), kv_store_resource)
-                    .await?
-                    .map_err(|err| store.data().extension_error(err))?;
-
-                anyhow::Ok(())
             }
             .boxed()
         })

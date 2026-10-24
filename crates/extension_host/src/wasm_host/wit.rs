@@ -8,7 +8,7 @@ mod since_v0_4_0;
 mod since_v0_5_0;
 mod since_v0_6_0;
 use dap::{DebugRequest, settings::DapSettings};
-use extension::{DebugTaskDefinition, KeyValueStoreDelegate, WorktreeDelegate};
+use extension::{DebugTaskDefinition, WorktreeDelegate};
 use gpui::BackgroundExecutor;
 use language::LanguageName;
 use lsp::{LanguageServerBinaryOptions, LanguageServerName};
@@ -543,43 +543,6 @@ impl Extension {
         }
     }
 
-    pub async fn call_suggest_docs_packages(
-        &self,
-        store: &mut Store<WasmState>,
-        provider: &str,
-    ) -> Result<Result<Vec<String>, String>> {
-        match self {
-            Extension::V0_6_0(ext) => ext.call_suggest_docs_packages(store, provider).await,
-            Extension::V0_5_0(ext) => ext.call_suggest_docs_packages(store, provider).await,
-            Extension::V0_4_0(ext) => ext.call_suggest_docs_packages(store, provider).await,
-            Extension::V0_3_0(ext) => ext.call_suggest_docs_packages(store, provider).await,
-            Extension::V0_2_0(ext) => ext.call_suggest_docs_packages(store, provider).await,
-            Extension::V0_1_0(ext) => ext.call_suggest_docs_packages(store, provider).await,
-            Extension::V0_0_1(_) | Extension::V0_0_4(_) | Extension::V0_0_6(_) => {
-                anyhow::bail!("`suggest_docs_packages` not available prior to v0.1.0");
-            }
-        }
-    }
-
-    pub async fn call_index_docs(
-        &self,
-        store: &mut Store<WasmState>,
-        provider: &str,
-        package_name: &str,
-        kv_store: Resource<Arc<dyn KeyValueStoreDelegate>>,
-    ) -> Result<Result<(), String>> {
-        match self {
-            Extension::V0_6_0(ext) => ext.call_index_docs(store, provider, package_name, kv_store).await,
-            Extension::V0_5_0(ext) => ext.call_index_docs(store, provider, package_name, kv_store).await,
-            Extension::V0_4_0(ext) => ext.call_index_docs(store, provider, package_name, kv_store).await,
-            Extension::V0_3_0(ext) => ext.call_index_docs(store, provider, package_name, kv_store).await,
-            Extension::V0_2_0(ext) => ext.call_index_docs(store, provider, package_name, kv_store).await,
-            Extension::V0_1_0(ext) => ext.call_index_docs(store, provider, package_name, kv_store).await,
-            Extension::V0_0_1(_) | Extension::V0_0_4(_) | Extension::V0_0_6(_) => {
-                anyhow::bail!("`index_docs` not available prior to v0.1.0");
-            }
-        }
-    }
     pub async fn call_get_dap_binary(
         &self,
         store: &mut Store<WasmState>,

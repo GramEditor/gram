@@ -124,20 +124,6 @@ pub trait Extension: Send + Sync {
         None
     }
 
-    /// Returns a list of package names as suggestions to be included in the
-    /// search results of the `/docs` slash command.
-    ///
-    /// This can be used to provide completions for known packages (e.g., from the
-    /// local project or a registry) before a package has been indexed.
-    fn suggest_docs_packages(&self, _provider: String) -> Result<Vec<String>, String> {
-        Ok(Vec::new())
-    }
-
-    /// Indexes the docs for the specified package.
-    fn index_docs(&self, _provider: String, _package: String, _database: &KeyValueStore) -> Result<(), String> {
-        Err("`index_docs` not implemented".to_string())
-    }
-
     /// Returns the debug adapter binary for the specified adapter name and configuration.
     fn get_dap_binary(
         &mut self,
@@ -367,14 +353,6 @@ impl wit::Guest for Component {
             }
         }
         Ok(labels)
-    }
-
-    fn suggest_docs_packages(provider: String) -> Result<Vec<String>, String> {
-        extension().suggest_docs_packages(provider)
-    }
-
-    fn index_docs(provider: String, package: String, database: &KeyValueStore) -> Result<(), String> {
-        extension().index_docs(provider, package, database)
     }
 
     fn get_dap_binary(

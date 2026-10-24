@@ -109,15 +109,6 @@ pub trait Extension: Send + Sync + 'static {
         symbols: Vec<Symbol>,
     ) -> Result<Vec<Option<CodeLabel>>>;
 
-    async fn suggest_docs_packages(&self, provider: Arc<str>) -> Result<Vec<String>>;
-
-    async fn index_docs(
-        &self,
-        provider: Arc<str>,
-        package_name: Arc<str>,
-        kv_store: Arc<dyn KeyValueStoreDelegate>,
-    ) -> Result<()>;
-
     async fn get_dap_binary(
         &self,
         dap_name: Arc<str>,
