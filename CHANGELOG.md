@@ -9,9 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Changed
+
+- Require exec permission for extensions to run `npm info`
+
 ## Fixed
 
 - Support smooth scroll in lists (settings, markdown preview, docs etc.)
+- Reset scroll position when navigating in docs
 
 ## [3.4.1] - 2026-10-23
 
