@@ -314,9 +314,8 @@ impl DocumentationView {
             view.update(cx, move |view, cx| {
                 let markdown_blocks_count = contents.children.len();
                 view.contents = Some(contents);
-                let scroll_top = view.list_state.logical_scroll_top();
                 view.list_state.reset(markdown_blocks_count);
-                view.list_state.scroll_to(scroll_top);
+                view.list_state.scroll_to_reveal_item(0);
                 cx.notify();
             })
         })
