@@ -317,10 +317,10 @@ impl http_client::Host for WasmState {
         request: http_client::HttpRequest,
     ) -> wasmtime::Result<Result<Resource<ExtensionHttpResponseStream>, String>> {
         let url_obj = Url::parse(&request.url)?;
+        self.capability_granter.grant_download_file(&url_obj)?;
         let request = convert_request(&request)?;
         let response = self.host.http_client.send(request);
         maybe!(async {
-            self.capability_granter.grant_download_file(&url_obj)?;
             let response = response.await?;
             let stream = Arc::new(Mutex::new(response));
             let resource = self.table.push(stream)?;
