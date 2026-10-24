@@ -88,8 +88,10 @@ We promise:
 
 For more thoughts on this topic, see the [mission statement](./docs/mission.md).
 
-> **PSA:** As of version 3.3.0, extensions still can and will do whatever they
-> want, including downloading and running executables. See
+> **PSA:** In versions before 3.4.0 (and in every version of Zed as far as I can
+> tell), the sandboxing for extensions was broken and extensions could do whatever
+> they wanted regardless of configuration, including downloading and running
+> executables. See
 > [bug #507](https://codeberg.org/GramEditor/gram/issues/507) and
 > [this post](https://gram-editor.com/posts/psa-extensions/).
 
