@@ -1,9 +1,12 @@
 use std::{
+    cell::RefCell,
     collections::{BTreeMap, HashMap},
     path::{Path, PathBuf},
     rc::Rc,
-    time::Duration,
+    time::{Duration, Instant},
 };
+
+use sysinfo::{Pid, ProcessRefreshKind, RefreshKind, System};
 
 use collections::HashSet;
 use editor::{Editor, EditorEvent};
@@ -38,13 +41,93 @@ pub struct LspButton {
     _subscriptions: Vec<Subscription>,
 }
 
-#[derive(Debug)]
 pub struct LanguageServerState {
     items: Vec<LspMenuItem>,
     workspace: WeakEntity<Workspace>,
     lsp_store: WeakEntity<LspStore>,
     active_editor: Option<ActiveEditor>,
     language_servers: LanguageServers,
+    process_memory_cache: Rc<RefCell<ProcessMemoryCache>>,
+}
+
+impl std::fmt::Debug for LanguageServerState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LanguageServerState")
+            .field("items", &self.items)
+            .field("workspace", &self.workspace)
+            .field("lsp_store", &self.lsp_store)
+            .field("active_editor", &self.active_editor)
+            .field("language_servers", &self.language_servers)
+            .finish_non_exhaustive()
+    }
+}
+
+const PROCESS_MEMORY_CACHE_DURATION: Duration = Duration::from_secs(5);
+
+struct ProcessMemoryCache {
+    system: System,
+    memory_usage: HashMap<u32, u64>,
+    last_refresh: Option<Instant>,
+}
+
+impl ProcessMemoryCache {
+    fn new() -> Self {
+        Self {
+            system: System::new(),
+            memory_usage: HashMap::new(),
+            last_refresh: None,
+        }
+    }
+
+    fn get_memory_usage(&mut self, process_id: u32) -> u64 {
+        let cache_expired = self
+            .last_refresh
+            .map(|last| last.elapsed() >= PROCESS_MEMORY_CACHE_DURATION)
+            .unwrap_or(true);
+
+        if cache_expired {
+            let refresh_kind =
+                RefreshKind::nothing().with_processes(ProcessRefreshKind::nothing().with_memory());
+            self.system.refresh_specifics(refresh_kind);
+            self.memory_usage.clear();
+            self.last_refresh = Some(Instant::now());
+        }
+
+        if let Some(&memory) = self.memory_usage.get(&process_id) {
+            return memory;
+        }
+
+        let root_pid = Pid::from_u32(process_id);
+
+        let parent_map: HashMap<Pid, Pid> = self
+            .system
+            .processes()
+            .iter()
+            .filter_map(|(&pid, process)| Some((pid, process.parent()?)))
+            .collect();
+
+        let total_memory = self
+            .system
+            .processes()
+            .iter()
+            .filter(|(pid, _)| self.is_descendant_of(**pid, root_pid, &parent_map))
+            .map(|(_, process)| process.memory())
+            .sum();
+
+        self.memory_usage.insert(process_id, total_memory);
+        total_memory
+    }
+
+    fn is_descendant_of(&self, pid: Pid, root_pid: Pid, parent_map: &HashMap<Pid, Pid>) -> bool {
+        let mut current = pid;
+        while current != root_pid {
+            match parent_map.get(&current) {
+                Some(&parent) => current = parent,
+                None => return false,
+            }
+        }
+        true
+    }
 }
 
 struct ActiveEditor {
@@ -125,15 +208,25 @@ impl LanguageServerState {
             return menu;
         };
 
-        let server_versions = self
+        let server_metadata = self
             .lsp_store
             .update(cx, |lsp_store, _| {
                 lsp_store
                     .language_server_statuses()
-                    .map(|(server_id, status)| (server_id, status.server_version.clone()))
+                    .map(|(server_id, status)| {
+                        (
+                            server_id,
+                            (
+                                status.server_version.clone(),
+                                status.process_id,
+                            ),
+                        )
+                    })
                     .collect::<HashMap<_, _>>()
             })
             .unwrap_or_default();
+
+        let process_memory_cache = self.process_memory_cache.clone();
 
         let mut first_button_encountered = false;
         for item in &self.items {
@@ -255,7 +348,15 @@ impl LanguageServerState {
                 .or_else(|| server_info.binary_status.as_ref()?.message.as_ref())
                 .cloned();
 
-            let server_version = server_versions.get(&server_info.id).and_then(|version| version.clone());
+            let (server_version, process_id) = server_metadata
+                .get(&server_info.id)
+                .map(|(version, process_id)| {
+                    (
+                        version.clone(),
+                        *process_id,
+                    )
+                })
+                .unwrap_or((None, None));
 
             let truncated_message = message.as_ref().and_then(|message| {
                 message
@@ -264,17 +365,6 @@ impl LanguageServerState {
                     .map(SharedString::new)
                     .next()
             });
-
-            let metadata_label = match (&server_version, &truncated_message) {
-                (None, None) => None,
-                (Some(version), None) => Some(SharedString::from(format!("v{}", version.as_ref()))),
-                (None, Some(message)) => Some(message.clone()),
-                (Some(version), Some(message)) => Some(SharedString::from(format!(
-                    "v{}\n\n{}",
-                    version.as_ref(),
-                    message.as_ref()
-                ))),
-            };
 
             let submenu_server_name = server_info.name.clone();
             let submenu_server_info = server_info.clone();
@@ -287,6 +377,7 @@ impl LanguageServerState {
                 let lsp_store = self.lsp_store.clone();
                 let state = cx.entity().downgrade();
                 let can_stop = submenu_server_info.can_stop();
+                let process_memory_cache = process_memory_cache.clone();
 
                 move |menu, _window, _cx| {
                     let mut submenu = menu;
@@ -456,8 +547,54 @@ impl LanguageServerState {
                     }
 
                     submenu = submenu.separator().custom_row({
-                        let metadata_label = metadata_label.clone();
+                        let server_version = server_version.clone();
+                        let truncated_message = truncated_message.clone();
+                        let process_memory_cache = process_memory_cache.clone();
                         move |_, _| {
+                            let memory_usage = process_id.map(|pid| {
+                                process_memory_cache.borrow_mut().get_memory_usage(pid)
+                            });
+
+                            let memory_label = memory_usage.map(|bytes| {
+                                if bytes >= 1024 * 1024 * 1024 {
+                                    format!(
+                                        "{:.1} GB",
+                                        bytes as f64 / (1024.0 * 1024.0 * 1024.0)
+                                    )
+                                } else {
+                                    format!("{:.1} MB", bytes as f64 / (1024.0 * 1024.0))
+                                }
+                            });
+
+                            let metadata_label =
+                                match (&server_version, &memory_label, &truncated_message) {
+                                    (None, None, None) => None,
+                                    (Some(version), None, None) => {
+                                        Some(format!("v{}", version.as_ref()))
+                                    }
+                                    (None, Some(memory), None) => Some(memory.clone()),
+                                    (Some(version), Some(memory), None) => {
+                                        Some(format!("v{} • {}", version.as_ref(), memory))
+                                    }
+                                    (None, None, Some(message)) => Some(message.to_string()),
+                                    (Some(version), None, Some(message)) => Some(format!(
+                                        "v{}\n\n{}",
+                                        version.as_ref(),
+                                        message.as_ref()
+                                    )),
+                                    (None, Some(memory), Some(message)) => {
+                                        Some(format!("{}\n\n{}", memory, message.as_ref()))
+                                    }
+                                    (Some(version), Some(memory), Some(message)) => {
+                                        Some(format!(
+                                            "v{} • {}\n\n{}",
+                                            version.as_ref(),
+                                            memory,
+                                            message.as_ref()
+                                        ))
+                                    }
+                                };
+
                             h_flex()
                                 .id("metadata-container")
                                 .ml_neg_1()
@@ -667,6 +804,7 @@ impl LspButton {
             lsp_store: lsp_store.downgrade(),
             active_editor: None,
             language_servers,
+            process_memory_cache: Rc::new(RefCell::new(ProcessMemoryCache::new())),
         });
 
         let mut lsp_button = Self {

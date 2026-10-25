@@ -4860,6 +4860,7 @@ dependencies = [
  "release_channel",
  "serde_json",
  "settings",
+ "sysinfo",
  "theme",
  "tree-sitter",
  "ui",
