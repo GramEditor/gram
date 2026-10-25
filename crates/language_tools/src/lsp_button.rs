@@ -20,7 +20,7 @@ use proto;
 use settings::{Settings as _, SettingsStore};
 use ui::{ContextMenu, ContextMenuEntry, Indicator, PopoverMenu, PopoverMenuHandle, Tooltip, prelude::*};
 
-use util::{ResultExt, rel_path::RelPath};
+use util::{ResultExt, paths::PathExt, rel_path::RelPath};
 use workspace::{StatusBarSettings, StatusItemView, Workspace};
 
 use crate::{lsp_config_view::OpenLanguageServerConfig, lsp_log_view};
@@ -217,7 +217,8 @@ impl LanguageServerState {
                         (
                             server_id,
                             (
-                                status.server_readable_version.clone(),
+                                status.server_version.clone(),
+                                status.binary.as_ref().map(|b| b.path.clone()),
                                 status.process_id,
                             ),
                         )
@@ -348,15 +349,17 @@ impl LanguageServerState {
                 .or_else(|| server_info.binary_status.as_ref()?.message.as_ref())
                 .cloned();
 
-            let (server_version, process_id) = server_metadata
+             let (server_version, binary_path, process_id) = server_metadata
                 .get(&server_info.id)
-                .map(|(version, process_id)| {
+                .map(|(version, path, process_id)| {
                     (
                         version.clone(),
-                        *process_id,
+                        path.as_ref()
+                            .map(|p| SharedString::from(p.compact().to_string_lossy().to_string())),
+                         *process_id,
                     )
                 })
-                .unwrap_or((None, None));
+                .unwrap_or((None, None, None));
 
             let truncated_message = message.as_ref().and_then(|message| {
                 message
@@ -547,6 +550,7 @@ impl LanguageServerState {
                     }
 
                     submenu = submenu.separator().custom_row({
+                        let binary_path = binary_path.clone();
                         let server_version = server_version.clone();
                         let truncated_message = truncated_message.clone();
                         let process_memory_cache = process_memory_cache.clone();
@@ -612,6 +616,9 @@ impl LanguageServerState {
                                                 .color(Color::Muted)
                                                 .truncate(),
                                         )
+                                })
+                                .when_some(binary_path.clone(), |el, path| {
+                                    el.tooltip(Tooltip::text(path))
                                 })
                                 .into_any_element()
                         }
