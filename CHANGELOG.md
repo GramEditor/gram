@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
 
 - Require exec permission for extensions to run `npm info`
+- Rename `gram::open_performance_profiler` to `dev::open_profiler`
 
 ## Fixed
 

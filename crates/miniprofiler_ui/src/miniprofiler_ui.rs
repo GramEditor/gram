@@ -5,7 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use app_actions::OpenPerformanceProfiler;
+use app_actions::dev::OpenProfiler;
 use gpui::{
     App, AppContext, ClipboardItem, Context, Div, Entity, Hsla, InteractiveElement, ParentElement as _, Render,
     SerializedTaskTiming, SharedString, StatefulInteractiveElement, Styled, Task, TaskTiming, TitlebarOptions,
@@ -24,7 +24,7 @@ use workspace::{
 
 pub fn init(startup_time: Instant, cx: &mut App) {
     cx.observe_new(move |workspace: &mut workspace::Workspace, _, _| {
-        workspace.register_action(move |workspace, _: &OpenPerformanceProfiler, window, cx| {
+        workspace.register_action(move |workspace, _: &OpenProfiler, window, cx| {
             let window_handle = window
                 .window_handle()
                 .downcast::<Workspace>()

@@ -64,8 +64,6 @@ actions!(
         OpenDocs,
         /// Views GPL license details.
         ViewLicense,
-        /// Opens the performance profiler.
-        OpenPerformanceProfiler,
         /// Opens the onboarding view.
         OpenOnboarding,
         /// Toggles the title bar visibility
@@ -187,7 +185,9 @@ pub mod dev {
         dev,
         [
             /// Toggles the developer inspector for debugging UI elements.
-            ToggleInspector
+            ToggleInspector,
+            /// Opens the performance profiler.
+            OpenProfiler,
         ]
     );
 }
