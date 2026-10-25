@@ -217,7 +217,7 @@ impl LanguageServerState {
                         (
                             server_id,
                             (
-                                status.server_version.clone(),
+                                status.server_readable_version.clone(),
                                 status.process_id,
                             ),
                         )
