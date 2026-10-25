@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Added
+
+- Add used memory to the language server menu (zed#48226)
+- Add path to the language server menu (zed#47037)
+
 ## Changed
 
 - Require exec permission for extensions to run `npm info`
@@ -18,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Support smooth scroll in lists (settings, markdown preview, docs etc.)
 - Reset scroll position when navigating in docs
+- Show readable version in the language server menu (zed#49835)
+- Improve UI of the language server submenu (zed#50160)
+- Fix incorrect memory display in the language server menu on Linux (zed#48245)
 
 ## [3.4.1] - 2026-10-23
 
