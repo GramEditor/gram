@@ -2387,6 +2387,10 @@ impl Buffer {
         S: ToOffset,
         T: Into<Arc<str>>,
     {
+        if self.read_only() {
+            return None;
+        }
+
         // Skip invalid edits and coalesce contiguous ones.
         let mut edits: Vec<(Range<usize>, Arc<str>)> = Vec::new();
 

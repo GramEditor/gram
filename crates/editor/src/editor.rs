@@ -7483,6 +7483,17 @@ impl Editor {
             for selection in &mut selections {
                 if selection.is_empty() {
                     let old_head = selection.head();
+
+                    // Ignore read-only buffers
+                    if let Some((buffer, _)) = display_map
+                        .buffer_snapshot()
+                        .buffer_line_for_row(MultiBufferRow(old_head.row))
+                        && let Some(buffer) = this.buffer.read(cx).buffer(buffer.remote_id())
+                        && buffer.read(cx).read_only()
+                    {
+                        continue;
+                    }
+
                     let mut new_head =
                         movement::left(&display_map, old_head.to_display_point(&display_map)).to_point(&display_map);
                     if let Some((buffer, line_buffer_range)) = display_map
@@ -7531,7 +7542,7 @@ impl Editor {
                     .collect::<Vec<_>>();
                 buffer.update(cx, |this, cx| {
                     this.edit(edits, None, cx);
-                })
+                });
             }
             refresh_linked_ranges(this, window, cx);
         });
@@ -7615,6 +7626,7 @@ impl Editor {
             return;
         }
         self.hide_mouse_cursor(HideMouseCursorOrigin::TypingAction, cx);
+        let display_map = self.display_map.update(cx, |map, cx| map.snapshot(cx));
         let mut selections = self.selections.all_adjusted(&self.display_snapshot(cx));
         let buffer = self.buffer.read(cx);
         let snapshot = buffer.snapshot(cx);
@@ -7647,6 +7659,17 @@ impl Editor {
             }
 
             let cursor = selection.head();
+
+            // Ignore read-only buffers
+            if let Some((buffer, _)) = display_map
+                .buffer_snapshot()
+                .buffer_line_for_row(MultiBufferRow(cursor.row))
+                && let Some(buffer) = self.buffer.read(cx).buffer(buffer.remote_id())
+                && buffer.read(cx).read_only()
+            {
+                continue;
+            }
+
             let current_indent = snapshot.indent_size_for_line(MultiBufferRow(cursor.row));
             if let Some(suggested_indent) = suggested_indents.get(&MultiBufferRow(cursor.row)).copied() {
                 // Don't do anything if already at suggested indent

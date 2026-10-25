@@ -1306,6 +1306,10 @@ impl MultiBuffer {
 
             let mut buffer_ids = Vec::with_capacity(buffer_edits.len());
             for (buffer_id, mut edits) in buffer_edits {
+                if this.buffers[&buffer_id].buffer.read(cx).read_only() {
+                    continue;
+                }
+
                 buffer_ids.push(buffer_id);
                 edits.sort_by_key(|edit| edit.range.start);
                 this.buffers[&buffer_id].buffer.update(cx, |buffer, cx| {
