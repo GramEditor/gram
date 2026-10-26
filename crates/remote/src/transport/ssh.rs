@@ -630,10 +630,15 @@ impl SshRemoteConnection {
             let quoted_dir = quote(paths::remote_server_dir_relative().as_unix_str())?;
             let quoted_path = quote(abs_binary_path.as_unix_str())?;
             let quoted_download_url = quote(&download_url)?;
+            let download_command = match self.ssh_platform.os {
+                "linux" => "wget -O-",
+                "macos" => "curl -L",
+                _ => unreachable!(),
+            };
             let command = format!(
                 "\
                 mkdir -p {quoted_dir} && \
-                wget -O- {quoted_download_url} | gunzip >{quoted_path} && \
+                {download_command} {quoted_download_url} | gunzip >{quoted_path} && \
                 chmod +x {quoted_path} && \
                 echo Done.\
             "
