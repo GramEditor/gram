@@ -86,8 +86,8 @@ impl ProcessMemoryCache {
             .unwrap_or(true);
 
         if cache_expired {
-            let refresh_kind = RefreshKind::nothing()
-                .with_processes(ProcessRefreshKind::nothing().without_tasks().with_memory());
+            let refresh_kind =
+                RefreshKind::nothing().with_processes(ProcessRefreshKind::nothing().without_tasks().with_memory());
             self.system.refresh_specifics(refresh_kind);
             self.memory_usage.clear();
             self.last_refresh = Some(Instant::now());
@@ -349,14 +349,14 @@ impl LanguageServerState {
                 .or_else(|| server_info.binary_status.as_ref()?.message.as_ref())
                 .cloned();
 
-             let (server_version, binary_path, process_id) = server_metadata
+            let (server_version, binary_path, process_id) = server_metadata
                 .get(&server_info.id)
                 .map(|(version, path, process_id)| {
                     (
                         version.clone(),
                         path.as_ref()
                             .map(|p| SharedString::from(p.compact().to_string_lossy().to_string())),
-                         *process_id,
+                        *process_id,
                     )
                 })
                 .unwrap_or((None, None, None));
@@ -549,57 +549,38 @@ impl LanguageServerState {
                         let server_message = server_message.clone();
                         let process_memory_cache = process_memory_cache.clone();
                         move |_, cx| {
-                            let memory_usage = process_id.map(|pid| {
-                                process_memory_cache.borrow_mut().get_memory_usage(pid)
-                            });
+                            let memory_usage =
+                                process_id.map(|pid| process_memory_cache.borrow_mut().get_memory_usage(pid));
 
                             let memory_label = memory_usage.map(|bytes| {
                                 if bytes >= 1024 * 1024 * 1024 {
-                                    format!(
-                                        "{:.1} GB",
-                                        bytes as f64 / (1024.0 * 1024.0 * 1024.0)
-                                    )
+                                    format!("{:.1} GB", bytes as f64 / (1024.0 * 1024.0 * 1024.0))
                                 } else {
                                     format!("{:.1} MB", bytes as f64 / (1024.0 * 1024.0))
                                 }
                             });
 
-                            let version_label =
-                                server_version.as_ref().map(|v| format!("v{}", v.as_ref()));
+                            let version_label = server_version.as_ref().map(|v| format!("v{}", v.as_ref()));
 
-                            let separator_color =
-                                cx.theme().colors().icon_disabled.opacity(0.8);
+                            let separator_color = cx.theme().colors().icon_disabled.opacity(0.8);
 
                             v_flex()
                                 .id("metadata-container")
                                 .gap_1()
-                                .when_some(server_message.as_ref(), |this, _| {
-                                    this.w(rems_from_px(240_f32))
-                                })
+                                .when_some(server_message.as_ref(), |this, _| this.w(rems_from_px(240_f32)))
                                 .child(
                                     h_flex()
                                         .ml_neg_1()
                                         .gap_1()
-                                        .child(
-                                            Icon::new(IconName::Circle)
-                                                .color(status_color)
-                                                .size(IconSize::Small),
-                                        )
-                                        .child(
-                                            Label::new(status_label)
-                                                .color(Color::Muted),
-                                        )
+                                        .child(Icon::new(IconName::Circle).color(status_color).size(IconSize::Small))
+                                        .child(Label::new(status_label).color(Color::Muted))
                                         .when_some(version_label.as_ref(), |row, version| {
                                             row.child(
                                                 Icon::new(IconName::Dash)
                                                     .color(Color::Custom(separator_color))
                                                     .size(IconSize::XSmall),
                                             )
-                                            .child(
-                                                Label::new(version)
-                                                    .size(LabelSize::Small)
-                                                    .color(Color::Muted),
-                                            )
+                                            .child(Label::new(version).size(LabelSize::Small).color(Color::Muted))
                                         })
                                         .when_some(memory_label.as_ref(), |row, memory| {
                                             row.child(
@@ -607,23 +588,13 @@ impl LanguageServerState {
                                                     .color(Color::Custom(separator_color))
                                                     .size(IconSize::XSmall),
                                             )
-                                            .child(
-                                                Label::new(memory)
-                                                    .size(LabelSize::Small)
-                                                    .color(Color::Muted),
-                                            )
+                                            .child(Label::new(memory).size(LabelSize::Small).color(Color::Muted))
                                         }),
                                 )
                                 .when_some(server_message.clone(), |container, message| {
-                                    container.child(
-                                        Label::new(message)
-                                            .color(Color::Muted)
-                                            .size(LabelSize::Small),
-                                    )
+                                    container.child(Label::new(message).color(Color::Muted).size(LabelSize::Small))
                                 })
-                                .when_some(binary_path.clone(), |el, path| {
-                                    el.tooltip(Tooltip::text(path))
-                                })
+                                .when_some(binary_path.clone(), |el, path| el.tooltip(Tooltip::text(path)))
                                 .into_any_element()
                         }
                     });
