@@ -1338,6 +1338,7 @@ impl LocalWorktree {
                             mtime: metadata.mtime,
                             size: metadata.len,
                         },
+                        file_type: FileType::Text,
                         is_local: true,
                         is_private,
                     })
@@ -1390,6 +1391,7 @@ impl LocalWorktree {
                             mtime: metadata.mtime,
                             size: metadata.len,
                         },
+                        file_type: FileType::Text,
                         is_local: true,
                         is_private,
                     })
@@ -1574,6 +1576,7 @@ impl LocalWorktree {
                         size: metadata.len,
                     },
                     entry_id: None,
+                    file_type: FileType::Text,
                     is_local: true,
                     is_private,
                 }))
@@ -3064,12 +3067,20 @@ impl fmt::Debug for Snapshot {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FileType {
+    Text,
+    Binary,
+    Submodule,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct File {
     pub worktree: Entity<Worktree>,
     pub path: Arc<RelPath>,
     pub disk_state: DiskState,
     pub entry_id: Option<ProjectEntryId>,
+    pub file_type: FileType,
     pub is_local: bool,
     pub is_private: bool,
 }
@@ -3123,7 +3134,7 @@ impl language::File for File {
     }
 
     fn can_open(&self) -> bool {
-        true
+        self.file_type != FileType::Submodule
     }
 }
 
@@ -3161,6 +3172,7 @@ impl File {
                 DiskState::New
             },
             entry_id: Some(entry.id),
+            file_type: FileType::Text,
             is_local: true,
             is_private: entry.is_private,
         })
@@ -3191,6 +3203,7 @@ impl File {
             path: RelPath::from_proto(&proto.path).context("invalid path in file protobuf")?,
             disk_state,
             entry_id: proto.entry_id.map(ProjectEntryId::from_proto),
+            file_type: FileType::Text,
             is_local: false,
             is_private: false,
         })

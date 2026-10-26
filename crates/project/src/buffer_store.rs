@@ -19,7 +19,7 @@ use rpc::{
 use std::{io, sync::Arc, time::Instant};
 use text::{BufferId, ReplicaId};
 use util::{ResultExt as _, debug_panic, maybe, rel_path::RelPath};
-use worktree::{File, PathChange, ProjectEntryId, Worktree, WorktreeId};
+use worktree::{File, FileType, PathChange, ProjectEntryId, Worktree, WorktreeId};
 
 /// A set of open buffers.
 pub struct BufferStore {
@@ -459,6 +459,7 @@ impl LocalBufferStore {
                         },
                         None => old_file.disk_state,
                     },
+                    file_type: FileType::Text,
                     is_local: true,
                     entry_id: Some(entry.id),
                     path: entry.path.clone(),
@@ -468,6 +469,7 @@ impl LocalBufferStore {
             } else {
                 File {
                     disk_state: DiskState::Deleted,
+                    file_type: FileType::Text,
                     is_local: true,
                     entry_id: old_file.entry_id,
                     path: old_file.path.clone(),
@@ -582,6 +584,7 @@ impl LocalBufferStore {
                             path,
                             disk_state: DiskState::New,
                             entry_id: None,
+                            file_type: FileType::Text,
                             is_local: true,
                             is_private: false,
                         })),

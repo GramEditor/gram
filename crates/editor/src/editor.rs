@@ -184,7 +184,7 @@ use ui::{
 };
 use util::{RangeExt, ResultExt, TryFutureExt, maybe, post_inc};
 use workspace::{
-    Item as WorkspaceItem, ItemId, ItemNavHistory, OpenInTerminal, OpenTerminal, RestoreOnStartupBehavior,
+    Item as WorkspaceItem, ItemId, ItemNavHistory, OpenInTerminal, OpenTerminal, Pane, RestoreOnStartupBehavior,
     SERIALIZATION_THROTTLE_TIME, SplitDirection, TabBarSettings, Toast, ViewId, Workspace, WorkspaceId,
     WorkspaceSettings,
     item::{ItemBufferKind, ItemHandle, PreviewTabsSettings, SaveOptions},
@@ -18502,81 +18502,112 @@ impl Editor {
                 };
 
                 for (buffer, (ranges, scroll_offset)) in new_selections_by_buffer {
-                    let buffer_read = buffer.read(cx);
-                    let (has_file, is_project_file) = if let Some(file) = buffer_read.file() {
-                        (true, project::File::from_dyn(Some(file)).is_some())
-                    } else {
-                        (false, false)
-                    };
-
-                    // If project file is none workspace.open_project_item will fail to open the excerpt
-                    // in a pre existing workspace item if one exists, because Buffer entity_id will be None
-                    // so we check if there's a tab match in that case first
-                    let editor = (!has_file || !is_project_file)
-                        .then(|| {
-                            // Handle file-less buffers separately: those are not really the project items, so won't have a project path or entity id,
-                            // so `workspace.open_project_item` will never find them, always opening a new editor.
-                            // Instead, we try to activate the existing editor in the pane first.
-                            let (editor, pane_item_index, pane_item_id) =
-                                pane.read(cx).items().enumerate().find_map(|(i, item)| {
-                                    let editor = item.downcast::<Editor>()?;
-                                    let singleton_buffer = editor.read(cx).buffer().read(cx).as_singleton()?;
-                                    if singleton_buffer == buffer {
-                                        Some((editor, i, item.item_id()))
-                                    } else {
-                                        None
-                                    }
-                                })?;
-                            pane.update(cx, |pane, cx| {
-                                pane.activate_item(pane_item_index, true, true, window, cx);
-                                if !PreviewTabsSettings::get_global(cx).enable_preview_from_multibuffer {
-                                    pane.unpreview_item_if_preview(pane_item_id);
-                                }
-                            });
-                            Some(editor)
-                        })
-                        .flatten()
-                        .unwrap_or_else(|| {
-                            let keep_old_preview =
-                                PreviewTabsSettings::get_global(cx).enable_keep_preview_on_code_navigation;
-                            let allow_new_preview = PreviewTabsSettings::get_global(cx).enable_preview_from_multibuffer;
-                            workspace.open_project_item::<Self>(
-                                pane.clone(),
-                                buffer,
-                                true,
-                                true,
-                                keep_old_preview,
-                                allow_new_preview,
-                                window,
-                                cx,
-                            )
-                        });
-
-                    editor.update(cx, |editor, cx| {
-                        if has_file && !is_project_file {
-                            editor.set_read_only(true);
-                        }
-                        let autoscroll = match scroll_offset {
-                            Some(scroll_offset) => Autoscroll::top_relative(scroll_offset as usize),
-                            None => Autoscroll::newest(),
-                        };
-                        let nav_history = editor.nav_history.take();
-                        let multibuffer_snapshot = editor.buffer().read(cx).snapshot(cx);
-                        let Some((&excerpt_id, _, buffer_snapshot)) = multibuffer_snapshot.as_singleton() else {
-                            return;
-                        };
-                        editor.change_selections(SelectionEffects::scroll(autoscroll), window, cx, |s| {
-                            s.select_ranges(ranges.into_iter().map(|range| {
-                                let range =
-                                    buffer_snapshot.anchor_before(range.start)..buffer_snapshot.anchor_after(range.end);
-                                multibuffer_snapshot.anchor_range_in_excerpt(excerpt_id, range).unwrap()
-                            }));
-                        });
-                        editor.nav_history = nav_history;
-                    });
+                    Self::open_buffer_excerpt(buffer, ranges, scroll_offset, &pane, window, workspace, cx);
                 }
             })
         });
+    }
+
+    fn open_buffer_excerpt(
+        buffer: Entity<Buffer>,
+        ranges: Vec<Range<BufferOffset>>,
+        scroll_offset: Option<u32>,
+        pane: &Entity<Pane>,
+        window: &mut Window,
+        workspace: &mut Workspace,
+        cx: &mut Context<Workspace>,
+    ) {
+        let buffer_read = buffer.read(cx);
+        let (has_file, is_project_file) = if let Some(file) = buffer_read.file() {
+            (true, project::File::from_dyn(Some(file)).is_some())
+        } else {
+            (false, false)
+        };
+
+        if buffer.read(cx).is_representation()
+            && let Some(file) = buffer_read.file()
+        {
+            // Buffer is a representation of a binary file, defer opening
+            // to open_path_preview so the actual contents gets opened.
+            workspace
+                .open_path_preview(
+                    ProjectPath {
+                        worktree_id: file.worktree_id(cx),
+                        path: file.path().clone(),
+                    },
+                    Some(pane.downgrade()),
+                    true,
+                    true,
+                    true,
+                    window,
+                    cx,
+                )
+                .detach_and_log_err(cx);
+        } else {
+            // If project file is none workspace.open_project_item will fail to open the excerpt
+            // in a pre existing workspace item if one exists, because Buffer entity_id will be None
+            // so we check if there's a tab match in that case first
+            let editor = (!has_file || !is_project_file)
+                .then(|| {
+                    // Handle file-less buffers separately: those are not really the project items, so won't have a project path or entity id,
+                    // so `workspace.open_project_item` will never find them, always opening a new editor.
+                    // Instead, we try to activate the existing editor in the pane first.
+                    let (editor, pane_item_index, pane_item_id) =
+                        pane.read(cx).items().enumerate().find_map(|(i, item)| {
+                            let editor = item.downcast::<Editor>()?;
+                            let singleton_buffer = editor.read(cx).buffer().read(cx).as_singleton()?;
+                            if singleton_buffer == buffer {
+                                Some((editor, i, item.item_id()))
+                            } else {
+                                None
+                            }
+                        })?;
+                    pane.update(cx, |pane, cx| {
+                        pane.activate_item(pane_item_index, true, true, window, cx);
+                        if !PreviewTabsSettings::get_global(cx).enable_preview_from_multibuffer {
+                            pane.unpreview_item_if_preview(pane_item_id);
+                        }
+                    });
+                    Some(editor)
+                })
+                .flatten()
+                .unwrap_or_else(|| {
+                    let keep_old_preview = PreviewTabsSettings::get_global(cx).enable_keep_preview_on_code_navigation;
+                    let allow_new_preview = PreviewTabsSettings::get_global(cx).enable_preview_from_multibuffer;
+                    workspace.open_project_item::<Self>(
+                        pane.clone(),
+                        buffer,
+                        true,
+                        true,
+                        keep_old_preview,
+                        allow_new_preview,
+                        window,
+                        cx,
+                    )
+                });
+
+            editor.update(cx, |editor, cx| {
+                if has_file && !is_project_file {
+                    editor.set_read_only(true);
+                }
+                let autoscroll = match scroll_offset {
+                    Some(scroll_offset) => Autoscroll::top_relative(scroll_offset as usize),
+                    None => Autoscroll::newest(),
+                };
+                let nav_history = editor.nav_history.take();
+                let multibuffer_snapshot = editor.buffer().read(cx).snapshot(cx);
+                let Some((&excerpt_id, _, buffer_snapshot)) = multibuffer_snapshot.as_singleton() else {
+                    return;
+                };
+                editor.change_selections(SelectionEffects::scroll(autoscroll), window, cx, |s| {
+                    s.select_ranges(ranges.into_iter().map(|range| {
+                        let range = buffer_snapshot.anchor_before(range.start)..buffer_snapshot.anchor_after(range.end);
+                        multibuffer_snapshot.anchor_range_in_excerpt(excerpt_id, range).unwrap()
+                    }));
+                });
+                editor.nav_history = nav_history;
+            });
+        }
     }
 
     fn marked_text_ranges(&self, cx: &App) -> Option<Vec<Range<MultiBufferOffsetUtf16>>> {

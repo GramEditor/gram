@@ -13,10 +13,10 @@ use gpui::{
     WeakEntity, Window,
 };
 
-use language::{Buffer, Capability, DiskState};
+use language::{Buffer, DiskState};
 use text::BufferId;
 use util::ResultExt;
-use worktree::Worktree;
+use worktree::{FileType, Worktree};
 
 use crate::{
     Project,
@@ -387,7 +387,7 @@ impl BranchDiff {
 
         let file_is_new = file_status.is_untracked() || file_status.is_created();
 
-        let (old, new) = if metadata.is_dir {
+        let (old, new, file_type) = if metadata.is_dir {
             let submodule = repository.backend.submodule(project_path.path.clone()).await?;
 
             let new = if submodule.is_dirty {
@@ -402,7 +402,7 @@ impl BranchDiff {
                 let oid = repository.backend.submodule_head(project_path.path.clone()).await?;
                 format!("Subproject commit {}", oid)
             };
-            (old, new)
+            (old, new, FileType::Submodule)
         } else {
             let new_size = metadata.len;
             let new = format!("{} byte binary file", new_size);
@@ -412,7 +412,7 @@ impl BranchDiff {
                 let old_size = repository.backend.object_head_size(project_path.path.clone()).await?;
                 format!("{} byte binary file", old_size)
             };
-            (old, new)
+            (old, new, FileType::Binary)
         };
 
         let buffer = cx.new(|cx| {
@@ -427,10 +427,11 @@ impl BranchDiff {
                     mtime: metadata.mtime,
                     size: metadata.len,
                 },
+                file_type,
                 is_local: true,
                 is_private: false,
             });
-            Buffer::build(text_buffer, Some(file), Capability::ReadOnly)
+            Buffer::build_representation(text_buffer, file)
         })?;
 
         let diff = cx.new(|cx| {
