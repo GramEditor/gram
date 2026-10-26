@@ -70,7 +70,14 @@ impl CapabilityGranter {
             bail!("path lookup not allowed for {desired_command} {desired_args:?}");
         }
 
-        self.manifest.allow_exec(desired_command, desired_args)?;
+        // TODO: fix this properly when reworking permissions
+        let workaround_allowed = (desired_command == "chmod"
+            && matches!(desired_args.first().map(|s| s.as_ref() == "+x"), Some(true)))
+            || (desired_command == "npm" && matches!(desired_args.first().map(|s| s.as_ref() == "info"), Some(true)));
+
+        if !workaround_allowed {
+            self.manifest.allow_exec(desired_command, desired_args)?;
+        }
 
         let is_allowed = self.granted_capabilities.iter().any(|capability| match capability {
             ExtensionCapability::ProcessExec(capability) => capability.allows(desired_command, desired_args),
