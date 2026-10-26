@@ -628,6 +628,20 @@ so ensure this change aligns with your workflow preferences.
 }
 ```
 
+The Helix-style jump-to-word action shows jump labels at visible word starts. It
+has no default binding in Vim mode, but you can enable it by adding a keybinding
+to your keymap. This example uses `g w`, which matches the default Helix
+binding, but overrides Vim mode's default rewrap binding.
+
+```json [keymap]
+{
+  "context": "vim_mode == normal || vim_mode == visual",
+  "bindings": {
+    "g w": "vim::HelixJumpToWord"
+  }
+}
+```
+
 The [vim-exchange](https://github.com/tommcdo/vim-exchange) feature does not
 have a default binding for visual mode, as the `shift-x` binding conflicts with
 the default `shift-x` binding for visual mode (`vim::VisualDeleteLine`). To

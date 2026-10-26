@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add used memory to the language server menu (zed#48226)
 - Add path to the language server menu (zed#47037)
 - Auto-close parentheses and brackets inside python f-strings
+- Add Helix amp jump support to Vim mode (zed#55492)
 
 ## Changed
 

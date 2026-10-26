@@ -714,10 +714,15 @@ impl Vim {
     }
 
     pub fn helix_jump_to_word(&mut self, _: &HelixJumpToWord, window: &mut Window, cx: &mut Context<Self>) {
-        let behaviour = if self.mode.is_visual() {
-            HelixJumpBehaviour::Extend
-        } else {
-            HelixJumpBehaviour::Move
+        let behaviour = match self.mode {
+            // Vim normal mode treats jump-to-word as a cursor motion, while Helix
+            // normal mode treats the cursor as a single-character selection.
+            Mode::Normal => HelixJumpBehaviour::MoveToWordStart,
+            // Vim visual mode extends like a motion, so the cursor stops at the
+            // same word boundary as normal mode instead of selecting the word.
+            Mode::Visual | Mode::VisualLine | Mode::VisualBlock => HelixJumpBehaviour::ExtendToWordStart,
+            Mode::HelixSelect => HelixJumpBehaviour::Extend,
+            _ => HelixJumpBehaviour::Move,
         };
         self.start_helix_jump(behaviour, window, cx);
     }
@@ -1419,9 +1424,12 @@ struct HelixJumpUiData {
 #[cfg(test)]
 mod test {
     use crate::{
+        VimAddon,
+        helix::HelixJumpToWord,
         state::{Mode, Operator},
         test::VimTestContext,
     };
+    use gpui::KeyBinding;
     use indoc::indoc;
 
     #[gpui::test]
@@ -2258,5 +2266,80 @@ mod test {
             matches!(cx.active_operator(), Some(Operator::HelixJump { .. })),
             "expected HelixJump operator to be active"
         )
+    }
+
+    #[gpui::test]
+    async fn test_vim_jump_moves_to_target_word_start(cx: &mut gpui::TestAppContext) {
+        let mut cx = VimTestContext::new(cx, true).await;
+        cx.update(|_, cx| {
+            cx.bind_keys([KeyBinding::new(
+                "g z",
+                HelixJumpToWord,
+                Some("vim_mode == normal || vim_mode == visual"),
+            )])
+        });
+        cx.set_state("ˇone two three", Mode::Normal);
+
+        jump_to_word_with_keystrokes(&mut cx, "g z", "two");
+
+        cx.assert_state("one ˇtwo three", Mode::Normal);
+        assert_eq!(cx.active_operator(), None);
+    }
+
+    fn jump_to_word_with_keystrokes(cx: &mut VimTestContext, keystrokes: &str, target_word: &str) {
+        cx.simulate_keystrokes(keystrokes);
+
+        let label = helix_jump_label_for_word(cx, target_word);
+
+        let mut chars = label.chars();
+        let first = chars.next().expect("jump labels are two characters long");
+        let second = chars.next().expect("jump labels are two characters long");
+        cx.simulate_keystrokes(&format!("{first} {second}"));
+    }
+
+    fn helix_jump_label_for_word(cx: &mut VimTestContext, target_word: &str) -> String {
+        use std::fmt::Write;
+
+        active_helix_jump_labels(cx)
+            .into_iter()
+            .find_map(|(label, word)| (word == target_word).then_some(label))
+            .unwrap_or_else(|| {
+                let mut message = String::new();
+                let labels = active_helix_jump_labels(cx);
+                let _ = write!(
+                    &mut message,
+                    "expected jump label for word {target_word:?}, available labels: {labels:?}"
+                );
+                panic!("{message}");
+            })
+    }
+
+    fn active_helix_jump_labels(cx: &mut VimTestContext) -> Vec<(String, String)> {
+        cx.update_editor(|editor, window, cx| {
+            let labels = match editor
+                .addon::<VimAddon>()
+                .unwrap()
+                .entity
+                .read(cx)
+                .operator_stack
+                .last()
+                .cloned()
+            {
+                Some(Operator::HelixJump { labels, .. }) => labels,
+                other => panic!("expected active HelixJump operator, got {other:?}"),
+            };
+
+            let snapshot = editor.snapshot(window, cx);
+            let buffer_snapshot = snapshot.display_snapshot.buffer_snapshot();
+
+            labels
+                .into_iter()
+                .map(|label| {
+                    let jump_label = label.label.iter().collect::<String>();
+                    let word = buffer_snapshot.text_for_range(label.range).collect::<String>();
+                    (jump_label, word)
+                })
+                .collect()
+        })
     }
 }
