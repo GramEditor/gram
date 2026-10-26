@@ -372,7 +372,7 @@ mimalloc = "0.1.52"
 minidumper = "0.10.1"
 nbformat = "3.0.0"
 nix = "0.31.3"
-notify = { git = "https://codeberg.org/GramEditor/notify", rev = "e83c704e8f0b397bcfbb587ae3a536aa36a4c105" }
+notify = { git = "https://codeberg.org/GramEditor/notify", rev = "0e9c262dbee55f8419ff8b94d51b24fc0de4d12d" }
 objc2 = "0.6.5"
 objc2-app-kit = "0.3.2"
 objc2-color-sync = "0.3.2"
