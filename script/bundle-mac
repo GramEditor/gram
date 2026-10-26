@@ -283,4 +283,4 @@ sign_app_binaries
 
 sign_binary "target/$target_triple/release/remote_server"
 gzip -9 -f --to-stdout "target/${target_triple}/release/remote_server" \
-    > "target/gram-remote_server-macos-${arch_suffix}.gz"
+    > "target/gram-remote-server-macos-${arch_suffix}.gz"

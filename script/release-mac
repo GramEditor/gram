@@ -8,7 +8,7 @@ bundle_target() {
   cargo clean
   ./script/bundle-mac $target
   cp target/$target/release/Gram-$arch.dmg ../gram-$version/Gram-$arch-$version.dmg
-  cp target/gram-remote_server-macos*.gz ../gram-$version/gram-remote_server-macos-${arch}-${version}.gz
+  cp target/gram-remote-server-macos*.gz ../gram-$version/gram-remote-server-macos-${arch}-${version}.gz
 }
 
 [ -d ../gram-$version ] || {
