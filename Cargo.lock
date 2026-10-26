@@ -1377,15 +1377,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "convert_case"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "affbf0190ed2caf063e3def54ff444b449371d55c58e513a95ab98eca50adb49"
-dependencies = [
- "unicode-segmentation",
-]
-
-[[package]]
 name = "core-foundation"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2313,7 +2304,6 @@ dependencies = [
  "buffer_diff",
  "clock",
  "collections",
- "convert_case 0.11.0",
  "criterion",
  "ctor",
  "db",
@@ -2323,6 +2313,7 @@ dependencies = [
  "fuzzy",
  "git",
  "gpui",
+ "heck",
  "indoc",
  "itertools 0.14.0",
  "language",
@@ -2583,11 +2574,11 @@ dependencies = [
  "anyhow",
  "async-trait",
  "collections",
- "convert_case 0.11.0",
  "dap",
  "fs",
  "futures",
  "gpui",
+ "heck",
  "http_client",
  "indoc",
  "language",
@@ -3553,8 +3544,8 @@ dependencies = [
 name = "gpui_macros"
 version = "3.4.1"
 dependencies = [
- "convert_case 0.11.0",
  "gpui",
+ "heck",
  "proc-macro2",
  "quote",
  "syn 2.0.119",
@@ -8749,11 +8740,11 @@ dependencies = [
  "anyhow",
  "app_actions",
  "bm25",
- "convert_case 0.11.0",
  "editor",
  "fs",
  "fuzzy",
  "gpui",
+ "heck",
  "log",
  "menu",
  "paths",
@@ -10143,12 +10134,12 @@ name = "toolchain_selector"
 version = "3.4.1"
 dependencies = [
  "anyhow",
- "convert_case 0.11.0",
  "editor",
  "file_finder",
  "futures",
  "fuzzy",
  "gpui",
+ "heck",
  "language",
  "menu",
  "picker",

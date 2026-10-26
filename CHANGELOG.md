@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Show readable version in the language server menu (zed#49835)
 - Improve UI of the language server submenu (zed#50160)
 - Fix incorrect memory display in the language server menu on Linux (zed#48245)
+- Switch to heck for case conversion to fix strange snake casing (#680)
 
 ## [3.4.1] - 2026-10-23
 

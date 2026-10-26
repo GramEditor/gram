@@ -13,12 +13,12 @@ test = false
 
 [dependencies]
 anyhow.workspace = true
-convert_case.workspace = true
 editor.workspace = true
 file_finder.workspace = true
 futures.workspace = true
 fuzzy.workspace = true
 gpui.workspace = true
+heck.workspace = true
 language.workspace = true
 menu.workspace = true
 picker.workspace = true

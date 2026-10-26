@@ -56,6 +56,7 @@ pub use editor_settings::{
 };
 pub use element::{CursorLayout, EditorElement, HighlightedRange, HighlightedRangeLine, PointForPosition};
 pub use git::blame::BlameRenderer;
+use heck::{ToKebabCase, ToLowerCamelCase, ToSnakeCase, ToTitleCase, ToUpperCamelCase};
 pub use inlays::Inlay;
 pub use items::MAX_TAB_TITLE_LEN;
 pub use lsp::CompletionContext;
@@ -79,7 +80,6 @@ use code_context_menus::{
     ContextMenuOrigin,
 };
 use collections::{BTreeMap, HashMap, HashSet, VecDeque};
-use convert_case::{Case, Casing};
 use display_map::*;
 use editor_settings::{GoToDefinitionFallback, Minimap as MinimapSettings};
 use element::{LineWithInvisibles, PositionMap};
@@ -9052,16 +9052,16 @@ impl Editor {
 
     pub fn convert_to_title_case(&mut self, _: &ConvertToTitleCase, window: &mut Window, cx: &mut Context<Self>) {
         self.manipulate_text(window, cx, |text| {
-            text.split('\n').map(|line| line.to_case(Case::Title)).join("\n")
+            text.split('\n').map(|line| line.to_title_case()).join("\n")
         })
     }
 
     pub fn convert_to_snake_case(&mut self, _: &ConvertToSnakeCase, window: &mut Window, cx: &mut Context<Self>) {
-        self.manipulate_text(window, cx, |text| text.to_case(Case::Snake))
+        self.manipulate_text(window, cx, |text| text.to_snake_case())
     }
 
     pub fn convert_to_kebab_case(&mut self, _: &ConvertToKebabCase, window: &mut Window, cx: &mut Context<Self>) {
-        self.manipulate_text(window, cx, |text| text.to_case(Case::Kebab))
+        self.manipulate_text(window, cx, |text| text.to_kebab_case())
     }
 
     pub fn convert_to_upper_camel_case(
@@ -9071,7 +9071,7 @@ impl Editor {
         cx: &mut Context<Self>,
     ) {
         self.manipulate_text(window, cx, |text| {
-            text.split('\n').map(|line| line.to_case(Case::UpperCamel)).join("\n")
+            text.split('\n').map(|line| line.to_upper_camel_case()).join("\n")
         })
     }
 
@@ -9081,7 +9081,7 @@ impl Editor {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        self.manipulate_text(window, cx, |text| text.to_case(Case::Camel))
+        self.manipulate_text(window, cx, |text| text.to_lower_camel_case())
     }
 
     pub fn convert_to_opposite_case(&mut self, _: &ConvertToOppositeCase, window: &mut Window, cx: &mut Context<Self>) {
@@ -9097,8 +9097,19 @@ impl Editor {
         })
     }
 
+    /// Makes the first non-empty word capitalized and the
+    /// remaining lowercase.
     pub fn convert_to_sentence_case(&mut self, _: &ConvertToSentenceCase, window: &mut Window, cx: &mut Context<Self>) {
-        self.manipulate_text(window, cx, |text| text.to_case(Case::Sentence))
+        self.manipulate_text(window, cx, |text| {
+            let mut result = text.to_title_case().to_lowercase();
+            if let Some((idx, c)) = result
+                .find(char::is_alphabetic)
+                .and_then(|n| result.char_indices().nth(n))
+            {
+                result.replace_range(idx..(idx + c.len_utf8()), &c.to_uppercase().to_string());
+            }
+            result
+        })
     }
 
     pub fn toggle_case(&mut self, _: &ToggleCase, window: &mut Window, cx: &mut Context<Self>) {

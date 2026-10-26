@@ -1,7 +1,6 @@
 mod active_toolchain;
 
 pub use active_toolchain::ActiveToolchain;
-use convert_case::Casing as _;
 use editor::Editor;
 use file_finder::OpenPathDelegate;
 use futures::channel::oneshot;
@@ -10,6 +9,7 @@ use gpui::{
     Action, Animation, AnimationExt, App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable,
     KeyContext, ParentElement, Render, Styled, Subscription, Task, WeakEntity, Window, actions, pulsating_between,
 };
+use heck::ToTitleCase;
 use language::{Language, LanguageName, Toolchain, ToolchainScope};
 use picker::{Picker, PickerDelegate};
 use project::{DirectoryLister, Project, ProjectPath, Toolchains, WorktreeId};
@@ -694,8 +694,7 @@ impl ToolchainSelectorDelegate {
                     .await?;
                 let relative_path = this
                     .update(cx, |this, cx| {
-                        this.delegate.add_toolchain_text =
-                            format!("Add {}", meta.term.as_ref().to_case(convert_case::Case::Title)).into();
+                        this.delegate.add_toolchain_text = format!("Add {}", meta.term.as_ref().to_title_case()).into();
                         cx.notify();
                         this.delegate.relative_path.clone()
                     })
