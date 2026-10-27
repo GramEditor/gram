@@ -29,6 +29,7 @@ mod helpers;
 mod html;
 mod json;
 mod lua;
+mod markdown;
 mod nix;
 mod odin;
 mod opentofu;
@@ -154,6 +155,7 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
     let yaml_lsp_adapter = Arc::new(yaml::YamlLspAdapter::new(node));
     let zig_lsp_adapter = Arc::new(zig::ZigLspAdapter);
     let zig_context_provider = Arc::new(zig::zig_task_context());
+    let zk_adapter = Arc::new(markdown::ZkLspAdapter);
 
     let built_in_languages = [
         LanguageInfo {
@@ -246,7 +248,7 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
         },
         LanguageInfo {
             name: "markdown",
-            adapters: vec![],
+            adapters: vec![zk_adapter],
             ..Default::default()
         },
         LanguageInfo {

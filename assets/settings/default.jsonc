@@ -1702,6 +1702,7 @@
       },
     },
     "Markdown": {
+      "language_servers": ["!zk", "..."],
       "format_on_save": "off",
       "use_on_type_format": false,
       "remove_trailing_whitespace_on_save": false,

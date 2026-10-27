@@ -4,7 +4,7 @@ Markdown support is available natively in Gram.
 
 - Tree-sitter:
   [tree-sitter-markdown](https://github.com/tree-sitter-grammars/tree-sitter-markdown)
-- Language Server: N/A
+- Language Server: [zk](https://zk-org.github.io/zk/index.html)
 
 ## Syntax Highlighting Code Blocks
 
@@ -26,6 +26,23 @@ def fib(n):
 ````
 
 ## Configuration
+
+### Language Server (zk)
+
+Gram comes with support for the `zk` zettelkasten language server built in.
+
+To enable it, add this to your settings.json:
+
+```json
+  "languages": {
+    "Markdown": {
+      "language_servers": ["zk"],
+    }
+  },
+```
+
+See the [documentation](https://zk-org.github.io/zk/index.html) more information
+about `zk` and the zettelkasten system for note taking.
 
 ### Format
 
