@@ -172,7 +172,7 @@ async fn capture_windows(
             "-NoProfile",
             "-Command",
             &format!(
-                "Set-Location '{}'; & '{}' --printenv",
+                "Set-Location {}; & {} --printenv",
                 directory.try_shell_safe(shell_kind)?,
                 binary_path,
             ),
