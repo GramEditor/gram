@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix incorrect memory display in the language server menu on Linux (zed#48245)
 - Switch to heck for case conversion to fix strange snake casing (#680)
 - Don't require extensions to declare chmod +x as an exec capability
+- Fix incorrect arguments to tombi TOML LSP after download 
 
 ## [3.4.1] - 2026-10-23
 

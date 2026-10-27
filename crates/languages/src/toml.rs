@@ -12,7 +12,6 @@ use util::fs::make_file_executable;
 use crate::helpers::{find_cached_server_binary, verify_metadata, write_metadata};
 
 pub struct TombiLspAdapter;
-pub struct TaploLspAdapter;
 
 #[cfg(target_os = "macos")]
 impl TombiLspAdapter {
@@ -34,25 +33,14 @@ impl TombiLspAdapter {
 
 impl TombiLspAdapter {
     const SERVER_NAME: LanguageServerName = LanguageServerName::new_static("tombi");
-}
 
-#[cfg(target_os = "macos")]
-impl TaploLspAdapter {
-    const OS_NAME: &str = "darwin";
-}
-
-#[cfg(target_os = "linux")]
-impl TaploLspAdapter {
-    const OS_NAME: &str = "linux";
-}
-
-#[cfg(target_os = "windows")]
-impl TaploLspAdapter {
-    const OS_NAME: &str = "windows";
-}
-
-impl TaploLspAdapter {
-    const SERVER_NAME: LanguageServerName = LanguageServerName::new_static("taplo");
+    fn binary(&self, path: PathBuf) -> LanguageServerBinary {
+        LanguageServerBinary {
+            path,
+            arguments: vec!["lsp".into(), "-v".into()],
+            env: Some(HashMap::from_iter([("NO_COLOR".into(), "true".into())])),
+        }
+    }
 }
 
 impl LspInstaller for TombiLspAdapter {
@@ -65,11 +53,7 @@ impl LspInstaller for TombiLspAdapter {
         _: &AsyncApp,
     ) -> Option<LanguageServerBinary> {
         let path = delegate.which("tombi".as_ref()).await?;
-        Some(LanguageServerBinary {
-            path,
-            arguments: vec!["lsp".into(), "-v".into()],
-            env: Some(HashMap::from_iter([("NO_COLOR".into(), "true".into())])),
-        })
+        Some(self.binary(path))
     }
 
     async fn fetch_latest_server_version(
@@ -141,11 +125,7 @@ impl LspInstaller for TombiLspAdapter {
         let asset_dir = format!("tombi-cli-{version_name}-{}-{}", arch, Self::OS_NAME);
         let path = container_dir.join(&asset_dir).join("tombi");
 
-        let binary = LanguageServerBinary {
-            path: path.clone(),
-            env: None,
-            arguments: vec!["lsp".into(), "stdio".into()],
-        };
+        let binary = self.binary(path.clone());
 
         if verify_metadata(&path, &path, &expected_digest, delegate).await {
             return Ok(binary);
@@ -176,11 +156,7 @@ impl LspInstaller for TombiLspAdapter {
             if binary.is_file() { Some(binary) } else { None }
         })
         .await
-        .map(|path| LanguageServerBinary {
-            path,
-            arguments: vec!["lsp".into(), "-v".into()],
-            env: Some(HashMap::from_iter([("NO_COLOR".into(), "true".into())])),
-        })
+        .map(|path| self.binary(path))
     }
 }
 
@@ -188,6 +164,35 @@ impl LspInstaller for TombiLspAdapter {
 impl LspAdapter for TombiLspAdapter {
     fn name(&self) -> LanguageServerName {
         Self::SERVER_NAME
+    }
+}
+
+pub struct TaploLspAdapter;
+
+#[cfg(target_os = "macos")]
+impl TaploLspAdapter {
+    const OS_NAME: &str = "darwin";
+}
+
+#[cfg(target_os = "linux")]
+impl TaploLspAdapter {
+    const OS_NAME: &str = "linux";
+}
+
+#[cfg(target_os = "windows")]
+impl TaploLspAdapter {
+    const OS_NAME: &str = "windows";
+}
+
+impl TaploLspAdapter {
+    const SERVER_NAME: LanguageServerName = LanguageServerName::new_static("taplo");
+
+    fn binary(&self, path: PathBuf) -> LanguageServerBinary {
+        LanguageServerBinary {
+            path,
+            arguments: vec!["lsp".into(), "stdio".into()],
+            env: None,
+        }
     }
 }
 
@@ -201,11 +206,7 @@ impl LspInstaller for TaploLspAdapter {
         _: &AsyncApp,
     ) -> Option<LanguageServerBinary> {
         let path = delegate.which("taplo".as_ref()).await?;
-        Some(LanguageServerBinary {
-            path,
-            arguments: vec!["lsp".into(), "stdio".into()],
-            env: None,
-        })
+        Some(self.binary(path))
     }
 
     async fn fetch_latest_server_version(
@@ -252,11 +253,7 @@ impl LspInstaller for TaploLspAdapter {
 
         let path = container_dir.join(format!("taplo-{version_name}"));
 
-        let binary = LanguageServerBinary {
-            path: path.clone(),
-            env: None,
-            arguments: vec!["lsp".into(), "stdio".into()],
-        };
+        let binary = self.binary(path.clone());
 
         if verify_metadata(&path, &path, &expected_digest, delegate).await {
             return Ok(binary);
@@ -284,11 +281,7 @@ impl LspInstaller for TaploLspAdapter {
     ) -> Option<LanguageServerBinary> {
         find_cached_server_binary(&container_dir, Some("taplo-"), async |path| Some(path.into()))
             .await
-            .map(|path| LanguageServerBinary {
-                path,
-                arguments: vec!["lsp".into(), "stdio".into()],
-                env: None,
-            })
+            .map(|path| self.binary(path))
     }
 }
 
