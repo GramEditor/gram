@@ -124,6 +124,7 @@ pub struct TitleBar {
 impl Render for TitleBar {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let title_bar_settings = *TitleBarSettings::get_global(cx);
+        let mut render_project_items = title_bar_settings.show_branch_name || title_bar_settings.show_project_items;
 
         let show_menus = show_menus(cx);
 
@@ -133,8 +134,6 @@ impl Render for TitleBar {
             h_flex()
                 .gap_1()
                 .map(|title_bar| {
-                    let mut render_project_items =
-                        title_bar_settings.show_branch_name || title_bar_settings.show_project_items;
                     title_bar
                         .when_some(
                             self.application_menu.clone().filter(|_| !show_menus),
@@ -172,15 +171,17 @@ impl Render for TitleBar {
             v_flex()
                 .w_full()
                 .child(self.platform_titlebar.clone().into_any_element())
-                .child(
-                    h_flex()
-                        .bg(title_bar_color)
-                        .h(height)
-                        .pl_2()
-                        .justify_between()
-                        .w_full()
-                        .children(children),
-                )
+                .when(render_project_items, |title_bar| {
+                    title_bar.child(
+                        h_flex()
+                            .bg(title_bar_color)
+                            .h(height)
+                            .pl_2()
+                            .justify_between()
+                            .w_full()
+                            .children(children),
+                    )
+                })
                 .into_any_element()
         } else {
             self.platform_titlebar.update(cx, |this, _| {
