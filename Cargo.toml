@@ -610,7 +610,7 @@ calloop = { git = "https://github.com/zed-industries/calloop", rev = "eb6b4fd17b
 
 [profile.dev]
 opt-level = 1
-debug = "limited"
+debug = "full"
 incremental = true
 codegen-units = 16
 
