@@ -5263,6 +5263,7 @@ impl EditorElement {
                 multi_buffer_range,
                 status,
                 is_created_file,
+                buffer_id,
                 ..
             } = &hunk
             {
@@ -5308,6 +5309,7 @@ impl EditorElement {
                         multi_buffer_range.clone(),
                         *is_created_file,
                         line_height,
+                        *buffer_id,
                         &editor,
                         window,
                         cx,

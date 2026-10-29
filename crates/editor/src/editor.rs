@@ -69,7 +69,7 @@ pub use split::SplittableEditor;
 pub use text::Bias;
 pub use workspace::searchable::Direction;
 
-use ::git::{Restore, blame::BlameEntry, commit::ParsedCommitMessage, status::FileStatus};
+use ::git::{Restore, blame::BlameEntry, commit::ParsedCommitMessage, repository::RepoPath, status::FileStatus};
 use aho_corasick::{AhoCorasick, AhoCorasickBuilder, BuildError};
 use anyhow::{Context as _, Result, anyhow, bail};
 use blink_manager::BlinkManager;
@@ -225,7 +225,17 @@ pub const FETCH_COLORS_DEBOUNCE_TIMEOUT: Duration = Duration::from_millis(150);
 pub(crate) const MINIMAP_FONT_SIZE: AbsoluteLength = AbsoluteLength::Pixels(px(2.));
 
 pub type RenderDiffHunkControlsFn = Arc<
-    dyn Fn(u32, &DiffHunkStatus, Range<Anchor>, bool, Pixels, &Entity<Editor>, &mut Window, &mut App) -> AnyElement,
+    dyn Fn(
+        u32,
+        &DiffHunkStatus,
+        Range<Anchor>,
+        bool,
+        Pixels,
+        BufferId,
+        &Entity<Editor>,
+        &mut Window,
+        &mut App,
+    ) -> AnyElement,
 >;
 
 pub enum ActiveDebugLine {}
@@ -269,6 +279,7 @@ enum DisplayDiffHunk {
         multi_buffer_range: Range<Anchor>,
         status: DiffHunkStatus,
         word_diffs: Vec<Range<MultiBufferOffset>>,
+        buffer_id: BufferId,
     },
 }
 
@@ -16320,7 +16331,24 @@ impl Editor {
         cx: &mut App,
     ) -> Option<()> {
         let project = self.project()?;
-        let buffer = project.read(cx).buffer_for_id(buffer_id, cx)?;
+        let Some(buffer) = project.read(cx).buffer_for_id(buffer_id, cx) else {
+            // Buffer is not in project buffer store, so it is a buffer representing
+            // a non-text file. This means we want to stage/unstage the file directly.
+            let repository = project.read(cx).active_repository(cx)?;
+            let representation_buffer = self.buffer.read(cx).buffer(buffer_id)?;
+            let representation_buffer = representation_buffer.read(cx);
+            if !representation_buffer.is_representation() {
+                log::warn!("Tried to stage/unstage buffer not in project and not representing a non-text file");
+                return None;
+            }
+            let path = RepoPath::from_rel_path(representation_buffer.file()?.path());
+            repository
+                .update(cx, |repo, cx| repo.stage_or_unstage_entries(stage, vec![path], cx))
+                .detach_and_log_err(cx);
+            return Some(());
+        };
+
+        // Buffer is in project, we must only stage/unstage the given hunks
         let diff = self.buffer.read(cx).diff_for(buffer_id)?;
         let buffer_snapshot = buffer.read(cx).snapshot();
         let file_exists = buffer_snapshot.file().is_some_and(|file| file.disk_state().exists());
@@ -20462,6 +20490,7 @@ impl EditorSnapshot {
                         display_row_range: hunk_display_start.row()..end_row,
                         multi_buffer_range: Anchor::range_in_buffer(hunk.excerpt_id, hunk.buffer_range),
                         is_created_file,
+                        buffer_id: hunk.buffer_id,
                     }
                 };
 
@@ -21616,10 +21645,13 @@ fn render_diff_hunk_controls(
     hunk_range: Range<Anchor>,
     is_created_file: bool,
     line_height: Pixels,
+    buffer_id: BufferId,
     editor: &Entity<Editor>,
     _window: &mut Window,
     cx: &mut App,
 ) -> AnyElement {
+    let buffer = editor.read(cx).buffer().read(cx).buffer(buffer_id);
+    let is_representation = buffer.is_some_and(|buffer| buffer.read(cx).is_representation());
     h_flex()
         .h(line_height)
         .mr_1()
@@ -21681,7 +21713,7 @@ fn render_diff_hunk_controls(
                         });
                     }
                 })
-                .disabled(is_created_file),
+                .disabled(is_created_file || is_representation),
         )
         .when(!editor.read(cx).buffer().read(cx).all_diff_hunks_expanded(), |el| {
             el.child(

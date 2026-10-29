@@ -4179,7 +4179,7 @@ impl Repository {
         self.stage_or_unstage_entries(false, entries, cx)
     }
 
-    fn stage_or_unstage_entries(
+    pub fn stage_or_unstage_entries(
         &mut self,
         stage: bool,
         entries: Vec<RepoPath>,

@@ -308,7 +308,6 @@ impl BranchDiff {
         repo: Entity<Repository>,
         cx: &Context<'_, Project>,
     ) -> Task<Result<(Entity<Buffer>, Entity<BufferDiff>)>> {
-        log::info!("TEMP: BranchDiff::load_buffer");
         cx.spawn(async move |project, cx| {
             let buffer = match project
                 .update(cx, |project, cx| project.open_buffer(project_path.clone(), cx))?
@@ -360,7 +359,7 @@ impl BranchDiff {
                     .read(cx)
                     .worktree_for_id(project_path.worktree_id, cx)
             })?
-            .context("found no worktree for project_path worktree_id")?;
+            .context("Found no worktree for project_path worktree_id")?;
 
         let (path, metadata) = worktree
             .update(cx, |worktree, cx| match worktree {
@@ -372,16 +371,16 @@ impl BranchDiff {
                         Ok::<_, anyhow::Error>((path, metadata))
                     }))
                 }
-                Worktree::Remote(_) => anyhow::bail!("remote worktrees can't yet load files"),
+                Worktree::Remote(_) => anyhow::bail!("Remote worktrees can't yet load files"),
             })??
             .await?;
-        let metadata = metadata.with_context(|| format!("found no metadata for {}", path.display()))?;
+        let metadata = metadata.with_context(|| format!("Found no metadata for {}", path.display()))?;
 
         let repository_state = repo.update(cx, |repo, _| repo.repository_state.clone())?.await.unwrap();
         let repository = match repository_state {
             RepositoryState::Local(local) => local,
             RepositoryState::Remote(_) => {
-                anyhow::bail!("remote repositories can't yet show submodule diffs");
+                anyhow::bail!("Remote repositories can't yet show submodule diffs");
             }
         };
 
@@ -434,16 +433,33 @@ impl BranchDiff {
             Buffer::build_representation(text_buffer, file)
         })?;
 
-        let diff = cx.new(|cx| {
-            let snapshot = buffer.read(cx).snapshot();
-            BufferDiff::new(&snapshot.text, cx)
-        })?;
-        let _ = diff
-            .update(cx, |diff, cx| {
-                let snapshot = buffer.read(cx).snapshot();
-                diff.set_base_text(Some(Arc::from(old)), None, snapshot.text, cx)
-            })?
-            .await;
+        let old: Arc<str> = old.into();
+        let create_diff =
+            async |old: Arc<str>, buffer: &Entity<Buffer>, cx: &mut AsyncApp| -> Result<Entity<BufferDiff>> {
+                let diff = cx.new(|cx| {
+                    let snapshot = buffer.read(cx).snapshot();
+                    BufferDiff::new(&snapshot.text, cx)
+                })?;
+
+                // Set base text to the old value
+                let _ = diff
+                    .update(cx, |diff, cx| {
+                        let snapshot = buffer.read(cx).snapshot();
+                        diff.set_base_text(Some(old), None, snapshot.text, cx)
+                    })?
+                    .await;
+                Ok(diff)
+            };
+
+        let diff = if file_status.staging().is_fully_staged() {
+            create_diff(old, &buffer, cx).await?
+        } else {
+            // If the file is unstaged, so is the diff hunk, so we must set secondary diff
+            let diff = create_diff(old.clone(), &buffer, cx).await?;
+            let diff_clone = create_diff(old, &buffer, cx).await?;
+            diff.update(cx, |diff, _cx| diff.set_secondary_diff(diff_clone))?;
+            diff
+        };
 
         Ok((buffer, diff))
     }

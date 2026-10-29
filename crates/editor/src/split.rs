@@ -463,7 +463,10 @@ impl SplittableEditor {
             editor.diff_action_delegate = Some(delegate);
             editor.set_delegate_expand_excerpts(true);
             editor.disable_diagnostics(cx);
-            editor.set_render_diff_hunk_controls(Arc::new(|_, _, _, _, _, _, _, _| gpui::Empty.into_any_element()), cx);
+            editor.set_render_diff_hunk_controls(
+                Arc::new(|_, _, _, _, _, _, _, _, _| gpui::Empty.into_any_element()),
+                cx,
+            );
             editor
         });
         window.defer(cx, {

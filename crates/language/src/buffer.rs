@@ -135,7 +135,8 @@ pub struct Buffer {
     tree_sitter_data: Arc<TreeSitterData>,
     encoding: &'static Encoding,
     has_bom: bool,
-    /// Buffer represents an unopenable file, such as a binary file.
+    /// Buffer represents the contents of a non-text file,
+    /// such as a binary file or a submodule.
     is_representation: bool,
 }
 

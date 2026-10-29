@@ -838,13 +838,13 @@ pub trait GitRepository: Send + Sync {
 
     fn commit_data_reader(&self) -> Result<CommitDataReader>;
 
-    /// Returns the size of the git opject with the given path in HEAD, if it exists.
+    /// Returns the size of the git opject with the given path in HEAD.
     fn object_head_size(&self, path: Arc<RelPath>) -> Task<Result<usize>>;
 
-    /// Returns the submodule with the given path, if it exists.
+    /// Returns the submodule with the given path.
     fn submodule(&self, submodule: Arc<RelPath>) -> Task<Result<Submodule>>;
 
-    /// Returns the commit the given submodule points at in HEAD, if it exists.
+    /// Returns the commit the given submodule points at in HEAD.
     fn submodule_head(&self, submodule: Arc<RelPath>) -> Task<Result<Oid>>;
 }
 
@@ -2543,7 +2543,7 @@ impl GitRepository for RealGitRepository {
                 .await?;
             if !submodule_output.status.success() {
                 let stderr = String::from_utf8_lossy(&submodule_output.stderr);
-                anyhow::bail!("git submodules failed: {stderr}");
+                anyhow::bail!("git submodule status failed: {stderr}");
             }
 
             let status_output = git
@@ -2552,7 +2552,7 @@ impl GitRepository for RealGitRepository {
                 .await?;
             if !status_output.status.success() {
                 let stderr = String::from_utf8_lossy(&status_output.stderr);
-                anyhow::bail!("git submodules failed: {stderr}");
+                anyhow::bail!("git status failed: {stderr}");
             }
 
             parse_submodule(&submodule_output.stdout, &status_output.stdout)
