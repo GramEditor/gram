@@ -12,7 +12,6 @@ use editor::{
 };
 use gpui::actions;
 use gpui::{Context, Font, Hsla, Pixels, Window, WindowTextSystem};
-use itertools::Itertools;
 use language::{CharClassifier, CharKind, Point, Selection};
 use multi_buffer::MultiBufferSnapshot;
 use search::{BufferSearchBar, SearchOptions};
@@ -1388,14 +1387,15 @@ impl Vim {
                 editor.change_selections(SelectionEffects::default(), window, cx, |s| {
                     let buffer = snapshot.buffer_snapshot();
 
-                    s.select_anchor_ranges(
+                    s.select_ranges(
                         prior_selections
                             .iter()
                             .cloned()
                             .chain(s.all_anchors(&snapshot).iter().map(|s| s.range()))
-                            .sorted_by(|a, b| a.start.cmp(&b.start, buffer).then_with(|| a.end.cmp(&b.end, buffer)))
-                            .dedup_by(|a, b| {
-                                a.start.cmp(&b.start, buffer).is_eq() && a.end.cmp(&b.end, buffer).is_eq()
+                            .map(|range| {
+                                let start = range.start.to_offset(buffer);
+                                let end = range.end.to_offset(buffer);
+                                start..end
                             }),
                     );
                 })
@@ -2182,6 +2182,97 @@ mod test {
         cx.simulate_keystrokes("n");
         // Should not panic
         cx.assert_state("«thisˇ» is a text", Mode::HelixNormal);
+    }
+
+    #[gpui::test]
+    async fn test_helix_select_next_match_wrapping_from_normal(cx: &mut gpui::TestAppContext) {
+        let mut cx = VimTestContext::new(cx, true).await;
+        cx.enable_helix();
+
+        // Exact repro for #51573: start in HelixNormal, search, then `v` to
+        // enter HelixSelect, then `n` past last match.
+        //
+        // In HelixNormal, search collapses the cursor to the match start.
+        // Pressing `v` expands by only one character, creating a partial
+        // selection that overlaps the full match range when the search wraps.
+        // The overlapping ranges must be merged (not just deduped) to avoid
+        // a backward-seeking rope cursor panic.
+        cx.set_state(
+            indoc! {"
+                    searˇch term
+                    stuff
+                    search term
+                    other stuff
+                "},
+            Mode::HelixNormal,
+        );
+        cx.simulate_keystrokes("/ t e r m");
+        cx.wait_for_search();
+        cx.simulate_keystrokes("enter");
+        cx.simulate_keystrokes("v");
+        cx.simulate_keystrokes("n");
+        cx.simulate_keystrokes("n");
+        // Should not panic when wrapping past last match.
+        cx.assert_state(
+            indoc! {"
+                    search «termˇ»
+                    stuff
+                    search «termˇ»
+                    other stuff
+                "},
+            Mode::HelixSelect,
+        );
+    }
+
+    #[gpui::test]
+    async fn test_helix_select_star_then_match(cx: &mut gpui::TestAppContext) {
+        let mut cx = VimTestContext::new(cx, true).await;
+        cx.enable_helix();
+
+        // Repro attempts for #52852: `*` searches for word under cursor,
+        // `v` enters select, `n` accumulates matches, `m` triggers match mode.
+        // Try multiple cursor positions and match counts.
+
+        // Cursor on first occurrence, 3 more occurrences to select through
+        cx.set_state(
+            indoc! {"
+                    ˇone two one three one four one
+                "},
+            Mode::HelixNormal,
+        );
+        cx.simulate_keystrokes("*");
+        cx.wait_for_search();
+        cx.simulate_keystrokes("v");
+        cx.simulate_keystrokes("n n n");
+        // Should not panic on wrapping `n`.
+
+        // Cursor in the middle of text before matches
+        cx.set_state(
+            indoc! {"
+                    heˇllo one two one three one
+                "},
+            Mode::HelixNormal,
+        );
+        cx.simulate_keystrokes("*");
+        cx.wait_for_search();
+        cx.simulate_keystrokes("v");
+        cx.simulate_keystrokes("n");
+        // Should not panic.
+
+        // The original #52852 sequence: * v n n n then m m
+        cx.set_state(
+            indoc! {"
+                    fn ˇfoo() { bar(foo()) }
+                    fn baz() { foo() }
+                "},
+            Mode::HelixNormal,
+        );
+        cx.simulate_keystrokes("*");
+        cx.wait_for_search();
+        cx.simulate_keystrokes("v");
+        cx.simulate_keystrokes("n n n");
+        cx.simulate_keystrokes("m m");
+        // Should not panic.
     }
 
     #[gpui::test]
