@@ -2164,6 +2164,27 @@ mod test {
     }
 
     #[gpui::test]
+    async fn test_helix_select_next_match_panic(cx: &mut gpui::TestAppContext) {
+        let mut cx = VimTestContext::new(cx, true).await;
+        cx.enable_helix();
+
+        // Three occurrences of "one". After selecting all three with `n n`,
+        // pressing `n` again wraps the search to the first occurrence.
+        // The prior selections (at higher offsets) are chained before the
+        // wrapped selection (at a lower offset), producing unsorted anchors
+        // that cause `rope::Cursor::summary` to panic with
+        // "cannot summarize backward".
+        cx.set_state("this is a textˇ", Mode::HelixSelect);
+        cx.simulate_keystrokes("? t h i s");
+        cx.wait_for_search();
+        cx.simulate_keystrokes("enter");
+        cx.simulate_keystrokes("v");
+        cx.simulate_keystrokes("n");
+        // Should not panic
+        cx.assert_state("«thisˇ» is a text", Mode::HelixNormal);
+    }
+
+    #[gpui::test]
     async fn test_helix_substitute(cx: &mut gpui::TestAppContext) {
         let mut cx = VimTestContext::new(cx, true).await;
 
