@@ -224,7 +224,7 @@ impl ProjectDiff {
                         });
                         editor.start_temporary_diff_override();
                         editor.set_render_diff_hunk_controls(
-                            Arc::new(|_, _, _, _, _, _, _, _| gpui::Empty.into_any_element()),
+                            Arc::new(|_, _, _, _, _, _, _, _, _| gpui::Empty.into_any_element()),
                             cx,
                         );
                     }

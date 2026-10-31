@@ -1,4 +1,6 @@
-use anyhow::Result;
+use std::sync::Arc;
+
+use anyhow::{Context as _, Result};
 use buffer_diff::BufferDiff;
 use collections::HashSet;
 use futures::StreamExt;
@@ -7,16 +9,18 @@ use git::{
     status::{DiffTreeType, FileStatus, StatusCode, TrackedStatus, TreeDiff, TreeDiffStatus},
 };
 use gpui::{
-    App, AsyncWindowContext, Context, Entity, EventEmitter, SharedString, Subscription, Task, WeakEntity, Window,
+    App, AppContext, AsyncApp, AsyncWindowContext, Context, Entity, EventEmitter, SharedString, Subscription, Task,
+    WeakEntity, Window,
 };
 
-use language::Buffer;
+use language::{Buffer, DiskState};
 use text::BufferId;
 use util::ResultExt;
+use worktree::{FileType, Worktree};
 
 use crate::{
     Project,
-    git_store::{GitStoreEvent, Repository, RepositoryEvent},
+    git_store::{GitStoreEvent, Repository, RepositoryEvent, RepositoryState},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -264,7 +268,7 @@ impl BranchDiff {
                 let Some(project_path) = repo.read(cx).repo_path_to_project_path(&item.repo_path, cx) else {
                     continue;
                 };
-                let task = Self::load_buffer(branch_diff, project_path, repo.clone(), cx);
+                let task = Self::load_buffer(branch_diff, project_path, item.status, repo.clone(), cx);
 
                 output.push(DiffBuffer {
                     repo_path: item.repo_path.clone(),
@@ -284,9 +288,8 @@ impl BranchDiff {
                 let Some(project_path) = repo.read(cx).repo_path_to_project_path(path, cx) else {
                     continue;
                 };
-                let task = Self::load_buffer(Some(branch_diff.clone()), project_path, repo.clone(), cx);
-
                 let file_status = diff_status_to_file_status(branch_diff);
+                let task = Self::load_buffer(Some(branch_diff.clone()), project_path, file_status, repo.clone(), cx);
 
                 output.push(DiffBuffer {
                     repo_path: path.clone(),
@@ -301,13 +304,20 @@ impl BranchDiff {
     fn load_buffer(
         branch_diff: Option<git::status::TreeDiffStatus>,
         project_path: crate::ProjectPath,
+        file_status: FileStatus,
         repo: Entity<Repository>,
         cx: &Context<'_, Project>,
     ) -> Task<Result<(Entity<Buffer>, Entity<BufferDiff>)>> {
         cx.spawn(async move |project, cx| {
-            let buffer = project
-                .update(cx, |project, cx| project.open_buffer(project_path, cx))?
-                .await?;
+            let buffer = match project
+                .update(cx, |project, cx| project.open_buffer(project_path.clone(), cx))?
+                .await
+            {
+                Ok(buffer) => buffer,
+                Err(_) => {
+                    return Self::open_representation(project_path, file_status, project, repo, cx).await;
+                }
+            };
 
             let changes = if let Some(entry) = branch_diff {
                 let oid = match entry {
@@ -329,6 +339,129 @@ impl BranchDiff {
             };
             Ok((buffer, changes))
         })
+    }
+
+    /// Create a representation of the contents of a non-text file.
+    ///
+    /// This will show the revision of a submodule or the size of
+    /// a binary file.
+    async fn open_representation(
+        project_path: crate::ProjectPath,
+        file_status: FileStatus,
+        project: WeakEntity<Project>,
+        repo: Entity<Repository>,
+        cx: &mut AsyncApp,
+    ) -> Result<(Entity<Buffer>, Entity<BufferDiff>)> {
+        let worktree = project
+            .update(cx, |project, cx| {
+                project
+                    .worktree_store()
+                    .read(cx)
+                    .worktree_for_id(project_path.worktree_id, cx)
+            })?
+            .context("Found no worktree for project_path worktree_id")?;
+
+        let (path, metadata) = worktree
+            .update(cx, |worktree, cx| match worktree {
+                Worktree::Local(this) => {
+                    let path = this.absolutize(&project_path.path);
+                    let fs = this.fs().clone();
+                    Ok(cx.background_spawn(async move {
+                        let metadata = fs.metadata(&path).await?;
+                        Ok::<_, anyhow::Error>((path, metadata))
+                    }))
+                }
+                Worktree::Remote(_) => anyhow::bail!("Remote worktrees can't yet load files"),
+            })??
+            .await?;
+        let metadata = metadata.with_context(|| format!("Found no metadata for {}", path.display()))?;
+
+        let repository_state = repo.update(cx, |repo, _| repo.repository_state.clone())?.await.unwrap();
+        let repository = match repository_state {
+            RepositoryState::Local(local) => local,
+            RepositoryState::Remote(_) => {
+                anyhow::bail!("Remote repositories can't yet show submodule diffs");
+            }
+        };
+
+        let file_is_new = file_status.is_untracked() || file_status.is_created();
+
+        let (old, new, file_type) = if metadata.is_dir {
+            let submodule = repository.backend.submodule(project_path.path.clone()).await?;
+
+            let new = if submodule.is_dirty {
+                format!("Subproject commit {}+dirty", submodule.oid)
+            } else {
+                format!("Subproject commit {}", submodule.oid)
+            };
+
+            let old = if file_is_new {
+                String::new()
+            } else {
+                let oid = repository.backend.submodule_head(project_path.path.clone()).await?;
+                format!("Subproject commit {}", oid)
+            };
+            (old, new, FileType::Submodule)
+        } else {
+            let new_size = metadata.len;
+            let new = format!("{} byte binary file", new_size);
+            let old = if file_is_new {
+                String::new()
+            } else {
+                let old_size = repository.backend.object_head_size(project_path.path.clone()).await?;
+                format!("{} byte binary file", old_size)
+            };
+            (old, new, FileType::Binary)
+        };
+
+        let buffer = cx.new(|cx| {
+            let text_buffer = text::Buffer::new(text::ReplicaId::LOCAL, cx.entity_id().as_non_zero_u64().into(), new);
+
+            let path = project_path.path;
+            let file = Arc::new(worktree::File {
+                entry_id: None,
+                worktree,
+                path,
+                disk_state: DiskState::Present {
+                    mtime: metadata.mtime,
+                    size: metadata.len,
+                },
+                file_type,
+                is_local: true,
+                is_private: false,
+            });
+            Buffer::build_representation(text_buffer, file)
+        })?;
+
+        let old: Arc<str> = old.into();
+        let create_diff =
+            async |old: Arc<str>, buffer: &Entity<Buffer>, cx: &mut AsyncApp| -> Result<Entity<BufferDiff>> {
+                let diff = cx.new(|cx| {
+                    let snapshot = buffer.read(cx).snapshot();
+                    BufferDiff::new(&snapshot.text, cx)
+                })?;
+
+                // Set base text to the old value
+                let _ = diff
+                    .update(cx, |diff, cx| {
+                        let snapshot = buffer.read(cx).snapshot();
+                        diff.set_base_text(Some(old), None, snapshot.text, cx)
+                    })?
+                    .await;
+                Ok(diff)
+            };
+
+        let diff = if file_status.staging().is_fully_staged() {
+            create_diff(old, &buffer, cx).await?
+        } else {
+            // If the file is unstaged, so is the diff hunk, so we must set secondary diff
+            let diff = create_diff(old.clone(), &buffer, cx).await?;
+            let diff_clone = create_diff(old, &buffer, cx).await?;
+            diff.update(cx, |diff, _cx| diff.set_secondary_diff(diff_clone))?;
+            diff
+        };
+
+        Ok((buffer, diff))
     }
 }
 

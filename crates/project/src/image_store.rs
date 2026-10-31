@@ -14,7 +14,7 @@ use std::num::NonZeroU64;
 use std::path::PathBuf;
 use std::sync::Arc;
 use util::{ResultExt, rel_path::RelPath};
-use worktree::{LoadedBinaryFile, PathChange, Worktree, WorktreeId};
+use worktree::{FileType, LoadedBinaryFile, PathChange, Worktree, WorktreeId};
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, PartialOrd, Ord, Eq)]
 pub struct ImageId(NonZeroU64);
@@ -740,6 +740,7 @@ impl LocalImageStore {
                         },
                         None => old_file.disk_state,
                     },
+                    file_type: FileType::Text,
                     is_local: true,
                     entry_id: Some(entry.id),
                     path: entry.path.clone(),
@@ -749,6 +750,7 @@ impl LocalImageStore {
             } else {
                 worktree::File {
                     disk_state: DiskState::Deleted,
+                    file_type: FileType::Text,
                     is_local: true,
                     entry_id: old_file.entry_id,
                     path: old_file.path.clone(),

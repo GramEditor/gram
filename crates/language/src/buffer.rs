@@ -135,6 +135,9 @@ pub struct Buffer {
     tree_sitter_data: Arc<TreeSitterData>,
     encoding: &'static Encoding,
     has_bom: bool,
+    /// Buffer represents the contents of a non-text file,
+    /// such as a binary file or a submodule.
+    is_representation: bool,
 }
 
 #[derive(Debug)]
@@ -1053,8 +1056,26 @@ impl Buffer {
         self.capability == Capability::ReadOnly
     }
 
+    pub fn is_representation(&self) -> bool {
+        self.is_representation
+    }
+
     /// Builds a [`Buffer`] with the given underlying [`TextBuffer`], diff base, [`File`] and [`Capability`].
     pub fn build(buffer: TextBuffer, file: Option<Arc<dyn File>>, capability: Capability) -> Self {
+        Self::build_common(buffer, file, capability, false)
+    }
+
+    /// Builds a [`Buffer`] with a [`TextBuffer`] that represents a non-text [`File`].
+    pub fn build_representation(buffer: TextBuffer, file: Arc<dyn File>) -> Self {
+        Self::build_common(buffer, Some(file), Capability::ReadOnly, true)
+    }
+
+    fn build_common(
+        buffer: TextBuffer,
+        file: Option<Arc<dyn File>>,
+        capability: Capability,
+        is_representation: bool,
+    ) -> Self {
         let saved_mtime = file.as_ref().and_then(|file| file.disk_state().mtime());
         let snapshot = buffer.snapshot();
         let syntax_map = Mutex::new(SyntaxMap::new(&snapshot));
@@ -1097,6 +1118,7 @@ impl Buffer {
             _subscriptions: Vec::new(),
             encoding: encoding_rs::UTF_8,
             has_bom: false,
+            is_representation,
         }
     }
 
@@ -2387,6 +2409,10 @@ impl Buffer {
         S: ToOffset,
         T: Into<Arc<str>>,
     {
+        if self.read_only() {
+            return None;
+        }
+
         // Skip invalid edits and coalesce contiguous ones.
         let mut edits: Vec<(Range<usize>, Arc<str>)> = Vec::new();
 
