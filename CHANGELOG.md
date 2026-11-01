@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix capturing environment in Powershell/Windows (#683) by @ognevny
 - Fix helix select next match panic when search wraps around (zed#51642) (#694)
 - Fix crash while moving through selections in helix mode (zed#52922) (#694)
+- Restore code outline support for diff files (#580) by @jqslr
 
 ## [3.4.1] - 2026-10-23
 
