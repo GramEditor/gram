@@ -2425,6 +2425,20 @@ mod test {
         assert_eq!(cx.active_operator(), None);
     }
 
+    #[gpui::test]
+    async fn test_vim_jump_pushes_to_jump_list(cx: &mut gpui::TestAppContext) {
+        let mut cx = VimTestContext::new(cx, true).await;
+        bind_vim_jump_to_word(&mut cx, "g z");
+        cx.set_state("ˇone two\nthree four\nfive six", Mode::Normal);
+
+        jump_to_word_with_keystrokes(&mut cx, "g z", "five");
+        cx.assert_state("one two\nthree four\nˇfive six", Mode::Normal);
+        cx.simulate_keystrokes("ctrl-o");
+        cx.run_until_parked();
+
+        cx.assert_state("ˇone two\nthree four\nfive six", Mode::Normal);
+    }
+
     fn jump_to_word_with_keystrokes(cx: &mut VimTestContext, keystrokes: &str, target_word: &str) {
         cx.simulate_keystrokes(keystrokes);
 
@@ -2451,6 +2465,16 @@ mod test {
                 );
                 panic!("{message}");
             })
+    }
+
+    fn bind_vim_jump_to_word(cx: &mut VimTestContext, keystrokes: &'static str) {
+        cx.update(|_, cx| {
+            cx.bind_keys([KeyBinding::new(
+                keystrokes,
+                HelixJumpToWord,
+                Some("vim_mode == normal || vim_mode == visual"),
+            )])
+        });
     }
 
     fn active_helix_jump_labels(cx: &mut VimTestContext) -> Vec<(String, String)> {
