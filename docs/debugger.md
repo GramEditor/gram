@@ -425,6 +425,10 @@ setting overrides any arguments that Gram would otherwise pass to the adapter.
     "CodeLLDB": {
       "binary": "/Users/name/bin/lldb-dap",
       "args": ["--wait-for-debugger"],
+      "env": {"KEY": "whatever"},
+      "ignore_system_version": false,
+      "allow_binary_download": false,
+      "enable_auto_updates": false,
     },
   },
 }
