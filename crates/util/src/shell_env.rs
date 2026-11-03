@@ -84,7 +84,7 @@ async fn capture_unix(
     };
 
     // cd into the directory, triggering directory specific side-effects (asdf, direnv, etc)
-    command_string.push_str(&format!("cd '{}';", directory.try_shell_safe(shell_kind)?));
+    command_string.push_str(&format!("cd {};", directory.try_shell_safe(shell_kind)?));
     if let Some(prefix) = shell_kind.command_prefix() {
         command_string.push(prefix);
     }
@@ -162,7 +162,7 @@ async fn capture_windows(
                 "-i",
                 "-c",
                 &format!(
-                    "cd '{}'; '{}' --printenv",
+                    "cd {}; {} --printenv",
                     directory.try_shell_safe(shell_kind)?,
                     binary_path,
                 ),
@@ -180,7 +180,7 @@ async fn capture_windows(
         ShellKind::Elvish => cmd.args([
             "-c",
             &format!(
-                "cd '{}'; '{}' --printenv",
+                "cd {}; {} --printenv",
                 directory.try_shell_safe(shell_kind)?,
                 binary_path,
             ),
@@ -188,7 +188,7 @@ async fn capture_windows(
         ShellKind::Nushell => cmd.args([
             "-c",
             &format!(
-                "cd '{}'; {}'{}' --printenv",
+                "cd {}; {}'{}' --printenv",
                 directory.try_shell_safe(shell_kind)?,
                 shell_kind
                     .command_prefix()
