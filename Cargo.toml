@@ -293,18 +293,18 @@ anyhow = "1.0.104"
 arrayvec = { version = "0.7.8", features = ["serde", "std"] }
 as-raw-xcb-connection = "1.0.1"
 ashpd = { version = "0.13.13", default-features = false, features = ["async-io", "file_chooser", "notification", "open_uri", "settings", "trash"] }
-async-compression = { version = "0.4.50", features = ["futures-io", "gzip"] }
+async-compression = { version = "0.4.52", features = ["futures-io", "gzip"] }
 async-dispatcher = "0.1.2"
 async-fs = "2.2.0"
 async-io = "2.6.0"
-async-lock = "3.4.2"
+async-lock = "3.5.0"
 async-pipe = { git = "https://github.com/zed-industries/async-pipe-rs", rev = "82d00a04211cf4e1236029aa03e6b6ce2a74c553" }
 async-recursion = "1.2.0"
 async-tar = { version = "0.6.1", default-features = false, features = ["runtime-tokio", "xattr"] }
 async-task = "4.7.1"
 async-trait = "0.1.92"
 async_zip = { version = "0.0.18", features = ["deflate", "deflate64"] }
-backtrace = "0.3.76"
+backtrace = "0.3.77"
 base64 = "0.22.1"
 bitcode = { version = "0.6.9", features = ["derive", "serde", "std"] }
 bitflags = "2.13.2"
@@ -333,7 +333,7 @@ dotenvy = "0.15.7"
 dunce = "1.0.5"
 ec4rs = "1.2.0"
 embed-resource = "=3.0.9"  # Later versions break the build for `aarch64-pc-windows-gnullvm`. See: https://github.com/nabijaczleweli/rust-embed-resource/commit/d72b4496810f5c2adea9a2647ec1dd9ffa047f7c#commitcomment-194257398
-encoding_rs = "0.8.42"
+encoding_rs = "0.8.44"
 env_logger = "0.11.11"
 etagere = "0.3.0"
 fancy-regex = "0.18.0"
@@ -342,12 +342,12 @@ flume = "0.11.1"
 foreign-types = "0.5.0"
 fork = "0.7.0"
 futures = "0.3.34"
-globset = "0.4.20"
+globset = "0.4.21"
 heck = "0.5.0"
 hex = "0.4.3"
 http = "1.5.0"
 http-body = "1.1.0"
-ignore = "0.4.33"
+ignore = "0.4.34"
 image = { version = "0.25.10", default-features = false, features = ["gif", "ico", "jpeg", "png", "webp"] }
 imara-diff = "0.2.0"
 indexmap = { version = "2.14.2", features = ["serde", "std"] }
@@ -356,13 +356,13 @@ inventory = "0.3.25"
 ipc-channel = "0.19.0"
 is_executable = "1.0.6"
 itertools = "0.14.0"
-jupyter-protocol = "2.0.2"
+jupyter-protocol = "2.0.3"
 jupyter-websocket-client = "2.0.0"
 jupyter-zmq-client = { version = "1.0.1", features = ["ring", "tokio-runtime"] }
-libc = "0.2.190"
+libc = "0.2.191"
 libsqlite3-sys = { version = "0.37.0", features = ["bundled", "min_sqlite_version_3_34_1"] }
 linkify = "0.11.0"
-log = { version = "0.4.34", features = ["kv_unstable_serde", "serde"] }
+log = { version = "0.4.35", features = ["kv_unstable_serde", "serde"] }
 lru = "0.18.5"
 lsp-types = { git = "https://github.com/zed-industries/lsp-types", rev = "b71ab4eeb27d9758be8092020a46fe33fbca4e33" }
 lyon = { version = "1.0.19", features = ["extra"] }
@@ -381,8 +381,8 @@ objc2-core-graphics = "0.3.2"
 objc2-core-services = "0.3.2"
 objc2-foundation = "0.3.2"
 objc2-quartz-core = "0.3.2"
-open = "5.4.4"
-ordered-float = "5.5.0"
+open = "5.4.5"
+ordered-float = "5.5.1"
 palette = { version = "0.7.7", default-features = false, features = ["std"] }
 parking = "2.2.1"
 parking_lot = "0.12.5"
@@ -396,13 +396,13 @@ pet-poetry = { git = "https://github.com/microsoft/python-environment-tools", re
 pet-reporter = { git = "https://github.com/microsoft/python-environment-tools", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
 pet-virtualenv = { git = "https://github.com/microsoft/python-environment-tools", rev = "a99cf642bb8564a8e2d3587ea69a45c9355e7f55" }
 pin-project = "1.1.13"
-plist = "1.10.1"
+plist = "1.10.3"
 postage = { version = "0.5.0", features = ["blocking", "futures-traits", "logging"] }
 postcard = { version = "1.1.3", default-features = false, features = ["use-std"] }
 pretty_assertions = { version = "1.4.1", features = ["std", "unstable"] }
 proc-macro2 = "1.0.107"
 profiling = "1.0.18"
-pulldown-cmark = { version = "0.13.4", default-features = false }
+pulldown-cmark = { version = "0.13.6", default-features = false }
 quote = "1.0.47"
 rand = "0.10.3"
 raw-window-handle = "0.6.2"
@@ -425,7 +425,7 @@ shellexpand = "3.1.2"
 shlex = "1.3.0"
 simplelog = "0.12.2"
 slotmap = "1.1.1"
-smallvec = { version = "1.16.3", features = ["const_new", "union"] }
+smallvec = { version = "1.16.4", features = ["const_new", "union"] }
 smol = "2.0.2"
 spin = "0.10.1"
 sqlformat = "0.2.6"
@@ -443,9 +443,9 @@ tendril = "0.4.3"
 thiserror = "2.0.21"
 thread_local = "1.1.10"
 time = { version = "0.3.55", features = ["formatting", "local-offset", "macros", "parsing", "serde", "serde-well-known", "std"] }
-tokio = { version = "1.53.2", features = ["full"] }
+tokio = { version = "1.54.1", features = ["full"] }
 tokio-util = { version = "0.7.20", features = ["compat", "rt"] }
-toml = "1.1.8"
+toml = "1.2.0"
 trash = "5.2.9"
 tree-sitter = { version = "0.26.13", features = ["std", "wasm"] }
 tree-sitter-bash = "0.25.1"
@@ -484,22 +484,22 @@ tree-sitter-xml = "0.7.0"
 tree-sitter-yaml = { git = "https://github.com/zed-industries/tree-sitter-yaml", rev = "baff0b51c64ef6a1fb1f8390f3ad6015b83ec13a" }
 tree-sitter-zig = { git = "https://github.com/tree-sitter-grammars/tree-sitter-zig", rev = "6479aa13f32f701c383083d8b28360ebd682fb7d" }
 unicase = "2.10.0"
-unicode-script = "0.5.8"
+unicode-script = "0.5.9"
 unicode-segmentation = "1.13.3"
 unindent = "0.2.4"
 url = "2.5.8"
 urlencoding = "2.1.3"
 usvg = { version = "0.48.1", default-features = false, features = ["text"] }
-uuid = { version = "1.28.0", features = ["serde", "std", "v4", "v5", "v7"] }
+uuid = { version = "1.29.0", features = ["serde", "std", "v4", "v5", "v7"] }
 vscode_theme = "0.2.0"
 waker-fn = "1.2.0"
 walkdir = "2.5.0"
 wasm-encoder = "0.221.3"
 wasmparser = "0.221.3"
-wasmtime = { version = "36.0.18", default-features = false, features = ["async", "component-model", "cranelift", "demangle", "incremental-cache", "parallel-compilation", "runtime"] }
-wasmtime-wasi = "36.0.18"
+wasmtime = { version = "36.0.20", default-features = false, features = ["async", "component-model", "cranelift", "demangle", "incremental-cache", "parallel-compilation", "runtime"] }
+wasmtime-wasi = "36.0.20"
 wax = "0.7.0"
-wayland-backend = { version = "0.3.17", features = ["client_system", "dlopen","rwh_06"] }
+wayland-backend = { version = "0.3.17", features = ["client_system", "dlopen", "rwh_06"] }
 wayland-client = "0.31.15"
 wayland-cursor = "0.31.14"
 wayland-protocols = { version = "0.32.13", features = ["client", "staging", "unstable"] }
@@ -516,7 +516,7 @@ wit-bindgen = "0.57.1"
 x11rb = { version = "0.13.2", features = ["allow-unsafe-code", "cursor", "randr", "resource_manager", "sync", "xinput", "xkb"] }
 xkbcommon = { version = "0.8.0", features = ["wayland", "x11"] }
 zeroize = "1.9.1"
-zstd = "0.13.3"
+zstd = "0.13.4"
 
 [workspace.dependencies.reqwest]
 package = "zed-reqwest"
