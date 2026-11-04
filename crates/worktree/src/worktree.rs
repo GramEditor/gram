@@ -1362,10 +1362,10 @@ impl LocalWorktree {
             //       We are not efficient with our memory usage per file, and use in excess of 64GB for a 10GB file
             //       Therefore, as a temporary workaround to prevent system freezes, we just bail before opening a file
             //       if it is too large
-            //       5GB seems to be more reasonable, peaking at ~16GB, while 6GB jumps up to >24GB which seems like a
-            //       reasonable limit
+            //       Peak memory usage is about 3.33x the file size, so to limit memory usage to no
+            //       more than 8GB, we must limit file size to 8/3.33=2.4GB.
             {
-                const FILE_SIZE_MAX: u64 = 6 * 1024 * 1024 * 1024; // 6GB
+                const FILE_SIZE_MAX: u64 = (24 * 1024 * 1024 * 1024) / 10; // 2.4GB
                 if let Ok(Some(metadata)) = fs.metadata(&abs_path).await
                     && metadata.len >= FILE_SIZE_MAX
                 {
