@@ -3725,7 +3725,6 @@ impl GitPanel {
                     div()
                         .id("commit-msg-hover")
                         .px_1()
-                        .cursor_pointer()
                         .line_clamp(1)
                         .rounded_sm()
                         .hover(|s| s.bg(cx.theme().colors().element_hover))
@@ -4235,52 +4234,47 @@ impl GitPanel {
                     })
                 })
                 .child(
-                    div()
-                        .id(checkbox_wrapper_id)
-                        .flex_none()
-                        .occlude()
-                        .cursor_pointer()
-                        .child(
-                            Checkbox::new(checkbox_id, is_staged)
-                                .disabled(!has_write_access)
-                                .fill()
-                                .elevation(ElevationIndex::Surface)
-                                .on_click_ext({
-                                    let entry = entry.clone();
-                                    let this = cx.weak_entity();
-                                    move |_, click, window, cx| {
-                                        this.update(cx, |this, cx| {
-                                            if !has_write_access {
-                                                return;
-                                            }
-                                            if click.modifiers().shift {
-                                                this.stage_bulk(ix, cx);
+                    div().id(checkbox_wrapper_id).flex_none().occlude().child(
+                        Checkbox::new(checkbox_id, is_staged)
+                            .disabled(!has_write_access)
+                            .fill()
+                            .elevation(ElevationIndex::Surface)
+                            .on_click_ext({
+                                let entry = entry.clone();
+                                let this = cx.weak_entity();
+                                move |_, click, window, cx| {
+                                    this.update(cx, |this, cx| {
+                                        if !has_write_access {
+                                            return;
+                                        }
+                                        if click.modifiers().shift {
+                                            this.stage_bulk(ix, cx);
+                                        } else {
+                                            let list_entry = if GitPanelSettings::get_global(cx).tree_view {
+                                                GitListEntry::TreeStatus(GitTreeStatusEntry {
+                                                    entry: entry.clone(),
+                                                    depth,
+                                                })
                                             } else {
-                                                let list_entry = if GitPanelSettings::get_global(cx).tree_view {
-                                                    GitListEntry::TreeStatus(GitTreeStatusEntry {
-                                                        entry: entry.clone(),
-                                                        depth,
-                                                    })
-                                                } else {
-                                                    GitListEntry::Status(entry.clone())
-                                                };
-                                                this.toggle_staged_for_entry(&list_entry, window, cx);
-                                            }
-                                            cx.stop_propagation();
-                                        })
-                                        .ok();
-                                    }
-                                })
-                                .tooltip(move |_window, cx| {
-                                    let action = match stage_status {
-                                        StageStatus::Staged => "Unstage",
-                                        StageStatus::Unstaged | StageStatus::PartiallyStaged => "Stage",
-                                    };
-                                    let tooltip_name = action.to_string();
+                                                GitListEntry::Status(entry.clone())
+                                            };
+                                            this.toggle_staged_for_entry(&list_entry, window, cx);
+                                        }
+                                        cx.stop_propagation();
+                                    })
+                                    .ok();
+                                }
+                            })
+                            .tooltip(move |_window, cx| {
+                                let action = match stage_status {
+                                    StageStatus::Staged => "Unstage",
+                                    StageStatus::Unstaged | StageStatus::PartiallyStaged => "Stage",
+                                };
+                                let tooltip_name = action.to_string();
 
-                                    Tooltip::for_action(tooltip_name, &ToggleStaged, cx)
-                                }),
-                        ),
+                                Tooltip::for_action(tooltip_name, &ToggleStaged, cx)
+                            }),
+                    ),
                 )
                 .on_click({
                     cx.listener(move |this, event: &ClickEvent, window, cx| {
@@ -4394,42 +4388,33 @@ impl GitPanel {
             .active(|s| s.bg(active_bg))
             .child(name_row)
             .child(
-                div()
-                    .id(checkbox_wrapper_id)
-                    .flex_none()
-                    .occlude()
-                    .cursor_pointer()
-                    .child(
-                        Checkbox::new(checkbox_id, toggle_state)
-                            .disabled(!has_write_access)
-                            .fill()
-                            .elevation(ElevationIndex::Surface)
-                            .on_click({
-                                let entry = entry.clone();
-                                let this = cx.weak_entity();
-                                move |_, window, cx| {
-                                    this.update(cx, |this, cx| {
-                                        if !has_write_access {
-                                            return;
-                                        }
-                                        this.toggle_staged_for_entry(
-                                            &GitListEntry::Directory(entry.clone()),
-                                            window,
-                                            cx,
-                                        );
-                                        cx.stop_propagation();
-                                    })
-                                    .ok();
-                                }
-                            })
-                            .tooltip(move |_window, cx| {
-                                let action = match stage_status {
-                                    StageStatus::Staged => "Unstage",
-                                    StageStatus::Unstaged | StageStatus::PartiallyStaged => "Stage",
-                                };
-                                Tooltip::simple(format!("{action} folder"), cx)
-                            }),
-                    ),
+                div().id(checkbox_wrapper_id).flex_none().occlude().child(
+                    Checkbox::new(checkbox_id, toggle_state)
+                        .disabled(!has_write_access)
+                        .fill()
+                        .elevation(ElevationIndex::Surface)
+                        .on_click({
+                            let entry = entry.clone();
+                            let this = cx.weak_entity();
+                            move |_, window, cx| {
+                                this.update(cx, |this, cx| {
+                                    if !has_write_access {
+                                        return;
+                                    }
+                                    this.toggle_staged_for_entry(&GitListEntry::Directory(entry.clone()), window, cx);
+                                    cx.stop_propagation();
+                                })
+                                .ok();
+                            }
+                        })
+                        .tooltip(move |_window, cx| {
+                            let action = match stage_status {
+                                StageStatus::Staged => "Unstage",
+                                StageStatus::Unstaged | StageStatus::PartiallyStaged => "Stage",
+                            };
+                            Tooltip::simple(format!("{action} folder"), cx)
+                        }),
+                ),
             )
             .on_click({
                 let key = entry.key.clone();

@@ -3624,7 +3624,7 @@ impl ProjectPanel {
             let new_cursor = if Self::is_copy_modifier_set(modifiers) {
                 CursorStyle::DragCopy
             } else {
-                CursorStyle::PointingHand
+                CursorStyle::Arrow
             };
             if existing_cursor != new_cursor {
                 cx.set_active_drag_cursor_style(new_cursor, window);
@@ -4344,7 +4344,6 @@ impl ProjectPanel {
             .id(id.clone())
             .relative()
             .group(GROUP_NAME)
-            .cursor_pointer()
             .rounded_none()
             .bg(bg_color)
             .border_1()

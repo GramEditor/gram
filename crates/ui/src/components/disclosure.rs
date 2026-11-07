@@ -25,7 +25,7 @@ impl Disclosure {
             selected: false,
             disabled: false,
             on_toggle_expanded: None,
-            cursor_style: CursorStyle::PointingHand,
+            cursor_style: CursorStyle::Arrow,
             opened_icon: IconName::ChevronDown,
             closed_icon: IconName::ChevronRight,
             visible_on_hover: None,

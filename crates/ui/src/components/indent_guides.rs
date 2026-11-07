@@ -334,7 +334,6 @@ impl Element for IndentGuidesElement {
                 });
                 let mut hovered_hitbox_id = None;
                 for (i, hitbox) in hitboxes.iter().enumerate() {
-                    window.set_cursor_style(gpui::CursorStyle::PointingHand, hitbox);
                     let indent_guide = &self.indent_guides[i];
                     let fill_color = if hitbox.is_hovered(window) {
                         hovered_hitbox_id = Some(hitbox.id);

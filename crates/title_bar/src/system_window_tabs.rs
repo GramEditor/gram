@@ -162,7 +162,6 @@ impl SystemWindowTabs {
             .justify_center()
             .border_l_1()
             .border_color(cx.theme().colors().border)
-            .cursor_pointer()
             .on_drag(
                 DraggedWindowTab {
                     id: item.id,

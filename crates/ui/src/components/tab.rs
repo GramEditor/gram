@@ -231,7 +231,6 @@ impl RenderOnce for Tab {
                     }
                 }
             })
-            .cursor_pointer()
             .child(
                 h_flex()
                     .group("")

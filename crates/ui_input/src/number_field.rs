@@ -447,7 +447,6 @@ impl<T: NumberFieldType> RenderOnce for NumberField<T> {
 
         let base_button = |icon: IconName| {
             h_flex()
-                .cursor_pointer()
                 .p_1p5()
                 .size_full()
                 .justify_center()

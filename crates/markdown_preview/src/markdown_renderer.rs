@@ -409,7 +409,6 @@ fn render_markdown_list_item(parsed: &ParsedMarkdownListItem, cx: &mut RenderCon
                     })
                 }),
             )
-            .hover(|s| s.cursor_pointer())
             .tooltip(|_, cx| InteractiveMarkdownElementTooltip::new(None, "toggle checkbox", cx).into())
             .into_any_element(),
     };
@@ -961,7 +960,6 @@ fn render_markdown_image(image: &Image, cx: &mut RenderContext) -> AnyElement {
 
     div()
         .id(element_id)
-        .cursor_pointer()
         .child(img(ImageSource::Resource(image_resource)).max_w_full().with_fallback({
             let alt_text = image.alt_text.clone();
             move || div().children(alt_text.clone()).into_any_element()

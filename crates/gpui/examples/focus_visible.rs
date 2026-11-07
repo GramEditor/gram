@@ -66,7 +66,6 @@ impl Render for Example {
                 .bg(gpui::rgb(0x2563eb))
                 .text_color(gpui::white())
                 .rounded_md()
-                .cursor_pointer()
                 .hover(|style| style.bg(gpui::rgb(0x1d4ed8)))
                 .child(label)
         }

@@ -2,7 +2,7 @@ use editor::Editor;
 use extension_host::{ExtensionOperation, ExtensionStore};
 use futures::StreamExt;
 use gpui::{
-    App, Context, CursorStyle, Entity, EventEmitter, InteractiveElement as _, ParentElement as _, Render, SharedString,
+    App, Context, Entity, EventEmitter, InteractiveElement as _, ParentElement as _, Render, SharedString,
     StatefulInteractiveElement, Styled, Window, actions,
 };
 use language::{
@@ -661,7 +661,6 @@ impl Render for ActivityIndicator {
                                 this.on_click(cx.listener(move |this, _, window, cx| {
                                     handler(this, window, cx);
                                 }))
-                                .cursor(CursorStyle::PointingHand)
                             }),
                     ),
                 )

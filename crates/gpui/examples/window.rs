@@ -17,7 +17,6 @@ fn button(text: &str, on_click: impl Fn(&mut Window, &mut App) + 'static) -> imp
         .border_1()
         .border_color(rgb(0xe0e0e0))
         .rounded_sm()
-        .cursor_pointer()
         .child(text.to_string())
         .on_click(move |_, window, cx| on_click(window, cx))
 }

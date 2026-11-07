@@ -1771,7 +1771,6 @@ impl Editor {
                     .active(|style| style.bg(cx.theme().colors().ghost_element_active))
                     .rounded_xs()
                     .size_full()
-                    .cursor_pointer()
                     .child("⋯")
                     .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
                     .on_click(move |_, _window, cx| {
