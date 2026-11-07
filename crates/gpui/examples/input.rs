@@ -617,7 +617,7 @@ impl Render for InputExample {
                             .px_2()
                             .bg(yellow())
                             .child("Reset")
-                            .hover(|style| style.bg(yellow().blend(opaque_grey(0.5, 0.5))).cursor_pointer())
+                            .hover(|style| style.bg(yellow().blend(opaque_grey(0.5, 0.5))))
                             .on_mouse_up(MouseButton::Left, cx.listener(Self::on_reset_click)),
                     ),
             )

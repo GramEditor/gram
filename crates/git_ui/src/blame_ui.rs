@@ -63,7 +63,6 @@ impl BlameRenderer for GitBlameRenderer {
                         )
                         .child(relative_timestamp)
                         .hover(|style| style.bg(cx.theme().colors().element_hover))
-                        .cursor_pointer()
                         .on_mouse_down(MouseButton::Right, {
                             let blame_entry = blame_entry.clone();
                             let details = details.clone();

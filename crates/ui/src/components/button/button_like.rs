@@ -513,7 +513,7 @@ impl ButtonLike {
             tooltip: None,
             hoverable_tooltip: None,
             children: SmallVec::new(),
-            cursor_style: CursorStyle::PointingHand,
+            cursor_style: CursorStyle::Arrow,
             on_click: None,
             on_right_click: None,
             layer: None,
@@ -686,7 +686,7 @@ impl RenderOnce for ButtonLike {
             .border_color(style.enabled(self.layer, cx).border_color)
             .bg(style.enabled(self.layer, cx).background)
             .when(self.disabled, |this| {
-                if self.cursor_style == CursorStyle::PointingHand {
+                if self.cursor_style == CursorStyle::Arrow {
                     this.cursor_not_allowed()
                 } else {
                     this.cursor(self.cursor_style)

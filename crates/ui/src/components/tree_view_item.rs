@@ -146,7 +146,6 @@ impl RenderOnce for TreeViewItem {
             .child(
                 h_flex()
                     .id("inner_tree_view_item")
-                    .cursor_pointer()
                     .size_full()
                     .h(item_size)
                     .rounded_sm()

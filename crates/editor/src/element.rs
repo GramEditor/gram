@@ -3666,7 +3666,6 @@ impl EditorElement {
                     })
                     .child(
                         h_flex()
-                            .cursor_pointer()
                             .id("path_header_block")
                             .min_w_0()
                             .size_full()
@@ -5714,11 +5713,11 @@ impl EditorElement {
                 };
 
                 // In singleton buffers, we select corresponding lines on the line number click, so use | -like cursor.
-                // In multi buffers, we open file at the line number clicked, so use a pointing hand cursor.
+                // In multi buffers, we open file at the line number clicked, so use the default cursor.
                 if is_singleton {
                     window.set_cursor_style(CursorStyle::IBeam, hitbox);
                 } else {
-                    window.set_cursor_style(CursorStyle::PointingHand, hitbox);
+                    window.set_cursor_style(CursorStyle::Arrow, hitbox);
                 }
             }
         }
@@ -5914,14 +5913,6 @@ impl EditorElement {
     }
 
     fn paint_gutter_highlights(&self, layout: &mut EditorLayout, window: &mut Window, cx: &mut App) {
-        for (_, hunk_hitbox) in &layout.display_hunks {
-            if let Some(hunk_hitbox) = hunk_hitbox
-                && !self.editor.read(cx).buffer().read(cx).all_diff_hunks_expanded()
-            {
-                window.set_cursor_style(CursorStyle::PointingHand, hunk_hitbox);
-            }
-        }
-
         let show_git_gutter = layout.position_map.snapshot.show_git_diff_gutter.unwrap_or_else(|| {
             matches!(
                 ProjectSettings::get_global(cx).git.git_gutter,
@@ -9638,8 +9629,6 @@ impl StickyHeaders {
                     );
                 },
             );
-
-            window.set_cursor_style(CursorStyle::PointingHand, &line.hitbox);
         }
     }
 }

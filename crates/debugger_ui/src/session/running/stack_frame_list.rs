@@ -515,7 +515,7 @@ impl StackFrameList {
                 this.selected_ix = Some(ix);
                 this.activate_selected_entry(window, cx);
             }))
-            .hover(|style| style.bg(cx.theme().colors().element_hover).cursor_pointer())
+            .hover(|style| style.bg(cx.theme().colors().element_hover))
             .overflow_x_scroll()
             .child(
                 v_flex()
@@ -542,7 +542,7 @@ impl StackFrameList {
                             .border_1()
                             .border_color(cx.theme().colors().element_selected)
                             .bg(cx.theme().colors().element_background)
-                            .hover(|style| style.bg(cx.theme().colors().ghost_element_hover).cursor_pointer())
+                            .hover(|style| style.bg(cx.theme().colors().ghost_element_hover))
                             .child(
                                 IconButton::new(("restart-stack-frame", stack_frame.id), IconName::RotateCcw)
                                     .icon_size(IconSize::Small)
@@ -604,7 +604,7 @@ impl StackFrameList {
                 this.selected_ix = Some(ix);
                 this.activate_selected_entry(window, cx);
             }))
-            .hover(|style| style.bg(cx.theme().colors().element_hover).cursor_pointer())
+            .hover(|style| style.bg(cx.theme().colors().element_hover))
             .child(
                 v_flex()
                     .text_ui_sm(cx)

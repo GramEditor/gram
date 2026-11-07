@@ -169,7 +169,6 @@ impl RenderOnce for WindowControl {
         h_flex()
             .id(self.id)
             .group("")
-            .cursor_pointer()
             .justify_center()
             .content_center()
             .rounded_2xl()

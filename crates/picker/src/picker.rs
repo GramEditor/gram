@@ -655,7 +655,6 @@ impl<D: PickerDelegate> Picker<D> {
 
         div()
             .id(("item", ix))
-            .cursor_pointer()
             .child(
                 canvas(
                     move |bounds, _window, _cx| {

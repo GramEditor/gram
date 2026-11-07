@@ -247,10 +247,8 @@ impl RenderOnce for Checkbox {
             .map(|this| {
                 if self.disabled {
                     this.cursor_not_allowed()
-                } else if self.visualization {
-                    this.cursor_default()
                 } else {
-                    this.cursor_pointer()
+                    this.cursor_default()
                 }
             })
             .gap(DynamicSpacing::Base06.rems(cx))
@@ -466,7 +464,6 @@ impl RenderOnce for Switch {
 
         h_flex()
             .id(self.id)
-            .cursor_pointer()
             .gap(DynamicSpacing::Base06.rems(cx))
             .when(self.full_width, |this| this.w_full().justify_between())
             .when(self.label_position == Some(SwitchLabelPosition::Start), |this| {
@@ -586,7 +583,6 @@ impl RenderOnce for SwitchField {
 
         h_flex()
             .id((self.id.clone(), "container"))
-            .when(!self.disabled, |this| this.hover(|this| this.cursor_pointer()))
             .w_full()
             .gap_4()
             .justify_between()

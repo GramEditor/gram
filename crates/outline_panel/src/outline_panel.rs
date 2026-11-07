@@ -2382,7 +2382,6 @@ impl OutlinePanel {
                     outline_panel.scroll_editor_to_entry(&clicked_entry, true, change_focus, window, cx);
                 })
             })
-            .cursor_pointer()
             .child(
                 ListItem::new(item_id)
                     .indent_level(depth)

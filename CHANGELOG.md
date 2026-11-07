@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Require exec permission for extensions to run `npm info`
 - Rename `gram::open_performance_profiler` to `dev::open_profiler`
+- UI elements now use the default cursor when hovered (#710) by @kramo
 
 ## Fixed
 

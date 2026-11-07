@@ -20,7 +20,6 @@ impl Render for UniformListExample {
                             div()
                                 .id(ix)
                                 .px_2()
-                                .cursor_pointer()
                                 .on_click(move |_event, _window, _cx| {
                                     println!("clicked Item {item:?}");
                                 })
