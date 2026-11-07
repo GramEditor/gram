@@ -97,14 +97,6 @@ impl DebugAdapter for ExtensionDapAdapter {
             anyhow::bail!("ignore_system_version set for extension-provided DAP");
         }
 
-        if !settings.allow_binary_download {
-            anyhow::bail!("allow_binary_download not set for extension-provided DAP");
-        }
-
-        if !settings.enable_auto_updates {
-            anyhow::bail!("enable_auto_updates not set for extension-provided DAP");
-        }
-
         self.extension
             .get_dap_binary(
                 self.debug_adapter_name.clone(),

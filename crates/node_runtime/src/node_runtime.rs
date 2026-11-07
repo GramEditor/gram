@@ -162,27 +162,16 @@ impl NodeRuntime {
                     );
                     Box::new(instance) as Box<dyn NodeRuntimeTrait>
                 }
-                Err(err) => {
-                    // failure case is cached, since downloading + installing may be expensive. The
-                    // downside of this is that it may fail due to an intermittent network issue.
-                    //
-                    // TODO: Have `install_if_needed` indicate which failure cases are retryable
-                    // and/or have shared tracking of when internet is available.
-                    Box::new(UnavailableNodeRuntime {
-                        error_message: format!(
-                            "failure while downloading and/or installing Gram managed Node.js, \
+                Err(err) => Box::new(UnavailableNodeRuntime {
+                    error_message: format!(
+                        "failure while downloading and/or installing Gram managed Node.js, \
                             restart Gram to retry: {}",
-                            err
-                        )
-                        .into(),
-                    }) as Box<dyn NodeRuntimeTrait>
-                }
+                        err
+                    )
+                    .into(),
+                }) as Box<dyn NodeRuntimeTrait>,
             }
         } else if let Some(system_node_error) = system_node_error {
-            // failure case not cached, since it's cheap to check again
-            //
-            // TODO: When support is added for setting `options.allow_binary_download`, update this
-            // error message.
             Box::new(UnavailableNodeRuntime {
                 error_message: format!(
                     "No compatible Node.js version found in system path. Additionally 'Allow npm install' is not enabled. See Language Server Configuration: {}",
@@ -191,10 +180,6 @@ impl NodeRuntime {
                 .into(),
             }) as Box<dyn NodeRuntimeTrait>
         } else {
-            // failure case is cached because it will always happen with these options
-            //
-            // TODO: When support is added for setting `options.allow_binary_download`, update this
-            // error message.
             Box::new(UnavailableNodeRuntime {
                 error_message: "No Node.js version found. Additionally 'Allow npm install' is not enabled. See Language Server Configuration."
                     .to_string()
