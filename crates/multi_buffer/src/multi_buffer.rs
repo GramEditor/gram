@@ -4504,6 +4504,15 @@ impl MultiBufferSnapshot {
         }
     }
 
+    /// Returns column offset of point taking tab size into consideration
+    pub fn column_for_point(&self, point: Point, tab_size: u32) -> Option<u32> {
+        let mut cursor = self.cursor::<Point, Point>();
+        let line_start = Point::new(point.row, 0);
+        cursor.seek(&line_start);
+        let region = cursor.region()?;
+        Some(region.buffer.column_for_point(point, tab_size))
+    }
+
     pub fn indent_and_comment_for_line(&self, row: MultiBufferRow, cx: &App) -> String {
         let mut indent = self.indent_size_for_line(row).chars().collect::<String>();
 

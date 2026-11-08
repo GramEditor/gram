@@ -81,6 +81,7 @@ impl GoToLine {
             let user_caret = UserCaretPosition::at_selection_end(
                 &editor.selections.last::<Point>(&editor.display_snapshot(cx)),
                 &editor.display_snapshot(cx),
+                cx,
             );
 
             let snapshot = active_buffer.read(cx).snapshot();
@@ -98,6 +99,7 @@ impl GoToLine {
 
         let line = user_caret.line.get();
         let column = user_caret.column.get();
+        let bytes = user_caret.bytes.get();
 
         let line_editor = cx.new(|cx| {
             let mut editor = Editor::single_line(window, cx);
@@ -123,7 +125,13 @@ impl GoToLine {
         });
         let line_editor_change = cx.subscribe_in(&line_editor, window, Self::on_line_editor_event);
 
-        let current_text = format!("Current Line: {} of {} (column {})", line, last_line + 1, column);
+        let current_text = format!(
+            "Current Line: {} of {} (column {}, byte {})",
+            line,
+            last_line + 1,
+            column,
+            bytes
+        );
 
         Self {
             line_editor,
@@ -563,19 +571,19 @@ mod tests {
         });
         cx.executor().advance_clock(Duration::from_millis(200));
         assert_eq!(
-            user_caret_position(1, 1, 1),
+            user_caret_position(1, 1, 1, 1),
             current_position(&workspace, cx),
             "Beginning of the line should be at first line, before any characters"
         );
 
-        let mut column = 1;
+        let mut bytes: u32 = 0;
         for (i, c) in text.chars().enumerate() {
             let i = i as u32 + 1;
-            column += c.len_utf8() as u32;
+            bytes += c.len_utf8() as u32;
             editor.update_in(cx, |editor, window, cx| editor.move_right(&MoveRight, window, cx));
             cx.executor().advance_clock(Duration::from_millis(200));
             assert_eq!(
-                user_caret_position(1, i + 1, column),
+                user_caret_position(1, i + 1, bytes + 1, i + 1),
                 current_position(&workspace, cx),
                 "Wrong position for char '{c}' in string '{text}'",
             );
@@ -584,8 +592,9 @@ mod tests {
         editor.update_in(cx, |editor, window, cx| editor.move_right(&MoveRight, window, cx));
         cx.executor().advance_clock(Duration::from_millis(200));
         let nchars = text.chars().count() as u32 + 1;
+        bytes = text.chars().map(|c| c.len_utf8() as u32).sum::<u32>() + 1;
         assert_eq!(
-            user_caret_position(1, nchars, column),
+            user_caret_position(1, nchars, bytes, nchars),
             current_position(&workspace, cx),
             "After reaching the end of the text, position should not change when moving right"
         );
@@ -636,15 +645,15 @@ mod tests {
             editor.move_to_beginning(&MoveToBeginning, window, cx)
         });
         cx.executor().advance_clock(Duration::from_millis(200));
-        assert_eq!(user_caret_position(1, 1, 1), current_position(&workspace, cx));
+        assert_eq!(user_caret_position(1, 1, 1, 1), current_position(&workspace, cx));
 
-        let mut column = 1;
+        let mut bytes = 0;
         for (i, c) in text.chars().enumerate() {
             let i = i as u32 + 1;
-            let next_column = column + c.len_utf8() as u32;
-            let point = user_caret_position(1, i + 1, next_column);
-            go_to_point(point, user_caret_position(1, i, column), &workspace, cx);
-            column = next_column;
+            let next_bytes = bytes + c.len_utf8() as u32;
+            let point = user_caret_position(1, i + 1, next_bytes + 1, i + 1);
+            go_to_point(point, user_caret_position(1, i, bytes + 1, i), &workspace, cx);
+            bytes = next_bytes;
             cx.executor().advance_clock(Duration::from_millis(200));
             assert_eq!(
                 point,
@@ -654,16 +663,18 @@ mod tests {
         }
 
         let end_char_pos = text.chars().count() as u32 + 1;
+        bytes = text.chars().map(|c| c.len_utf8() as u32).sum::<u32>() + 1;
         go_to_point(
-            user_caret_position(111, 222, 222),
-            user_caret_position(1, end_char_pos, column),
+            user_caret_position(111, 222, 222, 222),
+            user_caret_position(1, end_char_pos, bytes, end_char_pos),
             &workspace,
             cx,
         );
         cx.executor().advance_clock(Duration::from_millis(200));
         let end_char_pos = text.chars().count() as u32 + 1;
+        bytes = text.chars().map(|c| c.len_utf8() as u32).sum::<u32>() + 1;
         assert_eq!(
-            user_caret_position(1, end_char_pos, column),
+            user_caret_position(1, end_char_pos, bytes, end_char_pos),
             current_position(&workspace, cx),
             "When going into too large point, should go to the end of the text"
         );
@@ -682,10 +693,11 @@ mod tests {
         })
     }
 
-    fn user_caret_position(line: u32, character: u32, column: u32) -> UserCaretPosition {
+    fn user_caret_position(line: u32, character: u32, bytes: u32, column: u32) -> UserCaretPosition {
         UserCaretPosition {
             line: NonZeroU32::new(line).unwrap(),
             character: NonZeroU32::new(character).unwrap(),
+            bytes: NonZeroU32::new(bytes).unwrap(),
             column: NonZeroU32::new(column).unwrap(),
         }
     }

@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restore code outline support for diff files (#580) by @jqslr
 - Fix Helix amp jump history for short jumps (zed#66141) (#695)
 - Fix non-ASCII path:line:column navigation (zed#51238)
+- Fix line:column displaying wrong column for non-ASCII (#711)
 
 ## [3.4.1] - 2026-10-23
 

@@ -2,7 +2,7 @@ use editor::{Editor, EditorEvent, MBTextSummary, display_map::DisplaySnapshot};
 use gpui::{App, Entity, FocusHandle, Focusable, Styled, Subscription, Task, WeakEntity};
 use settings::{RegisterSetting, Settings};
 use std::{fmt::Write, num::NonZeroU32, time::Duration};
-use text::{Bias, Point, Selection};
+use text::{Point, Selection};
 use ui::{
     Button, ButtonCommon, Clickable, Context, FluentBuilder, IntoElement, ParentElement, Render, Tooltip, Window, div,
 };
@@ -32,39 +32,50 @@ pub struct CursorPosition {
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct UserCaretPosition {
     pub line: NonZeroU32,
+    /// Number of characters from start of line
     pub character: NonZeroU32,
+    /// Number of bytes from start of line
+    pub bytes: NonZeroU32,
+    /// Column offset in characters from line start, expanding tabs according to tab size
     pub column: NonZeroU32,
 }
 
 impl UserCaretPosition {
-    pub(crate) fn at_selection_end(selection: &Selection<Point>, snapshot: &DisplaySnapshot) -> Self {
-        let buffer_snapshot = snapshot.buffer_snapshot();
+    pub(crate) fn at_selection_end(selection: &Selection<Point>, snapshot: &DisplaySnapshot, cx: &mut App) -> Self {
+        let multi_buffer_snapshot = snapshot.buffer_snapshot();
         let selection_end = selection.head();
-        let (line, character) =
-            if let Some((buffer_snapshot, point, _)) = buffer_snapshot.point_to_buffer_point(selection_end) {
-                let line_start = Point::new(point.row, 0);
+        let (line, character, column, bytes) = if let Some((language_buffer_snapshot, point, _)) =
+            multi_buffer_snapshot.point_to_buffer_point(selection_end)
+        {
+            let line_start = Point::new(point.row, 0);
 
-                let chars_to_last_position = buffer_snapshot
-                    .text_summary_for_range::<text::TextSummary, _>(line_start..point)
-                    .chars as u32;
-                (line_start.row, chars_to_last_position)
-            } else {
-                let line_start = Point::new(selection_end.row, 0);
+            let tab_size = language_buffer_snapshot.settings_at(line_start, cx).tab_size.get();
 
-                let chars_to_last_position = buffer_snapshot
-                    .text_summary_for_range::<MBTextSummary, _>(line_start..selection_end)
-                    .chars as u32;
-                (selection_end.row, chars_to_last_position)
-            };
+            let chars_to_last_position = language_buffer_snapshot
+                .text_summary_for_range::<text::TextSummary, _>(line_start..point)
+                .chars as u32;
+            let column = language_buffer_snapshot.column_for_point(point, tab_size);
+            (line_start.row, chars_to_last_position, column, point.column)
+        } else {
+            let line_start = Point::new(selection_end.row, 0);
+            let tab_size = multi_buffer_snapshot
+                .language_settings_at(selection_end, cx)
+                .tab_size
+                .get();
+            let column = multi_buffer_snapshot
+                .column_for_point(selection_end, tab_size)
+                .unwrap_or(1);
 
-        let column = snapshot
-            .tab_snapshot()
-            .point_to_tab_point(selection_end, Bias::Left)
-            .column();
+            let chars_to_last_position = multi_buffer_snapshot
+                .text_summary_for_range::<MBTextSummary, _>(line_start..selection_end)
+                .chars as u32;
+            (selection_end.row, chars_to_last_position, column, selection_end.column)
+        };
 
         Self {
             line: NonZeroU32::new(line + 1).expect("added 1"),
             character: NonZeroU32::new(character + 1).expect("added 1"),
+            bytes: NonZeroU32::new(bytes + 1).expect("added 1"),
             column: NonZeroU32::new(column + 1).expect("added 1"),
         }
     }
@@ -137,7 +148,7 @@ impl CursorPosition {
                                     }
                                 }
                                 cursor_position.position =
-                                    last_selection.map(|s| UserCaretPosition::at_selection_end(&s, &snapshot));
+                                    last_selection.map(|s| UserCaretPosition::at_selection_end(&s, &snapshot, cx));
                                 cursor_position.context = Some(editor.focus_handle(cx));
                             }
                         }
@@ -209,7 +220,10 @@ impl Render for CursorPosition {
         let icon_size = StatusBarSettings::get_global(cx).icon_size;
 
         div().when_some(self.position, |el, position| {
-            let mut text = format!("{}{FILE_ROW_COLUMN_DELIMITER}{}", position.line, position.column,);
+            let mut text = format!(
+                "{}{FILE_ROW_COLUMN_DELIMITER}{} ({})",
+                position.line, position.column, position.bytes
+            );
             self.write_position(&mut text, cx);
 
             let context = self.context.clone();

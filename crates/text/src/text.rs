@@ -2148,6 +2148,22 @@ impl BufferSnapshot {
         LineIndent::from_iter(self.chars_at(Point::new(row, 0)))
     }
 
+    /// Returns column offset of point taking tab size into consideration
+    pub fn column_for_point(&self, point: Point, tab_size: u32) -> u32 {
+        let line_start = Point::new(point.row, 0);
+        let mut column = 0;
+        for chunk in self.text_for_range(line_start..point) {
+            for c in chunk.chars() {
+                if c == '\t' {
+                    column += tab_size - (column % tab_size);
+                } else {
+                    column += 1;
+                }
+            }
+        }
+        column
+    }
+
     pub fn is_line_blank(&self, row: u32) -> bool {
         self.text_for_range(Point::new(row, 0)..Point::new(row, self.line_len(row)))
             .all(|chunk| chunk.matches(|c: char| !c.is_whitespace()).next().is_none())
