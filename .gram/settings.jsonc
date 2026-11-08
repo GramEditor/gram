@@ -6,7 +6,7 @@
       "formatter": "prettier",
     },
     "TOML": {
-      "formatter": [{"language_server": {"name":"tombi"}}],
+      "formatter": [{ "language_server": { "name": "tombi" } }],
       "format_on_save": "off",
     },
     "YAML": {
@@ -40,26 +40,17 @@
     },
   },
   "file_types": {
-    "Dockerfile": [
-      "Dockerfile*[!dockerignore]"
-    ],
-    "JSONC": [
-      "**/assets/{settings,keymaps}/**/*.json",
-      "**/assets/{settings,keymaps}/**/*.jsonc",
-      "renovate.json"
-    ],
-    "Git Ignore": [
-      "dockerignore"
-    ],
+    "Dockerfile": ["Dockerfile*[!dockerignore]"],
+    "JSONC": ["**/assets/{settings,keymaps}/**/*.json", "**/assets/{settings,keymaps}/**/*.jsonc", "renovate.json"],
+    "Git Ignore": ["dockerignore"],
   },
   "lsp": {
     "rust-analyzer": {
       "binary": {
-        "path": "~/.cargo/bin/rust-analyzer"
+        "path": "~/.cargo/bin/rust-analyzer",
       },
     },
   },
-  "hard_tabs": false,
   "formatter": "auto",
   "remove_trailing_whitespace_on_save": true,
   "ensure_final_newline_on_save": true,
