@@ -10,7 +10,7 @@ use gpui::{
     App, AppContext, Entity, EventEmitter, Focusable, IntoElement, Render, SharedString, Subscription, Task,
     WeakEntity, Window,
 };
-use language::{BufferSnapshot, Capability, Point, Selection, SelectionGoal, TreeSitterOptions};
+use language::{Capability, LanguageBufferSnapshot, Point, Selection, SelectionGoal, TreeSitterOptions};
 use project::{Project, ProjectPath};
 use ui::{ActiveTheme as _, Context, ParentElement as _, Styled as _, div};
 use util::ResultExt as _;
@@ -265,7 +265,7 @@ impl StackTraceView {
         })
     }
 
-    fn heuristic_syntactic_expand(snapshot: &BufferSnapshot, selected_point: Point) -> Point {
+    fn heuristic_syntactic_expand(snapshot: &LanguageBufferSnapshot, selected_point: Point) -> Point {
         let mut text_objects =
             snapshot.text_object_ranges(selected_point..selected_point, TreeSitterOptions::max_start_depth(4));
 

@@ -4018,7 +4018,7 @@ fn proto_to_prompt(level: proto::LanguageServerPromptRequestLevel) -> gpui::Prom
 
 fn provide_inline_values(
     captures: impl Iterator<Item = (Range<usize>, language::DebuggerTextObject)>,
-    snapshot: &language::BufferSnapshot,
+    snapshot: &language::LanguageBufferSnapshot,
     max_row: usize,
 ) -> Vec<InlineValueLocation> {
     let mut variables = Vec::new();

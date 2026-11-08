@@ -3,7 +3,7 @@ use std::{mem, ops::Range, sync::Arc};
 use collections::HashSet;
 use gpui::{App, AppContext, Context, Entity};
 use itertools::Itertools;
-use language::{Buffer, BufferSnapshot};
+use language::{Buffer, LanguageBufferSnapshot};
 use rope::Point;
 use text::{Bias, BufferId, OffsetRangeExt, locator::Locator};
 use util::{post_inc, rel_path::RelPath};
@@ -95,7 +95,7 @@ impl MultiBuffer {
         &mut self,
         path: PathKey,
         buffer: Entity<Buffer>,
-        buffer_snapshot: &BufferSnapshot,
+        buffer_snapshot: &LanguageBufferSnapshot,
         excerpt_ranges: Vec<ExcerptRange<Point>>,
         cx: &mut Context<Self>,
     ) -> (Vec<Range<Anchor>>, bool) {
@@ -238,7 +238,7 @@ impl MultiBuffer {
         path: PathKey,
         buffer: Entity<Buffer>,
         ranges: Vec<ExcerptRange<Point>>,
-        buffer_snapshot: &BufferSnapshot,
+        buffer_snapshot: &LanguageBufferSnapshot,
         new: Vec<ExcerptRange<Point>>,
         counts: Vec<usize>,
         cx: &mut Context<Self>,
@@ -263,7 +263,7 @@ impl MultiBuffer {
         &mut self,
         path: PathKey,
         buffer: Entity<Buffer>,
-        buffer_snapshot: &BufferSnapshot,
+        buffer_snapshot: &LanguageBufferSnapshot,
         new: Vec<ExcerptRange<Point>>,
         cx: &mut Context<Self>,
     ) -> (Vec<ExcerptId>, bool) {

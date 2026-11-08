@@ -37,7 +37,7 @@ struct GeometrySettings {
 struct AlignmentJob {
     excerpt: ExcerptId,
     key: ModelKey,
-    buffer: language::BufferSnapshot,
+    buffer: language::LanguageBufferSnapshot,
     diff: Option<buffer_diff::BufferDiffSnapshot>,
 }
 

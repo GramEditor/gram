@@ -2259,7 +2259,7 @@ fn matching(map: &DisplaySnapshot, display_point: DisplayPoint, match_quotes: bo
     let is_quote_char = |ch: char| matches!(ch, '\'' | '"' | '`');
 
     let make_range_filter = |require_on_bracket: bool| {
-        move |buffer: &language::BufferSnapshot,
+        move |buffer: &language::LanguageBufferSnapshot,
               opening_range: Range<BufferOffset>,
               closing_range: Range<BufferOffset>| {
             if !match_quotes && buffer.chars_at(opening_range.start).next().is_some_and(is_quote_char) {

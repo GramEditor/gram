@@ -1,4 +1,4 @@
-use crate::{BufferSnapshot, Point, ToPoint, ToTreeSitterPoint};
+use crate::{LanguageBufferSnapshot, Point, ToPoint, ToTreeSitterPoint};
 use fuzzy::{StringMatch, StringMatchCandidate};
 use gpui::{BackgroundExecutor, HighlightStyle};
 use std::ops::Range;
@@ -29,7 +29,7 @@ pub struct SymbolPath(pub String);
 
 impl<T: ToPoint> OutlineItem<T> {
     /// Converts to an equivalent outline item, but with parameterized over Points.
-    pub fn to_point(&self, buffer: &BufferSnapshot) -> OutlineItem<Point> {
+    pub fn to_point(&self, buffer: &LanguageBufferSnapshot) -> OutlineItem<Point> {
         OutlineItem {
             depth: self.depth,
             range: self.range.start.to_point(buffer)..self.range.end.to_point(buffer),
@@ -49,7 +49,7 @@ impl<T: ToPoint> OutlineItem<T> {
         }
     }
 
-    pub fn body_range(&self, buffer: &BufferSnapshot) -> Option<Range<Point>> {
+    pub fn body_range(&self, buffer: &LanguageBufferSnapshot) -> Option<Range<Point>> {
         if let Some(range) = self.body_range.as_ref() {
             return Some(range.start.to_point(buffer)..range.end.to_point(buffer));
         }

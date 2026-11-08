@@ -21,10 +21,10 @@ use collections::{BTreeMap, Bound, HashMap, HashSet};
 use gpui::{App, Context, Entity, EntityId, EventEmitter, WeakEntity};
 use itertools::Itertools;
 use language::{
-    AutoindentMode, BracketMatch, Buffer, BufferChunks, BufferRow, BufferSnapshot, Capability, CharClassifier,
-    CharKind, CharScopeContext, Chunk, CursorShape, DiagnosticEntryRef, File, IndentGuideSettings, IndentSize,
-    Language, LanguageScope, OffsetRangeExt, OffsetUtf16, Outline, OutlineItem, Point, PointUtf16, Selection,
-    TextDimension, TextObject, ToOffset as _, ToPoint as _, TransactionId, TreeSitterOptions, Unclipped,
+    AutoindentMode, BracketMatch, Buffer, BufferChunks, BufferRow, Capability, CharClassifier, CharKind,
+    CharScopeContext, Chunk, CursorShape, DiagnosticEntryRef, File, IndentGuideSettings, IndentSize, Language,
+    LanguageBufferSnapshot, LanguageScope, OffsetRangeExt, OffsetUtf16, Outline, OutlineItem, Point, PointUtf16,
+    Selection, TextDimension, TextObject, ToOffset as _, ToPoint as _, TransactionId, TreeSitterOptions, Unclipped,
     language_settings::{LanguageSettings, language_settings},
     runnable::RunnableRange,
 };
@@ -672,7 +672,7 @@ impl std::hash::Hash for DiffTransformHunkInfo {
 #[derive(Clone)]
 pub struct ExcerptInfo {
     pub id: ExcerptId,
-    pub buffer: BufferSnapshot,
+    pub buffer: LanguageBufferSnapshot,
     pub buffer_id: BufferId,
     pub range: ExcerptRange<text::Anchor>,
     pub end_row: MultiBufferRow,
@@ -733,7 +733,7 @@ struct Excerpt {
     /// The buffer being excerpted
     buffer_id: BufferId,
     /// A snapshot of the buffer being excerpted
-    buffer: BufferSnapshot,
+    buffer: LanguageBufferSnapshot,
     /// The range of the buffer to be shown in the excerpt
     range: ExcerptRange<text::Anchor>,
     /// The last row in the excerpted slice of the buffer
@@ -1031,7 +1031,7 @@ struct MultiBufferCursor<'a, MBD, BD> {
 
 #[derive(Clone)]
 struct MultiBufferRegion<'a, MBD, BD> {
-    buffer: &'a BufferSnapshot,
+    buffer: &'a LanguageBufferSnapshot,
     is_main_buffer: bool,
     diff_hunk_status: Option<DiffHunkStatus>,
     excerpt: &'a Excerpt,
@@ -3418,7 +3418,7 @@ impl MultiBuffer {
 fn build_excerpt_ranges(
     ranges: impl IntoIterator<Item = Range<Point>>,
     context_line_count: u32,
-    buffer_snapshot: &BufferSnapshot,
+    buffer_snapshot: &LanguageBufferSnapshot,
 ) -> Vec<ExcerptRange<Point>> {
     ranges
         .into_iter()
@@ -3682,7 +3682,7 @@ impl MultiBufferSnapshot {
         let query_range = range.start.to_point(self)..range.end.to_point(self);
         self.lift_buffer_metadata(query_range.clone(), move |buffer, buffer_range| {
             let diff = self.diffs.get(&buffer.remote_id())?;
-            let iter: Box<dyn Iterator<Item = (DiffHunk, &BufferSnapshot, bool)>> =
+            let iter: Box<dyn Iterator<Item = (DiffHunk, &LanguageBufferSnapshot, bool)>> =
                 if let Some(main_buffer) = &diff.main_buffer {
                     let buffer_start = buffer.point_to_offset(buffer_range.start);
                     let buffer_end = buffer.point_to_offset(buffer_range.end);
@@ -3806,21 +3806,21 @@ impl MultiBufferSnapshot {
     pub fn ranges_to_buffer_ranges<T: ToOffset>(
         &self,
         ranges: impl Iterator<Item = Range<T>>,
-    ) -> impl Iterator<Item = (&BufferSnapshot, Range<BufferOffset>, ExcerptId)> {
+    ) -> impl Iterator<Item = (&LanguageBufferSnapshot, Range<BufferOffset>, ExcerptId)> {
         ranges.flat_map(|range| self.range_to_buffer_ranges(range).into_iter())
     }
 
     pub fn range_to_buffer_ranges<T: ToOffset>(
         &self,
         range: Range<T>,
-    ) -> Vec<(&BufferSnapshot, Range<BufferOffset>, ExcerptId)> {
+    ) -> Vec<(&LanguageBufferSnapshot, Range<BufferOffset>, ExcerptId)> {
         let start = range.start.to_offset(self);
         let end = range.end.to_offset(self);
 
         let mut cursor = self.cursor::<MultiBufferOffset, BufferOffset>();
         cursor.seek(&start);
 
-        let mut result: Vec<(&BufferSnapshot, Range<BufferOffset>, ExcerptId)> = Vec::new();
+        let mut result: Vec<(&LanguageBufferSnapshot, Range<BufferOffset>, ExcerptId)> = Vec::new();
         while let Some(region) = cursor.region() {
             if region.range.start > end {
                 break;
@@ -3847,7 +3847,7 @@ impl MultiBufferSnapshot {
     pub fn range_to_buffer_ranges_with_deleted_hunks<T: ToOffset>(
         &self,
         range: Range<T>,
-    ) -> impl Iterator<Item = (&BufferSnapshot, Range<BufferOffset>, ExcerptId, Option<Anchor>)> + '_ {
+    ) -> impl Iterator<Item = (&LanguageBufferSnapshot, Range<BufferOffset>, ExcerptId, Option<Anchor>)> + '_ {
         let start = range.start.to_offset(self);
         let end = range.end.to_offset(self);
 
@@ -3889,7 +3889,7 @@ impl MultiBufferSnapshot {
     fn lift_buffer_metadata<'a, MBD, M, I>(
         &'a self,
         query_range: Range<MBD>,
-        get_buffer_metadata: impl 'a + Fn(&'a BufferSnapshot, Range<MBD::TextDimension>) -> Option<I>,
+        get_buffer_metadata: impl 'a + Fn(&'a LanguageBufferSnapshot, Range<MBD::TextDimension>) -> Option<I>,
     ) -> impl Iterator<Item = (Range<MBD>, M, &'a Excerpt)> + 'a
     where
         I: Iterator<Item = (Range<MBD::TextDimension>, M)> + 'a,
@@ -4162,7 +4162,7 @@ impl MultiBufferSnapshot {
         self.singleton
     }
 
-    pub fn as_singleton(&self) -> Option<(&ExcerptId, BufferId, &BufferSnapshot)> {
+    pub fn as_singleton(&self) -> Option<(&ExcerptId, BufferId, &LanguageBufferSnapshot)> {
         if self.singleton {
             self.excerpts.iter().next().map(|e| (&e.id, e.buffer_id, &e.buffer))
         } else {
@@ -4377,7 +4377,7 @@ impl MultiBufferSnapshot {
         }
     }
 
-    pub fn point_to_buffer_offset<T: ToOffset>(&self, point: T) -> Option<(&BufferSnapshot, BufferOffset)> {
+    pub fn point_to_buffer_offset<T: ToOffset>(&self, point: T) -> Option<(&LanguageBufferSnapshot, BufferOffset)> {
         let offset = point.to_offset(self);
         let mut cursor = self.cursor::<MultiBufferOffset, BufferOffset>();
         cursor.seek(&offset);
@@ -4397,7 +4397,7 @@ impl MultiBufferSnapshot {
         Some((region.buffer, buffer_offset))
     }
 
-    pub fn point_to_buffer_point(&self, point: Point) -> Option<(&BufferSnapshot, Point, ExcerptId)> {
+    pub fn point_to_buffer_point(&self, point: Point) -> Option<(&LanguageBufferSnapshot, Point, ExcerptId)> {
         let mut cursor = self.cursor::<Point, Point>();
         cursor.seek(&point);
         let region = cursor.region()?;
@@ -4561,7 +4561,7 @@ impl MultiBufferSnapshot {
         }
     }
 
-    pub fn buffer_line_for_row(&self, row: MultiBufferRow) -> Option<(&BufferSnapshot, Range<Point>)> {
+    pub fn buffer_line_for_row(&self, row: MultiBufferRow) -> Option<(&LanguageBufferSnapshot, Range<Point>)> {
         let mut cursor = self.cursor::<Point, Point>();
         let point = Point::new(row.0, 0);
         cursor.seek(&point);
@@ -5255,7 +5255,7 @@ impl MultiBufferSnapshot {
         }
     }
 
-    pub fn excerpts(&self) -> impl Iterator<Item = (ExcerptId, &BufferSnapshot, ExcerptRange<text::Anchor>)> {
+    pub fn excerpts(&self) -> impl Iterator<Item = (ExcerptId, &LanguageBufferSnapshot, ExcerptRange<text::Anchor>)> {
         self.excerpts
             .iter()
             .map(|excerpt| (excerpt.id, &excerpt.buffer, excerpt.range.clone()))
@@ -5406,7 +5406,7 @@ impl MultiBufferSnapshot {
     pub fn innermost_enclosing_bracket_ranges<T: ToOffset>(
         &self,
         range: Range<T>,
-        range_filter: Option<&dyn Fn(&BufferSnapshot, Range<BufferOffset>, Range<BufferOffset>) -> bool>,
+        range_filter: Option<&dyn Fn(&LanguageBufferSnapshot, Range<BufferOffset>, Range<BufferOffset>) -> bool>,
     ) -> Option<(Range<MultiBufferOffset>, Range<MultiBufferOffset>)> {
         let range = range.start.to_offset(self)..range.end.to_offset(self);
         let mut excerpt = self.excerpt_containing(range.clone())?;
@@ -5556,8 +5556,8 @@ impl MultiBufferSnapshot {
     pub fn line_indents(
         &self,
         start_row: MultiBufferRow,
-        buffer_filter: impl Fn(&BufferSnapshot) -> bool,
-    ) -> impl Iterator<Item = (MultiBufferRow, LineIndent, &BufferSnapshot)> {
+        buffer_filter: impl Fn(&LanguageBufferSnapshot) -> bool,
+    ) -> impl Iterator<Item = (MultiBufferRow, LineIndent, &LanguageBufferSnapshot)> {
         let max_point = self.max_point();
         let mut cursor = self.cursor::<Point, Point>();
         cursor.seek(&Point::new(start_row.0, 0));
@@ -5592,8 +5592,8 @@ impl MultiBufferSnapshot {
     pub fn reversed_line_indents(
         &self,
         end_row: MultiBufferRow,
-        buffer_filter: impl Fn(&BufferSnapshot) -> bool,
-    ) -> impl Iterator<Item = (MultiBufferRow, LineIndent, &BufferSnapshot)> {
+        buffer_filter: impl Fn(&LanguageBufferSnapshot) -> bool,
+    ) -> impl Iterator<Item = (MultiBufferRow, LineIndent, &LanguageBufferSnapshot)> {
         let max_point = self.max_point();
         let mut cursor = self.cursor::<Point, Point>();
         cursor.seek(&Point::new(end_row.0, 0));
@@ -6153,7 +6153,7 @@ impl MultiBufferSnapshot {
         Some(self.excerpt(excerpt_id)?.buffer_id)
     }
 
-    pub fn buffer_for_excerpt(&self, excerpt_id: ExcerptId) -> Option<&BufferSnapshot> {
+    pub fn buffer_for_excerpt(&self, excerpt_id: ExcerptId) -> Option<&LanguageBufferSnapshot> {
         Some(&self.excerpt(excerpt_id)?.buffer)
     }
 
@@ -6698,7 +6698,7 @@ impl Excerpt {
         id: ExcerptId,
         locator: Locator,
         buffer_id: BufferId,
-        buffer: BufferSnapshot,
+        buffer: LanguageBufferSnapshot,
         range: ExcerptRange<text::Anchor>,
         has_trailing_newline: bool,
     ) -> Self {
@@ -6784,7 +6784,7 @@ impl<'a> MultiBufferExcerpt<'a> {
         Anchor::in_buffer(self.excerpt.id, self.excerpt.range.context.end)
     }
 
-    pub fn buffer(&self) -> &'a BufferSnapshot {
+    pub fn buffer(&self) -> &'a LanguageBufferSnapshot {
         &self.excerpt.buffer
     }
 

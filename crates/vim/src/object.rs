@@ -13,7 +13,7 @@ use editor::{
 };
 use gpui::{Action, Window, actions};
 use itertools::Itertools;
-use language::{BufferSnapshot, CharKind, Point, Selection, TextObject, TreeSitterOptions};
+use language::{CharKind, LanguageBufferSnapshot, Point, Selection, TextObject, TreeSitterOptions};
 use multi_buffer::MultiBufferRow;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -174,7 +174,7 @@ fn cover_or_next<I: Iterator<Item = (Range<MultiBufferOffset>, Range<MultiBuffer
     None
 }
 
-type DelimiterPredicate = dyn Fn(&BufferSnapshot, usize, usize) -> bool;
+type DelimiterPredicate = dyn Fn(&LanguageBufferSnapshot, usize, usize) -> bool;
 
 struct DelimiterRange {
     open: Range<MultiBufferOffset>,
@@ -265,11 +265,11 @@ fn get_visible_line_range(line_range: &Range<Point>) -> Range<Point> {
     line_range.start..Point::new(line_range.end.row, end_column)
 }
 
-fn is_quote_delimiter(buffer: &BufferSnapshot, _start: usize, end: usize) -> bool {
+fn is_quote_delimiter(buffer: &LanguageBufferSnapshot, _start: usize, end: usize) -> bool {
     matches!(buffer.chars_at(end).next(), Some('\'' | '"' | '`'))
 }
 
-fn is_bracket_delimiter(buffer: &BufferSnapshot, start: usize, _end: usize) -> bool {
+fn is_bracket_delimiter(buffer: &LanguageBufferSnapshot, start: usize, _end: usize) -> bool {
     matches!(buffer.chars_at(start).next(), Some('(' | '[' | '{' | '<' | '|'))
 }
 
@@ -1075,7 +1075,7 @@ fn argument(map: &DisplaySnapshot, relative_to: DisplayPoint, around: bool) -> O
     let buffer = excerpt.buffer();
 
     fn comma_delimited_range_at(
-        buffer: &BufferSnapshot,
+        buffer: &LanguageBufferSnapshot,
         mut offset: BufferOffset,
         include_comma: bool,
     ) -> Option<Range<BufferOffset>> {

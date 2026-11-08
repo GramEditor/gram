@@ -7,7 +7,7 @@ use text::BufferId;
 use tree_sitter::QueryCapture;
 use util::RangeExt;
 
-use crate::{BufferSnapshot, Language, Runnable, RunnableCapture, RunnableConfig};
+use crate::{Language, LanguageBufferSnapshot, Runnable, RunnableCapture, RunnableConfig};
 
 pub struct RunnableRange {
     pub buffer_id: BufferId,
@@ -57,12 +57,12 @@ pub trait RunnableResolver: Send + Sync {
         &self,
         local_captures: &[RunnableMatchCapture],
         shared_captures: &[RunnableMatchCapture],
-        buffer: &BufferSnapshot,
+        buffer: &LanguageBufferSnapshot,
     ) -> Option<ResolvedRunnable>;
 }
 
 pub(crate) fn runnable_ranges(
-    buffer: &BufferSnapshot,
+    buffer: &LanguageBufferSnapshot,
     offset_range: Range<usize>,
 ) -> impl Iterator<Item = RunnableRange> + '_ {
     let mut syntax_matches = buffer.matches(offset_range.clone(), |grammar| {
@@ -223,7 +223,7 @@ fn group_runnable_matches(
 }
 
 fn runnable_ranges_from_grouped_matches(
-    buffer: &BufferSnapshot,
+    buffer: &LanguageBufferSnapshot,
     captures: &[QueryCapture<'_>],
     runnable_config: &RunnableConfig,
     pattern_index: usize,
@@ -285,7 +285,7 @@ fn runnable_ranges_from_grouped_matches(
 }
 
 fn runnable_range_from_captures(
-    buffer: &BufferSnapshot,
+    buffer: &LanguageBufferSnapshot,
     captures: &[QueryCapture<'_>],
     runnable_config: &RunnableConfig,
     pattern_index: usize,
@@ -407,7 +407,7 @@ mod tests {
         buffer.update(cx, |buffer, _| buffer.snapshot().runnable_ranges(range).collect())
     }
 
-    fn text_at(buffer: &BufferSnapshot, range: Range<usize>) -> String {
+    fn text_at(buffer: &LanguageBufferSnapshot, range: Range<usize>) -> String {
         buffer.text_for_range(range).collect()
     }
 
@@ -419,7 +419,7 @@ mod tests {
             &self,
             local_captures: &[RunnableMatchCapture],
             _shared_captures: &[RunnableMatchCapture],
-            _buffer: &BufferSnapshot,
+            _buffer: &LanguageBufferSnapshot,
         ) -> Option<ResolvedRunnable> {
             let run = local_captures.iter().find(|capture| capture.is_run())?;
             Some(ResolvedRunnable {
@@ -437,7 +437,7 @@ mod tests {
             &self,
             local_captures: &[RunnableMatchCapture],
             _shared_captures: &[RunnableMatchCapture],
-            buffer: &BufferSnapshot,
+            buffer: &LanguageBufferSnapshot,
         ) -> Option<ResolvedRunnable> {
             let run = local_captures.iter().find(|capture| capture.is_run())?;
             let extras = local_captures
@@ -465,7 +465,7 @@ mod tests {
             &self,
             local_captures: &[RunnableMatchCapture],
             _shared_captures: &[RunnableMatchCapture],
-            buffer: &BufferSnapshot,
+            buffer: &LanguageBufferSnapshot,
         ) -> Option<ResolvedRunnable> {
             let run = local_captures.iter().find(|capture| capture.is_run())?;
             if text_at(buffer, run.range()) == self.skip_text {
@@ -486,7 +486,7 @@ mod tests {
             &self,
             local_captures: &[RunnableMatchCapture],
             _shared_captures: &[RunnableMatchCapture],
-            _buffer: &BufferSnapshot,
+            _buffer: &LanguageBufferSnapshot,
         ) -> Option<ResolvedRunnable> {
             let run = local_captures.iter().find(|capture| capture.is_run())?;
             let mut extras: SmallVec<[(String, String); 2]> = SmallVec::new();

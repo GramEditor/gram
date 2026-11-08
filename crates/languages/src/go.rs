@@ -423,7 +423,7 @@ impl RunnableResolver for GoRunnableResolver {
         &self,
         local_captures: &[RunnableMatchCapture],
         shared_captures: &[RunnableMatchCapture],
-        buffer: &BufferSnapshot,
+        buffer: &LanguageBufferSnapshot,
     ) -> Option<ResolvedRunnable> {
         const FIELD_CHECK: &str = "_field_check";
         const FIELD_NAME: &str = "_field_name";

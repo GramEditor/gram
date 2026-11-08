@@ -14,8 +14,8 @@ use collections::HashMap;
 use futures::future;
 use gpui::{App, AsyncApp, Entity, SharedString, Task};
 use language::{
-    Anchor, Bias, Buffer, BufferSnapshot, CachedLspAdapter, CharKind, CharScopeContext, OffsetRangeExt, PointUtf16,
-    ToOffset, ToPointUtf16, Transaction, Unclipped,
+    Anchor, Bias, Buffer, CachedLspAdapter, CharKind, CharScopeContext, LanguageBufferSnapshot, OffsetRangeExt,
+    PointUtf16, ToOffset, ToPointUtf16, Transaction, Unclipped,
     language_settings::{InlayHintKind, LanguageSettings, language_settings},
     point_from_lsp, point_to_lsp,
     proto::{deserialize_anchor, deserialize_version, serialize_anchor, serialize_version},
@@ -2252,7 +2252,7 @@ pub struct ParsedCompletionEdit {
 
 pub(crate) fn parse_completion_text_edit(
     edit: &lsp::CompletionTextEdit,
-    snapshot: &BufferSnapshot,
+    snapshot: &LanguageBufferSnapshot,
 ) -> Option<ParsedCompletionEdit> {
     let (replace_range, insert_range, new_text) = match edit {
         lsp::CompletionTextEdit::Edit(edit) => (edit.range, None, &edit.new_text),
@@ -2922,7 +2922,7 @@ impl InlayHints {
         })
     }
 
-    pub fn project_to_lsp_hint(hint: InlayHint, snapshot: &BufferSnapshot) -> lsp::InlayHint {
+    pub fn project_to_lsp_hint(hint: InlayHint, snapshot: &LanguageBufferSnapshot) -> lsp::InlayHint {
         lsp::InlayHint {
             position: point_to_lsp(hint.position.to_point_utf16(snapshot)),
             kind: hint.kind.map(|kind| match kind {

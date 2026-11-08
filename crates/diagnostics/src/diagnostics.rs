@@ -23,7 +23,8 @@ use gpui::{
 };
 use itertools::Itertools as _;
 use language::{
-    Bias, Buffer, BufferRow, BufferSnapshot, Capability, DiagnosticEntry, DiagnosticEntryRef, Point, ToTreeSitterPoint,
+    Bias, Buffer, BufferRow, Capability, DiagnosticEntry, DiagnosticEntryRef, LanguageBufferSnapshot, Point,
+    ToTreeSitterPoint,
 };
 use project::{
     DiagnosticSummary, Project, ProjectPath,
@@ -470,7 +471,7 @@ impl ProjectDiagnosticsEditor {
         &self,
         existing: &[DiagnosticEntry<text::Anchor>],
         new: &[DiagnosticEntryRef<'_, text::Anchor>],
-        snapshot: &BufferSnapshot,
+        snapshot: &LanguageBufferSnapshot,
     ) -> bool {
         if existing.len() != new.len() {
             return false;
@@ -554,18 +555,19 @@ impl ProjectDiagnosticsEditor {
                 blocks.extend(more);
             }
 
-            let cmp_excerpts =
-                |buffer_snapshot: &BufferSnapshot, a: &ExcerptRange<text::Anchor>, b: &ExcerptRange<text::Anchor>| {
-                    let context_start = || a.context.start.cmp(&b.context.start, buffer_snapshot);
-                    let context_end = || a.context.end.cmp(&b.context.end, buffer_snapshot);
-                    let primary_start = || a.primary.start.cmp(&b.primary.start, buffer_snapshot);
-                    let primary_end = || a.primary.end.cmp(&b.primary.end, buffer_snapshot);
-                    context_start()
-                        .then_with(context_end)
-                        .then_with(primary_start)
-                        .then_with(primary_end)
-                        .then(cmp::Ordering::Greater)
-                };
+            let cmp_excerpts = |buffer_snapshot: &LanguageBufferSnapshot,
+                                a: &ExcerptRange<text::Anchor>,
+                                b: &ExcerptRange<text::Anchor>| {
+                let context_start = || a.context.start.cmp(&b.context.start, buffer_snapshot);
+                let context_end = || a.context.end.cmp(&b.context.end, buffer_snapshot);
+                let primary_start = || a.primary.start.cmp(&b.primary.start, buffer_snapshot);
+                let primary_end = || a.primary.end.cmp(&b.primary.end, buffer_snapshot);
+                context_start()
+                    .then_with(context_end)
+                    .then_with(primary_start)
+                    .then_with(primary_end)
+                    .then(cmp::Ordering::Greater)
+            };
 
             let mut excerpt_ranges: Vec<ExcerptRange<_>> = this.update(cx, |this, cx| {
                 this.multibuffer.update(cx, |multi_buffer, cx| {
@@ -919,7 +921,7 @@ const DIAGNOSTIC_EXPANSION_ROW_LIMIT: u32 = 32;
 async fn context_range_for_entry(
     range: Range<Point>,
     context: u32,
-    snapshot: BufferSnapshot,
+    snapshot: LanguageBufferSnapshot,
     cx: &mut AsyncApp,
 ) -> Range<text::Anchor> {
     let range = if let Some(rows) =
@@ -946,7 +948,7 @@ async fn context_range_for_entry(
 async fn heuristic_syntactic_expand(
     input_range: Range<Point>,
     max_row_count: u32,
-    snapshot: BufferSnapshot,
+    snapshot: LanguageBufferSnapshot,
     cx: &mut AsyncApp,
 ) -> Option<RangeInclusive<BufferRow>> {
     let start = snapshot.clip_point(input_range.start, Bias::Right);
@@ -1060,7 +1062,12 @@ async fn heuristic_syntactic_expand(
     }
 }
 
-fn is_line_blank_or_indented_less(indent_level: u32, row: u32, tab_size: u32, snapshot: &BufferSnapshot) -> bool {
+fn is_line_blank_or_indented_less(
+    indent_level: u32,
+    row: u32,
+    tab_size: u32,
+    snapshot: &LanguageBufferSnapshot,
+) -> bool {
     let line_indent = snapshot.line_indent_for_row(row);
     line_indent.is_line_blank() || line_indent.len(tab_size) < indent_level
 }

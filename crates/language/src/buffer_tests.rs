@@ -1020,7 +1020,7 @@ async fn test_symbols_containing(cx: &mut gpui::TestAppContext) {
         ]
     );
 
-    fn symbols_containing(position: Point, snapshot: &BufferSnapshot) -> Vec<(String, Range<Point>)> {
+    fn symbols_containing(position: Point, snapshot: &LanguageBufferSnapshot) -> Vec<(String, Range<Point>)> {
         snapshot
             .symbols_containing(position, None)
             .into_iter()

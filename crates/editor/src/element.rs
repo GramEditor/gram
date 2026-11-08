@@ -7224,7 +7224,7 @@ fn header_jump_data(
 
 struct JumpTargetInExcerptInput<'a> {
     id: ExcerptId,
-    buffer: &'a language::BufferSnapshot,
+    buffer: &'a language::LanguageBufferSnapshot,
     excerpt_start_anchor: text::Anchor,
     jump_anchor: text::Anchor,
 }

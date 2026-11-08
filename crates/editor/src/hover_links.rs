@@ -631,7 +631,7 @@ fn link_pattern_file_candidates(candidate: &str) -> Vec<(String, Range<usize>)> 
 }
 
 fn surrounding_filename(
-    snapshot: &language::BufferSnapshot,
+    snapshot: &language::LanguageBufferSnapshot,
     position: text::Anchor,
 ) -> Option<(Range<text::Anchor>, String)> {
     const LIMIT: usize = 2048;

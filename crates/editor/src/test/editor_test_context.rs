@@ -12,7 +12,7 @@ use gpui::{
     WindowHandle, prelude::*,
 };
 use itertools::Itertools;
-use language::{Buffer, BufferSnapshot, LanguageRegistry};
+use language::{Buffer, LanguageBufferSnapshot, LanguageRegistry};
 use multi_buffer::{Anchor, ExcerptRange, MultiBufferOffset, MultiBufferRow};
 use parking_lot::RwLock;
 use project::{FakeFs, Project};
@@ -211,7 +211,7 @@ impl EditorTestContext {
         })
     }
 
-    pub fn buffer_snapshot(&mut self) -> BufferSnapshot {
+    pub fn buffer_snapshot(&mut self) -> LanguageBufferSnapshot {
         self.buffer(|buffer, _| buffer.snapshot())
     }
 
@@ -609,7 +609,7 @@ impl EditorTestContext {
 struct FormatMultiBufferAsMarkedText {
     multibuffer_snapshot: MultiBufferSnapshot,
     selections: Vec<Selection<Anchor>>,
-    excerpts: Vec<(ExcerptId, BufferSnapshot, ExcerptRange<text::Anchor>, bool)>,
+    excerpts: Vec<(ExcerptId, LanguageBufferSnapshot, ExcerptRange<text::Anchor>, bool)>,
 }
 
 impl std::fmt::Display for FormatMultiBufferAsMarkedText {

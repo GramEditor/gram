@@ -5,7 +5,7 @@ use multi_buffer::{BufferOffset, MultiBuffer, ToOffset};
 use std::ops::Range;
 use util::ResultExt as _;
 
-use language::{BufferSnapshot, JsxTagAutoCloseConfig, Node};
+use language::{JsxTagAutoCloseConfig, LanguageBufferSnapshot, Node};
 use text::{Anchor, OffsetRangeExt as _};
 
 use crate::{Editor, SelectionEffects};
@@ -28,7 +28,7 @@ const TS_NODE_TAG_NAME_CHILD_INDEX: u32 = 0;
 const ALREADY_CLOSED_PARENT_ELEMENT_WALK_BACK_LIMIT: usize = 2;
 
 pub(crate) fn should_auto_close(
-    buffer: &BufferSnapshot,
+    buffer: &LanguageBufferSnapshot,
     edited_ranges: &[Range<Anchor>],
     config: &JsxTagAutoCloseConfig,
 ) -> Option<Vec<JsxTagCompletionState>> {
@@ -91,7 +91,7 @@ pub(crate) fn should_auto_close(
 }
 
 pub(crate) fn generate_auto_close_edits(
-    buffer: &BufferSnapshot,
+    buffer: &LanguageBufferSnapshot,
     ranges: &[Range<Anchor>],
     config: &JsxTagAutoCloseConfig,
     state: Vec<JsxTagCompletionState>,

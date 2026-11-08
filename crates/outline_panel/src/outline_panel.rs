@@ -20,7 +20,7 @@ use gpui::{
     UniformListScrollHandle, WeakEntity, Window, actions, anchored, deferred, div, point, px, size, uniform_list,
 };
 use itertools::Itertools;
-use language::{Anchor, BufferId, BufferSnapshot, OffsetRangeExt, OutlineItem};
+use language::{Anchor, BufferId, LanguageBufferSnapshot, OffsetRangeExt, OutlineItem};
 use menu::{Cancel, SelectFirst, SelectLast, SelectNext, SelectPrevious};
 use std::{
     cmp,
@@ -3158,7 +3158,13 @@ impl OutlinePanel {
     fn excerpt_fetch_ranges(
         &self,
         cx: &App,
-    ) -> HashMap<BufferId, (BufferSnapshot, HashMap<ExcerptId, ExcerptRange<language::Anchor>>)> {
+    ) -> HashMap<
+        BufferId,
+        (
+            LanguageBufferSnapshot,
+            HashMap<ExcerptId, ExcerptRange<language::Anchor>>,
+        ),
+    > {
         self.fs_entries
             .iter()
             .fold(HashMap::default(), |mut excerpts_to_fetch, fs_entry| {
@@ -3199,7 +3205,7 @@ impl OutlinePanel {
             })
     }
 
-    fn buffer_snapshot_for_id(&self, buffer_id: BufferId, cx: &App) -> Option<BufferSnapshot> {
+    fn buffer_snapshot_for_id(&self, buffer_id: BufferId, cx: &App) -> Option<LanguageBufferSnapshot> {
         let editor = self.active_editor()?;
         Some(editor.read(cx).buffer().read(cx).buffer(buffer_id)?.read(cx).snapshot())
     }

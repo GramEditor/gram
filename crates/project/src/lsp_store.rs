@@ -55,8 +55,8 @@ use gpui::{App, AppContext, AsyncApp, Context, Entity, EventEmitter, PromptLevel
 use http_client::HttpClient;
 use itertools::Itertools as _;
 use language::{
-    Bias, BinaryStatus, Buffer, BufferRow, BufferSnapshot, CachedLspAdapter, CodeLabel, Diagnostic, DiagnosticEntry,
-    DiagnosticSet, DiagnosticSourceKind, Diff, File as _, Language, LanguageName, LanguageRegistry, LocalFile,
+    Bias, BinaryStatus, Buffer, BufferRow, CachedLspAdapter, CodeLabel, Diagnostic, DiagnosticEntry, DiagnosticSet,
+    DiagnosticSourceKind, Diff, File as _, Language, LanguageBufferSnapshot, LanguageName, LanguageRegistry, LocalFile,
     LspAdapter, LspAdapterDelegate, LspInstaller, ManifestDelegate, ManifestName, Patch, PointUtf16,
     TextBufferSnapshot, ToOffset, ToPointUtf16, Toolchain, Transaction, Unclipped,
     language_settings::{FormatOnSave, Formatter, LanguageSettings, language_settings},
@@ -5956,7 +5956,7 @@ impl LspStore {
 
     async fn regenerate_completion_labels(
         adapter: Arc<CachedLspAdapter>,
-        snapshot: &BufferSnapshot,
+        snapshot: &LanguageBufferSnapshot,
         completions: Rc<RefCell<Box<[Completion]>>>,
         completion_index: usize,
     ) -> Result<()> {
@@ -12162,7 +12162,7 @@ fn workspace_diagnostic_identifier(options: &DiagnosticServerCapabilities) -> Op
     }
 }
 
-fn resolve_word_completion(snapshot: &BufferSnapshot, completion: &mut Completion) {
+fn resolve_word_completion(snapshot: &LanguageBufferSnapshot, completion: &mut Completion) {
     let CompletionSource::BufferWord { word_range, resolved } = &mut completion.source else {
         return;
     };

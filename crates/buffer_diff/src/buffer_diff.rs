@@ -30,7 +30,7 @@ pub struct BufferDiff {
 #[derive(Clone)]
 pub struct BufferDiffSnapshot {
     revision: u64,
-    inner: BufferDiffInner<language::BufferSnapshot>,
+    inner: BufferDiffInner<language::LanguageBufferSnapshot>,
     secondary_diff: Option<Box<BufferDiffSnapshot>>,
 }
 
@@ -178,7 +178,7 @@ impl sum_tree::SeekTarget<'_, DiffHunkSummary, DiffHunkSummary> for Anchor {
     }
 }
 
-impl std::fmt::Debug for BufferDiffInner<language::BufferSnapshot> {
+impl std::fmt::Debug for BufferDiffInner<language::LanguageBufferSnapshot> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("BufferDiffSnapshot")
             .field("hunks", &self.hunks)
@@ -292,7 +292,7 @@ impl BufferDiffSnapshot {
         (range, base_text_range)
     }
 
-    pub fn base_text(&self) -> &language::BufferSnapshot {
+    pub fn base_text(&self) -> &language::LanguageBufferSnapshot {
         &self.inner.base_text
     }
 
@@ -560,7 +560,7 @@ impl BufferDiffInner<Entity<language::Buffer>> {
     }
 }
 
-impl BufferDiffInner<language::BufferSnapshot> {
+impl BufferDiffInner<language::LanguageBufferSnapshot> {
     fn hunks_intersecting_range<'a>(
         &'a self,
         range: Range<Anchor>,
@@ -1317,7 +1317,7 @@ impl BufferDiff {
         })
     }
 
-    pub fn base_text(&self, cx: &App) -> language::BufferSnapshot {
+    pub fn base_text(&self, cx: &App) -> language::LanguageBufferSnapshot {
         self.inner.base_text.read(cx).snapshot()
     }
 
@@ -2334,7 +2334,7 @@ mod tests {
         }
 
         fn uncommitted_diff(
-            working_copy: &language::BufferSnapshot,
+            working_copy: &language::LanguageBufferSnapshot,
             index_text: &Rope,
             head_text: String,
             cx: &mut TestAppContext,

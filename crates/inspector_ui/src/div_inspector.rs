@@ -8,7 +8,7 @@ use gpui::{
 };
 use language::language_settings::SoftWrap;
 use language::{
-    Anchor, Buffer, BufferSnapshot, CodeLabel, Diagnostic, DiagnosticEntry, DiagnosticSet, DiagnosticSeverity,
+    Anchor, Buffer, CodeLabel, Diagnostic, DiagnosticEntry, DiagnosticSet, DiagnosticSeverity, LanguageBufferSnapshot,
     LanguageServerId, Point, ToOffset as _, ToPoint as _,
 };
 use project::lsp_store::CompletionDocumentation;
@@ -339,7 +339,10 @@ impl DivInspector {
         }
     }
 
-    fn style_from_rust_buffer_snapshot(&self, snapshot: &BufferSnapshot) -> (StyleRefinement, Vec<Range<Anchor>>) {
+    fn style_from_rust_buffer_snapshot(
+        &self,
+        snapshot: &LanguageBufferSnapshot,
+    ) -> (StyleRefinement, Vec<Range<Anchor>>) {
         let method_names = if let Some((completion, completion_range)) = self
             .rust_completion
             .as_ref()
@@ -385,7 +388,7 @@ impl DivInspector {
     fn set_rust_buffer_diagnostics(
         unrecognized_ranges: Vec<Range<Anchor>>,
         rust_style_buffer: &mut Buffer,
-        snapshot: &BufferSnapshot,
+        snapshot: &LanguageBufferSnapshot,
         cx: &mut Context<Buffer>,
     ) {
         let diagnostic_entries = unrecognized_ranges
@@ -638,7 +641,7 @@ impl CompletionProvider for RustStyleCompletionProvider {
     }
 }
 
-fn completion_replace_range(snapshot: &BufferSnapshot, anchor: &Anchor) -> Option<Range<Anchor>> {
+fn completion_replace_range(snapshot: &LanguageBufferSnapshot, anchor: &Anchor) -> Option<Range<Anchor>> {
     let point = anchor.to_point(snapshot);
     let offset = point.to_offset(snapshot);
     let line_start = Point::new(point.row, 0).to_offset(snapshot);

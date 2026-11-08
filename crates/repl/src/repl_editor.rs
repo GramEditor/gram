@@ -6,7 +6,7 @@ use std::sync::Arc;
 use anyhow::{Context as _, Result};
 use editor::{Editor, MultiBufferOffset};
 use gpui::{App, Entity, WeakEntity, Window, prelude::*};
-use language::{BufferSnapshot, Language, LanguageName, Point};
+use language::{Language, LanguageBufferSnapshot, LanguageName, Point};
 use project::{ProjectItem as _, WorktreeId};
 
 use crate::repl_store::ReplStore;
@@ -315,7 +315,7 @@ pub fn setup_editor_session_actions(editor: &mut Editor, editor_handle: WeakEnti
         .detach();
 }
 
-fn cell_range(buffer: &BufferSnapshot, start_row: u32, end_row: u32) -> Range<Point> {
+fn cell_range(buffer: &LanguageBufferSnapshot, start_row: u32, end_row: u32) -> Range<Point> {
     let mut snippet_end_row = end_row;
     while buffer.is_line_blank(snippet_end_row) && snippet_end_row > start_row {
         snippet_end_row -= 1;
@@ -324,7 +324,7 @@ fn cell_range(buffer: &BufferSnapshot, start_row: u32, end_row: u32) -> Range<Po
 }
 
 // Returns the ranges of the snippets in the buffer and the next point for moving the cursor to
-fn jupytext_cells(buffer: &BufferSnapshot, range: Range<Point>) -> (Vec<Range<Point>>, Option<Point>) {
+fn jupytext_cells(buffer: &LanguageBufferSnapshot, range: Range<Point>) -> (Vec<Range<Point>>, Option<Point>) {
     let mut current_row = range.start.row;
 
     let Some(language) = buffer.language() else {
@@ -382,7 +382,11 @@ fn jupytext_cells(buffer: &BufferSnapshot, range: Range<Point>) -> (Vec<Range<Po
     (snippets, None)
 }
 
-fn runnable_ranges(buffer: &BufferSnapshot, range: Range<Point>, cx: &mut App) -> (Vec<Range<Point>>, Option<Point>) {
+fn runnable_ranges(
+    buffer: &LanguageBufferSnapshot,
+    range: Range<Point>,
+    cx: &mut App,
+) -> (Vec<Range<Point>>, Option<Point>) {
     if let Some(language) = buffer.language()
         && language.name() == "Markdown".into()
     {
@@ -439,7 +443,7 @@ fn runnable_ranges(buffer: &BufferSnapshot, range: Range<Point>, cx: &mut App) -
 
 // We allow markdown code blocks to end in a trailing newline in order to render the output
 // below the final code fence. This is different than our behavior for selections and Jupytext cells.
-fn markdown_code_blocks(buffer: &BufferSnapshot, range: Range<Point>, cx: &mut App) -> Vec<Range<Point>> {
+fn markdown_code_blocks(buffer: &LanguageBufferSnapshot, range: Range<Point>, cx: &mut App) -> Vec<Range<Point>> {
     buffer
         .injections_intersecting_range(range)
         .filter(|(_, language)| language_supported(language, cx))

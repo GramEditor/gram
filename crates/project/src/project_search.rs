@@ -13,7 +13,7 @@ use collections::HashSet;
 use fs::Fs;
 use futures::{SinkExt, StreamExt, select_biased, stream::FuturesOrdered};
 use gpui::{App, AppContext, AsyncApp, Entity, Task};
-use language::{Buffer, BufferSnapshot};
+use language::{Buffer, LanguageBufferSnapshot};
 use parking_lot::Mutex;
 use postage::oneshot;
 use rpc::{AnyProtoClient, proto};
@@ -481,7 +481,7 @@ impl Search {
         rx: Receiver<Entity<Buffer>>,
         find_all_matches_tx: Sender<(
             Entity<Buffer>,
-            BufferSnapshot,
+            LanguageBufferSnapshot,
             oneshot::Sender<(Entity<Buffer>, Vec<Range<language::Anchor>>)>,
         )>,
         results: Sender<oneshot::Receiver<(Entity<Buffer>, Vec<Range<language::Anchor>>)>>,
@@ -575,7 +575,7 @@ struct Worker {
     /// Then, when you're done, share them via the channel you were given.
     find_all_matches_rx: Receiver<(
         Entity<Buffer>,
-        BufferSnapshot,
+        LanguageBufferSnapshot,
         oneshot::Sender<(Entity<Buffer>, Vec<Range<language::Anchor>>)>,
     )>,
 }
@@ -658,7 +658,7 @@ impl RequestHandler<'_> {
         &self,
         (buffer, snapshot, mut report_matches): (
             Entity<Buffer>,
-            BufferSnapshot,
+            LanguageBufferSnapshot,
             oneshot::Sender<(Entity<Buffer>, Vec<Range<language::Anchor>>)>,
         ),
     ) {

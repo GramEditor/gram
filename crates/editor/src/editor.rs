@@ -18384,7 +18384,7 @@ impl Editor {
         self.open_excerpts_common(None, false, window, cx)
     }
 
-    fn can_open_excerpt_buffer(&self, buffer: &language::BufferSnapshot) -> bool {
+    fn can_open_excerpt_buffer(&self, buffer: &language::LanguageBufferSnapshot) -> bool {
         // An empty, fileless base in a split diff has no document to open.
         // Opening it as a project item would create an unrelated untitled tab.
         if self.diff_action_delegate.is_some() && buffer.file().is_none() && buffer.is_empty() {

@@ -3,7 +3,7 @@ use anyhow::Result;
 use fancy_regex::{Captures, Regex, RegexBuilder};
 use gpui::Entity;
 use itertools::Itertools as _;
-use language::{Buffer, BufferSnapshot, CharKind};
+use language::{Buffer, CharKind, LanguageBufferSnapshot};
 use rpc::proto;
 use smol::future::yield_now;
 use std::{
@@ -415,7 +415,7 @@ impl SearchQuery {
         }
     }
 
-    pub async fn search(&self, buffer: &BufferSnapshot, subrange: Option<Range<usize>>) -> Vec<Range<usize>> {
+    pub async fn search(&self, buffer: &LanguageBufferSnapshot, subrange: Option<Range<usize>>) -> Vec<Range<usize>> {
         const YIELD_INTERVAL: usize = 20000;
 
         if self.as_str().is_empty() {

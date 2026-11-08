@@ -5,7 +5,7 @@ use gpui::{
     App, Context, Entity, HighlightStyle, MouseButton, ScrollHandle, Size, StyledText, Task, TextStyle, Window,
     combine_highlights,
 };
-use language::BufferSnapshot;
+use language::LanguageBufferSnapshot;
 use markdown::style::MarkdownStyle;
 use markdown::{Markdown, MarkdownElement};
 use multi_buffer::{Anchor, MultiBufferOffset, ToOffset};
@@ -103,7 +103,7 @@ impl Editor {
             start..end
         };
         let not_quote_like_brackets =
-            |buffer: &BufferSnapshot, start: Range<BufferOffset>, end: Range<BufferOffset>| {
+            |buffer: &LanguageBufferSnapshot, start: Range<BufferOffset>, end: Range<BufferOffset>| {
                 let text_start = buffer.text_for_range(start).collect::<String>();
                 let text_end = buffer.text_for_range(end).collect::<String>();
                 QUOTE_PAIRS

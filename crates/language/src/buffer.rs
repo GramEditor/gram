@@ -181,7 +181,7 @@ struct BufferBranchState {
 
 /// An immutable, cheaply cloneable representation of a fixed
 /// state of a buffer.
-pub struct BufferSnapshot {
+pub struct LanguageBufferSnapshot {
     pub text: text::BufferSnapshot,
     pub syntax: SyntaxSnapshot,
     file: Option<Arc<dyn File>>,
@@ -513,7 +513,7 @@ pub enum AutoindentMode {
 
 #[derive(Clone)]
 struct AutoindentRequest {
-    before_edit: BufferSnapshot,
+    before_edit: LanguageBufferSnapshot,
     entries: Vec<AutoindentRequestEntry>,
     is_block_mode: bool,
     ignore_empty_lines: bool,
@@ -549,7 +549,7 @@ struct BufferChunkHighlights<'a> {
 /// An iterator that yields chunks of a buffer's text, along with their
 /// syntax highlights and diagnostic status.
 pub struct BufferChunks<'a> {
-    buffer_snapshot: Option<&'a BufferSnapshot>,
+    buffer_snapshot: Option<&'a LanguageBufferSnapshot>,
     range: Range<usize>,
     chunks: text::Chunks<'a>,
     diagnostic_endpoints: Option<Peekable<vec::IntoIter<DiagnosticEndpoint>>>,
@@ -793,7 +793,7 @@ impl EditPreview {
 
     pub fn highlight_edits(
         &self,
-        current_snapshot: &BufferSnapshot,
+        current_snapshot: &LanguageBufferSnapshot,
         edits: &[(Range<Anchor>, impl AsRef<str>)],
         include_deletions: bool,
         cx: &App,
@@ -1127,7 +1127,7 @@ impl Buffer {
         language: Option<Arc<Language>>,
         language_registry: Option<Arc<LanguageRegistry>>,
         cx: &mut App,
-    ) -> impl Future<Output = BufferSnapshot> + use<> {
+    ) -> impl Future<Output = LanguageBufferSnapshot> + use<> {
         let entity_id = cx.reserve_entity::<Self>().entity_id();
         let buffer_id = entity_id.as_non_zero_u64().into();
         async move {
@@ -1138,7 +1138,7 @@ impl Buffer {
                 syntax.reparse(&text, language_registry, language);
             }
             let tree_sitter_data = TreeSitterData::new(text.clone());
-            BufferSnapshot {
+            LanguageBufferSnapshot {
                 text,
                 syntax,
                 file: None,
@@ -1151,13 +1151,13 @@ impl Buffer {
         }
     }
 
-    pub fn build_empty_snapshot(cx: &mut App) -> BufferSnapshot {
+    pub fn build_empty_snapshot(cx: &mut App) -> LanguageBufferSnapshot {
         let entity_id = cx.reserve_entity::<Self>().entity_id();
         let buffer_id = entity_id.as_non_zero_u64().into();
         let text = TextBuffer::new_normalized(ReplicaId::LOCAL, buffer_id, Default::default(), Rope::new()).snapshot();
         let syntax = SyntaxMap::new(&text).snapshot();
         let tree_sitter_data = TreeSitterData::new(text.clone());
-        BufferSnapshot {
+        LanguageBufferSnapshot {
             text,
             syntax,
             tree_sitter_data: Arc::new(tree_sitter_data),
@@ -1175,7 +1175,7 @@ impl Buffer {
         language: Option<Arc<Language>>,
         language_registry: Option<Arc<LanguageRegistry>>,
         cx: &mut App,
-    ) -> BufferSnapshot {
+    ) -> LanguageBufferSnapshot {
         let entity_id = cx.reserve_entity::<Self>().entity_id();
         let buffer_id = entity_id.as_non_zero_u64().into();
         let text = TextBuffer::new_normalized(ReplicaId::LOCAL, buffer_id, Default::default(), text).snapshot();
@@ -1184,7 +1184,7 @@ impl Buffer {
             syntax.reparse(&text, language_registry, language);
         }
         let tree_sitter_data = TreeSitterData::new(text.clone());
-        BufferSnapshot {
+        LanguageBufferSnapshot {
             text,
             syntax,
             tree_sitter_data: Arc::new(tree_sitter_data),
@@ -1198,7 +1198,7 @@ impl Buffer {
 
     /// Retrieve a snapshot of the buffer's current state. This is computationally
     /// cheap, and allows reading from the buffer on a background thread.
-    pub fn snapshot(&self) -> BufferSnapshot {
+    pub fn snapshot(&self) -> LanguageBufferSnapshot {
         let text = self.text.snapshot();
         let mut syntax_map = self.syntax_map.lock();
         syntax_map.interpolate(&text);
@@ -1210,7 +1210,7 @@ impl Buffer {
             self.tree_sitter_data.clone()
         };
 
-        BufferSnapshot {
+        LanguageBufferSnapshot {
             text,
             syntax,
             tree_sitter_data,
@@ -3007,7 +3007,7 @@ impl Deref for Buffer {
     }
 }
 
-impl BufferSnapshot {
+impl LanguageBufferSnapshot {
     /// Returns [`IndentSize`] for a given line that respects user settings and
     /// language preferences.
     pub fn indent_size_for_line(&self, row: u32) -> IndentSize {
@@ -4829,7 +4829,7 @@ fn indent_size_for_text(text: impl Iterator<Item = char>) -> IndentSize {
     result
 }
 
-impl Clone for BufferSnapshot {
+impl Clone for LanguageBufferSnapshot {
     fn clone(&self) -> Self {
         Self {
             text: self.text.clone(),
@@ -4844,7 +4844,7 @@ impl Clone for BufferSnapshot {
     }
 }
 
-impl Deref for BufferSnapshot {
+impl Deref for LanguageBufferSnapshot {
     type Target = text::BufferSnapshot;
 
     fn deref(&self) -> &Self::Target {
@@ -4860,7 +4860,7 @@ impl<'a> BufferChunks<'a> {
         range: Range<usize>,
         syntax: Option<(SyntaxMapCaptures<'a>, Vec<HighlightMap>)>,
         diagnostics: bool,
-        buffer_snapshot: Option<&'a BufferSnapshot>,
+        buffer_snapshot: Option<&'a LanguageBufferSnapshot>,
     ) -> Self {
         let mut highlights = None;
         if let Some((captures, highlight_maps)) = syntax {

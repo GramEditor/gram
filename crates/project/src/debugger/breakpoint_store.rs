@@ -8,7 +8,7 @@ use collections::{BTreeMap, HashMap};
 use dap::{StackFrameId, client::SessionId};
 use gpui::{App, AppContext, AsyncApp, Context, Entity, EventEmitter, Subscription, Task};
 use itertools::Itertools;
-use language::{Buffer, BufferSnapshot, proto::serialize_anchor as serialize_text_anchor};
+use language::{Buffer, LanguageBufferSnapshot, proto::serialize_anchor as serialize_text_anchor};
 use rpc::{
     AnyProtoClient, TypedEnvelope,
     proto::{self},
@@ -543,7 +543,7 @@ impl BreakpointStore {
         &'a self,
         buffer: &'a Entity<Buffer>,
         range: Option<Range<text::Anchor>>,
-        buffer_snapshot: &'a BufferSnapshot,
+        buffer_snapshot: &'a LanguageBufferSnapshot,
         cx: &App,
     ) -> impl Iterator<Item = (&'a BreakpointWithPosition, Option<BreakpointSessionState>)> + 'a {
         let abs_path = Self::abs_path_from_buffer(buffer, cx);

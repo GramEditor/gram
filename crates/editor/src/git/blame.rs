@@ -12,7 +12,7 @@ use gpui::{
     Window,
 };
 use itertools::Itertools;
-use language::{Bias, BufferSnapshot, Edit};
+use language::{Bias, Edit, LanguageBufferSnapshot};
 use markdown::Markdown;
 use multi_buffer::{MultiBuffer, RowInfo};
 use project::{
@@ -69,7 +69,7 @@ impl<'a> sum_tree::Dimension<'a, GitBlameEntrySummary> for u32 {
 
 struct GitBlameBuffer {
     entries: SumTree<GitBlameEntry>,
-    buffer_snapshot: BufferSnapshot,
+    buffer_snapshot: LanguageBufferSnapshot,
     buffer_edits: text::Subscription<usize>,
     commit_details: HashMap<Oid, ParsedCommitMessage>,
 }
