@@ -13,7 +13,7 @@ use gpui::{
     PromptLevel, Render, SharedString, Task, TextStyleRefinement, WeakEntity,
 };
 
-use language::{CursorShape, Point};
+use language::CursorShape;
 use markdown::{Markdown, MarkdownElement, style::MarkdownStyle};
 use remote::{ConnectionIdentifier, RemoteClient, RemoteConnection, RemoteConnectionOptions, SshConnectionOptions};
 pub use settings::SshConnection;
@@ -669,7 +669,12 @@ pub async fn open_remote_project(
                                 active_editor.update(cx, |editor, cx| {
                                     let row = row.saturating_sub(1);
                                     let col = path.column.unwrap_or(0).saturating_sub(1);
-                                    editor.go_to_singleton_buffer_point(Point::new(row, col), window, cx);
+                                    let Some(buffer) = editor.buffer().read(cx).as_singleton() else {
+                                        return;
+                                    };
+                                    let buffer_snapshot = buffer.read(cx).snapshot();
+                                    let point = buffer_snapshot.point_from_external_input(row, col);
+                                    editor.go_to_singleton_buffer_point(point, window, cx);
                                 });
                             })
                             .ok();

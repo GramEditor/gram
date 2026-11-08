@@ -26,7 +26,6 @@ search.workspace = true
 serde.workspace = true
 settings.workspace = true
 shellexpand.workspace = true
-text.workspace = true
 theme.workspace = true
 ui.workspace = true
 util.workspace = true
