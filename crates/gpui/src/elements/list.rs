@@ -486,8 +486,8 @@ impl ListState {
     /// Set the offset from the scrollbar
     pub fn set_offset_from_scrollbar(&self, point: Point<Pixels>) {
         let mut state = self.0.borrow_mut();
-        state.set_offset_from_scrollbar(point);
         state.animation = None;
+        state.set_offset_from_scrollbar(point);
     }
 
     /// Returns the maximum scroll offset according to the items we have measured.
@@ -584,7 +584,9 @@ impl StateInner {
             start.height + scroll_top.offset_in_item
         };
 
-        self.set_logical_scroll_top(scroll_top_in_pixels - delta, height);
+        let content_height = self.items.summary().height;
+
+        self.set_logical_scroll_top(scroll_top_in_pixels - delta, height, content_height);
 
         let Some(handler) = self.scroll_handler.as_mut() else {
             return;
@@ -633,9 +635,9 @@ impl StateInner {
         })
     }
 
-    fn set_logical_scroll_top(&mut self, scroll_top_in_pixels: Pixels, height: Pixels) {
+    fn set_logical_scroll_top(&mut self, scroll_top_in_pixels: Pixels, height: Pixels, content_height: Pixels) {
         let padding = self.last_padding.unwrap_or_default();
-        let scroll_max = (self.items.summary().height + padding.top + padding.bottom - height).max(px(0.));
+        let scroll_max = (content_height + padding.top + padding.bottom - height).max(px(0.));
         let clamped_scroll_top = scroll_top_in_pixels.max(px(0.)).min(scroll_max);
 
         if self.alignment == ListAlignment::Bottom && clamped_scroll_top == scroll_max {
@@ -964,11 +966,15 @@ impl StateInner {
     // Scrollbar support
 
     fn set_offset_from_scrollbar(&mut self, point: Point<Pixels>) {
-        let height = self.items.summary().height;
+        let Some(bounds) = self.last_layout_bounds else {
+            return;
+        };
+        let height = bounds.size.height;
+        let content_height = self.items.summary().height;
         // if dragging the scrollbar, we want to offset the point if the height changed
-        let drag_offset = height - self.scrollbar_drag_start_height.unwrap_or(height);
+        let drag_offset = content_height - self.scrollbar_drag_start_height.unwrap_or(content_height);
 
-        self.set_logical_scroll_top((point.y - drag_offset).abs(), height);
+        self.set_logical_scroll_top((point.y - drag_offset).abs(), height, content_height);
     }
 }
 
