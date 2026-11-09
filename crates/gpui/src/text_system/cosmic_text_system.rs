@@ -218,7 +218,6 @@ impl CosmicTextSystemState {
 
         if cosmic_font.as_swash().charmap().map('m') == 0 && !allowed_bad_font_names.contains(&postscript_name.as_str())
         {
-            self.font_system.db_mut().remove_face(cosmic_font.id());
             anyhow::bail!("unusable font");
         };
 
