@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Changed
+
+- Increase contrast between search match and active match backgrounds (#717)
+
 ## [3.5.0] - 2026-11-09
 
 ## Added

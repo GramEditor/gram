@@ -225,7 +225,14 @@ impl ThemeFamily {
             AppearanceContent::Light => ThemeColors::light(),
             AppearanceContent::Dark => ThemeColors::dark(),
         };
-        let mut theme_colors_refinement = theme_colors_refinement(&theme.style.colors, &status_colors_refinement);
+        let mut theme_colors_refinement = theme_colors_refinement(
+            &theme.style.colors,
+            &status_colors_refinement,
+            match theme.appearance {
+                AppearanceContent::Light => Appearance::Light,
+                AppearanceContent::Dark => Appearance::Dark,
+            },
+        );
         apply_theme_color_defaults(&mut theme_colors_refinement, &refined_player_colors);
         refined_theme_colors.refine(&theme_colors_refinement);
 

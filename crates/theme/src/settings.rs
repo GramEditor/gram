@@ -503,6 +503,7 @@ impl ThemeSettings {
         base_theme.styles.colors.refine(&theme_colors_refinement(
             &theme_overrides.colors,
             &status_color_refinement,
+            base_theme.appearance,
         ));
         base_theme.styles.status.refine(&status_color_refinement);
         base_theme.styles.player.merge(&theme_overrides.players);

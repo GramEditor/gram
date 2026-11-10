@@ -6,7 +6,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 pub use settings::{FontWeightContent, WindowBackgroundContent};
 
-use crate::{StatusColorsRefinement, ThemeColorsRefinement};
+use crate::{Appearance, StatusColorsRefinement, ThemeColorsRefinement};
 
 fn ensure_non_opaque(color: Hsla) -> Hsla {
     const MAXIMUM_OPACITY: f32 = 0.7;
@@ -206,8 +206,14 @@ pub fn status_colors_refinement(colors: &settings::StatusColorsContent) -> Statu
 pub fn theme_colors_refinement(
     this: &settings::ThemeColorsContent,
     status_colors: &StatusColorsRefinement,
+    appearance: Appearance,
 ) -> ThemeColorsRefinement {
     let border = this.border.as_ref().and_then(|color| try_parse_color(color).ok());
+    let match_fallback = match appearance {
+        Appearance::Light => this.terminal_ansi_bright_magenta.as_ref(),
+        Appearance::Dark => this.terminal_ansi_bright_yellow.as_ref(),
+    }
+    .and_then(|color| try_parse_color(color).ok());
     let editor_document_highlight_read_background = this
         .editor_document_highlight_read_background
         .as_ref()
@@ -250,7 +256,7 @@ pub fn theme_colors_refinement(
         .search_active_match_background
         .as_ref()
         .and_then(|color| try_parse_color(color).ok())
-        .or(search_match_background);
+        .or(match_fallback);
     ThemeColorsRefinement {
         border,
         border_variant: this
@@ -779,7 +785,8 @@ mod tests {
             ..Default::default()
         };
 
-        let fallback_refinement = theme_colors_refinement(&ThemeColorsContent::default(), &status_colors);
+        let fallback_refinement =
+            theme_colors_refinement(&ThemeColorsContent::default(), &status_colors, Appearance::Dark);
 
         assert_eq!(fallback_refinement.vim_helix_jump_label_foreground, Some(status_error));
 
@@ -789,6 +796,7 @@ mod tests {
                 ..Default::default()
             },
             &status_colors,
+            Appearance::Dark,
         );
 
         assert_eq!(
