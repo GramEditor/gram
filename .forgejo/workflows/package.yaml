@@ -1,0 +1,59 @@
+# yaml-language-server: $schema=https://www.schemastore.org/github-workflow.json
+name: Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        type: string
+        required: true
+  release:
+    types: [published]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: "1"
+  CARGO_INCREMENTAL: "0"
+  RUSTUP_MAX_RETRIES: "10"
+  CARGO_NET_RETRY: "10"
+
+jobs:
+  publish:
+    name: Publish
+    if: github.event_name == 'workflow_dispatch' || !github.event.release.prerelease
+    runs-on: rust-22.04-amd64
+    environment: release
+    env:
+      CC: clang
+      CXX: clang++
+      CC_x86_64_unknown_linux_musl: musl-gcc
+      GRAM_RPM_COMPRESSION: gzip
+    steps:
+      - name: Code
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Dependencies
+        run: ./script/prepare-ci release
+
+      - name: Bundle Linux
+        run: ./script/bundle-linux --deb --rpm
+
+      - name: Package paths
+        id: set_package_paths
+        shell: bash
+        run: ./script/ci/package-paths
+
+      - name: Publish
+        env:
+          DEB_FILE: ${{ steps.set_package_paths.outputs.deb }}
+          RPM_FILE: ${{ steps.set_package_paths.outputs.rpm }}
+          TOKEN: ${{ secrets.CODEBERG_PACKAGE_TOKEN }}
+        run: ./script/ci/publish-packages

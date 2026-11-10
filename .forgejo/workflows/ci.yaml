@@ -114,13 +114,3 @@ jobs:
           name: ${{ steps.set_artifact_name.outputs.rpm_amd64 }}
           path: ${{ steps.set_artifact_name.outputs.rpm_amd64 }}
           compression-level: 0
-
-      - name: Publish packages
-        if: github.ref_type == 'tag'
-        env:
-          DEB_FILE: ${{ steps.set_artifact_name.outputs.deb_amd64 }}
-          RPM_FILE: ${{ steps.set_artifact_name.outputs.rpm_amd64 }}
-          CRATE_FILE: ${{ steps.gen_crate_dist.outputs.name }}
-          REF_NAME: ${{ github.ref_name }}
-          TOKEN: ${{ secrets.CODEBERG_PACKAGE_TOKEN }}
-        run: ./script/ci/publish-packages
