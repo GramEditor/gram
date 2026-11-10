@@ -34,6 +34,14 @@ impl MacDisplay {
         Self(screen_display_id(&screen))
     }
 
+    /// Get AppKit's active screen, which may differ from the primary screen.
+    pub fn focused() -> Option<Self> {
+        let mtm = MainThreadMarker::new().expect("Must be on the main thread");
+        let screen = NSScreen::mainScreen(mtm)?;
+        let display_id = screen_display_id(&screen);
+        (display_id != kCGNullDirectDisplay).then_some(Self(display_id))
+    }
+
     /// Obtains an iterator over all currently active system displays.
     pub fn all() -> impl Iterator<Item = Self> {
         unsafe {

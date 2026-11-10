@@ -1310,6 +1310,7 @@ impl Workspace {
         requesting_window: Option<WindowHandle<Workspace>>,
         env: Option<HashMap<String, String>>,
         activation_token: Option<String>,
+        display_id: Option<gpui::DisplayId>,
         init: Option<Box<dyn FnOnce(&mut Workspace, &mut Window, &mut Context<Workspace>) + Send>>,
         cx: &mut App,
     ) -> Task<
@@ -1444,6 +1445,17 @@ impl Workspace {
                 // Use the serialized workspace to construct the new window
                 let mut options = cx.update(|cx| (app_state.build_window_options)(display, cx))?;
                 options.window_bounds = window_bounds;
+                if window_bounds_override.is_none()
+                    && let Some(display_id) = display_id
+                    && options.display_id != Some(display_id)
+                    && let Some(display) = cx.update(|cx| cx.find_display(display_id))?
+                {
+                    options.display_id = Some(display_id);
+                    options.window_bounds = window_bounds.filter(|bounds| {
+                        let bounds = bounds.get_bounds();
+                        bounds.intersect(&display.visible_bounds()) == bounds
+                    });
+                }
                 let centered_layout = serialized_workspace
                     .as_ref()
                     .map(|w| w.centered_layout)
@@ -2038,7 +2050,7 @@ impl Workspace {
             Task::ready(Ok(callback(self, window, cx)))
         } else {
             let env = self.project.read(cx).cli_environment(cx);
-            let task = Self::new_local(Vec::new(), self.app_state.clone(), None, env, None, None, cx);
+            let task = Self::new_local(Vec::new(), self.app_state.clone(), None, env, None, None, None, cx);
             cx.spawn_in(window, async move |_vh, cx| {
                 let (workspace, _) = task.await?;
                 workspace.update(cx, callback)
@@ -5715,7 +5727,7 @@ pub async fn get_any_active_workspace(
     // find an existing workspace to focus and show call controls
     let active_window = activate_any_workspace_window(&mut cx);
     if active_window.is_none() {
-        cx.update(|cx| Workspace::new_local(vec![], app_state.clone(), None, None, None, None, cx))?
+        cx.update(|cx| Workspace::new_local(vec![], app_state.clone(), None, None, None, None, None, cx))?
             .await?;
     }
     activate_any_workspace_window(&mut cx).context("could not open gram")
@@ -5759,6 +5771,7 @@ pub struct OpenOptions {
     pub focus: Option<bool>,
     pub open_new_workspace: Option<bool>,
     pub prefer_focused_window: bool,
+    pub display_id: Option<gpui::DisplayId>,
     pub replace_window: Option<WindowHandle<Workspace>>,
     pub env: Option<HashMap<String, String>>,
     pub activation_token: Option<String>,
@@ -5875,6 +5888,7 @@ pub fn open_paths(
                     open_options.replace_window,
                     open_options.env,
                     open_options.activation_token,
+                    open_options.display_id,
                     None,
                     cx,
                 )
@@ -5926,6 +5940,7 @@ pub fn open_new(
         open_options.replace_window,
         open_options.env,
         open_options.activation_token,
+        open_options.display_id,
         Some(Box::new(init)),
         cx,
     );

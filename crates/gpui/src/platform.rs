@@ -93,6 +93,14 @@ pub fn platform_background_executor() -> BackgroundExecutor {
     WindowsPlatform::new_background_executor().unwrap()
 }
 
+/// Returns the focused display ID on macOS, falling back to the primary display.
+pub fn platform_focused_display_id() -> Option<DisplayId> {
+    cfg_select! {
+        target_os = "macos" => Some(MacDisplay::focused().unwrap_or_else(MacDisplay::primary).id()),
+        _ => None,
+    }
+}
+
 #[cfg(target_os = "macos")]
 pub(crate) fn current_platform(headless: bool) -> Rc<dyn Platform> {
     Rc::new(MacPlatform::new(headless))

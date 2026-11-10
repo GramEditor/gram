@@ -14,7 +14,7 @@ use fs::{Fs, RealFs};
 use futures::{StreamExt, channel::oneshot, future};
 use git::GitHostingProviderRegistry;
 use git_ui::clone::clone_and_open;
-use gpui::{App, AppContext, Application, AsyncApp, QuitMode, UpdateGlobal as _};
+use gpui::{App, AppContext, Application, AsyncApp, DisplayId, QuitMode, UpdateGlobal as _};
 
 use gpui_tokio::Tokio;
 use language::LanguageRegistry;
@@ -371,7 +371,7 @@ pub fn main() {
             cx.spawn({
                 let app_state = app_state;
                 async move |cx| {
-                    if let Err(e) = restore_or_create_workspace(app_state, cx).await {
+                    if let Err(e) = restore_or_create_workspace(app_state, None, cx).await {
                         fail_to_open_window_async(e, cx);
                     }
                 }
@@ -598,6 +598,7 @@ pub fn main() {
         cx.set_menus(menus);
         initialize_workspace(app_state.clone(), cx);
 
+        let startup_display = gpui::platform_focused_display_id();
         cx.activate();
 
         let urls: Vec<_> = args.paths_or_urls.iter().map(|arg| parse_url_arg(arg, cx)).collect();
@@ -625,7 +626,7 @@ pub fn main() {
             cx.spawn({
                 let app_state = app_state.clone();
                 async move |cx| {
-                    if let Err(e) = restore_or_create_workspace(app_state, cx).await {
+                    if let Err(e) = restore_or_create_workspace(app_state, startup_display, cx).await {
                         fail_to_open_window_async(e, cx);
                     }
                 }
@@ -888,7 +889,11 @@ fn handle_open_request(request: OpenRequest, app_state: Arc<AppState>, cx: &mut 
     }
 }
 
-async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp) -> Result<()> {
+async fn restore_or_create_workspace(
+    app_state: Arc<AppState>,
+    startup_display: Option<DisplayId>,
+    cx: &mut AsyncApp,
+) -> Result<()> {
     if let Some(locations) = restorable_workspace_locations(cx, &app_state).await {
         let use_system_window_tabs = cx
             .update(|cx| WorkspaceSettings::get_global(cx).use_system_window_tabs)
@@ -984,13 +989,15 @@ async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp
         cx.update(|cx| show_onboarding_view(app_state, cx))?.await?;
     } else {
         cx.update(|cx| {
-            workspace::open_new(Default::default(), app_state, cx, |workspace, window, cx| {
-                let restore_on_startup = WorkspaceSettings::get_global(cx).restore_on_startup;
-                match restore_on_startup {
-                    workspace::RestoreOnStartupBehavior::Launchpad => {}
-                    _ => {
-                        Editor::new_file(workspace, &Default::default(), window, cx);
-                    }
+            let launchpad =
+                WorkspaceSettings::get_global(cx).restore_on_startup == workspace::RestoreOnStartupBehavior::Launchpad;
+            let open_options = workspace::OpenOptions {
+                display_id: startup_display.filter(|_| launchpad),
+                ..Default::default()
+            };
+            workspace::open_new(open_options, app_state, cx, move |workspace, window, cx| {
+                if !launchpad {
+                    Editor::new_file(workspace, &Default::default(), window, cx);
                 }
             })
         })?

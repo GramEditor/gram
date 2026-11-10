@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Fixed
+
+- Improve workspace restoration logic when display layout changes (#699) by @jasonmader
+
 ## [3.5.1] - 2026-11-14
 
 ## Changed
