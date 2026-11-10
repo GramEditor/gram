@@ -11,12 +11,10 @@ elif [[ "$FORGEJO_REF_TYPE" == "branch" ]]; then
   debversion="$FORGEJO_SHA"
 fi
 
-find target -name '*.gz'
 rpm_name="$(find target -name '*.rpm' -print -quit)"
 deb_name="$(find target -name '*.deb' -print -quit)"
 
 if [[ -z "$rpm_name" || -z "$deb_name" ]]; then
-  echo "Error: RPM or DEB package not found" >&2
   exit 1
 fi
 
@@ -31,4 +29,4 @@ mv "$rpm_name" "./gram_${debversion}-1_x86_64.rpm"
   echo "remote_server_amd64=gram-remote-server-linux-x86_64${version}.gz"
   echo "deb_amd64=gram_${debversion}-1_x86_64.deb"
   echo "rpm_amd64=gram_${debversion}-1_x86_64.rpm"
-} >> "$FORGEJO_OUTPUT"
+} >>"$FORGEJO_OUTPUT"

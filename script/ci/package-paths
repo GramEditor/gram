@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+deb_path="$(find target -name '*.deb' -print -quit)"
+rpm_path="$(find target -name '*.rpm' -print -quit)"
+
+if [[ -z "$deb_path" || -z "$rpm_path" ]]; then
+  exit 1
+fi
+
+echo "deb: $deb_path"
+echo "rpm: $rpm_path"
+
+{
+  echo "deb=$deb_path"
+  echo "rpm=$rpm_path"
+} >>"${FORGEJO_OUTPUT:-$GITHUB_OUTPUT}"
