@@ -38,19 +38,19 @@ jobs:
       CXX: clang++
       CC_x86_64_unknown_linux_musl: musl-gcc
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
+      - name: Code
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Install dependencies
+      - name: Dependencies
         run: ./script/prepare-ci ci
 
-      - name: Check licenses
+      - name: Licenses
         run: ./script/check-licenses
 
-      - name: Cargo nextest
+      - name: Nextest
         run: cargo nextest run --workspace --no-fail-fast --success-output never --show-progress none
 
   release:
@@ -64,13 +64,13 @@ jobs:
       CC_x86_64_unknown_linux_musl: musl-gcc
       GRAM_RPM_COMPRESSION: gzip
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@f548e57e544e1ff5a4c46bf1e1b8685f8e4a348a # v7.0.1
+      - name: Code
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Install dependencies
+      - name: Dependencies
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
         run: ./script/prepare-ci release
 
@@ -78,7 +78,7 @@ jobs:
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
         run: ./script/bundle-linux --tarball --deb --rpm
 
-      - name: Set artifact name
+      - name: Artifact name
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
         id: set_artifact_name
         shell: bash
@@ -86,7 +86,7 @@ jobs:
 
       - name: Upload tarball
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
-        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
+        uses: forgejo/upload-artifact@v5
         with:
           name: ${{ steps.set_artifact_name.outputs.tarball_amd64 }}
           path: ${{ steps.set_artifact_name.outputs.tarball_amd64 }}
@@ -94,7 +94,7 @@ jobs:
 
       - name: Upload remote server
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
-        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
+        uses: forgejo/upload-artifact@v5
         with:
           name: ${{ steps.set_artifact_name.outputs.remote_server_amd64 }}
           path: ${{ steps.set_artifact_name.outputs.remote_server_amd64 }}
@@ -102,7 +102,7 @@ jobs:
 
       - name: Upload DEB
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
-        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
+        uses: forgejo/upload-artifact@v5
         with:
           name: ${{ steps.set_artifact_name.outputs.deb_amd64 }}
           path: ${{ steps.set_artifact_name.outputs.deb_amd64 }}
@@ -110,7 +110,7 @@ jobs:
 
       - name: Upload RPM
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
-        uses: forgejo/upload-artifact@cb8afe72b42edc798abfb8fcb556cf660d894245 # v5
+        uses: forgejo/upload-artifact@v5
         with:
           name: ${{ steps.set_artifact_name.outputs.rpm_amd64 }}
           path: ${{ steps.set_artifact_name.outputs.rpm_amd64 }}
