@@ -83,6 +83,8 @@ impl Pasteboard {
                 && let Some(path) = url.to_file_path()
             {
                 url_paths.push(path);
+            } else if let Some(url_str) = url.absoluteString() {
+                return Some(self.read_string(&url_str));
             }
             objects.next();
         }
@@ -288,6 +290,7 @@ impl UTType {
 #[cfg(test)]
 mod tests {
     use objc2_app_kit::NSPasteboardTypeFileURL;
+    use objc2_app_kit::NSPasteboardTypeURL;
 
     use crate::{ClipboardEntry, ClipboardItem, ClipboardString, MINIMAL_BMP};
 
@@ -296,6 +299,10 @@ mod tests {
     impl SafeNS {
         fn type_file_url() -> &'static NSPasteboardType {
             unsafe { NSPasteboardTypeFileURL }
+        }
+
+        fn type_url() -> &'static NSPasteboardType {
+            unsafe { NSPasteboardTypeURL }
         }
     }
 
@@ -322,6 +329,14 @@ mod tests {
         assert_eq!(
             pasteboard.read(),
             Some(ClipboardItem::new_string(text_from_other_app.to_string()))
+        );
+
+        let non_file_url = "https://gram-editor.com";
+        let bytes_data = NSString::from_str(non_file_url);
+        pasteboard.inner.setString_forType(&bytes_data, SafeNS::type_url());
+        assert_eq!(
+            pasteboard.read(),
+            Some(ClipboardItem::new_string(non_file_url.to_string()))
         );
     }
 
