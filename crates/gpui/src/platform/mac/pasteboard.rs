@@ -289,8 +289,7 @@ impl UTType {
 
 #[cfg(test)]
 mod tests {
-    use objc2_app_kit::NSPasteboardTypeFileURL;
-    use objc2_app_kit::NSPasteboardTypeURL;
+    use objc2_app_kit::{NSPasteboardTypeFileURL, NSPasteboardTypeURL};
 
     use crate::{ClipboardEntry, ClipboardItem, ClipboardString, MINIMAL_BMP};
 

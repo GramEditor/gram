@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Increase contrast between search match and active match backgrounds (#717)
 
+## Fixed
+
+- Fix pasting URLs copied from Safari (#720) by @pcantrell
+
 ## [3.5.0] - 2026-11-09
 
 ## Added
