@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Fixed
 
 - Fix pasting URLs copied from Safari (#720) by @pcantrell
+- Fix diacritic positioning using glyph offsets (#721) by @Holbormon
 
 ## [3.5.0] - 2026-11-09
 
