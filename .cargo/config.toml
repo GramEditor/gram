@@ -6,6 +6,9 @@ perf-test = ["test", "--profile", "release-fast", "--lib", "--bins", "--tests", 
 [env]
 MACOSX_DEPLOYMENT_TARGET = "10.15.7"
 
+[registry]
+global-min-publish-age = "7 days"
+
 # `windows_slim_errors` will reduce the size of `windows::core::Error` from 16 bytes to 4 bytes
 [target.'cfg(target_os = "windows")']
 rustflags = ["--cfg", "windows_slim_errors", "-C", "target-feature=+crt-static"]
