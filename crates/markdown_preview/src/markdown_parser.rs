@@ -296,7 +296,7 @@ impl<'a> MarkdownParser<'a> {
                             ));
 
                             regions.push((
-                                range.clone(),
+                                range,
                                 ParsedRegion {
                                     code: false,
                                     link: Some(Link::Web {
@@ -319,7 +319,7 @@ impl<'a> MarkdownParser<'a> {
                             new_highlight = false;
                         }
                         if new_highlight {
-                            highlights.push((last_run_len..text.len(), MarkdownHighlight::Style(style.clone())));
+                            highlights.push((last_run_len..text.len(), MarkdownHighlight::Style(style)));
                         }
                     }
                 }

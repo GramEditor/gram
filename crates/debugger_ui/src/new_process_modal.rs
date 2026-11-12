@@ -452,7 +452,7 @@ impl NewProcessModal {
                 };
 
                 for adapter in available_adapters.into_iter() {
-                    menu = menu.entry(adapter.0.clone(), None, setter_for_name(adapter.clone()));
+                    menu = menu.entry(adapter.0.clone(), None, setter_for_name(adapter));
                 }
 
                 menu

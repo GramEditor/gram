@@ -3334,7 +3334,7 @@ impl LocalLspStore {
                 .additional_initialization_options(adapter.name(), delegate)
                 .await
             {
-                merge_json_value_into(target_config.clone(), &mut initialization_config);
+                merge_json_value_into(target_config, &mut initialization_config);
             }
         }
 
@@ -3362,7 +3362,7 @@ impl LocalLspStore {
                 .additional_workspace_configuration(adapter.name(), delegate, cx)
                 .await
             {
-                merge_json_value_into(target_config.clone(), &mut workspace_config);
+                merge_json_value_into(target_config, &mut workspace_config);
             }
         }
 
@@ -4541,7 +4541,7 @@ impl LspStore {
                             worktree_path,
                             language.name(),
                             language.manifest(),
-                            delegate.clone(),
+                            delegate,
                             cx,
                         )
                         .collect::<Vec<_>>();
@@ -7342,7 +7342,7 @@ impl LspStore {
             .log_err()?;
         let next_snapshot = buffer.text_snapshot();
         for language_server in language_servers {
-            let language_server = language_server.clone();
+            let language_server = language_server;
 
             let buffer_snapshots = self
                 .as_local_mut()?

@@ -230,7 +230,7 @@ impl FoldMapWriter<'_> {
         let buffer = &snapshot.buffer;
         for range in ranges.into_iter() {
             let range = range.start.to_offset(buffer)..range.end.to_offset(buffer);
-            let mut folds_cursor = intersecting_folds(&snapshot, &self.0.snapshot.folds, range.clone(), inclusive);
+            let mut folds_cursor = intersecting_folds(&snapshot, &self.0.snapshot.folds, range, inclusive);
             while let Some(fold) = folds_cursor.item() {
                 let offset_range = fold.range.start.to_offset(buffer)..fold.range.end.to_offset(buffer);
                 if should_unfold(fold) {
@@ -289,7 +289,7 @@ impl FoldMapWriter<'_> {
                     inlay_snapshot.to_inlay_offset(buffer_start)..inlay_snapshot.to_inlay_offset(buffer_end);
                 edits.push(InlayEdit {
                     old: inlay_range.clone(),
-                    new: inlay_range.clone(),
+                    new: inlay_range,
                 });
 
                 self.0.snapshot.fold_metadata_by_id.insert(
@@ -1821,7 +1821,7 @@ mod tests {
             let (snapshot, edits) = map.read(inlay_snapshot.clone(), inlay_edits);
             snapshot_edits.push((snapshot.clone(), edits));
 
-            let mut expected_text: String = inlay_snapshot.text().to_string();
+            let mut expected_text: String = inlay_snapshot.text();
             for fold_range in map.merged_folds().into_iter().rev() {
                 let fold_inlay_start = inlay_snapshot.to_inlay_offset(fold_range.start);
                 let fold_inlay_end = inlay_snapshot.to_inlay_offset(fold_range.end);

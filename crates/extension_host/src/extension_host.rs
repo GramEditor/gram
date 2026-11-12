@@ -1010,7 +1010,7 @@ impl ExtensionStore {
                             this.proxy.register_language_server(
                                 extension.clone(),
                                 language_server_id.clone(),
-                                language.clone(),
+                                language,
                             );
                         }
                     }

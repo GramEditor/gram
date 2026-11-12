@@ -179,7 +179,7 @@ pub fn parse_markdown(
 
                 let mut last_len = parsed.len();
                 let mut ranges = vec![TextRange {
-                    source_range: range.clone(),
+                    source_range: range,
                     merged_range: 0..last_len,
                     parsed,
                 }];
@@ -190,7 +190,7 @@ pub fn parse_markdown(
                     };
                     let next_len = last_len + next_event.len();
                     ranges.push(TextRange {
-                        source_range: next_range.clone(),
+                        source_range: next_range,
                         merged_range: last_len..next_len,
                         parsed: next_event,
                     });
@@ -277,7 +277,7 @@ pub fn parse_markdown(
                             }),
                         ));
                         events.extend(link_events);
-                        events.push((link_range.clone(), MarkdownEvent::End(MarkdownTagEnd::Link)));
+                        events.push((link_range, MarkdownEvent::End(MarkdownTagEnd::Link)));
                     }
                 }
 
@@ -342,7 +342,7 @@ pub fn parse_links_only(text: &str) -> Vec<(Range<usize>, MarkdownEvent)> {
 
             if link.start() > text_start {
                 let text_range = text_start..link.start();
-                events.push((text_range.clone(), MarkdownEvent::Text));
+                events.push((text_range, MarkdownEvent::Text));
                 text_start = link.end();
             }
 
@@ -357,7 +357,7 @@ pub fn parse_links_only(text: &str) -> Vec<(Range<usize>, MarkdownEvent)> {
                 }),
             ));
             events.push((link_range.clone(), MarkdownEvent::Text));
-            events.push((link_range.clone(), MarkdownEvent::End(MarkdownTagEnd::Link)));
+            events.push((link_range, MarkdownEvent::End(MarkdownTagEnd::Link)));
             link_end = link.end();
 
             // Consume the link
@@ -369,7 +369,7 @@ pub fn parse_links_only(text: &str) -> Vec<(Range<usize>, MarkdownEvent)> {
             events.push((text_range, MarkdownEvent::Text));
         }
 
-        events.push((paragraph_range.clone(), MarkdownEvent::End(MarkdownTagEnd::Paragraph)));
+        events.push((paragraph_range, MarkdownEvent::End(MarkdownTagEnd::Paragraph)));
     }
 
     events

@@ -4028,7 +4028,7 @@ impl Editor {
                     {
                         for (buffer, edits) in ranges {
                             linked_edits
-                                .entry(buffer.clone())
+                                .entry(buffer)
                                 .or_default()
                                 .extend(edits.into_iter().map(|range| (range, text.clone())));
                         }
@@ -5471,7 +5471,7 @@ impl Editor {
                 {
                     for (buffer, edits) in ranges {
                         linked_edits
-                            .entry(buffer.clone())
+                            .entry(buffer)
                             .or_default()
                             .extend(edits.into_iter().map(|range| (range, new_text.to_owned())));
                     }
@@ -7026,7 +7026,7 @@ impl Editor {
         // Fill in the environmental variables from the tree-sitter captures
         let mut captured_task_variables = TaskVariables::default();
         for (capture_name, value) in tasks.extra_variables.clone() {
-            captured_task_variables.insert(task::VariableName::Custom(capture_name.into()), value.clone());
+            captured_task_variables.insert(task::VariableName::Custom(capture_name.into()), value);
         }
         project.update(cx, |project, cx| {
             project.task_store().update(cx, |task_store, cx| {
@@ -19529,7 +19529,7 @@ fn update_uncommitted_diff_for_buffer(
     project.update(cx, |project, cx| {
         for buffer in buffers {
             if project::File::from_dyn(buffer.read(cx).file()).is_some() {
-                tasks.push(project.open_uncommitted_diff(buffer.clone(), cx))
+                tasks.push(project.open_uncommitted_diff(buffer, cx))
             }
         }
     });

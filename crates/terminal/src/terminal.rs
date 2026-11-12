@@ -2602,7 +2602,7 @@ mod tests {
 
         let mut all_events = Vec::new();
         while let Ok(Ok(new_event)) = smol_timeout(Duration::from_millis(500), event_rx.recv()).await {
-            all_events.push(new_event.clone());
+            all_events.push(new_event);
         }
 
         assert!(

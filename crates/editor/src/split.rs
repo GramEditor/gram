@@ -558,7 +558,7 @@ impl SplittableEditor {
                     let snapshot = primary_multibuffer.snapshot(cx);
                     let buffer = snapshot.buffer_for_excerpt(excerpt_id).unwrap();
                     let diff = primary_multibuffer.diff_for(buffer.remote_id());
-                    secondary.sync_path_excerpts(path.clone(), primary_multibuffer, diff, cx);
+                    secondary.sync_path_excerpts(path, primary_multibuffer, diff, cx);
                 }
             })
         });

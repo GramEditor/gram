@@ -99,7 +99,7 @@ pub fn replace_value_in_json_text<T: AsRef<str>>(
         first_key_start.get_or_insert(key_range.start);
 
         let found_key = text
-            .get(key_range.clone())
+            .get(key_range)
             .zip(key_path.get(depth))
             .and_then(|(key_text, key_path_value)| {
                 serde_json::to_string(key_path_value.as_ref())

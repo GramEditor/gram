@@ -130,7 +130,7 @@ impl OpenRequest {
                 } else {
                     path.to_string()
                 };
-                this.kind = Some(OpenRequestKind::Docs { path: path.clone() });
+                this.kind = Some(OpenRequestKind::Docs { path });
             } else if let Some(clone_path) = url.strip_prefix("gram://git/clone") {
                 this.parse_git_clone_url(clone_path)?;
             } else if let Some(commit_path) = url.strip_prefix("gram://git/commit/") {

@@ -1533,8 +1533,8 @@ impl SettingsWindow {
     fn setup_navbar_focus_subscriptions(&mut self, window: &mut Window, cx: &mut Context<SettingsWindow>) {
         let mut focus_subscriptions = Vec::new();
 
-        for entry_index in 0..self.navbar_entries.len() {
-            let focus_handle = self.navbar_entries[entry_index].focus_handle.clone();
+        for (entry_index, entry) in self.navbar_entries.iter().enumerate().take(self.navbar_entries.len()) {
+            let focus_handle = entry.focus_handle.clone();
 
             let subscription = cx.on_focus(
                 &focus_handle,
@@ -1962,7 +1962,7 @@ impl SettingsWindow {
                 continue;
             };
 
-            missing_worktrees.push((worktree_id, directory_name.clone()));
+            missing_worktrees.push((worktree_id, directory_name));
             let path = RelPath::empty().to_owned().to_arc();
 
             let settings_ui_file = SettingsUiFile::Project((worktree_id, path));

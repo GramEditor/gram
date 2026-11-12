@@ -667,7 +667,7 @@ impl ProjectDiagnosticsEditor {
                 #[cfg(test)]
                 {
                     for (block_id, block) in block_ids.iter().zip(cloned_blocks.into_iter().flatten()) {
-                        let markdown = block.markdown.clone();
+                        let markdown = block.markdown;
                         editor::test::set_block_content_for_tests(&this.editor, *block_id, cx, move |cx| {
                             use markdown::style::MarkdownStyle;
 

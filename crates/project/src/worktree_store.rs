@@ -644,7 +644,7 @@ impl WorktreeStore {
             if let Some(old_worktree) = old_worktrees_by_id.remove(&WorktreeId::from_proto(worktree.id)) {
                 let push_strong_handle = self.retain_worktrees || old_worktree.read(cx).is_visible();
                 let handle = if push_strong_handle {
-                    WorktreeHandle::Strong(old_worktree.clone())
+                    WorktreeHandle::Strong(old_worktree)
                 } else {
                     WorktreeHandle::Weak(old_worktree.downgrade())
                 };

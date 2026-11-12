@@ -197,7 +197,7 @@ mod tests {
         for (color_str, _) in COLOR_TABLE.iter() {
             let color = extract_color(&CompletionItem {
                 kind: Some(CompletionItemKind::COLOR),
-                label: format!("{} foo", color_str).to_string(),
+                label: format!("{} foo", color_str),
                 detail: None,
                 documentation: None,
                 ..Default::default()
@@ -228,7 +228,7 @@ mod tests {
             let color = extract_color(&CompletionItem {
                 kind: Some(CompletionItemKind::COLOR),
                 label: "".to_string(),
-                detail: Some(format!("{} foo", color_str).to_string()),
+                detail: Some(format!("{} foo", color_str)),
                 documentation: None,
                 ..Default::default()
             });
@@ -244,7 +244,7 @@ mod tests {
                 kind: Some(CompletionItemKind::COLOR),
                 label: "".to_string(),
                 detail: None,
-                documentation: Some(Documentation::String(format!("{} foo", color_str).to_string())),
+                documentation: Some(Documentation::String(format!("{} foo", color_str))),
                 ..Default::default()
             });
 
@@ -259,7 +259,7 @@ mod tests {
                 kind: Some(CompletionItemKind::COLOR),
                 label: "".to_string(),
                 detail: None,
-                documentation: Some(Documentation::String(format!("foo {}", color_str).to_string())),
+                documentation: Some(Documentation::String(format!("foo {}", color_str))),
                 ..Default::default()
             });
 
@@ -274,7 +274,7 @@ mod tests {
                 kind: Some(CompletionItemKind::COLOR),
                 label: "".to_string(),
                 detail: None,
-                documentation: Some(Documentation::String(format!("foo {} foo", color_str).to_string())),
+                documentation: Some(Documentation::String(format!("foo {} foo", color_str))),
                 ..Default::default()
             });
 

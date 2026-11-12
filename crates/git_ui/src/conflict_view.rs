@@ -63,7 +63,7 @@ pub fn register_editor(editor: &mut Editor, buffer: Entity<MultiBuffer>, cx: &mu
                     continue;
                 };
                 let addon = editor.addon::<ConflictAddon>().unwrap();
-                let Some(conflict_set) = addon.conflict_set(buffer.remote_id()).clone() else {
+                let Some(conflict_set) = addon.conflict_set(buffer.remote_id()) else {
                     return;
                 };
                 excerpt_for_buffer_updated(editor, conflict_set, cx);
@@ -206,7 +206,7 @@ fn conflicts_updated(
             let Some(range) = snapshot.anchor_range_in_excerpt(excerpt_id, conflict_range) else {
                 continue;
             };
-            removed_highlighted_ranges.push(range.clone());
+            removed_highlighted_ranges.push(range);
             removed_block_ids.insert(block_id);
         }
 

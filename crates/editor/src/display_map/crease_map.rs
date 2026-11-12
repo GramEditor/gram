@@ -309,7 +309,7 @@ impl CreaseMap {
         let mut removals = Vec::new();
         for id in ids {
             if let Some(range) = self.id_to_range.remove(&id) {
-                removals.push((id, range.clone()));
+                removals.push((id, range));
             }
         }
         removals.sort_unstable_by(|(a_id, a_range), (b_id, b_range)| {

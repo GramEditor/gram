@@ -52,9 +52,8 @@ impl CornerSolver {
             return Pixels::ZERO;
         }
         let mut r = (self.root_radius - self.root_border - self.root_padding).max(Pixels::ZERO);
-        for i in 0..level {
-            let (b, p) = self.children[i];
-            r = (r - b - p).max(Pixels::ZERO);
+        for (b, p) in self.children.iter().take(level) {
+            r = (r - *b - *p).max(Pixels::ZERO);
         }
         r
     }

@@ -7164,7 +7164,6 @@ dependencies = [
  "log",
  "lsp",
  "node_runtime",
- "parking_lot",
  "paths",
  "serde",
  "serde_json",
@@ -9869,7 +9868,6 @@ name = "time_format"
 version = "3.5.0"
 dependencies = [
  "objc2-core-foundation",
- "sys-locale",
  "time",
 ]
 
