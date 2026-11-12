@@ -11,6 +11,8 @@ use theme::ThemeSettings;
 use ui::{Divider, DividerColor, DynamicSpacing, LabelSize, WithScrollbar, prelude::*, text_for_keystrokes};
 use workspace::{ModalView, Workspace};
 
+use app_actions::Spawn;
+
 use crate::FILTERED_KEYSTROKES;
 
 pub struct WhichKeyModal {
@@ -79,7 +81,10 @@ impl WhichKeyModal {
             .map(|(keystrokes, action)| {
                 // Map to remaining keystrokes and action name
                 let remaining_keystrokes = keystrokes[pending_keys.len()..].to_vec();
-                let action_name: SharedString = command_palette::humanize_action_name(action.name()).into();
+                let action_name: SharedString = match action.as_any().downcast_ref::<Spawn>() {
+                    Some(Spawn::ByName { task_name: name, .. } | Spawn::ByTag { task_tag: name, .. }) => name.into(),
+                    _ => command_palette::humanize_action_name(action.name()).into(),
+                };
                 (remaining_keystrokes, action_name)
             })
             .collect();

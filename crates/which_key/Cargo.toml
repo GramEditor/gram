@@ -12,6 +12,7 @@ path = "src/which_key.rs"
 test = false
 
 [dependencies]
+app_actions.workspace = true
 command_palette.workspace = true
 gpui.workspace = true
 settings.workspace = true
