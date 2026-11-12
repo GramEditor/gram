@@ -2334,6 +2334,7 @@ pub fn rgba_color(r: u8, g: u8, b: u8) -> Hsla {
 #[cfg(test)]
 mod tests {
     use rand::RngExt as _;
+    use settings::SettingsStore;
     use std::time::Duration;
 
     use super::*;
@@ -2468,6 +2469,12 @@ mod tests {
     #[cfg(target_os = "macos")]
     #[gpui::test(iterations = 10)]
     async fn test_terminal_eof(cx: &mut TestAppContext) {
+        cx.update(|cx| {
+            let settings = SettingsStore::test(cx);
+            cx.set_global(settings);
+            theme::init(theme::LoadThemes::JustBase, cx);
+        });
+
         let _guard = cx.executor().allow_parking();
 
         let (completion_tx, completion_rx) = smol::channel::unbounded();
