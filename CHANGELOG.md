@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.1] - 2026-11-14
+
+## Changed
+
+- Update embedded git binary to 2.56.1 (Mac OS)
+
 ## Fixed
 
 - Display user label for task key bindings in which-key popup (#723) by @Yo3-Y
