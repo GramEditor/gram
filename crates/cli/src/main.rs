@@ -432,6 +432,11 @@ fn main() -> Result<()> {
             use collections::HashMap;
             let activation_token = std::env::var("XDG_ACTIVATION_TOKEN").ok();
 
+            // IMPORTANT: This has to be done before any additional threads have been started.
+            unsafe {
+                std::env::remove_var("XDG_ACTIVATION_TOKEN");
+            }
+
             // On Linux, the desktop entry uses `cli` to spawn `gram`.
             // We need to handle env vars correctly since std::env::vars() may not contain
             // project-specific vars (e.g. those set by direnv).
@@ -862,7 +867,13 @@ mod flatpak {
     }
 
     fn get_xdg_env_args() -> Vec<OsString> {
-        let xdg_keys = ["XDG_DATA_HOME", "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_STATE_HOME"];
+        let xdg_keys = [
+            "XDG_DATA_HOME",
+            "XDG_CONFIG_HOME",
+            "XDG_CACHE_HOME",
+            "XDG_STATE_HOME",
+            "XDG_ACTIVATION_TOKEN",
+        ];
         env::vars()
             .filter(|(key, _)| xdg_keys.contains(&key.as_str()))
             .map(|(key, val)| format!("--env=FLATPAK_{}={}", key, val).into())
