@@ -802,6 +802,56 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                     files: USER,
                 }),
                 SettingsPageItem::SettingItem(SettingItem {
+                    title: "Smooth Cursor",
+                    description: "Whether the cursor smoothly animates when moving around the editor.",
+                    aliases: None,
+                    field: Box::new(SettingField {
+                        json_path: Some("smooth_cursor.enabled"),
+                        pick: |settings_content| {
+                            settings_content
+                                .editor
+                                .smooth_cursor
+                                .as_ref()?
+                                .enabled
+                                .as_ref()
+                        },
+                        write: |settings_content, value| {
+                            settings_content
+                                .editor
+                                .smooth_cursor
+                                .get_or_insert_default()
+                                .enabled = value;
+                        },
+                    }),
+                    metadata: None,
+                    files: USER,
+                }),
+                SettingsPageItem::SettingItem(SettingItem {
+                    title: "Smooth Cursor Duration Ms",
+                    description: "Duration in milliseconds for cursor movement.",
+                    aliases: None,
+                    field: Box::new(SettingField {
+                        json_path: Some("smooth_cursor.duration_ms"),
+                        pick: |settings_content| {
+                            settings_content
+                                .editor
+                                .smooth_cursor
+                                .as_ref()?
+                                .duration_ms
+                                .as_ref()
+                        },
+                        write: |settings_content, value| {
+                            settings_content
+                                .editor
+                                .smooth_cursor
+                                .get_or_insert_default()
+                                .duration_ms = value;
+                        },
+                    }),
+                    metadata: None,
+                    files: USER,
+                }),
+                SettingsPageItem::SettingItem(SettingItem {
                     title: "Hide Mouse",
                     description: "When to hide the mouse cursor.",
                     aliases: None,

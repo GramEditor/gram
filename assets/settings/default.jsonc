@@ -212,6 +212,13 @@
   //
   // Default: "bar"
   "cursor_shape": "bar",
+  // Smooth cursor movement settings.
+  "smooth_cursor": {
+    // Whether smooth cursor is enabled.
+    "enabled": false,
+    // Duration in milliseconds for cursor movement.
+    "duration_ms": 100,
+  },
   // Determines when the mouse cursor should be hidden in an editor or input box.
   //
   // 1. Never hide the mouse cursor:

@@ -24,6 +24,8 @@ pub struct EditorSettingsContent {
     ///
     /// Default: on_typing_and_movement
     pub hide_mouse: Option<HideMouseMode>,
+    /// Cursor movement animation settings.
+    pub smooth_cursor: Option<SmoothCursorSettingsContent>,
     /// Determines how snippets are sorted relative to other completion items.
     ///
     /// Default: inline
@@ -303,6 +305,19 @@ impl RelativeLineNumbers {
             RelativeLineNumbers::Wrapped => true,
         }
     }
+}
+
+#[with_fallible_options]
+#[derive(Clone, Default, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq)]
+pub struct SmoothCursorSettingsContent {
+    /// Whether smooth cursor is enabled.
+    ///
+    /// Default: false
+    pub enabled: Option<bool>,
+    /// Duration in milliseconds for cursor movement.
+    ///
+    /// Default: 100
+    pub duration_ms: Option<u64>,
 }
 
 // Toolbar related settings

@@ -37,6 +37,7 @@ mod persistence;
 mod rust_analyzer_ext;
 pub mod scroll;
 mod selections_collection;
+mod smooth_cursor;
 mod split;
 pub mod tasks;
 
@@ -156,6 +157,7 @@ use settings::{
     update_settings_file,
 };
 use smallvec::{SmallVec, smallvec};
+use smooth_cursor::SmoothCursorStates;
 use snippet::Snippet;
 use std::{
     any::{Any, TypeId},
@@ -914,6 +916,7 @@ pub struct Editor {
     read_only: bool,
     use_modal_editing: bool,
     blink_manager: Entity<BlinkManager>,
+    smooth_cursors: SmoothCursorStates,
 
     // Display Map & Text Rendering
     /// Map of how text in the buffer should be displayed.
@@ -2045,6 +2048,7 @@ impl Editor {
             semantics_provider: project.clone().map(|project| Rc::new(project) as _),
             project,
             blink_manager: blink_manager.clone(),
+            smooth_cursors: SmoothCursorStates::default(),
             show_local_selections: true,
             show_scrollbars: ScrollbarAxes {
                 horizontal: full_mode,
@@ -18784,6 +18788,7 @@ impl Editor {
     }
 
     fn handle_focus(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.smooth_cursors.clear();
         cx.emit(EditorEvent::Focused);
 
         if let Some(descendant) = self
@@ -18838,6 +18843,7 @@ impl Editor {
     }
 
     pub fn handle_blur(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.smooth_cursors.clear();
         self.blink_manager.update(cx, BlinkManager::disable);
         self.buffer.update(cx, |buffer, cx| buffer.remove_active_selections(cx));
 
