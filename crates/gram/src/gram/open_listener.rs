@@ -376,6 +376,7 @@ pub async fn handle_cli_connection(
                 reuse,
                 env,
                 user_data_dir: _,
+                activation_token,
             } => {
                 if !urls.is_empty() {
                     cx.update(
@@ -407,6 +408,7 @@ pub async fn handle_cli_connection(
                     wait,
                     app_state.clone(),
                     env,
+                    activation_token,
                     cx,
                 )
                 .await;
@@ -430,6 +432,7 @@ async fn open_workspaces(
     wait: bool,
     app_state: Arc<AppState>,
     env: Option<collections::HashMap<String, String>>,
+    activation_token: Option<String>,
     cx: &mut AsyncApp,
 ) -> Result<()> {
     let grouped_locations = if paths.is_empty() && diff_paths.is_empty() {
@@ -453,6 +456,7 @@ async fn open_workspaces(
             cx.update(|cx| {
                 let open_options = OpenOptions {
                     env,
+                    activation_token,
                     ..Default::default()
                 };
                 workspace::open_new(open_options, app_state, cx, |workspace, window, cx| {
@@ -487,7 +491,8 @@ async fn open_workspaces(
                         reuse,
                         wait,
                         responses,
-                        env.as_ref(),
+                        env.clone(),
+                        activation_token.clone(),
                         &app_state,
                         cx,
                     )
@@ -502,12 +507,16 @@ async fn open_workspaces(
                     if let RemoteConnectionOptions::Ssh(options) = &mut connection {
                         cx.update(|cx| SshSettings::get_global(cx).fill_connection_options_from_settings(options))?;
                     }
+                    let activation_token = activation_token.clone();
                     cx.spawn(async move |cx| {
                         open_remote_project(
                             connection,
                             workspace_paths.paths().to_vec(),
                             app_state,
-                            OpenOptions::default(),
+                            OpenOptions {
+                                activation_token,
+                                ..Default::default()
+                            },
                             cx,
                         )
                         .await
@@ -531,7 +540,8 @@ async fn open_local_workspace(
     reuse: bool,
     wait: bool,
     responses: &IpcSender<CliResponse>,
-    env: Option<&HashMap<String, String>>,
+    env: Option<HashMap<String, String>>,
+    activation_token: Option<String>,
     app_state: &Arc<AppState>,
     cx: &mut AsyncApp,
 ) -> bool {
@@ -557,7 +567,8 @@ async fn open_local_workspace(
             open_new_workspace,
             replace_window,
             prefer_focused_window: wait,
-            env: env.cloned(),
+            env,
+            activation_token,
             ..Default::default()
         },
         cx,
@@ -810,6 +821,7 @@ mod tests {
                     true,
                     &response_tx,
                     None,
+                    None,
                     &app_state,
                     &mut cx,
                 )
@@ -896,6 +908,7 @@ mod tests {
                     false,
                     &response_tx,
                     None,
+                    None,
                     &app_state,
                     &mut cx,
                 )
@@ -961,6 +974,7 @@ mod tests {
                         false,
                         &response_tx,
                         None,
+                        None,
                         &app_state,
                         &mut cx,
                     )
@@ -984,6 +998,7 @@ mod tests {
                         true, // reuse = true
                         false,
                         &response_tx,
+                        None,
                         None,
                         &app_state,
                         &mut cx,

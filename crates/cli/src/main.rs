@@ -426,10 +426,11 @@ fn main() -> Result<()> {
         None
     };
 
-    let env = {
+    let (env, activation_token) = {
         #[cfg(any(target_os = "linux", target_os = "freebsd"))]
         {
             use collections::HashMap;
+            let activation_token = std::env::var("XDG_ACTIVATION_TOKEN").ok();
 
             // On Linux, the desktop entry uses `cli` to spawn `gram`.
             // We need to handle env vars correctly since std::env::vars() may not contain
@@ -437,9 +438,9 @@ fn main() -> Result<()> {
             // By setting env to None here, the LSP will use worktree env vars instead,
             // which is what we want.
             if !std::io::stdout().is_terminal() {
-                None
+                (None, activation_token)
             } else {
-                Some(std::env::vars().collect::<HashMap<_, _>>())
+                (Some(std::env::vars().collect::<HashMap<_, _>>()), activation_token)
             }
         }
 
@@ -447,14 +448,14 @@ fn main() -> Result<()> {
         {
             // On Windows, by default, a child process inherits a copy of the environment block of the parent process.
             // So we don't need to pass env vars explicitly.
-            None
+            (None, None)
         }
 
         #[cfg(not(any(target_os = "linux", target_os = "freebsd", target_os = "windows")))]
         {
             use collections::HashMap;
 
-            Some(std::env::vars().collect::<HashMap<_, _>>())
+            (Some(std::env::vars().collect::<HashMap<_, _>>()), None)
         }
     };
 
@@ -525,6 +526,7 @@ fn main() -> Result<()> {
                     reuse: args.reuse,
                     env,
                     user_data_dir: user_data_dir_for_thread,
+                    activation_token,
                 })?;
 
                 while let Ok(response) = rx.recv() {

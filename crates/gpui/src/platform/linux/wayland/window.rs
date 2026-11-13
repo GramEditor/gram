@@ -118,6 +118,7 @@ pub struct WaylandWindowState {
     in_progress_window_controls: Option<WindowControls>,
     window_controls: WindowControls,
     client_inset: Option<Pixels>,
+    activation_token: Option<String>,
 }
 
 pub enum WaylandSurfaceState {
@@ -343,6 +344,7 @@ impl WaylandWindowState {
             in_progress_window_controls: None,
             window_controls: WindowControls::default(),
             client_inset: None,
+            activation_token: None,
         })
     }
 
@@ -1095,19 +1097,30 @@ impl PlatformWindow for WaylandWindow {
     }
 
     fn activate(&self) {
-        // Try to request an activation token. Even though the activation is likely going to be rejected,
-        // KWin and Mutter can use the app_id to visually indicate we're requesting attention.
-        let state = self.borrow();
-        if let (Some(activation), Some(app_id)) = (&state.globals.activation, state.app_id.clone()) {
-            state.client.set_pending_activation(state.surface.id());
-            let token = activation.get_activation_token(&state.globals.qh, ());
-            // The serial isn't exactly important here, since the activation is probably going to be rejected anyway.
-            let serial = state.client.get_serial(SerialKind::MousePress);
-            token.set_app_id(app_id);
-            token.set_serial(serial, &state.globals.seat);
-            token.set_surface(&state.surface);
-            token.commit();
+        let mut state = self.borrow_mut();
+        if let Some(activation_token) = state.activation_token.take()
+            && let Some(activation) = &state.globals.activation
+        {
+            activation.activate(activation_token, &state.surface);
+        } else {
+            // Try to request an activation token. Even though the activation is likely going to be rejected,
+            // KWin and Mutter can use the app_id to visually indicate we're requesting attention.
+            if let (Some(activation), Some(app_id)) = (&state.globals.activation, state.app_id.clone()) {
+                state.client.set_pending_activation(state.surface.id());
+                let token = activation.get_activation_token(&state.globals.qh, ());
+                // The serial isn't exactly important here, since the activation is probably going to be rejected anyway.
+                let serial = state.client.get_serial(SerialKind::MousePress);
+                token.set_app_id(app_id);
+                token.set_serial(serial, &state.globals.seat);
+                token.set_surface(&state.surface);
+                token.commit();
+            }
         }
+    }
+
+    fn set_activation_token(&self, token: &str) {
+        let mut state = self.borrow_mut();
+        state.activation_token = Some(token.to_string());
     }
 
     fn is_active(&self) -> bool {

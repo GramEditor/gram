@@ -453,6 +453,7 @@ pub(crate) trait PlatformWindow: HasWindowHandle + HasDisplayHandle {
     fn inner_window_bounds(&self) -> WindowBounds {
         self.window_bounds()
     }
+    fn set_activation_token(&self, _token: &str) {}
     fn request_decorations(&self, _decorations: WindowDecorations) {}
     fn show_window_menu(&self, _position: Point<Pixels>) {}
     fn start_window_move(&self) {}

@@ -20,6 +20,7 @@ pub enum CliRequest {
         reuse: bool,
         env: Option<HashMap<String, String>>,
         user_data_dir: Option<String>,
+        activation_token: Option<String>,
     },
 }
 
