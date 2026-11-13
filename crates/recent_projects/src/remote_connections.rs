@@ -530,6 +530,13 @@ pub async fn open_remote_project(
         })?
     };
 
+    if let Some(activation_token) = open_options.activation_token {
+        window.update(cx, |_workspace, window, _cx| {
+            window.set_activation_token(&activation_token);
+            window.activate_window();
+        })?;
+    }
+
     loop {
         let (cancel_tx, cancel_rx) = oneshot::channel();
         let delegate = window.update(cx, {

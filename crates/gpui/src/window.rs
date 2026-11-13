@@ -4197,6 +4197,11 @@ impl Window {
         subscription
     }
 
+    /// Sets activation token to be used for next window activation.
+    pub fn set_activation_token(&self, token: &str) {
+        self.platform_window.set_activation_token(token);
+    }
+
     /// Focus the current window and bring it to the foreground at the platform level.
     pub fn activate_window(&self) {
         self.platform_window.activate();

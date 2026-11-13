@@ -1309,6 +1309,7 @@ impl Workspace {
         app_state: Arc<AppState>,
         requesting_window: Option<WindowHandle<Workspace>>,
         env: Option<HashMap<String, String>>,
+        activation_token: Option<String>,
         init: Option<Box<dyn FnOnce(&mut Workspace, &mut Window, &mut Context<Workspace>) + Send>>,
         cx: &mut App,
     ) -> Task<
@@ -1466,6 +1467,13 @@ impl Workspace {
                     }
                 })?
             };
+
+            if let Some(activation_token) = activation_token {
+                window.update(cx, |_workspace, window, _cx| {
+                    window.set_activation_token(&activation_token);
+                    window.activate_window();
+                })?;
+            }
 
             notify_if_database_failed(window, cx);
             // Check if this is an empty workspace (no paths to open)
@@ -2030,7 +2038,7 @@ impl Workspace {
             Task::ready(Ok(callback(self, window, cx)))
         } else {
             let env = self.project.read(cx).cli_environment(cx);
-            let task = Self::new_local(Vec::new(), self.app_state.clone(), None, env, None, cx);
+            let task = Self::new_local(Vec::new(), self.app_state.clone(), None, env, None, None, cx);
             cx.spawn_in(window, async move |_vh, cx| {
                 let (workspace, _) = task.await?;
                 workspace.update(cx, callback)
@@ -5707,7 +5715,7 @@ pub async fn get_any_active_workspace(
     // find an existing workspace to focus and show call controls
     let active_window = activate_any_workspace_window(&mut cx);
     if active_window.is_none() {
-        cx.update(|cx| Workspace::new_local(vec![], app_state.clone(), None, None, None, cx))?
+        cx.update(|cx| Workspace::new_local(vec![], app_state.clone(), None, None, None, None, cx))?
             .await?;
     }
     activate_any_workspace_window(&mut cx).context("could not open gram")
@@ -5753,6 +5761,7 @@ pub struct OpenOptions {
     pub prefer_focused_window: bool,
     pub replace_window: Option<WindowHandle<Workspace>>,
     pub env: Option<HashMap<String, String>>,
+    pub activation_token: Option<String>,
 }
 
 #[allow(clippy::type_complexity)]
@@ -5832,6 +5841,9 @@ pub fn open_paths(
         let result = if let Some(existing) = existing {
             let open_task = existing
                 .update(cx, |workspace, window, cx| {
+                    if let Some(activation_token) = &open_options.activation_token {
+                        window.set_activation_token(activation_token);
+                    }
                     window.activate_window();
                     workspace.open_paths(
                         abs_paths,
@@ -5862,6 +5874,7 @@ pub fn open_paths(
                     app_state.clone(),
                     open_options.replace_window,
                     open_options.env,
+                    open_options.activation_token,
                     None,
                     cx,
                 )
@@ -5912,6 +5925,7 @@ pub fn open_new(
         app_state,
         open_options.replace_window,
         open_options.env,
+        open_options.activation_token,
         Some(Box::new(init)),
         cx,
     );
