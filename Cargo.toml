@@ -434,6 +434,7 @@ strsim = "0.11.1"
 strum = { version = "0.28.0", features = ["derive", "std"] }
 swash = "0.2.10"
 syn = { version = "2.0.119", features = ["clone-impls", "derive", "extra-traits", "full", "parsing", "printing", "proc-macro", "visit-mut"] }
+sys-locale = "0.3.2"
 sysinfo = "0.38.4"
 taffy = "0.11.0"
 tempfile = "3.27.0"
@@ -595,6 +596,10 @@ too_many_arguments = "allow"
 # Individual rules that have violations in the codebase:
 type_complexity = "allow"
 unnecessary_wraps = "warn"
+
+[workspace.lints.cargo]
+# Added in Rust 1.100.0, but creates false positives. Use cargo-shear
+unused_dependencies = "allow"
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ["cfg(perf_enabled)", "cfg(rust_analyzer)"] }

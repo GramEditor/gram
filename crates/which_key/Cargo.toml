@@ -16,6 +16,7 @@ app_actions.workspace = true
 command_palette.workspace = true
 gpui.workspace = true
 settings.workspace = true
+sys-locale.workspace = true
 theme.workspace = true
 ui.workspace = true
 util.workspace = true
