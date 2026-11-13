@@ -2334,7 +2334,6 @@ pub fn rgba_color(r: u8, g: u8, b: u8) -> Hsla {
 #[cfg(test)]
 mod tests {
     use rand::RngExt as _;
-    use settings::SettingsStore;
     use std::time::Duration;
 
     use super::*;
@@ -2470,8 +2469,8 @@ mod tests {
     #[gpui::test(iterations = 10)]
     async fn test_terminal_eof(cx: &mut TestAppContext) {
         cx.update(|cx| {
-            let settings = SettingsStore::test(cx);
-            cx.set_global(settings);
+            let settings_store = settings::SettingsStore::test(cx);
+            cx.set_global(settings_store);
             theme::init(theme::LoadThemes::JustBase, cx);
         });
 
