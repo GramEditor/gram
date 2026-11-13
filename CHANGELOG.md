@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix diacritic positioning using glyph offsets (#721) by @Holbormon
 - Fix pasting URLs copied from Safari (#720) by @pcantrell
 - Increase default contrast between search match and active match backgrounds (#717)
+- Fix tombi LSP path on Windows (#654)
 
 ## [3.5.0] - 2026-11-09
 

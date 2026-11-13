@@ -121,9 +121,13 @@ impl LspInstaller for TombiLspAdapter {
             other => return Err(anyhow!("unsupported architecture: {}", other)),
         };
 
-        // The archive contains a top-level directory with this name.
-        let asset_dir = format!("tombi-cli-{version_name}-{}-{}", arch, Self::OS_NAME);
-        let path = container_dir.join(&asset_dir).join("tombi");
+        let path = if cfg!(windows) {
+            container_dir.join("tombi.exe")
+        } else {
+            // The archive contains a top-level directory with this name.
+            let asset_dir = format!("tombi-cli-{version_name}-{}-{}", arch, Self::OS_NAME);
+            container_dir.join(&asset_dir).join("tombi")
+        };
 
         let binary = self.binary(path.clone());
 
