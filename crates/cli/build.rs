@@ -11,7 +11,6 @@ fn main() {
     }
 
     // Populate git sha environment variable if git is available
-    println!("cargo:rerun-if-changed=../../.git/logs/HEAD");
     if let Some(output) = Command::new("git")
         .args(["rev-parse", "HEAD"])
         .output()
@@ -20,6 +19,7 @@ fn main() {
     {
         let git_sha = String::from_utf8_lossy(&output.stdout);
         let git_sha = git_sha.trim();
+        println!("cargo:rerun-if-changed=../../.git/logs/HEAD");
         println!("cargo:rustc-env=GRAM_COMMIT_SHA={git_sha}");
     }
 
