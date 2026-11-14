@@ -1307,10 +1307,7 @@ impl Workspace {
     pub fn new_local(
         abs_paths: Vec<PathBuf>,
         app_state: Arc<AppState>,
-        requesting_window: Option<WindowHandle<Workspace>>,
-        env: Option<HashMap<String, String>>,
-        activation_token: Option<String>,
-        display_id: Option<gpui::DisplayId>,
+        open_options: OpenOptions,
         init: Option<Box<dyn FnOnce(&mut Workspace, &mut Window, &mut Context<Workspace>) + Send>>,
         cx: &mut App,
     ) -> Task<
@@ -1324,7 +1321,7 @@ impl Workspace {
             app_state.node_runtime.clone(),
             app_state.languages.clone(),
             app_state.fs.clone(),
-            env,
+            open_options.env.clone(),
             cx,
         );
 
@@ -1396,7 +1393,7 @@ impl Workspace {
                 })?;
             }
 
-            let window = if let Some(window) = requesting_window {
+            let window = if let Some(window) = open_options.replace_window {
                 let centered_layout = serialized_workspace
                     .as_ref()
                     .map(|w| w.centered_layout)
@@ -1446,7 +1443,7 @@ impl Workspace {
                 let mut options = cx.update(|cx| (app_state.build_window_options)(display, cx))?;
                 options.window_bounds = window_bounds;
                 if window_bounds_override.is_none()
-                    && let Some(display_id) = display_id
+                    && let Some(display_id) = open_options.display_id
                     && options.display_id != Some(display_id)
                     && let Some(display) = cx.update(|cx| cx.find_display(display_id))?
                 {
@@ -1480,7 +1477,7 @@ impl Workspace {
                 })?
             };
 
-            if let Some(activation_token) = activation_token {
+            if let Some(activation_token) = open_options.activation_token {
                 window.update(cx, |_workspace, window, _cx| {
                     window.set_activation_token(&activation_token);
                     window.activate_window();
@@ -2050,7 +2047,7 @@ impl Workspace {
             Task::ready(Ok(callback(self, window, cx)))
         } else {
             let env = self.project.read(cx).cli_environment(cx);
-            let task = Self::new_local(Vec::new(), self.app_state.clone(), None, env, None, None, None, cx);
+            let task = Self::new_local(Vec::new(), self.app_state.clone(), OpenOptions::with_env(env), None, cx);
             cx.spawn_in(window, async move |_vh, cx| {
                 let (workspace, _) = task.await?;
                 workspace.update(cx, callback)
@@ -5727,7 +5724,7 @@ pub async fn get_any_active_workspace(
     // find an existing workspace to focus and show call controls
     let active_window = activate_any_workspace_window(&mut cx);
     if active_window.is_none() {
-        cx.update(|cx| Workspace::new_local(vec![], app_state.clone(), None, None, None, None, None, cx))?
+        cx.update(|cx| Workspace::new_local(vec![], app_state.clone(), OpenOptions::default(), None, cx))?
             .await?;
     }
     activate_any_workspace_window(&mut cx).context("could not open gram")
@@ -5775,6 +5772,15 @@ pub struct OpenOptions {
     pub replace_window: Option<WindowHandle<Workspace>>,
     pub env: Option<HashMap<String, String>>,
     pub activation_token: Option<String>,
+}
+
+impl OpenOptions {
+    pub fn with_env(env: Option<HashMap<String, String>>) -> Self {
+        Self {
+            env,
+            ..Default::default()
+        }
+    }
 }
 
 #[allow(clippy::type_complexity)]
@@ -5885,10 +5891,7 @@ pub fn open_paths(
                 Workspace::new_local(
                     abs_paths,
                     app_state.clone(),
-                    open_options.replace_window,
-                    open_options.env,
-                    open_options.activation_token,
-                    open_options.display_id,
+                    open_options,
                     None,
                     cx,
                 )
@@ -5934,16 +5937,7 @@ pub fn open_new(
     cx: &mut App,
     init: impl FnOnce(&mut Workspace, &mut Window, &mut Context<Workspace>) + 'static + Send,
 ) -> Task<anyhow::Result<()>> {
-    let task = Workspace::new_local(
-        Vec::new(),
-        app_state,
-        open_options.replace_window,
-        open_options.env,
-        open_options.activation_token,
-        open_options.display_id,
-        Some(Box::new(init)),
-        cx,
-    );
+    let task = Workspace::new_local(Vec::new(), app_state, open_options, Some(Box::new(init)), cx);
     cx.spawn(async move |_cx| {
         let (_workspace, _opened_paths) = task.await?;
         // Init callback is called synchronously during workspace creation

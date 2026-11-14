@@ -94,6 +94,7 @@ pub fn platform_background_executor() -> BackgroundExecutor {
 }
 
 /// Returns the focused display ID on macOS, falling back to the primary display.
+#[allow(clippy::unnecessary_wraps)]
 pub fn platform_focused_display_id() -> Option<DisplayId> {
     cfg_select! {
         target_os = "macos" => Some(MacDisplay::focused().unwrap_or_else(MacDisplay::primary).id()),
