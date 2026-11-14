@@ -488,6 +488,28 @@ pub fn merge_json_value_into(source: serde_json::Value, target: &mut serde_json:
     }
 }
 
+pub fn merge_json_value_into_replace_array(source: serde_json::Value, target: &mut serde_json::Value) {
+    use serde_json::Value;
+
+    match (source, target) {
+        (Value::Object(source), Value::Object(target)) => {
+            for (key, value) in source {
+                if let Some(target) = target.get_mut(&key) {
+                    merge_json_value_into(value, target);
+                } else {
+                    target.insert(key, value);
+                }
+            }
+        }
+
+        (Value::Array(source), Value::Array(target)) => {
+            target.splice(0..source.len(), source);
+        }
+
+        (source, target) => *target = source,
+    }
+}
+
 pub fn merge_non_null_json_value_into(source: serde_json::Value, target: &mut serde_json::Value) {
     use serde_json::Value;
     if let Value::Object(source_object) = source {

@@ -117,6 +117,7 @@ use text::{Anchor, BufferId, LineEnding, OffsetRangeExt, ToPoint as _};
 
 use util::{
     ConnectionResult, ResultExt as _, debug_panic, defer, maybe, merge_json_value_into,
+    merge_json_value_into_replace_array,
     paths::{PathStyle, SanitizedPath},
     post_inc,
     redact::redact_command,
@@ -721,7 +722,7 @@ impl LocalLspStore {
                                 })
                                 .unwrap_or_default();
                             if let Some(settings) = override_settings {
-                                merge_json_value_into(settings, &mut workspace_config);
+                                merge_json_value_into_replace_array(settings, &mut workspace_config);
                             }
 
                             new_scope_uri.insert(workspace_config);

@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Improve workspace restoration logic when display layout changes (#699) by @jasonmader
 - Fix loading extensions compiled with WASIp2 0.2.12 exit-with-code API (#737)
+- Fix doubled arrays in LSP settings (#738)
 
 ## [3.5.1] - 2026-11-14
 
