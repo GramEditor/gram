@@ -24,6 +24,7 @@ wasmtime::component::bindgen!({
          "zed:extension/github": latest::zed::extension::github,
          "zed:extension/platform": latest::zed::extension::platform,
     },
+    anyhow: true,
 });
 
 pub type ExtensionWorktree = Arc<dyn WorktreeDelegate>;
@@ -32,7 +33,7 @@ pub fn linker(executor: &BackgroundExecutor) -> &'static Linker<WasmState> {
     static LINKER: OnceLock<Linker<WasmState>> = OnceLock::new();
     LINKER.get_or_init(|| {
         super::new_linker(executor, |linker| {
-            Extension::add_to_linker::<_, WasmState>(linker, |s| s)
+            Extension::add_to_linker::<_, WasmState>(linker, |s| s).map_err(|e| anyhow::anyhow!(e))
         })
     })
 }
@@ -72,11 +73,11 @@ impl HostWorktree for WasmState {
         &mut self,
         delegate: Resource<Arc<dyn WorktreeDelegate>>,
         path: String,
-    ) -> wasmtime::Result<Result<String, String>> {
+    ) -> Result<Result<String, String>> {
         latest::HostWorktree::read_text_file(self, delegate, path).await
     }
 
-    async fn shell_env(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<EnvVars> {
+    async fn shell_env(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> Result<EnvVars> {
         latest::HostWorktree::shell_env(self, delegate).await
     }
 
@@ -84,7 +85,7 @@ impl HostWorktree for WasmState {
         &mut self,
         delegate: Resource<Arc<dyn WorktreeDelegate>>,
         binary_name: String,
-    ) -> wasmtime::Result<Option<String>> {
+    ) -> Result<Option<String>> {
         latest::HostWorktree::which(self, delegate, binary_name).await
     }
 
@@ -94,26 +95,19 @@ impl HostWorktree for WasmState {
 }
 
 impl ExtensionImports for WasmState {
-    async fn node_binary_path(&mut self) -> wasmtime::Result<Result<String, String>> {
+    async fn node_binary_path(&mut self) -> Result<Result<String, String>> {
         latest::nodejs::Host::node_binary_path(self).await
     }
 
-    async fn npm_package_latest_version(&mut self, package_name: String) -> wasmtime::Result<Result<String, String>> {
+    async fn npm_package_latest_version(&mut self, package_name: String) -> Result<Result<String, String>> {
         latest::nodejs::Host::npm_package_latest_version(self, package_name).await
     }
 
-    async fn npm_package_installed_version(
-        &mut self,
-        package_name: String,
-    ) -> wasmtime::Result<Result<Option<String>, String>> {
+    async fn npm_package_installed_version(&mut self, package_name: String) -> Result<Result<Option<String>, String>> {
         latest::nodejs::Host::npm_package_installed_version(self, package_name).await
     }
 
-    async fn npm_install_package(
-        &mut self,
-        package_name: String,
-        version: String,
-    ) -> wasmtime::Result<Result<(), String>> {
+    async fn npm_install_package(&mut self, package_name: String, version: String) -> Result<Result<(), String>> {
         latest::nodejs::Host::npm_install_package(self, package_name, version).await
     }
 
@@ -121,7 +115,7 @@ impl ExtensionImports for WasmState {
         &mut self,
         repo: String,
         options: GithubReleaseOptions,
-    ) -> wasmtime::Result<Result<GithubRelease, String>> {
+    ) -> Result<Result<GithubRelease, String>> {
         latest::zed::extension::github::Host::latest_github_release(self, repo, options).await
     }
 
@@ -133,7 +127,7 @@ impl ExtensionImports for WasmState {
         &mut self,
         server_name: String,
         status: LanguageServerInstallationStatus,
-    ) -> wasmtime::Result<()> {
+    ) -> Result<()> {
         let status = match status {
             LanguageServerInstallationStatus::CheckingForUpdate => BinaryStatus::CheckingForUpdate,
             LanguageServerInstallationStatus::Downloading => BinaryStatus::Downloading,
@@ -155,7 +149,7 @@ impl ExtensionImports for WasmState {
         url: String,
         path: String,
         file_type: DownloadedFileType,
-    ) -> wasmtime::Result<Result<(), String>> {
+    ) -> Result<Result<(), String>> {
         latest::ExtensionImports::download_file(self, url, path, file_type.into()).await
     }
 }

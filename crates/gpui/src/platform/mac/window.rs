@@ -1353,9 +1353,13 @@ impl PlatformWindow for MacWindow {
 
     fn activate(&self) {
         let window = self.0.lock().native_window.clone();
+        let view = self.0.lock().native_view.clone();
         let executor = self.0.lock().executor.clone();
         executor
             .spawn(async move {
+                if !window.isVisible() {
+                    view.setNeedsDisplay(true);
+                }
                 window.makeKeyAndOrderFront(None);
             })
             .detach();

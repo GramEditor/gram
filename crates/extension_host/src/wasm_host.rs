@@ -362,7 +362,7 @@ fn wasm_engine(executor: &BackgroundExecutor) -> wasmtime::Engine {
         .get_or_init(|| {
             let mut config = wasmtime::Config::new();
             config.wasm_component_model(true);
-            config.async_support(true);
+
             config.enable_incremental_compilation(cache_store()).unwrap();
             // Async support introduces the issue that extension execution happens during `Future::poll`,
             // which could block an async thread.
@@ -459,8 +459,7 @@ impl WasmHost {
 
             executor.spawn(async move {
                 let gram_api_version = parse_wasm_extension_version(&manifest_id, &wasm_bytes)?;
-                let component =
-                    Component::from_binary(&engine, &wasm_bytes).context("failed to compile wasm component")?;
+                let component = Component::from_binary(&engine, &wasm_bytes)?;
 
                 anyhow::Ok((gram_api_version, component))
             })
@@ -546,8 +545,7 @@ impl WasmHost {
             .await
             .context("failed to create extension work dir")?;
 
-        let file_perms = wasmtime_wasi::FilePerms::all();
-        let dir_perms = wasmtime_wasi::DirPerms::all();
+        let perms = wasmtime_wasi::FsPerms::ReadWrite;
         let path = SanitizedPath::new(&extension_work_dir).to_string();
         #[cfg(target_os = "windows")]
         let path = path.replace('\\', "/");
@@ -555,8 +553,8 @@ impl WasmHost {
         let mut ctx = WasiCtxBuilder::new();
         ctx.inherit_stdio().env("PWD", &path).env("RUST_BACKTRACE", "full");
 
-        ctx.preopened_dir(&path, ".", dir_perms, file_perms)?;
-        ctx.preopened_dir(&path, &path, dir_perms, file_perms)?;
+        ctx.preopened_dir(&path, ".", perms)?;
+        ctx.preopened_dir(&path, &path, perms)?;
 
         Ok(ctx.build())
     }

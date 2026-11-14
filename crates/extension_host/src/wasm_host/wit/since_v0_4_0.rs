@@ -30,6 +30,7 @@ wasmtime::component::bindgen!({
         "zed:extension/platform": latest::zed::extension::platform,
         "zed:extension/process": latest::zed::extension::process,
     },
+    anyhow: true,
 });
 
 mod settings {
@@ -45,7 +46,7 @@ pub fn linker(executor: &BackgroundExecutor) -> &'static Linker<WasmState> {
     static LINKER: OnceLock<Linker<WasmState>> = OnceLock::new();
     LINKER.get_or_init(|| {
         super::new_linker(executor, |linker| {
-            Extension::add_to_linker::<_, WasmState>(linker, |s| s)
+            Extension::add_to_linker::<_, WasmState>(linker, |s| s).map_err(|e| anyhow::anyhow!(e))
         })
     })
 }
@@ -115,7 +116,7 @@ impl HostKeyValueStore for WasmState {
         kv_store: Resource<ExtensionKeyValueStore>,
         key: String,
         value: String,
-    ) -> wasmtime::Result<Result<(), String>> {
+    ) -> Result<Result<(), String>> {
         latest::HostKeyValueStore::insert(self, kv_store, key, value).await
     }
 
@@ -126,7 +127,7 @@ impl HostKeyValueStore for WasmState {
 }
 
 impl HostProject for WasmState {
-    async fn worktree_ids(&mut self, project: Resource<ExtensionProject>) -> wasmtime::Result<Vec<u64>> {
+    async fn worktree_ids(&mut self, project: Resource<ExtensionProject>) -> Result<Vec<u64>> {
         latest::HostProject::worktree_ids(self, project).await
     }
 
@@ -137,11 +138,11 @@ impl HostProject for WasmState {
 }
 
 impl HostWorktree for WasmState {
-    async fn id(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<u64> {
+    async fn id(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> Result<u64> {
         latest::HostWorktree::id(self, delegate).await
     }
 
-    async fn root_path(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<String> {
+    async fn root_path(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> Result<String> {
         latest::HostWorktree::root_path(self, delegate).await
     }
 
@@ -149,11 +150,11 @@ impl HostWorktree for WasmState {
         &mut self,
         delegate: Resource<Arc<dyn WorktreeDelegate>>,
         path: String,
-    ) -> wasmtime::Result<Result<String, String>> {
+    ) -> Result<Result<String, String>> {
         latest::HostWorktree::read_text_file(self, delegate, path).await
     }
 
-    async fn shell_env(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<EnvVars> {
+    async fn shell_env(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> Result<EnvVars> {
         latest::HostWorktree::shell_env(self, delegate).await
     }
 
@@ -161,7 +162,7 @@ impl HostWorktree for WasmState {
         &mut self,
         delegate: Resource<Arc<dyn WorktreeDelegate>>,
         binary_name: String,
-    ) -> wasmtime::Result<Option<String>> {
+    ) -> Result<Option<String>> {
         latest::HostWorktree::which(self, delegate, binary_name).await
     }
 
@@ -177,7 +178,7 @@ impl ExtensionImports for WasmState {
         location: Option<self::SettingsLocation>,
         category: String,
         key: Option<String>,
-    ) -> wasmtime::Result<Result<String, String>> {
+    ) -> Result<Result<String, String>> {
         latest::ExtensionImports::get_settings(self, location.map(|location| location.into()), category, key).await
     }
 
@@ -185,7 +186,7 @@ impl ExtensionImports for WasmState {
         &mut self,
         server_name: String,
         status: LanguageServerInstallationStatus,
-    ) -> wasmtime::Result<()> {
+    ) -> Result<()> {
         latest::ExtensionImports::set_language_server_installation_status(self, server_name, status.into()).await
     }
 
@@ -194,11 +195,11 @@ impl ExtensionImports for WasmState {
         url: String,
         path: String,
         file_type: DownloadedFileType,
-    ) -> wasmtime::Result<Result<(), String>> {
+    ) -> Result<Result<(), String>> {
         latest::ExtensionImports::download_file(self, url, path, file_type.into()).await
     }
 
-    async fn make_file_executable(&mut self, path: String) -> wasmtime::Result<Result<(), String>> {
+    async fn make_file_executable(&mut self, path: String) -> Result<Result<(), String>> {
         latest::ExtensionImports::make_file_executable(self, path).await
     }
 }

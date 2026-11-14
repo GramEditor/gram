@@ -9,9 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Changed
+
+- Upgrade wasmtime to 48.0.8
+- Upgrade tree-sitter to 0.27.2
+
 ## Fixed
 
 - Improve workspace restoration logic when display layout changes (#699) by @jasonmader
+- Fix loading extensions compiled with WASIp2 0.2.12 exit-with-code API (#737)
 
 ## [3.5.1] - 2026-11-14
 

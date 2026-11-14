@@ -69,7 +69,7 @@ pub struct SyntaxMapMatch<'a> {
 
 struct SyntaxMapCapturesLayer<'a> {
     depth: usize,
-    captures: QueryCaptures<'a, 'a, TextProvider<'a>, &'a [u8]>,
+    captures: QueryCaptures<'a, 'a, 'static, TextProvider<'a>, &'a [u8]>,
     next_capture: Option<QueryCapture<'a>>,
     grammar_index: usize,
     _query_cursor: QueryCursorHandle,
@@ -81,7 +81,7 @@ struct SyntaxMapMatchesLayer<'a> {
     next_pattern_index: usize,
     next_captures: Vec<QueryCapture<'a>>,
     has_next: bool,
-    matches: QueryMatches<'a, 'a, TextProvider<'a>, &'a [u8]>,
+    matches: QueryMatches<'a, 'a, 'static, TextProvider<'a>, &'a [u8]>,
     query: &'a Query,
     grammar_index: usize,
     _query_cursor: QueryCursorHandle,
@@ -676,7 +676,7 @@ impl SyntaxSnapshot {
                             text.as_rope(),
                             step_start_byte,
                             &included_ranges,
-                            Some(old_tree.clone()),
+                            Some(old_tree),
                             budget,
                         );
                         match result {
@@ -985,11 +985,9 @@ impl<'a> SyntaxMapCaptures<'a> {
         layers: impl Iterator<Item = SyntaxLayer<'a>>,
         query: fn(&Grammar) -> Option<&Query>,
     ) -> Self {
-        let mut result = Self {
-            layers: Vec::new(),
-            grammars: Vec::new(),
-            active_layer_count: 0,
-        };
+        let mut ret_layers: Vec<SyntaxMapCapturesLayer<'a>> = Vec::new();
+        let mut ret_grammars: Vec<&'a Grammar> = Vec::new();
+        let mut active_layer_count = 0;
         for layer in layers {
             let grammar = match &layer.language.grammar {
                 Some(grammar) => grammar,
@@ -1008,14 +1006,14 @@ impl<'a> SyntaxMapCaptures<'a> {
             };
 
             cursor.set_byte_range(range.clone());
-            let captures = cursor.captures(query, layer.node(), TextProvider(text));
-            let grammar_index = result
-                .grammars
+            let provider = TextProvider(text);
+            let captures = cursor.captures(query, layer.node(), provider);
+            let grammar_index = ret_grammars
                 .iter()
                 .position(|g| g.id == grammar.id())
                 .unwrap_or_else(|| {
-                    result.grammars.push(grammar);
-                    result.grammars.len() - 1
+                    ret_grammars.push(grammar);
+                    ret_grammars.len() - 1
                 });
             let mut layer = SyntaxMapCapturesLayer {
                 depth: layer.depth,
@@ -1028,19 +1026,21 @@ impl<'a> SyntaxMapCaptures<'a> {
             layer.advance();
             if layer.next_capture.is_some() {
                 let key = layer.sort_key();
-                let ix = match result.layers[..result.active_layer_count]
-                    .binary_search_by_key(&key, |layer| layer.sort_key())
-                {
+                let ix = match ret_layers[..active_layer_count].binary_search_by_key(&key, |layer| layer.sort_key()) {
                     Ok(ix) | Err(ix) => ix,
                 };
-                result.layers.insert(ix, layer);
-                result.active_layer_count += 1;
+                ret_layers.insert(ix, layer);
+                active_layer_count += 1;
             } else {
-                result.layers.push(layer);
+                ret_layers.push(layer);
             }
         }
 
-        result
+        Self {
+            layers: ret_layers,
+            grammars: ret_grammars,
+            active_layer_count,
+        }
     }
 
     pub fn grammars(&self) -> &[&'a Grammar] {
@@ -1246,7 +1246,7 @@ impl<'a> SyntaxMapMatches<'a> {
 
 impl SyntaxMapCapturesLayer<'_> {
     fn advance(&mut self) {
-        self.next_capture = self.captures.next().map(|(mat, ix)| mat.captures[*ix]);
+        self.next_capture = self.captures.next().map(|(mat, ix)| mat.captures()[*ix]);
     }
 
     fn sort_key(&self) -> (usize, Reverse<usize>, usize) {
@@ -1267,7 +1267,7 @@ impl SyntaxMapMatchesLayer<'_> {
                     continue;
                 }
                 self.next_captures.clear();
-                self.next_captures.extend_from_slice(mat.captures);
+                self.next_captures.extend_from_slice(mat.captures());
                 self.next_pattern_index = mat.pattern_index;
                 self.has_next = true;
             } else {
@@ -1319,7 +1319,7 @@ fn has_parent(args: &[QueryPredicateArg], mat: &QueryMatch) -> bool {
         return false;
     };
 
-    let Some(capture) = mat.captures.iter().find(|c| c.index == *capture_ix) else {
+    let Some(capture) = mat.captures().iter().find(|c| c.index == *capture_ix) else {
         return false;
     };
 
@@ -1371,7 +1371,7 @@ fn parse_text(
     text: &Rope,
     start_byte: usize,
     ranges: &[tree_sitter::Range],
-    old_tree: Option<Tree>,
+    old_tree: Option<&Tree>,
     parse_budget: &mut Option<Duration>,
 ) -> anyhow::Result<Tree> {
     with_parser(|parser| {
@@ -1399,7 +1399,7 @@ fn parse_text(
                     chunks.seek(start_byte + offset);
                     chunks.next().unwrap_or("").as_bytes()
                 },
-                old_tree.as_ref(),
+                old_tree,
                 progress_callback
                     .as_mut()
                     .map(|progress_callback| tree_sitter::ParseOptions {
@@ -1719,7 +1719,7 @@ impl<'a> SyntaxLayer<'a> {
         let mut smallest_match: Option<(u32, Range<usize>)> = None;
         let mut matches = query_cursor.matches(&config.query, self.node(), text);
         while let Some(mat) = matches.next() {
-            for capture in mat.captures {
+            for capture in mat.captures() {
                 let Some(override_entry) = config.values.get(&capture.index) else {
                     continue;
                 };

@@ -43,8 +43,9 @@ wasmtime::component::bindgen!({
          "worktree": ExtensionWorktree,
          "project": ExtensionProject,
          "key-value-store": ExtensionKeyValueStore,
-         "zed:extension/http-client/http-response-stream": ExtensionHttpResponseStream
+         "zed:extension/http-client.http-response-stream": ExtensionHttpResponseStream
     },
+    anyhow: true,
 });
 
 pub use self::zed::extension::*;
@@ -63,7 +64,7 @@ pub fn linker(executor: &BackgroundExecutor) -> &'static Linker<WasmState> {
     static LINKER: OnceLock<Linker<WasmState>> = OnceLock::new();
     LINKER.get_or_init(|| {
         super::new_linker(executor, |linker| {
-            Extension::add_to_linker::<_, WasmState>(linker, |s| s)
+            Extension::add_to_linker::<_, WasmState>(linker, |s| s).map_err(|e| anyhow::anyhow!(e))
         })
     })
 }
@@ -463,7 +464,7 @@ impl HostKeyValueStore for WasmState {
         kv_store: Resource<ExtensionKeyValueStore>,
         key: String,
         value: String,
-    ) -> wasmtime::Result<Result<(), String>> {
+    ) -> Result<Result<(), String>> {
         let kv_store = self.table.get(&kv_store)?;
         kv_store.insert(key, value).await.to_wasmtime_result()
     }
@@ -475,7 +476,7 @@ impl HostKeyValueStore for WasmState {
 }
 
 impl HostProject for WasmState {
-    async fn worktree_ids(&mut self, project: Resource<ExtensionProject>) -> wasmtime::Result<Vec<u64>> {
+    async fn worktree_ids(&mut self, project: Resource<ExtensionProject>) -> Result<Vec<u64>> {
         let project = self.table.get(&project)?;
         Ok(project.worktree_ids())
     }
@@ -487,12 +488,12 @@ impl HostProject for WasmState {
 }
 
 impl HostWorktree for WasmState {
-    async fn id(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<u64> {
+    async fn id(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> Result<u64> {
         let delegate = self.table.get(&delegate)?;
         Ok(delegate.id())
     }
 
-    async fn root_path(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<String> {
+    async fn root_path(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> Result<String> {
         let delegate = self.table.get(&delegate)?;
         Ok(delegate.root_path())
     }
@@ -501,7 +502,7 @@ impl HostWorktree for WasmState {
         &mut self,
         delegate: Resource<Arc<dyn WorktreeDelegate>>,
         path: String,
-    ) -> wasmtime::Result<Result<String, String>> {
+    ) -> Result<Result<String, String>> {
         let delegate = self.table.get(&delegate)?;
         Ok(delegate
             .read_text_file(&RelPath::new(Path::new(&path), PathStyle::Posix)?)
@@ -509,7 +510,7 @@ impl HostWorktree for WasmState {
             .map_err(|error| error.to_string()))
     }
 
-    async fn shell_env(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<EnvVars> {
+    async fn shell_env(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> Result<EnvVars> {
         let delegate = self.table.get(&delegate)?;
         Ok(delegate.shell_env().await.into_iter().collect())
     }
@@ -518,7 +519,7 @@ impl HostWorktree for WasmState {
         &mut self,
         delegate: Resource<Arc<dyn WorktreeDelegate>>,
         binary_name: String,
-    ) -> wasmtime::Result<Option<String>> {
+    ) -> Result<Option<String>> {
         let delegate = self.table.get(&delegate)?;
         Ok(delegate.which(binary_name).await)
     }
@@ -532,10 +533,7 @@ impl HostWorktree for WasmState {
 impl common::Host for WasmState {}
 
 impl http_client::Host for WasmState {
-    async fn fetch(
-        &mut self,
-        request: http_client::HttpRequest,
-    ) -> wasmtime::Result<Result<http_client::HttpResponse, String>> {
+    async fn fetch(&mut self, request: http_client::HttpRequest) -> Result<Result<http_client::HttpResponse, String>> {
         maybe!(async {
             let url = &request.url;
             let url_obj = Url::parse(url)?;
@@ -555,7 +553,7 @@ impl http_client::Host for WasmState {
     async fn fetch_stream(
         &mut self,
         request: http_client::HttpRequest,
-    ) -> wasmtime::Result<Result<Resource<ExtensionHttpResponseStream>, String>> {
+    ) -> Result<Result<Resource<ExtensionHttpResponseStream>, String>> {
         let url_obj = Url::parse(&request.url)?;
         self.capability_granter.grant_download_file(&url_obj)?;
         let request = convert_request(&request)?;
@@ -575,7 +573,7 @@ impl http_client::HostHttpResponseStream for WasmState {
     async fn next_chunk(
         &mut self,
         resource: Resource<ExtensionHttpResponseStream>,
-    ) -> wasmtime::Result<Result<Option<Vec<u8>>, String>> {
+    ) -> Result<Result<Option<Vec<u8>>, String>> {
         let stream = self.table.get(&resource)?.clone();
         maybe!(async move {
             let mut response = stream.lock().await;
@@ -647,7 +645,7 @@ async fn convert_response(
 }
 
 impl nodejs::Host for WasmState {
-    async fn node_binary_path(&mut self) -> wasmtime::Result<Result<String, String>> {
+    async fn node_binary_path(&mut self) -> Result<Result<String, String>> {
         self.host
             .node_runtime
             .binary_path()
@@ -656,7 +654,7 @@ impl nodejs::Host for WasmState {
             .to_wasmtime_result()
     }
 
-    async fn npm_package_latest_version(&mut self, package_name: String) -> wasmtime::Result<Result<String, String>> {
+    async fn npm_package_latest_version(&mut self, package_name: String) -> Result<Result<String, String>> {
         // This calls npm info which talks to remote servers
         self.capability_granter.grant_exec("npm", &["info"])?;
         self.host
@@ -666,10 +664,7 @@ impl nodejs::Host for WasmState {
             .to_wasmtime_result()
     }
 
-    async fn npm_package_installed_version(
-        &mut self,
-        package_name: String,
-    ) -> wasmtime::Result<Result<Option<String>, String>> {
+    async fn npm_package_installed_version(&mut self, package_name: String) -> Result<Result<Option<String>, String>> {
         self.host
             .node_runtime
             .npm_package_installed_version(&self.work_dir(), &package_name)
@@ -677,11 +672,7 @@ impl nodejs::Host for WasmState {
             .to_wasmtime_result()
     }
 
-    async fn npm_install_package(
-        &mut self,
-        package_name: String,
-        version: String,
-    ) -> wasmtime::Result<Result<(), String>> {
+    async fn npm_install_package(&mut self, package_name: String, version: String) -> Result<Result<(), String>> {
         self.capability_granter.grant_npm_install_package(&package_name)?;
 
         self.host
@@ -718,7 +709,7 @@ impl github::Host for WasmState {
         &mut self,
         repo: String,
         options: github::GithubReleaseOptions,
-    ) -> wasmtime::Result<Result<github::GithubRelease, String>> {
+    ) -> Result<Result<github::GithubRelease, String>> {
         maybe!(async {
             let url = Url::parse(&::http_client::github::releases_url(&repo))?;
             self.capability_granter.grant_download_file(&url)?;
@@ -740,7 +731,7 @@ impl github::Host for WasmState {
         &mut self,
         repo: String,
         tag: String,
-    ) -> wasmtime::Result<Result<github::GithubRelease, String>> {
+    ) -> Result<Result<github::GithubRelease, String>> {
         maybe!(async {
             let url = Url::parse(&::http_client::github::tags_url(&repo, &tag))?;
             self.capability_granter.grant_download_file(&url)?;
@@ -783,7 +774,7 @@ impl From<std::process::Output> for process::Output {
 }
 
 impl process::Host for WasmState {
-    async fn run_command(&mut self, command: process::Command) -> wasmtime::Result<Result<process::Output, String>> {
+    async fn run_command(&mut self, command: process::Command) -> Result<Result<process::Output, String>> {
         maybe!(async {
             self.capability_granter.grant_exec(&command.command, &command.args)?;
 
@@ -801,10 +792,7 @@ impl process::Host for WasmState {
 }
 
 impl dap::Host for WasmState {
-    async fn resolve_tcp_template(
-        &mut self,
-        template: TcpArgumentsTemplate,
-    ) -> wasmtime::Result<Result<TcpArguments, String>> {
+    async fn resolve_tcp_template(&mut self, template: TcpArgumentsTemplate) -> Result<Result<TcpArguments, String>> {
         maybe!(async {
             let (host, port, timeout) = ::dap::configure_tcp_connection(task::TcpArgumentsTemplate {
                 port: template.port,
@@ -829,7 +817,7 @@ impl ExtensionImports for WasmState {
         location: Option<self::SettingsLocation>,
         category: String,
         key: Option<String>,
-    ) -> wasmtime::Result<Result<String, String>> {
+    ) -> Result<Result<String, String>> {
         self.on_main_thread(|cx| {
             async move {
                 let path = location
@@ -885,7 +873,7 @@ impl ExtensionImports for WasmState {
         &mut self,
         server_name: String,
         status: LanguageServerInstallationStatus,
-    ) -> wasmtime::Result<()> {
+    ) -> Result<()> {
         let status = match status {
             LanguageServerInstallationStatus::CheckingForUpdate => BinaryStatus::CheckingForUpdate,
             LanguageServerInstallationStatus::Downloading => BinaryStatus::Downloading,
@@ -905,7 +893,7 @@ impl ExtensionImports for WasmState {
         url: String,
         path: String,
         file_type: DownloadedFileType,
-    ) -> wasmtime::Result<Result<(), String>> {
+    ) -> Result<Result<(), String>> {
         maybe!(async {
             let parsed_url = Url::parse(&url)?;
             self.capability_granter.grant_download_file(&parsed_url)?;
@@ -964,7 +952,7 @@ impl ExtensionImports for WasmState {
         .to_wasmtime_result()
     }
 
-    async fn make_file_executable(&mut self, path: String) -> wasmtime::Result<Result<(), String>> {
+    async fn make_file_executable(&mut self, path: String) -> Result<Result<(), String>> {
         self.capability_granter.grant_exec("chmod", &["+x", &path])?;
 
         let path = self

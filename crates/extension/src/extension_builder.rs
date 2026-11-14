@@ -595,9 +595,11 @@ impl ExtensionBuilder {
                 continue;
             }
             if let Some((id, range)) = payload.as_section() {
+                let start = usize::try_from(range.start)?;
+                let end = usize::try_from(range.end)?;
                 RawSection {
                     id,
-                    data: &input[range],
+                    data: &input[start..end],
                 }
                 .append_to(&mut output);
             }

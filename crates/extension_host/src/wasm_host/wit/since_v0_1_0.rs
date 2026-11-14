@@ -36,11 +36,12 @@ wasmtime::component::bindgen!({
     with: {
          "worktree": ExtensionWorktree,
          "key-value-store": ExtensionKeyValueStore,
-         "zed:extension/http-client/http-response-stream": ExtensionHttpResponseStream,
+         "zed:extension/http-client.http-response-stream": ExtensionHttpResponseStream,
          "zed:extension/github": latest::zed::extension::github,
          "zed:extension/nodejs": latest::zed::extension::nodejs,
          "zed:extension/platform": latest::zed::extension::platform,
     },
+    anyhow: true,
 });
 
 pub use self::zed::extension::*;
@@ -57,7 +58,7 @@ pub fn linker(executor: &BackgroundExecutor) -> &'static Linker<WasmState> {
     static LINKER: OnceLock<Linker<WasmState>> = OnceLock::new();
     LINKER.get_or_init(|| {
         super::new_linker(executor, |linker| {
-            Extension::add_to_linker::<_, WasmState>(linker, |s| s)
+            Extension::add_to_linker::<_, WasmState>(linker, |s| s).map_err(|e| anyhow::anyhow!(e))
         })
     })
 }
@@ -243,7 +244,7 @@ impl HostKeyValueStore for WasmState {
         kv_store: Resource<ExtensionKeyValueStore>,
         key: String,
         value: String,
-    ) -> wasmtime::Result<Result<(), String>> {
+    ) -> Result<Result<(), String>> {
         let kv_store = self.table.get(&kv_store)?;
         kv_store.insert(key, value).await.to_wasmtime_result()
     }
@@ -255,11 +256,11 @@ impl HostKeyValueStore for WasmState {
 }
 
 impl HostWorktree for WasmState {
-    async fn id(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<u64> {
+    async fn id(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> Result<u64> {
         latest::HostWorktree::id(self, delegate).await
     }
 
-    async fn root_path(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<String> {
+    async fn root_path(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> Result<String> {
         latest::HostWorktree::root_path(self, delegate).await
     }
 
@@ -267,11 +268,11 @@ impl HostWorktree for WasmState {
         &mut self,
         delegate: Resource<Arc<dyn WorktreeDelegate>>,
         path: String,
-    ) -> wasmtime::Result<Result<String, String>> {
+    ) -> Result<Result<String, String>> {
         latest::HostWorktree::read_text_file(self, delegate, path).await
     }
 
-    async fn shell_env(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> wasmtime::Result<EnvVars> {
+    async fn shell_env(&mut self, delegate: Resource<Arc<dyn WorktreeDelegate>>) -> Result<EnvVars> {
         latest::HostWorktree::shell_env(self, delegate).await
     }
 
@@ -279,7 +280,7 @@ impl HostWorktree for WasmState {
         &mut self,
         delegate: Resource<Arc<dyn WorktreeDelegate>>,
         binary_name: String,
-    ) -> wasmtime::Result<Option<String>> {
+    ) -> Result<Option<String>> {
         latest::HostWorktree::which(self, delegate, binary_name).await
     }
 
@@ -292,10 +293,7 @@ impl HostWorktree for WasmState {
 impl common::Host for WasmState {}
 
 impl http_client::Host for WasmState {
-    async fn fetch(
-        &mut self,
-        request: http_client::HttpRequest,
-    ) -> wasmtime::Result<Result<http_client::HttpResponse, String>> {
+    async fn fetch(&mut self, request: http_client::HttpRequest) -> Result<Result<http_client::HttpResponse, String>> {
         maybe!(async {
             let url = &request.url;
             let url_obj = Url::parse(url)?;
@@ -315,7 +313,7 @@ impl http_client::Host for WasmState {
     async fn fetch_stream(
         &mut self,
         request: http_client::HttpRequest,
-    ) -> wasmtime::Result<Result<Resource<ExtensionHttpResponseStream>, String>> {
+    ) -> Result<Result<Resource<ExtensionHttpResponseStream>, String>> {
         let url_obj = Url::parse(&request.url)?;
         self.capability_granter.grant_download_file(&url_obj)?;
         let request = convert_request(&request)?;
@@ -335,7 +333,7 @@ impl http_client::HostHttpResponseStream for WasmState {
     async fn next_chunk(
         &mut self,
         resource: Resource<ExtensionHttpResponseStream>,
-    ) -> wasmtime::Result<Result<Option<Vec<u8>>, String>> {
+    ) -> Result<Result<Option<Vec<u8>>, String>> {
         let stream = self.table.get(&resource)?.clone();
         maybe!(async move {
             let mut response = stream.lock().await;
@@ -414,7 +412,7 @@ impl ExtensionImports for WasmState {
         location: Option<self::SettingsLocation>,
         category: String,
         key: Option<String>,
-    ) -> wasmtime::Result<Result<String, String>> {
+    ) -> Result<Result<String, String>> {
         self.on_main_thread(|cx| {
             async move {
                 let path = location
@@ -469,7 +467,7 @@ impl ExtensionImports for WasmState {
         &mut self,
         server_name: String,
         status: LanguageServerInstallationStatus,
-    ) -> wasmtime::Result<()> {
+    ) -> Result<()> {
         let status = match status {
             LanguageServerInstallationStatus::CheckingForUpdate => BinaryStatus::CheckingForUpdate,
             LanguageServerInstallationStatus::Downloading => BinaryStatus::Downloading,
@@ -489,7 +487,7 @@ impl ExtensionImports for WasmState {
         url: String,
         path: String,
         file_type: DownloadedFileType,
-    ) -> wasmtime::Result<Result<(), String>> {
+    ) -> Result<Result<(), String>> {
         maybe!(async {
             let parsed_url = Url::parse(&url)?;
             self.capability_granter.grant_download_file(&parsed_url)?;
@@ -550,7 +548,7 @@ impl ExtensionImports for WasmState {
         .to_wasmtime_result()
     }
 
-    async fn make_file_executable(&mut self, path: String) -> wasmtime::Result<Result<(), String>> {
+    async fn make_file_executable(&mut self, path: String) -> Result<Result<(), String>> {
         self.capability_granter.grant_exec("chmod", &["+x", &path])?;
 
         let path = self

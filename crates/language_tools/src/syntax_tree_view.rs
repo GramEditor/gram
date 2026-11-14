@@ -344,12 +344,12 @@ impl SyntaxTreeView {
         let colors = cx.theme().colors();
         let mut row = h_flex();
         if let Some(field_name) = cursor.field_name() {
-            row = row.children([Label::new(field_name).color(Color::Info), Label::new(": ")]);
+            row = row.children([Label::new(field_name.to_string()).color(Color::Info), Label::new(": ")]);
         }
 
         let node = cursor.node();
         row.child(if node.is_named() {
-            Label::new(node.kind()).color(Color::Default)
+            Label::new(node.kind().to_string()).color(Color::Default)
         } else {
             Label::new(format!("\"{}\"", node.kind())).color(Color::Created)
         })

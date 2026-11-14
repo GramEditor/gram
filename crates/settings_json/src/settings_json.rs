@@ -77,12 +77,13 @@ pub fn replace_value_in_json_text<T: AsRef<str>>(
 
     let mut matches = cursor.matches(&PAIR_QUERY, syntax_tree.root_node(), text.as_bytes());
     while let Some(mat) = matches.next() {
-        if mat.captures.len() != 2 {
+        let captures = mat.captures();
+        if captures.len() != 2 {
             continue;
         }
 
-        let key_range = mat.captures[0].node.byte_range();
-        let value_range = mat.captures[1].node.byte_range();
+        let key_range = captures[0].node.byte_range();
+        let value_range = captures[1].node.byte_range();
 
         // Don't enter sub objects until we find an exact
         // match for the current keypath
@@ -119,8 +120,8 @@ pub fn replace_value_in_json_text<T: AsRef<str>>(
             }
 
             if let Some(array_replacement) = handle_possible_array_value(
-                &mat.captures[0].node,
-                &mat.captures[1].node,
+                &captures[0].node,
+                &captures[1].node,
                 text,
                 &key_path[depth..],
                 new_value,

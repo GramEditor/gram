@@ -446,7 +446,7 @@ tokio = { version = "1.54.1", features = ["full"] }
 tokio-util = { version = "0.7.20", features = ["compat", "rt"] }
 toml = "1.2.0"
 trash = "5.2.9"
-tree-sitter = { version = "0.26.13", features = ["std", "wasm"] }
+tree-sitter = { version = "0.27.2", features = ["std", "wasm"] }
 tree-sitter-bash = "0.25.1"
 tree-sitter-c = "0.24.2"
 tree-sitter-cpp = { git = "https://github.com/tree-sitter/tree-sitter-cpp", rev = "8b5b49eb196bec7040441bee33b2c9a4838d6967" }
@@ -493,16 +493,16 @@ uuid = { version = "1.29.0", features = ["serde", "std", "v4", "v5", "v7"] }
 vscode_theme = "0.2.0"
 waker-fn = "1.2.0"
 walkdir = "2.5.0"
-wasm-encoder = "0.221.3"
-wasmparser = "0.221.3"
-wasmtime = { version = "36.0.20", default-features = false, features = ["async", "component-model", "cranelift", "demangle", "incremental-cache", "parallel-compilation", "runtime"] }
-wasmtime-wasi = "36.0.20"
+wasm-encoder = "0.263.0"
+wasmparser = "0.263.0"
+wasmtime = { version = "48.0.8", default-features = false, features = ["anyhow", "async", "component-model", "component-model-async", "cranelift", "demangle", "incremental-cache", "parallel-compilation", "runtime"] }
+wasmtime-wasi = { version = "48.0.8", default-features = false, features = ["p2"]}
 wax = "0.7.0"
 wayland-backend = { version = "0.3.17", features = ["client_system", "dlopen", "rwh_06"] }
 wayland-client = "0.31.15"
 wayland-cursor = "0.31.14"
 wayland-protocols = { version = "0.32.13", features = ["client", "staging", "unstable"] }
-wayland-protocols-plasma = { version = "0.2.0", features = ["client"] }
+wayland-protocols-plasma = { version = "0.3.12", features = ["client"] }
 wayland-protocols-wlr = { version = "0.3.12", features = ["client"] }
 wgpu = "30.0.1"
 which = "8.0.6"
@@ -511,7 +511,7 @@ windows-core = "0.61.2"
 windows-numerics = "0.2.0"
 windows-registry = "0.5.3"
 winresource = "0.1.34"
-wit-bindgen = "0.57.1"
+wit-bindgen = "0.63.0"
 x11rb = { version = "0.13.2", features = ["allow-unsafe-code", "cursor", "randr", "resource_manager", "sync", "xinput", "xkb"] }
 xkbcommon = { version = "0.8.0", features = ["wayland", "x11"] }
 zeroize = "1.9.1"
