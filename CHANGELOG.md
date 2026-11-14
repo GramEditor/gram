@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.2] - 2026-11-14
+
 ## Changed
 
 - Upgrade wasmtime to 48.0.8
