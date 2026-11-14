@@ -37,7 +37,7 @@ impl ZkLspAdapter {
 fn arch() -> Result<&'static str> {
     match std::env::consts::ARCH {
         "aarch64" => Ok("arm64"),
-        "x86_64" => Ok("amd64"),
+        "x86_64" => Ok(if cfg!(windows) { "x86_64" } else { "amd64" }),
         "x86" => Ok("i386"),
         other => Err(anyhow!("unsupported architecture: {}", other)),
     }

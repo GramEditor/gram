@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix tombi LSP path on Windows (#654)
 - Fix window activation by another process on Wayland (#726) (#728) by @palant
 - Handle text/uri-list clipboard contents on Wayland (#733) (#734) by @palant
+- Fix download URL for zk on Windows (#735)
 
 ## [3.5.0] - 2026-11-09
 
