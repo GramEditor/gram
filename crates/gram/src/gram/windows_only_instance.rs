@@ -155,6 +155,7 @@ fn send_args_to_instance(args: &Args) -> anyhow::Result<()> {
             reuse: false,
             env: None,
             user_data_dir: args.user_data_dir.clone(),
+            activation_token: None,
         }
     };
 
