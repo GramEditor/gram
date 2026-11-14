@@ -523,9 +523,7 @@ impl BufferDiffInner<Entity<language::Buffer>> {
                 }
                 DiffHunkSecondaryStatus::SecondaryHunkAdditionPending => {
                     log::debug!("unstaging hunk {:?}", buffer_offset_range);
-                    head_text
-                        .chunks_in_range(diff_base_byte_range)
-                        .collect::<String>()
+                    head_text.chunks_in_range(diff_base_byte_range).collect::<String>()
                 }
                 _ => {
                     debug_assert!(false);

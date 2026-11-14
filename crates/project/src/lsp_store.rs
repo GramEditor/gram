@@ -4537,13 +4537,7 @@ impl LspStore {
                     let worktree_path = ProjectPath { worktree_id, path };
                     let abs_path = file.abs_path(cx);
                     let nodes = rebase
-                        .walk(
-                            worktree_path,
-                            language.name(),
-                            language.manifest(),
-                            delegate,
-                            cx,
-                        )
+                        .walk(worktree_path, language.name(), language.manifest(), delegate, cx)
                         .collect::<Vec<_>>();
                     for node in nodes {
                         let server_id = node.server_id_or_init(|disposition| {
