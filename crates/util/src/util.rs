@@ -495,7 +495,7 @@ pub fn merge_json_value_into_replace_array(source: serde_json::Value, target: &m
         (Value::Object(source), Value::Object(target)) => {
             for (key, value) in source {
                 if let Some(target) = target.get_mut(&key) {
-                    merge_json_value_into(value, target);
+                    merge_json_value_into_replace_array(value, target);
                 } else {
                     target.insert(key, value);
                 }
