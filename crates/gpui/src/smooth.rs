@@ -12,18 +12,24 @@ pub struct SmoothAnimation {
     pub target: Point<f64>,
     /// Last updated at this time
     pub updated_at: Instant,
-    /// Total animation target time
-    pub duration: f64,
 }
 
 impl SmoothAnimation {
     /// Create a new animation state.
-    pub fn new(duration: Duration, current: Point<f64>, target: Point<f64>) -> Self {
+    pub fn new(current: Point<f64>, target: Point<f64>, now: Instant) -> Self {
         Self {
             current,
             target,
-            updated_at: Instant::now(),
-            duration: duration.as_secs_f64(),
+            updated_at: now,
+        }
+    }
+
+    /// Create a new animation state from a point.
+    pub fn from_point(point: Point<f64>, now: Instant) -> Self {
+        Self {
+            current: point,
+            target: point,
+            updated_at: now,
         }
     }
 
@@ -33,7 +39,8 @@ impl SmoothAnimation {
     }
 
     /// Returns whether the target was reached.
-    pub fn update(&mut self) -> (Point<f64>, bool) {
+    pub fn update(&mut self, now: Instant, duration: Duration) -> (Point<f64>, bool) {
+        let duration = duration.as_secs_f64();
         let current = self.current;
         let target = self.target;
 
@@ -45,9 +52,8 @@ impl SmoothAnimation {
             return (self.current, true);
         }
 
-        let now = Instant::now();
         let dt = now.duration_since(self.updated_at).as_secs_f64();
-        let speed = 3.0 / self.duration;
+        let speed = 3.0 / duration;
         let decay = if dt > 0.0 { 1.0 - (-speed * dt).exp() } else { 1.0 };
         self.updated_at = now;
         self.current.x += delta_x * decay;

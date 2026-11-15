@@ -29,7 +29,6 @@ use crate::{
         ActiveScrollbarState, Autoscroll, ScrollOffset, ScrollPixelOffset, ScrollbarThumbState,
         scroll_amount::ScrollAmount,
     },
-    smooth_cursor::{CursorViewport, LogicalCursorPosition},
 };
 use buffer_diff::{DiffHunkStatus, DiffHunkStatusKind};
 use collections::{BTreeMap, HashMap, HashSet};
@@ -43,7 +42,8 @@ use gpui::{
     MouseDownEvent, MouseMoveEvent, MousePressureEvent, MouseUpEvent, PaintQuad, ParentElement, Pixels, PressureStage,
     ScrollHandle, ScrollWheelEvent, ShapedLine, SharedString, Size, StatefulInteractiveElement, Style, Styled,
     TextAlign, TextRun, TextStyle, TextStyleRefinement, WeakEntity, Window, anchored, deferred, div, fill,
-    linear_color_stop, linear_gradient, outline, point, px, quad, relative, size, solid_background, transparent_black,
+    linear_color_stop, linear_gradient, outline, point, px, quad, relative, scroll::GlobalScrollSettings, size,
+    solid_background, transparent_black,
 };
 use itertools::Itertools;
 use language::{File, IndentGuideSettings, language_settings::ShowWhitespaceSetting};
@@ -1472,19 +1472,7 @@ impl EditorElement {
             let show_local_cursors = editor.show_local_cursors(window, cx);
             let animation_settings = EditorSettings::get_global(cx).smooth_cursor;
             let animation_enabled = animation_settings.enabled;
-            let animation_context = animation_enabled.then(|| {
-                (
-                    CursorViewport::new(
-                        content_origin,
-                        text_hitbox.bounds,
-                        scroll_position,
-                        scroll_pixel_position,
-                        line_height,
-                        em_advance,
-                    ),
-                    Instant::now(),
-                )
-            });
+            let animation_now = animation_enabled.then(|| Instant::now());
 
             if animation_enabled {
                 let newest_animation_selection_id =
@@ -1614,7 +1602,7 @@ impl EditorElement {
                         shape: selection.cursor_shape,
                         block_text,
                         cursor_name: None,
-                        animated_corners: None,
+                        animated_bounds: None,
                     };
                     let cursor_name = selection.user_name.clone().map(|name| CursorName {
                         string: name,
@@ -1623,21 +1611,14 @@ impl EditorElement {
                     });
                     cursor.layout(content_origin, cursor_name, window, cx);
                     if selection.is_local && supports_smooth_cursor(selection.cursor_shape) {
-                        if let Some((cursor_viewport, animation_now)) = animation_context {
+                        if let Some(now) = animation_now {
                             handled_animation_cursors.insert(selection.id);
                             let target_bounds = window.pixel_snap_bounds(cursor.bounds(content_origin));
-                            cursor.animated_corners = editor.smooth_cursors.update(
-                                selection.id,
-                                LogicalCursorPosition {
-                                    row: cursor_position.row().0,
-                                    column: cursor_position.column(),
-                                },
-                                target_bounds,
-                                cursor_viewport,
-                                animation_settings,
-                                animation_now,
-                            );
-                            request_animation_frame |= cursor.animated_corners.is_some();
+                            cursor.animated_bounds =
+                                editor
+                                    .smooth_cursors
+                                    .update(selection.id, target_bounds, animation_settings, now);
+                            request_animation_frame |= cursor.animated_bounds.is_some();
                         }
                     } else if animation_enabled && selection.is_local {
                         editor.smooth_cursors.remove(selection.id);
@@ -8371,7 +8352,9 @@ impl Element for EditorElement {
                         editor.set_visible_line_count((bounds.size.height / line_height) as f64, window, cx);
                         editor.set_visible_column_count(f64::from(editor_width / em_advance));
 
-                        if let Some((target, local)) = editor.scroll_manager.update_animation() {
+                        if let Some(duration) = GlobalScrollSettings::duration(cx)
+                            && let Some((target, local)) = editor.scroll_manager.update_animation(duration)
+                        {
                             editor.set_scroll_position_internal(target, local, false, window, cx);
                             snapshot.scroll_anchor = editor.scroll_manager.anchor();
                             window.request_animation_frame();
@@ -10350,7 +10333,7 @@ pub struct CursorLayout {
     shape: CursorShape,
     block_text: Option<ShapedLine>,
     cursor_name: Option<AnyElement>,
-    animated_corners: Option<[gpui::Point<Pixels>; 4]>,
+    animated_bounds: Option<Bounds<Pixels>>,
 }
 
 #[derive(Debug)]
@@ -10377,7 +10360,7 @@ impl CursorLayout {
             shape,
             block_text,
             cursor_name: None,
-            animated_corners: None,
+            animated_bounds: None,
         }
     }
 
@@ -10440,19 +10423,9 @@ impl CursorLayout {
     }
 
     pub fn paint(&mut self, origin: gpui::Point<Pixels>, window: &mut Window, cx: &mut App) {
-        if let Some(corners) = self.animated_corners {
-            let mut builder = gpui::PathBuilder::fill();
-            builder.add_polygon(&corners, true);
-            if let Ok(path) = builder.build() {
-                if let Some(name) = &mut self.cursor_name {
-                    name.paint(window, cx);
-                }
-                window.paint_path(path, self.color);
-                return;
-            }
-        }
-
-        let bounds = window.pixel_snap_bounds(self.bounds(origin));
+        let bounds = self
+            .animated_bounds
+            .unwrap_or_else(|| window.pixel_snap_bounds(self.bounds(origin)));
 
         //Draw background or border quad
         let cursor = if matches!(self.shape, CursorShape::Hollow) {
@@ -10467,7 +10440,9 @@ impl CursorLayout {
 
         window.paint_quad(cursor);
 
-        if let Some(block_text) = &self.block_text {
+        if self.animated_bounds.is_none()
+            && let Some(block_text) = &self.block_text
+        {
             block_text
                 .paint(
                     self.origin + origin,

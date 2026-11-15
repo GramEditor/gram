@@ -19,6 +19,7 @@ use language::language_settings::{AllLanguageSettings, SoftWrap};
 use language::{Bias, Point};
 pub use scroll_amount::ScrollAmount;
 use settings::Settings;
+use std::time::Instant;
 use std::{cmp::Ordering, time::Duration};
 use ui::scrollbars::ScrollbarAutoHide;
 use util::ResultExt;
@@ -163,17 +164,12 @@ impl ScrollManager {
         self.sticky_header_line_count = count;
     }
 
-    pub fn start_animation(
-        &mut self,
-        duration: Duration,
-        current: gpui::Point<ScrollOffset>,
-        target: gpui::Point<ScrollOffset>,
-    ) {
+    pub fn start_animation(&mut self, current: gpui::Point<ScrollOffset>, target: gpui::Point<ScrollOffset>) {
         self.local = true;
         if let Some(animation) = self.animation.as_mut() {
             animation.restart(target);
         } else {
-            self.animation = Some(SmoothAnimation::new(duration, current, target));
+            self.animation = Some(SmoothAnimation::new(current, target, Instant::now()));
         }
     }
 
@@ -181,9 +177,9 @@ impl ScrollManager {
         self.animation = None;
     }
 
-    pub fn update_animation(&mut self) -> Option<(gpui::Point<ScrollOffset>, bool)> {
+    pub fn update_animation(&mut self, duration: Duration) -> Option<(gpui::Point<ScrollOffset>, bool)> {
         let animation = self.animation.as_mut()?;
-        let (current, at_target) = animation.update();
+        let (current, at_target) = animation.update(Instant::now(), duration);
         if at_target {
             self.cancel_animation();
         }

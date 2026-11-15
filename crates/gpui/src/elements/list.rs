@@ -17,7 +17,7 @@ use crate::{
 };
 use collections::VecDeque;
 use refineable::Refineable as _;
-use std::{cell::RefCell, ops::Range, rc::Rc};
+use std::{cell::RefCell, ops::Range, rc::Rc, time::Instant};
 use sum_tree::{Bias, Dimensions, SumTree};
 
 type RenderItemFn = dyn FnMut(usize, &mut Window, &mut App) -> AnyElement + 'static;
@@ -553,12 +553,12 @@ impl StateInner {
 
         self.ongoing_scroll.update(axis);
 
-        if !precise && let Some(duration) = GlobalScrollSettings::duration(cx) {
+        if !precise {
             let delta_y = f64::from(delta.y);
             if let Some(animation) = self.animation.as_mut() {
                 animation.restart(point(0., animation.current.y + delta_y));
             } else {
-                self.animation = Some(SmoothAnimation::new(duration, point(0., 0.), point(0., delta_y)));
+                self.animation = Some(SmoothAnimation::new(point(0., 0.), point(0., delta_y), Instant::now()));
             }
         } else {
             self.scroll_internal(delta.y, scroll_top, height, window, cx);
@@ -608,8 +608,12 @@ impl StateInner {
             return;
         };
 
+        let Some(duration) = GlobalScrollSettings::duration(cx) else {
+            return;
+        };
+
         let previous = animation.current;
-        let (current, at_target) = animation.update();
+        let (current, at_target) = animation.update(Instant::now(), duration);
         if at_target {
             self.animation = None;
             return;

@@ -30,13 +30,11 @@ impl Editor {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if let Some(duration) = GlobalScrollSettings::duration(cx) {
+        self.scroll_manager.update_ongoing_scroll(axis);
+        if GlobalScrollSettings::duration(cx).is_some() {
             let current_position = self.scroll_position(cx);
-            self.scroll_manager.update_ongoing_scroll(axis);
-            self.scroll_manager
-                .start_animation(duration, current_position, scroll_position);
+            self.scroll_manager.start_animation(current_position, scroll_position);
         } else {
-            self.scroll_manager.update_ongoing_scroll(axis);
             self.set_scroll_position(scroll_position, window, cx);
         }
 

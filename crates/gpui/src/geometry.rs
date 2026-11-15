@@ -158,6 +158,13 @@ impl<T: Clone + Debug + Default + PartialEq> Point<T> {
     }
 }
 
+impl Point<f64> {
+    /// True if the points are within epsilon on both axis
+    pub fn almost_equal(&self, other: Point<f64>, epsilon: f64) -> bool {
+        (self.x - other.x).abs() < epsilon && (self.y - other.y).abs() < epsilon
+    }
+}
+
 impl<T: Clone + Debug + Default + PartialEq> Along for Point<T> {
     type Unit = T;
 
@@ -3664,6 +3671,12 @@ impl Half for i32 {
 }
 
 impl Half for f32 {
+    fn half(&self) -> Self {
+        self / 2.
+    }
+}
+
+impl Half for f64 {
     fn half(&self) -> Self {
         self / 2.
     }
