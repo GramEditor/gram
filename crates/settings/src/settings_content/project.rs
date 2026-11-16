@@ -175,7 +175,7 @@ pub struct BinarySettings {
 #[with_fallible_options]
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, JsonSchema, MergeFrom, Hash)]
 pub struct FetchSettings {
-    // Whether to consider pre-releases for fetching
+    /// Whether to consider pre-releases for fetching
     pub pre_release: Option<bool>,
 }
 
