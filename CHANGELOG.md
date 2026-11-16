@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Fixed
 
 - Second attempt to fix doubled arrays (#738)
+- Register KillRingCopy as an action (#745)
 
 ## [3.5.2] - 2026-11-14
 
