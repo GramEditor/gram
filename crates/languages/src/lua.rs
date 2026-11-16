@@ -77,7 +77,7 @@ impl LspInstaller for LuaLspAdapter {
         _cx: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
         let release =
-            latest_github_release("LuaLS/lua-language-server", pre_release, true, delegate.http_client()).await?;
+            latest_github_release("LuaLS/lua-language-server", true, pre_release, delegate.http_client()).await?;
 
         let Some(binary_name) = Self::binary_name() else {
             return Err(anyhow!("unsupported architecture: {}", std::env::consts::ARCH));

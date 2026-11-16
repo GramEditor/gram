@@ -255,10 +255,10 @@ impl LspInstaller for TyLspAdapter {
     async fn fetch_latest_server_version(
         &self,
         delegate: &dyn LspAdapterDelegate,
-        _: bool,
+        pre_release: bool,
         _: &mut AsyncApp,
     ) -> Result<Self::BinaryVersion> {
-        let release = latest_github_release("astral-sh/ty", true, false, delegate.http_client()).await?;
+        let release = latest_github_release("astral-sh/ty", true, pre_release, delegate.http_client()).await?;
         let (_, asset_name) = Self::build_asset_name();
         let asset = release
             .assets
@@ -2235,10 +2235,10 @@ impl LspInstaller for RuffLspAdapter {
     async fn fetch_latest_server_version(
         &self,
         delegate: &dyn LspAdapterDelegate,
-        _: bool,
+        pre_release: bool,
         _: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        let release = latest_github_release("astral-sh/ruff", true, false, delegate.http_client()).await?;
+        let release = latest_github_release("astral-sh/ruff", true, pre_release, delegate.http_client()).await?;
         let (_, asset_name) = Self::build_asset_name();
         let asset = release
             .assets

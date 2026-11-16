@@ -89,7 +89,7 @@ impl LspInstaller for OdinLspAdapter {
         pre_release: bool,
         _cx: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        let release = latest_github_release("DanielGavin/ols", pre_release, false, delegate.http_client()).await?;
+        let release = latest_github_release("DanielGavin/ols", true, pre_release, delegate.http_client()).await?;
 
         let Some(binary_name) = Self::ols_binary_name() else {
             return Err(anyhow!("unsupported architecture: {}", std::env::consts::ARCH));

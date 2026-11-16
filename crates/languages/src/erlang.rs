@@ -138,8 +138,8 @@ impl LspInstaller for ElpAdapter {
         log::info!("trying github download for ELP...");
         let release = http_client::github::latest_github_release(
             "WhatsApp/erlang-language-platform",
-            pre_release,
             true,
+            pre_release,
             delegate.http_client(),
         )
         .await?;

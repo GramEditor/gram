@@ -63,10 +63,10 @@ impl LspInstaller for ZkLspAdapter {
     async fn fetch_latest_server_version(
         &self,
         delegate: &dyn LspAdapterDelegate,
-        _pre_release: bool,
+        pre_release: bool,
         _cx: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        let release = latest_github_release("zk-org/zk", false, false, delegate.http_client()).await?;
+        let release = latest_github_release("zk-org/zk", true, pre_release, delegate.http_client()).await?;
 
         let binary_version = release
             .tag_name

@@ -60,10 +60,10 @@ impl LspInstaller for GleamLspAdapter {
     async fn fetch_latest_server_version(
         &self,
         delegate: &dyn LspAdapterDelegate,
-        _pre_release: bool,
+        pre_release: bool,
         _cx: &mut AsyncApp,
     ) -> Result<GitHubLspBinaryVersion> {
-        let release = latest_github_release("gleam-lang/gleam", false, false, delegate.http_client()).await?;
+        let release = latest_github_release("gleam-lang/gleam", true, pre_release, delegate.http_client()).await?;
 
         let arch = match std::env::consts::ARCH {
             "aarch64" => "aarch64",
