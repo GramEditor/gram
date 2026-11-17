@@ -1756,6 +1756,10 @@
     "Starlark": {
       "language_servers": ["starpls", "!buck2-lsp", "..."],
     },
+    "SuperHTML": {
+      "language_servers": ["superhtml", "!vscode-html-language-server", "..."],
+      "formatter": "language_server",
+    },
     "Svelte": {
       "language_servers": ["svelte-language-server", "..."],
       "prettier": {

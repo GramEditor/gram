@@ -102,6 +102,7 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
         ("rust", tree_sitter_rust::LANGUAGE),
         ("scheme", tree_sitter_scheme::LANGUAGE),
         ("sql", tree_sitter_sql::LANGUAGE),
+        ("superhtml", tree_sitter_html::LANGUAGE),
         ("toml", tree_sitter_toml::LANGUAGE),
         ("tsx", tree_sitter_typescript::LANGUAGE_TSX),
         ("typescript", tree_sitter_typescript::LANGUAGE_TYPESCRIPT),
@@ -221,7 +222,7 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
         },
         LanguageInfo {
             name: "html",
-            adapters: vec![superhtml_lsp_adapter, html_lsp_adapter],
+            adapters: vec![superhtml_lsp_adapter.clone(), html_lsp_adapter],
             ..Default::default()
         },
         LanguageInfo {
@@ -294,6 +295,11 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
         LanguageInfo {
             name: "sql",
             adapters: vec![],
+            ..Default::default()
+        },
+        LanguageInfo {
+            name: "superhtml",
+            adapters: vec![superhtml_lsp_adapter],
             ..Default::default()
         },
         LanguageInfo {
@@ -427,6 +433,7 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
         "TypeScript",
         "PHP",
         "Svelte",
+        "SuperHTML",
         "TSX",
         "Vue.js",
     ];
