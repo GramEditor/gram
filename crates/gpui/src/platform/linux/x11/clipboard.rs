@@ -32,6 +32,7 @@ use std::{
 };
 
 use parking_lot::{Condvar, Mutex, MutexGuard, RwLock};
+use strum::IntoEnumIterator;
 use x11rb::{
     COPY_DEPTH_FROM_PARENT, COPY_FROM_PARENT, NONE,
     connection::Connection,
@@ -55,37 +56,26 @@ static CLIPBOARD: Mutex<Option<GlobalClipboard>> = parking_lot::const_mutex(None
 x11rb::atom_manager! {
     pub Atoms: AtomCookies {
         CLIPBOARD,
-        PRIMARY,
-        SECONDARY,
 
         CLIPBOARD_MANAGER,
         SAVE_TARGETS,
         TARGETS,
-        ATOM,
         INCR,
 
+        TEXT_MIME_UTF8_1: b"text/plain;charset=utf-8",
+        TEXT_MIME_UTF8_2: b"text/plain;charset=UTF-8",
+        TEXT_MIME_UNKNOWN: b"text/plain",
+
         UTF8_STRING,
-        UTF8_MIME_0: b"text/plain;charset=utf-8",
-        UTF8_MIME_1: b"text/plain;charset=UTF-8",
         // Text in ISO Latin-1 encoding
         // See: https://tronche.com/gui/x/icccm/sec-2.html#s-2.6.2
         STRING,
         // Text in unknown encoding
         // See: https://tronche.com/gui/x/icccm/sec-2.html#s-2.6.2
         TEXT,
-        TEXT_MIME_UNKNOWN: b"text/plain",
 
         // HTML: b"text/html",
-        // URI_LIST: b"text/uri-list",
-
-        PNG__MIME: ImageFormat::mime_type(ImageFormat::Png ).as_bytes(),
-        JPEG_MIME: ImageFormat::mime_type(ImageFormat::Jpeg).as_bytes(),
-        WEBP_MIME: ImageFormat::mime_type(ImageFormat::Webp).as_bytes(),
-        GIF__MIME: ImageFormat::mime_type(ImageFormat::Gif ).as_bytes(),
-        SVG__MIME: ImageFormat::mime_type(ImageFormat::Svg ).as_bytes(),
-        BMP__MIME: ImageFormat::mime_type(ImageFormat::Bmp ).as_bytes(),
-        TIFF_MIME: ImageFormat::mime_type(ImageFormat::Tiff).as_bytes(),
-        ICO__MIME: ImageFormat::mime_type(ImageFormat::Ico ).as_bytes(),
+        URI_LIST: b"text/uri-list",
 
         // This is just some random name for the property on our window, into which
         // the clipboard owner writes the data we requested.
@@ -126,6 +116,7 @@ struct Inner {
     /// requests coming to us.
     server: XContext,
     atoms: Atoms,
+    image_formats: HashMap<ImageFormat, Atom>,
 
     clipboard: Selection,
     primary: Selection,
@@ -210,10 +201,21 @@ impl Inner {
             .map_err(into_unknown)?
             .reply()
             .map_err(into_unknown)?;
+        let image_formats = ImageFormat::iter()
+            .map(|format| {
+                server
+                    .conn
+                    .intern_atom(false, format.mime_type().as_bytes())
+                    .map_err(into_unknown)
+                    .and_then(|cookie| cookie.reply().map(|reply| reply.atom).map_err(into_unknown))
+                    .map(|atom| (format, atom))
+            })
+            .collect::<Result<_>>()?;
 
         Ok(Self {
             server,
             atoms,
+            image_formats,
             clipboard: Selection::default(),
             primary: Selection::default(),
             secondary: Selection::default(),
@@ -276,15 +278,12 @@ impl Inner {
     fn read(&self, formats: &[Atom], selection: ClipboardKind) -> Result<ClipboardData> {
         // if we are the current owner, we can get the current clipboard ourselves
         if self.is_owner(selection)? {
-            let data = self.selection_of(selection).data.read();
-            if let Some(data_list) = &*data {
-                for data in data_list {
-                    for format in formats {
-                        if *format == data.format {
-                            return Ok(data.clone());
-                        }
-                    }
-                }
+            let data_list = self.selection_of(selection).data.read();
+            if let Some(data) = data_list
+                .as_ref()
+                .and_then(|data_list| data_list.iter().find(|data| formats.contains(&data.format)))
+            {
+                return Ok(data.clone());
             }
             return Err(Error::ContentNotAvailable);
         }
@@ -296,7 +295,7 @@ impl Inner {
                 None
             }
             Ok(ClipboardData { bytes, format }) => {
-                if format == self.atoms.ATOM {
+                if format == Atom::from(AtomEnum::ATOM) {
                     let available_formats = Self::parse_formats(&bytes);
                     formats.iter().find(|format| available_formats.contains(format))
                 } else {
@@ -321,15 +320,15 @@ impl Inner {
         }
 
         log::trace!("Falling back on attempting to convert clipboard to each format.");
-        for format in formats {
-            match self.read_single(&reader, selection, *format) {
+        for &format in formats {
+            match self.read_single(&reader, selection, format) {
                 Ok(data) => {
                     if formats.contains(&data.format) {
                         return Ok(data);
                     } else {
                         log::trace!(
                             "Conversion to {} responded with {} which is not supported",
-                            self.atom_name(*format),
+                            self.atom_name(format),
                             self.atom_name(data.format),
                         );
                         continue;
@@ -339,7 +338,7 @@ impl Inner {
                     continue;
                 }
                 Err(e) => {
-                    log::trace!("Conversion to {} failed: {}", self.atom_name(*format), e);
+                    log::trace!("Conversion to {} failed: {}", self.atom_name(format), e);
                     return Err(e);
                 }
             }
@@ -350,10 +349,10 @@ impl Inner {
 
     fn parse_formats(bytes: &[u8]) -> Vec<Atom> {
         bytes
-            .as_chunks::<4>()
+            .as_chunks::<{ (Atom::BITS / 8) as usize }>()
             .0
             .iter()
-            .map(|bytes| u32::from_le_bytes(*bytes))
+            .map(|bytes| Atom::from_ne_bytes(*bytes))
             .collect()
     }
 
@@ -411,7 +410,7 @@ impl Inner {
                             // This means we received an indication that an the
                             // data is going to be sent INCRementally. Let's
                             // reset our timeout.
-                            timeout_end += SHORT_TIMEOUT_DUR;
+                            timeout_end = Instant::now() + SHORT_TIMEOUT_DUR;
                         }
                         ReadSelNotifyResult::EventNotRecognized => (),
                     }
@@ -445,8 +444,8 @@ impl Inner {
     fn atom_of(&self, selection: ClipboardKind) -> Atom {
         match selection {
             ClipboardKind::Clipboard => self.atoms.CLIPBOARD,
-            ClipboardKind::Primary => self.atoms.PRIMARY,
-            ClipboardKind::Secondary => self.atoms.SECONDARY,
+            ClipboardKind::Primary => AtomEnum::PRIMARY.into(),
+            ClipboardKind::Secondary => AtomEnum::SECONDARY.into(),
         }
     }
 
@@ -461,8 +460,8 @@ impl Inner {
     fn kind_of(&self, atom: Atom) -> Option<ClipboardKind> {
         match atom {
             a if a == self.atoms.CLIPBOARD => Some(ClipboardKind::Clipboard),
-            a if a == self.atoms.PRIMARY => Some(ClipboardKind::Primary),
-            a if a == self.atoms.SECONDARY => Some(ClipboardKind::Secondary),
+            a if a == Atom::from(AtomEnum::PRIMARY) => Some(ClipboardKind::Primary),
+            a if a == Atom::from(AtomEnum::SECONDARY) => Some(ClipboardKind::Secondary),
             _ => None,
         }
     }
@@ -513,7 +512,7 @@ impl Inner {
     fn handle_read_selection_notify(
         &self,
         reader: &XContext,
-        target_format: u32,
+        target_format: Atom,
         using_incr: &mut bool,
         incr_data: &mut Vec<u8>,
         event: SelectionNotifyEvent,
@@ -528,7 +527,8 @@ impl Inner {
         }
         if self.kind_of(event.selection).is_none() {
             log::info!(
-                "Received a SelectionNotify for a selection other than CLIPBOARD, PRIMARY or SECONDARY. This is unexpected."
+                "Received a SelectionNotify for a selection {}. This is unexpected.",
+                self.atom_name(event.selection)
             );
             return Ok(ReadSelNotifyResult::EventNotRecognized);
         }
@@ -565,7 +565,7 @@ impl Inner {
             log::trace!("Receiving INCR segments");
             *using_incr = true;
             if reply.value_len == 4 {
-                let min_data_len = reply.value32().and_then(|mut vals| vals.next()).unwrap_or(0);
+                let min_data_len = reply.value32().and_then(|mut vals| vals.next()).unwrap_or_default();
                 incr_data.reserve(min_data_len as usize);
             }
             Ok(ReadSelNotifyResult::IncrStarted)
@@ -581,7 +581,7 @@ impl Inner {
     fn handle_read_property_notify(
         &self,
         reader: &XContext,
-        target_format: u32,
+        target_format: Atom,
         using_incr: bool,
         incr_data: &mut Vec<u8>,
         timeout_end: &mut Instant,
@@ -601,10 +601,10 @@ impl Inner {
                 true,
                 event.window,
                 event.atom,
-                if target_format == self.atoms.TARGETS {
-                    self.atoms.ATOM
-                } else {
+                if target_format != self.atoms.TARGETS {
                     target_format
+                } else {
+                    AtomEnum::ATOM.into()
                 },
                 0,
                 u32::MAX / 4,
@@ -632,28 +632,29 @@ impl Inner {
             Some(kind) => kind,
             None => {
                 log::warn!(
-                    "Received a selection request to a selection other than the CLIPBOARD, PRIMARY or SECONDARY. This is unexpected."
+                    "Received a selection request to selection {}. This is unexpected.",
+                    self.atom_name(event.selection)
                 );
                 return Ok(());
             }
         };
 
         let success;
-        // we are asked for a list of supported conversion targets
         if event.target == self.atoms.TARGETS {
+            // we are asked for a list of supported conversion targets
             log::trace!("Handling TARGETS, dst property is {}", self.atom_name(event.property));
             let mut targets = Vec::with_capacity(10);
             targets.push(self.atoms.TARGETS);
             targets.push(self.atoms.SAVE_TARGETS);
-            let data = self.selection_of(selection).data.read();
-            if let Some(data_list) = &*data {
+            let data_list = self.selection_of(selection).data.read();
+            if let Some(data_list) = data_list.as_ref() {
                 for data in data_list {
                     targets.push(data.format);
                     if data.format == self.atoms.UTF8_STRING {
                         // When we are storing a UTF8 string,
                         // add all equivalent formats to the supported targets
-                        targets.push(self.atoms.UTF8_MIME_0);
-                        targets.push(self.atoms.UTF8_MIME_1);
+                        targets.push(self.atoms.TEXT_MIME_UTF8_1);
+                        targets.push(self.atoms.TEXT_MIME_UTF8_2);
                     }
                 }
             }
@@ -663,8 +664,7 @@ impl Inner {
                     PropMode::REPLACE,
                     event.requestor,
                     event.property,
-                    // TODO: change to `AtomEnum::ATOM`
-                    self.atoms.ATOM,
+                    AtomEnum::ATOM,
                     &targets,
                 )
                 .map_err(into_unknown)?;
@@ -856,7 +856,8 @@ fn serve_requests(context: Arc<Inner>) -> Result<(), Box<dyn std::error::Error>>
                 // signaling that the data was handed over successfully.
                 if event.selection != context.atoms.CLIPBOARD_MANAGER {
                     log::error!(
-                        "Received a `SelectionNotify` from a selection other than the CLIPBOARD_MANAGER. This is unexpected in this thread."
+                        "Received a SelectionNotify from selection {}. This is unexpected in this thread.",
+                        context.atom_name(event.selection)
                     );
                     continue;
                 }
@@ -929,71 +930,41 @@ impl Clipboard {
 
     #[allow(unused)]
     pub(crate) fn set_image(&self, image: Image, selection: ClipboardKind, wait: WaitConfig) -> Result<()> {
-        let format = match image.format {
-            ImageFormat::Png => self.inner.atoms.PNG__MIME,
-            ImageFormat::Jpeg => self.inner.atoms.JPEG_MIME,
-            ImageFormat::Webp => self.inner.atoms.WEBP_MIME,
-            ImageFormat::Gif => self.inner.atoms.GIF__MIME,
-            ImageFormat::Svg => self.inner.atoms.SVG__MIME,
-            ImageFormat::Bmp => self.inner.atoms.BMP__MIME,
-            ImageFormat::Tiff => self.inner.atoms.TIFF_MIME,
-            ImageFormat::Ico => self.inner.atoms.ICO__MIME,
-        };
         let data = vec![ClipboardData {
             bytes: image.bytes,
-            format: self.inner.atoms.PNG__MIME,
+            format: *self
+                .inner
+                .image_formats
+                .get(&image.format)
+                .ok_or(Error::ConversionFailure)?,
         }];
         self.inner.write(data, selection, wait)
     }
 
     pub(crate) fn get_any(&self, selection: ClipboardKind) -> Result<ClipboardItem> {
-        const IMAGE_FORMAT_COUNT: usize = 7;
-        let image_format_atoms: [Atom; IMAGE_FORMAT_COUNT] = [
-            self.inner.atoms.PNG__MIME,
-            self.inner.atoms.JPEG_MIME,
-            self.inner.atoms.WEBP_MIME,
-            self.inner.atoms.GIF__MIME,
-            self.inner.atoms.SVG__MIME,
-            self.inner.atoms.BMP__MIME,
-            self.inner.atoms.TIFF_MIME,
-        ];
-        let image_formats: [ImageFormat; IMAGE_FORMAT_COUNT] = [
-            ImageFormat::Png,
-            ImageFormat::Jpeg,
-            ImageFormat::Webp,
-            ImageFormat::Gif,
-            ImageFormat::Svg,
-            ImageFormat::Bmp,
-            ImageFormat::Tiff,
-        ];
-
-        const TEXT_FORMAT_COUNT: usize = 6;
-        let text_format_atoms: [Atom; TEXT_FORMAT_COUNT] = [
-            self.inner.atoms.UTF8_STRING,
-            self.inner.atoms.UTF8_MIME_0,
-            self.inner.atoms.UTF8_MIME_1,
-            self.inner.atoms.STRING,
-            self.inner.atoms.TEXT,
-            self.inner.atoms.TEXT_MIME_UNKNOWN,
-        ];
-
-        let atom_none: Atom = AtomEnum::NONE.into();
-
-        const FORMAT_ATOM_COUNT: usize = TEXT_FORMAT_COUNT + IMAGE_FORMAT_COUNT;
-
-        let mut format_atoms: [Atom; FORMAT_ATOM_COUNT] = [atom_none; FORMAT_ATOM_COUNT];
-
         // image formats first, as they are more specific, and read will return the first
         // format that the contents can be converted to
-        format_atoms[0..IMAGE_FORMAT_COUNT].copy_from_slice(&image_format_atoms);
-        format_atoms[IMAGE_FORMAT_COUNT..].copy_from_slice(&text_format_atoms);
-        debug_assert!(!format_atoms.contains(&atom_none));
+        let format_atoms = self
+            .inner
+            .image_formats
+            .values()
+            .copied()
+            .chain([
+                self.inner.atoms.TEXT_MIME_UTF8_1,
+                self.inner.atoms.TEXT_MIME_UTF8_2,
+                self.inner.atoms.UTF8_STRING,
+                self.inner.atoms.TEXT_MIME_UNKNOWN,
+                self.inner.atoms.STRING,
+                self.inner.atoms.TEXT,
+                self.inner.atoms.URI_LIST,
+            ])
+            .collect::<Vec<_>>();
 
         let result = self.inner.read(&format_atoms, selection)?;
 
         log::trace!("read clipboard as format {:?}", self.inner.atom_name(result.format));
 
-        for (format_atom, image_format) in image_format_atoms.into_iter().zip(image_formats) {
+        for (&image_format, &format_atom) in self.inner.image_formats.iter() {
             if result.format == format_atom {
                 let bytes = result.bytes;
                 let id = hash(&bytes);
@@ -1006,9 +977,7 @@ impl Clipboard {
         }
 
         let text = if result.format == self.inner.atoms.STRING {
-            // ISO Latin-1
-            // See: https://stackoverflow.com/questions/28169745/what-are-the-options-to-convert-iso-8859-1-latin-1-to-a-string-utf-8
-            result.bytes.into_iter().map(|c| c as char).collect()
+            encoding_rs::mem::decode_latin1(&result.bytes).to_string()
         } else {
             String::from_utf8(result.bytes).map_err(|_| Error::ConversionFailure)?
         };
@@ -1016,7 +985,7 @@ impl Clipboard {
     }
 
     pub fn is_owner(&self, selection: ClipboardKind) -> bool {
-        self.inner.is_owner(selection).unwrap_or(false)
+        self.inner.is_owner(selection).unwrap_or_default()
     }
 }
 
