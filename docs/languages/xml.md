@@ -16,3 +16,20 @@ recognized as XML just add them to
     "XML": ["rdf", "gpx", "kml"]
   }
 ```
+
+## Formatters
+
+You can also set a different formatter for XML files through the [language specific configuration](../configuring-languages.md). [xmllint](https://gnome.pages.gitlab.gnome.org/libxml2/xmllint.html) is a popular XML parsing tool that can also format XML files, and usually is pre-installed, as part of [libxml2](https://gitlab.gnome.org/GNOME/libxml2/-/wikis/home):
+
+```json
+"languages": {
+  "XML": {
+    "formatter": {
+      "external": {
+        "command": "xmllint",
+        "arguments": ["--format", "-"]
+      },
+    }
+  }
+}
+```
