@@ -3384,6 +3384,7 @@ dependencies = [
  "derive_more",
  "dispatch2",
  "embed-resource",
+ "encoding_rs",
  "env_logger 0.11.11",
  "etagere",
  "filedescriptor",

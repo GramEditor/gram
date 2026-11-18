@@ -89,6 +89,7 @@ bytemuck = { workspace = true, optional = true }
 collections.workspace = true
 ctor.workspace = true
 derive_more.workspace = true
+encoding_rs.workspace = true
 etagere.workspace = true
 futures.workspace = true
 gpui_macros.workspace = true
