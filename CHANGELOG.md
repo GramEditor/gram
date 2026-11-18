@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Added
 
 - Add native SuperHTML support (#746) (#749) by @cyexclam
+- Docs: Using xmllint as XML formatter (#634) (#697) by @zetashift
 
 ## Fixed
 
