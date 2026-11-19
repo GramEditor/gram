@@ -93,13 +93,10 @@ pub fn platform_background_executor() -> BackgroundExecutor {
     WindowsPlatform::new_background_executor().unwrap()
 }
 
-/// Returns the focused display ID on macOS, falling back to the primary display.
-#[allow(clippy::unnecessary_wraps)]
-pub fn platform_focused_display_id() -> Option<DisplayId> {
-    cfg_select! {
-        target_os = "macos" => Some(MacDisplay::focused().unwrap_or_else(MacDisplay::primary).id()),
-        _ => None,
-    }
+/// Returns the display containing the window receiving keyboard events.
+#[cfg(target_os = "macos")]
+pub fn focused_display_id() -> DisplayId {
+    MacDisplay::focused().unwrap_or_else(MacDisplay::primary).id()
 }
 
 #[cfg(target_os = "macos")]

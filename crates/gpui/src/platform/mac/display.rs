@@ -20,21 +20,20 @@ impl MacDisplay {
 
     /// Get the primary screen - the one with the menu bar, and whose bottom left
     /// corner is at the origin of the AppKit coordinate system.
+    ///
+    /// The screen containing the menu bar is always the first object (index 0) in the array returned by the screens
+    /// method.
+    ///
+    /// See https://developer.apple.com/documentation/appkit/nsscreen/main
     pub fn primary() -> Self {
-        // Instead of iterating through all active systems displays via `all()` we use the first
-        // NSScreen and gets its CGDirectDisplayID, because we can't be sure that `CGGetActiveDisplayList`
-        // will always return a list of active displays (machine might be sleeping).
-        //
-        // The following is what Chromium does too:
-        //
-        // https://chromium.googlesource.com/chromium/src/+/66.0.3359.158/ui/display/mac/screen_mac.mm#56
         let mtm = MainThreadMarker::new().expect("Must be on the main thread");
-        let screens = NSScreen::screens(mtm);
-        let screen = screens.objectAtIndex(0);
+        let screen = NSScreen::screens(mtm).objectAtIndex(0);
         Self(screen_display_id(&screen))
     }
 
-    /// Get AppKit's active screen, which may differ from the primary screen.
+    /// Get the screen containing the window that is currently receiving keyboard events.
+    ///
+    /// See https://developer.apple.com/documentation/appkit/nsscreen/main
     pub fn focused() -> Option<Self> {
         let mtm = MainThreadMarker::new().expect("Must be on the main thread");
         let screen = NSScreen::mainScreen(mtm)?;
