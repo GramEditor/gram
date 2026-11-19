@@ -309,7 +309,7 @@ impl X11Client {
                         // Insert the runnables as idle callbacks, so we make sure that user-input and X11
                         // events have higher priority and runnables are only worked off after the event
                         // callbacks.
-                        handle.insert_idle(|_| {
+                        handle.insert_idle(|client| {
                             let start = Instant::now();
                             let mut timing = match runnable {
                                 RunnableVariant::Meta(runnable) => {
@@ -337,6 +337,9 @@ impl X11Client {
                                     timing
                                 }
                             };
+
+                            let xcb_connection = client.0.borrow().xcb_connection.clone();
+                            client.process_x11_events(&xcb_connection).log_err();
 
                             let end = Instant::now();
                             timing.end = Some(end);
