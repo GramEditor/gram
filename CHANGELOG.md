@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Second attempt to fix doubled arrays (#738)
 - Register KillRingCopy as an action (#745)
 - Cleaned up X11 clipboard implementation somewhat (#733) (#750) by @palant
+- Drain buffered X11 events after foreground work (zed#62081) (#752) by @wrongsell
 
 ## [3.5.2] - 2026-11-14
 
