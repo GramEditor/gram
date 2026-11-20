@@ -899,6 +899,7 @@ async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp
             match location {
                 SerializedWorkspaceLocation::Local => {
                     let app_state = app_state.clone();
+
                     let task = cx.spawn(async move |cx| {
                         let open_task = cx.update(|cx| {
                             workspace::open_paths(paths.paths(), app_state, workspace::OpenOptions::default(), cx)
@@ -983,20 +984,16 @@ async fn restore_or_create_workspace(app_state: Arc<AppState>, cx: &mut AsyncApp
         cx.update(|cx| show_onboarding_view(app_state, cx))?.await?;
     } else {
         cx.update(|cx| {
-            let launchpad =
-                WorkspaceSettings::get_global(cx).restore_on_startup == workspace::RestoreOnStartupBehavior::Launchpad;
-
-            let startup_display = cfg_select! {
-                target_os = "macos" => Some(gpui::focused_display_id()),
-                _ => None,
-            };
-
             let open_options = workspace::OpenOptions {
-                display_id: startup_display.filter(|_| launchpad),
+                display_id: cfg_select! {
+                    target_os = "macos" => Some(gpui::focused_display_id()),
+                    _ => None,
+                },
                 ..Default::default()
             };
             workspace::open_new(open_options, app_state, cx, move |workspace, window, cx| {
-                if !launchpad {
+                let restore_on_startup = WorkspaceSettings::get_global(cx).restore_on_startup;
+                if restore_on_startup != workspace::RestoreOnStartupBehavior::Launchpad {
                     Editor::new_file(workspace, &Default::default(), window, cx);
                 }
             })
