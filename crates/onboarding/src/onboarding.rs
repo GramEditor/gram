@@ -21,7 +21,6 @@ pub use workspace::welcome::ShowWelcome;
 use workspace::welcome::WelcomePage;
 use workspace::{
     AppState, Workspace, WorkspaceId,
-    dock::DockPosition,
     item::{Item, ItemEvent},
     open_new, register_serializable_item, with_active_or_new_workspace,
 };
@@ -127,7 +126,7 @@ pub fn init(cx: &mut App) {
 pub fn show_onboarding_view(app_state: Arc<AppState>, cx: &mut App) -> Task<anyhow::Result<()>> {
     open_new(Default::default(), app_state, cx, |workspace, window, cx| {
         {
-            workspace.toggle_dock(DockPosition::Left, window, cx);
+            workspace.close_all_docks(window, cx);
             let onboarding_page = Onboarding::new(workspace, cx);
             workspace.add_item_to_center(Box::new(onboarding_page.clone()), window, cx);
 
