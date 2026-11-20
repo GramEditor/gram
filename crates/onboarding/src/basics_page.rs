@@ -77,6 +77,21 @@ fn render_theme_section(tab_index: &mut isize, cx: &mut App) -> impl IntoElement
                 .gap_4()
                 .justify_between()
                 .children(render_theme_previews(tab_index, &theme_selection, cx)),
+        )
+        .child(
+            h_flex().w_full().mt_4().justify_end().child(
+                Button::new("more_themes", "More themes")
+                    .style(ButtonStyle::OutlinedGhost)
+                    .size(ButtonSize::Medium)
+                    .label_size(LabelSize::Small)
+                    .tab_index({
+                        *tab_index += 1;
+                        *tab_index - 1
+                    })
+                    .on_click(|_, window, cx| {
+                        window.dispatch_action(app_actions::theme_selector::Toggle::default().boxed_clone(), cx)
+                    }),
+            ),
         );
 
     fn render_theme_previews(

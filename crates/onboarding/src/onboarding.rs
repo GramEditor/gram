@@ -206,59 +206,75 @@ impl Render for Onboarding {
                 cx.notify();
             }))
             .child(
-                div()
+                v_flex()
                     .max_w(Rems(48.0))
                     .size_full()
                     .mx_auto()
                     .child(
-                        v_flex()
-                            .id("page-content")
-                            .m_auto()
-                            .p_12()
-                            .size_full()
-                            .max_w_full()
-                            .min_w_0()
-                            .gap_6()
-                            .overflow_y_scroll()
+                        div()
+                            .flex_1()
+                            .min_h_0()
+                            .w_full()
+                            .vertical_scrollbar_for(&self.scroll_handle, window, cx)
                             .child(
-                                h_flex()
-                                    .w_full()
-                                    .gap_4()
-                                    .justify_between()
+                                v_flex()
+                                    .id("page-content")
+                                    .m_auto()
+                                    .p_12()
+                                    .size_full()
+                                    .max_w_full()
+                                    .min_w_0()
+                                    .gap_6()
+                                    .overflow_y_scroll()
                                     .child(
-                                        h_flex().gap_4().child(Vector::square(image, rems(6.))).child(
-                                            v_flex()
-                                                .gap_1()
-                                                .child(Headline::new("Gram").size(HeadlineSize::Large))
-                                                .child(
-                                                Label::new(
-                                                    "“What cannot be mended must be transcended.”\n- Ursula K. Le Guin",
-                                                )
-                                                .size(LabelSize::Small)
-                                                .line_height_style(LineHeightStyle::UiLabel)
-                                                .color(Color::Muted)
-                                                .italic(),
+                                        h_flex()
+                                            .w_full()
+                                            .gap_4()
+                                            .child(
+                                                h_flex().gap_4().child(Vector::square(image, rems(6.))).child(
+                                                    v_flex()
+                                                        .gap_1()
+                                                        .child(Headline::new("Gram").size(HeadlineSize::Large))
+                                                        .child(
+                                                            Label::new(
+                                                                "“What cannot be mended must be transcended.”\n- Ursula K. Le Guin",
+                                                            )
+                                                            .size(LabelSize::Small)
+                                                            .line_height_style(LineHeightStyle::UiLabel)
+                                                            .color(Color::Muted)
+                                                            .italic(),
+                                                        ),
+                                                ),
                                             ),
-                                        ),
                                     )
-                                    .child({
-                                        Button::new("finish_setup", "Finish Setup")
-                                            .style(ButtonStyle::Filled)
-                                            .size(ButtonSize::Medium)
-                                            .key_binding(
-                                                KeyBinding::for_action_in(&Finish, &self.focus_handle, cx)
-                                                    .size(TextSize::Small.rems(cx)),
-                                            )
-                                            .on_click(|_, window, cx| {
-                                                window.dispatch_action(Finish.boxed_clone(), cx);
-                                            })
-                                    }),
-                            )
-                            .child(Divider::horizontal().color(ui::DividerColor::BorderVariant))
-                            .child(self.render_page(cx))
-                            .track_scroll(&self.scroll_handle),
+                                    .child(Divider::horizontal().color(ui::DividerColor::BorderVariant))
+                                    .child(self.render_page(cx))
+                                    .track_scroll(&self.scroll_handle),
+                            ),
                     )
-                    .vertical_scrollbar_for(&self.scroll_handle, window, cx),
+                    .child(
+                        h_flex()
+                            .w_full()
+                            .flex_shrink_0()
+                            .justify_end()
+                            .px_12()
+                            .py_4()
+                            .border_t_1()
+                            .border_color(cx.theme().colors().border_variant)
+                            .child({
+                                let background = cx.theme().colors().ghost_element_hover;
+                                Button::new("finish_setup", "Finish Setup")
+                                    .style(ButtonStyle::Background(background))
+                                    .size(ButtonSize::Medium)
+                                    .key_binding(
+                                        KeyBinding::for_action_in(&Finish, &self.focus_handle, cx)
+                                            .size(TextSize::Small.rems(cx)),
+                                    )
+                                    .on_click(|_, window, cx| {
+                                        window.dispatch_action(Finish.boxed_clone(), cx);
+                                    })
+                            }),
+                    ),
             )
     }
 }
