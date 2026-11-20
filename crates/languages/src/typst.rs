@@ -7,7 +7,9 @@ use http_client::github::{AssetKind, GitHubLspBinaryVersion, latest_github_relea
 use http_client::github_download::download_server_binary;
 use language::{LanguageServerName, LspAdapter, LspAdapterDelegate, LspInstaller, Toolchain};
 use lsp::LanguageServerBinary;
+use project::ContextProviderWithTasks;
 use std::path::PathBuf;
+use task::{HideStrategy, TaskTemplate, TaskTemplates, VariableName};
 use util::fs::{make_file_executable, remove_matching};
 
 use crate::helpers::{find_cached_server_binary, verify_metadata, with_exe, write_metadata};
@@ -172,4 +174,14 @@ impl LspAdapter for TypstLspAdapter {
     fn name(&self) -> LanguageServerName {
         Self::SERVER_NAME
     }
+}
+
+pub(super) fn typst_task_context() -> ContextProviderWithTasks {
+    ContextProviderWithTasks::new(TaskTemplates(vec![TaskTemplate {
+        label: "Typst: Export PDF".into(),
+        command: "typst".into(),
+        args: vec!["compile".into(), VariableName::File.template_value_with_whitespace()],
+        hide: HideStrategy::OnSuccess,
+        ..Default::default()
+    }]))
 }
