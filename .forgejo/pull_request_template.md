@@ -1,4 +1,4 @@
-<!-- Please put the pull request description above. -->
+<!-- Please put pull request description above. -->
 
 ## Checklist
 
@@ -7,22 +7,24 @@ The [CONTRIBUTING.md](https://codeberg.org/GramEditor/gram/src/branch/main/CONTR
 ### Compliance
 
 <!--
-
-We require commits to be signed. See: <https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work>.
-You can use either a GPG key or a SSH key to sign your commits. Ideally you should add your
-key to your Codeberg account so that it can verify the commits.
+We require commits to be signed, see <https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work>.
+You can use either GPG key or SSH key to sign your commits. Please add your key
+to your Codeberg account so that it can verify the commits.
 
 - SSH: <https://docs.codeberg.org/security/ssh-key>.
 - GPG: <https://docs.codeberg.org/security/gpg-key>
-
 -->
 
 - [ ] I have read and agree to the [Gram Code of Conduct](https://codeberg.org/GramEditor/gram/src/branch/main/CODE_OF_CONDUCT.md).
-- [ ] I have signed my commits using an GPG or SSH key (see above).
+- [ ] I have signed my commits using a GPG or SSH key (see above).
 
 ### Rust changes
 
-<!-- You can skip and remove this section if your changes do not involve Rust code. -->
+<!--
+You can skip and remove this section if your changes do not involve Rust code.
+
+See also 'script/dev' for same.
+-->
 
 - [ ] `cargo check --workspace --all-targets --locked` passes.
 - [ ] `cargo fmt --all -- --check` passes.
@@ -30,14 +32,16 @@ key to your Codeberg account so that it can verify the commits.
 
 #### Rust tests
 
-<!-- You can skip and remove this section if your changes do not involve Rust code and tests. -->
+<!--
+You can skip and remove this section if your changes do not involve Rust
+code and tests. All the tests should either pass or be skipped.
 
-> [!NOTE]
->
-> All the tests should either pass or be skipped.
+'cargo test' is built-in or use 'cargo nextest' which is faster,
+see <https://nexte.st/docs/installation/from-source>.
+-->
 
-- [ ] `cargo test run --workspace --locked` passes (optional). <!-- Built-in. -->
-- [ ] `cargo nextest run --workspace --locked` passes (optional). <!-- Nextest is faster, <https://nexte.st/docs/installation/from-source>. -->
+- [ ] `cargo test --workspace --locked` passes (optional).
+- [ ] `cargo nextest run --workspace --locked` passes (optional).
 
 ### Documentation
 
@@ -48,4 +52,3 @@ key to your Codeberg account so that it can verify the commits.
 
 - [ ] This change is user-facing (feature, bug fix, performance, etc.). A release note should be added.
 - [ ] This change is internal (refactor, dependency upgrade, CI, etc.). No release note is needed.
-
