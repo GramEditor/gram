@@ -1069,8 +1069,8 @@ mod tests {
             settings.defaults.inlay_hints = Some(InlayHintSettingsContent {
                 enabled: Some(true),
                 show_value_hints: Some(false),
-                edit_debounce_ms: Some(0),
-                scroll_debounce_ms: Some(0),
+                edit_debounce_ms: Some(settings::DelayMs(0)),
+                scroll_debounce_ms: Some(settings::DelayMs(0)),
                 show_type_hints: Some(true),
                 show_parameter_hints: Some(true),
                 show_other_hints: Some(true),

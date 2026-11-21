@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use settings_macros::{MergeFrom, with_fallible_options};
 use std::sync::Arc;
 
-use crate::{ExtendingVec, merge_from};
+use crate::{DelayMs, ExtendingVec, merge_from};
 
 #[with_fallible_options]
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -363,13 +363,13 @@ pub struct InlayHintSettingsContent {
     /// Set to 0 to disable debouncing.
     ///
     /// Default: 700
-    pub edit_debounce_ms: Option<u64>,
+    pub edit_debounce_ms: Option<DelayMs>,
     /// Whether or not to debounce inlay hints updates after buffer scrolls.
     ///
     /// Set to 0 to disable debouncing.
     ///
     /// Default: 50
-    pub scroll_debounce_ms: Option<u64>,
+    pub scroll_debounce_ms: Option<DelayMs>,
     /// Toggles inlay hints (hides or shows) when the user presses the modifiers specified.
     /// If only a subset of the modifiers specified is pressed, hints are not toggled.
     /// If no modifiers are specified, this is equivalent to `null`.
