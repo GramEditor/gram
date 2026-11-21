@@ -6802,8 +6802,8 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             files: USER | PROJECT,
         }),
         SettingsPageItem::SettingItem(SettingItem {
-            title: "Edit Debounce Ms",
-            description: "Whether or not to debounce inlay hints updates after buffer edits (set to 0 to disable debouncing).",
+            title: "Edit Debounce",
+            description: "Time in milliseconds to debounce inlay hints updates after buffer edits (set to 0 to disable debouncing).",
             aliases: None,
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).inlay_hints.edit_debounce_ms"),
@@ -6822,8 +6822,8 @@ fn language_settings_data() -> Vec<SettingsPageItem> {
             files: USER | PROJECT,
         }),
         SettingsPageItem::SettingItem(SettingItem {
-            title: "Scroll Debounce Ms",
-            description: "Whether or not to debounce inlay hints updates after buffer scrolls (set to 0 to disable debouncing).",
+            title: "Scroll Debounce",
+            description: "Time in milliseconds to debounce inlay hints updates after buffer scrolls (set to 0 to disable debouncing).",
             aliases: None,
             field: Box::new(SettingField {
                 json_path: Some("languages.$(language).inlay_hints.scroll_debounce_ms"),
