@@ -1472,7 +1472,7 @@ impl EditorElement {
             let show_local_cursors = editor.show_local_cursors(window, cx);
             let animation_settings = EditorSettings::get_global(cx).smooth_cursor;
             let animation_enabled = animation_settings.enabled;
-            let animation_now = animation_enabled.then(|| Instant::now());
+            let animation_now = animation_enabled.then(Instant::now);
 
             if animation_enabled {
                 let newest_animation_selection_id =

@@ -13,7 +13,7 @@ pub(crate) struct SmoothCursorStates {
     newest_state: Option<SmoothCursorState>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct SmoothCursorState {
     position_animation: Option<SmoothAnimation>,
     size_animation: Option<SmoothAnimation>,
@@ -75,16 +75,6 @@ impl SmoothCursorStates {
 
     pub(crate) fn active(&self) -> bool {
         self.states.iter().any(|state| state.1.active())
-    }
-}
-
-impl Default for SmoothCursorState {
-    fn default() -> Self {
-        Self {
-            position_animation: None,
-            size_animation: None,
-            target_bounds: None,
-        }
     }
 }
 
