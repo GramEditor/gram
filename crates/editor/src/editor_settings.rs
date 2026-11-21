@@ -228,7 +228,7 @@ impl Settings for EditorSettings {
             cursor_shape: editor.cursor_shape.map(Into::into),
             smooth_cursor: SmoothCursorSettings {
                 enabled: smooth_cursor.enabled.unwrap(),
-                duration_ms: smooth_cursor.duration_ms.unwrap(),
+                duration_ms: smooth_cursor.duration_ms.unwrap().0,
             },
             current_line_highlight: editor.current_line_highlight.unwrap(),
             selection_highlight: editor.selection_highlight.unwrap(),

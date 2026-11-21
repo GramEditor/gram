@@ -317,7 +317,7 @@ pub struct SmoothCursorSettingsContent {
     /// Duration in milliseconds for cursor movement.
     ///
     /// Default: 100
-    pub duration_ms: Option<u64>,
+    pub duration_ms: Option<DelayMs>,
 }
 
 // Toolbar related settings
