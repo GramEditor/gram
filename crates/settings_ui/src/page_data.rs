@@ -827,7 +827,7 @@ pub(crate) fn settings_data(cx: &App) -> Vec<SettingsPage> {
                     files: USER,
                 }),
                 SettingsPageItem::SettingItem(SettingItem {
-                    title: "Smooth Cursor Duration Ms",
+                    title: "Smooth Cursor Duration",
                     description: "Duration in milliseconds for cursor movement.",
                     aliases: None,
                     field: Box::new(SettingField {
