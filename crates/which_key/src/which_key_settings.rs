@@ -12,7 +12,7 @@ impl Settings for WhichKeySettings {
 
         Self {
             enabled: which_key.enabled.unwrap(),
-            delay_ms: which_key.delay_ms.unwrap(),
+            delay_ms: which_key.delay_ms.unwrap().0,
         }
     }
 }

@@ -803,7 +803,7 @@ pub struct WhichKeySettingsContent {
     /// Delay in milliseconds before showing the which-key popup.
     ///
     /// Default: 700
-    pub delay_ms: Option<u64>,
+    pub delay_ms: Option<DelayMs>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
