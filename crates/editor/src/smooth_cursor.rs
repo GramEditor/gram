@@ -1,4 +1,4 @@
-use crate::editor_settings::SmoothCursorSettings;
+use crate::{DisplayPoint, editor_settings::SmoothCursorSettings};
 use collections::HashMap;
 use gpui::{Bounds, Size, smooth::SmoothAnimation};
 use std::time::{Duration, Instant};
@@ -18,6 +18,7 @@ struct SmoothCursorState {
     position_animation: Option<SmoothAnimation>,
     size_animation: Option<SmoothAnimation>,
     target_bounds: Option<Bounds<f64>>,
+    last_cursor_position: Option<DisplayPoint>,
 }
 
 impl SmoothCursorStates {
@@ -63,6 +64,7 @@ impl SmoothCursorStates {
     pub(crate) fn update(
         &mut self,
         selection_id: usize,
+        cursor_position: DisplayPoint,
         target_bounds: Bounds<Pixels>,
         settings: SmoothCursorSettings,
         now: Instant,
@@ -70,7 +72,7 @@ impl SmoothCursorStates {
         self.states
             .entry(selection_id)
             .or_default()
-            .update(target_bounds, settings, now)
+            .update(cursor_position, target_bounds, settings, now)
     }
 
     pub(crate) fn active(&self) -> bool {
@@ -81,6 +83,7 @@ impl SmoothCursorStates {
 impl SmoothCursorState {
     pub(crate) fn update(
         &mut self,
+        cursor_position: DisplayPoint,
         target_bounds: Bounds<Pixels>,
         settings: SmoothCursorSettings,
         now: Instant,
@@ -97,10 +100,23 @@ impl SmoothCursorState {
             return None;
         };
 
+        let almost_equal = target_bounds.origin.almost_equal(previous_bounds.origin, EPSILON);
+
+        if let Some(last_cursor_position) = self.last_cursor_position
+            && cursor_position == last_cursor_position
+            && !almost_equal
+        {
+            // Cursor did not move but target bounds changed
+            self.reset(target_bounds);
+            return None;
+        }
+
+        self.last_cursor_position = Some(cursor_position);
+
         let duration = Duration::from_millis(settings.duration_ms);
 
         let (current_position, pos_done) = if let Some(position_animation) = self.position_animation.as_mut() {
-            if target_bounds.origin.almost_equal(previous_bounds.origin, EPSILON) {
+            if almost_equal {
                 position_animation.restart(target_bounds.origin);
             }
             position_animation.update(now, duration)

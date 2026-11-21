@@ -1614,10 +1614,13 @@ impl EditorElement {
                         if let Some(now) = animation_now {
                             handled_animation_cursors.insert(selection.id);
                             let target_bounds = window.pixel_snap_bounds(cursor.bounds(content_origin));
-                            cursor.animated_bounds =
-                                editor
-                                    .smooth_cursors
-                                    .update(selection.id, target_bounds, animation_settings, now);
+                            cursor.animated_bounds = editor.smooth_cursors.update(
+                                selection.id,
+                                cursor_position,
+                                target_bounds,
+                                animation_settings,
+                                now,
+                            );
                             request_animation_frame |= cursor.animated_bounds.is_some();
                         }
                     } else if animation_enabled && selection.is_local {
