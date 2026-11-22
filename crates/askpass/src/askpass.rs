@@ -18,8 +18,9 @@ use futures::{
     AsyncBufReadExt as _, AsyncWriteExt as _, FutureExt as _, SinkExt, StreamExt, io::BufReader, select_biased,
 };
 use gpui::{AsyncApp, BackgroundExecutor, Task};
+use shell::ShellKind;
 use smol::fs;
-use util::{ResultExt as _, debug_panic, maybe, paths::PathExt, shell::ShellKind};
+use util::{ResultExt as _, debug_panic, maybe};
 
 /// Path to the program used for askpass
 ///
@@ -328,8 +329,8 @@ fn generate_askpass_script(
     let askpass_program = shell_kind
         .try_quote_prefix_aware(&askpass_program)
         .context("Failed to shell-escape Askpass program path")?;
-    let askpass_socket = askpass_socket
-        .try_shell_safe(shell_kind)
+    let askpass_socket = shell_kind
+        .try_into_safe_path(askpass_socket)
         .context("Failed to shell-escape Askpass socket path")?;
     let print_args = "printf '%s\\0' \"$@\"";
     let shebang = "#!/bin/sh";

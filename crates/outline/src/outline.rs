@@ -1,12 +1,7 @@
-use std::ops::Range;
-use std::{
-    cmp::{self, Reverse},
-    sync::Arc,
+use editor::{
+    Anchor, AnchorRangeExt, Editor, MultiBufferOffset, RowHighlightOptions, SelectionEffects,
+    scroll::{Autoscroll, ScrollOffset},
 };
-
-use editor::scroll::ScrollOffset;
-use editor::{Anchor, AnchorRangeExt, Editor, scroll::Autoscroll};
-use editor::{MultiBufferOffset, RowHighlightOptions, SelectionEffects};
 use fuzzy::StringMatch;
 use gpui::{
     App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, HighlightStyle, ParentElement, Point,
@@ -16,6 +11,11 @@ use language::{Outline, OutlineItem};
 use ordered_float::OrderedFloat;
 use picker::{Picker, PickerDelegate};
 use settings::Settings;
+use std::{
+    cmp::{self, Reverse},
+    ops::Range,
+    sync::Arc,
+};
 use theme::{ActiveTheme, ThemeSettings};
 use ui::{ListItem, ListItemSpacing, prelude::*};
 use util::ResultExt;
@@ -346,9 +346,10 @@ mod tests {
     use gpui::{TestAppContext, VisualTestContext};
     use indoc::indoc;
     use language::{Language, LanguageConfig, LanguageMatcher};
+    use paths::rel_path::unix_rel_path;
     use project::{FakeFs, Project};
     use serde_json::json;
-    use util::{path, rel_path::rel_path};
+    use util::path;
     use workspace::{AppState, Workspace};
 
     #[gpui::test]
@@ -386,7 +387,7 @@ mod tests {
             .unwrap();
         let editor = workspace
             .update_in(cx, |workspace, window, cx| {
-                workspace.open_path((worktree_id, rel_path("a.rs")), None, true, window, cx)
+                workspace.open_path((worktree_id, unix_rel_path("a.rs")), None, true, window, cx)
             })
             .await
             .unwrap()

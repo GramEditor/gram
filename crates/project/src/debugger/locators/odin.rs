@@ -4,7 +4,8 @@ use base64::{Engine as _, engine::general_purpose};
 use dap::{DapLocator, DebugRequest, adapters::DebugAdapterName};
 use gpui::SharedString;
 use serde_json;
-use task::{BuildTaskDefinition, DebugScenario, LaunchRequest, ShellBuilder, SpawnInTerminal, TaskTemplate};
+use shell::builder::ShellBuilder;
+use task::{BuildTaskDefinition, DebugScenario, LaunchRequest, SpawnInTerminal, TaskTemplate};
 
 const ODIN_SCRIPT: &str = include_str!("odin/lldb.py");
 
@@ -96,7 +97,7 @@ impl DapLocator for OdinLocator {
         let builder = ShellBuilder::new(&build_config.shell, cfg!(windows)).non_interactive();
         let (program, args) = builder.build(Some("odin".into()), &build_config.args);
 
-        let mut child = util::command::new_smol_command(program)
+        let mut child = command::new_smol_command(program)
             .args(args)
             .envs(build_config.env.iter().map(|(k, v)| (k.clone(), v.clone())))
             .current_dir(&cwd)

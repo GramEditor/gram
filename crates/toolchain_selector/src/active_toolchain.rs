@@ -1,17 +1,16 @@
-use std::sync::Arc;
-
+use crate::ToolchainSelector;
 use editor::Editor;
 use gpui::{
     AsyncWindowContext, Context, Entity, IntoElement, ParentElement, Render, Styled, Subscription, Task, WeakEntity,
     Window, div,
 };
 use language::{Buffer, BufferEvent, LanguageName, Toolchain, ToolchainScope};
+use paths::rel_path::RelPath;
 use project::{Project, ProjectPath, Toolchains, WorktreeId, toolchain_store::ToolchainStoreEvent};
+use std::sync::Arc;
 use ui::{Button, ButtonCommon, Clickable, LabelSize, SharedString, Tooltip};
-use util::{maybe, rel_path::RelPath};
+use util::maybe;
 use workspace::{StatusItemView, Workspace, item::ItemHandle};
-
-use crate::ToolchainSelector;
 
 pub struct ActiveToolchain {
     active_toolchain: Option<Toolchain>,

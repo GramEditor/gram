@@ -79,6 +79,10 @@ use lsp::{
 };
 use node_runtime::read_package_installed_version;
 use parking_lot::Mutex;
+use paths::{
+    rel_path::RelPath,
+    {PathStyle, sanitized_path::SanitizedPath},
+};
 use postage::{mpsc, sink::Sink, stream::Stream, watch};
 use rand::prelude::*;
 use rpc::{
@@ -114,14 +118,9 @@ use std::{
 };
 use sum_tree::Dimensions;
 use text::{Anchor, BufferId, LineEnding, OffsetRangeExt, ToPoint as _};
-
 use util::{
-    ConnectionResult, ResultExt as _, debug_panic, defer, maybe, merge_json_value_into,
-    merge_json_value_into_replace_array,
-    paths::{PathStyle, SanitizedPath},
-    post_inc,
+    ConnectionResult, ResultExt as _, debug_panic, defer, maybe, merge_json_value_into, post_inc,
     redact::redact_command,
-    rel_path::RelPath,
 };
 
 pub use fs::*;
@@ -722,7 +721,7 @@ impl LocalLspStore {
                                 })
                                 .unwrap_or_default();
                             if let Some(settings) = override_settings {
-                                merge_json_value_into_replace_array(settings, &mut workspace_config);
+                                merge_json_value_into(settings, &mut workspace_config);
                             }
 
                             new_scope_uri.insert(workspace_config);
@@ -2022,7 +2021,7 @@ impl LocalLspStore {
             Some(worktree_path)
         })?;
 
-        let mut child = util::command::new_smol_command(command);
+        let mut child = command::new_smol_command(command);
 
         if let Some(buffer_env) = buffer.env.as_ref() {
             child.envs(buffer_env);
@@ -12872,7 +12871,7 @@ impl LspAdapterDelegate for LocalLspAdapterDelegate {
         };
 
         let env = self.shell_env().await;
-        let output = util::command::new_smol_command(&npm)
+        let output = command::new_smol_command(&npm)
             .args(["root", "-g"])
             .envs(env)
             .current_dir(local_package_directory)
@@ -12904,7 +12903,7 @@ impl LspAdapterDelegate for LocalLspAdapterDelegate {
         if self.fs.is_file(&working_dir).await {
             working_dir.pop();
         }
-        let output = util::command::new_smol_command(&command.path)
+        let output = command::new_smol_command(&command.path)
             .args(command.arguments)
             .envs(command.env.clone().unwrap_or_default())
             .current_dir(working_dir)

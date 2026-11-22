@@ -1,6 +1,6 @@
-mod components;
-mod page_data;
-
+use crate::components::{
+    EnumVariantDropdown, SettingsInputField, SettingsSectionHeader, font_picker, icon_theme_picker, theme_picker,
+};
 use anyhow::Result;
 use app_actions::{OpenProjectSettings, OpenSettings, OpenSettingsAt};
 use editor::{Editor, EditorEvent};
@@ -11,6 +11,7 @@ use gpui::{
     UniformListScrollHandle, Window, WindowBounds, WindowHandle, WindowOptions, actions, div, list, point, prelude::*,
     px, uniform_list,
 };
+use paths::{PathStyle, rel_path::RelPath};
 use project::{Project, WorktreeId};
 use release_channel::ReleaseChannel;
 use schemars::JsonSchema;
@@ -33,12 +34,11 @@ use ui::{
     PopoverMenu, Switch, Tooltip, TreeViewItem, WithScrollbar, prelude::*,
 };
 use ui_input::{NumberField, NumberFieldMode, NumberFieldType};
-use util::{ResultExt as _, paths::PathStyle, rel_path::RelPath};
+use util::ResultExt as _;
 use workspace::{AppState, OpenOptions, OpenVisible, Workspace, WorkspaceSettings, client_side_decorations};
 
-use crate::components::{
-    EnumVariantDropdown, SettingsInputField, SettingsSectionHeader, font_picker, icon_theme_picker, theme_picker,
-};
+mod components;
+mod page_data;
 
 const NAVBAR_CONTAINER_TAB_INDEX: isize = 0;
 const NAVBAR_GROUP_TAB_INDEX: isize = 1;
@@ -2945,10 +2945,10 @@ impl SettingsWindow {
                         workspace
                             .with_local_workspace(window, cx, |workspace, window, cx| {
                                 let create_task = workspace.project().update(cx, |project, cx| {
-                                    project.find_or_create_worktree(paths::config_dir().as_path(), false, cx)
+                                    project.find_or_create_worktree(paths::locations::config_dir(), false, cx)
                                 });
                                 let open_task = workspace.open_paths(
-                                    vec![paths::settings_file().to_path_buf()],
+                                    vec![paths::locations::settings_file().to_path_buf()],
                                     OpenOptions {
                                         visible: Some(OpenVisible::None),
                                         ..Default::default()
@@ -2976,7 +2976,7 @@ impl SettingsWindow {
                 window.remove_window();
             }
             SettingsUiFile::Project((worktree_id, path)) => {
-                let settings_path = path.join(paths::local_settings_file_relative_path());
+                let settings_path = path.join(paths::locations::local_settings_file_relative_path());
                 let Some(app_state) = workspace::AppState::global(cx).upgrade() else {
                     return;
                 };
@@ -3237,7 +3237,7 @@ fn update_settings_file(
 ) -> Result<()> {
     match file {
         SettingsUiFile::Project((worktree_id, rel_path)) => {
-            let rel_path = rel_path.join(paths::local_settings_file_relative_path());
+            let rel_path = rel_path.join(paths::locations::local_settings_file_relative_path());
             let Some((worktree, project)) = all_projects(cx)
                 .find_map(|project| project.read(cx).worktree_for_id(worktree_id, cx).zip(Some(project)))
             else {

@@ -1,39 +1,40 @@
-use crate::HeadlessProject;
-use crate::headless_project::HeadlessAppState;
+use crate::{HeadlessProject, headless_project::HeadlessAppState};
 use anyhow::{Context as _, Result, anyhow};
 use client::ProxySettings;
-use util::ResultExt;
-
 use extension::ExtensionHostProxy;
 use fs::{Fs, RealFs};
-use futures::channel::{mpsc, oneshot};
-use futures::{AsyncRead, AsyncWrite, AsyncWriteExt, FutureExt, SinkExt, select, select_biased};
+use futures::{
+    AsyncRead, AsyncWrite, AsyncWriteExt, FutureExt, SinkExt,
+    channel::{mpsc, oneshot},
+    select, select_biased,
+};
 use git::GitHostingProviderRegistry;
 use gpui::{App, AppContext as _, Context, Entity, SemanticVersion, UpdateGlobal as _};
 use gpui_tokio::Tokio;
 use http_client::{Url, read_proxy_from_env};
 use language::LanguageRegistry;
 use node_runtime::{NodeBinaryOptions, NodeRuntime};
-use paths::logs_dir;
 use project::project_settings::ProjectSettings;
-use util::command::new_smol_command;
-
 use proto::CrashReport;
 use release_channel::{AppVersion, RELEASE_CHANNEL, ReleaseChannel};
-use remote::RemoteClient;
 use remote::{
+    RemoteClient,
     json_log::LogRecord,
     protocol::{read_message, write_message},
     proxy::ProxyLaunchError,
 };
 use reqwest_client::ReqwestClient;
-use rpc::proto::{self, Envelope, REMOTE_SERVER_PROJECT_ID};
-use rpc::{AnyProtoClient, TypedEnvelope};
+use rpc::{
+    AnyProtoClient, TypedEnvelope,
+    proto::{self, Envelope, REMOTE_SERVER_PROJECT_ID},
+};
 use settings::{Settings, SettingsStore, watch_config_file};
-
-use smol::channel::{Receiver, Sender};
-use smol::io::AsyncReadExt;
-use smol::{net::unix::UnixListener, stream::StreamExt as _};
+use smol::{
+    channel::{Receiver, Sender},
+    io::AsyncReadExt,
+    net::unix::UnixListener,
+    stream::StreamExt as _,
+};
 use std::{
     env,
     ffi::OsStr,
@@ -47,6 +48,7 @@ use std::{
     sync::{Arc, LazyLock},
 };
 use thiserror::Error;
+use util::ResultExt;
 
 pub static VERSION: LazyLock<&str> = LazyLock::new(|| match *RELEASE_CHANNEL {
     ReleaseChannel::Stable => env!("CARGO_PKG_VERSION"),
@@ -124,7 +126,7 @@ fn handle_crash_files_requests(project: &Entity<HeadlessProject>, client: &AnyPr
         |_, _: TypedEnvelope<proto::GetCrashFiles>, _cx| async move {
             let mut legacy_panics = Vec::new();
             let mut crashes = Vec::new();
-            let mut children = smol::fs::read_dir(paths::logs_dir()).await?;
+            let mut children = smol::fs::read_dir(paths::locations::logs_dir()).await?;
             while let Some(child) = children.next().await {
                 let child = child?;
                 let child_path = child.path();
@@ -316,14 +318,14 @@ fn start_server(
 
 fn init_paths() -> anyhow::Result<()> {
     for path in [
-        paths::config_dir(),
-        paths::user_extensions_dir(),
-        paths::languages_dir(),
-        paths::logs_dir(),
-        paths::temp_dir(),
-        paths::hang_traces_dir(),
-        paths::remote_extensions_dir(),
-        paths::remote_extensions_uploads_dir(),
+        paths::locations::config_dir(),
+        paths::locations::user_extensions_dir(),
+        paths::locations::languages_dir(),
+        paths::locations::logs_dir(),
+        paths::locations::temp_dir(),
+        paths::locations::hang_traces_dir(),
+        paths::locations::remote_extensions_dir(),
+        paths::locations::remote_extensions_uploads_dir(),
     ]
     .iter()
     {
@@ -380,7 +382,7 @@ pub fn execute_run(
     let (shell_env_loaded_tx, shell_env_loaded_rx) = oneshot::channel();
     app.background_executor()
         .spawn(async {
-            util::load_login_shell_environment().await.log_err();
+            shell::load_login_shell_environment().await.log_err();
             shell_env_loaded_tx.send(()).ok();
         })
         .detach();
@@ -444,7 +446,7 @@ pub fn execute_run(
             );
 
             let mut languages = LanguageRegistry::new(cx.background_executor().clone());
-            languages.set_language_server_download_dir(paths::languages_dir().clone());
+            languages.set_language_server_download_dir(paths::locations::languages_dir());
             let languages = Arc::new(languages);
 
             HeadlessProject::new(
@@ -497,22 +499,22 @@ struct ServerPaths {
 
 impl ServerPaths {
     fn new(identifier: &str) -> Result<Self, ServerPathError> {
-        let server_dir = paths::remote_server_state_dir().join(identifier);
+        let server_dir = paths::locations::remote_server_state_dir().join(identifier);
         std::fs::create_dir_all(&server_dir).map_err(|source| ServerPathError::CreateServerDir {
             source,
             path: server_dir.clone(),
         })?;
-        let log_dir = logs_dir();
+        let log_dir = paths::locations::logs_dir();
         std::fs::create_dir_all(log_dir).map_err(|source| ServerPathError::CreateLogsDir {
             source,
-            path: log_dir.clone(),
+            path: log_dir.to_owned(),
         })?;
 
         let pid_file = server_dir.join("server.pid");
         let stdin_socket = server_dir.join("stdin.sock");
         let stdout_socket = server_dir.join("stdout.sock");
         let stderr_socket = server_dir.join("stderr.sock");
-        let log_file = logs_dir().join(format!("server-{}.log", identifier));
+        let log_file = paths::locations::logs_dir().join(format!("server-{}.log", identifier));
 
         Ok(Self {
             pid_file,
@@ -652,7 +654,7 @@ pub(crate) fn execute_proxy(identifier: String, is_reconnecting: bool) -> Result
 
 async fn kill_running_server(pid: u32, paths: &ServerPaths) -> Result<(), ExecuteProxyError> {
     log::info!("killing existing server with PID {}", pid);
-    new_smol_command("kill")
+    command::new_smol_command("kill")
         .arg(pid.to_string())
         .output()
         .await
@@ -703,7 +705,7 @@ async fn spawn_server(paths: &ServerPaths) -> Result<(), SpawnServerError> {
     }
 
     let binary_name = std::env::current_exe().map_err(SpawnServerError::CurrentExe)?;
-    let mut server_process = new_smol_command(binary_name);
+    let mut server_process = command::new_smol_command(binary_name);
     server_process
         .arg("run")
         .arg("--log-file")
@@ -761,7 +763,12 @@ async fn check_pid_file(path: &Path) -> Result<Option<u32>, CheckPidError> {
     };
 
     log::debug!("Checking if process with PID {} exists...", pid);
-    match new_smol_command("kill").arg("-0").arg(pid.to_string()).output().await {
+    match command::new_smol_command("kill")
+        .arg("-0")
+        .arg(pid.to_string())
+        .output()
+        .await
+    {
         Ok(output) if output.status.success() => {
             log::debug!(
                 "Process with PID {} exists. NOT spawning new server, but attaching to existing one.",
@@ -811,7 +818,11 @@ fn initialize_settings(
     fs: Arc<dyn Fs>,
     cx: &mut App,
 ) -> watch::Receiver<Option<NodeBinaryOptions>> {
-    let user_settings_file_rx = watch_config_file(cx.background_executor(), fs, paths::settings_file().clone());
+    let user_settings_file_rx = watch_config_file(
+        cx.background_executor(),
+        fs,
+        paths::locations::settings_file().to_owned(),
+    );
 
     handle_settings_file_changes(user_settings_file_rx, cx, {
         move |err, _cx| {
@@ -822,7 +833,11 @@ fn initialize_settings(
                     .send(proto::Toast {
                         project_id: REMOTE_SERVER_PROJECT_ID,
                         notification_id: "server-settings-failed".to_string(),
-                        message: format!("Error in settings on remote host {:?}: {}", paths::settings_file(), e),
+                        message: format!(
+                            "Error in settings on remote host {:?}: {}",
+                            paths::locations::settings_file(),
+                            e
+                        ),
                     })
                     .log_err();
             } else {
@@ -952,7 +967,7 @@ unsafe fn redirect_standard_streams() -> Result<()> {
 }
 
 fn cleanup_old_binaries() -> Result<()> {
-    let server_dir = paths::remote_server_dir_relative();
+    let server_dir = paths::locations::remote_server_dir_relative();
     let release_channel = release_channel::RELEASE_CHANNEL.dev_name();
     let prefix = format!("gram-remote-server-{}-", release_channel);
 

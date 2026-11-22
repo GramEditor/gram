@@ -1,3 +1,5 @@
+// TODO: Clean up imports in this file.
+
 pub mod buffer_store;
 mod color_extractor;
 pub mod debounced_delay;
@@ -88,6 +90,7 @@ use lsp_store::{CompletionDocumentation, LspFormatTarget, OpenLspBufferHandle};
 pub use manifest_tree::ManifestProvidersStore;
 use node_runtime::NodeRuntime;
 use parking_lot::Mutex;
+use paths::{PathStyle, is_absolute, rel_path::RelPath, sanitized_path::SanitizedPath};
 pub use prettier_store::PrettierStore;
 use project_settings::{ProjectSettings, SettingsObserver, SettingsObserverEvent};
 use remote::{RemoteClient, RemoteConnectionOptions};
@@ -112,15 +115,10 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-
 use task_store::TaskStore;
 use terminals::Terminals;
 use text::{Anchor, BufferId, OffsetRangeExt, Point, Rope};
-use util::{
-    ResultExt as _, maybe,
-    paths::{PathStyle, SanitizedPath, is_absolute},
-    rel_path::RelPath,
-};
+use util::{ResultExt as _, maybe};
 use worktree::{CreatedEntry, Snapshot, Traversal};
 pub use worktree::{
     Entry, EntryKind, FS_WATCH_LATENCY, File, LocalWorktree, PathChange, ProjectEntryId, UpdatedEntriesSet,
@@ -143,6 +141,7 @@ pub use lsp_store::{
     SERVER_PROGRESS_THROTTLE_TIMEOUT,
 };
 pub use toolchain_store::{ToolchainStore, Toolchains};
+
 const MAX_PROJECT_SEARCH_HISTORY_SIZE: usize = 500;
 
 pub trait ProjectItem: 'static {
@@ -3052,7 +3051,7 @@ impl Project {
         buffer: &Entity<Buffer>,
         cx: &mut Context<Self>,
     ) -> Task<Option<ResolvedPath>> {
-        if util::paths::is_absolute(path, self.path_style(cx)) || path.starts_with("~") {
+        if paths::is_absolute(path, self.path_style(cx)) || path.starts_with("~") {
             self.resolve_abs_path(path, cx)
         } else {
             self.resolve_path_in_worktrees(path, buffer, cx)

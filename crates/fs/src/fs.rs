@@ -7,6 +7,7 @@ use tokio_util::compat::FuturesAsyncReadCompatExt;
 use util::maybe;
 
 use anyhow::{Context as _, Result, anyhow};
+use command::new_smol_command;
 use futures::stream::iter;
 use gpui::App;
 use gpui::BackgroundExecutor;
@@ -16,7 +17,6 @@ use gpui::SharedString;
 use std::borrow::Cow;
 #[cfg(unix)]
 use std::ffi::CString;
-use util::command::new_smol_command;
 
 #[cfg(unix)]
 use std::os::fd::{AsFd, AsRawFd};
@@ -788,7 +788,7 @@ impl Fs for RealFs {
             // Use the directory of the destination as temp dir to avoid
             // invalid cross-device link error, and XDG_CACHE_DIR for fallback.
             // See https://github.com/zed-industries/zed/pull/8437 for more details.
-            let mut tmp_file = tempfile::NamedTempFile::new_in(path.parent().unwrap_or(paths::temp_dir()))?;
+            let mut tmp_file = tempfile::NamedTempFile::new_in(path.parent().unwrap_or(paths::locations::temp_dir()))?;
             tmp_file.write_all(data.as_bytes())?;
             tmp_file.persist(path)?;
             anyhow::Ok(())
@@ -969,7 +969,8 @@ impl Fs for RealFs {
         latency: Duration,
         mode: WatcherMode,
     ) -> (Pin<Box<dyn Send + Stream<Item = Vec<PathEvent>>>>, Arc<dyn Watcher>) {
-        use util::{ResultExt as _, paths::SanitizedPath};
+        use paths::sanitized_path::SanitizedPath;
+        use util::ResultExt as _;
 
         let (tx, rx) = smol::channel::unbounded();
         let pending_paths: Arc<Mutex<Vec<PathEvent>>> = Default::default();
@@ -1910,7 +1911,7 @@ impl FakeFs {
             state.head_contents.clear();
             state.unmerged_paths.clear();
             for (path, content) in workdir_contents {
-                use util::{paths::PathStyle, rel_path::RelPath};
+                use paths::{PathStyle, rel_path::RelPath};
 
                 let repo_path = RelPath::new(path.strip_prefix(workdir_path).unwrap(), PathStyle::local()).unwrap();
                 let repo_path = RepoPath::from_rel_path(&repo_path);

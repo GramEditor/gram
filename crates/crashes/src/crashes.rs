@@ -61,7 +61,7 @@ pub async fn init(crash_init: InitCrashHandler) {
     // server or interactive gram instance. This solves an issue where occasionally the socket
     // used by the crash handler isn't destroyed correctly which causes it to stay on the file
     // system and block further attempts to initialize crash handlers with that socket path.
-    let socket_name = paths::temp_dir().join(format!("gram-crash-handler-{app_pid}"));
+    let socket_name = paths::locations::temp_dir().join(format!("gram-crash-handler-{app_pid}"));
     #[cfg(not(target_os = "windows"))]
     let _crash_handler = Command::new(exe)
         .arg("--crash-handler")
@@ -184,7 +184,7 @@ pub struct CrashPanic {
 impl minidumper::ServerHandler for CrashServer {
     fn create_minidump_file(&self) -> Result<(File, PathBuf), io::Error> {
         let err_message = "Missing initialization data";
-        let dump_path = paths::logs_dir()
+        let dump_path = paths::locations::logs_dir()
             .join(&self.initialization_params.get().expect(err_message).session_id)
             .with_extension("dmp");
         let file = File::create(&dump_path)?;
@@ -228,7 +228,7 @@ impl minidumper::ServerHandler for CrashServer {
             gpus,
         };
 
-        let crash_data_path = paths::logs_dir()
+        let crash_data_path = paths::locations::logs_dir()
             .join(&crash_info.init.session_id)
             .with_extension("json");
 

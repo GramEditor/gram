@@ -166,7 +166,7 @@ async fn build_remote_server_from_source(
     use smol::process::{Command, Stdio};
     use std::env::VarError;
     use std::path::Path;
-    use util::command::new_smol_command;
+    use command::new_smol_command;
 
     async fn run_cmd(command: &mut Command) -> Result<()> {
         log::info!("Command: {:?}", command);

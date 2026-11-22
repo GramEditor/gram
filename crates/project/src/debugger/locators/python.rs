@@ -1,10 +1,8 @@
-use std::path::Path;
-
 use anyhow::{Result, bail};
 use async_trait::async_trait;
 use dap::{DapLocator, DebugRequest, adapters::DebugAdapterName};
 use gpui::SharedString;
-
+use std::path::Path;
 use task::{DebugScenario, SpawnInTerminal, TaskTemplate, VariableName};
 
 pub(crate) struct PythonLocator;
@@ -114,7 +112,7 @@ mod test {
             reveal_target: task::RevealTarget::Dock,
             hide: task::HideStrategy::Never,
             tags: vec!["python-module-main-method".into()],
-            shell: task::Shell::System,
+            shell: shell::Shell::System,
             show_summary: false,
             show_command: false,
             save: SaveStrategy::default(),

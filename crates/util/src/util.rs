@@ -1,16 +1,10 @@
 pub mod arc_cow;
 pub mod archive;
-pub mod command;
 pub mod fs;
 pub mod markdown;
-pub mod paths;
 pub mod redact;
-pub mod rel_path;
 pub mod schemars;
 pub mod serde;
-pub mod shell;
-pub mod shell_builder;
-pub mod shell_env;
 pub mod size;
 #[cfg(any(test, feature = "test-support"))]
 pub mod test;
@@ -19,7 +13,6 @@ pub mod time;
 use anyhow::{Context as _, Result};
 use futures::Future;
 use itertools::Either;
-use paths::PathExt;
 use std::path::PathBuf;
 use std::sync::OnceLock;
 use std::{
@@ -266,81 +259,6 @@ pub fn increase_open_file_limit() -> Result<()> {
     Ok(())
 }
 
-#[cfg(unix)]
-fn load_shell_from_passwd() -> Result<()> {
-    let buflen = match unsafe { libc::sysconf(libc::_SC_GETPW_R_SIZE_MAX) } {
-        n if n < 0 => 1024,
-        n => n as usize,
-    };
-    let mut buffer = Vec::with_capacity(buflen);
-
-    let mut pwd: std::mem::MaybeUninit<libc::passwd> = std::mem::MaybeUninit::uninit();
-    let mut result: *mut libc::passwd = std::ptr::null_mut();
-
-    let uid = unsafe { libc::getuid() };
-    let status = unsafe {
-        libc::getpwuid_r(
-            uid,
-            pwd.as_mut_ptr(),
-            buffer.as_mut_ptr() as *mut libc::c_char,
-            buflen,
-            &mut result,
-        )
-    };
-    anyhow::ensure!(!result.is_null(), "passwd entry for uid {} not found", uid);
-
-    // SAFETY: If `getpwuid_r` doesn't error, we have the entry here.
-    let entry = unsafe { pwd.assume_init() };
-
-    anyhow::ensure!(
-        status == 0,
-        "call to getpwuid_r failed. uid: {}, status: {}",
-        uid,
-        status
-    );
-    anyhow::ensure!(
-        entry.pw_uid == uid,
-        "passwd entry has different uid ({}) than getuid ({}) returned",
-        entry.pw_uid,
-        uid,
-    );
-
-    let shell = unsafe { std::ffi::CStr::from_ptr(entry.pw_shell).to_str().unwrap() };
-    let should_set_shell = env::var("SHELL").map_or(true, |shell_env| {
-        shell_env != shell && !std::path::Path::new(&shell_env).exists()
-    });
-
-    if should_set_shell {
-        log::info!(
-            "updating SHELL environment variable to value from passwd entry: {:?}",
-            shell,
-        );
-        unsafe { env::set_var("SHELL", shell) };
-    }
-
-    Ok(())
-}
-
-/// Returns a shell escaped path for the current executable
-pub fn get_shell_safe_binary_path(shell_kind: shell::ShellKind) -> anyhow::Result<String> {
-    let mut binary_path = std::env::current_exe().context("Failed to determine current executable path.")?;
-    if cfg!(target_os = "linux")
-        && !binary_path.is_file()
-        && let Some(truncated) = binary_path
-            .clone()
-            .file_name()
-            .and_then(|s| s.to_str())
-            .and_then(|n| n.strip_suffix(" (deleted)"))
-    {
-        // Might have been deleted during update; let's use the new binary if there is one.
-        binary_path.set_file_name(truncated);
-    }
-
-    binary_path
-        .try_shell_safe(shell_kind)
-        .context("Failed to shell-escape Gram executable path.")
-}
-
 /// Returns a path for the gram cli executable, this function
 /// should be called from the executable, not gram-cli.
 pub fn get_gram_cli_path() -> Result<PathBuf> {
@@ -367,79 +285,6 @@ pub fn get_gram_cli_path() -> Result<PathBuf> {
         .iter()
         .find_map(|p| parent.join(p).canonicalize().ok().filter(|p| p != &binary_path))
         .with_context(|| format!("could not find gram-cli from any of: {}", possible_locations.join(", ")))
-}
-
-#[cfg(unix)]
-pub async fn load_login_shell_environment() -> Result<()> {
-    load_shell_from_passwd().log_err();
-
-    // If possible, we want to `cd` in the user's `$HOME` to trigger programs
-    // such as direnv, asdf, mise, ... to adjust the PATH. These tools often hook
-    // into shell's `cd` command (and hooks) to manipulate env.
-    // We do this so that we get the env a user would have when spawning a shell
-    // in home directory.
-
-    // Save the current PATH before the shell env capture overwrites it.
-    // This preserves PATH entries injected by a wrapper script (e.g. Nix's wrapProgram), which
-    // the system shell does not know about.
-    let original_path = std::env::var("PATH").unwrap_or_default();
-
-    for (name, value) in shell_env::capture(get_system_shell(), &[], paths::home_dir())
-        .await
-        .with_context(|| format!("capturing environment with {:?}", get_system_shell()))?
-    {
-        // Skip SHLVL to prevent it from polluting our process environment.
-        // The login shell used for env capture increments SHLVL, and if we propagate it,
-        // terminals spawned by us will inherit it and increment again, causing SHLVL
-        // to start at 2 instead of 1 (and increase by 2 on each reload).
-        if name == "SHLVL" {
-            continue;
-        }
-        if name == "PATH" && !original_path.is_empty() {
-            // Prepend any original PATH entries not already present in the system shell's PATH.
-            let shell_entries: Vec<&str> = value.split(':').collect();
-            let mut combined = original_path
-                .split(':')
-                .filter(|p| !p.is_empty() && !shell_entries.contains(p))
-                .collect::<Vec<&str>>()
-                .join(":");
-            if !combined.is_empty() && !value.is_empty() {
-                combined.push(':');
-            }
-            combined.push_str(&value);
-            unsafe { env::set_var("PATH", &combined) };
-        } else {
-            unsafe { env::set_var(&name, &value) };
-        }
-    }
-
-    log::info!(
-        "set environment variables from shell:{}, path:{}",
-        std::env::var("SHELL").unwrap_or_default(),
-        std::env::var("PATH").unwrap_or_default(),
-    );
-
-    Ok(())
-}
-
-/// Configures the process to start a new session, to prevent interactive shells from taking control
-/// of the terminal.
-///
-/// For more details: <https://registerspill.thorstenball.com/p/how-to-lose-control-of-your-shell>
-pub fn set_pre_exec_to_start_new_session(command: &mut std::process::Command) -> &mut std::process::Command {
-    // safety: code in pre_exec should be signal safe.
-    // https://man7.org/linux/man-pages/man7/signal-safety.7.html
-    #[cfg(not(target_os = "windows"))]
-    unsafe {
-        use std::os::unix::process::CommandExt;
-        command.pre_exec(|| {
-            libc::setsid();
-            #[cfg(target_os = "macos")]
-            crate::command::reset_exception_ports();
-            Ok(())
-        });
-    };
-    command
 }
 
 pub fn merge_json_lenient_value_into(source: serde_json_lenient::Value, target: &mut serde_json_lenient::Value) {
@@ -1043,8 +888,6 @@ pub fn split_str_with_ranges(s: &str, pat: impl Fn(char) -> bool) -> Vec<(Range<
 pub fn default<D: Default>() -> D {
     Default::default()
 }
-
-pub use self::shell::{get_default_system_shell, get_default_system_shell_preferring_bash, get_system_shell};
 
 #[derive(Debug)]
 pub enum ConnectionResult<O> {

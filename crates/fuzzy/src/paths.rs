@@ -1,4 +1,5 @@
 use gpui::BackgroundExecutor;
+use paths::{PathStyle, rel_path::RelPath};
 use std::{
     cmp::{self, Ordering},
     sync::{
@@ -6,7 +7,6 @@ use std::{
         atomic::{self, AtomicBool},
     },
 };
-use util::{paths::PathStyle, rel_path::RelPath};
 
 use crate::{
     CharBag,
@@ -259,9 +259,8 @@ fn distance_between_paths(path: &RelPath, relative_to: &RelPath) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use util::rel_path::RelPath;
-
     use super::distance_between_paths;
+    use paths::rel_path::RelPath;
 
     #[test]
     fn test_distance_between_paths_empty() {

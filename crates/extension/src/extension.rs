@@ -16,9 +16,9 @@ use fs::normalize_path;
 use gpui::{App, Task};
 use language::LanguageName;
 use lsp::LanguageServerBinaryOptions;
+use paths::rel_path::RelPath;
 use semver::Version as SemanticVersion;
 use task::{GramDebugConfig, SpawnInTerminal};
-use util::rel_path::RelPath;
 
 pub use crate::capabilities::*;
 pub use crate::extension_events::*;

@@ -1,8 +1,10 @@
-mod alignment;
-mod layout;
-
-use std::{ops::Range, sync::Arc};
-
+use crate::{
+    Editor, EditorEvent, ToggleSplitDiff,
+    display_map::{
+        BlockId, BlockPlacement, BlockProperties, BlockStyle, CustomBlockId, DisplayRow, DisplaySnapshot,
+        ToDisplayPoint,
+    },
+};
 use buffer_diff::BufferDiff;
 use collections::{HashMap, HashSet};
 use gpui::{Action, AppContext as _, Entity, EventEmitter, Focusable, NoAction, Subscription, WeakEntity};
@@ -12,16 +14,15 @@ use multi_buffer::{
 };
 use project::Project;
 use rope::Point;
+use std::{ops::Range, sync::Arc};
 use text::{Bias, OffsetRangeExt as _, ToPoint as _};
 use ui::{
     App, Context, InteractiveElement as _, IntoElement as _, ParentElement as _, Render, Styled as _, Window, div,
 };
 use workspace::{ActivePaneDecorator, Item, ItemHandle, Pane, PaneGroup, SplitDirection, Workspace};
 
-use crate::display_map::{
-    BlockId, BlockPlacement, BlockProperties, BlockStyle, CustomBlockId, DisplayRow, DisplaySnapshot, ToDisplayPoint,
-};
-use crate::{Editor, EditorEvent, ToggleSplitDiff};
+mod alignment;
+mod layout;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum DiffSide {
@@ -884,7 +885,8 @@ mod tests {
     async fn test_split_padding_survives_render(cx: &mut gpui::TestAppContext) {
         use super::*;
         use gpui::{point, px, size};
-        use util::rel_path::RelPath;
+        use paths::rel_path::RelPath;
+
         init_test(cx);
         let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
         let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
@@ -957,7 +959,8 @@ mod tests {
     async fn test_split_layout_wraps_headers_and_scroll(cx: &mut gpui::TestAppContext) {
         use super::*;
         use gpui::px;
-        use util::rel_path::RelPath;
+        use paths::rel_path::RelPath;
+
         init_test(cx);
         let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
         let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));

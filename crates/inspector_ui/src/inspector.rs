@@ -1,9 +1,10 @@
 use anyhow::{Context as _, anyhow};
+use command::new_smol_command;
 use gpui::{App, DivInspectorState, Inspector, InspectorElementId, IntoElement, Window};
 use std::{cell::OnceCell, path::Path, sync::Arc};
 use title_bar::platform_title_bar::PlatformTitleBar;
 use ui::{Label, Tooltip, prelude::*};
-use util::{ResultExt as _, command::new_smol_command};
+use util::ResultExt;
 use workspace::AppState;
 
 use crate::div_inspector::DivInspector;

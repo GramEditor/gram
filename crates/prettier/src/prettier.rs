@@ -6,16 +6,12 @@ use language::language_settings::PrettierSettings;
 use language::{Buffer, Diff, Language, language_settings::language_settings};
 use lsp::{LanguageServer, LanguageServerId};
 use node_runtime::NodeRuntime;
-use paths::default_prettier_dir;
+use paths::{PathStyle, locations::default_prettier_dir, path_matcher::PathMatcher, rel_path::RelPath};
 use serde::{Deserialize, Serialize};
 use std::{
     ops::ControlFlow,
     path::{Path, PathBuf},
     sync::Arc,
-};
-use util::{
-    paths::{PathMatcher, PathStyle},
-    rel_path::RelPath,
 };
 
 #[derive(Debug, Clone)]
@@ -265,7 +261,7 @@ impl Prettier {
         _: AsyncApp,
     ) -> anyhow::Result<Self> {
         Ok(Self::Test(TestPrettier {
-            default: prettier_dir == default_prettier_dir().as_path(),
+            default: prettier_dir.as_path() == default_prettier_dir(),
             prettier_dir,
         }))
     }
@@ -321,7 +317,7 @@ impl Prettier {
             .context("prettier server initialization")?;
         Ok(Self::Real(RealPrettier {
             server,
-            default: prettier_dir == default_prettier_dir().as_path(),
+            default: prettier_dir.as_path() == default_prettier_dir(),
             prettier_dir,
         }))
     }

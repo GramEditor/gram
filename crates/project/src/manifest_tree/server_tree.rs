@@ -6,11 +6,8 @@
 //! LSP Tree is transparent to RPC peers; when clients ask host to spawn a new language server, the host will perform LSP Tree lookup for provided path; it may decide
 //! to reuse existing language server.
 
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    sync::{Arc, Weak},
-};
-
+use super::ManifestTree;
+use crate::{LanguageServerId, ProjectPath, project_settings::LspSettings, toolchain_store::LocalToolchainStore};
 use collections::IndexMap;
 use gpui::{App, Entity};
 use language::{
@@ -18,13 +15,13 @@ use language::{
     language_settings::AllLanguageSettings,
 };
 use lsp::LanguageServerName;
+use paths::rel_path::RelPath;
 use settings::{Settings, SettingsLocation, WorktreeId};
 use std::sync::OnceLock;
-use util::rel_path::RelPath;
-
-use crate::{LanguageServerId, ProjectPath, project_settings::LspSettings, toolchain_store::LocalToolchainStore};
-
-use super::ManifestTree;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    sync::{Arc, Weak},
+};
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct ServersForWorktree {

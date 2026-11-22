@@ -339,7 +339,7 @@ impl LanguageServer {
             working_dir,
             binary.arguments
         );
-        let mut command = util::command::new_smol_command(&binary.path);
+        let mut command = command::new_smol_command(&binary.path);
         command
             .current_dir(working_dir)
             .args(&binary.arguments)

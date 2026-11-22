@@ -1,20 +1,19 @@
-use std::{path::Path, sync::Arc};
-
+use crate::{
+    debugger_panel::DebugPanel,
+    tests::{active_debug_session_panel, init_test, init_test_workspace, start_debug_session},
+};
 use dap::{Scope, StackFrame, Variable, requests::Variables};
 use editor::{Editor, EditorMode, MultiBuffer};
 use gpui::{BackgroundExecutor, TestAppContext, VisualTestContext};
 use language::{
     Language, LanguageConfig, LanguageMatcher, tree_sitter_python, tree_sitter_rust, tree_sitter_typescript,
 };
+use paths::rel_path::unix_rel_path;
 use project::{FakeFs, Project};
 use serde_json::json;
+use std::{path::Path, sync::Arc};
 use unindent::Unindent as _;
-use util::{path, rel_path::rel_path};
-
-use crate::{
-    debugger_panel::DebugPanel,
-    tests::{active_debug_session_panel, init_test, init_test_workspace, start_debug_session},
-};
+use util::path;
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
@@ -216,7 +215,7 @@ fn main() {
 
     let buffer = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("main.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("main.rs")), cx)
         })
         .await
         .unwrap();
@@ -1584,7 +1583,7 @@ def process_data(untyped_param, typed_param: int, another_typed: str):
 
     let buffer = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("main.py")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("main.py")), cx)
         })
         .await
         .unwrap();
@@ -2080,7 +2079,7 @@ async fn test_inline_values_util(
 
     let buffer = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("main.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("main.rs")), cx)
         })
         .await
         .unwrap();

@@ -14,6 +14,7 @@ use futures::{AsyncReadExt, lock::Mutex};
 use futures::{FutureExt as _, io::BufReader};
 use gpui::{BackgroundExecutor, SharedString};
 use language::{BinaryStatus, LanguageName, language_settings::AllLanguageSettings};
+use paths::{PathStyle, rel_path::RelPath};
 use project::project_settings::ProjectSettings;
 use semver::Version as SemanticVersion;
 use std::{
@@ -25,7 +26,7 @@ use std::{
 };
 use task::{GramDebugConfig, SpawnInTerminal};
 use url::Url;
-use util::{archive::extract_zip, fs::make_file_executable, maybe, paths::PathStyle, rel_path::RelPath};
+use util::{archive::extract_zip, fs::make_file_executable, maybe};
 use wasmtime::component::{Linker, Resource};
 
 pub const MIN_VERSION: SemanticVersion = SemanticVersion::new(0, 6, 0);
@@ -778,7 +779,7 @@ impl process::Host for WasmState {
         maybe!(async {
             self.capability_granter.grant_exec(&command.command, &command.args)?;
 
-            let output = util::command::new_smol_command(command.command.as_str())
+            let output = command::new_smol_command(command.command.as_str())
                 .args(&command.args)
                 .envs(command.env)
                 .output()

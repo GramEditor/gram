@@ -6,16 +6,9 @@ use gpui::{
     actions,
 };
 use language::{LanguageMatcher, LanguageName, LanguageRegistry};
-use paths::snippets_dir;
 use picker::{Picker, PickerDelegate};
 use settings::Settings;
-use std::{
-    borrow::{Borrow, Cow},
-    collections::HashSet,
-    fs,
-    path::Path,
-    sync::Arc,
-};
+use std::{borrow::Cow, collections::HashSet, fs, path::Path, sync::Arc};
 use ui::{HighlightedLabel, ListItem, ListItemSpacing, prelude::*};
 use util::ResultExt;
 use workspace::{ModalView, OpenOptions, OpenVisible, Workspace, notifications::NotifyResultExt};
@@ -88,8 +81,8 @@ fn configure_snippets(
 }
 
 fn open_folder(workspace: &mut Workspace, _: &OpenFolder, _: &mut Window, cx: &mut Context<Workspace>) {
-    fs::create_dir_all(snippets_dir()).notify_err(workspace, cx);
-    cx.open_with_system(snippets_dir().borrow());
+    fs::create_dir_all(paths::locations::snippets_dir()).notify_err(workspace, cx);
+    cx.open_with_system(paths::locations::snippets_dir());
 }
 
 pub struct ScopeSelector {
@@ -153,7 +146,7 @@ impl ScopeSelectorDelegate {
 
         let mut existing_scopes = HashSet::new();
 
-        if let Some(read_dir) = fs::read_dir(snippets_dir()).log_err() {
+        if let Some(read_dir) = fs::read_dir(paths::locations::snippets_dir()).log_err() {
             for entry in read_dir {
                 if let Some(entry) = entry.log_err() {
                     let path = entry.path();
@@ -217,7 +210,7 @@ impl PickerDelegate for ScopeSelectorDelegate {
                             .with_local_workspace(window, cx, |workspace, window, cx| {
                                 workspace
                                     .open_abs_path(
-                                        snippets_dir().join(scope_file_name.with_extension()),
+                                        paths::locations::snippets_dir().join(scope_file_name.with_extension()),
                                         OpenOptions {
                                             visible: Some(OpenVisible::None),
                                             ..Default::default()

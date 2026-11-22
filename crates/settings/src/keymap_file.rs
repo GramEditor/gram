@@ -603,7 +603,7 @@ impl KeymapFile {
     }
 
     pub async fn load_keymap_file(fs: &Arc<dyn Fs>) -> Result<String> {
-        match fs.load(paths::keymap_file()).await {
+        match fs.load(paths::locations::keymap_file()).await {
             result @ Ok(_) => result,
             Err(err) => {
                 if let Some(e) = err.downcast_ref::<std::io::Error>()

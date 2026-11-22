@@ -1,13 +1,9 @@
+use crate::{
+    attach_modal::{AttachModal, ModalIntent},
+    debugger_panel::DebugPanel,
+};
 use anyhow::{Context as _, bail};
 use collections::{FxHashMap, HashMap, HashSet};
-use language::{LanguageName, LanguageRegistry};
-use std::{
-    borrow::Cow,
-    path::{Path, PathBuf},
-    sync::Arc,
-};
-use tasks_ui::{TaskOverrides, TasksModal};
-
 use dap::{DapRegistry, DebugRequest, adapters::DebugAdapterName};
 use editor::Editor;
 use fuzzy::{StringMatch, StringMatchCandidate};
@@ -16,21 +12,25 @@ use gpui::{
     Subscription, Task, WeakEntity,
 };
 use itertools::Itertools as _;
+use language::{LanguageName, LanguageRegistry};
+use paths::rel_path::RelPath;
 use picker::{Picker, PickerDelegate, highlighted_match_with_paths::HighlightedMatch};
 use project::{DebugScenarioContext, Project, TaskContexts, TaskSourceKind, task_store::TaskStore};
+use shell::ShellKind;
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use task::{DebugScenario, GramDebugConfig, RevealTarget, VariableName};
+use tasks_ui::{TaskOverrides, TasksModal};
 use ui::{
     ContextMenu, DropdownMenu, FluentBuilder, IconWithIndicator, Indicator, KeyBinding, ListItem, ListItemSpacing,
     Switch, SwitchLabelPosition, ToggleButtonGroup, ToggleButtonSimple, ToggleState, Tooltip, prelude::*,
 };
 use ui_input::InputField;
-use util::{ResultExt, debug_panic, rel_path::RelPath, shell::ShellKind};
+use util::{ResultExt, debug_panic};
 use workspace::{ModalView, Workspace, notifications::DetachAndPromptErr, pane};
-
-use crate::{
-    attach_modal::{AttachModal, ModalIntent},
-    debugger_panel::DebugPanel,
-};
 
 pub(super) struct NewProcessModal {
     workspace: WeakEntity<Workspace>,
@@ -1383,7 +1383,7 @@ impl PickerDelegate for DebugDelegate {
 
 pub(crate) fn resolve_path(path: &mut String) {
     if path.starts_with('~') {
-        let home = paths::home_dir().to_string_lossy().into_owned();
+        let home = paths::locations::home_dir().to_string_lossy().to_owned();
         let trimmed_path = path.trim().to_owned();
         *path = trimmed_path.replacen('~', &home, 1);
     } else if let Some(strip_path) = path.strip_prefix(&format!(".{}", std::path::MAIN_SEPARATOR)) {

@@ -13,7 +13,7 @@ use gpui::{
     PromptLevel, ScrollHandle, Subscription, Task, WeakEntity, Window, canvas,
 };
 use log::info;
-use paths::{global_ssh_config_file, user_ssh_config_file};
+use paths::{PathStyle, remote_path::RemotePathBuf};
 use picker::Picker;
 use project::{Fs, Project};
 use remote::{
@@ -38,10 +38,7 @@ use ui::{
     IconButtonShape, List, ListItem, ListSeparator, Modal, ModalHeader, Navigable, NavigableEntry, Section, Tooltip,
     WithScrollbar, prelude::*,
 };
-use util::{
-    ResultExt,
-    paths::{PathStyle, RemotePathBuf},
-};
+use util::ResultExt;
 use workspace::{
     ModalView, OpenOptions, Toast, Workspace,
     notifications::{DetachAndPromptErr, NotificationId},
@@ -2018,8 +2015,12 @@ impl RemoteServerProjects {
 }
 
 fn spawn_ssh_config_watch(fs: Arc<dyn Fs>, cx: &Context<RemoteServerProjects>) -> Task<()> {
-    let mut user_ssh_config_watcher = watch_config_file(cx.background_executor(), fs.clone(), user_ssh_config_file());
-    let mut global_ssh_config_watcher = global_ssh_config_file()
+    let mut user_ssh_config_watcher = watch_config_file(
+        cx.background_executor(),
+        fs.clone(),
+        paths::locations::user_ssh_config_file().to_owned(),
+    );
+    let mut global_ssh_config_watcher = paths::locations::global_ssh_config_file()
         .map(|it| watch_config_file(cx.background_executor(), fs, it.to_owned()))
         .unwrap_or_else(|| futures::channel::mpsc::unbounded().1);
 

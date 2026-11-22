@@ -1068,18 +1068,14 @@ impl<T: FollowableItem> WeakFollowableItemHandle for WeakEntity<T> {
 
 #[cfg(any(test, feature = "test-support"))]
 pub mod test {
-    use super::{Item, ItemEvent, SerializableItem, TabContentParams};
-    use crate::{
-        ItemId, ItemNavHistory, Workspace, WorkspaceId,
-        item::{ItemBufferKind, SaveOptions},
-    };
+    use super::*;
     use gpui::{
-        AnyElement, App, AppContext as _, Context, Entity, EntityId, EventEmitter, Focusable, InteractiveElement,
-        IntoElement, ParentElement, Render, SharedString, Task, WeakEntity, Window,
+        AnyElement, App, Context, Entity, EntityId, EventEmitter, Focusable, InteractiveElement, IntoElement,
+        ParentElement, Render, SharedString, Task, WeakEntity, Window,
     };
+    use paths::rel_path::unix_rel_path;
     use project::{Project, ProjectEntryId, ProjectPath, WorktreeId};
     use std::{any::Any, cell::Cell};
-    use util::rel_path::rel_path;
 
     pub struct TestProjectItem {
         pub entry_id: Option<ProjectEntryId>,
@@ -1137,7 +1133,7 @@ pub mod test {
             let entry_id = Some(ProjectEntryId::from_proto(id));
             let project_path = Some(ProjectPath {
                 worktree_id: WorktreeId::from_usize(0),
-                path: rel_path(path).into(),
+                path: unix_rel_path(path).into(),
             });
             cx.new(|_| Self {
                 entry_id,
@@ -1158,7 +1154,7 @@ pub mod test {
             let entry_id = Some(ProjectEntryId::from_proto(id));
             let project_path = Some(ProjectPath {
                 worktree_id: WorktreeId::from_usize(0),
-                path: rel_path(path).into(),
+                path: unix_rel_path(path).into(),
             });
             cx.new(|_| Self {
                 entry_id,

@@ -1,14 +1,14 @@
-use std::{future::IntoFuture, path::Path, time::Duration};
-
 use super::*;
 use editor::Editor;
 use gpui::{Entity, TestAppContext, VisualTestContext};
 use menu::{Confirm, SelectNext, SelectPrevious};
+use paths::rel_path::unix_rel_path;
 use pretty_assertions::{assert_eq, assert_matches};
 use project::{FS_WATCH_LATENCY, RemoveOptions};
 use serde_json::json;
 use settings::SettingsStore;
-use util::{path, rel_path::rel_path};
+use std::{future::IntoFuture, path::Path, time::Duration};
+use util::path;
 use workspace::{AppState, CloseActiveItem, OpenOptions, ToggleFileFinder, Workspace, open_paths};
 
 #[ctor::ctor(unsafe)]
@@ -63,8 +63,8 @@ fn test_custom_project_search_ordering_in_file_finder() {
             score: 0.5,
             positions: Vec::new(),
             worktree_id: 0,
-            path: rel_path("b0.5").into(),
-            path_prefix: rel_path("").into(),
+            path: unix_rel_path("b0.5").into(),
+            path_prefix: unix_rel_path("").into(),
             distance_to_relative_ancestor: 0,
             is_dir: false,
         }),
@@ -72,8 +72,8 @@ fn test_custom_project_search_ordering_in_file_finder() {
             score: 1.0,
             positions: Vec::new(),
             worktree_id: 0,
-            path: rel_path("c1.0").into(),
-            path_prefix: rel_path("").into(),
+            path: unix_rel_path("c1.0").into(),
+            path_prefix: unix_rel_path("").into(),
             distance_to_relative_ancestor: 0,
             is_dir: false,
         }),
@@ -81,8 +81,8 @@ fn test_custom_project_search_ordering_in_file_finder() {
             score: 1.0,
             positions: Vec::new(),
             worktree_id: 0,
-            path: rel_path("a1.0").into(),
-            path_prefix: rel_path("").into(),
+            path: unix_rel_path("a1.0").into(),
+            path_prefix: unix_rel_path("").into(),
             distance_to_relative_ancestor: 0,
             is_dir: false,
         }),
@@ -90,8 +90,8 @@ fn test_custom_project_search_ordering_in_file_finder() {
             score: 0.5,
             positions: Vec::new(),
             worktree_id: 0,
-            path: rel_path("a0.5").into(),
-            path_prefix: rel_path("").into(),
+            path: unix_rel_path("a0.5").into(),
+            path_prefix: unix_rel_path("").into(),
             distance_to_relative_ancestor: 0,
             is_dir: false,
         }),
@@ -99,8 +99,8 @@ fn test_custom_project_search_ordering_in_file_finder() {
             score: 1.0,
             positions: Vec::new(),
             worktree_id: 0,
-            path: rel_path("b1.0").into(),
-            path_prefix: rel_path("").into(),
+            path: unix_rel_path("b1.0").into(),
+            path_prefix: unix_rel_path("").into(),
             distance_to_relative_ancestor: 0,
             is_dir: false,
         }),
@@ -114,8 +114,8 @@ fn test_custom_project_search_ordering_in_file_finder() {
                 score: 1.0,
                 positions: Vec::new(),
                 worktree_id: 0,
-                path: rel_path("a1.0").into(),
-                path_prefix: rel_path("").into(),
+                path: unix_rel_path("a1.0").into(),
+                path_prefix: unix_rel_path("").into(),
                 distance_to_relative_ancestor: 0,
                 is_dir: false,
             }),
@@ -123,8 +123,8 @@ fn test_custom_project_search_ordering_in_file_finder() {
                 score: 1.0,
                 positions: Vec::new(),
                 worktree_id: 0,
-                path: rel_path("b1.0").into(),
-                path_prefix: rel_path("").into(),
+                path: unix_rel_path("b1.0").into(),
+                path_prefix: unix_rel_path("").into(),
                 distance_to_relative_ancestor: 0,
                 is_dir: false,
             }),
@@ -132,8 +132,8 @@ fn test_custom_project_search_ordering_in_file_finder() {
                 score: 1.0,
                 positions: Vec::new(),
                 worktree_id: 0,
-                path: rel_path("c1.0").into(),
-                path_prefix: rel_path("").into(),
+                path: unix_rel_path("c1.0").into(),
+                path_prefix: unix_rel_path("").into(),
                 distance_to_relative_ancestor: 0,
                 is_dir: false,
             }),
@@ -141,8 +141,8 @@ fn test_custom_project_search_ordering_in_file_finder() {
                 score: 0.5,
                 positions: Vec::new(),
                 worktree_id: 0,
-                path: rel_path("a0.5").into(),
-                path_prefix: rel_path("").into(),
+                path: unix_rel_path("a0.5").into(),
+                path_prefix: unix_rel_path("").into(),
                 distance_to_relative_ancestor: 0,
                 is_dir: false,
             }),
@@ -150,8 +150,8 @@ fn test_custom_project_search_ordering_in_file_finder() {
                 score: 0.5,
                 positions: Vec::new(),
                 worktree_id: 0,
-                path: rel_path("b0.5").into(),
-                path_prefix: rel_path("").into(),
+                path: unix_rel_path("b0.5").into(),
+                path_prefix: unix_rel_path("").into(),
                 distance_to_relative_ancestor: 0,
                 is_dir: false,
             }),
@@ -348,7 +348,7 @@ async fn test_absolute_paths(cx: &mut TestAppContext) {
     picker.update(cx, |picker, _| {
         assert_eq!(
             collect_search_matches(picker).search_paths_only(),
-            vec![rel_path("a/b/file2.txt").into()],
+            vec![unix_rel_path("a/b/file2.txt").into()],
             "Matching abs path should be the only match"
         )
     });
@@ -401,7 +401,7 @@ async fn test_complex_path(cx: &mut TestAppContext) {
         assert_eq!(picker.delegate.matches.len(), 2);
         assert_eq!(
             collect_search_matches(picker).search_paths_only(),
-            vec![rel_path("其他/S数据表格/task.xlsx").into()],
+            vec![unix_rel_path("其他/S数据表格/task.xlsx").into()],
         )
     });
     cx.dispatch_action(Confirm);
@@ -804,15 +804,15 @@ async fn test_ignored_root_with_file_inclusions(cx: &mut TestAppContext) {
         assert_eq!(
             matches.search,
             vec![
-                rel_path("ignored-root/hi").into(),
-                rel_path("tracked-root/hi").into(),
-                rel_path("ignored-root/hiccup").into(),
-                rel_path("tracked-root/hiccup").into(),
-                rel_path("tracked-root/height_demo/test_1/hi_bonjour").into(),
-                rel_path("ignored-root/height").into(),
-                rel_path("tracked-root/heights/height_1").into(),
-                rel_path("ignored-root/happiness").into(),
-                rel_path("tracked-root/happiness").into(),
+                unix_rel_path("ignored-root/hi").into(),
+                unix_rel_path("tracked-root/hi").into(),
+                unix_rel_path("ignored-root/hiccup").into(),
+                unix_rel_path("tracked-root/hiccup").into(),
+                unix_rel_path("tracked-root/height_demo/test_1/hi_bonjour").into(),
+                unix_rel_path("ignored-root/height").into(),
+                unix_rel_path("tracked-root/heights/height_1").into(),
+                unix_rel_path("ignored-root/happiness").into(),
+                unix_rel_path("tracked-root/happiness").into(),
             ],
             "All ignored files that were indexed are found for default ignored mode"
         );
@@ -917,13 +917,13 @@ async fn test_ignored_root(cx: &mut TestAppContext) {
         assert_eq!(
             matches.search,
             vec![
-                rel_path("ignored-root/hi").into(),
-                rel_path("tracked-root/hi").into(),
-                rel_path("ignored-root/hiccup").into(),
-                rel_path("tracked-root/hiccup").into(),
-                rel_path("ignored-root/height").into(),
-                rel_path("ignored-root/happiness").into(),
-                rel_path("tracked-root/happiness").into(),
+                unix_rel_path("ignored-root/hi").into(),
+                unix_rel_path("tracked-root/hi").into(),
+                unix_rel_path("ignored-root/hiccup").into(),
+                unix_rel_path("tracked-root/hiccup").into(),
+                unix_rel_path("ignored-root/height").into(),
+                unix_rel_path("ignored-root/happiness").into(),
+                unix_rel_path("tracked-root/happiness").into(),
             ],
             "All ignored files that were indexed are found for default ignored mode"
         );
@@ -940,14 +940,14 @@ async fn test_ignored_root(cx: &mut TestAppContext) {
         assert_eq!(
             matches.search,
             vec![
-                rel_path("ignored-root/hi").into(),
-                rel_path("tracked-root/hi").into(),
-                rel_path("ignored-root/hiccup").into(),
-                rel_path("tracked-root/hiccup").into(),
-                rel_path("ignored-root/height").into(),
-                rel_path("tracked-root/height").into(),
-                rel_path("ignored-root/happiness").into(),
-                rel_path("tracked-root/happiness").into(),
+                unix_rel_path("ignored-root/hi").into(),
+                unix_rel_path("tracked-root/hi").into(),
+                unix_rel_path("ignored-root/hiccup").into(),
+                unix_rel_path("tracked-root/hiccup").into(),
+                unix_rel_path("ignored-root/height").into(),
+                unix_rel_path("tracked-root/height").into(),
+                unix_rel_path("ignored-root/happiness").into(),
+                unix_rel_path("tracked-root/happiness").into(),
             ],
             "All ignored files should be found, for the toggled on ignored mode"
         );
@@ -965,9 +965,9 @@ async fn test_ignored_root(cx: &mut TestAppContext) {
         assert_eq!(
             matches.search,
             vec![
-                rel_path("tracked-root/hi").into(),
-                rel_path("tracked-root/hiccup").into(),
-                rel_path("tracked-root/happiness").into(),
+                unix_rel_path("tracked-root/hi").into(),
+                unix_rel_path("tracked-root/hiccup").into(),
+                unix_rel_path("tracked-root/happiness").into(),
             ],
             "Only non-ignored files should be found for the turned off ignored mode"
         );
@@ -1010,13 +1010,13 @@ async fn test_ignored_root(cx: &mut TestAppContext) {
         assert_eq!(
             matches.search,
             vec![
-                rel_path("ignored-root/hi").into(),
-                rel_path("tracked-root/hi").into(),
-                rel_path("ignored-root/hiccup").into(),
-                rel_path("tracked-root/hiccup").into(),
-                rel_path("ignored-root/height").into(),
-                rel_path("ignored-root/happiness").into(),
-                rel_path("tracked-root/happiness").into(),
+                unix_rel_path("ignored-root/hi").into(),
+                unix_rel_path("tracked-root/hi").into(),
+                unix_rel_path("ignored-root/hiccup").into(),
+                unix_rel_path("tracked-root/hiccup").into(),
+                unix_rel_path("ignored-root/height").into(),
+                unix_rel_path("ignored-root/happiness").into(),
+                unix_rel_path("tracked-root/happiness").into(),
             ],
             "Only for the worktree with the ignored root, all indexed ignored files are found in the auto ignored mode"
         );
@@ -1034,16 +1034,16 @@ async fn test_ignored_root(cx: &mut TestAppContext) {
         assert_eq!(
             matches.search,
             vec![
-                rel_path("ignored-root/hi").into(),
-                rel_path("tracked-root/hi").into(),
-                rel_path("ignored-root/hiccup").into(),
-                rel_path("tracked-root/hiccup").into(),
-                rel_path("ignored-root/height").into(),
-                rel_path("tracked-root/height").into(),
-                rel_path("tracked-root/heights/height_1").into(),
-                rel_path("tracked-root/heights/height_2").into(),
-                rel_path("ignored-root/happiness").into(),
-                rel_path("tracked-root/happiness").into(),
+                unix_rel_path("ignored-root/hi").into(),
+                unix_rel_path("tracked-root/hi").into(),
+                unix_rel_path("ignored-root/hiccup").into(),
+                unix_rel_path("tracked-root/hiccup").into(),
+                unix_rel_path("ignored-root/height").into(),
+                unix_rel_path("tracked-root/height").into(),
+                unix_rel_path("tracked-root/heights/height_1").into(),
+                unix_rel_path("tracked-root/heights/height_2").into(),
+                unix_rel_path("ignored-root/happiness").into(),
+                unix_rel_path("tracked-root/happiness").into(),
             ],
             "All ignored files that were indexed are found in the turned on ignored mode"
         );
@@ -1061,9 +1061,9 @@ async fn test_ignored_root(cx: &mut TestAppContext) {
         assert_eq!(
             matches.search,
             vec![
-                rel_path("tracked-root/hi").into(),
-                rel_path("tracked-root/hiccup").into(),
-                rel_path("tracked-root/happiness").into(),
+                unix_rel_path("tracked-root/hi").into(),
+                unix_rel_path("tracked-root/hiccup").into(),
+                unix_rel_path("tracked-root/happiness").into(),
             ],
             "Only non-ignored files should be found for the turned off ignored mode"
         );
@@ -1163,7 +1163,7 @@ async fn test_history_items_uniqueness_for_multiple_worktree(cx: &mut TestAppCon
             workspace.open_path(
                 ProjectPath {
                     worktree_id: worktree_id1,
-                    path: rel_path("package.json").into(),
+                    path: unix_rel_path("package.json").into(),
                 },
                 None,
                 true,
@@ -1205,12 +1205,12 @@ async fn test_history_items_uniqueness_for_multiple_worktree(cx: &mut TestAppCon
 
         if let Match::History { path, .. } = &matches[0] {
             assert_eq!(path.project.worktree_id, worktree_id1);
-            assert_eq!(path.project.path.as_ref(), rel_path("package.json"));
+            assert_eq!(path.project.path.as_ref(), unix_rel_path("package.json"));
         }
 
         if let Match::Search(path_match) = &matches[1] {
             assert_eq!(WorktreeId::from_usize(path_match.0.worktree_id), worktree_id2);
-            assert_eq!(path_match.0.path.as_ref(), rel_path("package.json"));
+            assert_eq!(path_match.0.path.as_ref(), unix_rel_path("package.json"));
         }
     });
 }
@@ -1248,7 +1248,7 @@ async fn test_create_file_for_multiple_worktrees(cx: &mut TestAppContext) {
 
     let b_path = ProjectPath {
         worktree_id: worktree_id2,
-        path: rel_path("the-parent-dirb/fileb").into(),
+        path: unix_rel_path("the-parent-dirb/fileb").into(),
     };
     workspace
         .update_in(cx, |workspace, window, cx| {
@@ -1278,7 +1278,7 @@ async fn test_create_file_for_multiple_worktrees(cx: &mut TestAppContext) {
             project_path,
             Some(ProjectPath {
                 worktree_id: worktree_id2,
-                path: rel_path("the-parent-dirb/filec").into()
+                path: unix_rel_path("the-parent-dirb/filec").into()
             })
         );
     });
@@ -1333,7 +1333,7 @@ async fn test_create_file_no_focused_with_multiple_worktrees(cx: &mut TestAppCon
             project_path,
             Some(ProjectPath {
                 worktree_id: worktree_id2,
-                path: rel_path("filec").into()
+                path: unix_rel_path("filec").into()
             })
         );
     });
@@ -1371,7 +1371,7 @@ async fn test_path_distance_ordering(cx: &mut TestAppContext) {
     // so that one should be sorted earlier
     let b_path = ProjectPath {
         worktree_id,
-        path: rel_path("dir2/b.txt").into(),
+        path: unix_rel_path("dir2/b.txt").into(),
     };
     workspace
         .update_in(cx, |workspace, window, cx| {
@@ -1388,8 +1388,8 @@ async fn test_path_distance_ordering(cx: &mut TestAppContext) {
 
     finder.update(cx, |picker, _| {
         let matches = collect_search_matches(picker).search_paths_only();
-        assert_eq!(matches[0].as_ref(), rel_path("dir2/a.txt"));
-        assert_eq!(matches[1].as_ref(), rel_path("dir1/a.txt"));
+        assert_eq!(matches[0].as_ref(), unix_rel_path("dir2/a.txt"));
+        assert_eq!(matches[1].as_ref(), unix_rel_path("dir1/a.txt"));
     });
 }
 
@@ -1472,7 +1472,7 @@ async fn test_query_history(cx: &mut gpui::TestAppContext) {
         vec![FoundPath::new(
             ProjectPath {
                 worktree_id,
-                path: rel_path("test/first.rs").into(),
+                path: unix_rel_path("test/first.rs").into(),
             },
             PathBuf::from(path!("/src/test/first.rs"))
         )],
@@ -1486,14 +1486,14 @@ async fn test_query_history(cx: &mut gpui::TestAppContext) {
             FoundPath::new(
                 ProjectPath {
                     worktree_id,
-                    path: rel_path("test/second.rs").into(),
+                    path: unix_rel_path("test/second.rs").into(),
                 },
                 PathBuf::from(path!("/src/test/second.rs"))
             ),
             FoundPath::new(
                 ProjectPath {
                     worktree_id,
-                    path: rel_path("test/first.rs").into(),
+                    path: unix_rel_path("test/first.rs").into(),
                 },
                 PathBuf::from(path!("/src/test/first.rs"))
             ),
@@ -1509,21 +1509,21 @@ async fn test_query_history(cx: &mut gpui::TestAppContext) {
             FoundPath::new(
                 ProjectPath {
                     worktree_id,
-                    path: rel_path("test/third.rs").into(),
+                    path: unix_rel_path("test/third.rs").into(),
                 },
                 PathBuf::from(path!("/src/test/third.rs"))
             ),
             FoundPath::new(
                 ProjectPath {
                     worktree_id,
-                    path: rel_path("test/second.rs").into(),
+                    path: unix_rel_path("test/second.rs").into(),
                 },
                 PathBuf::from(path!("/src/test/second.rs"))
             ),
             FoundPath::new(
                 ProjectPath {
                     worktree_id,
-                    path: rel_path("test/first.rs").into(),
+                    path: unix_rel_path("test/first.rs").into(),
                 },
                 PathBuf::from(path!("/src/test/first.rs"))
             ),
@@ -1539,21 +1539,21 @@ async fn test_query_history(cx: &mut gpui::TestAppContext) {
             FoundPath::new(
                 ProjectPath {
                     worktree_id,
-                    path: rel_path("test/second.rs").into(),
+                    path: unix_rel_path("test/second.rs").into(),
                 },
                 PathBuf::from(path!("/src/test/second.rs"))
             ),
             FoundPath::new(
                 ProjectPath {
                     worktree_id,
-                    path: rel_path("test/third.rs").into(),
+                    path: unix_rel_path("test/third.rs").into(),
                 },
                 PathBuf::from(path!("/src/test/third.rs"))
             ),
             FoundPath::new(
                 ProjectPath {
                     worktree_id,
-                    path: rel_path("test/first.rs").into(),
+                    path: unix_rel_path("test/first.rs").into(),
                 },
                 PathBuf::from(path!("/src/test/first.rs"))
             ),
@@ -1598,7 +1598,7 @@ async fn test_history_match_positions(cx: &mut gpui::TestAppContext) {
         assert_matches!(matches.as_slice(), [Match::History { .. }, Match::CreateNew { .. }]);
         assert_eq!(
             matches[0].panel_match().unwrap().0.path.as_ref(),
-            rel_path("test/first.rs")
+            unix_rel_path("test/first.rs")
         );
         assert_eq!(matches[0].panel_match().unwrap().0.positions, &[5, 6, 7]);
 
@@ -1702,7 +1702,7 @@ async fn test_external_files_history(cx: &mut gpui::TestAppContext) {
         vec![FoundPath::new(
             ProjectPath {
                 worktree_id: external_worktree_id,
-                path: rel_path("").into(),
+                path: unix_rel_path("").into(),
             },
             PathBuf::from(path!("/external-src/test/third.rs"))
         )],
@@ -1716,14 +1716,14 @@ async fn test_external_files_history(cx: &mut gpui::TestAppContext) {
             FoundPath::new(
                 ProjectPath {
                     worktree_id,
-                    path: rel_path("test/second.rs").into(),
+                    path: unix_rel_path("test/second.rs").into(),
                 },
                 PathBuf::from(path!("/src/test/second.rs"))
             ),
             FoundPath::new(
                 ProjectPath {
                     worktree_id: external_worktree_id,
-                    path: rel_path("").into(),
+                    path: unix_rel_path("").into(),
                 },
                 PathBuf::from(path!("/external-src/test/third.rs"))
             ),
@@ -1842,7 +1842,7 @@ async fn test_search_preserves_history_items(cx: &mut gpui::TestAppContext) {
             &FoundPath::new(
                 ProjectPath {
                     worktree_id,
-                    path: rel_path("test/first.rs").into(),
+                    path: unix_rel_path("test/first.rs").into(),
                 },
                 PathBuf::from(path!("/src/test/first.rs")),
             )
@@ -1852,7 +1852,10 @@ async fn test_search_preserves_history_items(cx: &mut gpui::TestAppContext) {
             1,
             "Only one non-history item contains {first_query}, it should be present"
         );
-        assert_eq!(matches.search.first().unwrap().as_ref(), rel_path("test/fourth.rs"));
+        assert_eq!(
+            matches.search.first().unwrap().as_ref(),
+            unix_rel_path("test/fourth.rs")
+        );
     });
 
     let second_query = "fsdasdsa";
@@ -1886,12 +1889,12 @@ async fn test_search_preserves_history_items(cx: &mut gpui::TestAppContext) {
             assert_eq!(history_match, &FoundPath::new(
                 ProjectPath {
                     worktree_id,
-                    path: rel_path("test/first.rs").into(),
+                    path: unix_rel_path("test/first.rs").into(),
                 },
                 PathBuf::from(path!("/src/test/first.rs"))
             ));
             assert_eq!(matches.search.len(), 1, "Only one non-history item contains {first_query_again}, it should be present, even after non-matching query");
-            assert_eq!(matches.search.first().unwrap().as_ref(), rel_path("test/fourth.rs"));
+            assert_eq!(matches.search.first().unwrap().as_ref(), unix_rel_path("test/fourth.rs"));
         });
 }
 
@@ -1938,11 +1941,14 @@ async fn test_search_sorts_history_items(cx: &mut gpui::TestAppContext) {
         let search_matches = collect_search_matches(finder);
         assert_eq!(
             search_matches.history,
-            vec![rel_path("test/1_qw").into(), rel_path("test/6_qwqwqw").into()],
+            vec![unix_rel_path("test/1_qw").into(), unix_rel_path("test/6_qwqwqw").into()],
         );
         assert_eq!(
             search_matches.search,
-            vec![rel_path("test/5_qwqwqw").into(), rel_path("test/7_qwqwqw").into()],
+            vec![
+                unix_rel_path("test/5_qwqwqw").into(),
+                unix_rel_path("test/7_qwqwqw").into()
+            ],
         );
     });
 }
@@ -2386,7 +2392,10 @@ async fn test_nonexistent_history_items_not_shown(cx: &mut gpui::TestAppContext)
     picker.update(cx, |picker, _| {
         assert_eq!(
             collect_search_matches(picker).history,
-            vec![rel_path("test/first.rs").into(), rel_path("test/third.rs").into()],
+            vec![
+                unix_rel_path("test/first.rs").into(),
+                unix_rel_path("test/third.rs").into()
+            ],
             "Should have all opened files in the history, except the ones that do not exist on disk"
         );
     });
@@ -2632,7 +2641,7 @@ async fn test_history_items_uniqueness_for_multiple_worktree_open_all_files(cx: 
             workspace.open_path(
                 ProjectPath {
                     worktree_id: worktree_id1,
-                    path: rel_path("package.json").into(),
+                    path: unix_rel_path("package.json").into(),
                 },
                 None,
                 true,
@@ -2652,7 +2661,7 @@ async fn test_history_items_uniqueness_for_multiple_worktree_open_all_files(cx: 
             workspace.open_path(
                 ProjectPath {
                     worktree_id: worktree_id2,
-                    path: rel_path("package.json").into(),
+                    path: unix_rel_path("package.json").into(),
                 },
                 None,
                 true,
@@ -2694,10 +2703,10 @@ async fn test_history_items_uniqueness_for_multiple_worktree_open_all_files(cx: 
 
         if let Match::History { path, panel_match } = &matches[0] {
             assert_eq!(path.project.worktree_id, worktree_id2);
-            assert_eq!(path.project.path.as_ref(), rel_path("package.json"));
+            assert_eq!(path.project.path.as_ref(), unix_rel_path("package.json"));
             let panel_match = panel_match.as_ref().unwrap();
-            assert_eq!(panel_match.0.path_prefix, rel_path("repo2").into());
-            assert_eq!(panel_match.0.path, rel_path("package.json").into());
+            assert_eq!(panel_match.0.path_prefix, unix_rel_path("repo2").into());
+            assert_eq!(panel_match.0.path, unix_rel_path("package.json").into());
             assert_eq!(
                 panel_match.0.positions,
                 vec![6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
@@ -2706,10 +2715,10 @@ async fn test_history_items_uniqueness_for_multiple_worktree_open_all_files(cx: 
 
         if let Match::History { path, panel_match } = &matches[1] {
             assert_eq!(path.project.worktree_id, worktree_id1);
-            assert_eq!(path.project.path.as_ref(), rel_path("package.json"));
+            assert_eq!(path.project.path.as_ref(), unix_rel_path("package.json"));
             let panel_match = panel_match.as_ref().unwrap();
-            assert_eq!(panel_match.0.path_prefix, rel_path("repo1").into());
-            assert_eq!(panel_match.0.path, rel_path("package.json").into());
+            assert_eq!(panel_match.0.path_prefix, unix_rel_path("repo1").into());
+            assert_eq!(panel_match.0.path, unix_rel_path("package.json").into());
             assert_eq!(
                 panel_match.0.positions,
                 vec![6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
@@ -3301,11 +3310,11 @@ async fn test_filename_precedence(cx: &mut TestAppContext) {
         assert_eq!(
             search_matches,
             vec![
-                rel_path("routes/+layout.svelte").into(),
-                rel_path("layout/app.css").into(),
-                rel_path("layout/app.d.ts").into(),
-                rel_path("layout/app.html").into(),
-                rel_path("layout/+page.svelte").into(),
+                unix_rel_path("routes/+layout.svelte").into(),
+                unix_rel_path("layout/app.css").into(),
+                unix_rel_path("layout/app.d.ts").into(),
+                unix_rel_path("layout/app.html").into(),
+                unix_rel_path("layout/+page.svelte").into(),
             ],
             "File with 'layout' in filename should be prioritized over files in 'layout' directory"
         );
@@ -3344,7 +3353,7 @@ async fn test_paths_with_starting_slash(cx: &mut TestAppContext) {
     picker.update(cx, |picker, _| {
         assert_eq!(
             collect_search_matches(picker).search_paths_only(),
-            vec![rel_path("a/file1.txt").into()],
+            vec![unix_rel_path("a/file1.txt").into()],
             "Relative path starting with slash should match"
         )
     });

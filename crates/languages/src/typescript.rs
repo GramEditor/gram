@@ -11,6 +11,7 @@ use language::{
 };
 use lsp::{CodeActionKind, LanguageServerBinary, LanguageServerName, Uri};
 use node_runtime::{NodeRuntime, VersionStrategy};
+use paths::rel_path::RelPath;
 use project::{Fs, lsp_store::language_server_settings};
 use serde_json::{Value, json};
 use smol::lock::RwLock;
@@ -21,7 +22,6 @@ use std::{
     sync::{Arc, LazyLock},
 };
 use task::{TaskTemplate, TaskTemplates, VariableName};
-use util::rel_path::RelPath;
 use util::{ResultExt, maybe};
 
 use crate::{PackageJson, PackageJsonData};
@@ -785,11 +785,12 @@ mod tests {
     use std::path::Path;
 
     use gpui::{AppContext as _, BackgroundExecutor, TestAppContext};
+    use paths::rel_path::unix_rel_path;
     use project::FakeFs;
     use serde_json::json;
     use task::TaskTemplates;
     use unindent::Unindent;
-    use util::{path, rel_path::rel_path};
+    use util::path;
 
     use crate::typescript::{PackageJsonData, TypeScriptContextProvider, replace_test_name_parameters};
 
@@ -1151,7 +1152,12 @@ mod tests {
         let provider = TypeScriptContextProvider::new(fs.clone());
         let package_json_data = cx
             .update(|cx| {
-                provider.combined_package_json_data(fs.clone(), path!("/root").as_ref(), rel_path("sub/file1.js"), cx)
+                provider.combined_package_json_data(
+                    fs.clone(),
+                    path!("/root").as_ref(),
+                    unix_rel_path("sub/file1.js"),
+                    cx,
+                )
             })
             .await
             .unwrap();
@@ -1283,7 +1289,7 @@ mod tests {
 
         let package_json_data = cx
             .update(|cx| {
-                provider.combined_package_json_data(fs.clone(), path!("/root").as_ref(), rel_path("file.js"), cx)
+                provider.combined_package_json_data(fs.clone(), path!("/root").as_ref(), unix_rel_path("file.js"), cx)
             })
             .await
             .unwrap();

@@ -22,6 +22,7 @@ use language::{
 };
 use lsp::DiagnosticSeverity;
 use multi_buffer::MultiBufferOffset;
+use paths::PathExt;
 use project::{
     File, Project, ProjectItem as _, ProjectPath, lsp_store::FormatTrigger, project_settings::ProjectSettings,
     search::SearchQuery,
@@ -40,21 +41,16 @@ use std::{
 use text::{BufferId, BufferSnapshot, Selection};
 use theme::{Theme, ThemeSettings};
 use ui::{IconDecorationKind, prelude::*};
-use util::{ResultExt, TryFutureExt, paths::PathExt};
+use util::{ResultExt, TryFutureExt};
 use workspace::{
-    ItemId, ItemNavHistory, ToolbarItemLocation, ViewId, Workspace, WorkspaceId,
+    ItemId, ItemNavHistory, OpenOptions, OpenVisible, Pane, ToolbarItemLocation, ViewId, Workspace, WorkspaceId,
+    WorkspaceSettings,
     invalid_item_view::InvalidItemView,
-    item::{FollowableItem, Item, ItemBufferKind, ItemEvent, ProjectItem, SaveOptions},
-    searchable::{Direction, FilteredSearchRange, SearchEvent, SearchableItem, SearchableItemHandle},
-};
-use workspace::{
-    OpenOptions,
-    item::{Dedup, ItemSettings, SerializableItem, TabContentParams},
-};
-use workspace::{
-    OpenVisible, Pane, WorkspaceSettings,
     item::{BreadcrumbText, ProjectItemKind},
+    item::{Dedup, ItemSettings, SerializableItem, TabContentParams},
+    item::{FollowableItem, Item, ItemBufferKind, ItemEvent, ProjectItem, SaveOptions},
     searchable::SearchOptions,
+    searchable::{Direction, FilteredSearchRange, SearchEvent, SearchableItem, SearchableItemHandle},
 };
 
 pub const MAX_TAB_TITLE_LEN: usize = 24;
@@ -815,7 +811,7 @@ impl Item for Editor {
                 )
                 .unwrap_or_else(|| {
                     if let Some(path) = multibuffer.path_for_excerpt(cursor.excerpt_id) {
-                        path.path.display(util::paths::PathStyle::local()).into_owned()
+                        path.path.display(paths::PathStyle::local()).into_owned()
                     } else if multibuffer.is_singleton() {
                         multibuffer.title(cx).to_string()
                     } else {
@@ -1763,16 +1759,15 @@ fn path_for_file<'a>(
 
 #[cfg(test)]
 mod tests {
-    use crate::editor_tests::init_test;
-    use fs::Fs;
-
     use super::*;
-    use fs::MTime;
+    use crate::editor_tests::init_test;
+    use fs::{Fs, MTime};
     use gpui::{App, VisualTestContext};
     use language::{LanguageMatcher, TestFile};
+    use paths::rel_path::RelPath;
     use project::FakeFs;
     use std::path::{Path, PathBuf};
-    use util::{path, rel_path::RelPath};
+    use util::path;
 
     #[gpui::test]
     fn test_path_for_file(cx: &mut App) {

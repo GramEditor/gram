@@ -249,10 +249,11 @@ mod tests {
         status::{UnmergedStatus, UnmergedStatusCode},
     };
     use gpui::{BackgroundExecutor, TestAppContext};
+    use paths::rel_path::unix_rel_path;
     use serde_json::json;
     use text::{Buffer, BufferId, Point, ReplicaId, ToOffset as _};
     use unindent::Unindent as _;
-    use util::{path, rel_path::rel_path};
+    use util::path;
 
     #[test]
     fn test_parse_conflicts_in_buffer() {
@@ -593,7 +594,7 @@ mod tests {
         cx.run_until_parked();
         fs.with_git_state(path!("/project/.git").as_ref(), true, |state| {
             state.unmerged_paths.insert(
-                RepoPath::from_rel_path(rel_path("a.txt")),
+                RepoPath::from_rel_path(unix_rel_path("a.txt")),
                 UnmergedStatus {
                     first_head: UnmergedStatusCode::Updated,
                     second_head: UnmergedStatusCode::Updated,

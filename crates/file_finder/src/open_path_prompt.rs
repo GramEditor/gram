@@ -3,6 +3,7 @@ use file_icons::FileIcons;
 use futures::channel::oneshot;
 use fuzzy::{CharBag, StringMatch, StringMatchCandidate};
 use gpui::{HighlightStyle, StyledText, Task};
+use paths::{PathStyle, compare_paths};
 use picker::{Picker, PickerDelegate};
 use project::{DirectoryItem, DirectoryLister};
 use settings::Settings;
@@ -13,12 +14,8 @@ use std::{
         atomic::{self, AtomicBool},
     },
 };
-use ui::{Context, LabelLike, ListItem, Window};
-use ui::{HighlightedLabel, ListItemSpacing, prelude::*};
-use util::{
-    maybe,
-    paths::{PathStyle, compare_paths},
-};
+use ui::{Context, HighlightedLabel, LabelLike, ListItem, ListItemSpacing, Window, prelude::*};
+use util::maybe;
 use workspace::Workspace;
 
 pub(crate) struct OpenPathPrompt;
@@ -865,9 +862,8 @@ fn get_dir_and_suffix(query: String, path_style: PathStyle) -> (String, String) 
 
 #[cfg(test)]
 mod tests {
-    use util::paths::PathStyle;
-
     use crate::open_path_prompt::get_dir_and_suffix;
+    use paths::PathStyle;
 
     #[test]
     fn test_get_dir_and_suffix_with_windows_style() {

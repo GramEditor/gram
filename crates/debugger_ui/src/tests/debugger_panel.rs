@@ -18,6 +18,7 @@ use editor::{
     actions::{self},
 };
 use gpui::{BackgroundExecutor, TestAppContext, VisualTestContext};
+use paths::rel_path::unix_rel_path;
 use project::{
     FakeFs, Project,
     debugger::session::{ThreadId, ThreadStatus},
@@ -32,9 +33,8 @@ use std::{
 };
 use terminal_view::terminal_panel::TerminalPanel;
 use tests::{active_debug_session_panel, init_test, init_test_workspace};
-use util::{path, rel_path::rel_path};
-use workspace::item::SaveOptions;
-use workspace::{Item, dock::Panel};
+use util::path;
+use workspace::{Item, dock::Panel, item::SaveOptions};
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
@@ -1001,7 +1001,7 @@ async fn test_send_breakpoints_when_editor_has_been_saved(executor: BackgroundEx
 
     let buffer = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("main.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("main.rs")), cx)
         })
         .await
         .unwrap();
@@ -1159,14 +1159,14 @@ async fn test_unsetting_breakpoints_on_clear_breakpoint_action(executor: Backgro
 
     let first = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("main.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("main.rs")), cx)
         })
         .await
         .unwrap();
 
     let second = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("second.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("second.rs")), cx)
         })
         .await
         .unwrap();
@@ -1380,14 +1380,14 @@ async fn test_active_debug_line_setting(executor: BackgroundExecutor, cx: &mut T
 
     let main_buffer = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("main.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("main.rs")), cx)
         })
         .await
         .unwrap();
 
     let second_buffer = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("second.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("second.rs")), cx)
         })
         .await
         .unwrap();

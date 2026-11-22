@@ -42,7 +42,8 @@ fn main() -> anyhow::Result<()> {
     }
 
     if cli.printenv {
-        util::shell_env::print_env();
+        shell::env::print_env();
+
         return Ok(());
     }
 

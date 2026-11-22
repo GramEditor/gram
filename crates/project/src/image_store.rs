@@ -9,11 +9,12 @@ use gpui::{App, AsyncApp, Context, Entity, EventEmitter, Img, Subscription, Task
 pub use image::ImageFormat;
 use image::{ExtendedColorType, GenericImageView, ImageReader};
 use language::{DiskState, File};
+use paths::rel_path::RelPath;
 use rpc::{AnyProtoClient, ErrorExt as _, TypedEnvelope, proto};
 use std::num::NonZeroU64;
 use std::path::PathBuf;
 use std::sync::Arc;
-use util::{ResultExt, rel_path::RelPath};
+use util::ResultExt;
 use worktree::{FileType, LoadedBinaryFile, PathChange, Worktree, WorktreeId};
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, PartialOrd, Ord, Eq)]
@@ -841,9 +842,9 @@ mod tests {
     use super::*;
     use fs::FakeFs;
     use gpui::TestAppContext;
+    use paths::rel_path::unix_rel_path;
     use serde_json::json;
     use settings::SettingsStore;
-    use util::rel_path::rel_path;
 
     pub fn init_test(cx: &mut TestAppContext) {
         zlog::init_test();
@@ -878,7 +879,7 @@ mod tests {
 
         let project_path = ProjectPath {
             worktree_id,
-            path: rel_path("image_1.png").into(),
+            path: unix_rel_path("image_1.png").into(),
         };
 
         let (task1, task2) = project.update(cx, |project, cx| {

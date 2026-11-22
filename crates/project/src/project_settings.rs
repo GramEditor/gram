@@ -6,9 +6,12 @@ use futures::StreamExt as _;
 use gpui::{AsyncApp, BorrowAppContext, Context, Entity, EventEmitter, Subscription, Task};
 use lsp::LanguageServerName;
 use paths::{
-    EDITORCONFIG_NAME, local_debug_file_relative_path, local_settings_file_relative_path,
-    local_tasks_file_relative_path, local_vscode_launch_file_relative_path, local_vscode_tasks_file_relative_path,
-    local_vscodium_launch_file_relative_path, local_vscodium_tasks_file_relative_path, task_file_name,
+    locations::{
+        EDITORCONFIG_NAME, debug_scenarios_file, local_debug_file_relative_path, local_settings_file_relative_path,
+        local_tasks_file_relative_path, local_vscode_launch_file_relative_path, local_vscode_tasks_file_relative_path,
+        local_vscodium_launch_file_relative_path, local_vscodium_tasks_file_relative_path, task_file_name, tasks_file,
+    },
+    rel_path::RelPath,
 };
 use rpc::{
     AnyProtoClient, TypedEnvelope,
@@ -24,7 +27,7 @@ use settings::{
 };
 use std::{path::PathBuf, sync::Arc, time::Duration};
 use task::{DebugTaskFile, TaskTemplates, VsCodeDebugTaskFile, VsCodeTaskFile};
-use util::{ResultExt, rel_path::RelPath};
+use util::ResultExt;
 use worktree::{PathChange, UpdatedEntriesSet, Worktree, WorktreeId};
 
 use crate::{
@@ -522,12 +525,12 @@ impl SettingsObserver {
             project_id: REMOTE_SERVER_PROJECT_ID,
             _global_task_config_watcher: Self::subscribe_to_global_task_file_changes(
                 fs.clone(),
-                paths::tasks_file().clone(),
+                tasks_file().to_owned(),
                 cx,
             ),
             _global_debug_config_watcher: Self::subscribe_to_global_debug_scenarios_changes(
                 fs.clone(),
-                paths::debug_scenarios_file().clone(),
+                debug_scenarios_file().to_owned(),
                 cx,
             ),
         }
@@ -570,12 +573,12 @@ impl SettingsObserver {
             _user_settings_watcher: user_settings_watcher,
             _global_task_config_watcher: Self::subscribe_to_global_task_file_changes(
                 fs.clone(),
-                paths::tasks_file().clone(),
+                tasks_file().to_owned(),
                 cx,
             ),
             _global_debug_config_watcher: Self::subscribe_to_global_debug_scenarios_changes(
                 fs.clone(),
-                paths::debug_scenarios_file().clone(),
+                debug_scenarios_file().to_owned(),
                 cx,
             ),
         }

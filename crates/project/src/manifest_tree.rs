@@ -3,25 +3,23 @@
 //! A Manifest Tree is responsible for determining where the manifests for subprojects are located in a project.
 //! This then is used to provide those locations to language servers & determine locations eligible for toolchain selection.
 
-mod manifest_store;
-mod path_trie;
-mod server_tree;
-
-use std::{borrow::Borrow, collections::hash_map::Entry, ops::ControlFlow, sync::Arc};
-
+use crate::{
+    ProjectPath,
+    worktree_store::{WorktreeStore, WorktreeStoreEvent},
+};
 use collections::HashMap;
 use gpui::{App, AppContext as _, Context, Entity, Subscription};
 use language::{ManifestDelegate, ManifestName, ManifestQuery};
 pub use manifest_store::ManifestProvidersStore;
 use path_trie::{LabelPresence, RootPathTrie, TriePath};
+use paths::rel_path::RelPath;
 use settings::{SettingsStore, WorktreeId};
-use util::rel_path::RelPath;
+use std::{borrow::Borrow, collections::hash_map::Entry, ops::ControlFlow, sync::Arc};
 use worktree::{Event as WorktreeEvent, Snapshot, Worktree};
 
-use crate::{
-    ProjectPath,
-    worktree_store::{WorktreeStore, WorktreeStoreEvent},
-};
+mod manifest_store;
+mod path_trie;
+mod server_tree;
 
 pub(crate) use server_tree::{LanguageServerTree, LanguageServerTreeNode, LaunchDisposition};
 

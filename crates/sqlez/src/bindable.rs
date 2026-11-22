@@ -1,12 +1,10 @@
+use crate::statement::{SqlType, Statement};
+use anyhow::{Context as _, Result};
+use paths::PathExt;
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-
-use anyhow::{Context as _, Result};
-use util::paths::PathExt;
-
-use crate::statement::{SqlType, Statement};
 
 /// Define the number of columns that a type occupies in a query/database
 pub trait StaticColumnCount {

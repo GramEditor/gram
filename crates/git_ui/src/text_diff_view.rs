@@ -9,6 +9,7 @@ use gpui::{
     Render, Task, Window,
 };
 use language::{self, Buffer, Point};
+use paths::PathExt;
 use project::Project;
 use std::{
     any::{Any, TypeId},
@@ -19,7 +20,6 @@ use std::{
     time::Duration,
 };
 use ui::{Color, Icon, IconName, Label, LabelCommon as _, SharedString};
-use util::paths::PathExt;
 
 use workspace::{
     Item, ItemHandle as _, ItemNavHistory, ToolbarItemLocation, Workspace,

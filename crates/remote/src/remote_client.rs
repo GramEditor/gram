@@ -25,7 +25,7 @@ use gpui::{
     Global, Task, WeakEntity,
 };
 use parking_lot::Mutex;
-
+use paths::{PathStyle, remote_path::RemotePathBuf};
 use release_channel::ReleaseChannel;
 use rpc::{
     AnyProtoClient, ErrorExt, ProtoClient, ProtoMessageHandlerSet, RpcError,
@@ -42,10 +42,7 @@ use std::{
     },
     time::{Duration, Instant},
 };
-use util::{
-    ResultExt,
-    paths::{PathStyle, RemotePathBuf},
-};
+use util::ResultExt;
 
 #[derive(Copy, Clone, Debug)]
 pub struct RemotePlatform {
@@ -1396,9 +1393,9 @@ mod fake {
         select_biased,
     };
     use gpui::{App, AppContext as _, AsyncApp, Task, TestAppContext};
+    use paths::{PathStyle, remote_path::RemotePathBuf};
     use rpc::proto::Envelope;
     use std::{path::PathBuf, sync::Arc};
-    use util::paths::{PathStyle, RemotePathBuf};
 
     pub(super) struct FakeRemoteConnection {
         pub(super) connection_options: RemoteConnectionOptions,

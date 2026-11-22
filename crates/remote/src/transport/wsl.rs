@@ -8,8 +8,10 @@ use async_trait::async_trait;
 use collections::HashMap;
 use futures::channel::mpsc::{Sender, UnboundedReceiver, UnboundedSender};
 use gpui::{App, AppContext as _, AsyncApp, SemanticVersion, Task};
+use paths::{PathStyle, locations::remote_wsl_server_dir_relative, rel_path::RelPath, remote_path::RemotePathBuf};
 use release_channel::{AppVersion, ReleaseChannel};
 use rpc::proto::Envelope;
+use shell::ShellKind;
 #[cfg(debug_assertions)]
 use smol::fs;
 use smol::process;
@@ -21,11 +23,6 @@ use std::{
     path::{Path, PathBuf},
     process::Stdio,
     sync::Arc,
-};
-use util::{
-    paths::{PathStyle, RemotePathBuf},
-    rel_path::RelPath,
-    shell::ShellKind,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Deserialize, schemars::JsonSchema)]
@@ -151,7 +148,7 @@ impl WslRemoteConnection {
 
         let binary_name = format!("gram-remote-server-{}-{}", release_channel.dev_name(), version_str);
 
-        let dst_path = paths::remote_wsl_server_dir_relative().join(RelPath::unix(&binary_name).unwrap());
+        let dst_path = remote_wsl_server_dir_relative().join(RelPath::unix(&binary_name).unwrap());
 
         if let Some(parent) = dst_path.parent() {
             let parent = parent.display(PathStyle::Posix);
@@ -166,7 +163,7 @@ impl WslRemoteConnection {
                 if let Some(remote_server_path) =
                     super::build_remote_server_from_source(&self.platform, delegate.as_ref(), cx).await?
                 {
-                    let tmp_path = paths::remote_wsl_server_dir_relative().join(
+                    let tmp_path = remote_wsl_server_dir_relative().join(
                         RelPath::unix(&format!(
                             "download-{}-{}",
                             std::process::id(),
@@ -521,7 +518,7 @@ fn wsl_command_impl(
     args: &[impl AsRef<OsStr>],
     exec: bool,
 ) -> process::Command {
-    let mut command = util::command::new_smol_command("wsl.exe");
+    let mut command = command::new_smol_command("wsl.exe");
 
     if let Some(user) = &options.user {
         command.arg("--user").arg(user);

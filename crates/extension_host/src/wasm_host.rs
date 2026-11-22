@@ -27,6 +27,7 @@ use lru::LruCache;
 use lsp::{LanguageServerBinaryOptions, LanguageServerName};
 use node_runtime::NodeRuntime;
 use parking_lot::RwLock;
+use paths::sanitized_path::SanitizedPath;
 use release_channel::ReleaseChannel;
 use semver::Version as SemanticVersion;
 use settings::Settings;
@@ -41,7 +42,6 @@ use std::{
     time::Duration,
 };
 use task::{DebugScenario, GramDebugConfig, SpawnInTerminal, TaskTemplate};
-use util::paths::SanitizedPath;
 use wasmtime::{
     CacheStore, Engine, Store,
     component::{Component, ResourceTable},

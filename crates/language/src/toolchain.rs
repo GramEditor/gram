@@ -4,17 +4,15 @@
 //! which is a set of tools used to interact with the projects written in said language.
 //! For example, a Python project can have an associated virtual environment; a Rust project can have a toolchain override.
 
-use std::{path::PathBuf, sync::Arc};
-
+use crate::{LanguageName, ManifestName};
 use async_trait::async_trait;
 use collections::HashMap;
 use fs::Fs;
 use gpui::{App, AsyncApp, SharedString};
+use paths::rel_path::RelPath;
 use settings::WorktreeId;
-use task::ShellKind;
-use util::rel_path::RelPath;
-
-use crate::{LanguageName, ManifestName};
+use shell::ShellKind;
+use std::{path::PathBuf, sync::Arc};
 
 /// Represents a single toolchain.
 #[derive(Clone, Eq, Debug)]

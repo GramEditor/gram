@@ -20,9 +20,12 @@ use gpui::{
     InteractiveElement, IntoElement, KeyContext, ParentElement, Point, Render, SharedString, Styled, Subscription,
     Task, UpdateGlobal, WeakEntity, Window, actions, div,
 };
-use itertools::Itertools;
 use language::{Buffer, Capability, Language};
 use menu::Confirm;
+use paths::{
+    path_matcher::{PathMatcher, PathMatcherSources},
+    rel_path::RelPath,
+};
 use project::{
     Project, ProjectPath, SearchResults,
     search::{SearchInputKind, SearchQuery},
@@ -37,7 +40,7 @@ use std::{
     sync::Arc,
 };
 use ui::{CommonAnimationExt, IconButtonShape, KeyBinding, Toggleable, Tooltip, prelude::*, utils::SearchInputWidth};
-use util::{ResultExt as _, paths::PathMatcher, rel_path::RelPath};
+use util::ResultExt as _;
 use workspace::{
     DeploySearch, ItemNavHistory, NewSearch, StatusBarSettings, ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView,
     Workspace, WorkspaceId,
@@ -285,13 +288,27 @@ impl ProjectSearch {
             project
                 .search_history_mut(SearchInputKind::Query)
                 .add(&mut self.search_history_cursor, query.as_str().to_string());
-            let included = query.as_inner().files_to_include().sources().join(",");
+            let included = itertools::join(
+                query
+                    .as_inner()
+                    .files_to_include()
+                    .sources()
+                    .map(PathMatcherSources::raw),
+                ",",
+            );
             if !included.is_empty() {
                 project
                     .search_history_mut(SearchInputKind::Include)
                     .add(&mut self.search_included_history_cursor, included);
             }
-            let excluded = query.as_inner().files_to_exclude().sources().join(",");
+            let excluded = itertools::join(
+                query
+                    .as_inner()
+                    .files_to_exclude()
+                    .sources()
+                    .map(PathMatcherSources::raw),
+                ",",
+            );
             if !excluded.is_empty() {
                 project
                     .search_history_mut(SearchInputKind::Exclude)
@@ -2241,11 +2258,12 @@ pub mod tests {
     use editor::{DisplayPoint, display_map::DisplayRow};
     use gpui::{Action, TestAppContext, VisualTestContext, WindowHandle};
     use language::{FakeLspAdapter, rust_lang};
+    use paths::{PathStyle, rel_path::unix_rel_path};
     use pretty_assertions::assert_eq;
     use project::FakeFs;
     use serde_json::json;
     use settings::{InlayHintSettingsContent, SettingsStore};
-    use util::{path, paths::PathStyle, rel_path::rel_path};
+    use util::path;
     use util_macros::perf;
     use workspace::DeploySearch;
 
@@ -3181,7 +3199,7 @@ pub mod tests {
                 .read(cx)
                 .project()
                 .read(cx)
-                .entry_for_path(&(worktree_id, rel_path("a")).into(), cx)
+                .entry_for_path(&(worktree_id, unix_rel_path("a")).into(), cx)
                 .expect("no entry for /a/ directory")
                 .clone()
         });
@@ -3610,7 +3628,7 @@ pub mod tests {
         window
             .update(cx, |workspace, window, cx| {
                 workspace.open_path(
-                    (worktree_id, rel_path("one.rs")),
+                    (worktree_id, unix_rel_path("one.rs")),
                     Some(first_pane.downgrade()),
                     true,
                     window,
@@ -3814,7 +3832,7 @@ pub mod tests {
         window
             .update(cx, |workspace, window, cx| {
                 workspace.open_path(
-                    (worktree_id, rel_path("one.rs")),
+                    (worktree_id, unix_rel_path("one.rs")),
                     Some(first_pane.downgrade()),
                     true,
                     window,
@@ -4025,7 +4043,7 @@ pub mod tests {
 
         let editor = workspace
             .update_in(&mut cx, |workspace, window, cx| {
-                workspace.open_path((worktree_id, rel_path("one.rs")), None, true, window, cx)
+                workspace.open_path((worktree_id, unix_rel_path("one.rs")), None, true, window, cx)
             })
             .await
             .unwrap()

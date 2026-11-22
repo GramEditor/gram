@@ -18,13 +18,16 @@ use language::{
     language_settings::language_settings,
 };
 use lsp::{LanguageServerId, LanguageServerName};
-use paths::{debug_task_file_name, task_file_name};
+use paths::{
+    locations::{debug_task_file_name, task_file_name},
+    rel_path::RelPath,
+};
 use settings::{InvalidSettingsError, parse_json_with_comments};
 use task::{
     DebugScenario, ResolvedTask, TaskContext, TaskId, TaskTemplate, TaskTemplates, TaskVariables, VariableName,
 };
 use text::{BufferId, Point, ToPoint};
-use util::{NumericPrefixWithSuffix, ResultExt as _, post_inc, rel_path::RelPath};
+use util::{NumericPrefixWithSuffix, ResultExt as _, post_inc};
 use worktree::WorktreeId;
 
 use crate::{task_store::TaskSettingsLocation, worktree_store::WorktreeStore};
@@ -1011,18 +1014,14 @@ impl ContextProvider for ContextProviderWithTasks {
 
 #[cfg(test)]
 mod tests {
+    use super::{test_inventory::*, *};
+    use crate::task_store::TaskStore;
     use gpui::TestAppContext;
-    use paths::tasks_file;
+    use paths::{locations::tasks_file, rel_path::unix_rel_path};
     use pretty_assertions::assert_eq;
     use serde_json::json;
     use settings::SettingsLocation;
     use std::path::Path;
-    use util::rel_path::rel_path;
-
-    use crate::task_store::TaskStore;
-
-    use super::test_inventory::*;
-    use super::*;
 
     #[gpui::test]
     async fn test_task_list_sorting(cx: &mut TestAppContext) {
@@ -1094,7 +1093,7 @@ mod tests {
         let worktree_id = WorktreeId::from_usize(0);
         let local_worktree_location = SettingsLocation {
             worktree_id,
-            path: rel_path("foo"),
+            path: unix_rel_path("foo"),
         };
         inventory.update(cx, |inventory, _| {
             inventory
@@ -1311,21 +1310,21 @@ mod tests {
             (
                 TaskSourceKind::AbsPath {
                     id_base: "global tasks.jsonc".into(),
-                    abs_path: paths::tasks_file().clone(),
+                    abs_path: tasks_file().to_owned(),
                 },
                 common_name.to_string(),
             ),
             (
                 TaskSourceKind::AbsPath {
                     id_base: "global tasks.jsonc".into(),
-                    abs_path: paths::tasks_file().clone(),
+                    abs_path: tasks_file().to_owned(),
                 },
                 "static_source_1".to_string(),
             ),
             (
                 TaskSourceKind::AbsPath {
                     id_base: "global tasks.jsonc".into(),
-                    abs_path: paths::tasks_file().clone(),
+                    abs_path: tasks_file().to_owned(),
                 },
                 "static_source_2".to_string(),
             ),
@@ -1334,7 +1333,7 @@ mod tests {
             (
                 TaskSourceKind::Worktree {
                     id: worktree_1,
-                    directory_in_worktree: rel_path(".gram").into(),
+                    directory_in_worktree: unix_rel_path(".gram").into(),
                     id_base: "local worktree tasks from directory \".gram\"".into(),
                 },
                 common_name.to_string(),
@@ -1342,7 +1341,7 @@ mod tests {
             (
                 TaskSourceKind::Worktree {
                     id: worktree_1,
-                    directory_in_worktree: rel_path(".gram").into(),
+                    directory_in_worktree: unix_rel_path(".gram").into(),
                     id_base: "local worktree tasks from directory \".gram\"".into(),
                 },
                 "worktree_1".to_string(),
@@ -1352,7 +1351,7 @@ mod tests {
             (
                 TaskSourceKind::Worktree {
                     id: worktree_2,
-                    directory_in_worktree: rel_path(".gram").into(),
+                    directory_in_worktree: unix_rel_path(".gram").into(),
                     id_base: "local worktree tasks from directory \".gram\"".into(),
                 },
                 common_name.to_string(),
@@ -1360,7 +1359,7 @@ mod tests {
             (
                 TaskSourceKind::Worktree {
                     id: worktree_2,
-                    directory_in_worktree: rel_path(".gram").into(),
+                    directory_in_worktree: unix_rel_path(".gram").into(),
                     id_base: "local worktree tasks from directory \".gram\"".into(),
                 },
                 "worktree_2".to_string(),
@@ -1380,7 +1379,7 @@ mod tests {
                 .update_file_based_tasks(
                     TaskSettingsLocation::Worktree(SettingsLocation {
                         worktree_id: worktree_1,
-                        path: rel_path(".gram"),
+                        path: unix_rel_path(".gram"),
                     }),
                     Some(&mock_tasks_from_names(
                         worktree_1_tasks.iter().map(|(_, name)| name.as_str()),
@@ -1391,7 +1390,7 @@ mod tests {
                 .update_file_based_tasks(
                     TaskSettingsLocation::Worktree(SettingsLocation {
                         worktree_id: worktree_2,
-                        path: rel_path(".gram"),
+                        path: unix_rel_path(".gram"),
                     }),
                     Some(&mock_tasks_from_names(
                         worktree_2_tasks.iter().map(|(_, name)| name.as_str()),

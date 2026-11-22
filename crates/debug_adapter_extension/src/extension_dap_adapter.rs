@@ -14,8 +14,8 @@ use dap::{
 };
 use extension::{Extension, WorktreeDelegate};
 use gpui::AsyncApp;
+use paths::rel_path::RelPath;
 use task::{DebugScenario, GramDebugConfig};
-use util::rel_path::RelPath;
 
 pub(crate) struct ExtensionDapAdapter {
     extension: Arc<dyn Extension>,

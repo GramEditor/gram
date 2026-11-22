@@ -3604,7 +3604,7 @@ impl EditorElement {
         let relative_path = for_excerpt.buffer.resolve_file_path(include_root, cx).or_else(|| {
             multi_buffer
                 .path_for_excerpt(for_excerpt.id)
-                .map(|path| path.path.display(util::paths::PathStyle::local()).into_owned())
+                .map(|path| path.path.display(paths::PathStyle::local()).into_owned())
         });
         let (parent_path, filename) = if let Some(path) = &relative_path {
             if let Some(path_style) = path_style {

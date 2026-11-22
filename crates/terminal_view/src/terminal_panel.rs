@@ -1,9 +1,8 @@
-use std::{cmp, ops::ControlFlow, path::PathBuf, process::ExitStatus, sync::Arc, time::Duration};
-
 use crate::{
     TerminalView, default_working_directory,
     persistence::{SerializedItems, SerializedTerminalPanel, deserialize_terminal_panel, serialize_pane_group},
 };
+use anyhow::{Result, anyhow};
 use breadcrumbs::Breadcrumbs;
 use collections::HashMap;
 use db::kvp::KEY_VALUE_STORE;
@@ -16,7 +15,9 @@ use itertools::Itertools;
 use project::{Fs, Project, ProjectEntryId};
 use search::{BufferSearchBar, buffer_search::DivRegistrar};
 use settings::{Settings, TerminalDockPosition};
-use task::{RevealStrategy, RevealTarget, Shell, ShellBuilder, SpawnInTerminal, TaskId};
+use shell::{Shell, builder::ShellBuilder};
+use std::{cmp, ops::ControlFlow, path::PathBuf, process::ExitStatus, sync::Arc, time::Duration};
+use task::{RevealStrategy, RevealTarget, SpawnInTerminal, TaskId};
 use terminal::{Terminal, terminal_settings::TerminalSettings};
 use ui::{
     ButtonLike, Clickable, ContextMenu, FluentBuilder, PopoverMenu, SplitButton, Toggleable, Tooltip, prelude::*,
@@ -31,8 +32,6 @@ use workspace::{
     item::SerializableItem,
     move_active_item, move_item, pane,
 };
-
-use anyhow::{Result, anyhow};
 
 const TERMINAL_PANEL_KEY: &str = "TerminalPanel";
 
@@ -1548,7 +1547,7 @@ mod tests {
             .unwrap();
 
         let terminal = task.await.unwrap();
-        let expected_shell = util::get_system_shell();
+        let expected_shell = shell::get_system_shell();
         terminal
             .update(cx, |terminal, _| {
                 let task_metadata = terminal
@@ -1558,7 +1557,7 @@ mod tests {
                     .clone();
                 assert_eq!(task_metadata.env, HashMap::default());
                 assert_eq!(task_metadata.cwd, None);
-                assert_eq!(task_metadata.shell, task::Shell::System);
+                assert_eq!(task_metadata.shell, shell::Shell::System);
                 assert_eq!(
                     task_metadata.command,
                     Some(expected_shell.clone()),
@@ -1650,7 +1649,7 @@ mod tests {
             .unwrap();
 
         let terminal = task.await.unwrap();
-        let shell = util::get_system_shell();
+        let shell = shell::get_system_shell();
         terminal
             .update(cx, |terminal, _| {
                 let task_metadata = terminal
@@ -1660,7 +1659,7 @@ mod tests {
                     .clone();
                 assert_eq!(task_metadata.env, HashMap::default());
                 assert_eq!(task_metadata.cwd, Some(expected_cwd));
-                assert_eq!(task_metadata.shell, task::Shell::System);
+                assert_eq!(task_metadata.shell, shell::Shell::System);
                 assert_eq!(task_metadata.command, Some(shell.clone()));
                 assert_eq!(
                     task_metadata.args,
@@ -1718,7 +1717,7 @@ mod tests {
             .unwrap();
 
         let terminal = task.await.unwrap();
-        let shell = util::get_system_shell();
+        let shell = shell::get_system_shell();
         terminal
             .update(cx, |terminal, _| {
                 let task_metadata = terminal
@@ -1728,7 +1727,7 @@ mod tests {
                     .clone();
                 assert_eq!(task_metadata.env, HashMap::default());
                 assert_eq!(task_metadata.cwd, Some(expected_cwd));
-                assert_eq!(task_metadata.shell, task::Shell::System);
+                assert_eq!(task_metadata.shell, shell::Shell::System);
                 assert_eq!(task_metadata.command, Some(shell.clone()));
                 assert_eq!(
                     task_metadata.args,

@@ -1,7 +1,4 @@
-use std::ops::Range;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-
+use crate::{LanguageServerRegistryProxy, LspAccess};
 use anyhow::{Context as _, Result};
 use async_trait::async_trait;
 use collections::{HashMap, HashSet};
@@ -15,11 +12,15 @@ use language::{
 use lsp::{
     CodeActionKind, LanguageServerBinary, LanguageServerBinaryOptions, LanguageServerName, LanguageServerSelector, Uri,
 };
+use paths::rel_path::RelPath;
 use serde::Serialize;
 use serde_json::Value;
-use util::{ResultExt, maybe, rel_path::RelPath};
-
-use crate::{LanguageServerRegistryProxy, LspAccess};
+use std::{
+    ops::Range,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
+use util::{ResultExt, maybe};
 
 /// An adapter that allows an [`LspAdapterDelegate`] to be used as a [`WorktreeDelegate`].
 struct WorktreeDelegateAdapter(pub Arc<dyn LspAdapterDelegate>);

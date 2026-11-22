@@ -386,11 +386,11 @@ mod tests {
         term::{Config, cell::Flags, test::TermSize},
         vte::ansi::Handler,
     };
+    use paths::PathWithPosition;
     use regex::Regex;
     use settings::{self, Settings, SettingsContent};
     use std::{cell::RefCell, ops::RangeInclusive, path::PathBuf, rc::Rc};
     use url::Url;
-    use util::paths::PathWithPosition;
 
     fn re_test(re: &str, hay: &str, expected: Vec<&str>) {
         let results: Vec<_> = Regex::new(re).unwrap().find_iter(hay).map(|m| m.as_str()).collect();

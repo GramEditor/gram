@@ -34,6 +34,7 @@ use gpui::{
 
 use lsp::{LanguageServerId, NumberOrString};
 use parking_lot::Mutex;
+use paths::{PathStyle, rel_path::RelPath};
 #[cfg(any(test, feature = "test-support"))]
 use rand::RngExt as _;
 use serde::{Deserialize, Serialize};
@@ -70,7 +71,7 @@ pub use text::{
 use theme::{ActiveTheme as _, SyntaxTheme};
 #[cfg(any(test, feature = "test-support"))]
 use util::RandomCharIter;
-use util::{RangeExt, debug_panic, maybe, paths::PathStyle, rel_path::RelPath};
+use util::{RangeExt, debug_panic, maybe};
 
 #[cfg(any(test, feature = "test-support"))]
 pub use {tree_sitter_python, tree_sitter_rust, tree_sitter_typescript};

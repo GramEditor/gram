@@ -59,6 +59,7 @@ pub use pane::*;
 pub use pane_group::{
     ActivePaneDecorator, HANDLE_HITBOX_SIZE, Member, PaneAxis, PaneGroup, PaneRenderContext, SplitDirection,
 };
+use paths::{PathStyle, rel_path::RelPath, sanitized_path::SanitizedPath};
 use persistence::{DB, SerializedWindowBounds, model::SerializedWorkspace};
 pub use persistence::{
     DB as WORKSPACE_DB, WorkspaceDb, delete_unloaded_items,
@@ -106,12 +107,7 @@ use theme::{ActiveTheme, GlobalTheme, SystemAppearance, ThemeSettings};
 pub use toolbar::{Toolbar, ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView};
 pub use ui;
 use ui::{Window, prelude::*};
-use util::{
-    ResultExt, TryFutureExt,
-    paths::{PathStyle, SanitizedPath},
-    rel_path::RelPath,
-    serde::default_true,
-};
+use util::{ResultExt, TryFutureExt, serde::default_true};
 use uuid::Uuid;
 pub use workspace_settings::{
     AutosaveSetting, BottomDockLayout, RestoreOnStartupBehavior, StatusBarSettings, TabBarSettings, WorkspaceSettings,
@@ -6630,8 +6626,6 @@ pub fn with_active_or_new_workspace(
 
 #[cfg(test)]
 mod tests {
-    use std::{cell::RefCell, rc::Rc};
-
     use super::*;
     use crate::{
         dock::{PanelEvent, test::TestPanel},
@@ -6645,10 +6639,11 @@ mod tests {
         DismissEvent, Empty, EventEmitter, FocusHandle, Focusable, Render, TestAppContext, UpdateGlobal,
         VisualTestContext, px,
     };
+    use paths::rel_path::unix_rel_path;
     use project::{Project, ProjectEntryId};
     use serde_json::json;
     use settings::SettingsStore;
-    use util::rel_path::rel_path;
+    use std::{cell::RefCell, rc::Rc};
 
     #[gpui::test]
     async fn test_tab_disambiguation(cx: &mut TestAppContext) {
@@ -6735,7 +6730,7 @@ mod tests {
             assert_eq!(
                 project.active_entry(),
                 project
-                    .entry_for_path(&(worktree_id, rel_path("one.txt")).into(), cx)
+                    .entry_for_path(&(worktree_id, unix_rel_path("one.txt")).into(), cx)
                     .map(|e| e.id)
             );
         });
@@ -6750,7 +6745,7 @@ mod tests {
             assert_eq!(
                 project.active_entry(),
                 project
-                    .entry_for_path(&(worktree_id, rel_path("two.txt")).into(), cx)
+                    .entry_for_path(&(worktree_id, unix_rel_path("two.txt")).into(), cx)
                     .map(|e| e.id)
             );
         });
@@ -6766,7 +6761,7 @@ mod tests {
             assert_eq!(
                 project.active_entry(),
                 project
-                    .entry_for_path(&(worktree_id, rel_path("one.txt")).into(), cx)
+                    .entry_for_path(&(worktree_id, unix_rel_path("one.txt")).into(), cx)
                     .map(|e| e.id)
             );
         });
@@ -9382,7 +9377,7 @@ mod tests {
 
             let handle = workspace
                 .update_in(cx, |workspace, window, cx| {
-                    let project_path = (worktree_id, rel_path("one.png"));
+                    let project_path = (worktree_id, unix_rel_path("one.png"));
                     workspace.open_path(project_path, None, true, window, cx)
                 })
                 .await
@@ -9393,7 +9388,7 @@ mod tests {
 
             let handle = workspace
                 .update_in(cx, |workspace, window, cx| {
-                    let project_path = (worktree_id, rel_path("two.ipynb"));
+                    let project_path = (worktree_id, unix_rel_path("two.ipynb"));
                     workspace.open_path(project_path, None, true, window, cx)
                 })
                 .await
@@ -9403,7 +9398,7 @@ mod tests {
 
             let handle = workspace
                 .update_in(cx, |workspace, window, cx| {
-                    let project_path = (worktree_id, rel_path("three.txt"));
+                    let project_path = (worktree_id, unix_rel_path("three.txt"));
                     workspace.open_path(project_path, None, true, window, cx)
                 })
                 .await;
@@ -9435,7 +9430,7 @@ mod tests {
 
             let handle = workspace
                 .update_in(cx, |workspace, window, cx| {
-                    let project_path = (worktree_id, rel_path("one.png"));
+                    let project_path = (worktree_id, unix_rel_path("one.png"));
                     workspace.open_path(project_path, None, true, window, cx)
                 })
                 .await
@@ -9449,7 +9444,7 @@ mod tests {
 
             let handle = workspace
                 .update_in(cx, |workspace, window, cx| {
-                    let project_path = (worktree_id, rel_path("three.txt"));
+                    let project_path = (worktree_id, unix_rel_path("three.txt"));
                     workspace.open_path(project_path, None, true, window, cx)
                 })
                 .await;

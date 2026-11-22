@@ -431,14 +431,14 @@ impl ManagedNodeRuntime {
 
         let version = Self::VERSION;
         let folder_name = format!("node-{version}-{os}-{arch}");
-        let node_containing_dir = paths::data_dir().join("node");
+        let node_containing_dir = paths::locations::data_dir().join("node");
         let node_dir = node_containing_dir.join(folder_name);
         let node_binary = node_dir.join(Self::NODE_PATH);
         let npm_file = node_dir.join(Self::NPM_PATH);
         let node_ca_certs = env::var(NODE_CA_CERTS_ENV_VAR).unwrap_or_else(|_| String::new());
 
         let valid = if fs::metadata(&node_binary).await.is_ok() {
-            let result = util::command::new_smol_command(&node_binary)
+            let result = command::new_smol_command(&node_binary)
                 .env(NODE_CA_CERTS_ENV_VAR, node_ca_certs)
                 .arg(npm_file)
                 .arg("--version")
@@ -579,7 +579,7 @@ impl NodeRuntimeTrait for ManagedNodeRuntime {
 
             let node_ca_certs = env::var(NODE_CA_CERTS_ENV_VAR).unwrap_or_else(|_| String::new());
 
-            let mut command = util::command::new_smol_command(node_binary);
+            let mut command = command::new_smol_command(node_binary);
             command.env("PATH", env_path);
             command.env(NODE_CA_CERTS_ENV_VAR, node_ca_certs);
             command.arg(npm_file).arg(subcommand);
@@ -635,7 +635,7 @@ pub struct SystemNodeRuntime {
 impl SystemNodeRuntime {
     const MIN_VERSION: semver::Version = Version::new(22, 0, 0);
     async fn new(node: PathBuf, npm: PathBuf) -> Result<Self> {
-        let output = util::command::new_smol_command(&node)
+        let output = command::new_smol_command(&node)
             .arg("--version")
             .output()
             .await
@@ -658,7 +658,7 @@ impl SystemNodeRuntime {
             )
         }
 
-        let scratch_dir = paths::data_dir().join("node");
+        let scratch_dir = paths::locations::data_dir().join("node");
         fs::create_dir(&scratch_dir).await.ok();
         fs::create_dir(scratch_dir.join("cache")).await.ok();
 
@@ -717,7 +717,7 @@ impl NodeRuntimeTrait for SystemNodeRuntime {
         args: &[&str],
     ) -> anyhow::Result<Output> {
         let node_ca_certs = env::var(NODE_CA_CERTS_ENV_VAR).unwrap_or_else(|_| String::new());
-        let mut command = util::command::new_smol_command(self.npm.clone());
+        let mut command = command::new_smol_command(self.npm.clone());
         let path = path_with_node_binary_prepended(&self.node).unwrap_or_default();
         command
             .env("PATH", path)

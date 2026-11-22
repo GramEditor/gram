@@ -1,14 +1,13 @@
+use crate::{SCOPE_STRING_SEP_CHAR, ScopeRef};
 use std::{
     fs,
     io::{self, Write},
-    path::PathBuf,
+    path::Path,
     sync::{
         Mutex, OnceLock,
         atomic::{AtomicBool, AtomicU64, Ordering},
     },
 };
-
-use crate::{SCOPE_STRING_SEP_CHAR, ScopeRef};
 
 // ANSI color escape codes for log levels
 const ANSI_RESET: &str = "\x1b[0m";
@@ -21,8 +20,8 @@ const ANSI_MAGENTA: &str = "\x1b[35m";
 
 /// Is Some(file) if file output is enabled.
 static ENABLED_SINKS_FILE: Mutex<Option<std::fs::File>> = Mutex::new(None);
-static SINK_FILE_PATH: OnceLock<&'static PathBuf> = OnceLock::new();
-static SINK_FILE_PATH_ROTATE: OnceLock<&'static PathBuf> = OnceLock::new();
+static SINK_FILE_PATH: OnceLock<&'static Path> = OnceLock::new();
+static SINK_FILE_PATH_ROTATE: OnceLock<&'static Path> = OnceLock::new();
 
 // NB: Since this can be accessed in tests, we probably should stick to atomics here.
 /// Whether stdout output is enabled.
@@ -52,7 +51,7 @@ pub fn init_output_stderr() {
     ENABLED_SINKS_STDERR.store(true, Ordering::Release);
 }
 
-pub fn init_output_file(path: &'static PathBuf, path_rotate: Option<&'static PathBuf>) -> io::Result<()> {
+pub fn init_output_file(path: &'static Path, path_rotate: Option<&'static Path>) -> io::Result<()> {
     let mut file = std::fs::OpenOptions::new().create(true).append(true).open(path)?;
 
     SINK_FILE_PATH
@@ -70,7 +69,7 @@ pub fn init_output_file(path: &'static PathBuf, path_rotate: Option<&'static Pat
 
     let size_bytes = file.metadata().map_or(0, |metadata| metadata.len());
     if size_bytes >= SINK_FILE_SIZE_BYTES_MAX {
-        rotate_log_file(&mut file, Some(path), path_rotate, &SINK_FILE_SIZE_BYTES);
+        rotate_log_file(&mut file, Some(path.as_ref()), path_rotate, &SINK_FILE_SIZE_BYTES);
     } else {
         SINK_FILE_SIZE_BYTES.store(size_bytes, Ordering::Release);
     }

@@ -1,5 +1,7 @@
-use std::sync::Arc;
-
+use crate::{
+    Project,
+    git_store::{GitStoreEvent, Repository, RepositoryEvent, RepositoryState},
+};
 use anyhow::{Context as _, Result};
 use buffer_diff::BufferDiff;
 use collections::HashSet;
@@ -12,16 +14,11 @@ use gpui::{
     App, AppContext, AsyncApp, AsyncWindowContext, Context, Entity, EventEmitter, SharedString, Subscription, Task,
     WeakEntity, Window,
 };
-
 use language::{Buffer, DiskState};
+use std::sync::Arc;
 use text::BufferId;
 use util::ResultExt;
 use worktree::{FileType, Worktree};
-
-use crate::{
-    Project,
-    git_store::{GitStoreEvent, Repository, RepositoryEvent, RepositoryState},
-};
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum DiffBase {

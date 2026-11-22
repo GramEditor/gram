@@ -1,5 +1,3 @@
-mod outline_panel_settings;
-
 use anyhow::Context as _;
 use collections::{BTreeSet, HashMap, HashSet, hash_map};
 use db::kvp::KEY_VALUE_STORE;
@@ -22,6 +20,13 @@ use gpui::{
 use itertools::Itertools;
 use language::{Anchor, BufferId, LanguageBufferSnapshot, OffsetRangeExt, OutlineItem};
 use menu::{Cancel, SelectFirst, SelectLast, SelectNext, SelectPrevious};
+use outline_panel_settings::{DockSide, OutlinePanelSettings, ShowIndentGuides};
+use paths::rel_path::RelPath;
+use project::{File, Fs, GitEntry, GitTraversal, Project, ProjectItem};
+use search::{BufferSearchBar, ProjectSearchView};
+use serde::{Deserialize, Serialize};
+use settings::{Settings, SettingsStore};
+use smol::channel;
 use std::{
     cmp,
     collections::BTreeMap,
@@ -34,19 +39,12 @@ use std::{
     },
     time::Duration,
 };
-
-use outline_panel_settings::{DockSide, OutlinePanelSettings, ShowIndentGuides};
-use project::{File, Fs, GitEntry, GitTraversal, Project, ProjectItem};
-use search::{BufferSearchBar, ProjectSearchView};
-use serde::{Deserialize, Serialize};
-use settings::{Settings, SettingsStore};
-use smol::channel;
 use theme::{SyntaxTheme, ThemeSettings};
 use ui::{
     ContextMenu, FluentBuilder, HighlightedLabel, IconButton, IconButtonShape, IndentGuideColors, IndentGuideLayout,
     ListItem, ScrollAxes, Scrollbars, Tab, Tooltip, WithScrollbar, prelude::*,
 };
-use util::{RangeExt, ResultExt, TryFutureExt, debug_panic, rel_path::RelPath};
+use util::{RangeExt, ResultExt, TryFutureExt, debug_panic};
 use workspace::{
     OpenInTerminal, WeakItemHandle, Workspace,
     dock::{DockPosition, Panel, PanelEvent},
@@ -54,6 +52,8 @@ use workspace::{
     searchable::{SearchEvent, SearchableItem},
 };
 use worktree::{Entry, ProjectEntryId, WorktreeId};
+
+mod outline_panel_settings;
 
 actions!(
     outline_panel,

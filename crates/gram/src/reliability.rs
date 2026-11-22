@@ -1,11 +1,10 @@
+use crate::STARTUP_TIME;
 use anyhow::Context as _;
 use gpui::{App, SerializedThreadTaskTimings};
 use log::info;
 use smol::stream::StreamExt;
 use std::{thread::ThreadId, time::Duration};
 use util::ResultExt;
-
-use crate::STARTUP_TIME;
 
 pub fn init(cx: &mut App) {
     monitor_hangs(cx);
@@ -73,7 +72,8 @@ fn save_hang_trace(
         })
         .collect::<Vec<_>>();
 
-    let trace_path = paths::hang_traces_dir().join(format!("hang-{}.miniprof", hang_time.format("%Y-%m-%d_%H-%M-%S")));
+    let trace_path =
+        paths::locations::hang_traces_dir().join(format!("hang-{}.miniprof", hang_time.format("%Y-%m-%d_%H-%M-%S")));
 
     let Some(timings) = serde_json::to_string(&thread_timings)
         .context("hang timings serialization")

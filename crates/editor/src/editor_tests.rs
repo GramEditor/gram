@@ -28,11 +28,11 @@ use language::{
     tree_sitter_python,
 };
 use language_settings::Formatter;
-use languages::markdown_lang;
-use languages::rust_lang;
+use languages::{markdown_lang, rust_lang};
 use lsp::CompletionParams;
 use multi_buffer::{ExcerptRange, IndentGuide, MultiBuffer, MultiBufferOffset, MultiBufferOffsetUtf16, PathKey};
 use parking_lot::Mutex;
+use paths::rel_path::unix_rel_path;
 use pretty_assertions::{assert_eq, assert_ne};
 use project::{
     FakeFs,
@@ -44,17 +44,21 @@ use settings::{
     AllLanguageSettingsContent, EditorSettingsContent, IndentGuideBackgroundColoring, IndentGuideColoring,
     IndentGuideSettingsContent, ProjectSettingsContent, SearchSettingsContent,
 };
-use std::{cell::RefCell, future::Future, path::Path, rc::Rc, sync::atomic::AtomicBool, time::Instant};
 use std::{
+    cell::RefCell,
+    future::Future,
     iter,
+    path::Path,
+    rc::Rc,
+    sync::atomic::AtomicBool,
     sync::atomic::{self, AtomicUsize},
+    time::Instant,
 };
 use test::build_editor_with_project;
 use text::ToPoint as _;
 use unindent::Unindent;
 use util::{
     assert_set_eq, path,
-    rel_path::rel_path,
     test::{TextRangeMarker, marked_text_ranges, marked_text_ranges_by, sample_text},
     uri,
 };
@@ -11754,19 +11758,19 @@ async fn test_multibuffer_format_during_save(cx: &mut TestAppContext) {
 
     let buffer_1 = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("main.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("main.rs")), cx)
         })
         .await
         .unwrap();
     let buffer_2 = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("other.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("other.rs")), cx)
         })
         .await
         .unwrap();
     let buffer_3 = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("lib.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("lib.rs")), cx)
         })
         .await
         .unwrap();
@@ -11929,19 +11933,19 @@ async fn test_autosave_with_dirty_buffers(cx: &mut TestAppContext) {
     // Open three buffers
     let buffer_1 = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("file1.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("file1.rs")), cx)
         })
         .await
         .unwrap();
     let buffer_2 = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("file2.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("file2.rs")), cx)
         })
         .await
         .unwrap();
     let buffer_3 = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("file3.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("file3.rs")), cx)
         })
         .await
         .unwrap();
@@ -15332,7 +15336,7 @@ async fn test_multiline_completion(cx: &mut TestAppContext) {
         .unwrap();
     let editor = workspace
         .update(cx, |workspace, window, cx| {
-            workspace.open_path((worktree_id, rel_path("main.ts")), None, true, window, cx)
+            workspace.open_path((worktree_id, unix_rel_path("main.ts")), None, true, window, cx)
         })
         .unwrap()
         .await
@@ -17286,7 +17290,7 @@ async fn test_on_type_formatting_not_triggered(cx: &mut TestAppContext) {
         .unwrap();
     let editor_handle = workspace
         .update(cx, |workspace, window, cx| {
-            workspace.open_path((worktree_id, rel_path("main.rs")), None, true, window, cx)
+            workspace.open_path((worktree_id, unix_rel_path("main.rs")), None, true, window, cx)
         })
         .unwrap()
         .await
@@ -22080,19 +22084,19 @@ async fn test_folding_buffers(cx: &mut TestAppContext) {
 
     let buffer_1 = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("first.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("first.rs")), cx)
         })
         .await
         .unwrap();
     let buffer_2 = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("second.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("second.rs")), cx)
         })
         .await
         .unwrap();
     let buffer_3 = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("third.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("third.rs")), cx)
         })
         .await
         .unwrap();
@@ -22236,19 +22240,19 @@ async fn test_folding_buffers_with_one_excerpt(cx: &mut TestAppContext) {
 
     let buffer_1 = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("first.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("first.rs")), cx)
         })
         .await
         .unwrap();
     let buffer_2 = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("second.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("second.rs")), cx)
         })
         .await
         .unwrap();
     let buffer_3 = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("third.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("third.rs")), cx)
         })
         .await
         .unwrap();
@@ -22353,7 +22357,7 @@ async fn test_folding_buffer_when_multibuffer_has_only_one_excerpt(cx: &mut Test
 
     let buffer_1 = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("main.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("main.rs")), cx)
         })
         .await
         .unwrap();
@@ -22663,7 +22667,7 @@ async fn test_breakpoint_toggling(cx: &mut TestAppContext) {
 
     let buffer = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("main.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("main.rs")), cx)
         })
         .await
         .unwrap();
@@ -22766,7 +22770,7 @@ async fn test_log_breakpoint_editing(cx: &mut TestAppContext) {
 
     let buffer = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("main.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("main.rs")), cx)
         })
         .await
         .unwrap();
@@ -22923,7 +22927,7 @@ async fn test_breakpoint_enabling_and_disabling(cx: &mut TestAppContext) {
 
     let buffer = project
         .update(cx, |project, cx| {
-            project.open_buffer((worktree_id, rel_path("main.rs")), cx)
+            project.open_buffer((worktree_id, unix_rel_path("main.rs")), cx)
         })
         .await
         .unwrap();
@@ -23463,7 +23467,7 @@ println!("5");
     let editor_1 = workspace
         .update_in(cx, |workspace, window, cx| {
             workspace.open_path(
-                (worktree_id, rel_path("main.rs")),
+                (worktree_id, unix_rel_path("main.rs")),
                 Some(pane_1.downgrade()),
                 true,
                 window,
@@ -23506,7 +23510,7 @@ println!("5");
     let editor_2 = workspace
         .update_in(cx, |workspace, window, cx| {
             workspace.open_path(
-                (worktree_id, rel_path("main.rs")),
+                (worktree_id, unix_rel_path("main.rs")),
                 Some(pane_2.downgrade()),
                 true,
                 window,
@@ -23545,7 +23549,7 @@ println!("5");
     let _other_editor_1 = workspace
         .update_in(cx, |workspace, window, cx| {
             workspace.open_path(
-                (worktree_id, rel_path("lib.rs")),
+                (worktree_id, unix_rel_path("lib.rs")),
                 Some(pane_1.downgrade()),
                 true,
                 window,
@@ -23581,7 +23585,7 @@ println!("5");
     let _other_editor_2 = workspace
         .update_in(cx, |workspace, window, cx| {
             workspace.open_path(
-                (worktree_id, rel_path("lib.rs")),
+                (worktree_id, unix_rel_path("lib.rs")),
                 Some(pane_2.downgrade()),
                 true,
                 window,
@@ -23618,7 +23622,7 @@ println!("5");
     let _editor_1_reopened = workspace
         .update_in(cx, |workspace, window, cx| {
             workspace.open_path(
-                (worktree_id, rel_path("main.rs")),
+                (worktree_id, unix_rel_path("main.rs")),
                 Some(pane_1.downgrade()),
                 true,
                 window,
@@ -23632,7 +23636,7 @@ println!("5");
     let _editor_2_reopened = workspace
         .update_in(cx, |workspace, window, cx| {
             workspace.open_path(
-                (worktree_id, rel_path("main.rs")),
+                (worktree_id, unix_rel_path("main.rs")),
                 Some(pane_2.downgrade()),
                 true,
                 window,
@@ -23725,7 +23729,7 @@ println!("5");
     let editor = workspace
         .update_in(cx, |workspace, window, cx| {
             workspace.open_path(
-                (worktree_id, rel_path("main.rs")),
+                (worktree_id, unix_rel_path("main.rs")),
                 Some(pane.downgrade()),
                 true,
                 window,
@@ -23784,7 +23788,7 @@ println!("5");
     let _editor_reopened = workspace
         .update_in(cx, |workspace, window, cx| {
             workspace.open_path(
-                (worktree_id, rel_path("main.rs")),
+                (worktree_id, unix_rel_path("main.rs")),
                 Some(pane.downgrade()),
                 true,
                 window,
@@ -23943,7 +23947,7 @@ async fn test_html_linked_edits_on_completion(cx: &mut TestAppContext) {
         .unwrap();
     let editor = workspace
         .update(cx, |workspace, window, cx| {
-            workspace.open_path((worktree_id, rel_path("file.html")), None, true, window, cx)
+            workspace.open_path((worktree_id, unix_rel_path("file.html")), None, true, window, cx)
         })
         .unwrap()
         .await
@@ -24112,7 +24116,7 @@ async fn test_invisible_worktree_servers(cx: &mut TestAppContext) {
     let main_editor = workspace
         .update_in(cx, |workspace, window, cx| {
             workspace.open_path(
-                (worktree_id, rel_path("main.rs")),
+                (worktree_id, unix_rel_path("main.rs")),
                 Some(pane.downgrade()),
                 true,
                 window,
@@ -26030,7 +26034,7 @@ async fn test_document_colors(cx: &mut TestAppContext) {
                     .path();
                 assert_eq!(
                     editor_file.as_ref(),
-                    rel_path("first.rs"),
+                    unix_rel_path("first.rs"),
                     "Both editors should be opened for the same file"
                 )
             }
@@ -26204,7 +26208,7 @@ async fn test_non_utf_8_opens(cx: &mut TestAppContext) {
 
     let handle = workspace
         .update_in(cx, |workspace, window, cx| {
-            let project_path = (worktree_id, rel_path("one.pdf"));
+            let project_path = (worktree_id, unix_rel_path("one.pdf"));
             workspace.open_path(project_path, None, true, window, cx)
         })
         .await

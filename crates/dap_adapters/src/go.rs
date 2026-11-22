@@ -70,7 +70,7 @@ impl GoDebugAdapter {
         };
         download_adapter_from_github("delve-shim-dap".into(), asset.clone(), ty, delegate.as_ref(), cx).await?;
 
-        let path = paths::debug_adapters_dir()
+        let path = paths::locations::debug_adapters_dir()
             .join("delve-shim-dap")
             .join(format!("delve-shim-dap_{}", asset.tag_name))
             .join(format!("delve-shim-dap{}", std::env::consts::EXE_SUFFIX));
@@ -394,7 +394,7 @@ impl DebugAdapter for GoDebugAdapter {
         settings: &DapSettings,
         cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
-        let adapter_path = paths::debug_adapters_dir().join(Self::ADAPTER_NAME);
+        let adapter_path = paths::locations::debug_adapters_dir().join(Self::ADAPTER_NAME);
         let dlv_path = adapter_path.join("dlv");
 
         let delve_path = if let Some(path) = user_installed_path {
@@ -413,9 +413,9 @@ impl DebugAdapter for GoDebugAdapter {
                 .await
                 .context("Go not found in path. Please install Go first, then Dlv will be installed automatically.")?;
 
-            let adapter_path = paths::debug_adapters_dir().join(Self::ADAPTER_NAME);
+            let adapter_path = paths::locations::debug_adapters_dir().join(Self::ADAPTER_NAME);
 
-            let install_output = util::command::new_smol_command(&go)
+            let install_output = command::new_smol_command(&go)
                 .env("GO111MODULE", "on")
                 .env("GOBIN", &adapter_path)
                 .args(["install", "github.com/go-delve/delve/cmd/dlv@latest"])

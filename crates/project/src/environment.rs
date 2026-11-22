@@ -1,12 +1,14 @@
 use anyhow::{Context as _, bail};
 use futures::{FutureExt, StreamExt as _, channel::mpsc, future::Shared};
 use language::Buffer;
+use paths::rel_path::RelPath;
 use remote::RemoteClient;
 use rpc::proto::{self, REMOTE_SERVER_PROJECT_ID};
+use shell::Shell;
 use std::{collections::VecDeque, path::Path, sync::Arc};
-use task::{Shell, shell_to_proto};
+use task::shell_to_proto;
 use terminal::terminal_settings::TerminalSettings;
-use util::{ResultExt, command::new_smol_command, rel_path::RelPath};
+use util::ResultExt;
 use worktree::Worktree;
 
 use collections::HashMap;
@@ -324,7 +326,7 @@ async fn load_directory_shell_environment(
     };
 
     let (shell, args) = shell.program_and_args();
-    let mut envs = util::shell_env::capture(shell.clone(), args, abs_path)
+    let mut envs = shell::env::capture(shell.clone(), args, abs_path)
         .await
         .with_context(|| {
             tx.unbounded_send("Failed to load environment variables".into()).ok();
@@ -378,7 +380,7 @@ async fn load_direnv_environment(
     };
 
     let args = &["export", "json"];
-    let direnv_output = new_smol_command(&direnv_path)
+    let direnv_output = command::new_smol_command(&direnv_path)
         .args(args)
         .envs(env)
         .env("TERM", "dumb")

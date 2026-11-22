@@ -13,6 +13,7 @@ use gpui::{TestAppContext, VisualTestContext};
 use indoc::indoc;
 use language::{DiagnosticSourceKind, Rope};
 use lsp::LanguageServerId;
+use paths::rel_path::unix_rel_path;
 use pretty_assertions::assert_eq;
 use project::{
     FakeFs,
@@ -27,7 +28,7 @@ use std::{
     str::FromStr,
 };
 use unindent::Unindent as _;
-use util::{RandomCharIter, path, post_inc, rel_path::rel_path};
+use util::{RandomCharIter, path, post_inc};
 
 #[ctor::ctor(unsafe)]
 fn init_logger() {
@@ -1386,7 +1387,7 @@ async fn test_buffer_diagnostics(cx: &mut TestAppContext) {
     let cx = &mut VisualTestContext::from_window(*window, cx);
     let project_path = project::ProjectPath {
         worktree_id: project.read_with(cx, |project, cx| project.worktrees(cx).next().unwrap().read(cx).id()),
-        path: rel_path("main.rs").into(),
+        path: unix_rel_path("main.rs").into(),
     };
     let buffer = project
         .update(cx, |project, cx| project.open_buffer(project_path.clone(), cx))
@@ -1527,7 +1528,7 @@ async fn test_buffer_diagnostics_without_warnings(cx: &mut TestAppContext) {
     let cx = &mut VisualTestContext::from_window(*window, cx);
     let project_path = project::ProjectPath {
         worktree_id: project.read_with(cx, |project, cx| project.worktrees(cx).next().unwrap().read(cx).id()),
-        path: rel_path("main.rs").into(),
+        path: unix_rel_path("main.rs").into(),
     };
     let buffer = project
         .update(cx, |project, cx| project.open_buffer(project_path.clone(), cx))
@@ -1650,7 +1651,7 @@ async fn test_buffer_diagnostics_multiple_servers(cx: &mut TestAppContext) {
     let cx = &mut VisualTestContext::from_window(*window, cx);
     let project_path = project::ProjectPath {
         worktree_id: project.read_with(cx, |project, cx| project.worktrees(cx).next().unwrap().read(cx).id()),
-        path: rel_path("main.rs").into(),
+        path: unix_rel_path("main.rs").into(),
     };
     let buffer = project
         .update(cx, |project, cx| project.open_buffer(project_path.clone(), cx))

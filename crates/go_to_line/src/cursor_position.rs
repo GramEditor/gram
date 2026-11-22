@@ -6,7 +6,7 @@ use text::{Point, Selection};
 use ui::{
     Button, ButtonCommon, Clickable, Context, FluentBuilder, IntoElement, ParentElement, Render, Tooltip, Window, div,
 };
-use util::paths::FILE_ROW_COLUMN_DELIMITER;
+use paths::FILE_ROW_COLUMN_DELIMITER;
 use workspace::{StatusBarSettings, StatusItemView, Workspace, item::ItemHandle};
 
 #[derive(Copy, Clone, Debug, Default, PartialOrd, PartialEq)]

@@ -433,7 +433,7 @@ impl Platform for WindowsPlatform {
             clippy::disallowed_methods,
             reason = "We are restarting ourselves, using std command thus is fine"
         )] // todo(shell): There might be no powershell on the system
-        let restart_process = util::command::new_std_command(util::shell::get_windows_system_shell())
+        let restart_process = command::new_std_command(util::shell::get_windows_system_shell())
             .arg("-command")
             .arg(script)
             .spawn();

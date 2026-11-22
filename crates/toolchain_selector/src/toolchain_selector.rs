@@ -1,5 +1,3 @@
-mod active_toolchain;
-
 pub use active_toolchain::ActiveToolchain;
 use editor::Editor;
 use file_finder::OpenPathDelegate;
@@ -11,6 +9,7 @@ use gpui::{
 };
 use heck::ToTitleCase;
 use language::{Language, LanguageName, Toolchain, ToolchainScope};
+use paths::{PathStyle, rel_path::RelPath};
 use picker::{Picker, PickerDelegate};
 use project::{DirectoryLister, Project, ProjectPath, Toolchains, WorktreeId};
 use std::{
@@ -22,8 +21,10 @@ use std::{
 use ui::{
     Divider, HighlightedLabel, KeyBinding, List, ListItem, ListItemSpacing, Navigable, NavigableEntry, prelude::*,
 };
-use util::{ResultExt, maybe, paths::PathStyle, rel_path::RelPath};
+use util::{ResultExt, maybe};
 use workspace::{ModalView, Workspace};
+
+mod active_toolchain;
 
 actions!(
     toolchain,

@@ -1,11 +1,10 @@
-use std::path::PathBuf;
-
-use gpui::{AppContext, Entity, Global, MenuItem};
-use smallvec::SmallVec;
-use ui::{App, Context};
-use util::{ResultExt, paths::PathExt};
-
 use crate::{NewWindow, SerializedWorkspaceLocation, WORKSPACE_DB, WorkspaceId, path_list::PathList};
+use gpui::{AppContext, Entity, Global, MenuItem};
+use paths::PathExt;
+use smallvec::SmallVec;
+use std::path::PathBuf;
+use ui::{App, Context};
+use util::ResultExt;
 
 pub fn init(cx: &mut App) {
     let manager = cx.new(|_| HistoryManager::new());

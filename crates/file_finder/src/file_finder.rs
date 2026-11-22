@@ -1,24 +1,15 @@
-#[cfg(test)]
-mod file_finder_tests;
-#[cfg(test)]
-mod open_path_prompt_tests;
-
-pub mod file_finder_settings;
-mod open_path_prompt;
-
-use futures::future::join_all;
-pub use open_path_prompt::OpenPathDelegate;
-
 use collections::HashMap;
 use editor::Editor;
 use file_finder_settings::{FileFinderSettings, FileFinderWidth};
 use file_icons::FileIcons;
+use futures::future::join_all;
 use fuzzy::{CharBag, PathMatch, PathMatchCandidate};
 use gpui::{
     Action, AnyElement, App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, KeyContext,
     Modifiers, ModifiersChangedEvent, ParentElement, Render, Styled, Task, WeakEntity, Window, actions, rems,
 };
 use open_path_prompt::OpenPathPrompt;
+use paths::{PathStyle, PathWithPosition, rel_path::RelPath};
 use picker::{Picker, PickerDelegate};
 use project::{PathMatchCandidateSet, Project, ProjectPath, WorktreeId, worktree_store::WorktreeStore};
 use search::ToggleIncludeIgnored;
@@ -37,16 +28,20 @@ use ui::{
     ButtonLike, ContextMenu, HighlightedLabel, Indicator, KeyBinding, ListItem, ListItemSpacing, PopoverMenu,
     PopoverMenuHandle, TintColor, Tooltip, prelude::*,
 };
-use util::{
-    ResultExt, maybe,
-    paths::{PathStyle, PathWithPosition},
-    post_inc,
-    rel_path::RelPath,
-};
+use util::{ResultExt, maybe, post_inc};
 use workspace::{
     ModalView, OpenOptions, OpenVisible, SplitDirection, Workspace, item::PreviewTabsSettings,
     notifications::NotifyResultExt, pane,
 };
+
+#[cfg(test)]
+mod file_finder_tests;
+#[cfg(test)]
+mod open_path_prompt_tests;
+
+pub mod file_finder_settings;
+mod open_path_prompt;
+pub use open_path_prompt::OpenPathDelegate;
 
 actions!(
     file_finder,
@@ -1010,7 +1005,7 @@ impl FileFinderDelegate {
         };
 
         if file_name_positions.is_empty() {
-            let user_home_path = util::paths::home_dir().to_string_lossy();
+            let user_home_path = paths::locations::home_dir().to_string_lossy();
             if !user_home_path.is_empty() && full_path.starts_with(&*user_home_path) {
                 full_path.replace_range(0..user_home_path.len(), "~");
                 full_path_positions.retain_mut(|pos| {

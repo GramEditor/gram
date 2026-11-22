@@ -6,6 +6,7 @@ use futures::FutureExt as _;
 use gpui::{App, AppContext as _, BorrowAppContext, Entity};
 use gpui::{HighlightStyle, TestAppContext};
 use indoc::indoc;
+use paths::rel_path::unix_rel_path;
 use proto::deserialize_operation;
 use rand::prelude::*;
 use regex::RegexBuilder;
@@ -24,7 +25,6 @@ use text::{BufferId, LineEnding};
 use text::{Point, ToPoint};
 use theme::ActiveTheme;
 use unindent::Unindent as _;
-use util::rel_path::rel_path;
 use util::test::marked_text_offsets;
 use util::{RandomCharIter, assert_set_eq, post_inc, test::marked_text_ranges};
 
@@ -382,7 +382,7 @@ async fn test_language_for_file_with_custom_file_types(cx: &mut TestAppContext) 
 
 fn file(path: &str) -> Arc<dyn File> {
     Arc::new(TestFile {
-        path: Arc::from(rel_path(path)),
+        path: Arc::from(unix_rel_path(path)),
         root_name: "gram".into(),
         local_root: None,
     })

@@ -1,9 +1,8 @@
+use crate::{StatusItemView, item::ItemHandle, workspace_settings::StatusBarSettings};
 use gpui::{ClipboardItem, Context, Empty, EventEmitter, IntoElement, ParentElement, Render, SharedString, Window};
+use paths::PathStyle;
 use settings::Settings;
 use ui::{Button, Tooltip, prelude::*};
-use util::paths::PathStyle;
-
-use crate::{StatusItemView, item::ItemHandle, workspace_settings::StatusBarSettings};
 
 pub struct ActiveFileName {
     project_path: Option<SharedString>,

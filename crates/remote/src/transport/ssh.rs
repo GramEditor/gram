@@ -1,3 +1,5 @@
+// TODO: Clean up imports in this file.
+
 use crate::{
     RemoteClientDelegate, RemotePlatform,
     remote_client::{CommandTemplate, RemoteConnection, RemoteConnectionOptions},
@@ -30,12 +32,9 @@ use std::{
 #[cfg(debug_assertions)]
 use std::time::Instant;
 
+use paths::{PathStyle, locations::remote_server_dir_relative, rel_path::RelPath, remote_path::RemotePathBuf};
+use shell::ShellKind;
 use tempfile::TempDir;
-use util::{
-    paths::{PathStyle, RemotePathBuf},
-    rel_path::RelPath,
-    shell::ShellKind,
-};
 
 pub(crate) struct SshRemoteConnection {
     socket: SshSocket,
@@ -160,7 +159,7 @@ impl MasterProcess {
     ) -> Result<Self> {
         let args = ["-N", "-o", "ControlPersist=no", "-o", "ControlMaster=yes", "-o"];
 
-        let mut master_process = util::command::new_smol_command("ssh");
+        let mut master_process = command::new_smol_command("ssh");
         master_process
             .kill_on_drop(true)
             .stdin(Stdio::null())
@@ -202,7 +201,7 @@ impl MasterProcess {
         // -N doesn't work with JumpHosts as windows openssh never closes stdin in that case
         let args = ["-t", &format!("echo '{}'; exec $0", Self::CONNECTION_ESTABLISHED_MAGIC)];
 
-        let mut master_process = util::command::new_smol_command("ssh");
+        let mut master_process = command::new_smol_command("ssh");
         master_process
             .kill_on_drop(true)
             .stdin(Stdio::null())
@@ -581,14 +580,14 @@ impl SshRemoteConnection {
             return Ok(relative_binary_path.into());
         }
 
-        let abs_binary_path = paths::remote_server_dir_relative().join(relative_binary_path);
+        let abs_binary_path = remote_server_dir_relative().join(relative_binary_path);
 
         cfg_select! {
             debug_assertions => {
                 if let Some(remote_server_path) =
                     super::build_remote_server_from_source(&self.ssh_platform, delegate.as_ref(), cx).await?
                 {
-                    let tmp_path = paths::remote_server_dir_relative().join(
+                    let tmp_path = remote_server_dir_relative().join(
                         RelPath::unix(&format!(
                             "download-{}-{}",
                             std::process::id(),
@@ -627,7 +626,7 @@ impl SshRemoteConnection {
                 self.ssh_platform.os, self.ssh_platform.arch,
             );
 
-            let quoted_dir = quote(paths::remote_server_dir_relative().as_unix_str())?;
+            let quoted_dir = quote(remote_server_dir_relative().as_unix_str())?;
             let quoted_path = quote(abs_binary_path.as_unix_str())?;
             let quoted_download_url = quote(&download_url)?;
             let download_command = match self.ssh_platform.os {
@@ -767,7 +766,7 @@ impl SshRemoteConnection {
     }
 
     fn build_scp_command(&self, src_path: &Path, dest_path_str: &str, args: Option<&[&str]>) -> process::Command {
-        let mut command = util::command::new_smol_command("scp");
+        let mut command = command::new_smol_command("scp");
         self.socket.ssh_options(&mut command, false).args(
             self.socket
                 .connection_options
@@ -787,7 +786,7 @@ impl SshRemoteConnection {
     }
 
     fn build_sftp_command(&self) -> process::Command {
-        let mut command = util::command::new_smol_command("sftp");
+        let mut command = command::new_smol_command("sftp");
         self.socket.ssh_options(&mut command, false).args(
             self.socket
                 .connection_options
@@ -904,7 +903,7 @@ impl SshSocket {
         args: &[impl AsRef<str>],
         allow_pseudo_tty: bool,
     ) -> process::Command {
-        let mut command = util::command::new_smol_command("ssh");
+        let mut command = command::new_smol_command("ssh");
         let program = shell_kind.prepend_command_prefix(program);
         let mut to_run = shell_kind
             .try_quote_prefix_aware(&program)

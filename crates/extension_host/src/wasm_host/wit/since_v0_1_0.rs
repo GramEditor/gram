@@ -1,14 +1,14 @@
+use super::latest;
 use crate::wasm_host::{WasmState, wit::ToWasmtimeResult};
 use ::http_client::{AsyncBody, HttpRequestExt};
 use ::settings::{Settings, WorktreeId};
 use anyhow::{Context as _, Result, bail};
 use async_compression::futures::bufread::GzipDecoder;
 use extension::{ExtensionLanguageServerProxy, KeyValueStoreDelegate, WorktreeDelegate};
-use futures::{AsyncReadExt, lock::Mutex};
-use futures::{FutureExt as _, io::BufReader};
+use futures::{AsyncReadExt, FutureExt as _, io::BufReader, lock::Mutex};
 use gpui::BackgroundExecutor;
-use language::LanguageName;
-use language::{BinaryStatus, language_settings::AllLanguageSettings};
+use language::{BinaryStatus, LanguageName, language_settings::AllLanguageSettings};
+use paths::{PathStyle, rel_path::RelPath};
 use project::project_settings::ProjectSettings;
 use semver::Version as SemanticVersion;
 use std::{
@@ -16,12 +16,8 @@ use std::{
     sync::{Arc, OnceLock},
 };
 use url::Url;
-use util::paths::PathStyle;
-use util::rel_path::RelPath;
 use util::{archive::extract_zip, fs::make_file_executable, maybe};
 use wasmtime::component::{Linker, Resource};
-
-use super::latest;
 
 pub const MIN_VERSION: SemanticVersion = SemanticVersion::new(0, 1, 0);
 

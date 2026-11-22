@@ -9,11 +9,12 @@ use dap::{
 };
 use editor::{Editor, ToPoint as _};
 use gpui::{BackgroundExecutor, TestAppContext, VisualTestContext};
+use paths::rel_path::unix_rel_path;
 use project::{FakeFs, Project};
 use serde_json::json;
 use std::sync::Arc;
 use unindent::Unindent as _;
-use util::{path, rel_path::rel_path};
+use util::path;
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
@@ -320,7 +321,7 @@ async fn test_select_stack_frame(executor: BackgroundExecutor, cx: &mut TestAppC
             assert_eq!(1, editors.len());
 
             let project_path = editors[0].update(cx, |editor, cx| editor.project_path(cx)).unwrap();
-            assert_eq!(rel_path("src/test.js"), project_path.path.as_ref());
+            assert_eq!(unix_rel_path("src/test.js"), project_path.path.as_ref());
             assert_eq!(test_file_content, editors[0].read(cx).text(cx));
             assert_eq!(
                 vec![2..3],
@@ -379,7 +380,7 @@ async fn test_select_stack_frame(executor: BackgroundExecutor, cx: &mut TestAppC
         assert_eq!(1, editors.len());
 
         let project_path = editors[0].update(cx, |editor, cx| editor.project_path(cx)).unwrap();
-        assert_eq!(rel_path("src/module.js"), project_path.path.as_ref());
+        assert_eq!(unix_rel_path("src/module.js"), project_path.path.as_ref());
         assert_eq!(module_file_content, editors[0].read(cx).text(cx));
         assert_eq!(
             vec![0..1],

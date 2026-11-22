@@ -8,8 +8,10 @@ use futures::{
     future::LocalBoxFuture,
 };
 use gpui::{App, AsyncApp, BorrowAppContext, Global, SharedString, Task, UpdateGlobal};
-
-use paths::{EDITORCONFIG_NAME, local_settings_file_relative_path, task_file_name};
+use paths::{
+    locations::{EDITORCONFIG_NAME, local_settings_file_relative_path, task_file_name},
+    rel_path::RelPath,
+};
 use schemars::{JsonSchema, json_schema};
 use serde_json::Value;
 use smallvec::SmallVec;
@@ -25,7 +27,6 @@ use std::{
 };
 use util::{
     ResultExt as _,
-    rel_path::RelPath,
     schemars::{AllowTrailingCommas, DefaultDenyUnknownFields, replace_subschema},
 };
 
@@ -420,7 +421,7 @@ impl SettingsStore {
     }
 
     pub async fn load_settings(fs: &Arc<dyn Fs>) -> Result<String> {
-        match fs.load(paths::settings_file()).await {
+        match fs.load(paths::locations::settings_file()).await {
             result @ Ok(_) => result,
             Err(err) => {
                 if let Some(e) = err.downcast_ref::<std::io::Error>()
@@ -446,7 +447,7 @@ impl SettingsStore {
                         let old_text = Self::load_settings(&fs).await?;
                         let new_text = update(old_text, cx.clone())?;
                         let new_text_2 = new_text.clone();
-                        let settings_path = paths::settings_file().as_path();
+                        let settings_path = paths::locations::settings_file();
                         if fs.is_file(settings_path).await {
                             let resolved_path = fs
                                 .canonicalize(settings_path)
@@ -1254,16 +1255,14 @@ impl<T: Settings> AnySettingValue for SettingValue<T> {
 
 #[cfg(test)]
 mod tests {
-    use std::num::NonZeroU32;
-
+    use super::*;
     use crate::{
         ClosePosition, ItemSettingsContent, VsCodeSettingsSource, default_settings,
         settings_content::LanguageSettingsContent, test_settings,
     };
-
-    use super::*;
+    use paths::rel_path::unix_rel_path;
+    use std::num::NonZeroU32;
     use unindent::Unindent;
-    use util::rel_path::rel_path;
 
     #[derive(Debug, PartialEq)]
     struct ItemSettings {
@@ -1337,7 +1336,7 @@ mod tests {
         store
             .set_local_settings(
                 WorktreeId::from_usize(1),
-                rel_path("root1").into(),
+                unix_rel_path("root1").into(),
                 LocalSettingsKind::Settings,
                 Some(r#"{ "tab_size": 5 }"#),
                 cx,
@@ -1346,7 +1345,7 @@ mod tests {
         store
             .set_local_settings(
                 WorktreeId::from_usize(1),
-                rel_path("root1/subdir").into(),
+                unix_rel_path("root1/subdir").into(),
                 LocalSettingsKind::Settings,
                 Some(r#"{ "preferred_line_length": 50 }"#),
                 cx,
@@ -1356,7 +1355,7 @@ mod tests {
         store
             .set_local_settings(
                 WorktreeId::from_usize(1),
-                rel_path("root2").into(),
+                unix_rel_path("root2").into(),
                 LocalSettingsKind::Settings,
                 Some(r#"{ "tab_size": 9, "auto_update": true}"#),
                 cx,
@@ -1366,7 +1365,7 @@ mod tests {
         assert_eq!(
             store.get::<DefaultLanguageSettings>(Some(SettingsLocation {
                 worktree_id: WorktreeId::from_usize(1),
-                path: rel_path("root1/something"),
+                path: unix_rel_path("root1/something"),
             })),
             &DefaultLanguageSettings {
                 preferred_line_length: 80,
@@ -1376,7 +1375,7 @@ mod tests {
         assert_eq!(
             store.get::<DefaultLanguageSettings>(Some(SettingsLocation {
                 worktree_id: WorktreeId::from_usize(1),
-                path: rel_path("root1/subdir/something"),
+                path: unix_rel_path("root1/subdir/something"),
             })),
             &DefaultLanguageSettings {
                 preferred_line_length: 50,
@@ -1386,7 +1385,7 @@ mod tests {
         assert_eq!(
             store.get::<DefaultLanguageSettings>(Some(SettingsLocation {
                 worktree_id: WorktreeId::from_usize(1),
-                path: rel_path("root2/something"),
+                path: unix_rel_path("root2/something"),
             })),
             &DefaultLanguageSettings {
                 preferred_line_length: 80,
@@ -1832,7 +1831,7 @@ mod tests {
 
         let local_1_child = (
             WorktreeId::from_usize(0),
-            RelPath::new(std::path::Path::new("child1"), util::paths::PathStyle::Posix)
+            RelPath::new(std::path::Path::new("child1"), paths::PathStyle::Posix)
                 .unwrap()
                 .to_arc(),
         );
@@ -1840,7 +1839,7 @@ mod tests {
         let local_2 = (WorktreeId::from_usize(1), RelPath::empty().to_arc());
         let local_2_child = (
             WorktreeId::from_usize(1),
-            RelPath::new(std::path::Path::new("child2"), util::paths::PathStyle::Posix)
+            RelPath::new(std::path::Path::new("child2"), paths::PathStyle::Posix)
                 .unwrap()
                 .to_arc(),
         );
@@ -1897,7 +1896,7 @@ mod tests {
         );
 
         // adjacent children should be treated as siblings not inherit from each other
-        let local_1_adjacent_child = (local_1.0, rel_path("adjacent_child").to_arc());
+        let local_1_adjacent_child = (local_1.0, unix_rel_path("adjacent_child").to_arc());
         store
             .set_local_settings(
                 local_1_adjacent_child.0,
@@ -1948,11 +1947,11 @@ mod tests {
     #[test]
     fn test_file_ord() {
         let wt0_root = SettingsFile::Project((WorktreeId::from_usize(0), RelPath::empty().to_arc()));
-        let wt0_child1 = SettingsFile::Project((WorktreeId::from_usize(0), rel_path("child1").to_arc()));
-        let wt0_child2 = SettingsFile::Project((WorktreeId::from_usize(0), rel_path("child2").to_arc()));
+        let wt0_child1 = SettingsFile::Project((WorktreeId::from_usize(0), unix_rel_path("child1").to_arc()));
+        let wt0_child2 = SettingsFile::Project((WorktreeId::from_usize(0), unix_rel_path("child2").to_arc()));
 
         let wt1_root = SettingsFile::Project((WorktreeId::from_usize(1), RelPath::empty().to_arc()));
-        let wt1_subdir = SettingsFile::Project((WorktreeId::from_usize(1), rel_path("subdir").to_arc()));
+        let wt1_subdir = SettingsFile::Project((WorktreeId::from_usize(1), unix_rel_path("subdir").to_arc()));
 
         let mut files = vec![
             &wt1_root,

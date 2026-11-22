@@ -5,17 +5,17 @@
 //! Long story short, before we attempt to resolve a path as a "real" path, we try to treat is as a yarn path;
 //! for .zip handling, we unpack the contents into the temp directory (yes, this is bad, against the spirit of Yarn and what-not)
 
+use anyhow::Result;
+use collections::HashMap;
+use fs::Fs;
+use gpui::{App, AppContext as _, Context, Entity, Task};
+use paths::{PathStyle, rel_path::RelPath};
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
     sync::Arc,
 };
-
-use anyhow::Result;
-use collections::HashMap;
-use fs::Fs;
-use gpui::{App, AppContext as _, Context, Entity, Task};
-use util::{ResultExt, archive::extract_zip, paths::PathStyle, rel_path::RelPath};
+use util::{ResultExt, archive::extract_zip};
 
 pub(crate) struct YarnPathStore {
     temp_dirs: HashMap<Arc<Path>, tempfile::TempDir>,

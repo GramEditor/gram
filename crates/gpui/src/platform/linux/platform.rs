@@ -17,7 +17,7 @@ use anyhow::{Context as _, anyhow};
 use calloop::{LoopSignal, channel::Channel};
 use futures::channel::oneshot;
 use util::ResultExt as _;
-use util::command::{new_smol_command, new_std_command};
+use command::{new_smol_command, new_std_command};
 #[cfg(any(feature = "wayland", feature = "x11"))]
 use xkbcommon::xkb::{self, Keycode, Keysym, State};
 

@@ -489,7 +489,7 @@ impl TcpTransport {
         let mut stderr_task = None;
 
         if let Some(command) = &binary.command {
-            let mut command = util::command::new_std_command(command);
+            let mut command = command::new_std_command(command);
 
             if let Some(cwd) = &binary.cwd {
                 command.current_dir(cwd);
@@ -627,7 +627,7 @@ impl StdioTransport {
         let Some(binary_command) = &binary.command else {
             bail!("When using the `stdio` transport, the path to a debug adapter binary must be set by Gram.");
         };
-        let mut command = util::command::new_std_command(binary_command);
+        let mut command = command::new_std_command(binary_command);
 
         if let Some(cwd) = &binary.cwd {
             command.current_dir(cwd);
@@ -983,7 +983,7 @@ impl Child {
 
     #[cfg(not(windows))]
     fn spawn(mut command: std::process::Command, stdin: Stdio) -> Result<Self> {
-        util::set_pre_exec_to_start_new_session(&mut command);
+        shell::set_pre_exec_to_start_new_session(&mut command);
         let mut command = smol::process::Command::from(command);
         let process = command
             .stdin(stdin)

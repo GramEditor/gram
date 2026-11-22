@@ -1,9 +1,9 @@
 use criterion::{Criterion, criterion_group, criterion_main};
+use paths::rel_path::RelPath;
 use project::{Entry, EntryKind, GitEntry, ProjectEntryId};
 use project_panel::par_sort_worktree_entries_with_mode;
 use settings::ProjectPanelSortMode;
 use std::sync::Arc;
-use util::rel_path::RelPath;
 
 fn load_linux_repo_snapshot() -> Vec<GitEntry> {
     let file = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/benches/linux_repo_snapshot.txt"))

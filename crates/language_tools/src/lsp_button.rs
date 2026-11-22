@@ -1,3 +1,15 @@
+use crate::{lsp_config_view::OpenLanguageServerConfig, lsp_log_view};
+use collections::HashSet;
+use editor::{Editor, EditorEvent};
+use gpui::{Corner, Entity, Subscription, Task, WeakEntity, actions};
+use language::{BinaryStatus, BufferId, ServerHealth};
+use lsp::{LanguageServerId, LanguageServerName, LanguageServerSelector};
+use paths::{PathExt, rel_path::RelPath};
+use project::{
+    LspStore, LspStoreEvent, Worktree, lsp_store::log_store::GlobalLogStore, project_settings::ProjectSettings,
+};
+use proto;
+use settings::{Settings as _, SettingsStore};
 use std::{
     cell::RefCell,
     collections::{BTreeMap, HashMap},
@@ -5,25 +17,10 @@ use std::{
     rc::Rc,
     time::{Duration, Instant},
 };
-
 use sysinfo::{Pid, ProcessRefreshKind, RefreshKind, System};
-
-use collections::HashSet;
-use editor::{Editor, EditorEvent};
-use gpui::{Corner, Entity, Subscription, Task, WeakEntity, actions};
-use language::{BinaryStatus, BufferId, ServerHealth};
-use lsp::{LanguageServerId, LanguageServerName, LanguageServerSelector};
-use project::{
-    LspStore, LspStoreEvent, Worktree, lsp_store::log_store::GlobalLogStore, project_settings::ProjectSettings,
-};
-use proto;
-use settings::{Settings as _, SettingsStore};
 use ui::{ContextMenu, ContextMenuEntry, Indicator, PopoverMenu, PopoverMenuHandle, Tooltip, prelude::*};
-
-use util::{ResultExt, paths::PathExt, rel_path::RelPath};
+use util::ResultExt;
 use workspace::{StatusBarSettings, StatusItemView, Workspace};
-
-use crate::{lsp_config_view::OpenLanguageServerConfig, lsp_log_view};
 
 actions!(
     lsp_tool,
