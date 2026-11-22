@@ -21,6 +21,7 @@ itertools.workspace = true
 language.workspace = true
 log.workspace = true
 parking_lot.workspace = true
+paths.workspace = true
 rand.workspace = true
 rope.workspace = true
 serde.workspace = true

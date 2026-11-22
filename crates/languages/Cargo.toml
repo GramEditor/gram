@@ -86,6 +86,9 @@ tree-sitter-zig = { workspace = true, optional = true }
 tokio-util.workspace = true
 url.workspace = true
 util.workspace = true
+paths.workspace = true
+command.workspace = true
+shell.workspace = true
 
 [dev-dependencies]
 codebook-tree-sitter-typst.workspace = true

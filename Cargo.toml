@@ -13,6 +13,7 @@ members = [
   "crates/client",
   "crates/clock",
   "crates/collections",
+  "crates/command",
   "crates/command_palette",
   "crates/command_palette_hooks",
   "crates/component",
@@ -104,6 +105,7 @@ members = [
   "crates/settings_macros",
   "crates/settings_profile_selector",
   "crates/settings_ui",
+  "crates/shell",
   "crates/snippet",
   "crates/snippet_provider",
   "crates/snippets_ui",
@@ -166,6 +168,7 @@ cli = { path = "crates/cli" }
 client = { path = "crates/client" }
 clock = { path = "crates/clock" }
 collections = { path = "crates/collections" }
+command = { path = "crates/command" }
 command_palette = { path = "crates/command_palette" }
 command_palette_hooks = { path = "crates/command_palette_hooks" }
 component = { path = "crates/component" }
@@ -250,6 +253,7 @@ settings_json = { path = "crates/settings_json" }
 settings_macros = { path = "crates/settings_macros" }
 settings_profile_selector = { path = "crates/settings_profile_selector" }
 settings_ui = { path = "crates/settings_ui" }
+shell = { path = "crates/shell" }
 snippet = { path = "crates/snippet" }
 snippet_provider = { path = "crates/snippet_provider" }
 snippets_ui = { path = "crates/snippets_ui" }

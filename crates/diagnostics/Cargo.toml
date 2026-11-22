@@ -22,6 +22,7 @@ language.workspace = true
 log.workspace = true
 lsp.workspace = true
 markdown.workspace = true
+paths.workspace = true
 project.workspace = true
 rand.workspace = true
 serde_json.workspace = true

@@ -18,6 +18,7 @@ collections.workspace = true
 dap.workspace = true
 extension.workspace = true
 gpui.workspace = true
+paths.workspace = true
 serde_json.workspace = true
 task.workspace = true
 util.workspace = true

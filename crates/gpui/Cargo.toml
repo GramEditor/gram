@@ -87,6 +87,7 @@ backtrace = { workspace = true, optional = true }
 bitflags = { workspace = true, optional = true }
 bytemuck = { workspace = true, optional = true }
 collections.workspace = true
+command.workspace = true
 ctor.workspace = true
 derive_more.workspace = true
 encoding_rs.workspace = true

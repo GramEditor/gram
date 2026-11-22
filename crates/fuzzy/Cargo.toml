@@ -13,6 +13,7 @@ path = "src/fuzzy.rs"
 [dependencies]
 gpui.workspace = true
 log.workspace = true
+paths.workspace = true
 util.workspace = true
 
 [dev-dependencies]
