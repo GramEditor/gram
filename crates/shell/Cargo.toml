@@ -1,0 +1,33 @@
+[package]
+name = "shell"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description.workspace = true
+documentation.workspace = true
+homepage.workspace = true
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+anyhow.workspace = true
+collections.workspace = true
+log.workspace = true
+schemars.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+shlex.workspace = true
+smol.workspace = true
+paths.workspace = true
+which.workspace = true
+libc.workspace = true
+util.workspace = true
+command.workspace = true
+command-fds.workspace = true
+
+[lints]
+workspace = true

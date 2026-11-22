@@ -1,10 +1,7 @@
-use std::path::Path;
-
+use crate::ShellKind;
 use anyhow::{Context as _, Result};
 use collections::HashMap;
-
-use crate::paths::PathExt;
-use crate::shell::ShellKind;
+use std::path::Path;
 
 pub fn print_env() {
     let env_vars: HashMap<String, String> = std::env::vars().collect();
@@ -33,9 +30,8 @@ async fn capture_unix(
     args: &[String],
     directory: &Path,
 ) -> Result<collections::HashMap<String, String>> {
+    use command::new_std_command;
     use std::os::unix::process::CommandExt;
-
-    use crate::command::new_std_command;
 
     let shell_kind = ShellKind::new(shell_path, false);
     let binary_path = super::get_shell_safe_binary_path(shell_kind)?;
@@ -84,7 +80,7 @@ async fn capture_unix(
     };
 
     // cd into the directory, triggering directory specific side-effects (asdf, direnv, etc)
-    command_string.push_str(&format!("cd {};", directory.try_shell_safe(shell_kind)?));
+    command_string.push_str(&format!("cd '{}';", shell_kind.try_into_safe_path(directory)?));
     if let Some(prefix) = shell_kind.command_prefix() {
         command_string.push(prefix);
     }
@@ -162,7 +158,7 @@ async fn capture_windows(
                 "-i",
                 "-c",
                 &format!(
-                    "cd {}; {} --printenv",
+                    "cd '{}'; '{}' --printenv",
                     directory.try_shell_safe(shell_kind)?,
                     binary_path,
                 ),
@@ -180,7 +176,7 @@ async fn capture_windows(
         ShellKind::Elvish => cmd.args([
             "-c",
             &format!(
-                "cd {}; {} --printenv",
+                "cd '{}'; '{}' --printenv",
                 directory.try_shell_safe(shell_kind)?,
                 binary_path,
             ),
@@ -188,7 +184,7 @@ async fn capture_windows(
         ShellKind::Nushell => cmd.args([
             "-c",
             &format!(
-                "cd {}; {}'{}' --printenv",
+                "cd '{}'; {}'{}' --printenv",
                 directory.try_shell_safe(shell_kind)?,
                 shell_kind
                     .command_prefix()
