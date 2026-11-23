@@ -1174,6 +1174,7 @@ dependencies = [
 name = "command"
 version = "3.5.2"
 dependencies = [
+ "mach2 0.6.0",
  "smol",
 ]
 

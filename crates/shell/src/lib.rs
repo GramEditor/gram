@@ -454,7 +454,7 @@ pub fn set_pre_exec_to_start_new_session(command: &mut std::process::Command) ->
         command.pre_exec(|| {
             libc::setsid();
             #[cfg(target_os = "macos")]
-            crate::command::reset_exception_ports();
+            command::reset_exception_ports();
             Ok(())
         });
     };

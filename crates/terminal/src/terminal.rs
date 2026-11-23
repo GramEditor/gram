@@ -2482,7 +2482,7 @@ mod tests {
                 TerminalBuilder::new(
                     None,
                     None,
-                    task::Shell::System,
+                    Shell::System,
                     HashMap::default(),
                     CursorShape::default(),
                     AlternateScroll::On,

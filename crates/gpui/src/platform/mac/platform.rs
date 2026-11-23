@@ -8,6 +8,7 @@ use crate::{
 };
 use anyhow::{Context, anyhow};
 use block2::RcBlock;
+use command::{new_smol_command, new_std_command};
 use dispatch2::DispatchQueue;
 use futures::channel::oneshot;
 use itertools::Itertools;
@@ -41,10 +42,7 @@ use std::{
     str,
     sync::{Arc, OnceLock},
 };
-use util::{
-    ResultExt,
-    command::{new_smol_command, new_std_command},
-};
+use util::ResultExt;
 
 #[derive(Default)]
 struct GPUIAppDelegateIvars {
