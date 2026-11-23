@@ -79,6 +79,8 @@ actions!(
         Copy,
         /// Pastes from the clipboard.
         Paste,
+        /// Linux/FreeBSD have concept of primary selection, other platforms fallback to Paste
+        PastePrimarySelection,
         /// Shows the character palette for special characters.
         ShowCharacterPalette,
         /// Searches for text in the terminal.

@@ -1029,8 +1029,7 @@ impl App {
         self.platform.write_to_clipboard(item)
     }
 
-    /// Reads data from the primary selection buffer.
-    /// Only available on Linux.
+    /// Linux/FreeBSD have the concept of primary selection
     #[cfg(any(target_os = "linux", target_os = "freebsd"))]
     pub fn read_from_primary(&self) -> Option<ClipboardItem> {
         self.platform.read_from_primary()

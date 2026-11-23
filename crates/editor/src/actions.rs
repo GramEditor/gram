@@ -687,6 +687,9 @@ actions!(
         PageUp,
         /// Pastes from clipboard.
         Paste,
+        /// Pastes from the primary selection on Linux and FreeBSD.
+        /// Falls back to pasting from the clipboard on other platforms.
+        PastePrimarySelection,
         /// Goes to the previous snippet tabstop if one exists.
         PreviousSnippetTabstop,
         /// Redoes the last undone edit.

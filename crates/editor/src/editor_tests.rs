@@ -7521,6 +7521,24 @@ async fn test_paste_multiline(cx: &mut TestAppContext) {
         )ˇ"});
 }
 
+/// Paste primary selection is a concept on linux/freebsd
+#[cfg(any(target_os = "linux", target_os = "freebsd"))]
+#[gpui::test]
+async fn test_paste_primary_selection(cx: &mut TestAppContext) {
+    init_test(cx, |_| {});
+
+    cx.write_to_clipboard(ClipboardItem::new_string("clipboard".into()));
+    cx.update(|cx| cx.write_to_primary(ClipboardItem::new_string("primary".into())));
+
+    let mut cx = EditorTestContext::new(cx).await;
+    cx.set_state("a ˇb");
+    cx.update_editor(|e, window, cx| e.paste_primary_selection(&PastePrimarySelection, window, cx));
+    cx.assert_editor_state("a primaryˇb");
+
+    cx.update_editor(|e, window, cx| e.paste(&Paste, window, cx));
+    cx.assert_editor_state("a primaryclipboardˇb");
+}
+
 #[gpui::test]
 async fn test_paste_content_from_other_app(cx: &mut TestAppContext) {
     init_test(cx, |_| {});

@@ -280,6 +280,7 @@ impl EditorElement {
         register_action(editor, window, Editor::copy_and_trim);
         register_action(editor, window, Editor::diff_clipboard_with_selection);
         register_action(editor, window, Editor::paste);
+        register_action(editor, window, Editor::paste_primary_selection);
         register_action(editor, window, Editor::undo);
         register_action(editor, window, Editor::redo);
         register_action(editor, window, Editor::move_page_up);

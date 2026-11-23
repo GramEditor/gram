@@ -17,9 +17,9 @@ use serde::Deserialize;
 use settings::{Settings, SettingsStore, TerminalBlink, WorkingDirectory};
 use task::TaskId;
 use terminal::{
-    Clear, Copy, Event, HoveredWord, MaybeNavigationTarget, Paste, ScrollLineDown, ScrollLineUp, ScrollPageDown,
-    ScrollPageUp, ScrollToBottom, ScrollToTop, ShowCharacterPalette, TaskState, TaskStatus, Terminal, TerminalBounds,
-    ToggleViMode,
+    Clear, Copy, Event, HoveredWord, MaybeNavigationTarget, Paste, PastePrimarySelection, ScrollLineDown, ScrollLineUp,
+    ScrollPageDown, ScrollPageUp, ScrollToBottom, ScrollToTop, ShowCharacterPalette, TaskState, TaskStatus, Terminal,
+    TerminalBounds, ToggleViMode,
     alacritty_terminal::{
         index::Point as AlacPoint,
         term::{TermMode, point_to_viewport, search::RegexSearch},
@@ -707,6 +707,19 @@ impl TerminalView {
         }
     }
 
+    /// Linux/FreeBSD have concept of primary selection. Platforms without it fallback to clipboard.
+    fn paste_primary_selection(&mut self, _: &PastePrimarySelection, _: &mut Window, cx: &mut Context<Self>) {
+        #[cfg(any(target_os = "linux", target_os = "freebsd"))]
+        let item = cx.read_from_primary();
+
+        #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
+        let item = cx.read_from_clipboard();
+
+        if let Some(text) = item.and_then(|item| item.text()) {
+            self.terminal.update(cx, |terminal, _cx| terminal.paste(&text));
+        }
+    }
+
     fn send_text(&mut self, text: &SendText, _: &mut Window, cx: &mut Context<Self>) {
         self.clear_bell(cx);
         self.terminal.update(cx, |term, _| {
@@ -1060,6 +1073,7 @@ impl Render for TerminalView {
             .on_action(cx.listener(TerminalView::send_keystroke))
             .on_action(cx.listener(TerminalView::copy))
             .on_action(cx.listener(TerminalView::paste))
+            .on_action(cx.listener(TerminalView::paste_primary_selection))
             .on_action(cx.listener(TerminalView::clear))
             .on_action(cx.listener(TerminalView::scroll_line_up))
             .on_action(cx.listener(TerminalView::scroll_line_down))
