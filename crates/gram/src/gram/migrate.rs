@@ -140,7 +140,7 @@ impl ToolbarItemView for MigrationBanner {
             return ToolbarItemLocation::Hidden;
         };
 
-        if &target == paths::locations::keymap_file() {
+        if target == paths::locations::keymap_file() {
             self.migration_type = Some(MigrationType::Keymap);
             let fs = <dyn Fs>::global(cx);
             let should_migrate = cx.background_spawn(should_migrate_keymap(fs));
@@ -152,7 +152,7 @@ impl ToolbarItemView for MigrationBanner {
                     .log_err();
                 }
             }));
-        } else if &target == paths::locations::settings_file() {
+        } else if target == paths::locations::settings_file() {
             self.migration_type = Some(MigrationType::Settings);
             let fs = <dyn Fs>::global(cx);
             let should_migrate = cx.background_spawn(should_migrate_settings(fs));

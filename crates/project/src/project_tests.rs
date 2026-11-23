@@ -7628,7 +7628,7 @@ async fn test_home_dir_as_git_repository(cx: &mut gpui::TestAppContext) {
         assert!(containing.is_none());
     });
 
-    let project = Project::test(fs.clone(), [home.as_ref()], cx).await;
+    let project = Project::test(fs.clone(), [home], cx).await;
     let tree = project.read_with(cx, |project, cx| project.worktrees(cx).next().unwrap());
     let tree_id = tree.read_with(cx, |tree, _| tree.id());
     project.update(cx, |project, cx| project.git_scans_complete(cx)).await;

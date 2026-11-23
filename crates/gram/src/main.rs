@@ -331,14 +331,21 @@ pub fn main() {
     }
 
     let fs = Arc::new(RealFs::new(git_binary_path, app.background_executor()));
-    let user_settings_file_rx =
-        watch_config_file(&app.background_executor(), fs.clone(), paths::locations::settings_file().to_owned());
+    let user_settings_file_rx = watch_config_file(
+        &app.background_executor(),
+        fs.clone(),
+        paths::locations::settings_file().to_owned(),
+    );
     let global_settings_file_rx = watch_config_file(
         &app.background_executor(),
         fs.clone(),
         paths::locations::global_settings_file().to_owned(),
     );
-    let user_keymap_file_rx = watch_config_file(&app.background_executor(), fs.clone(), paths::locations::keymap_file().to_owned());
+    let user_keymap_file_rx = watch_config_file(
+        &app.background_executor(),
+        fs.clone(),
+        paths::locations::keymap_file().to_owned(),
+    );
 
     let (shell_env_loaded_tx, shell_env_loaded_rx) = oneshot::channel();
     if stdout_is_a_pty() {

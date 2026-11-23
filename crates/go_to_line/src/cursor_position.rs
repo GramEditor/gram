@@ -1,12 +1,12 @@
 use editor::{Editor, EditorEvent, MBTextSummary, display_map::DisplaySnapshot};
 use gpui::{App, Entity, FocusHandle, Focusable, Styled, Subscription, Task, WeakEntity};
+use paths::FILE_ROW_COLUMN_DELIMITER;
 use settings::{RegisterSetting, Settings};
 use std::{fmt::Write, num::NonZeroU32, time::Duration};
 use text::{Point, Selection};
 use ui::{
     Button, ButtonCommon, Clickable, Context, FluentBuilder, IntoElement, ParentElement, Render, Tooltip, Window, div,
 };
-use paths::FILE_ROW_COLUMN_DELIMITER;
 use workspace::{StatusBarSettings, StatusItemView, Workspace, item::ItemHandle};
 
 #[derive(Copy, Clone, Debug, Default, PartialOrd, PartialEq)]

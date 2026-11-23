@@ -8,7 +8,7 @@ use gpui::{
     inspector_reflection::FunctionReflection, styled_reflection,
 };
 use language::{
-    Anchor, Buffer, LanguageBufferSnapshot, CodeLabel, Diagnostic, DiagnosticEntry, DiagnosticSet, DiagnosticSeverity,
+    Anchor, Buffer, CodeLabel, Diagnostic, DiagnosticEntry, DiagnosticSet, DiagnosticSeverity, LanguageBufferSnapshot,
     LanguageServerId, Point, ToOffset as _, ToPoint as _, language_settings::SoftWrap,
 };
 use paths::rel_path::RelPath;

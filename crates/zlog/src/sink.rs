@@ -69,7 +69,7 @@ pub fn init_output_file(path: &'static Path, path_rotate: Option<&'static Path>)
 
     let size_bytes = file.metadata().map_or(0, |metadata| metadata.len());
     if size_bytes >= SINK_FILE_SIZE_BYTES_MAX {
-        rotate_log_file(&mut file, Some(path.as_ref()), path_rotate, &SINK_FILE_SIZE_BYTES);
+        rotate_log_file(&mut file, Some(path), path_rotate, &SINK_FILE_SIZE_BYTES);
     } else {
         SINK_FILE_SIZE_BYTES.store(size_bytes, Ordering::Release);
     }

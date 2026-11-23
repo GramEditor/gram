@@ -23,7 +23,6 @@ static DATA_DIR: OnceLock<PathBuf> = OnceLock::new();
 /// On macOS, this is `~/.config/gram`.
 /// On Linux/FreeBSD, this is `$XDG_CONFIG_HOME/gram`.
 /// On Windows, this is `%APPDATA%\Gram`.
-
 /// Returns the relative path to the gram_server directory on the ssh host.
 pub fn remote_server_dir_relative() -> &'static RelPath {
     static CACHED: LazyLock<&'static RelPath> = LazyLock::new(|| RelPath::unix(".gram_server").unwrap());

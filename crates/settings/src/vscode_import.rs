@@ -72,7 +72,7 @@ impl VsCodeSettings {
         };
 
         let content = fs
-            .load(&path)
+            .load(path)
             .await
             .with_context(|| format!("Error loading {} settings file from {}", source, path.display()))?;
         let content = serde_json_lenient::from_str(&content)
