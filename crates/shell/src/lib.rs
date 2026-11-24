@@ -2,6 +2,7 @@ use anyhow::Context;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, fmt, path::Path, sync::LazyLock};
+#[cfg(not(windows))]
 use util::ResultExt;
 
 pub mod builder;

@@ -27,6 +27,8 @@ which.workspace = true
 libc.workspace = true
 util.workspace = true
 command.workspace = true
+
+[target."cfg(not(windows))".dependencies]
 command-fds.workspace = true
 
 [lints]

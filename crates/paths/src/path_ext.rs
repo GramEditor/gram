@@ -27,7 +27,9 @@ pub trait PathExt {
             }
 
             windows => {
+                use anyhow::Context;
                 use tendril::fmt::{Format, WTF8};
+                use std::ffi::OsStr;
                 WTF8::validate(bytes)
                     .then(|| {
                         // Safety: bytes are valid WTF-8 sequence.

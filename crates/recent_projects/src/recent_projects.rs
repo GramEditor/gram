@@ -54,7 +54,7 @@ pub fn init(cx: &mut App) {
             );
 
             cx.spawn_in(window, async move |workspace, cx| {
-                use util::paths::SanitizedPath;
+                use paths::sanitized_path::SanitizedPath;
 
                 let Some(paths) = paths.await.log_err().flatten() else {
                     return;

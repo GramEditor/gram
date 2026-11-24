@@ -80,7 +80,7 @@ async fn capture_unix(
     };
 
     // cd into the directory, triggering directory specific side-effects (asdf, direnv, etc)
-    command_string.push_str(&format!("cd '{}';", shell_kind.try_into_safe_path(directory)?));
+    command_string.push_str(&format!("cd {};", shell_kind.try_into_safe_path(directory)?));
     if let Some(prefix) = shell_kind.command_prefix() {
         command_string.push(prefix);
     }
@@ -149,7 +149,7 @@ async fn capture_windows(
     let shell_kind = ShellKind::new(shell_path, true);
     let binary_path = super::get_shell_safe_binary_path(shell_kind)?;
 
-    let mut cmd = crate::command::new_smol_command(shell_path);
+    let mut cmd = command::new_smol_command(shell_path);
     cmd.args(args);
     let cmd = match shell_kind {
         ShellKind::Csh | ShellKind::Tcsh | ShellKind::Rc | ShellKind::Fish | ShellKind::Xonsh | ShellKind::Posix => cmd
@@ -158,8 +158,8 @@ async fn capture_windows(
                 "-i",
                 "-c",
                 &format!(
-                    "cd '{}'; '{}' --printenv",
-                    directory.try_shell_safe(shell_kind)?,
+                    "cd {}; {} --printenv",
+                    shell_kind.try_into_safe_path(directory)?,
                     binary_path,
                 ),
             ]),
@@ -169,23 +169,23 @@ async fn capture_windows(
             "-Command",
             &format!(
                 "Set-Location {}; & {} --printenv",
-                directory.try_shell_safe(shell_kind)?,
+                shell_kind.try_into_safe_path(directory)?,
                 binary_path,
             ),
         ]),
         ShellKind::Elvish => cmd.args([
             "-c",
             &format!(
-                "cd '{}'; '{}' --printenv",
-                directory.try_shell_safe(shell_kind)?,
+                "cd {}; {} --printenv",
+                shell_kind.try_into_safe_path(directory)?,
                 binary_path,
             ),
         ]),
         ShellKind::Nushell => cmd.args([
             "-c",
             &format!(
-                "cd '{}'; {}'{}' --printenv",
-                directory.try_shell_safe(shell_kind)?,
+                "cd {}; {}{} --printenv",
+                shell_kind.try_into_safe_path(directory)?,
                 shell_kind
                     .command_prefix()
                     .map(|prefix| prefix.to_string())
@@ -196,7 +196,7 @@ async fn capture_windows(
         ShellKind::Cmd => cmd.args([
             "/c",
             "cd",
-            &directory.try_shell_safe(shell_kind)?,
+            &shell_kind.try_into_safe_path(directory)?,
             "&&",
             &binary_path,
             "--printenv",

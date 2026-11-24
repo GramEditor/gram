@@ -174,7 +174,9 @@ wgpu.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
 flume.workspace = true
+paths.workspace = true
 rand.workspace = true
+shell.workspace = true
 windows.workspace = true
 windows-core.workspace = true
 windows-numerics.workspace = true
