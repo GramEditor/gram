@@ -2428,7 +2428,7 @@ mod tests {
                 TerminalBuilder::new(
                     None,
                     None,
-                    shell::Shell::WithArguments {
+                    Shell::WithArguments {
                         program,
                         args,
                         title_override: None,
@@ -2482,7 +2482,7 @@ mod tests {
                 TerminalBuilder::new(
                     None,
                     None,
-                    task::Shell::System,
+                    Shell::System,
                     HashMap::default(),
                     CursorShape::default(),
                     AlternateScroll::On,
@@ -2553,7 +2553,7 @@ mod tests {
                 TerminalBuilder::new(
                     None,
                     None,
-                    shell::Shell::WithArguments {
+                    Shell::WithArguments {
                         program,
                         args,
                         title_override: None,
@@ -2960,7 +2960,7 @@ mod tests {
                     TerminalBuilder::new(
                         None,
                         None,
-                        shell::Shell::System,
+                        Shell::System,
                         HashMap::default(),
                         CursorShape::default(),
                         AlternateScroll::On,
