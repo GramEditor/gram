@@ -958,8 +958,8 @@ impl Element for MarkdownElement {
                                 range,
                                 markdown_end,
                             );
-                            // Without `w_0`, text doesn't wrap to the width of the container.
-                            builder.push_div(div().flex_1().w_0(), range, markdown_end);
+                            // Without `min_w_0`, text doesn't wrap to the width of the container.
+                            builder.push_div(div().flex_1().min_w_0(), range, markdown_end);
                         }
                         MarkdownTag::Emphasis => builder.push_text_style(TextStyleRefinement {
                             font_style: Some(FontStyle::Italic),
