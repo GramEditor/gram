@@ -10,9 +10,6 @@ repository.workspace = true
 license.workspace = true
 publish.workspace = true
 
-[lib]
-doctest = false
-
 [dependencies]
 dirs.workspace = true
 ignore.workspace = true
@@ -27,6 +24,7 @@ pretty_assertions.workspace = true
 util_macros.workspace = true
 
 [target."cfg(windows)".dependencies]
+dunce.workspace = true
 tendril.workspace = true
 
 [features]
