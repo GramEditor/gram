@@ -2,6 +2,7 @@ use anyhow::Context;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, fmt, path::Path, sync::LazyLock};
+#[cfg(not(windows))]
 use util::ResultExt;
 
 pub mod builder;
@@ -93,6 +94,11 @@ impl ShellKind {
     pub fn new(program: impl AsRef<Path>, is_windows: bool) -> Self {
         let program = program.as_ref();
         let program = program.file_stem().unwrap_or(program.as_os_str()).to_string_lossy();
+        let program = if is_windows {
+            Cow::Owned(program.to_ascii_lowercase())
+        } else {
+            program
+        };
 
         match &*program {
             "powershell" | "pwsh" => ShellKind::PowerShell,
@@ -454,7 +460,7 @@ pub fn set_pre_exec_to_start_new_session(command: &mut std::process::Command) ->
         command.pre_exec(|| {
             libc::setsid();
             #[cfg(target_os = "macos")]
-            crate::command::reset_exception_ports();
+            command::reset_exception_ports();
             Ok(())
         });
     };
@@ -816,5 +822,43 @@ mod tests {
             shell_kind.try_quote_prefix_aware("uname").unwrap().into_owned(),
             "uname".to_string()
         );
+    }
+
+    #[test]
+    fn test_shell_kind_windows_case_insensitive() {
+        for (program, expected) in [
+            ("CMD.EXE", ShellKind::Cmd),
+            ("PowerShell.exe", ShellKind::PowerShell),
+            ("PwSh.ExE", ShellKind::PowerShell),
+            ("NU.EXE", ShellKind::Nushell),
+            ("FISH.EXE", ShellKind::Fish),
+            ("CSH.EXE", ShellKind::Csh),
+            ("TCSH.EXE", ShellKind::Tcsh),
+            ("RC.EXE", ShellKind::Rc),
+            ("XONSH.EXE", ShellKind::Xonsh),
+            ("ELVISH.EXE", ShellKind::Elvish),
+            ("SH.EXE", ShellKind::Posix),
+            ("BASH.EXE", ShellKind::Posix),
+            ("ZSH.EXE", ShellKind::Posix),
+            ("C:/Windows/System32/CMD.EXE", ShellKind::Cmd),
+            ("C:/Program Files/PowerShell/7/PWSH.EXE", ShellKind::PowerShell),
+            ("unknown.exe", ShellKind::PowerShell),
+        ] {
+            assert_eq!(ShellKind::new(program, true), expected, "{program}");
+        }
+    }
+
+    #[test]
+    fn test_shell_kind_unix_case_sensitive() {
+        for (program, expected) in [
+            ("/bin/nu", ShellKind::Nushell),
+            ("/bin/NU", ShellKind::Posix),
+            ("/bin/pwsh", ShellKind::PowerShell),
+            ("/bin/PWSH", ShellKind::Posix),
+            ("/bin/bash", ShellKind::Posix),
+            ("/bin/unknown", ShellKind::Posix),
+        ] {
+            assert_eq!(ShellKind::new(program, false), expected, "{program}");
+        }
     }
 }

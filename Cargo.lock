@@ -302,7 +302,6 @@ dependencies = [
  "gpui",
  "log",
  "net",
- "paths",
  "shell",
  "smol",
  "tempfile",
@@ -1174,6 +1173,7 @@ dependencies = [
 name = "command"
 version = "3.5.2"
 dependencies = [
+ "mach2 0.6.0",
  "smol",
 ]
 
@@ -2636,7 +2636,6 @@ dependencies = [
  "tempfile",
  "theme",
  "ui",
- "util",
  "vim_mode_setting",
  "workspace",
 ]
@@ -2705,7 +2704,6 @@ dependencies = [
  "serde_json",
  "settings",
  "shellexpand",
- "text",
  "theme",
  "ui",
  "util",
@@ -2720,7 +2718,6 @@ dependencies = [
  "gpui",
  "paths",
  "theme",
- "util",
 ]
 
 [[package]]
@@ -3441,6 +3438,7 @@ dependencies = [
  "open",
  "parking",
  "parking_lot",
+ "paths",
  "pin-project",
  "postage",
  "profiling",
@@ -3453,6 +3451,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
+ "shell",
  "slotmap",
  "smallvec",
  "smol",
@@ -3474,7 +3473,6 @@ dependencies = [
  "wayland-client",
  "wayland-cursor",
  "wayland-protocols",
- "wayland-protocols-plasma",
  "wayland-protocols-wlr",
  "wgpu",
  "windows 0.61.3",
@@ -6339,6 +6337,7 @@ version = "3.5.2"
 dependencies = [
  "anyhow",
  "dirs",
+ "dunce",
  "globset",
  "ignore",
  "itertools 0.14.0",
@@ -9060,7 +9059,6 @@ dependencies = [
  "smol",
  "sqlformat",
  "thread_local",
- "util",
  "uuid",
 ]
 
@@ -10849,33 +10847,21 @@ dependencies = [
  "async-fs",
  "async_zip",
  "collections",
- "command-fds",
- "dirs",
- "dunce",
  "futures",
- "globset",
  "itertools 0.14.0",
- "libc",
  "log",
- "mach2 0.6.0",
  "nix 0.31.3",
- "paths",
- "pretty_assertions",
  "rand 0.10.4",
  "regex",
  "rust-embed",
  "schemars",
- "serde",
  "serde_json",
  "serde_json_lenient",
- "shlex",
  "smol",
  "tempfile",
- "tendril",
  "unicase",
  "util_macros",
  "walkdir",
- "which",
 ]
 
 [[package]]
@@ -11573,19 +11559,6 @@ dependencies = [
  "bitflags 2.13.2",
  "wayland-backend",
  "wayland-client",
- "wayland-scanner",
-]
-
-[[package]]
-name = "wayland-protocols-plasma"
-version = "0.3.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b6d8cf1eb2c1c31ed1f5643c88a6e53538129d4af80030c8cabd1f9fa884d91"
-dependencies = [
- "bitflags 2.13.2",
- "wayland-backend",
- "wayland-client",
- "wayland-protocols",
  "wayland-scanner",
 ]
 

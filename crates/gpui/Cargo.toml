@@ -149,7 +149,6 @@ wayland-backend = { workspace = true, optional = true }
 wayland-client = { workspace = true, optional = true }
 wayland-cursor = { workspace = true, optional = true }
 wayland-protocols = { workspace = true, optional = true }
-wayland-protocols-plasma = { workspace = true, optional = true }
 wayland-protocols-wlr = { workspace = true, optional = true }
 wgpu = { workspace = true, optional = true }
 x11rb = { workspace = true, optional = true }
@@ -175,7 +174,9 @@ wgpu.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
 flume.workspace = true
+paths.workspace = true
 rand.workspace = true
+shell.workspace = true
 windows.workspace = true
 windows-core.workspace = true
 windows-numerics.workspace = true
@@ -202,7 +203,6 @@ wayland = [
   "wayland-client",
   "wayland-cursor",
   "wayland-protocols",
-  "wayland-protocols-plasma",
   "wayland-protocols-wlr",
   "wgpu",
   "xkbcommon"

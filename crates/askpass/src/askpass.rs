@@ -354,8 +354,8 @@ fn generate_askpass_script(
     let askpass_program = shell_kind
         .try_quote_prefix_aware(&askpass_program)
         .context("Failed to shell-escape Askpass program path")?;
-    let askpass_socket = askpass_socket
-        .try_shell_safe(shell_kind)
+    let askpass_socket = shell_kind
+        .try_into_safe_path(askpass_socket)
         .context("Failed to shell-escape Askpass socket path")?;
     Ok(format!(
         r#"

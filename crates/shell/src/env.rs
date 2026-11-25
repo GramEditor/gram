@@ -1,7 +1,22 @@
 use crate::ShellKind;
 use anyhow::{Context as _, Result};
 use collections::HashMap;
+use serde::Deserialize;
 use std::path::Path;
+
+#[cfg(windows)]
+use paths::PathExt;
+
+fn parse_env_map_from_noisy_output(output: &str) -> Result<collections::HashMap<String, String>> {
+    for (position, _) in output.match_indices('{') {
+        let candidate = &output[position..];
+        let mut deserializer = serde_json::Deserializer::from_str(candidate);
+        if let Ok(env_map) = HashMap::<String, String>::deserialize(&mut deserializer) {
+            return Ok(env_map);
+        }
+    }
+    anyhow::bail!("Failed to find JSON in shell output: {output}")
+}
 
 pub fn print_env() {
     let env_vars: HashMap<String, String> = std::env::vars().collect();
@@ -80,7 +95,7 @@ async fn capture_unix(
     };
 
     // cd into the directory, triggering directory specific side-effects (asdf, direnv, etc)
-    command_string.push_str(&format!("cd '{}';", shell_kind.try_into_safe_path(directory)?));
+    command_string.push_str(&format!("cd {};", shell_kind.try_into_safe_path(directory)?));
     if let Some(prefix) = shell_kind.command_prefix() {
         command_string.push(prefix);
     }
@@ -106,7 +121,7 @@ async fn capture_unix(
     );
 
     // Parse the JSON output from gram --printenv
-    let env_map: collections::HashMap<String, String> = serde_json::from_str(&env_output)
+    let env_map = parse_env_map_from_noisy_output(&env_output)
         .with_context(|| format!("Failed to deserialize environment variables from json: {env_output}"))?;
     Ok(env_map)
 }
@@ -149,7 +164,7 @@ async fn capture_windows(
     let shell_kind = ShellKind::new(shell_path, true);
     let binary_path = super::get_shell_safe_binary_path(shell_kind)?;
 
-    let mut cmd = crate::command::new_smol_command(shell_path);
+    let mut cmd = command::new_smol_command(shell_path);
     cmd.args(args);
     let cmd = match shell_kind {
         ShellKind::Csh | ShellKind::Tcsh | ShellKind::Rc | ShellKind::Fish | ShellKind::Xonsh | ShellKind::Posix => cmd
@@ -158,8 +173,8 @@ async fn capture_windows(
                 "-i",
                 "-c",
                 &format!(
-                    "cd '{}'; '{}' --printenv",
-                    directory.try_shell_safe(shell_kind)?,
+                    "cd {}; {} --printenv",
+                    shell_kind.try_into_safe_path(directory)?,
                     binary_path,
                 ),
             ]),
@@ -169,23 +184,23 @@ async fn capture_windows(
             "-Command",
             &format!(
                 "Set-Location {}; & {} --printenv",
-                directory.try_shell_safe(shell_kind)?,
+                shell_kind.try_into_safe_path(directory)?,
                 binary_path,
             ),
         ]),
         ShellKind::Elvish => cmd.args([
             "-c",
             &format!(
-                "cd '{}'; '{}' --printenv",
-                directory.try_shell_safe(shell_kind)?,
+                "cd {}; {} --printenv",
+                shell_kind.try_into_safe_path(directory)?,
                 binary_path,
             ),
         ]),
         ShellKind::Nushell => cmd.args([
             "-c",
             &format!(
-                "cd '{}'; {}'{}' --printenv",
-                directory.try_shell_safe(shell_kind)?,
+                "cd {}; {}{} --printenv",
+                shell_kind.try_into_safe_path(directory)?,
                 shell_kind
                     .command_prefix()
                     .map(|prefix| prefix.to_string())
@@ -194,9 +209,10 @@ async fn capture_windows(
             ),
         ]),
         ShellKind::Cmd => cmd.args([
+            "/d",
             "/c",
             "cd",
-            &directory.try_shell_safe(shell_kind)?,
+            &shell_kind.try_into_safe_path(directory)?,
             "&&",
             &binary_path,
             "--printenv",
@@ -216,6 +232,6 @@ async fn capture_windows(
     let env_output = String::from_utf8_lossy(&output.stdout);
 
     // Parse the JSON output from gram --printenv
-    serde_json::from_str(&env_output)
+    parse_env_map_from_noisy_output(&env_output)
         .with_context(|| format!("Failed to deserialize environment variables from json: {env_output}"))
 }

@@ -21,7 +21,6 @@ paths.workspace = true
 smol.workspace = true
 sqlformat.workspace = true
 thread_local.workspace = true
-util.workspace = true
 uuid.workspace = true
 
 [lints]
