@@ -45,6 +45,7 @@ menu.workspace = true
 multi_buffer.workspace = true
 ordered-float.workspace = true
 parking_lot.workspace = true
+paths.workspace = true
 pretty_assertions.workspace = true
 project.workspace = true
 rand.workspace = true

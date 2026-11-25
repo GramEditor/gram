@@ -31,6 +31,7 @@ markdown.workspace = true
 menu.workspace = true
 node_runtime.workspace = true
 parking_lot.workspace = true
+paths.workspace = true
 project.workspace = true
 proto.workspace = true
 remote.workspace = true
@@ -62,7 +63,16 @@ tempfile.workspace = true
 zlog.workspace = true
 
 [features]
-test-support = ["db/test-support", "fs/test-support", "gpui/test-support", "http_client/test-support", "project/test-support", "session/test-support", "settings/test-support"]
+test-support = [
+  "db/test-support",
+  "fs/test-support",
+  "gpui/test-support",
+  "http_client/test-support",
+  "paths/test-support",
+  "project/test-support",
+  "session/test-support",
+  "settings/test-support"
+]
 
 [lints]
 workspace = true

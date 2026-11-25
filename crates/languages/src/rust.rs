@@ -1,38 +1,41 @@
+use crate::{
+    helpers::{verify_metadata, write_metadata},
+    language_settings::language_settings,
+};
 use anyhow::{Context as _, Result};
 use async_trait::async_trait;
 use collections::HashMap;
 use futures::StreamExt;
 use futures::lock::OwnedMutexGuard;
 use gpui::{App, AppContext, AsyncApp, SharedString, Task};
-use http_client::github::AssetKind;
-use http_client::github::{GitHubLspBinaryVersion, latest_github_release};
-use http_client::github_download::download_server_binary;
+use http_client::{
+    github::{AssetKind, GitHubLspBinaryVersion, latest_github_release},
+    github_download::download_server_binary,
+};
 pub use language::*;
 use lsp::{InitializeParams, LanguageServerBinary, LanguageServerBinaryOptions};
-use project::lsp_store::rust_analyzer_ext::CARGO_DIAGNOSTICS_SOURCE_NAME;
-use project::project_settings::ProjectSettings;
+use paths::rel_path::RelPath;
+use project::{lsp_store::rust_analyzer_ext::CARGO_DIAGNOSTICS_SOURCE_NAME, project_settings::ProjectSettings};
 use regex::Regex;
 use serde_json::json;
 use settings::Settings as _;
 use smallvec::SmallVec;
 use smol::fs::{self};
-use std::cmp::Reverse;
-use std::fmt::Display;
-use std::ops::Range;
-use std::process::Stdio;
 use std::{
     borrow::Cow,
+    cmp::Reverse,
+    fmt::Display,
+    ops::Range,
     path::{Path, PathBuf},
+    process::Stdio,
     sync::{Arc, LazyLock},
 };
 use task::{TaskTemplate, TaskTemplates, TaskVariables, VariableName};
-use util::fs::{make_file_executable, remove_matching};
-use util::merge_json_value_into;
-use util::rel_path::RelPath;
-use util::{ResultExt, maybe};
-
-use crate::helpers::{verify_metadata, write_metadata};
-use crate::language_settings::language_settings;
+use util::{
+    ResultExt,
+    fs::{make_file_executable, remove_matching},
+    maybe, merge_json_value_into,
+};
 
 pub struct RustLspAdapter;
 
@@ -136,7 +139,7 @@ impl RustLspAdapter {
         use futures::pin_mut;
 
         async fn from_ldd_version() -> Option<LibcType> {
-            use util::command::new_smol_command;
+            use command::new_smol_command;
 
             let ldd_output = new_smol_command("ldd").arg("--version").output().await.ok()?;
             let ldd_version = String::from_utf8_lossy(&ldd_output.stdout);
@@ -498,7 +501,7 @@ impl LspAdapter for RustLspAdapter {
             .0
             .ok()?;
 
-        let mut command = util::command::new_smol_command(&binary.path);
+        let mut command = command::new_smol_command(&binary.path);
         command
             .arg("--print-config-schema")
             .stdout(Stdio::piped())
@@ -999,7 +1002,7 @@ async fn target_info_from_abs_path(
     abs_path: &Path,
     project_env: Option<&HashMap<String, String>>,
 ) -> Option<(Option<TargetInfo>, Arc<Path>)> {
-    let mut command = util::command::new_smol_command("cargo");
+    let mut command = command::new_smol_command("cargo");
     if let Some(envs) = project_env {
         command.envs(envs);
     }
@@ -1071,7 +1074,7 @@ async fn human_readable_package_name(
     package_directory: &Path,
     project_env: Option<&HashMap<String, String>>,
 ) -> Option<String> {
-    let mut command = util::command::new_smol_command("cargo");
+    let mut command = command::new_smol_command("cargo");
     if let Some(envs) = project_env {
         command.envs(envs);
     }

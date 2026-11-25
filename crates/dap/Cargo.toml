@@ -17,6 +17,7 @@ async-pipe = { workspace = true, optional = true }
 async-tar.workspace = true
 async-trait.workspace = true
 collections.workspace = true
+command.workspace = true
 dap-types.workspace = true
 fs.workspace = true
 futures.workspace = true
@@ -33,6 +34,7 @@ schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 settings.workspace = true
+shell.workspace = true
 smallvec.workspace = true
 smol.workspace = true
 task.workspace = true

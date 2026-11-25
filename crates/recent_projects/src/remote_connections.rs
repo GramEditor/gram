@@ -1,8 +1,3 @@
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
-
 use anyhow::{Context as _, Result};
 use askpass::EncryptedPassword;
 use editor::Editor;
@@ -12,18 +7,21 @@ use gpui::{
     AnyWindowHandle, App, AsyncApp, DismissEvent, Entity, EventEmitter, Focusable, FontFeatures, ParentElement as _,
     PromptLevel, Render, SharedString, Task, TextStyleRefinement, WeakEntity,
 };
-
 use language::CursorShape;
 use markdown::{Markdown, MarkdownElement, style::MarkdownStyle};
+use paths::PathWithPosition;
 use remote::{ConnectionIdentifier, RemoteClient, RemoteConnection, RemoteConnectionOptions, SshConnectionOptions};
 pub use settings::SshConnection;
 use settings::{ExtendingVec, RegisterSetting, Settings, WslConnection};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use theme::ThemeSettings;
 use ui::{
     ActiveTheme, Color, CommonAnimationExt, Context, Icon, IconName, IconSize, InteractiveElement, IntoElement, Label,
     LabelCommon, Styled, Window, prelude::*,
 };
-use util::paths::PathWithPosition;
 use workspace::{AppState, ModalView, Workspace};
 
 #[derive(RegisterSetting)]
@@ -734,7 +732,7 @@ async fn path_exists(connection: &Arc<dyn RemoteConnection>, path: &Path) -> boo
     ) else {
         return false;
     };
-    let Ok(mut child) = util::command::new_smol_command(command.program)
+    let Ok(mut child) = command::new_smol_command(command.program)
         .args(command.args)
         .envs(command.env)
         .spawn()

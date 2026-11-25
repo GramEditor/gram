@@ -1,12 +1,13 @@
 use anyhow::{Context as _, Result};
 use async_trait::async_trait;
+use command::new_smol_command;
 use dap::{DapLocator, DebugRequest, adapters::DebugAdapterName};
 use gpui::SharedString;
 use serde_json::{Value, json};
+use shell::builder::ShellBuilder;
 use smol::{Timer, io::AsyncReadExt, process::Stdio};
 use std::time::Duration;
-use task::{BuildTaskDefinition, DebugScenario, ShellBuilder, SpawnInTerminal, TaskTemplate};
-use util::command::new_smol_command;
+use task::{BuildTaskDefinition, DebugScenario, SpawnInTerminal, TaskTemplate};
 
 pub(crate) struct CargoLocator;
 
@@ -122,7 +123,7 @@ impl DapLocator for CargoLocator {
                 .chain(Some("--message-format=json".to_owned()))
                 .collect::<Vec<_>>(),
         );
-        let mut child = util::command::new_smol_command(program)
+        let mut child = command::new_smol_command(program)
             .args(args)
             .envs(build_config.env.iter().map(|(k, v)| (k.clone(), v.clone())))
             .current_dir(cwd)

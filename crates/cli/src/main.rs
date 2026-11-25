@@ -11,6 +11,7 @@ use anyhow::{Context as _, Result};
 use clap::{CommandFactory as _, Parser};
 use cli::{CliRequest, CliResponse, IpcHandshake, ipc::IpcOneShotServer};
 use parking_lot::Mutex;
+use paths::PathWithPosition;
 use std::{
     env,
     ffi::OsStr,
@@ -21,7 +22,6 @@ use std::{
     thread::{self, JoinHandle},
 };
 use tempfile::NamedTempFile;
-use util::paths::PathWithPosition;
 
 #[cfg(any(target_os = "linux", target_os = "freebsd"))]
 use std::io::IsTerminal;
@@ -175,9 +175,9 @@ fn parse_path_with_position(argument_str: &str) -> anyhow::Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use paths::sanitized_path::SanitizedPath;
     use serde_json::json;
     use util::path;
-    use util::paths::SanitizedPath;
     use util::test::TempTree;
 
     macro_rules! assert_path_eq {
@@ -311,7 +311,7 @@ fn parse_path_in_wsl(source: &str, wsl: &str) -> Result<String> {
 
     let command = [OsStr::new("realpath"), OsStr::new("-s"), source.path.as_ref()];
 
-    let output = util::command::new_std_command("wsl.exe")
+    let output = command::new_std_command("wsl.exe")
         .args(&args)
         .arg("--exec")
         .args(command)
@@ -319,7 +319,7 @@ fn parse_path_in_wsl(source: &str, wsl: &str) -> Result<String> {
     let result = if output.status.success() {
         String::from_utf8_lossy(&output.stdout).to_string()
     } else {
-        let fallback = util::command::new_std_command("wsl.exe")
+        let fallback = command::new_std_command("wsl.exe")
             .args(&args)
             .arg("--")
             .args(command)
@@ -372,7 +372,7 @@ fn main() -> Result<()> {
     // Set custom data directory before any path operations
     let user_data_dir = args.user_data_dir.clone();
     if let Some(dir) = &user_data_dir {
-        paths::set_custom_data_dir(dir);
+        paths::locations::set_data_dir(dir);
     }
 
     #[cfg(target_os = "linux")]
@@ -705,7 +705,7 @@ mod linux {
         fn launch(&self, ipc_url: String, user_data_dir: Option<&str>) -> anyhow::Result<()> {
             let data_dir = user_data_dir
                 .map(PathBuf::from)
-                .unwrap_or_else(|| paths::data_dir().clone());
+                .unwrap_or_else(|| paths::locations::data_dir().to_owned());
 
             let sock_path = data_dir.join(format!("gram-{}.sock", *release_channel::RELEASE_CHANNEL_NAME));
             let sock = UnixDatagram::unbound()?;

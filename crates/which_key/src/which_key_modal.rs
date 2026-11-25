@@ -1,5 +1,6 @@
 //! Modal implementation for the which-key display.
 
+use app_actions::Spawn;
 use gpui::prelude::FluentBuilder;
 use gpui::{
     App, Context, DismissEvent, EventEmitter, FocusHandle, Focusable, FontWeight, Keystroke, ScrollHandle,
@@ -10,8 +11,6 @@ use std::collections::HashMap;
 use theme::ThemeSettings;
 use ui::{Divider, DividerColor, DynamicSpacing, LabelSize, WithScrollbar, prelude::*, text_for_keystrokes};
 use workspace::{ModalView, Workspace};
-
-use app_actions::Spawn;
 
 use crate::FILTERED_KEYSTROKES;
 

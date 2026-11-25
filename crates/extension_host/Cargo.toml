@@ -52,6 +52,7 @@ util.workspace = true
 wasmparser.workspace = true
 wasmtime.workspace = true
 wasmtime-wasi.workspace = true
+command.workspace = true
 
 [dev-dependencies]
 criterion.workspace = true

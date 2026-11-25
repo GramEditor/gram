@@ -16,9 +16,10 @@ use rpc::{
     proto::{self},
 };
 
+use paths::rel_path::RelPath;
 use std::{io, sync::Arc, time::Instant};
 use text::{BufferId, ReplicaId};
-use util::{ResultExt as _, debug_panic, maybe, rel_path::RelPath};
+use util::{ResultExt as _, debug_panic, maybe};
 use worktree::{File, FileType, PathChange, ProjectEntryId, Worktree, WorktreeId};
 
 /// A set of open buffers.

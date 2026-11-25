@@ -29,14 +29,14 @@ use gpui::{App, AppContext, AsyncApp, Context, Entity, EventEmitter, SharedStrin
 use http_client::HttpClient;
 use language::{Buffer, LanguageToolchainStore};
 use node_runtime::NodeRuntime;
-use settings::InlayHintKind;
-
+use paths::rel_path::RelPath;
 use remote::RemoteClient;
 use rpc::{
     AnyProtoClient, TypedEnvelope,
     proto::{self},
 };
 use serde::{Deserialize, Serialize};
+use settings::InlayHintKind;
 use settings::{Settings, SettingsLocation, WorktreeId};
 use std::{
     borrow::Borrow,
@@ -47,7 +47,7 @@ use std::{
     sync::{Arc, Once},
 };
 use task::{DebugScenario, SpawnInTerminal, TaskContext, TaskTemplate};
-use util::{ResultExt as _, rel_path::RelPath};
+use util::ResultExt as _;
 use worktree::Worktree;
 
 #[derive(Debug)]
@@ -178,7 +178,7 @@ impl DapStore {
         cx: &mut Context<Self>,
     ) -> Self {
         cx.background_spawn(async move {
-            let dir = paths::debug_adapters_dir().join("js-debug-companion");
+            let dir = paths::locations::debug_adapters_dir().join("js-debug-companion");
 
             let mut children = fs.read_dir(&dir).await?.try_collect::<Vec<_>>().await?;
             children.sort_by_key(|child| semver::Version::parse(child.file_name()?.to_str()?).ok());

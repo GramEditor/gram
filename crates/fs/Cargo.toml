@@ -36,6 +36,7 @@ trash.workspace = true
 tokio.workspace = true
 tokio-util.workspace = true
 util.workspace = true
+command.workspace = true
 
 [dev-dependencies]
 git = { workspace = true, features = ["test-support"] }

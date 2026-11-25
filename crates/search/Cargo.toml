@@ -27,6 +27,7 @@ language.workspace = true
 log.workspace = true
 menu.workspace = true
 multi_buffer.workspace = true
+paths.workspace = true
 picker.workspace = true
 project.workspace = true
 rpc.workspace = true

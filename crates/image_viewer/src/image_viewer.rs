@@ -13,12 +13,12 @@ use gpui::{
     Task, WeakEntity, Window, actions, canvas, div, img, opaque_grey, point, px, size,
 };
 use language::File as _;
+use paths::PathExt;
 use persistence::IMAGE_VIEWER;
 use project::{ImageItem, Project, ProjectPath, image_store::ImageItemEvent};
 use settings::Settings;
 use theme::{Theme, ThemeSettings};
 use ui::{Tooltip, prelude::*};
-use util::paths::PathExt;
 use workspace::{
     ItemId, ItemSettings, Pane, ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView, Workspace, WorkspaceId,
     delete_unloaded_items,

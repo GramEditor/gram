@@ -246,7 +246,8 @@ impl DapLocator for GoLocator {
 mod tests {
     use super::*;
     use gpui::TestAppContext;
-    use task::{HideStrategy, RevealStrategy, RevealTarget, SaveStrategy, Shell, TaskTemplate};
+    use shell::Shell;
+    use task::{HideStrategy, RevealStrategy, RevealTarget, SaveStrategy, TaskTemplate};
 
     #[gpui::test]
     async fn test_create_scenario_for_go_build(_: &mut TestAppContext) {

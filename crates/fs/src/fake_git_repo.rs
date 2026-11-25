@@ -17,13 +17,13 @@ use git::{
 use gpui::{AsyncApp, BackgroundExecutor, SharedString, Task, TaskLabel};
 use ignore::gitignore::GitignoreBuilder;
 use parking_lot::Mutex;
+use paths::{PathStyle, rel_path::RelPath};
 use rope::Rope;
 use smol::{channel::Sender, future::FutureExt as _};
 use std::{
     path::PathBuf,
     sync::{Arc, LazyLock},
 };
-use util::{paths::PathStyle, rel_path::RelPath};
 
 pub static LOAD_INDEX_TEXT_TASK: LazyLock<TaskLabel> = LazyLock::new(TaskLabel::new);
 pub static LOAD_HEAD_TEXT_TASK: LazyLock<TaskLabel> = LazyLock::new(TaskLabel::new);

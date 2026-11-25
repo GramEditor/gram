@@ -1,3 +1,14 @@
+use crate::{
+    ToggleMarksView, ToggleRegistersView, Vim,
+    motion::{EndOfDocument, Motion, MotionKind, StartOfDocument},
+    normal::{
+        JoinLines,
+        search::{FindCommand, ReplaceCommand, Replacement},
+    },
+    object::Object,
+    state::{Mark, Mode},
+    visual::VisualDeleteLine,
+};
 use anyhow::{Result, anyhow};
 use app_actions::{OpenDocs, RevealTarget};
 use collections::{HashMap, HashSet};
@@ -12,6 +23,10 @@ use gpui::{Action, App, AppContext as _, Context, Global, Keystroke, Task, WeakE
 use itertools::Itertools;
 use language::Point;
 use multi_buffer::MultiBufferRow;
+use paths::{
+    PathStyle,
+    rel_path::{RelPath, RelPathBuf},
+};
 use project::ProjectPath;
 use regex::Regex;
 use schemars::JsonSchema;
@@ -29,24 +44,10 @@ use std::{
 };
 use task::{HideStrategy, RevealStrategy, SaveStrategy, SpawnInTerminal, TaskId};
 use ui::ActiveTheme;
-use util::{
-    ResultExt,
-    paths::PathStyle,
-    rel_path::{RelPath, RelPathBuf},
-};
-use workspace::{Item, SaveIntent, Workspace, notifications::NotifyResultExt};
-use workspace::{SplitDirection, notifications::DetachAndPromptErr};
-
-use crate::{
-    ToggleMarksView, ToggleRegistersView, Vim,
-    motion::{EndOfDocument, Motion, MotionKind, StartOfDocument},
-    normal::{
-        JoinLines,
-        search::{FindCommand, ReplaceCommand, Replacement},
-    },
-    object::Object,
-    state::{Mark, Mode},
-    visual::VisualDeleteLine,
+use util::ResultExt;
+use workspace::{
+    Item, SaveIntent, SplitDirection, Workspace,
+    notifications::{DetachAndPromptErr, NotifyResultExt},
 };
 
 /// Goes to the specified line number in the editor.

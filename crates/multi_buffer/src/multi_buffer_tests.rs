@@ -4,13 +4,14 @@ use gpui::{App, TestAppContext};
 use indoc::indoc;
 use language::{Buffer, Rope};
 use parking_lot::RwLock;
+use paths::rel_path::unix_rel_path;
 use rand::prelude::*;
 use settings::SettingsStore;
-use std::env;
-use std::time::{Duration, Instant};
-use util::RandomCharIter;
-use util::rel_path::rel_path;
-use util::test::sample_text;
+use std::{
+    env,
+    time::{Duration, Instant},
+};
+use util::{RandomCharIter, test::sample_text};
 
 #[ctor::ctor(unsafe)]
 fn init_logger() {
@@ -1611,7 +1612,7 @@ fn test_set_excerpts_for_buffer_ordering(cx: &mut TestAppContext) {
             cx,
         )
     });
-    let path1: PathKey = PathKey::with_sort_prefix(0, rel_path("root").to_arc());
+    let path1: PathKey = PathKey::with_sort_prefix(0, unix_rel_path("root").to_arc());
 
     let multibuffer = cx.new(|_| MultiBuffer::new(Capability::ReadWrite));
     multibuffer.update(cx, |multibuffer, cx| {
@@ -1698,7 +1699,7 @@ fn test_set_excerpts_for_buffer(cx: &mut TestAppContext) {
             cx,
         )
     });
-    let path1: PathKey = PathKey::with_sort_prefix(0, rel_path("root").to_arc());
+    let path1: PathKey = PathKey::with_sort_prefix(0, unix_rel_path("root").to_arc());
     let buf2 = cx.new(|cx| {
         Buffer::local(
             indoc! {
@@ -1717,7 +1718,7 @@ fn test_set_excerpts_for_buffer(cx: &mut TestAppContext) {
             cx,
         )
     });
-    let path2 = PathKey::with_sort_prefix(1, rel_path("root").to_arc());
+    let path2 = PathKey::with_sort_prefix(1, unix_rel_path("root").to_arc());
 
     let multibuffer = cx.new(|_| MultiBuffer::new(Capability::ReadWrite));
     multibuffer.update(cx, |multibuffer, cx| {
@@ -1870,7 +1871,7 @@ fn test_set_excerpts_for_buffer_rename(cx: &mut TestAppContext) {
             cx,
         )
     });
-    let path: PathKey = PathKey::with_sort_prefix(0, rel_path("root").to_arc());
+    let path: PathKey = PathKey::with_sort_prefix(0, unix_rel_path("root").to_arc());
     let buf2 = cx.new(|cx| {
         Buffer::local(
             indoc! {

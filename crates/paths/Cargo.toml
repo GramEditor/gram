@@ -2,18 +2,30 @@
 name = "paths"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
+description.workspace = true
+documentation.workspace = true
+homepage.workspace = true
 repository.workspace = true
-license = "GPL-3.0-or-later"
+license.workspace = true
 publish.workspace = true
-
-[lib]
-doctest = false
-path = "src/paths.rs"
 
 [dependencies]
 dirs.workspace = true
 ignore.workspace = true
-util.workspace = true
+serde.workspace = true
+regex.workspace = true
+anyhow.workspace = true
+globset.workspace = true
+itertools.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+util_macros.workspace = true
+
+[target."cfg(windows)".dependencies]
+dunce.workspace = true
+tendril.workspace = true
 
 [features]
 test-support = []

@@ -1,9 +1,3 @@
-mod persistence;
-pub mod terminal_element;
-pub mod terminal_panel;
-mod terminal_path_like_target;
-pub mod terminal_scrollbar;
-
 use editor::{Editor, EditorSettings, actions::SelectAll, blink_manager::BlinkManager};
 use gpui::{
     Action, AnyElement, App, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, KeyContext, KeyDownEvent,
@@ -15,6 +9,14 @@ use project::{Project, search::SearchQuery};
 use schemars::JsonSchema;
 use serde::Deserialize;
 use settings::{Settings, SettingsStore, TerminalBlink, WorkingDirectory};
+use std::{
+    cmp,
+    ops::{Range, RangeInclusive},
+    path::{Path, PathBuf},
+    rc::Rc,
+    sync::Arc,
+    time::Duration,
+};
 use task::TaskId;
 use terminal::{
     Clear, Copy, Event, HoveredWord, MaybeNavigationTarget, Paste, PastePrimarySelection, ScrollLineDown, ScrollLineUp,
@@ -44,14 +46,11 @@ use workspace::{
     searchable::{Direction, SearchEvent, SearchOptions, SearchableItem, SearchableItemHandle},
 };
 
-use std::{
-    cmp,
-    ops::{Range, RangeInclusive},
-    path::{Path, PathBuf},
-    rc::Rc,
-    sync::Arc,
-    time::Duration,
-};
+mod persistence;
+pub mod terminal_element;
+pub mod terminal_panel;
+mod terminal_path_like_target;
+pub mod terminal_scrollbar;
 
 struct ImeState {
     marked_text: String,
@@ -1618,9 +1617,9 @@ fn first_project_directory(workspace: &Workspace, cx: &App) -> Option<PathBuf> {
 mod tests {
     use super::*;
     use gpui::TestAppContext;
+    use paths::rel_path::RelPath;
     use project::{Entry, Project, ProjectPath, Worktree};
     use std::path::Path;
-    use util::rel_path::RelPath;
     use workspace::AppState;
 
     // Working directory calculation tests

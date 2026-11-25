@@ -11,6 +11,7 @@ mod vscode_format;
 use collections::{HashMap, HashSet, hash_map};
 use gpui::SharedString;
 use serde::{Deserialize, Serialize};
+use shell::Shell;
 use std::borrow::Cow;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -25,8 +26,6 @@ pub use task_template::{
     DebugArgsRequest, HideStrategy, RevealStrategy, SaveStrategy, TaskTemplate, TaskTemplates,
     substitute_variables_in_map, substitute_variables_in_str,
 };
-pub use util::shell::{Shell, ShellKind};
-pub use util::shell_builder::ShellBuilder;
 pub use vscode_debug_format::VsCodeDebugTaskFile;
 pub use vscode_format::VsCodeTaskFile;
 

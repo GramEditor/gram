@@ -1,7 +1,4 @@
-use std::path::Path;
-use std::sync::Arc;
-use std::time::Duration;
-
+use crate::{StackTraceView, ToggleUserFrames, session::running::RunningState};
 use anyhow::{Context as _, Result, anyhow};
 use dap::StackFrameId;
 use db::kvp::KEY_VALUE_STORE;
@@ -9,20 +6,19 @@ use gpui::{
     Action, AnyElement, Entity, EventEmitter, FocusHandle, Focusable, FontWeight, ListState, Subscription, Task,
     WeakEntity, list,
 };
-use util::{
-    debug_panic,
-    paths::{PathStyle, is_absolute},
-};
-
-use crate::{StackTraceView, ToggleUserFrames};
 use language::PointUtf16;
-use project::debugger::breakpoint_store::ActiveStackFrame;
-use project::debugger::session::{Session, SessionEvent, StackFrame, ThreadStatus};
-use project::{ProjectItem, ProjectPath};
+use paths::{PathStyle, is_absolute};
+use project::{
+    ProjectItem, ProjectPath,
+    debugger::{
+        breakpoint_store::ActiveStackFrame,
+        session::{Session, SessionEvent, StackFrame, ThreadStatus},
+    },
+};
+use std::{path::Path, sync::Arc, time::Duration};
 use ui::{Tooltip, WithScrollbar, prelude::*};
+use util::debug_panic;
 use workspace::{ItemHandle, Workspace};
-
-use super::RunningState;
 
 #[derive(Debug)]
 pub enum StackFrameListEvent {

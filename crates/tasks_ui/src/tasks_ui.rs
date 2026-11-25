@@ -1,9 +1,8 @@
-use std::{path::Path, sync::Arc};
-
 use collections::HashMap;
 use editor::Editor;
 use gpui::{App, AppContext as _, Context, Entity, Task, Window};
 use project::{Location, TaskContexts, TaskSourceKind, Worktree};
+use std::{path::Path, sync::Arc};
 use task::{RevealTarget, TaskContext, TaskId, TaskTemplate, TaskVariables, VariableName};
 use workspace::Workspace;
 
@@ -337,19 +336,18 @@ fn worktree_context(worktree_abs_path: &Path) -> TaskContext {
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::HashMap, sync::Arc};
-
+    use crate::task_contexts;
     use editor::{Editor, MultiBufferOffset, SelectionEffects};
     use gpui::TestAppContext;
     use language::{Language, LanguageConfig};
+    use paths::rel_path::unix_rel_path;
     use project::{BasicContextProvider, FakeFs, Project, task_store::TaskStore};
     use serde_json::json;
+    use std::{collections::HashMap, sync::Arc};
     use task::{TaskContext, TaskVariables, VariableName};
     use ui::VisualContext;
-    use util::{path, rel_path::rel_path};
+    use util::path;
     use workspace::{AppState, Workspace};
-
-    use crate::task_contexts;
 
     #[gpui::test]
     async fn test_default_language_context(cx: &mut TestAppContext) {
@@ -416,8 +414,9 @@ mod tests {
 
         let buffer1 = workspace
             .update(cx, |this, cx| {
-                this.project()
-                    .update(cx, |this, cx| this.open_buffer((worktree_id, rel_path("a.ts")), cx))
+                this.project().update(cx, |this, cx| {
+                    this.open_buffer((worktree_id, unix_rel_path("a.ts")), cx)
+                })
             })
             .await
             .unwrap();
@@ -426,7 +425,7 @@ mod tests {
         let buffer2 = workspace
             .update(cx, |this, cx| {
                 this.project().update(cx, |this, cx| {
-                    this.open_buffer((worktree_id, rel_path("rust/b.rs")), cx)
+                    this.open_buffer((worktree_id, unix_rel_path("rust/b.rs")), cx)
                 })
             })
             .await

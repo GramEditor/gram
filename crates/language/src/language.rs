@@ -48,6 +48,7 @@ use gpui::{App, AsyncApp, Entity, SharedString};
 use http_client::HttpClient;
 use lsp::{CodeActionKind, InitializeParams, LanguageServerBinary, LanguageServerBinaryOptions, Uri};
 use parking_lot::Mutex;
+use paths::rel_path::RelPath;
 use regex::Regex;
 use schemars::{JsonSchema, SchemaGenerator, json_schema};
 use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
@@ -56,7 +57,7 @@ use settings::WorktreeId;
 use smol::future::FutureExt;
 use theme::SyntaxTheme;
 use tree_sitter::{self, Query, QueryCursor, WasmStore, wasmtime};
-use util::{rel_path::RelPath, serde::default_true};
+use util::serde::default_true;
 
 // Internal dependencies
 use crate::language_settings::SoftWrap;

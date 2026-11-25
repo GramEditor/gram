@@ -1,7 +1,9 @@
-use std::{path::PathBuf, str::FromStr, sync::Arc};
-
+use crate::{
+    ProjectEnvironment, ProjectPath,
+    manifest_tree::{ManifestQueryDelegate, ManifestTree},
+    worktree_store::WorktreeStore,
+};
 use anyhow::{Context as _, Result};
-
 use async_trait::async_trait;
 use collections::{BTreeMap, IndexSet};
 use fs::Fs;
@@ -9,16 +11,12 @@ use gpui::{App, AppContext as _, AsyncApp, Context, Entity, EventEmitter, Subscr
 use language::{
     LanguageName, LanguageRegistry, LanguageToolchainStore, ManifestDelegate, Toolchain, ToolchainList, ToolchainScope,
 };
+use paths::rel_path::RelPath;
 use rpc::{AnyProtoClient, TypedEnvelope, proto};
 use settings::WorktreeId;
-use task::Shell;
-use util::{ResultExt as _, rel_path::RelPath};
-
-use crate::{
-    ProjectEnvironment, ProjectPath,
-    manifest_tree::{ManifestQueryDelegate, ManifestTree},
-    worktree_store::WorktreeStore,
-};
+use shell::Shell;
+use std::{path::PathBuf, str::FromStr, sync::Arc};
+use util::ResultExt as _;
 
 pub struct ToolchainStore {
     mode: ToolchainStoreInner,

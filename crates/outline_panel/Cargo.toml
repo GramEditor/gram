@@ -27,6 +27,7 @@ language.workspace = true
 log.workspace = true
 menu.workspace = true
 outline.workspace = true
+paths.workspace = true
 project.workspace = true
 search.workspace = true
 serde.workspace = true

@@ -24,6 +24,7 @@ use gpui::{
 };
 use language::{Anchor, Buffer, Capability, OffsetRangeExt};
 use multi_buffer::{MultiBuffer, PathKey};
+use paths::rel_path::RelPath;
 use project::{
     Project, ProjectPath,
     git_store::{
@@ -34,11 +35,13 @@ use project::{
 };
 use settings::{Settings, SettingsStore};
 use smol::future::yield_now;
-use std::any::{Any, TypeId};
-use std::sync::Arc;
+use std::{
+    any::{Any, TypeId},
+    sync::Arc,
+};
 use theme::ActiveTheme;
 use ui::{KeyBinding, Tooltip, prelude::*, vertical_divider};
-use util::{ResultExt as _, rel_path::RelPath};
+use util::ResultExt;
 use workspace::{
     CloseActiveItem, ItemNavHistory, SerializableItem, ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView,
     Workspace,
@@ -588,7 +591,7 @@ impl ProjectDiff {
     }
 
     #[cfg(any(test, feature = "test-support"))]
-    pub fn excerpt_paths(&self, cx: &App) -> Vec<std::sync::Arc<util::rel_path::RelPath>> {
+    pub fn excerpt_paths(&self, cx: &App) -> Vec<std::sync::Arc<paths::rel_path::RelPath>> {
         self.multibuffer.read(cx).paths().map(|key| key.path.clone()).collect()
     }
 }
@@ -1410,15 +1413,13 @@ mod tests {
     use editor::test::editor_test_context::{EditorTestContext, assert_state_with_diff};
     use git::status::{TrackedStatus, UnmergedStatus, UnmergedStatusCode};
     use gpui::TestAppContext;
+    use paths::rel_path::{RelPath, unix_rel_path};
     use project::FakeFs;
     use serde_json::json;
     use settings::SettingsStore;
     use std::path::Path;
     use unindent::Unindent as _;
-    use util::{
-        path,
-        rel_path::{RelPath, rel_path},
-    };
+    use util::path;
 
     use super::*;
 
@@ -1533,7 +1534,7 @@ mod tests {
 
         let editor = cx.update_window_entity(&diff, |diff, window, cx| {
             diff.move_to_path(
-                PathKey::with_sort_prefix(TRACKED_SORT_PREFIX, rel_path("foo").to_arc()),
+                PathKey::with_sort_prefix(TRACKED_SORT_PREFIX, unix_rel_path("foo").to_arc()),
                 window,
                 cx,
             );
@@ -1554,7 +1555,7 @@ mod tests {
 
         let editor = cx.update_window_entity(&diff, |diff, window, cx| {
             diff.move_to_path(
-                PathKey::with_sort_prefix(TRACKED_SORT_PREFIX, rel_path("bar").to_arc()),
+                PathKey::with_sort_prefix(TRACKED_SORT_PREFIX, unix_rel_path("bar").to_arc()),
                 window,
                 cx,
             );
@@ -2111,15 +2112,15 @@ mod tests {
             statuses,
             HashMap::from_iter([
                 (
-                    rel_path("a.txt").to_arc(),
+                    unix_rel_path("a.txt").to_arc(),
                     Some(FileStatus::Tracked(TrackedStatus {
                         index_status: git::status::StatusCode::Modified,
                         worktree_status: git::status::StatusCode::Modified
                     }))
                 ),
-                (rel_path("b.txt").to_arc(), Some(FileStatus::Untracked)),
+                (unix_rel_path("b.txt").to_arc(), Some(FileStatus::Untracked)),
                 (
-                    rel_path("d.txt").to_arc(),
+                    unix_rel_path("d.txt").to_arc(),
                     Some(FileStatus::Tracked(TrackedStatus {
                         index_status: git::status::StatusCode::Added,
                         worktree_status: git::status::StatusCode::Added
@@ -2153,7 +2154,7 @@ mod tests {
 
         let _editor = workspace
             .update_in(cx, |workspace, window, cx| {
-                workspace.open_path((worktree_id, rel_path("README.md")), None, true, window, cx)
+                workspace.open_path((worktree_id, unix_rel_path("README.md")), None, true, window, cx)
             })
             .await
             .unwrap()

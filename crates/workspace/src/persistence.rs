@@ -1,13 +1,10 @@
 pub mod model;
 
-use std::{
-    borrow::Cow,
-    collections::BTreeMap,
-    path::{Path, PathBuf},
-    str::FromStr,
-    sync::Arc,
+use crate::{
+    WorkspaceId,
+    path_list::{PathList, SerializedPathList},
+    persistence::model::RemoteConnectionKind,
 };
-
 use anyhow::{Context as _, Result, bail};
 use collections::{HashMap, IndexSet};
 use db::{
@@ -17,10 +14,10 @@ use db::{
     sqlez_macros::sql,
 };
 use gpui::{Axis, Bounds, Task, WindowBounds, WindowId, point, size};
-use project::debugger::breakpoint_store::{BreakpointState, SourceBreakpoint};
-
 use language::{LanguageName, Toolchain, ToolchainScope};
+use paths::rel_path::RelPath;
 use project::WorktreeId;
+use project::debugger::breakpoint_store::{BreakpointState, SourceBreakpoint};
 use remote::{RemoteConnectionOptions, SshConnectionOptions, WslConnectionOptions};
 use serde::{Deserialize, Serialize};
 use sqlez::{
@@ -28,16 +25,16 @@ use sqlez::{
     statement::Statement,
     thread_safe_connection::ThreadSafeConnection,
 };
-
-use ui::{App, SharedString, px};
-use util::{ResultExt, maybe, rel_path::RelPath};
-use uuid::Uuid;
-
-use crate::{
-    WorkspaceId,
-    path_list::{PathList, SerializedPathList},
-    persistence::model::RemoteConnectionKind,
+use std::{
+    borrow::Cow,
+    collections::BTreeMap,
+    path::{Path, PathBuf},
+    str::FromStr,
+    sync::Arc,
 };
+use ui::{App, SharedString, px};
+use util::{ResultExt, maybe};
+use uuid::Uuid;
 
 use model::{
     GroupId, ItemId, PaneId, RemoteConnectionId, SerializedItem, SerializedPane, SerializedPaneGroup,
@@ -1398,7 +1395,7 @@ impl WorkspaceDb {
                 paths
                     .paths()
                     .iter()
-                    .any(|path| util::paths::WslPath::from_path(path).is_some())
+                    .any(|path| paths::wsl_path::WslPath::from_path(path).is_some())
             } else {
                 false
             };

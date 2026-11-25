@@ -1,3 +1,4 @@
+use crate::PackageJsonData;
 use anyhow::{Context as _, Result, bail};
 use async_compression::futures::bufread::GzipDecoder;
 use async_tar::Archive;
@@ -12,6 +13,7 @@ use language::{
 };
 use lsp::{LanguageServerBinary, LanguageServerName, Uri};
 use node_runtime::{NodeRuntime, VersionStrategy};
+use paths::{PathStyle, rel_path::RelPath};
 use project::lsp_store::language_server_settings;
 use serde_json::{Value, json};
 use settings::SettingsLocation;
@@ -29,12 +31,7 @@ use std::{
 };
 use task::{TaskTemplate, TaskTemplates, VariableName};
 use tokio_util::compat::FuturesAsyncReadCompatExt;
-use util::{
-    ResultExt, archive::extract_zip, fs::remove_matching, maybe, merge_json_value_into, paths::PathStyle,
-    rel_path::RelPath,
-};
-
-use crate::PackageJsonData;
+use util::{ResultExt, archive::extract_zip, fs::remove_matching, maybe, merge_json_value_into};
 
 const SERVER_PATH: &str = "node_modules/vscode-langservers-extracted/bin/vscode-json-language-server";
 

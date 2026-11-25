@@ -1,6 +1,7 @@
 use crate::*;
 use anyhow::{Context as _, bail};
 use collections::HashMap;
+use command::new_smol_command;
 use dap::settings::DapSettings;
 use dap::{DebugRequest, StartDebuggingRequestArguments, adapters::DebugTaskDefinition};
 use fs::RemoveOptions;
@@ -8,7 +9,7 @@ use futures::{StreamExt, TryStreamExt};
 use gpui::http_client::AsyncBody;
 use gpui::{AsyncApp, SharedString};
 use language::{LanguageName, Toolchain};
-use paths::debug_adapters_dir;
+use paths::{PathStyle, locations::debug_adapters_dir, rel_path::RelPath};
 use serde_json::Value;
 use smol::fs::File;
 use smol::io::AsyncReadExt;
@@ -20,8 +21,7 @@ use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
 };
-use util::command::new_smol_command;
-use util::{ResultExt, paths::PathStyle, rel_path::RelPath};
+use util::ResultExt;
 
 enum DebugpyLaunchMode<'a> {
     Normal,
@@ -54,7 +54,7 @@ impl PythonDebugAdapter {
             );
             vec![user_installed_path.to_string_lossy().into_owned()]
         } else {
-            let adapter_path = paths::debug_adapters_dir().join(Self::DEBUG_ADAPTER_NAME.as_ref());
+            let adapter_path = debug_adapters_dir().join(Self::DEBUG_ADAPTER_NAME.as_ref());
             let path = adapter_path
                 .join("debugpy")
                 .join("adapter")
@@ -116,7 +116,7 @@ impl PythonDebugAdapter {
         std::fs::create_dir_all(&download_dir)?;
         let venv_python = self.base_venv_path(toolchain, delegate).await?;
 
-        let installation_succeeded = util::command::new_smol_command(venv_python.as_ref())
+        let installation_succeeded = command::new_smol_command(venv_python.as_ref())
             .args([
                 "-m",
                 "pip",
@@ -239,8 +239,8 @@ impl PythonDebugAdapter {
                     })?
                 };
 
-                let debug_adapter_path = paths::debug_adapters_dir().join(Self::DEBUG_ADAPTER_NAME.as_ref());
-                let output = util::command::new_smol_command(&base_python)
+                let debug_adapter_path = debug_adapters_dir().join(Self::DEBUG_ADAPTER_NAME.as_ref());
+                let output = command::new_smol_command(&base_python)
                     .args(["-m", "venv", "gram_base_venv"])
                     .current_dir(
                         &debug_adapter_path,
@@ -264,7 +264,7 @@ impl PythonDebugAdapter {
                     "bin/python3"
                 };
                 Ok(Arc::from(
-                    paths::debug_adapters_dir()
+                    debug_adapters_dir()
                         .join(Self::DEBUG_ADAPTER_NAME.as_ref())
                         .join("gram_base_venv")
                         .join(PYTHON_PATH)

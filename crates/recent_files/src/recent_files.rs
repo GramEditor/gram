@@ -1,21 +1,21 @@
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
-
 use file_icons::FileIcons;
 use fuzzy::{StringMatch, StringMatchCandidate};
 use gpui::{
     Action, AppContext, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, Modifiers,
     ModifiersChangedEvent, Task, WeakEntity, actions, rems,
 };
+use paths::PathExt;
 use picker::{Picker, PickerDelegate};
 use postage::{sink::Sink, stream::Stream};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use ui::{
     App, Color, FluentBuilder, HighlightedLabel, Icon, InteractiveElement, IntoElement, LabelCommon, LabelSize,
     ListItem, ListItemSpacing, ParentElement, Render, SharedString, Styled, Toggleable, Window, h_flex, v_flex,
 };
-use util::{ResultExt, paths::PathExt as _};
+use util::ResultExt;
 use workspace::{ModalView, OpenOptions, WORKSPACE_DB, Workspace};
 
 const PANEL_WIDTH_REMS: f32 = 34.;

@@ -1,3 +1,23 @@
+use crate::{
+    Project, ProjectItem, ProjectPath, RemotelyCreatedModels,
+    buffer_store::BufferStore,
+    search::{SearchQuery, SearchResult},
+    worktree_store::WorktreeStore,
+};
+use anyhow::Context;
+use collections::HashSet;
+use fs::Fs;
+use futures::{SinkExt, StreamExt, select_biased, stream::FuturesOrdered};
+use gpui::{App, AppContext, AsyncApp, Entity, Task};
+use language::{Buffer, LanguageBufferSnapshot};
+use parking_lot::Mutex;
+use paths::{compare_rel_paths, rel_path::RelPath};
+use postage::oneshot;
+use rpc::{AnyProtoClient, proto};
+use smol::{
+    channel::{Receiver, Sender, bounded, unbounded},
+    future::FutureExt,
+};
 use std::{
     cell::LazyCell,
     collections::BTreeSet,
@@ -7,31 +27,9 @@ use std::{
     pin::pin,
     sync::Arc,
 };
-
-use anyhow::Context;
-use collections::HashSet;
-use fs::Fs;
-use futures::{SinkExt, StreamExt, select_biased, stream::FuturesOrdered};
-use gpui::{App, AppContext, AsyncApp, Entity, Task};
-use language::{Buffer, LanguageBufferSnapshot};
-use parking_lot::Mutex;
-use postage::oneshot;
-use rpc::{AnyProtoClient, proto};
-use smol::{
-    channel::{Receiver, Sender, bounded, unbounded},
-    future::FutureExt,
-};
-
 use text::BufferId;
-use util::{ResultExt, maybe, paths::compare_rel_paths, rel_path::RelPath};
+use util::{ResultExt, maybe};
 use worktree::{Entry, ProjectEntryId, Snapshot, Worktree, WorktreeSettings};
-
-use crate::{
-    Project, ProjectItem, ProjectPath, RemotelyCreatedModels,
-    buffer_store::BufferStore,
-    search::{SearchQuery, SearchResult},
-    worktree_store::WorktreeStore,
-};
 
 pub struct Search {
     buffer_store: Entity<BufferStore>,
@@ -782,17 +780,17 @@ struct PathInclusionMatcher {
 impl PathInclusionMatcher {
     fn new(query: Arc<SearchQuery>) -> Self {
         let mut included = BTreeSet::new();
+
         // To do an inverse glob match, we split each glob into it's prefix and the glob part.
         // For example, `src/**/*.rs` becomes `src/` and `**/*.rs`. The glob part gets dropped.
         // Then, when checking whether a given directory should be scanned, we check whether it is a non-empty substring of any glob prefix.
         if query.filters_path() {
-            included.extend(
-                query
-                    .files_to_include()
-                    .sources()
-                    .flat_map(|glob| Some(wax::Glob::new(glob).ok()?.partition().0)),
-            );
+            included.extend(query.files_to_include().sources().filter_map(|source| {
+                let glob = wax::Glob::new(source.raw()).ok()?;
+                Some(glob.partition().0)
+            }));
         }
+
         Self { included, query }
     }
 
@@ -873,17 +871,13 @@ impl PathInclusionMatcher {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{Project, project_search::PathInclusionMatcher, project_tests::init_test, search::SearchQuery};
     use fs::FakeFs;
+    use paths::{PathStyle, path_matcher::PathMatcher, rel_path::RelPath};
     use serde_json::json;
     use settings::Settings;
-    use util::{
-        path,
-        paths::{PathMatcher, PathStyle},
-        rel_path::RelPath,
-    };
+    use util::path;
     use worktree::{Entry, EntryKind, WorktreeSettings};
-
-    use crate::{Project, project_search::PathInclusionMatcher, project_tests::init_test, search::SearchQuery};
 
     #[gpui::test]
     async fn test_path_inclusion_matcher(cx: &mut gpui::TestAppContext) {

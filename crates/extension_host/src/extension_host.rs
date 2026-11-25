@@ -28,6 +28,7 @@ use language::{
     LanguageConfig, LanguageMatcher, LanguageName, LanguageQueries, LoadedLanguage, QUERY_FILENAME_PREFIXES, Rope,
 };
 use node_runtime::NodeRuntime;
+use paths::remote_path::RemotePathBuf;
 use project::ContextProviderWithTasks;
 use remote::RemoteClient;
 use rpc::proto;
@@ -40,7 +41,7 @@ use std::{
     sync::Arc,
     time::{Duration, Instant},
 };
-use util::{ResultExt, paths::RemotePathBuf};
+use util::ResultExt;
 use wasm_host::{WasmExtension, WasmHost};
 
 pub use extension::{ExtensionLibraryKind, GrammarManifestEntry, OldExtensionManifest, SchemaVersion};
@@ -204,8 +205,8 @@ pub fn init(
 ) {
     let store = cx.new(move |cx| {
         ExtensionStore::new(
-            paths::system_extensions_dir().clone(),
-            paths::user_extensions_dir().clone(),
+            paths::locations::system_extensions_dir().map(ToOwned::to_owned),
+            paths::locations::user_extensions_dir().to_owned(),
             None,
             extension_host_proxy,
             fs,

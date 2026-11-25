@@ -3,14 +3,14 @@ use anyhow::{Context as _, Result};
 use editor::Editor;
 use gpui::{App, AppContext, Context, Task, WeakEntity, Window};
 use itertools::Itertools;
+use paths::{
+    rel_path::RelPath,
+    {PathStyle, PathWithPosition},
+};
 use project::{Entry, Metadata};
 use std::path::PathBuf;
 use terminal::PathLikeTarget;
-use util::{
-    ResultExt, debug_panic,
-    paths::{PathStyle, PathWithPosition},
-    rel_path::RelPath,
-};
+use util::{ResultExt, debug_panic};
 use workspace::{OpenOptions, OpenVisible, Workspace};
 
 /// The way we found the open target. This is important to have for test assertions.

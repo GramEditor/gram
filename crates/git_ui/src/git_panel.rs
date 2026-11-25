@@ -1,33 +1,35 @@
-use crate::askpass_modal::AskPassModal;
-use crate::commit_modal::CommitModal;
-use crate::commit_tooltip::CommitTooltip;
-use crate::project_diff::{self, Diff, ProjectDiff};
-use crate::remote_output::{self, RemoteAction, SuccessMessage};
-use crate::{branch_picker, picker_prompt, render_remote_button};
 use crate::{
-    file_history_view::FileHistoryView, git_panel_settings::GitPanelSettings, git_status_icon,
+    askpass_modal::AskPassModal,
+    branch_picker,
+    commit_modal::CommitModal,
+    commit_tooltip::CommitTooltip,
+    file_history_view::FileHistoryView,
+    git_panel_settings::GitPanelSettings,
+    git_status_icon, picker_prompt,
+    project_diff::{self, Diff, ProjectDiff},
+    remote_output::{self, RemoteAction, SuccessMessage},
+    render_remote_button,
     repository_selector::RepositorySelector,
 };
 use anyhow::Context as _;
 use askpass::AskPassDelegate;
 use collections::{BTreeMap, HashMap, HashSet};
 use db::kvp::KEY_VALUE_STORE;
-use editor::RewrapOptions;
 use editor::{
-    Direction, Editor, EditorElement, EditorMode, MultiBuffer, MultiBufferOffset, SizingBehavior,
+    Direction, Editor, EditorElement, EditorMode, MultiBuffer, MultiBufferOffset, RewrapOptions, SizingBehavior,
     actions::ExpandAllDiffHunks,
 };
-use git::commit::ParsedCommitMessage;
-use git::repository::{
-    Branch, CommitDetails, CommitOptions, CommitSummary, FetchOptions, GitCommitter, PushOptions, Remote,
-    RemoteCommandOutput, ResetMode, Upstream, UpstreamTracking, UpstreamTrackingStatus, get_git_committer,
-};
-use git::stash::GitStash;
-use git::status::{DiffStat, StageStatus};
-use git::{Amend, Signoff, ToggleStaged, Verify, repository::RepoPath, status::FileStatus};
 use git::{
-    ExpandCommitEditor, GitHostingProviderRegistry, RestoreTrackedFiles, StageAll, StashAll, StashApply, StashPop,
-    ToggleFillCommitEditor, TrashUntrackedFiles, UnstageAll,
+    Amend, ExpandCommitEditor, GitHostingProviderRegistry, RestoreTrackedFiles, Signoff, StageAll, StashAll,
+    StashApply, StashPop, ToggleFillCommitEditor, ToggleStaged, TrashUntrackedFiles, UnstageAll, Verify,
+    commit::ParsedCommitMessage,
+    repository::{
+        Branch, CommitDetails, CommitOptions, CommitSummary, FetchOptions, GitCommitter, PushOptions, Remote,
+        RemoteCommandOutput, RepoPath, ResetMode, Upstream, UpstreamTracking, UpstreamTrackingStatus,
+        get_git_committer,
+    },
+    stash::GitStash,
+    status::{DiffStat, FileStatus, StageStatus},
 };
 use gpui::{
     Action, AsyncWindowContext, Bounds, ClickEvent, Corner, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable,
@@ -42,6 +44,7 @@ use notifications::status_toast::{StatusToast, ToastIcon};
 use panel::{
     PanelHeader, panel_button, panel_editor_container, panel_editor_style, panel_filled_button, panel_icon_button,
 };
+use paths::PathStyle;
 use project::{
     Fs, Project, ProjectPath,
     git_store::{GitStoreEvent, Repository, RepositoryEvent, RepositoryId, pending_op},
@@ -49,25 +52,20 @@ use project::{
 };
 use serde::{Deserialize, Serialize};
 use settings::{Settings, SettingsStore, StatusStyle};
-use std::fmt;
-use std::future::Future;
-use std::ops::Range;
-use std::path::Path;
-use std::{sync::Arc, time::Duration};
+use std::{fmt, future::Future, ops::Range, path::Path, sync::Arc, time::Duration};
 use strum::{IntoEnumIterator, VariantNames};
 use time::OffsetDateTime;
 use ui::{
     ButtonLike, Checkbox, ContextMenu, DiffStat as DiffStatLabel, ElevationIndex, IndentGuideColors, PopoverMenu,
     RenderedIndentGuide, ScrollAxes, Scrollbars, SplitButton, Tooltip, WithScrollbar, prelude::*,
 };
-use util::paths::PathStyle;
 use util::{ResultExt, TryFutureExt, maybe};
-use workspace::SERIALIZATION_THROTTLE_TIME;
 use workspace::{
-    Workspace,
+    SERIALIZATION_THROTTLE_TIME, Workspace,
     dock::{DockPosition, Panel, PanelEvent},
     notifications::{DetachAndPromptErr, NotifyResultExt},
 };
+
 actions!(
     git_panel,
     [
@@ -2471,7 +2469,7 @@ impl GitPanel {
                 .iter()
                 .map(|worktree| worktree.read(cx).abs_path())
                 .map(|worktree_abs_path| {
-                    if let Ok(path) = worktree_abs_path.strip_prefix(util::paths::home_dir()) {
+                    if let Ok(path) = worktree_abs_path.strip_prefix(paths::locations::home_dir()) {
                         Path::new("~").join(path).to_string_lossy().to_string().into()
                     } else {
                         worktree_abs_path.to_string_lossy().into_owned().into()
@@ -5306,20 +5304,19 @@ pub(crate) fn show_error_toast(
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use git::{
         repository::repo_path,
         status::{StatusCode, UnmergedStatus, UnmergedStatusCode},
     };
     use gpui::{TestAppContext, UpdateGlobal, VisualTestContext};
     use indoc::indoc;
+    use paths::rel_path::{RelPath, unix_rel_path};
     use project::FakeFs;
     use serde_json::json;
     use settings::SettingsStore;
     use theme::LoadThemes;
     use util::path;
-    use util::rel_path::{RelPath, rel_path};
-
-    use super::*;
 
     fn init_test(cx: &mut gpui::TestAppContext) {
         zlog::init_test();
@@ -6072,7 +6069,7 @@ mod tests {
                 .active_path(cx)
                 .expect("active_path should exist");
 
-            assert_eq!(active_path.path, rel_path("untracked").to_arc());
+            assert_eq!(active_path.path, unix_rel_path("untracked").to_arc());
         });
     }
 

@@ -1,13 +1,18 @@
+use crate::git_panel::GitPanel;
 use anyhow::{Context as _, Result};
 use buffer_diff::BufferDiff;
 use collections::HashMap;
-use editor::SplittableEditor;
-use editor::actions::ToggleSplitDiff;
-use editor::display_map::{BlockPlacement, BlockProperties, BlockStyle};
-use editor::{Addon, Editor, EditorEvent, ExcerptRange, MultiBuffer, multibuffer_context_lines};
-use git::repository::{CommitDetails, CommitDiff, RepoPath, is_binary_content};
-use git::status::{FileStatus, StatusCode, TrackedStatus};
-use git::{BuildCommitPermalinkParams, GitHostingProviderRegistry, GitRemote, ParsedGitRemote, parse_git_remote_url};
+use editor::{
+    Addon, Editor, EditorEvent, ExcerptRange, MultiBuffer, SplittableEditor,
+    actions::ToggleSplitDiff,
+    display_map::{BlockPlacement, BlockProperties, BlockStyle},
+    multibuffer_context_lines,
+};
+use git::{
+    BuildCommitPermalinkParams, GitHostingProviderRegistry, GitRemote, ParsedGitRemote, parse_git_remote_url,
+    repository::{CommitDetails, CommitDiff, RepoPath, is_binary_content},
+    status::{FileStatus, StatusCode, TrackedStatus},
+};
 use gpui::{
     AnyElement, App, AppContext as _, AsyncApp, AsyncWindowContext, ClipboardItem, Context, Element, Entity,
     EventEmitter, FocusHandle, Focusable, InteractiveElement, IntoElement, ParentElement, PromptLevel, Render, Styled,
@@ -18,6 +23,7 @@ use language::{
     Rope, TextBuffer,
 };
 use multi_buffer::PathKey;
+use paths::{PathStyle, rel_path::RelPath};
 use project::{Project, WorktreeId, git_store::Repository};
 use std::{
     any::{Any, TypeId},
@@ -27,7 +33,7 @@ use std::{
 };
 use theme::ActiveTheme;
 use ui::{ButtonLike, Chip, DiffStat, Tooltip, prelude::*};
-use util::{ResultExt, paths::PathStyle, rel_path::RelPath, truncate_and_trailoff};
+use util::{ResultExt, truncate_and_trailoff};
 use workspace::item::TabTooltipContent;
 use workspace::{
     Item, ItemHandle, ItemNavHistory, ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView, Workspace,
@@ -36,8 +42,6 @@ use workspace::{
     pane::SaveIntent,
     searchable::SearchableItemHandle,
 };
-
-use crate::git_panel::GitPanel;
 
 actions!(git, [ApplyCurrentStash, PopCurrentStash, DropCurrentStash,]);
 

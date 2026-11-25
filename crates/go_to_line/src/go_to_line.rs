@@ -1,5 +1,3 @@
-pub mod cursor_position;
-
 use cursor_position::UserCaretPosition;
 use editor::{
     Anchor, Editor, MultiBufferSnapshot, RowHighlightOptions, SelectionEffects, ToPoint,
@@ -12,11 +10,13 @@ use gpui::{
 };
 use language::Buffer;
 use multi_buffer::MultiBufferRow;
+use paths::FILE_ROW_COLUMN_DELIMITER;
 use text::{Bias, Point};
 use theme::ActiveTheme;
 use ui::prelude::*;
-use util::paths::FILE_ROW_COLUMN_DELIMITER;
 use workspace::{DismissDecision, ModalView};
+
+pub mod cursor_position;
 
 pub fn init(cx: &mut App) {
     cx.observe_new(GoToLine::register).detach();
@@ -336,10 +336,11 @@ mod tests {
     use editor::actions::{MoveRight, MoveToBeginning, SelectAll};
     use gpui::{TestAppContext, VisualTestContext};
     use indoc::indoc;
+    use paths::rel_path::unix_rel_path;
     use project::{FakeFs, Project};
     use serde_json::json;
     use std::{num::NonZeroU32, sync::Arc, time::Duration};
-    use util::{path, rel_path::rel_path};
+    use util::path;
     use workspace::{AppState, Workspace};
 
     #[gpui::test]
@@ -381,7 +382,7 @@ mod tests {
             .unwrap();
         let editor = workspace
             .update_in(cx, |workspace, window, cx| {
-                workspace.open_path((worktree_id, rel_path("a.rs")), None, true, window, cx)
+                workspace.open_path((worktree_id, unix_rel_path("a.rs")), None, true, window, cx)
             })
             .await
             .unwrap()
@@ -479,7 +480,7 @@ mod tests {
             .unwrap();
         let editor = workspace
             .update_in(cx, |workspace, window, cx| {
-                workspace.open_path((worktree_id, rel_path("a.rs")), None, true, window, cx)
+                workspace.open_path((worktree_id, unix_rel_path("a.rs")), None, true, window, cx)
             })
             .await
             .unwrap()
@@ -559,7 +560,7 @@ mod tests {
             .unwrap();
         let editor = workspace
             .update_in(cx, |workspace, window, cx| {
-                workspace.open_path((worktree_id, rel_path("a.rs")), None, true, window, cx)
+                workspace.open_path((worktree_id, unix_rel_path("a.rs")), None, true, window, cx)
             })
             .await
             .unwrap()
@@ -634,7 +635,7 @@ mod tests {
             .unwrap();
         let editor = workspace
             .update_in(cx, |workspace, window, cx| {
-                workspace.open_path((worktree_id, rel_path("a.rs")), None, true, window, cx)
+                workspace.open_path((worktree_id, unix_rel_path("a.rs")), None, true, window, cx)
             })
             .await
             .unwrap()
@@ -663,7 +664,6 @@ mod tests {
         }
 
         let end_char_pos = text.chars().count() as u32 + 1;
-        bytes = text.chars().map(|c| c.len_utf8() as u32).sum::<u32>() + 1;
         go_to_point(
             user_caret_position(111, 222, 222, 222),
             user_caret_position(1, end_char_pos, bytes, end_char_pos),
@@ -791,7 +791,7 @@ mod tests {
             .unwrap();
         let editor = workspace
             .update_in(cx, |workspace, window, cx| {
-                workspace.open_path((worktree_id, rel_path("a.rs")), None, true, window, cx)
+                workspace.open_path((worktree_id, unix_rel_path("a.rs")), None, true, window, cx)
             })
             .await
             .unwrap()
@@ -841,7 +841,7 @@ mod tests {
             .unwrap();
         let editor = workspace
             .update_in(cx, |workspace, window, cx| {
-                workspace.open_path((worktree_id, rel_path("a.rs")), None, true, window, cx)
+                workspace.open_path((worktree_id, unix_rel_path("a.rs")), None, true, window, cx)
             })
             .await
             .unwrap()
@@ -889,7 +889,7 @@ mod tests {
             .unwrap();
         let editor = workspace
             .update_in(cx, |workspace, window, cx| {
-                workspace.open_path((worktree_id, rel_path("a.rs")), None, true, window, cx)
+                workspace.open_path((worktree_id, unix_rel_path("a.rs")), None, true, window, cx)
             })
             .await
             .unwrap()

@@ -2,6 +2,7 @@ use anyhow::Result;
 use gpui::BackgroundExecutor;
 use notify::{EventKind, EventKindMask, Watcher as _};
 use parking_lot::Mutex;
+use paths::sanitized_path::SanitizedPath;
 use smol::{Timer, channel::Sender};
 use std::{
     collections::{BTreeMap, HashMap},
@@ -10,7 +11,7 @@ use std::{
     sync::{Arc, OnceLock},
     time::Duration,
 };
-use util::{ResultExt, paths::SanitizedPath};
+use util::ResultExt;
 
 use crate::{PathEvent, PathEventKind, Watcher};
 

@@ -28,7 +28,10 @@ use ignore::IgnoreStack;
 use language::DiskState;
 
 use parking_lot::Mutex;
-use paths::{local_settings_folder_name, local_vscode_folder_name, local_vscodium_folder_name};
+use paths::locations::{local_settings_folder_name, local_vscode_folder_name, local_vscodium_folder_name};
+use paths::{
+    PathStyle, locations::home_dir, path_matcher::PathMatcher, rel_path::RelPath, sanitized_path::SanitizedPath,
+};
 use postage::{
     barrier,
     prelude::{Sink as _, Stream as _},
@@ -63,11 +66,7 @@ use std::{
 };
 use sum_tree::{Bias, Dimensions, Edit, KeyedItem, SeekTarget, SumTree, Summary, TreeMap, TreeSet};
 use text::{LineEnding, Rope};
-use util::{
-    ResultExt, debug_panic, maybe,
-    paths::{PathMatcher, PathStyle, SanitizedPath, home_dir},
-    rel_path::RelPath,
-};
+use util::{ResultExt, debug_panic, maybe};
 pub use worktree_settings::WorktreeSettings;
 
 use crate::ignore::IgnoreKind;
@@ -3656,7 +3655,7 @@ impl BackgroundScanner {
 
         self.process_pending_watches().await;
 
-        let global_gitignore_file = paths::global_gitignore_path();
+        let global_gitignore_file = paths::locations::global_gitignore_path();
         let mut global_gitignore_events = if let Some(global_gitignore_path) = &global_gitignore_file
             && self.scanning_enabled
         {
@@ -4999,7 +4998,7 @@ async fn discover_ancestor_git_repo(
     let mut ignores = HashMap::default();
     for (index, ancestor) in root_abs_path.as_path().ancestors().enumerate() {
         if index != 0 {
-            if ancestor == paths::home_dir() {
+            if ancestor == paths::locations::home_dir() {
                 // Unless $HOME is itself the worktree root, don't consider it as a
                 // containing git repository---expensive and likely unwanted.
                 break;

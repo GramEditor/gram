@@ -1,18 +1,3 @@
-pub(crate) mod breakpoint_list;
-pub(crate) mod console;
-pub(crate) mod loaded_source_list;
-pub(crate) mod memory_view;
-pub(crate) mod module_list;
-pub mod stack_frame_list;
-pub mod variable_list;
-use std::{
-    any::Any,
-    ops::ControlFlow,
-    path::PathBuf,
-    sync::{Arc, LazyLock},
-    time::Duration,
-};
-
 use crate::{
     ToggleExpandItem,
     attach_modal::{AttachModal, ModalIntent},
@@ -20,7 +5,6 @@ use crate::{
     persistence::{self, DebuggerPaneItem, SerializedLayout},
     session::running::memory_view::MemoryView,
 };
-
 use anyhow::{Context as _, Result, anyhow, bail};
 use breakpoint_list::BreakpointList;
 use collections::{HashMap, IndexMap};
@@ -46,10 +30,18 @@ use project::{
 use rpc::proto::ViewId;
 use serde_json::Value;
 use settings::Settings;
+use shell::{Shell, builder::ShellBuilder};
 use stack_frame_list::StackFrameList;
+use std::{
+    any::Any,
+    ops::ControlFlow,
+    path::PathBuf,
+    sync::{Arc, LazyLock},
+    time::Duration,
+};
 use task::{
-    BuildTaskDefinition, DebugScenario, GramDebugConfig, SaveStrategy, Shell, ShellBuilder, SpawnInTerminal,
-    TaskContext, substitute_variables_in_str,
+    BuildTaskDefinition, DebugScenario, GramDebugConfig, SaveStrategy, SpawnInTerminal, TaskContext,
+    substitute_variables_in_str,
 };
 use terminal_view::TerminalView;
 use ui::{
@@ -62,6 +54,14 @@ use workspace::{
     ActivePaneDecorator, DraggedTab, Item, ItemHandle, Member, Pane, PaneGroup, SplitDirection, Workspace,
     item::TabContentParams, move_item, pane::Event,
 };
+
+pub(crate) mod breakpoint_list;
+pub(crate) mod console;
+pub(crate) mod loaded_source_list;
+pub(crate) mod memory_view;
+pub(crate) mod module_list;
+pub mod stack_frame_list;
+pub mod variable_list;
 
 static PROCESS_ID_PLACEHOLDER: LazyLock<String> = LazyLock::new(|| task::VariableName::PickProcessId.template_value());
 

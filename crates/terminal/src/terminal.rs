@@ -41,8 +41,9 @@ use futures::StreamExt;
 use pty_info::{ProcessIdGetter, PtyProcessInfo};
 use serde::{Deserialize, Serialize};
 use settings::Settings;
+use shell::Shell;
 use smol::channel::{Receiver, Sender};
-use task::{HideStrategy, Shell, SpawnInTerminal};
+use task::{HideStrategy, SpawnInTerminal};
 use terminal_hyperlinks::RegexSearches;
 use terminal_settings::{AlternateScroll, CursorShape, TerminalSettings};
 use theme::{ActiveTheme, Theme};
@@ -455,7 +456,7 @@ impl TerminalBuilder {
             let shell_params = match shell.clone() {
                 Shell::System => {
                     if cfg!(windows) {
-                        Some(ShellParams::new(util::shell::get_windows_system_shell(), None, None))
+                        Some(ShellParams::new(shell::get_windows_system_shell(), None, None))
                     } else {
                         None
                     }
@@ -2335,9 +2336,6 @@ pub fn rgba_color(r: u8, g: u8, b: u8) -> Hsla {
 
 #[cfg(test)]
 mod tests {
-    use rand::RngExt as _;
-    use std::time::Duration;
-
     use super::*;
     use crate::{
         IndexedCell, TerminalBounds, TerminalBuilder, TerminalContent, content_index_for_mouse, rgb_for_index,
@@ -2351,8 +2349,10 @@ mod tests {
         Entity, Modifiers, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Point, TestAppContext,
         bounds, point, size, smol_timeout,
     };
+    use rand::RngExt as _;
     use rand::{distr, rngs::ThreadRng};
-    use task::ShellBuilder;
+    use shell::builder::ShellBuilder;
+    use std::time::Duration;
 
     fn init_ctrl_click_hyperlink_test(cx: &mut TestAppContext, output: &[u8]) -> Entity<Terminal> {
         cx.update(|cx| {
@@ -2430,7 +2430,7 @@ mod tests {
                 TerminalBuilder::new(
                     None,
                     None,
-                    task::Shell::WithArguments {
+                    Shell::WithArguments {
                         program,
                         args,
                         title_override: None,
@@ -2484,7 +2484,7 @@ mod tests {
                 TerminalBuilder::new(
                     None,
                     None,
-                    task::Shell::System,
+                    Shell::System,
                     HashMap::default(),
                     CursorShape::default(),
                     AlternateScroll::On,
@@ -2555,7 +2555,7 @@ mod tests {
                 TerminalBuilder::new(
                     None,
                     None,
-                    task::Shell::WithArguments {
+                    Shell::WithArguments {
                         program,
                         args,
                         title_override: None,
@@ -2962,7 +2962,7 @@ mod tests {
                     TerminalBuilder::new(
                         None,
                         None,
-                        task::Shell::System,
+                        Shell::System,
                         HashMap::default(),
                         CursorShape::default(),
                         AlternateScroll::On,

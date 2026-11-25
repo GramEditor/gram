@@ -1,25 +1,23 @@
 use anyhow::{Result, anyhow};
-use editor::completion::CompletionProvider;
-use editor::{Bias, Editor, EditorEvent, EditorMode, ExcerptId, MinimapVisibility, MultiBuffer};
+use editor::{
+    Bias, Editor, EditorEvent, EditorMode, ExcerptId, MinimapVisibility, MultiBuffer, completion::CompletionProvider,
+};
 use fuzzy::StringMatch;
 use gpui::{
     AsyncWindowContext, DivInspectorState, Entity, InspectorElementId, IntoElement, StyleRefinement, Task, Window,
     inspector_reflection::FunctionReflection, styled_reflection,
 };
-use language::language_settings::SoftWrap;
 use language::{
     Anchor, Buffer, CodeLabel, Diagnostic, DiagnosticEntry, DiagnosticSet, DiagnosticSeverity, LanguageBufferSnapshot,
-    LanguageServerId, Point, ToOffset as _, ToPoint as _,
+    LanguageServerId, Point, ToOffset as _, ToPoint as _, language_settings::SoftWrap,
 };
-use project::lsp_store::CompletionDocumentation;
-use project::{Completion, CompletionDisplayOptions, CompletionResponse, CompletionSource, Project, ProjectPath};
-use std::fmt::Write as _;
-use std::ops::Range;
-use std::path::Path;
-use std::rc::Rc;
-use std::sync::LazyLock;
+use paths::rel_path::RelPath;
+use project::{
+    Completion, CompletionDisplayOptions, CompletionResponse, CompletionSource, Project, ProjectPath,
+    lsp_store::CompletionDocumentation,
+};
+use std::{fmt::Write as _, ops::Range, path::Path, rc::Rc, sync::LazyLock};
 use ui::{Label, LabelSize, Tooltip, prelude::*, styled_ext_reflection, v_flex};
-use util::rel_path::RelPath;
 use util::split_str_with_ranges;
 
 /// Path used for unsaved buffer that contains style json. To support the json language server, this

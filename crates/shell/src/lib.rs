@@ -1,6 +1,12 @@
+use anyhow::Context;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, fmt, path::Path, sync::LazyLock};
+#[cfg(not(windows))]
+use util::ResultExt;
+
+pub mod builder;
+pub mod env;
 
 /// Shell configuration to open the terminal with.
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq, JsonSchema, Hash)]
@@ -63,166 +69,6 @@ pub enum ShellKind {
     Elvish,
 }
 
-pub fn get_system_shell() -> String {
-    if cfg!(windows) {
-        get_windows_system_shell()
-    } else {
-        std::env::var("SHELL").unwrap_or("/bin/sh".to_string())
-    }
-}
-
-pub fn get_default_system_shell() -> String {
-    if cfg!(windows) {
-        get_windows_system_shell()
-    } else {
-        "/bin/sh".to_string()
-    }
-}
-
-/// Get the default system shell, preferring bash on Windows.
-pub fn get_default_system_shell_preferring_bash() -> String {
-    if cfg!(windows) {
-        get_windows_bash().unwrap_or_else(get_windows_system_shell)
-    } else {
-        "/bin/sh".to_string()
-    }
-}
-
-pub fn get_windows_bash() -> Option<String> {
-    use std::path::PathBuf;
-
-    fn find_bash_in_scoop() -> Option<PathBuf> {
-        let bash_exe = PathBuf::from(std::env::var_os("USERPROFILE")?).join("scoop\\shims\\bash.exe");
-        bash_exe.exists().then_some(bash_exe)
-    }
-
-    fn find_bash_in_git() -> Option<PathBuf> {
-        // /path/to/git/cmd/git.exe/../../bin/bash.exe
-        let git = which::which("git").ok()?;
-        let git_bash = git.parent()?.parent()?.join("bin").join("bash.exe");
-        git_bash.exists().then_some(git_bash)
-    }
-
-    static BASH: LazyLock<Option<String>> = LazyLock::new(|| {
-        let bash = find_bash_in_scoop()
-            .or_else(find_bash_in_git)
-            .map(|p| p.to_string_lossy().into_owned());
-        if let Some(ref path) = bash {
-            log::info!("Found bash at {}", path);
-        }
-        bash
-    });
-
-    (*BASH).clone()
-}
-
-pub fn get_windows_system_shell() -> String {
-    use std::path::PathBuf;
-
-    fn find_pwsh_in_programfiles(find_alternate: bool, find_preview: bool) -> Option<PathBuf> {
-        #[cfg(target_pointer_width = "64")]
-        let env_var = if find_alternate {
-            "ProgramFiles(x86)"
-        } else {
-            "ProgramFiles"
-        };
-
-        #[cfg(target_pointer_width = "32")]
-        let env_var = if find_alternate { "ProgramW6432" } else { "ProgramFiles" };
-
-        let install_base_dir = PathBuf::from(std::env::var_os(env_var)?).join("PowerShell");
-        install_base_dir
-            .read_dir()
-            .ok()?
-            .filter_map(Result::ok)
-            .filter(|entry| matches!(entry.file_type(), Ok(ft) if ft.is_dir()))
-            .filter_map(|entry| {
-                let dir_name = entry.file_name();
-                let dir_name = dir_name.to_string_lossy();
-
-                let version = if find_preview {
-                    let dash_index = dir_name.find('-')?;
-                    if &dir_name[dash_index + 1..] != "preview" {
-                        return None;
-                    };
-                    dir_name[..dash_index].parse::<u32>().ok()?
-                } else {
-                    dir_name.parse::<u32>().ok()?
-                };
-
-                let exe_path = entry.path().join("pwsh.exe");
-                if exe_path.exists() {
-                    Some((version, exe_path))
-                } else {
-                    None
-                }
-            })
-            .max_by_key(|(version, _)| *version)
-            .map(|(_, path)| path)
-    }
-
-    fn find_pwsh_in_msix(find_preview: bool) -> Option<PathBuf> {
-        let msix_app_dir = PathBuf::from(std::env::var_os("LOCALAPPDATA")?).join("Microsoft\\WindowsApps");
-        if !msix_app_dir.exists() {
-            return None;
-        }
-
-        let prefix = if find_preview {
-            "Microsoft.PowerShellPreview_"
-        } else {
-            "Microsoft.PowerShell_"
-        };
-        msix_app_dir
-            .read_dir()
-            .ok()?
-            .filter_map(|entry| {
-                let entry = entry.ok()?;
-                if !matches!(entry.file_type(), Ok(ft) if ft.is_dir()) {
-                    return None;
-                }
-
-                if !entry.file_name().to_string_lossy().starts_with(prefix) {
-                    return None;
-                }
-
-                let exe_path = entry.path().join("pwsh.exe");
-                exe_path.exists().then_some(exe_path)
-            })
-            .next()
-    }
-
-    fn find_pwsh_in_scoop() -> Option<PathBuf> {
-        let pwsh_exe = PathBuf::from(std::env::var_os("USERPROFILE")?).join("scoop\\shims\\pwsh.exe");
-        pwsh_exe.exists().then_some(pwsh_exe)
-    }
-
-    static SYSTEM_SHELL: LazyLock<String> = LazyLock::new(|| {
-        let locations = [
-            || find_pwsh_in_programfiles(false, false),
-            || find_pwsh_in_programfiles(true, false),
-            || find_pwsh_in_msix(false),
-            || find_pwsh_in_programfiles(false, true),
-            || find_pwsh_in_msix(true),
-            || find_pwsh_in_programfiles(true, true),
-            || find_pwsh_in_scoop(),
-            || which::which_global("pwsh.exe").ok(),
-            || which::which_global("powershell.exe").ok(),
-        ];
-
-        locations
-            .into_iter()
-            .find_map(|f| f())
-            .map(|p| p.to_string_lossy().trim().to_owned())
-            .inspect(|shell| log::info!("Found powershell in: {}", shell))
-            .unwrap_or_else(|| {
-                log::warn!("Powershell not found, falling back to `cmd`");
-                "cmd.exe".to_string()
-            })
-    });
-
-    (*SYSTEM_SHELL).clone()
-}
-
 impl fmt::Display for ShellKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -248,6 +94,11 @@ impl ShellKind {
     pub fn new(program: impl AsRef<Path>, is_windows: bool) -> Self {
         let program = program.as_ref();
         let program = program.file_stem().unwrap_or(program.as_os_str()).to_string_lossy();
+        let program = if is_windows {
+            Cow::Owned(program.to_ascii_lowercase())
+        } else {
+            program
+        };
 
         match &*program {
             "powershell" | "pwsh" => ShellKind::PowerShell,
@@ -265,6 +116,15 @@ impl ShellKind {
             // unix-like shell.
             _ => ShellKind::Posix,
         }
+    }
+
+    pub fn try_into_safe_path(&self, path: impl AsRef<Path>) -> anyhow::Result<String> {
+        let path_str = path.as_ref().to_str().with_context(|| "Path contains invalid UTF-8")?;
+
+        self.try_quote(path_str)
+            .as_deref()
+            .map(ToOwned::to_owned)
+            .context("Failed to quote path")
     }
 
     pub fn to_shell_variable(self, input: &str) -> String {
@@ -567,6 +427,315 @@ impl ShellKind {
     }
 }
 
+/// Returns a shell escaped path for the current executable
+pub fn get_shell_safe_binary_path(shell_kind: ShellKind) -> anyhow::Result<String> {
+    let mut binary_path = std::env::current_exe().context("Failed to determine current executable path.")?;
+    if cfg!(target_os = "linux")
+        && !binary_path.is_file()
+        && let Some(truncated) = binary_path
+            .clone()
+            .file_name()
+            .and_then(|s| s.to_str())
+            .and_then(|n| n.strip_suffix(" (deleted)"))
+    {
+        // Might have been deleted during update; let's use the new binary if there is one.
+        binary_path.set_file_name(truncated);
+    }
+
+    shell_kind
+        .try_into_safe_path(binary_path)
+        .context("Failed to shell-escape Gram executable path.")
+}
+
+/// Configures the process to start a new session, to prevent interactive shells from taking control
+/// of the terminal.
+///
+/// For more details: <https://registerspill.thorstenball.com/p/how-to-lose-control-of-your-shell>
+pub fn set_pre_exec_to_start_new_session(command: &mut std::process::Command) -> &mut std::process::Command {
+    // safety: code in pre_exec should be signal safe.
+    // https://man7.org/linux/man-pages/man7/signal-safety.7.html
+    #[cfg(not(target_os = "windows"))]
+    unsafe {
+        use std::os::unix::process::CommandExt;
+        command.pre_exec(|| {
+            libc::setsid();
+            #[cfg(target_os = "macos")]
+            command::reset_exception_ports();
+            Ok(())
+        });
+    };
+    command
+}
+
+#[cfg(unix)]
+fn load_shell_from_passwd() -> anyhow::Result<()> {
+    let buflen = match unsafe { libc::sysconf(libc::_SC_GETPW_R_SIZE_MAX) } {
+        n if n < 0 => 1024,
+        n => n as usize,
+    };
+    let mut buffer = Vec::with_capacity(buflen);
+
+    let mut pwd: std::mem::MaybeUninit<libc::passwd> = std::mem::MaybeUninit::uninit();
+    let mut result: *mut libc::passwd = std::ptr::null_mut();
+
+    let uid = unsafe { libc::getuid() };
+    let status = unsafe {
+        libc::getpwuid_r(
+            uid,
+            pwd.as_mut_ptr(),
+            buffer.as_mut_ptr() as *mut libc::c_char,
+            buflen,
+            &mut result,
+        )
+    };
+    anyhow::ensure!(!result.is_null(), "passwd entry for uid {} not found", uid);
+
+    // SAFETY: If `getpwuid_r` doesn't error, we have the entry here.
+    let entry = unsafe { pwd.assume_init() };
+
+    anyhow::ensure!(
+        status == 0,
+        "call to getpwuid_r failed. uid: {}, status: {}",
+        uid,
+        status
+    );
+    anyhow::ensure!(
+        entry.pw_uid == uid,
+        "passwd entry has different uid ({}) than getuid ({}) returned",
+        entry.pw_uid,
+        uid,
+    );
+
+    let shell = unsafe { std::ffi::CStr::from_ptr(entry.pw_shell).to_str().unwrap() };
+    let should_set_shell = std::env::var("SHELL").map_or(true, |shell_env| {
+        shell_env != shell && !std::path::Path::new(&shell_env).exists()
+    });
+
+    if should_set_shell {
+        log::info!(
+            "updating SHELL environment variable to value from passwd entry: {:?}",
+            shell,
+        );
+
+        unsafe { std::env::set_var("SHELL", shell) };
+    }
+
+    Ok(())
+}
+
+#[cfg(unix)]
+pub async fn load_login_shell_environment() -> anyhow::Result<()> {
+    load_shell_from_passwd().log_err();
+
+    // If possible, we want to `cd` in the user's `$HOME` to trigger programs
+    // such as direnv, asdf, mise, ... to adjust the PATH. These tools often hook
+    // into shell's `cd` command (and hooks) to manipulate env.
+    // We do this so that we get the env a user would have when spawning a shell
+    // in home directory.
+
+    // Save the current PATH before the shell env capture overwrites it.
+    // This preserves PATH entries injected by a wrapper script (e.g. Nix's wrapProgram), which
+    // the system shell does not know about.
+    let original_path = std::env::var("PATH").unwrap_or_default();
+
+    for (name, value) in env::capture(get_system_shell(), &[], paths::locations::home_dir())
+        .await
+        .with_context(|| format!("capturing environment with {:?}", get_system_shell()))?
+    {
+        // Skip SHLVL to prevent it from polluting our process environment.
+        // The login shell used for env capture increments SHLVL, and if we propagate it,
+        // terminals spawned by us will inherit it and increment again, causing SHLVL
+        // to start at 2 instead of 1 (and increase by 2 on each reload).
+        if name == "SHLVL" {
+            continue;
+        }
+        if name == "PATH" && !original_path.is_empty() {
+            // Prepend any original PATH entries not already present in the system shell's PATH.
+            let shell_entries: Vec<&str> = value.split(':').collect();
+            let mut combined = original_path
+                .split(':')
+                .filter(|p| !p.is_empty() && !shell_entries.contains(p))
+                .collect::<Vec<&str>>()
+                .join(":");
+            if !combined.is_empty() && !value.is_empty() {
+                combined.push(':');
+            }
+            combined.push_str(&value);
+            unsafe { std::env::set_var("PATH", &combined) };
+        } else {
+            unsafe { std::env::set_var(&name, &value) };
+        }
+    }
+
+    log::info!(
+        "set environment variables from shell:{}, path:{}",
+        std::env::var("SHELL").unwrap_or_default(),
+        std::env::var("PATH").unwrap_or_default(),
+    );
+
+    Ok(())
+}
+
+pub fn get_system_shell() -> String {
+    if cfg!(windows) {
+        get_windows_system_shell()
+    } else {
+        std::env::var("SHELL").unwrap_or("/bin/sh".to_string())
+    }
+}
+
+pub fn get_default_system_shell() -> String {
+    if cfg!(windows) {
+        get_windows_system_shell()
+    } else {
+        "/bin/sh".to_string()
+    }
+}
+
+/// Get the default system shell, preferring bash on Windows.
+pub fn get_default_system_shell_preferring_bash() -> String {
+    if cfg!(windows) {
+        get_windows_bash().unwrap_or_else(get_windows_system_shell)
+    } else {
+        "/bin/sh".to_string()
+    }
+}
+
+pub fn get_windows_bash() -> Option<String> {
+    use std::path::PathBuf;
+
+    fn find_bash_in_scoop() -> Option<PathBuf> {
+        let bash_exe = PathBuf::from(std::env::var_os("USERPROFILE")?).join("scoop\\shims\\bash.exe");
+        bash_exe.exists().then_some(bash_exe)
+    }
+
+    fn find_bash_in_git() -> Option<PathBuf> {
+        // /path/to/git/cmd/git.exe/../../bin/bash.exe
+        let git = which::which("git").ok()?;
+        let git_bash = git.parent()?.parent()?.join("bin").join("bash.exe");
+        git_bash.exists().then_some(git_bash)
+    }
+
+    static BASH: LazyLock<Option<String>> = LazyLock::new(|| {
+        let bash = find_bash_in_scoop()
+            .or_else(find_bash_in_git)
+            .map(|p| p.to_string_lossy().into_owned());
+        if let Some(ref path) = bash {
+            log::info!("Found bash at {}", path);
+        }
+        bash
+    });
+
+    (*BASH).clone()
+}
+
+pub fn get_windows_system_shell() -> String {
+    use std::path::PathBuf;
+
+    fn find_pwsh_in_programfiles(find_alternate: bool, find_preview: bool) -> Option<PathBuf> {
+        #[cfg(target_pointer_width = "64")]
+        let env_var = if find_alternate {
+            "ProgramFiles(x86)"
+        } else {
+            "ProgramFiles"
+        };
+
+        #[cfg(target_pointer_width = "32")]
+        let env_var = if find_alternate { "ProgramW6432" } else { "ProgramFiles" };
+
+        let install_base_dir = PathBuf::from(std::env::var_os(env_var)?).join("PowerShell");
+        install_base_dir
+            .read_dir()
+            .ok()?
+            .filter_map(Result::ok)
+            .filter(|entry| matches!(entry.file_type(), Ok(ft) if ft.is_dir()))
+            .filter_map(|entry| {
+                let dir_name = entry.file_name();
+                let dir_name = dir_name.to_string_lossy();
+
+                let version = if find_preview {
+                    let dash_index = dir_name.find('-')?;
+                    if &dir_name[dash_index + 1..] != "preview" {
+                        return None;
+                    };
+                    dir_name[..dash_index].parse::<u32>().ok()?
+                } else {
+                    dir_name.parse::<u32>().ok()?
+                };
+
+                let exe_path = entry.path().join("pwsh.exe");
+                if exe_path.exists() {
+                    Some((version, exe_path))
+                } else {
+                    None
+                }
+            })
+            .max_by_key(|(version, _)| *version)
+            .map(|(_, path)| path)
+    }
+
+    fn find_pwsh_in_msix(find_preview: bool) -> Option<PathBuf> {
+        let msix_app_dir = PathBuf::from(std::env::var_os("LOCALAPPDATA")?).join("Microsoft\\WindowsApps");
+        if !msix_app_dir.exists() {
+            return None;
+        }
+
+        let prefix = if find_preview {
+            "Microsoft.PowerShellPreview_"
+        } else {
+            "Microsoft.PowerShell_"
+        };
+        msix_app_dir
+            .read_dir()
+            .ok()?
+            .filter_map(|entry| {
+                let entry = entry.ok()?;
+                if !matches!(entry.file_type(), Ok(ft) if ft.is_dir()) {
+                    return None;
+                }
+
+                if !entry.file_name().to_string_lossy().starts_with(prefix) {
+                    return None;
+                }
+
+                let exe_path = entry.path().join("pwsh.exe");
+                exe_path.exists().then_some(exe_path)
+            })
+            .next()
+    }
+
+    fn find_pwsh_in_scoop() -> Option<PathBuf> {
+        let pwsh_exe = PathBuf::from(std::env::var_os("USERPROFILE")?).join("scoop\\shims\\pwsh.exe");
+        pwsh_exe.exists().then_some(pwsh_exe)
+    }
+
+    static SYSTEM_SHELL: LazyLock<String> = LazyLock::new(|| {
+        let locations = [
+            || find_pwsh_in_programfiles(false, false),
+            || find_pwsh_in_programfiles(true, false),
+            || find_pwsh_in_msix(false),
+            || find_pwsh_in_programfiles(false, true),
+            || find_pwsh_in_msix(true),
+            || find_pwsh_in_programfiles(true, true),
+            || find_pwsh_in_scoop(),
+            || which::which_global("pwsh.exe").ok(),
+            || which::which_global("powershell.exe").ok(),
+        ];
+
+        locations
+            .into_iter()
+            .find_map(|f| f())
+            .map(|p| p.to_string_lossy().trim().to_owned())
+            .inspect(|shell| log::info!("Found powershell in: {}", shell))
+            .unwrap_or_else(|| {
+                log::warn!("Powershell not found, falling back to `cmd`");
+                "cmd.exe".to_string()
+            })
+    });
+
+    (*SYSTEM_SHELL).clone()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -653,5 +822,43 @@ mod tests {
             shell_kind.try_quote_prefix_aware("uname").unwrap().into_owned(),
             "uname".to_string()
         );
+    }
+
+    #[test]
+    fn test_shell_kind_windows_case_insensitive() {
+        for (program, expected) in [
+            ("CMD.EXE", ShellKind::Cmd),
+            ("PowerShell.exe", ShellKind::PowerShell),
+            ("PwSh.ExE", ShellKind::PowerShell),
+            ("NU.EXE", ShellKind::Nushell),
+            ("FISH.EXE", ShellKind::Fish),
+            ("CSH.EXE", ShellKind::Csh),
+            ("TCSH.EXE", ShellKind::Tcsh),
+            ("RC.EXE", ShellKind::Rc),
+            ("XONSH.EXE", ShellKind::Xonsh),
+            ("ELVISH.EXE", ShellKind::Elvish),
+            ("SH.EXE", ShellKind::Posix),
+            ("BASH.EXE", ShellKind::Posix),
+            ("ZSH.EXE", ShellKind::Posix),
+            ("C:/Windows/System32/CMD.EXE", ShellKind::Cmd),
+            ("C:/Program Files/PowerShell/7/PWSH.EXE", ShellKind::PowerShell),
+            ("unknown.exe", ShellKind::PowerShell),
+        ] {
+            assert_eq!(ShellKind::new(program, true), expected, "{program}");
+        }
+    }
+
+    #[test]
+    fn test_shell_kind_unix_case_sensitive() {
+        for (program, expected) in [
+            ("/bin/nu", ShellKind::Nushell),
+            ("/bin/NU", ShellKind::Posix),
+            ("/bin/pwsh", ShellKind::PowerShell),
+            ("/bin/PWSH", ShellKind::Posix),
+            ("/bin/bash", ShellKind::Posix),
+            ("/bin/unknown", ShellKind::Posix),
+        ] {
+            assert_eq!(ShellKind::new(program, false), expected, "{program}");
+        }
     }
 }

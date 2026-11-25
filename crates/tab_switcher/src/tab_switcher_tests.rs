@@ -2,9 +2,10 @@ use super::*;
 use editor::Editor;
 use gpui::{TestAppContext, VisualTestContext};
 use menu::SelectPrevious;
+use paths::rel_path::unix_rel_path;
 use project::{Project, ProjectPath};
 use serde_json::json;
-use util::{path, rel_path::rel_path};
+use util::path;
 use workspace::{ActivatePreviousItem, AppState, Workspace, item::test::TestItem};
 
 #[ctor::ctor(unsafe)]
@@ -288,7 +289,7 @@ async fn open_buffer(
     });
     let project_path = ProjectPath {
         worktree_id,
-        path: rel_path(file_path).into(),
+        path: unix_rel_path(file_path).into(),
     };
     workspace
         .update_in(cx, move |workspace, window, cx| {

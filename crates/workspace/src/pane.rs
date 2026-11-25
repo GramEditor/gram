@@ -25,6 +25,7 @@ use gpui::{
 use itertools::Itertools;
 use language::DiagnosticSeverity;
 use parking_lot::Mutex;
+use paths::PathStyle;
 use project::{DirectoryLister, Project, ProjectEntryId, ProjectPath, WorktreeId};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -48,7 +49,7 @@ use ui::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, DecoratedIcon, IconButtonShape, IconDecoration, IconDecorationKind,
     Indicator, PopoverMenu, PopoverMenuHandle, Tab, TabBar, TabPosition, Tooltip, prelude::*, right_click_menu,
 };
-use util::{ResultExt, debug_panic, maybe, paths::PathStyle, truncate_and_remove_front};
+use util::{ResultExt, debug_panic, maybe, truncate_and_remove_front};
 
 /// A selected entry in e.g. project panel.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]

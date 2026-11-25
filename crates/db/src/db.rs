@@ -6,19 +6,19 @@ pub use anyhow;
 use anyhow::Context as _;
 use gpui::{App, AppContext};
 pub use indoc::indoc;
-pub use paths::database_dir;
+pub use paths::locations::database_dir;
+pub use release_channel::RELEASE_CHANNEL;
 pub use smol;
 pub use sqlez;
+use sqlez::{domain::Migrator, thread_safe_connection::ThreadSafeConnection};
 pub use sqlez_macros;
-
-pub use release_channel::RELEASE_CHANNEL;
-use sqlez::domain::Migrator;
-use sqlez::thread_safe_connection::ThreadSafeConnection;
 use sqlez_macros::sql;
-use std::future::Future;
-use std::path::Path;
-use std::sync::atomic::AtomicBool;
-use std::sync::{LazyLock, atomic::Ordering};
+use std::{
+    future::Future,
+    path::Path,
+    sync::atomic::AtomicBool,
+    sync::{LazyLock, atomic::Ordering},
+};
 use util::{ResultExt, maybe};
 
 const CONNECTION_INITIALIZE_QUERY: &str = sql!(

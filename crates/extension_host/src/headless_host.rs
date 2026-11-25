@@ -287,7 +287,9 @@ impl HeadlessExtensionStore {
                     dev: e.dev,
                 })
                 .collect(),
-            tmp_dir: paths::remote_extensions_uploads_dir().to_string_lossy().to_string(),
+            tmp_dir: paths::locations::remote_extensions_uploads_dir()
+                .to_string_lossy()
+                .to_string(),
         })
     }
 

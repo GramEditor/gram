@@ -1,22 +1,22 @@
+use crate::{Project, ProjectPath};
 use anyhow::Result;
 use collections::HashMap;
-use gpui::{App, AppContext as _, Context, Entity, Task, WeakEntity};
-
 use futures::{FutureExt, future::Shared};
+use gpui::{App, AppContext as _, Context, Entity, Task, WeakEntity};
 use itertools::Itertools as _;
 use language::LanguageName;
+use paths::rel_path::RelPath;
 use remote::RemoteClient;
 use settings::{Settings, SettingsLocation};
+use shell::{Shell, ShellKind, builder::ShellBuilder, get_default_system_shell};
 use smol::channel::bounded;
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use task::{Shell, ShellBuilder, ShellKind, SpawnInTerminal};
+use task::SpawnInTerminal;
 use terminal::{TaskState, TaskStatus, Terminal, TerminalBuilder, terminal_settings::TerminalSettings};
-use util::{command::new_std_command, get_default_system_shell, maybe, rel_path::RelPath};
-
-use crate::{Project, ProjectPath};
+use util::maybe;
 
 pub struct Terminals {
     pub(crate) local_handles: Vec<WeakEntity<terminal::Terminal>>,
@@ -442,13 +442,13 @@ impl Project {
                             remote_client
                                 .read(cx)
                                 .build_command(Some(command), &args, &env, None, None)?;
-                        let mut command = new_std_command(command_template.program);
+                        let mut command = command::new_std_command(command_template.program);
                         command.args(command_template.args);
                         command.envs(command_template.env);
                         Ok(command)
                     }
                     None => {
-                        let mut command = new_std_command(command);
+                        let mut command = command::new_std_command(command);
                         command.args(args);
                         command.envs(env);
                         if let Some(path) = path {
@@ -458,7 +458,7 @@ impl Project {
                     }
                 }
                 .map(|mut process| {
-                    util::set_pre_exec_to_start_new_session(&mut process);
+                    shell::set_pre_exec_to_start_new_session(&mut process);
                     smol::process::Command::from(process)
                 })
             })?

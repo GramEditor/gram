@@ -1,44 +1,38 @@
-use collections::{HashMap, HashSet};
-use futures::StreamExt;
-use std::cell::RefCell;
-use std::ops::Range;
-use std::pin::pin;
-use std::sync::Arc;
-use std::time::Duration;
-
-use crate::common::{
-    BottomResizeDrag, DEFAULT_PREVIEW_HEIGHT, DEFAULT_RESULTS_HEIGHT, DragPreview, MAX_PREVIEW_HEIGHT,
-    MIN_PANEL_HEIGHT, ResizeDrag, SEARCH_DEBOUNCE_MS, SearchDrag, SearchMatch,
-};
 use crate::{
     SearchOption, SearchOptions, SelectNextMatch, SelectPreviousMatch, ToggleCaseSensitive, ToggleIncludeIgnored,
     ToggleRegex, ToggleReplace, ToggleWholeWord,
+    common::{
+        BottomResizeDrag, DEFAULT_PREVIEW_HEIGHT, DEFAULT_RESULTS_HEIGHT, DragPreview, MAX_PREVIEW_HEIGHT,
+        MIN_PANEL_HEIGHT, ResizeDrag, SEARCH_DEBOUNCE_MS, SearchDrag, SearchMatch,
+    },
 };
 pub use app_actions::quick_search::Toggle;
-use editor::EditorSettings;
-use editor::{Editor, EditorEvent, EditorMode, RowHighlightOptions};
+use collections::{HashMap, HashSet};
+use editor::{Editor, EditorEvent, EditorMode, EditorSettings, RowHighlightOptions};
+use futures::StreamExt;
 use gpui::{
     Action, App, AsyncApp, Context, DismissEvent, DragMoveEvent, Entity, EventEmitter, FocusHandle, Focusable, Global,
     HighlightStyle, KeyContext, ParentElement, Render, Styled, StyledText, Subscription, Task, WeakEntity, Window,
     actions, px, relative,
 };
-use language::language_settings::SoftWrap;
-use language::{Buffer, Capability};
+use language::{Buffer, Capability, language_settings::SoftWrap};
 use menu;
 use multi_buffer::{ExcerptRange, MultiBuffer};
+use paths::path_matcher::PathMatcher;
 use picker::{Picker, PickerDelegate, PickerEditorPosition};
-use project::SearchResults;
-use project::search::{SearchQuery, SearchResult};
-use project::{Project, ProjectPath};
+use project::{
+    Project, ProjectPath, SearchResults,
+    search::{SearchQuery, SearchResult},
+};
 use settings::Settings;
+use std::{cell::RefCell, ops::Range, pin::pin, sync::Arc, time::Duration};
 use text::{Anchor, Point, ToOffset};
 use theme::ActiveTheme;
-use ui::Divider;
 use ui::{
-    ButtonLike, ContextMenu, IconButton, IconName, KeyBinding, ListItem, ListItemSpacing, PopoverMenu,
+    ButtonLike, ContextMenu, Divider, IconButton, IconName, KeyBinding, ListItem, ListItemSpacing, PopoverMenu,
     PopoverMenuHandle, TintColor, Tooltip, prelude::*,
 };
-use util::{ResultExt, paths::PathMatcher};
+use util::ResultExt;
 use workspace::{ModalView, SplitDirection, Workspace, pane};
 
 actions!(quick_search, [ReplaceNext, ReplaceAll, ToggleFilters, ToggleSplitMenu]);

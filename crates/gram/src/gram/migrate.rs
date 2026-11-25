@@ -1,19 +1,16 @@
 use anyhow::{Context as _, Result};
 use editor::Editor;
 use fs::Fs;
-use migrator::{migrate_keymap, migrate_settings};
-use settings::{KeymapFile, Settings, SettingsStore};
-use util::ResultExt;
-use workspace::notifications::NotifyTaskExt;
-
-use std::sync::Arc;
-
 use gpui::{Entity, EventEmitter, Global, Task, TextStyle, TextStyleRefinement};
 use markdown::{Markdown, MarkdownElement, style::MarkdownStyle};
+use migrator::{migrate_keymap, migrate_settings};
+use settings::{KeymapFile, Settings, SettingsStore};
+use std::sync::Arc;
 use theme::ThemeSettings;
 use ui::prelude::*;
-use workspace::item::ItemHandle;
-use workspace::{ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView, Workspace};
+use util::ResultExt;
+use workspace::notifications::NotifyTaskExt;
+use workspace::{ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView, Workspace, item::ItemHandle};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum MigrationType {
@@ -89,7 +86,7 @@ impl MigrationBanner {
         let (file_type, backup_file_name) = match self.migration_type {
             Some(MigrationType::Keymap) => (
                 "keymap",
-                paths::keymap_backup_file()
+                paths::locations::keymap_backup_file()
                     .file_name()
                     .unwrap_or_default()
                     .to_string_lossy()
@@ -97,7 +94,7 @@ impl MigrationBanner {
             ),
             Some(MigrationType::Settings) => (
                 "settings",
-                paths::settings_backup_file()
+                paths::locations::settings_backup_file()
                     .file_name()
                     .unwrap_or_default()
                     .to_string_lossy()
@@ -143,7 +140,7 @@ impl ToolbarItemView for MigrationBanner {
             return ToolbarItemLocation::Hidden;
         };
 
-        if &target == paths::keymap_file() {
+        if target == paths::locations::keymap_file() {
             self.migration_type = Some(MigrationType::Keymap);
             let fs = <dyn Fs>::global(cx);
             let should_migrate = cx.background_spawn(should_migrate_keymap(fs));
@@ -155,7 +152,7 @@ impl ToolbarItemView for MigrationBanner {
                     .log_err();
                 }
             }));
-        } else if &target == paths::settings_file() {
+        } else if target == paths::locations::settings_file() {
             self.migration_type = Some(MigrationType::Settings);
             let fs = <dyn Fs>::global(cx);
             let should_migrate = cx.background_spawn(should_migrate_settings(fs));
@@ -265,9 +262,9 @@ async fn write_keymap_migration(fs: Arc<dyn Fs>) -> Result<()> {
     let Ok(Some(new_text)) = migrate_keymap(&old_text) else {
         return Ok(());
     };
-    let keymap_path = paths::keymap_file().as_path();
+    let keymap_path = paths::locations::keymap_file();
     if fs.is_file(keymap_path).await {
-        fs.atomic_write(paths::keymap_backup_file().clone(), old_text)
+        fs.atomic_write(paths::locations::keymap_backup_file().to_owned(), old_text)
             .await
             .with_context(|| "Failed to create settings backup in home directory".to_string())?;
         let resolved_path = fs
@@ -290,9 +287,9 @@ async fn write_settings_migration(fs: Arc<dyn Fs>) -> Result<()> {
     let Ok(Some(new_text)) = migrate_settings(&old_text) else {
         return Ok(());
     };
-    let settings_path = paths::settings_file().as_path();
+    let settings_path = paths::locations::settings_file();
     if fs.is_file(settings_path).await {
-        fs.atomic_write(paths::settings_backup_file().clone(), old_text)
+        fs.atomic_write(paths::locations::settings_backup_file().to_owned(), old_text)
             .await
             .with_context(|| "Failed to create settings backup in home directory".to_string())?;
         let resolved_path = fs

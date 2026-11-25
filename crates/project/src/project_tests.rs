@@ -32,11 +32,16 @@ use lsp::{
     notification::DidRenameFiles,
 };
 use parking_lot::Mutex;
-use paths::{config_dir, global_gitignore_path, tasks_file};
+use paths::{
+    locations::{config_dir, global_gitignore_path, home_dir, tasks_file},
+    path_matcher::PathMatcher,
+    rel_path::unix_rel_path,
+};
 use postage::stream::Stream as _;
 use pretty_assertions::{assert_eq, assert_matches};
 use rand::{RngExt as _, rngs::StdRng};
 use serde_json::json;
+use shell::ShellKind;
 #[cfg(not(windows))]
 use std::os;
 use std::{
@@ -49,12 +54,10 @@ use std::{
     task::Poll,
 };
 use sum_tree::SumTree;
-use task::{ResolvedTask, ShellKind, TaskContext};
+use task::{ResolvedTask, TaskContext};
 use unindent::Unindent as _;
 use util::{
     TryFutureExt as _, assert_set_eq, maybe, path,
-    paths::PathMatcher,
-    rel_path::rel_path,
     test::{TempTree, marked_text_offsets},
     uri,
 };
@@ -132,8 +135,8 @@ async fn test_symlinks(cx: &mut gpui::TestAppContext) {
         let tree = project.worktrees(cx).next().unwrap().read(cx);
         assert_eq!(tree.file_count(), 5);
         assert_eq!(
-            tree.entry_for_path(rel_path("fennel/grape")).unwrap().inode,
-            tree.entry_for_path(rel_path("finnochio/grape")).unwrap().inode
+            tree.entry_for_path(unix_rel_path("fennel/grape")).unwrap().inode,
+            tree.entry_for_path(unix_rel_path("finnochio/grape")).unwrap().inode
         );
     });
 }
@@ -196,7 +199,7 @@ async fn test_editorconfig_support(cx: &mut gpui::TestAppContext) {
     cx.update(|cx| {
         let tree = worktree.read(cx);
         let settings_for = |path: &str| {
-            let file_entry = tree.entry_for_path(rel_path(path)).unwrap().clone();
+            let file_entry = tree.entry_for_path(unix_rel_path(path)).unwrap().clone();
             let file = File::for_entry(file_entry, worktree.clone());
             let file_language = project
                 .read(cx)
@@ -348,7 +351,7 @@ async fn test_managing_project_specific_settings(cx: &mut gpui::TestAppContext) 
 
     let topmost_local_task_source_kind = TaskSourceKind::Worktree {
         id: worktree_id,
-        directory_in_worktree: rel_path(".gram").into(),
+        directory_in_worktree: unix_rel_path(".gram").into(),
         id_base: "local worktree tasks from directory \".gram\"".into(),
     };
 
@@ -357,12 +360,12 @@ async fn test_managing_project_specific_settings(cx: &mut gpui::TestAppContext) 
             let tree = worktree.read(cx);
 
             let file_a = File::for_entry(
-                tree.entry_for_path(rel_path("a/a.rs")).unwrap().clone(),
+                tree.entry_for_path(unix_rel_path("a/a.rs")).unwrap().clone(),
                 worktree.clone(),
             ) as _;
             let settings_a = language_settings(None, Some(&file_a), cx);
             let file_b = File::for_entry(
-                tree.entry_for_path(rel_path("b/b.rs")).unwrap().clone(),
+                tree.entry_for_path(unix_rel_path("b/b.rs")).unwrap().clone(),
                 worktree.clone(),
             ) as _;
             let settings_b = language_settings(None, Some(&file_b), cx);
@@ -385,7 +388,7 @@ async fn test_managing_project_specific_settings(cx: &mut gpui::TestAppContext) 
             (
                 TaskSourceKind::Worktree {
                     id: worktree_id,
-                    directory_in_worktree: rel_path("b/.gram").into(),
+                    directory_in_worktree: unix_rel_path("b/.gram").into(),
                     id_base: "local worktree tasks from directory \"b/.gram\"".into()
                 },
                 "cargo check".to_string(),
@@ -456,7 +459,7 @@ async fn test_managing_project_specific_settings(cx: &mut gpui::TestAppContext) 
             (
                 TaskSourceKind::Worktree {
                     id: worktree_id,
-                    directory_in_worktree: rel_path("b/.gram").into(),
+                    directory_in_worktree: unix_rel_path("b/.gram").into(),
                     id_base: "local worktree tasks from directory \"b/.gram\"".into()
                 },
                 "cargo check".to_string(),
@@ -465,7 +468,7 @@ async fn test_managing_project_specific_settings(cx: &mut gpui::TestAppContext) 
             ),
             (
                 TaskSourceKind::AbsPath {
-                    abs_path: paths::tasks_file().clone(),
+                    abs_path: tasks_file().to_owned(),
                     id_base: "global tasks.jsonc".into(),
                 },
                 "cargo check unstable".to_string(),
@@ -557,7 +560,7 @@ async fn test_fallback_to_single_worktree_tasks(cx: &mut gpui::TestAppContext) {
         vec![(
             TaskSourceKind::Worktree {
                 id: worktree_id,
-                directory_in_worktree: rel_path(".gram").into(),
+                directory_in_worktree: unix_rel_path(".gram").into(),
                 id_base: "local worktree tasks from directory \".gram\"".into(),
             },
             "echo /dir".to_string(),
@@ -576,7 +579,7 @@ async fn test_running_multiple_instances_of_a_single_server_in_one_worktree(cx: 
 
         fn search(&self, ManifestQuery { path, depth, delegate }: ManifestQuery) -> Option<Arc<RelPath>> {
             for path in path.ancestors().take(depth) {
-                let p = path.join(rel_path("pyproject.toml"));
+                let p = path.join(unix_rel_path("pyproject.toml"));
                 if delegate.exists(&p, Some(false)) {
                     return Some(path.into());
                 }
@@ -691,7 +694,7 @@ async fn test_running_multiple_instances_of_a_single_server_in_one_worktree(cx: 
             this.available_toolchains(
                 ProjectPath {
                     worktree_id,
-                    path: rel_path("project-b/source_file.py").into(),
+                    path: unix_rel_path("project-b/source_file.py").into(),
                 },
                 LanguageName::new_static("Python"),
                 cx,
@@ -699,7 +702,7 @@ async fn test_running_multiple_instances_of_a_single_server_in_one_worktree(cx: 
         })
         .await
         .expect("A toolchain to be discovered");
-    assert_eq!(root_path.as_ref(), rel_path("project-b"));
+    assert_eq!(root_path.as_ref(), unix_rel_path("project-b"));
     assert_eq!(available_toolchains_for_b.toolchains().len(), 1);
     let currently_active_toolchain = project
         .update(cx, |this, cx| {
@@ -707,7 +710,7 @@ async fn test_running_multiple_instances_of_a_single_server_in_one_worktree(cx: 
             this.active_toolchain(
                 ProjectPath {
                     worktree_id,
-                    path: rel_path("project-b/source_file.py").into(),
+                    path: unix_rel_path("project-b/source_file.py").into(),
                 },
                 LanguageName::new_static("Python"),
                 cx,
@@ -1256,7 +1259,7 @@ async fn test_language_server_tilde_path(cx: &mut gpui::TestAppContext) {
         .unwrap();
 
     let lsp_path = tilde_lsp.next().await.unwrap().binary.path;
-    let expected_path = paths::home_dir().join(".local/bin/rust-analyzer");
+    let expected_path = home_dir().join(".local/bin/rust-analyzer");
     assert_eq!(lsp_path, expected_path, "Tilde path should expand to home directory");
 }
 
@@ -1705,7 +1708,7 @@ async fn test_omitted_diagnostics(cx: &mut gpui::TestAppContext) {
 
     let main_ignored_buffer = project
         .update(cx, |project, cx| {
-            project.open_buffer((main_worktree_id, rel_path("b.rs")), cx)
+            project.open_buffer((main_worktree_id, unix_rel_path("b.rs")), cx)
         })
         .await
         .unwrap();
@@ -1719,7 +1722,7 @@ async fn test_omitted_diagnostics(cx: &mut gpui::TestAppContext) {
     });
     let other_buffer = project
         .update(cx, |project, cx| {
-            project.open_buffer((other_worktree_id, rel_path("")), cx)
+            project.open_buffer((other_worktree_id, unix_rel_path("")), cx)
         })
         .await
         .unwrap();
@@ -1739,7 +1742,7 @@ async fn test_omitted_diagnostics(cx: &mut gpui::TestAppContext) {
             vec![(
                 ProjectPath {
                     worktree_id: main_worktree_id,
-                    path: rel_path("b.rs").into(),
+                    path: unix_rel_path("b.rs").into(),
                 },
                 server_id,
                 DiagnosticSummary {
@@ -1822,7 +1825,7 @@ async fn test_disk_based_diagnostics_progress(cx: &mut gpui::TestAppContext) {
         events.next().await.unwrap(),
         Event::DiagnosticsUpdated {
             language_server_id: LanguageServerId(0),
-            paths: vec![(worktree_id, rel_path("a.rs")).into()],
+            paths: vec![(worktree_id, unix_rel_path("a.rs")).into()],
         }
     );
 
@@ -1870,7 +1873,7 @@ async fn test_disk_based_diagnostics_progress(cx: &mut gpui::TestAppContext) {
         events.next().await.unwrap(),
         Event::DiagnosticsUpdated {
             language_server_id: LanguageServerId(0),
-            paths: vec![(worktree_id, rel_path("a.rs")).into()],
+            paths: vec![(worktree_id, unix_rel_path("a.rs")).into()],
         }
     );
 
@@ -3719,30 +3722,36 @@ async fn test_rename_file_to_new_directory(cx: &mut gpui::TestAppContext) {
 
     let (worktree, entry_id) = project.read_with(cx, |project, cx| {
         let worktree = project.worktrees(cx).next().unwrap();
-        let entry_id = worktree.read(cx).entry_for_path(rel_path("test.txt")).unwrap().id;
+        let entry_id = worktree.read(cx).entry_for_path(unix_rel_path("test.txt")).unwrap().id;
         (worktree, entry_id)
     });
     let worktree_id = worktree.read_with(cx, |worktree, _| worktree.id());
     let _result = project
         .update(cx, |project, cx| {
-            project.rename_entry(entry_id, (worktree_id, rel_path("dir1/dir2/dir3/test.txt")).into(), cx)
+            project.rename_entry(
+                entry_id,
+                (worktree_id, unix_rel_path("dir1/dir2/dir3/test.txt")).into(),
+                cx,
+            )
         })
         .await
         .unwrap();
     worktree.read_with(cx, |worktree, _| {
         assert!(
-            worktree.entry_for_path(rel_path("test.txt")).is_none(),
+            worktree.entry_for_path(unix_rel_path("test.txt")).is_none(),
             "Old file should have been removed"
         );
         assert!(
-            worktree.entry_for_path(rel_path("dir1/dir2/dir3/test.txt")).is_some(),
+            worktree
+                .entry_for_path(unix_rel_path("dir1/dir2/dir3/test.txt"))
+                .is_some(),
             "Whole directory hierarchy and the new file should have been created"
         );
     });
     assert_eq!(
         worktree
             .update(cx, |worktree, cx| {
-                worktree.load_file(rel_path("dir1/dir2/dir3/test.txt"), cx)
+                worktree.load_file(unix_rel_path("dir1/dir2/dir3/test.txt"), cx)
             })
             .await
             .unwrap()
@@ -3752,33 +3761,38 @@ async fn test_rename_file_to_new_directory(cx: &mut gpui::TestAppContext) {
     );
 
     let entry_id = worktree.read_with(cx, |worktree, _| {
-        worktree.entry_for_path(rel_path("dir1/dir2/dir3/test.txt")).unwrap().id
+        worktree
+            .entry_for_path(unix_rel_path("dir1/dir2/dir3/test.txt"))
+            .unwrap()
+            .id
     });
 
     let _result = project
         .update(cx, |project, cx| {
-            project.rename_entry(entry_id, (worktree_id, rel_path("dir1/dir2/test.txt")).into(), cx)
+            project.rename_entry(entry_id, (worktree_id, unix_rel_path("dir1/dir2/test.txt")).into(), cx)
         })
         .await
         .unwrap();
     worktree.read_with(cx, |worktree, _| {
         assert!(
-            worktree.entry_for_path(rel_path("test.txt")).is_none(),
+            worktree.entry_for_path(unix_rel_path("test.txt")).is_none(),
             "First file should not reappear"
         );
         assert!(
-            worktree.entry_for_path(rel_path("dir1/dir2/dir3/test.txt")).is_none(),
+            worktree
+                .entry_for_path(unix_rel_path("dir1/dir2/dir3/test.txt"))
+                .is_none(),
             "Old file should have been removed"
         );
         assert!(
-            worktree.entry_for_path(rel_path("dir1/dir2/test.txt")).is_some(),
+            worktree.entry_for_path(unix_rel_path("dir1/dir2/test.txt")).is_some(),
             "No error should have occurred after moving into existing directory"
         );
     });
     assert_eq!(
         worktree
             .update(cx, |worktree, cx| {
-                worktree.load_file(rel_path("dir1/dir2/test.txt"), cx)
+                worktree.load_file(unix_rel_path("dir1/dir2/test.txt"), cx)
             })
             .await
             .unwrap()
@@ -3873,7 +3887,7 @@ async fn test_save_file_spawns_language_server(cx: &mut gpui::TestAppContext) {
                 buffer.clone(),
                 ProjectPath {
                     worktree_id,
-                    path: rel_path("file.rs").into(),
+                    path: unix_rel_path("file.rs").into(),
                 },
                 cx,
             )
@@ -4084,7 +4098,7 @@ async fn test_save_as(cx: &mut gpui::TestAppContext) {
             let worktree_id = project.worktrees(cx).next().unwrap().read(cx).id();
             let path = ProjectPath {
                 worktree_id,
-                path: rel_path("file1.rs").into(),
+                path: unix_rel_path("file1.rs").into(),
             };
             project.save_buffer_as(buffer.clone(), path, cx)
         })
@@ -4141,7 +4155,7 @@ async fn test_save_as_existing_file(cx: &mut gpui::TestAppContext) {
             let worktree_id = project.worktrees(cx).next().unwrap().read(cx).id();
             let new_path = ProjectPath {
                 worktree_id,
-                path: rel_path("data_b.txt").into(),
+                path: unix_rel_path("data_b.txt").into(),
             };
 
             project.save_buffer_as(buffer.clone(), new_path, cx)
@@ -4191,7 +4205,7 @@ async fn test_buffer_identity_across_renames(cx: &mut gpui::TestAppContext) {
         project.update(cx, |project, cx| {
             let tree = project.worktrees(cx).next().unwrap();
             tree.read(cx)
-                .entry_for_path(rel_path(path))
+                .entry_for_path(unix_rel_path(path))
                 .unwrap_or_else(|| panic!("no entry for path {}", path))
                 .id
         })
@@ -4200,14 +4214,14 @@ async fn test_buffer_identity_across_renames(cx: &mut gpui::TestAppContext) {
     let dir_id = id_for_path("a", cx);
     let file_id = id_for_path("a/file1", cx);
     let buffer = project
-        .update(cx, |p, cx| p.open_buffer((tree_id, rel_path("a/file1")), cx))
+        .update(cx, |p, cx| p.open_buffer((tree_id, unix_rel_path("a/file1")), cx))
         .await
         .unwrap();
     buffer.update(cx, |buffer, _| assert!(!buffer.is_dirty()));
 
     project
         .update(cx, |project, cx| {
-            project.rename_entry(dir_id, (tree_id, rel_path("b")).into(), cx)
+            project.rename_entry(dir_id, (tree_id, unix_rel_path("b")).into(), cx)
         })
         .unwrap()
         .await
@@ -4893,8 +4907,8 @@ async fn test_lsp_rename_notifications(cx: &mut gpui::TestAppContext) {
     let fake_server = fake_servers.next().await.unwrap();
     let response = project.update(cx, |project, cx| {
         let worktree = project.worktrees(cx).next().unwrap();
-        let entry = worktree.read(cx).entry_for_path(rel_path("one.rs")).unwrap();
-        project.rename_entry(entry.id, (worktree.read(cx).id(), rel_path("three.rs")).into(), cx)
+        let entry = worktree.read(cx).entry_for_path(unix_rel_path("one.rs")).unwrap();
+        project.rename_entry(entry.id, (worktree.read(cx).id(), unix_rel_path("three.rs")).into(), cx)
     });
     let expected_edit = lsp::WorkspaceEdit {
         changes: None,
@@ -5940,7 +5954,7 @@ async fn test_create_entry(cx: &mut gpui::TestAppContext) {
     project
         .update(cx, |project, cx| {
             let id = project.worktrees(cx).next().unwrap().read(cx).id();
-            project.create_entry((id, rel_path("b..")), true, cx)
+            project.create_entry((id, unix_rel_path("b..")), true, cx)
         })
         .await
         .unwrap()
@@ -7339,7 +7353,7 @@ async fn test_staging_random_hunks(mut rng: StdRng, executor: BackgroundExecutor
 
     log::info!(
         "index text:\n{}",
-        repo.load_index_text(RepoPath::from_rel_path(rel_path("file.txt")))
+        repo.load_index_text(RepoPath::from_rel_path(unix_rel_path("file.txt")))
             .await
             .unwrap()
     );
@@ -7558,7 +7572,7 @@ async fn test_repository_and_path_for_project_path(
         let actual = pairs
             .iter()
             .map(|(path, _)| {
-                let project_path = (tree_id, rel_path(path)).into();
+                let project_path = (tree_id, unix_rel_path(path)).into();
                 let result = maybe!({
                     let (repo, repo_path) = git_store.repository_and_path_for_project_path(&project_path, cx)?;
                     Some((repo.read(cx).work_directory_abs_path.clone(), repo_path))
@@ -7577,7 +7591,7 @@ async fn test_repository_and_path_for_project_path(
     project.read_with(cx, |project, cx| {
         let git_store = project.git_store().read(cx);
         assert_eq!(
-            git_store.repository_and_path_for_project_path(&(tree_id, rel_path("dir1/src/b.txt")).into(), cx),
+            git_store.repository_and_path_for_project_path(&(tree_id, unix_rel_path("dir1/src/b.txt")).into(), cx),
             None
         );
     });
@@ -7587,7 +7601,7 @@ async fn test_repository_and_path_for_project_path(
 async fn test_home_dir_as_git_repository(cx: &mut gpui::TestAppContext) {
     init_test(cx);
     let fs = FakeFs::new(cx.background_executor.clone());
-    let home = paths::home_dir();
+    let home = home_dir();
     fs.insert_tree(
         home,
         json!({
@@ -7610,11 +7624,11 @@ async fn test_home_dir_as_git_repository(cx: &mut gpui::TestAppContext) {
         let containing = project
             .git_store()
             .read(cx)
-            .repository_and_path_for_project_path(&(tree_id, rel_path("a.txt")).into(), cx);
+            .repository_and_path_for_project_path(&(tree_id, unix_rel_path("a.txt")).into(), cx);
         assert!(containing.is_none());
     });
 
-    let project = Project::test(fs.clone(), [home.as_ref()], cx).await;
+    let project = Project::test(fs.clone(), [home], cx).await;
     let tree = project.read_with(cx, |project, cx| project.worktrees(cx).next().unwrap());
     let tree_id = tree.read_with(cx, |tree, _| tree.id());
     project.update(cx, |project, cx| project.git_scans_complete(cx)).await;
@@ -7624,7 +7638,7 @@ async fn test_home_dir_as_git_repository(cx: &mut gpui::TestAppContext) {
         let containing = project
             .git_store()
             .read(cx)
-            .repository_and_path_for_project_path(&(tree_id, rel_path("project/a.txt")).into(), cx);
+            .repository_and_path_for_project_path(&(tree_id, unix_rel_path("project/a.txt")).into(), cx);
         assert_eq!(containing.unwrap().0.read(cx).work_directory_abs_path.as_ref(), home,);
     });
 }
@@ -8773,7 +8787,7 @@ async fn test_file_status(cx: &mut gpui::TestAppContext) {
         assert_eq!(
             repository
                 .status_for_path(&RepoPath::from_rel_path(
-                    &rel_path(renamed_dir_name).join(rel_path(RENAMED_FILE))
+                    &unix_rel_path(renamed_dir_name).join(unix_rel_path(RENAMED_FILE))
                 ))
                 .unwrap()
                 .status,
@@ -8793,7 +8807,7 @@ async fn test_file_status(cx: &mut gpui::TestAppContext) {
         assert_eq!(
             repository
                 .status_for_path(&RepoPath::from_rel_path(
-                    &rel_path(renamed_dir_name).join(rel_path(RENAMED_FILE))
+                    &unix_rel_path(renamed_dir_name).join(unix_rel_path(RENAMED_FILE))
                 ))
                 .unwrap()
                 .status,
@@ -8861,7 +8875,7 @@ async fn test_ignored_dirs_events(cx: &mut gpui::TestAppContext) {
     let tree = project.read_with(cx, |project, cx| project.worktrees(cx).next().unwrap());
     tree.flush_fs_events(cx).await;
     tree.update(cx, |tree, cx| {
-        tree.load_file(rel_path("project/target/debug/important_text.txt"), cx)
+        tree.load_file(unix_rel_path("project/target/debug/important_text.txt"), cx)
     })
     .await
     .unwrap();
@@ -8871,14 +8885,14 @@ async fn test_ignored_dirs_events(cx: &mut gpui::TestAppContext) {
                 .map(|entry| (entry.path.as_ref(), entry.is_ignored))
                 .collect::<Vec<_>>(),
             vec![
-                (rel_path(""), false),
-                (rel_path("project/"), false),
-                (rel_path("project/.gitignore"), false),
-                (rel_path("project/src"), false),
-                (rel_path("project/src/main.rs"), false),
-                (rel_path("project/target"), true),
-                (rel_path("project/target/debug"), true),
-                (rel_path("project/target/debug/important_text.txt"), true),
+                (unix_rel_path(""), false),
+                (unix_rel_path("project/"), false),
+                (unix_rel_path("project/.gitignore"), false),
+                (unix_rel_path("project/src"), false),
+                (unix_rel_path("project/src/main.rs"), false),
+                (unix_rel_path("project/target"), true),
+                (unix_rel_path("project/target/debug"), true),
+                (unix_rel_path("project/target/debug/important_text.txt"), true),
             ]
         );
     });
@@ -8921,14 +8935,14 @@ async fn test_ignored_dirs_events(cx: &mut gpui::TestAppContext) {
                 .map(|entry| (entry.path.as_ref(), entry.is_ignored))
                 .collect::<Vec<_>>(),
             vec![
-                (rel_path(""), false),
-                (rel_path("project/"), false),
-                (rel_path("project/.gitignore"), false),
-                (rel_path("project/src"), false),
-                (rel_path("project/src/main.rs"), false),
-                (rel_path("project/target"), true),
-                (rel_path("project/target/debug"), true),
-                (rel_path("project/target/debug/important_text.txt"), true),
+                (unix_rel_path(""), false),
+                (unix_rel_path("project/"), false),
+                (unix_rel_path("project/.gitignore"), false),
+                (unix_rel_path("project/src"), false),
+                (unix_rel_path("project/src/main.rs"), false),
+                (unix_rel_path("project/target"), true),
+                (unix_rel_path("project/target/debug"), true),
+                (unix_rel_path("project/target/debug/important_text.txt"), true),
             ],
             "No stray temp files should be left after the flycheck changes"
         );
@@ -9008,7 +9022,7 @@ async fn test_odd_events_for_ignored_dirs(executor: BackgroundExecutor, cx: &mut
     });
 
     let tree = project.read_with(cx, |project, cx| project.worktrees(cx).next().unwrap());
-    tree.update(cx, |tree, cx| tree.load_file(rel_path("target/debug/foo.txt"), cx))
+    tree.update(cx, |tree, cx| tree.load_file(unix_rel_path("target/debug/foo.txt"), cx))
         .await
         .unwrap();
     tree.flush_fs_events(cx).await;
@@ -9020,14 +9034,14 @@ async fn test_odd_events_for_ignored_dirs(executor: BackgroundExecutor, cx: &mut
                 .map(|entry| (entry.path.as_ref(), entry.is_ignored))
                 .collect::<Vec<_>>(),
             vec![
-                (rel_path(""), false),
-                (rel_path(".gitignore"), false),
-                (rel_path("src"), false),
-                (rel_path("src/main.rs"), false),
-                (rel_path("target"), true),
-                (rel_path("target/debug"), true),
-                (rel_path("target/debug/deps"), true),
-                (rel_path("target/debug/foo.txt"), true),
+                (unix_rel_path(""), false),
+                (unix_rel_path(".gitignore"), false),
+                (unix_rel_path("src"), false),
+                (unix_rel_path("src/main.rs"), false),
+                (unix_rel_path("target"), true),
+                (unix_rel_path("target/debug"), true),
+                (unix_rel_path("target/debug/deps"), true),
+                (unix_rel_path("target/debug/foo.txt"), true),
             ]
         );
     });
@@ -9175,7 +9189,7 @@ async fn test_rescan_with_gitignore(cx: &mut gpui::TestAppContext) {
     });
 
     tree.read_with(cx, |tree, _| {
-        tree.refresh_entries_for_paths(vec![rel_path("ignored-dir").into()])
+        tree.refresh_entries_for_paths(vec![unix_rel_path("ignored-dir").into()])
             .unwrap()
     })
     .recv()
@@ -9255,7 +9269,7 @@ async fn test_rescan_with_gitignore(cx: &mut gpui::TestAppContext) {
             None,
             true,
         );
-        assert!(tree.read(cx).entry_for_path(rel_path(".git")).unwrap().is_ignored);
+        assert!(tree.read(cx).entry_for_path(unix_rel_path(".git")).unwrap().is_ignored);
     });
 }
 
@@ -9513,7 +9527,7 @@ async fn test_buffer_changed_file_path_updates_git_diff(cx: &mut gpui::TestAppCo
             let worktree_id = project.worktrees(cx).next().unwrap().read(cx).id();
             let path = ProjectPath {
                 worktree_id,
-                path: rel_path("src/file_2.rs").into(),
+                path: unix_rel_path("src/file_2.rs").into(),
             };
             project.save_buffer_as(buffer.clone(), path, cx)
         })
@@ -9761,7 +9775,7 @@ fn assert_entry_git_state(
 ) {
     assert_eq!(tree.abs_path(), repository.work_directory_abs_path);
     let entry = tree
-        .entry_for_path(rel_path(path))
+        .entry_for_path(unix_rel_path(path))
         .unwrap_or_else(|| panic!("entry {path} not found"));
     let status = repository.status_for_path(&repo_path(path)).map(|entry| entry.status);
     let expected = index_status.map(|index_status| {
@@ -9983,17 +9997,17 @@ async fn test_find_project_path_abs(background_executor: BackgroundExecutor, cx:
         let abs_path = project1_abs_path.join("file1.txt");
         let found_path = project.find_project_path(abs_path, cx).unwrap();
         assert_eq!(found_path.worktree_id, project1_id);
-        assert_eq!(&*found_path.path, rel_path("file1.txt"));
+        assert_eq!(&*found_path.path, unix_rel_path("file1.txt"));
 
         let abs_path = project1_abs_path.join("subdir").join("file2.txt");
         let found_path = project.find_project_path(abs_path, cx).unwrap();
         assert_eq!(found_path.worktree_id, project1_id);
-        assert_eq!(&*found_path.path, rel_path("subdir/file2.txt"));
+        assert_eq!(&*found_path.path, unix_rel_path("subdir/file2.txt"));
 
         let abs_path = project2_abs_path.join("file3.txt");
         let found_path = project.find_project_path(abs_path, cx).unwrap();
         assert_eq!(found_path.worktree_id, project2_id);
-        assert_eq!(&*found_path.path, rel_path("file3.txt"));
+        assert_eq!(&*found_path.path, unix_rel_path("file3.txt"));
 
         let abs_path = project1_abs_path.join("nonexistent.txt");
         let found_path = project.find_project_path(abs_path, cx);

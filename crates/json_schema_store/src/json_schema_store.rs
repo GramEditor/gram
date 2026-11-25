@@ -1,11 +1,11 @@
 //! # json_schema_store
-use std::{str::FromStr, sync::Arc};
 
 use anyhow::{Context as _, Result};
 use gpui::{App, AsyncApp, BorrowAppContext as _, Entity, Task, WeakEntity};
 use language::{LanguageRegistry, LspAdapterDelegate, language_settings::AllLanguageSettings};
 use project::{LspStore, lsp_store::LocalLspAdapterDelegate};
 use settings::{LSP_SETTINGS_SCHEMA_URL_PREFIX, Settings as _, SettingsLocation};
+use std::{str::FromStr, sync::Arc};
 use util::schemars::DefaultDenyUnknownFields;
 
 // Origin: https://github.com/SchemaStore/schemastore
@@ -235,33 +235,33 @@ pub fn all_schema_file_associations(
     let mut file_associations = serde_json::json!([
         {
             "fileMatch": [
-                schema_file_match(paths::settings_file()),
-                paths::local_settings_file_relative_path()
+                schema_file_match(paths::locations::settings_file()),
+                paths::locations::local_settings_file_relative_path()
             ],
             "url": "gram://schemas/settings",
         },
         {
-            "fileMatch": [schema_file_match(paths::keymap_file())],
+            "fileMatch": [schema_file_match(paths::locations::keymap_file())],
             "url": "gram://schemas/keymap",
         },
         {
             "fileMatch": [
-                schema_file_match(paths::tasks_file()),
-                paths::local_tasks_file_relative_path()
+                schema_file_match(paths::locations::tasks_file()),
+                paths::locations::local_tasks_file_relative_path()
             ],
             "url": "gram://schemas/tasks",
         },
         {
             "fileMatch": [
-                schema_file_match(paths::debug_scenarios_file()),
-                paths::local_debug_file_relative_path()
+                schema_file_match(paths::locations::debug_scenarios_file()),
+                paths::locations::local_debug_file_relative_path()
             ],
             "url": "gram://schemas/debug_tasks",
         },
         {
             "fileMatch": [
                 schema_file_match(
-                    paths::snippets_dir()
+                    paths::locations::snippets_dir()
                         .join("*.json")
                         .as_path()
                 )

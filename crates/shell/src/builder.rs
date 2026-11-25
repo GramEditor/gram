@@ -1,5 +1,4 @@
-use crate::shell::get_system_shell;
-use crate::shell::{Shell, ShellKind};
+use crate::{Shell, ShellKind, get_system_shell};
 
 /// ShellBuilder is used to turn a user-requested task into a
 /// program that can be executed by the shell.

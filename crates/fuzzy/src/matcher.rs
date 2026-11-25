@@ -306,9 +306,8 @@ impl<'a> Matcher<'a> {
 
 #[cfg(test)]
 mod tests {
-    use util::rel_path::{RelPath, rel_path};
-
     use crate::{PathMatch, PathMatchCandidate};
+    use paths::rel_path::{RelPath, unix_rel_path};
 
     use super::*;
     use std::sync::Arc;
@@ -546,7 +545,10 @@ mod tests {
         let query = query.chars().collect::<Vec<_>>();
         let query_chars = CharBag::from(&lowercase_query[..]);
 
-        let path_arcs: Vec<Arc<RelPath>> = paths.iter().map(|path| Arc::from(rel_path(path))).collect::<Vec<_>>();
+        let path_arcs: Vec<Arc<RelPath>> = paths
+            .iter()
+            .map(|path| Arc::from(unix_rel_path(path)))
+            .collect::<Vec<_>>();
         let mut path_entries = Vec::new();
         for (i, path) in paths.iter().enumerate() {
             let lowercase_path: Vec<char> = path.chars().map(simple_lowercase).collect();
@@ -588,7 +590,7 @@ mod tests {
                     paths
                         .iter()
                         .copied()
-                        .find(|p| result.path.as_ref() == rel_path(p))
+                        .find(|p| result.path.as_ref() == unix_rel_path(p))
                         .unwrap(),
                     result.positions,
                 )

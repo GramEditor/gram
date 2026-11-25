@@ -1,18 +1,15 @@
-use std::path::PathBuf;
-
+use crate::{
+    Editor, SwitchSourceHeader, element::register_action, lsp_ext::find_specific_language_server_in_selection,
+};
 use anyhow::Context as _;
 use gpui::{App, Context, Entity, Window};
 use language::Language;
+use paths::PathStyle;
+use project::lsp_store::clangd_ext::CLANGD_SERVER_NAME;
 use project::lsp_store::lsp_ext_command::SwitchSourceHeaderResult;
 use rpc::proto;
-use util::paths::PathStyle;
+use std::path::PathBuf;
 use workspace::{OpenOptions, OpenVisible};
-
-use crate::lsp_ext::find_specific_language_server_in_selection;
-
-use crate::{Editor, SwitchSourceHeader, element::register_action};
-
-use project::lsp_store::clangd_ext::CLANGD_SERVER_NAME;
 
 fn is_c_language(language: &Language) -> bool {
     language.name() == "C++".into() || language.name() == "C".into()

@@ -1,17 +1,20 @@
+use crate::{
+    NewProcessMode,
+    new_process_modal::NewProcessModal,
+    tests::{init_test, init_test_workspace},
+};
 use dap::DapRegistry;
 use editor::Editor;
 use gpui::{BackgroundExecutor, TestAppContext, VisualTestContext};
 use project::{FakeFs, Fs as _, Project};
 use serde_json::json;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
 use task::{DebugRequest, DebugScenario, GramDebugConfig, LaunchRequest, TaskContext, VariableName};
 use text::Point;
 use util::path;
-
-use crate::NewProcessMode;
-use crate::new_process_modal::NewProcessModal;
-use crate::tests::{init_test, init_test_workspace};
 
 #[gpui::test]
 #[allow(clippy::result_large_err)]
@@ -44,7 +47,7 @@ async fn test_debug_session_substitutes_variables_and_relativizes_paths(
         project_env: Default::default(),
     };
 
-    let home_dir = paths::home_dir();
+    let home_dir = paths::locations::home_dir();
 
     let test_cases: Vec<(&'static str, &'static str)> = vec![
         // Absolute path - should not be relativized

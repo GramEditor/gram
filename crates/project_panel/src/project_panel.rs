@@ -1,7 +1,3 @@
-use itertools::Itertools;
-mod project_panel_settings;
-mod utils;
-
 use anyhow::{Context as _, Result};
 use app_actions::{
     project_panel::{Toggle, ToggleFocus},
@@ -29,9 +25,11 @@ use gpui::{
     anchored, deferred, div, hsla, linear_color_stop, linear_gradient, point, px, size, transparent_white,
     uniform_list,
 };
+use itertools::Itertools;
 use language::DiagnosticSeverity;
 use menu::{Confirm, SelectFirst, SelectLast, SelectNext, SelectPrevious};
 use notifications::status_toast::{StatusToast, ToastIcon};
+use paths::{compare_paths, rel_path::RelPath};
 use project::{
     Entry, EntryKind, Fs, GitEntry, GitEntryRef, GitTraversal, Project, ProjectEntryId, ProjectPath, Worktree,
     WorktreeId,
@@ -48,8 +46,8 @@ use settings::{
     update_settings_file,
 };
 use smallvec::SmallVec;
-use std::any::TypeId;
 use std::{
+    any::TypeId,
     cell::OnceCell,
     cmp,
     collections::HashSet,
@@ -64,7 +62,7 @@ use ui::{
     IndentGuideLayout, KeyBinding, Label, LabelSize, ListItem, ListItemSpacing, ScrollAxes, ScrollableHandle,
     Scrollbars, StickyCandidate, Tooltip, WithScrollbar, prelude::*, v_flex,
 };
-use util::{ResultExt, TryFutureExt, maybe, paths::compare_paths, rel_path::RelPath};
+use util::{ResultExt, TryFutureExt, maybe};
 use workspace::{
     DraggedSelection, OpenInTerminal, OpenOptions, OpenVisible, PreviewTabsSettings, SelectedEntry, SplitDirection,
     Workspace,
@@ -72,6 +70,9 @@ use workspace::{
     notifications::{DetachAndPromptErr, NotifyResultExt, NotifyTaskExt},
 };
 use worktree::CreatedEntry;
+
+mod project_panel_settings;
+mod utils;
 
 const PROJECT_PANEL_KEY: &str = "ProjectPanel";
 const NEW_ENTRY_ID: ProjectEntryId = ProjectEntryId::MAX;
@@ -5899,22 +5900,22 @@ impl ClipboardEntry {
 
 #[inline]
 fn cmp_directories_first(a: &Entry, b: &Entry) -> cmp::Ordering {
-    util::paths::compare_rel_paths((&a.path, a.is_file()), (&b.path, b.is_file()), false)
+    paths::compare_rel_paths((&a.path, a.is_file()), (&b.path, b.is_file()), false)
 }
 
 #[inline]
 fn cmp_directories_smart(a: &Entry, b: &Entry) -> cmp::Ordering {
-    util::paths::compare_rel_paths((&a.path, a.is_file()), (&b.path, b.is_file()), true)
+    paths::compare_rel_paths((&a.path, a.is_file()), (&b.path, b.is_file()), true)
 }
 
 #[inline]
 fn cmp_mixed(a: &Entry, b: &Entry) -> cmp::Ordering {
-    util::paths::compare_rel_paths_mixed((&a.path, a.is_file()), (&b.path, b.is_file()))
+    paths::compare_rel_paths_mixed((&a.path, a.is_file()), (&b.path, b.is_file()))
 }
 
 #[inline]
 fn cmp_files_first(a: &Entry, b: &Entry) -> cmp::Ordering {
-    util::paths::compare_rel_paths_files_first((&a.path, a.is_file()), (&b.path, b.is_file()))
+    paths::compare_rel_paths_files_first((&a.path, a.is_file()), (&b.path, b.is_file()))
 }
 
 #[inline]

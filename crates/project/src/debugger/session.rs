@@ -1,68 +1,66 @@
-use crate::debugger::breakpoint_store::BreakpointSessionState;
-use crate::debugger::dap_command::{DataBreakpointContext, ReadMemory};
-use crate::debugger::memory::{self, Memory, MemoryIterator, MemoryPageBuilder, PageAddress};
-
-use super::breakpoint_store::{BreakpointStore, BreakpointStoreEvent, BreakpointUpdatedReason, SourceBreakpoint};
-use super::dap_command::{
-    self, Attach, ConfigurationDone, ContinueCommand, DataBreakpointInfoCommand, DisconnectCommand, EvaluateCommand,
-    Initialize, Launch, LoadedSourcesCommand, LocalDapCommand, LocationsCommand, ModulesCommand, NextCommand,
-    PauseCommand, RestartCommand, RestartStackFrameCommand, ScopesCommand, SetDataBreakpointsCommand,
-    SetExceptionBreakpoints, SetVariableValueCommand, StackTraceCommand, StepBackCommand, StepCommand, StepInCommand,
-    StepOutCommand, TerminateCommand, TerminateThreadsCommand, ThreadsCommand, VariablesCommand,
+use super::{
+    breakpoint_store::{BreakpointStore, BreakpointStoreEvent, BreakpointUpdatedReason, SourceBreakpoint},
+    dap_command::{
+        self, Attach, ConfigurationDone, ContinueCommand, DataBreakpointInfoCommand, DisconnectCommand,
+        EvaluateCommand, Initialize, Launch, LoadedSourcesCommand, LocalDapCommand, LocationsCommand, ModulesCommand,
+        NextCommand, PauseCommand, RestartCommand, RestartStackFrameCommand, ScopesCommand, SetDataBreakpointsCommand,
+        SetExceptionBreakpoints, SetVariableValueCommand, StackTraceCommand, StepBackCommand, StepCommand,
+        StepInCommand, StepOutCommand, TerminateCommand, TerminateThreadsCommand, ThreadsCommand, VariablesCommand,
+    },
+    dap_store::DapStore,
 };
-use super::dap_store::DapStore;
+use crate::debugger::{
+    breakpoint_store::BreakpointSessionState,
+    dap_command::{DataBreakpointContext, ReadMemory},
+    memory::{self, Memory, MemoryIterator, MemoryPageBuilder, PageAddress},
+};
 use anyhow::{Context as _, Result, anyhow, bail};
 use base64::Engine;
 use collections::{HashMap, HashSet, IndexMap};
-use dap::adapters::{DebugAdapterBinary, DebugAdapterName};
-use dap::messages::Response;
-use dap::requests::{Request, RunInTerminal, StartDebugging};
-use dap::transport::TcpTransport;
 use dap::{
-    Capabilities, ContinueArguments, EvaluateArgumentsContext, Module, Source, StackFrameId, SteppingGranularity,
-    StoppedEvent, VariableReference,
+    Capabilities, ContinueArguments, EvaluateArgumentsContext, ExceptionBreakpointsFilter, ExceptionFilterOptions,
+    Module, OutputEvent, OutputEventCategory, RunInTerminalRequestArguments, Source, StackFrameId,
+    StackFramePresentationHint, StartDebuggingRequestArguments, StartDebuggingRequestArgumentsRequest,
+    SteppingGranularity, StoppedEvent, VariablePresentationHint, VariableReference, WriteMemoryArguments,
+    adapters::{DebugAdapterBinary, DebugAdapterName},
     client::{DebugAdapterClient, SessionId},
-    messages::{Events, Message},
+    messages::{Events, Message, Response},
+    requests::{Request, RunInTerminal, StartDebugging},
+    transport::TcpTransport,
 };
-use dap::{
-    ExceptionBreakpointsFilter, ExceptionFilterOptions, OutputEvent, OutputEventCategory,
-    RunInTerminalRequestArguments, StackFramePresentationHint, StartDebuggingRequestArguments,
-    StartDebuggingRequestArgumentsRequest, VariablePresentationHint, WriteMemoryArguments,
+use futures::{
+    AsyncBufReadExt as _, FutureExt, SinkExt, StreamExt, TryStreamExt,
+    channel::{
+        mpsc::{self, UnboundedSender},
+        oneshot,
+    },
+    future::Shared,
+    io::BufReader,
 };
-use futures::channel::mpsc::UnboundedSender;
-use futures::channel::{mpsc, oneshot};
-use futures::io::BufReader;
-use futures::{AsyncBufReadExt as _, SinkExt, StreamExt, TryStreamExt};
-use futures::{FutureExt, future::Shared};
 use gpui::{
     App, AppContext, AsyncApp, BackgroundExecutor, Context, Entity, EventEmitter, SharedString, Task, WeakEntity,
 };
 use http_client::HttpClient;
-
 use node_runtime::NodeRuntime;
 use remote::RemoteClient;
 use rpc::ErrorExt;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use smol::net::{TcpListener, TcpStream};
-use std::any::TypeId;
-use std::collections::{BTreeMap, VecDeque};
-use std::net::Ipv4Addr;
-use std::ops::RangeInclusive;
-use std::path::PathBuf;
-use std::process::Stdio;
-use std::time::Duration;
 use std::{
-    any::Any,
-    collections::hash_map::Entry,
+    any::{Any, TypeId},
+    collections::{BTreeMap, VecDeque, hash_map::Entry},
     hash::{Hash, Hasher},
-    path::Path,
+    net::Ipv4Addr,
+    ops::RangeInclusive,
+    path::{Path, PathBuf},
+    process::Stdio,
     sync::Arc,
+    time::Duration,
 };
 use task::TaskContext;
 use text::{PointUtf16, ToPointUtf16};
 use url::Url;
-use util::command::new_smol_command;
 use util::{ResultExt, debug_panic, maybe};
 use worktree::Worktree;
 
@@ -2547,7 +2545,7 @@ impl Session {
 
                 let child = remote_client.update(cx, |client, _| {
                     let command = client.build_forward_ports_command(port_forwards)?;
-                    let child = new_smol_command(command.program)
+                    let child = command::new_smol_command(command.program)
                         .args(command.args)
                         .envs(command.env)
                         .spawn()
@@ -2730,14 +2728,14 @@ async fn spawn_companion(node_runtime: NodeRuntime, cx: &mut AsyncApp) -> Result
         listener.local_addr()?.port()
     };
 
-    let dir = paths::data_dir()
-        .join("js_debug_companion_state")
-        .to_string_lossy()
-        .to_string();
+    let dir = paths::locations::data_dir().join("js_debug_companion_state");
 
-    let child = new_smol_command(binary_path)
+    let child = command::new_smol_command(binary_path)
         .arg(path)
-        .args([format!("--listen=127.0.0.1:{port}"), format!("--state={dir}")])
+        .args([
+            format!("--listen=127.0.0.1:{port}"),
+            format!("--state={}", dir.to_string_lossy()),
+        ])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -2766,7 +2764,7 @@ async fn get_or_install_companion(node: NodeRuntime, cx: &mut AsyncApp) -> Resul
         Ok(dir.join(version))
     }
 
-    let dir = paths::debug_adapters_dir().join("js-debug-companion");
+    let dir = paths::locations::debug_adapters_dir().join("js-debug-companion");
     let (latest_installed_version, latest_version) = cx
         .background_spawn({
             let dir = dir.clone();

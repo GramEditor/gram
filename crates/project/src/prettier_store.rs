@@ -20,10 +20,10 @@ use language::{
 };
 use lsp::{LanguageServer, LanguageServerId, LanguageServerName};
 use node_runtime::NodeRuntime;
-use paths::default_prettier_dir;
+use paths::{locations::default_prettier_dir, rel_path::RelPath};
 use prettier::Prettier;
 use smol::stream::StreamExt;
-use util::{ResultExt, TryFutureExt, rel_path::RelPath};
+use util::{ResultExt, TryFutureExt};
 
 use crate::{File, PathChange, ProjectEntryId, Worktree, lsp_store::WorktreeId, worktree_store::WorktreeStore};
 
@@ -300,7 +300,7 @@ impl PrettierStore {
                     }
                     let new_default_prettier = prettier_store.update(cx, |prettier_store, cx| {
                         let new_default_prettier =
-                            Self::start_prettier(node, default_prettier_dir().clone(), worktree_id, cx);
+                            Self::start_prettier(node, default_prettier_dir().to_owned(), worktree_id, cx);
                         prettier_store.default_prettier.prettier = PrettierInstallation::Installed(PrettierInstance {
                             attempt: 0,
                             prettier: Some(new_default_prettier.clone()),
@@ -309,12 +309,13 @@ impl PrettierStore {
                     })?;
                     Ok(new_default_prettier)
                 }
+
                 ControlFlow::Break(instance) => match instance.prettier {
                     Some(instance) => Ok(instance),
                     None => {
                         let new_default_prettier = prettier_store.update(cx, |prettier_store, cx| {
                             let new_default_prettier =
-                                Self::start_prettier(node, default_prettier_dir().clone(), worktree_id, cx);
+                                Self::start_prettier(node, default_prettier_dir().to_owned(), worktree_id, cx);
                             prettier_store.default_prettier.prettier =
                                 PrettierInstallation::Installed(PrettierInstance {
                                     attempt: instance.attempt + 1,
@@ -839,7 +840,7 @@ async fn install_prettier_packages(
     .await
     .context("fetching latest npm versions")?;
 
-    let default_prettier_dir = default_prettier_dir().as_path();
+    let default_prettier_dir = default_prettier_dir();
     match fs
         .metadata(default_prettier_dir)
         .await

@@ -1,35 +1,40 @@
-use crate::handle_open_request;
-use crate::restorable_workspace_locations;
+use crate::{handle_open_request, restorable_workspace_locations};
 use anyhow::{Context as _, Result, anyhow};
-use cli::{CliRequest, CliResponse, ipc::IpcSender};
-use cli::{IpcHandshake, ipc};
+use cli::{
+    CliRequest, CliResponse, IpcHandshake,
+    ipc::{self, IpcSender},
+};
 use collections::HashMap;
 use db::kvp::KEY_VALUE_STORE;
 use editor::Editor;
 use fs::Fs;
-use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender};
-use futures::channel::{mpsc, oneshot};
-use futures::future;
-use futures::future::join_all;
-use futures::{FutureExt, SinkExt, StreamExt};
+use futures::{
+    FutureExt, SinkExt, StreamExt,
+    channel::{
+        mpsc::{self, UnboundedReceiver, UnboundedSender},
+        oneshot,
+    },
+    future::{self, join_all},
+};
 use git_ui::file_diff_view::FileDiffView;
 use gpui::{App, AsyncApp, Global, WindowHandle};
 use language::Point;
-use onboarding::FIRST_OPEN;
-use onboarding::show_onboarding_view;
+use onboarding::{FIRST_OPEN, show_onboarding_view};
+use paths::PathWithPosition;
 use recent_projects::{SshSettings, open_remote_project};
 use remote::{RemoteConnectionOptions, WslConnectionOptions};
 use settings::Settings;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+    thread,
+    time::Duration,
+};
 use ui::SharedString;
 use util::ResultExt;
-use util::paths::PathWithPosition;
-use workspace::item::ItemHandle;
-use workspace::{AppState, OpenOptions, SerializedWorkspaceLocation, Workspace};
-use workspace::{PathList, WorkspaceSettings};
+use workspace::{
+    AppState, OpenOptions, PathList, SerializedWorkspaceLocation, Workspace, WorkspaceSettings, item::ItemHandle,
+};
 
 #[derive(Default, Debug)]
 pub struct OpenRequest {
@@ -249,7 +254,7 @@ pub fn listen_for_cli_connections(opener: OpenListener) -> Result<()> {
     use release_channel::RELEASE_CHANNEL_NAME;
     use std::os::unix::net::UnixDatagram;
 
-    let sock_path = paths::data_dir().join(format!("gram-{}.sock", *RELEASE_CHANNEL_NAME));
+    let sock_path = paths::locations::data_dir().join(format!("gram-{}.sock", *RELEASE_CHANNEL_NAME));
     // remove the socket if the process listening on it has died
     if let Err(e) = UnixDatagram::unbound()?.connect(&sock_path)
         && e.kind() == std::io::ErrorKind::ConnectionRefused

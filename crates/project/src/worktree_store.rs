@@ -1,28 +1,23 @@
-use std::{
-    path::{Path, PathBuf},
-    sync::{Arc, atomic::AtomicUsize},
-};
-
+use crate::ProjectPath;
 use anyhow::{Context as _, Result, anyhow, bail};
 use collections::HashMap;
 use fs::{Fs, copy_recursive};
 use futures::{FutureExt, future::Shared};
 use gpui::{App, AppContext as _, AsyncApp, Context, Entity, EntityId, EventEmitter, Task, WeakEntity};
+use paths::{PathStyle, rel_path::RelPath, remote_path::RemotePathBuf, sanitized_path::SanitizedPath};
 use rpc::{
     AnyProtoClient, ErrorExt, TypedEnvelope,
     proto::{self, REMOTE_SERVER_PROJECT_ID},
 };
-use text::ReplicaId;
-use util::{
-    ResultExt,
-    paths::{PathStyle, RemotePathBuf, SanitizedPath},
-    rel_path::RelPath,
+use std::{
+    path::{Path, PathBuf},
+    sync::{Arc, atomic::AtomicUsize},
 };
+use text::ReplicaId;
+use util::ResultExt;
 use worktree::{
     CreatedEntry, Entry, ProjectEntryId, UpdatedEntriesSet, UpdatedGitRepositoriesSet, Worktree, WorktreeId,
 };
-
-use crate::ProjectPath;
 
 enum WorktreeStoreState {
     Local {

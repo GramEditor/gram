@@ -1,14 +1,14 @@
 use anyhow::{Context as _, Result, anyhow};
-use language::File;
-use lsp::LanguageServerId;
-
 use extension::ExtensionHostProxy;
 use extension_host::headless_host::HeadlessExtensionStore;
 use fs::Fs;
 use gpui::{App, AppContext as _, AsyncApp, Context, Entity, PromptLevel};
 use http_client::HttpClient;
+use language::File;
 use language::{Buffer, BufferEvent, LanguageRegistry, proto::serialize_operation};
+use lsp::LanguageServerId;
 use node_runtime::NodeRuntime;
+use paths::{PathStyle, rel_path::RelPath};
 use project::{
     LspStore, LspStoreEvent, ManifestTree, PrettierStore, ProjectEnvironment, ProjectPath, ToolchainStore, WorktreeId,
     buffer_store::{BufferStore, BufferStoreEvent},
@@ -25,7 +25,6 @@ use rpc::{
     AnyProtoClient, TypedEnvelope,
     proto::{self, REMOTE_SERVER_PEER_ID, REMOTE_SERVER_PROJECT_ID},
 };
-
 use settings::initial_server_settings_content;
 use smol::stream::StreamExt;
 use std::{
@@ -37,7 +36,7 @@ use std::{
     },
 };
 use sysinfo::{ProcessRefreshKind, RefreshKind, System, UpdateKind};
-use util::{ResultExt, paths::PathStyle, rel_path::RelPath};
+use util::ResultExt;
 use worktree::Worktree;
 
 pub struct HeadlessProject {
@@ -215,7 +214,7 @@ impl HeadlessProject {
         let extensions = HeadlessExtensionStore::new(
             fs.clone(),
             http_client.clone(),
-            paths::remote_extensions_dir().to_path_buf(),
+            paths::locations::remote_extensions_dir().to_path_buf(),
             proxy,
             node_runtime,
             cx,
@@ -389,7 +388,7 @@ impl HeadlessProject {
                     .ok_or(e)
                     .with_context(|| format!("{path:?} does not exist"))?;
                 if parent == Path::new("") {
-                    parent = util::paths::home_dir();
+                    parent = paths::locations::home_dir();
                 }
                 let parent = fs.canonicalize(parent).await.map_err(|_| {
                     anyhow!(
@@ -606,7 +605,7 @@ impl HeadlessProject {
         _: TypedEnvelope<proto::OpenServerSettings>,
         mut cx: AsyncApp,
     ) -> Result<proto::OpenBufferResponse> {
-        let settings_path = paths::settings_file();
+        let settings_path = paths::locations::settings_file();
         let (worktree, path) = this
             .update(&mut cx, |this, cx| {
                 this.worktree_store.update(cx, |worktree_store, cx| {

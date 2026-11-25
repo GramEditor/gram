@@ -1,24 +1,23 @@
-mod native_kernel;
-use std::{fmt::Debug, future::Future, path::PathBuf};
-
+use anyhow::Result;
 use futures::{
     channel::mpsc::{self, Receiver},
     future::Shared,
     stream,
 };
 use gpui::{App, Entity, Task, Window};
+use jupyter_protocol::JupyterKernelspec;
+use jupyter_zmq_client::{ExecutionState, JupyterMessage, KernelInfoReply};
 use language::LanguageName;
+use paths::rel_path::RelPath;
+use project::{Project, ProjectPath, Toolchains, WorktreeId};
+use std::{fmt::Debug, future::Future, path::PathBuf};
+use ui::{Icon, IconName, SharedString};
+
+mod native_kernel;
 pub use native_kernel::*;
 
 mod remote_kernels;
-use project::{Project, ProjectPath, Toolchains, WorktreeId};
 pub use remote_kernels::*;
-
-use anyhow::Result;
-use jupyter_protocol::JupyterKernelspec;
-use jupyter_zmq_client::{ExecutionState, JupyterMessage, KernelInfoReply};
-use ui::{Icon, IconName, SharedString};
-use util::rel_path::RelPath;
 
 pub type JupyterMessageChannel = stream::SelectAll<Receiver<JupyterMessage>>;
 
@@ -113,7 +112,7 @@ pub fn python_env_kernel_specifications(
                     let python_path = toolchain.path.to_string();
 
                     // Check if ipykernel is installed
-                    let ipykernel_check = util::command::new_smol_command(&python_path)
+                    let ipykernel_check = command::new_smol_command(&python_path)
                         .args(["-c", "import ipykernel"])
                         .output()
                         .await;

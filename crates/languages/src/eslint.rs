@@ -8,6 +8,7 @@ use http_client::{
 use language::{LspAdapter, LspAdapterDelegate, LspInstaller, Toolchain};
 use lsp::{CodeActionKind, LanguageServerBinary, LanguageServerName, Uri};
 use node_runtime::{NodeRuntime, read_package_installed_version};
+use paths::rel_path::RelPath;
 use project::{Fs, lsp_store::language_server_settings_for};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -18,8 +19,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use util::merge_json_value_into;
-use util::{fs::remove_matching, rel_path::RelPath};
+use util::{fs::remove_matching, merge_json_value_into};
 
 fn eslint_server_binary_arguments(server_path: &Path) -> Vec<OsString> {
     vec!["--max-old-space-size=8192".into(), server_path.into(), "--stdio".into()]

@@ -1,9 +1,9 @@
-use std::{
-    collections::hash_map,
-    ops::{ControlFlow, Range},
-    time::Duration,
+use crate::{
+    Editor, EditorSnapshot, PointForPosition, ToggleInlayHints, ToggleInlineValues, debounce_value,
+    hover_links::{InlayHighlight, TriggerPoint, show_link_definition},
+    hover_popover::{self, InlayHover},
+    inlays::{Inlay, InlayId, InlaySplice},
 };
-
 use clock::Global;
 use collections::{HashMap, HashSet};
 use futures::future::join_all;
@@ -19,17 +19,14 @@ use project::{
     ResolveState,
     lsp_store::{CacheInlayHints, ResolvedHint},
 };
+use std::{
+    collections::hash_map,
+    ops::{ControlFlow, Range},
+    time::Duration,
+};
 use text::{Bias, BufferId};
 use ui::{Context, Window};
 use util::debug_panic;
-
-use super::{Inlay, InlayId};
-use crate::{
-    Editor, EditorSnapshot, PointForPosition, ToggleInlayHints, ToggleInlineValues, debounce_value,
-    hover_links::{InlayHighlight, TriggerPoint, show_link_definition},
-    hover_popover::{self, InlayHover},
-    inlays::InlaySplice,
-};
 
 pub fn inlay_hint_settings(
     location: Anchor,
@@ -838,34 +835,37 @@ fn spawn_editor_hints_refresh(
 
 #[cfg(test)]
 pub mod tests {
-    use crate::editor_tests::update_test_language_settings;
-    use crate::inlays::inlay_hints::InlayHintRefreshReason;
-    use crate::scroll::ScrollAmount;
-    use crate::{Editor, SelectionEffects};
-    use crate::{ExcerptRange, scroll::Autoscroll};
+    use crate::{
+        Editor, ExcerptRange, SelectionEffects, editor_tests::update_test_language_settings,
+        inlays::inlay_hints::InlayHintRefreshReason, scroll::Autoscroll, scroll::ScrollAmount,
+    };
     use collections::HashSet;
     use futures::{StreamExt, future};
     use gpui::{AppContext as _, Context, SemanticVersion, TestAppContext, WindowHandle};
     use itertools::Itertools as _;
-    use language::language_settings::InlayHintKind;
-    use language::{Capability, FakeLspAdapter};
-    use language::{Language, LanguageConfig, LanguageMatcher};
+    use language::{
+        Capability, FakeLspAdapter, Language, LanguageConfig, LanguageMatcher, language_settings::InlayHintKind,
+    };
     use languages::rust_lang;
     use lsp::FakeLanguageServer;
     use multi_buffer::{MultiBuffer, MultiBufferOffset};
     use parking_lot::Mutex;
+    use paths::natural_sort;
     use pretty_assertions::assert_eq;
     use project::{FakeFs, Project};
     use serde_json::json;
     use settings::{AllLanguageSettingsContent, InlayHintSettingsContent, SettingsStore};
-    use std::ops::Range;
-    use std::sync::Arc;
-    use std::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
-    use std::time::Duration;
+    use std::{
+        ops::Range,
+        sync::{
+            Arc,
+            atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering},
+        },
+        time::Duration,
+    };
     use text::{OffsetRangeExt, Point};
     use ui::App;
     use util::path;
-    use util::paths::natural_sort;
 
     #[gpui::test]
     async fn test_basic_cache_update_with_duplicate_hints(cx: &mut gpui::TestAppContext) {

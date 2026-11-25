@@ -1,7 +1,6 @@
-mod gram;
-mod reliability;
-
+use crate::gram::{OpenRequestKind, eager_load_active_theme_and_icon_theme};
 use anyhow::{Context as _, Error, Result};
+use assets::Assets;
 use clap::Parser;
 use cli::FORCE_CLI_MODE_ENV_VAR_NAME;
 use client::{Client, ProxySettings};
@@ -15,25 +14,22 @@ use futures::{StreamExt, channel::oneshot, future};
 use git::GitHostingProviderRegistry;
 use git_ui::clone::clone_and_open;
 use gpui::{App, AppContext, Application, AsyncApp, QuitMode, UpdateGlobal as _};
-
 use gpui_tokio::Tokio;
-use language::LanguageRegistry;
-use onboarding::{FIRST_OPEN, show_onboarding_view};
-use project_panel::ProjectPanel;
-use remote::RemoteConnectionOptions;
-use reqwest_client::ReqwestClient;
-
-use assets::Assets;
 use gram::{
     OpenListener, OpenRequest, RawOpenRequest, app_menus, build_window_options, derive_paths_with_position,
     handle_cli_connection, handle_keymap_file_changes, handle_settings_file_changes, initialize_workspace,
     open_paths_with_positions,
 };
+use language::LanguageRegistry;
 use node_runtime::{NodeBinaryOptions, NodeRuntime};
+use onboarding::{FIRST_OPEN, show_onboarding_view};
 use parking_lot::Mutex;
 use project::{debugger::dap_store::DapStore, project_settings::ProjectSettings};
+use project_panel::ProjectPanel;
 use recent_projects::{SshSettings, open_remote_project};
 use release_channel::{AppCommitSha, AppVersion, ReleaseChannel};
+use remote::RemoteConnectionOptions;
+use reqwest_client::ReqwestClient;
 use session::{AppSession, Session};
 use settings::{Settings, SettingsStore, watch_config_file};
 use std::{
@@ -54,7 +50,8 @@ use workspace::{
     notifications::NotificationId,
 };
 
-use crate::gram::{OpenRequestKind, eager_load_active_theme_and_icon_theme};
+mod gram;
+mod reliability;
 
 #[cfg(feature = "mimalloc")]
 #[global_allocator]
@@ -198,7 +195,7 @@ pub fn main() {
 
     // `gram --printenv` Outputs environment variables as JSON to stdout
     if args.printenv {
-        util::shell_env::print_env();
+        shell::env::print_env();
         return;
     }
 
@@ -209,7 +206,7 @@ pub fn main() {
 
     // Set custom data directory.
     if let Some(dir) = &args.user_data_dir {
-        paths::set_custom_data_dir(dir);
+        paths::locations::set_data_dir(dir);
     }
 
     #[cfg(target_os = "windows")]
@@ -233,7 +230,7 @@ pub fn main() {
     if stdout_is_a_pty() {
         zlog::init_output_stdout();
     } else {
-        let result = zlog::init_output_file(paths::log_file(), Some(paths::old_log_file()));
+        let result = zlog::init_output_file(paths::locations::log_file(), Some(paths::locations::old_log_file()));
         if let Err(err) = result {
             eprintln!("Could not open log file: {err}... Defaulting to stdout");
             zlog::init_output_stdout();
@@ -334,14 +331,21 @@ pub fn main() {
     }
 
     let fs = Arc::new(RealFs::new(git_binary_path, app.background_executor()));
-    let user_settings_file_rx =
-        watch_config_file(&app.background_executor(), fs.clone(), paths::settings_file().clone());
+    let user_settings_file_rx = watch_config_file(
+        &app.background_executor(),
+        fs.clone(),
+        paths::locations::settings_file().to_owned(),
+    );
     let global_settings_file_rx = watch_config_file(
         &app.background_executor(),
         fs.clone(),
-        paths::global_settings_file().clone(),
+        paths::locations::global_settings_file().to_owned(),
     );
-    let user_keymap_file_rx = watch_config_file(&app.background_executor(), fs.clone(), paths::keymap_file().clone());
+    let user_keymap_file_rx = watch_config_file(
+        &app.background_executor(),
+        fs.clone(),
+        paths::locations::keymap_file().to_owned(),
+    );
 
     let (shell_env_loaded_tx, shell_env_loaded_rx) = oneshot::channel();
     if stdout_is_a_pty() {
@@ -350,7 +354,7 @@ pub fn main() {
         app.background_executor()
             .spawn(async {
                 #[cfg(unix)]
-                util::load_login_shell_environment().await.log_err();
+                shell::load_login_shell_environment().await.log_err();
                 shell_env_loaded_tx.send(()).ok();
             })
             .detach();
@@ -421,7 +425,7 @@ pub fn main() {
         let client = Client::production(cx);
         cx.set_http_client(client.http_client());
         let mut languages = LanguageRegistry::new(cx.background_executor().clone());
-        languages.set_language_server_download_dir(paths::languages_dir().clone());
+        languages.set_language_server_download_dir(paths::locations::languages_dir());
         let languages = Arc::new(languages);
         let (mut tx, rx) = watch::channel(None);
         cx.observe_global::<SettingsStore>(move |cx| {
@@ -1057,14 +1061,14 @@ pub(crate) async fn restorable_workspace_locations(
 
 fn init_paths() -> HashMap<io::ErrorKind, Vec<&'static Path>> {
     [
-        paths::config_dir(),
-        paths::user_extensions_dir(),
-        paths::languages_dir(),
-        paths::debug_adapters_dir(),
-        paths::database_dir(),
-        paths::logs_dir(),
-        paths::temp_dir(),
-        paths::hang_traces_dir(),
+        paths::locations::config_dir(),
+        paths::locations::user_extensions_dir(),
+        paths::locations::languages_dir(),
+        paths::locations::debug_adapters_dir(),
+        paths::locations::database_dir(),
+        paths::locations::logs_dir(),
+        paths::locations::temp_dir(),
+        paths::locations::hang_traces_dir(),
     ]
     .into_iter()
     .fold(HashMap::default(), |mut errors, path| {
@@ -1207,7 +1211,7 @@ fn load_user_themes_in_background(fs: Arc<dyn fs::Fs>, cx: &mut App) {
         let fs = fs.clone();
         async move |cx| {
             if let Some(theme_registry) = cx.update(|cx| ThemeRegistry::global(cx)).log_err() {
-                let themes_dir = paths::themes_dir().as_ref();
+                let themes_dir = paths::locations::themes_dir();
                 match fs.metadata(themes_dir).await.ok().flatten().map(|m| m.is_dir) {
                     Some(is_dir) => {
                         anyhow::ensure!(is_dir, "Themes dir path {themes_dir:?} is not a directory");
@@ -1233,7 +1237,7 @@ fn watch_themes(fs: Arc<dyn fs::Fs>, cx: &mut App) {
     cx.spawn(async move |cx| {
         let (mut events, _) = fs
             .watch(
-                paths::themes_dir(),
+                paths::locations::themes_dir(),
                 Duration::from_millis(100),
                 fs::fs_watcher::WatcherMode::Native,
             )

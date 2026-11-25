@@ -87,7 +87,7 @@ mod test_mocks {
             None
         }
 
-        async fn read_text_file(&self, _path: &util::rel_path::RelPath) -> Result<String> {
+        async fn read_text_file(&self, _path: &paths::rel_path::RelPath) -> Result<String> {
             Ok(String::new())
         }
 

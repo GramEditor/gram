@@ -1,14 +1,5 @@
-mod app_menus;
-pub mod component_preview;
-mod migrate;
-mod open_listener;
-mod quick_action_bar;
-#[cfg(target_os = "windows")]
-pub(crate) mod windows_only_instance;
-
 use anyhow::Context as _;
 use app_actions::{About, OpenBrowser, OpenGramUrl, OpenServerSettings, OpenSettingsFile, Quit, ToggleTitleBar};
-pub use app_menus::*;
 use assets::Assets;
 use breadcrumbs::Breadcrumbs;
 use collections::VecDeque;
@@ -16,11 +7,8 @@ use debugger_ui::debugger_panel::DebugPanel;
 use editor::{Editor, MultiBuffer};
 use extension_host::ExtensionStore;
 use fs::Fs;
-use futures::future::Either;
-use futures::{StreamExt, channel::mpsc, select_biased};
-use git_ui::commit_view::CommitViewToolbar;
-use git_ui::git_panel::GitPanel;
-use git_ui::project_diff::ProjectDiffToolbar;
+use futures::{StreamExt, channel::mpsc, future::Either, select_biased};
+use git_ui::{commit_view::CommitViewToolbar, git_panel::GitPanel, project_diff::ProjectDiffToolbar};
 use gpui::{
     Action, App, AppContext as _, ClipboardItem, Context, DismissEvent, Element, Entity, FocusHandle, Focusable,
     KeyBinding, ParentElement, PathPromptOptions, PromptLevel, ReadGlobal, SharedString, Size, Task, TitlebarOptions,
@@ -29,14 +17,15 @@ use gpui::{
 };
 use image_viewer::ImageInfo;
 use language::Capability;
-use language_tools::lsp_button::{self, LspButton};
-use language_tools::lsp_log_view::LspLogToolbarItemView;
+use language_tools::{
+    lsp_button::{self, LspButton},
+    lsp_log_view::LspLogToolbarItemView,
+};
 use migrate::{MigrationBanner, MigrationEvent, MigrationNotification, MigrationType};
 use migrator::migrate_keymap;
 use onboarding::multibuffer_hint::MultibufferHint;
-pub use open_listener::*;
 use outline_panel::OutlinePanel;
-use paths::{local_debug_file_relative_path, local_settings_file_relative_path, local_tasks_file_relative_path};
+use paths::rel_path::RelPath;
 use project::{DirectoryLister, ProjectItem};
 use project_panel::ProjectPanel;
 use quick_action_bar::QuickActionBar;
@@ -62,18 +51,31 @@ use title_bar::title_bar_settings::TitleBarSettings;
 use ui::{
     ButtonLink, CopyButton, Navigable, NavigableEntry, PopoverMenuHandle, TintColor, Vector, VectorName, prelude::*,
 };
-use util::markdown::MarkdownString;
-use util::rel_path::RelPath;
-use util::{ResultExt, asset_str};
+use util::{ResultExt, asset_str, markdown::MarkdownString};
 use uuid::Uuid;
 use vim_mode_setting::VimModeSetting;
-use workspace::notifications::{NotificationId, dismiss_app_notification, show_app_notification};
 use workspace::{
-    AppState, NewFile, NewWindow, OpenLog, Toast, Workspace, WorkspaceSettings, create_and_open_local_file,
-    notifications::simple_message_notification::MessageNotification, open_new,
+    AppState, CloseIntent, CloseProject, CloseWindow, NewFile, NewWindow, OpenLog, Pane, Toast, Workspace,
+    WorkspaceSettings, create_and_open_local_file,
+    notifications::{
+        DetachAndPromptErr, NotificationId, dismiss_app_notification, show_app_notification,
+        simple_message_notification::MessageNotification,
+    },
+    open_new, with_active_or_new_workspace,
 };
-use workspace::{CloseIntent, CloseProject, CloseWindow, with_active_or_new_workspace};
-use workspace::{Pane, notifications::DetachAndPromptErr};
+
+pub mod component_preview;
+mod migrate;
+mod quick_action_bar;
+
+#[cfg(target_os = "windows")]
+pub(crate) mod windows_only_instance;
+
+mod app_menus;
+pub use app_menus::*;
+
+mod open_listener;
+pub use open_listener::*;
 
 actions!(
     gram,
@@ -165,7 +167,7 @@ pub fn init(cx: &mut App) {
         });
     })
     .on_action(|_: &workspace::RevealLogInFileManager, cx| {
-        cx.reveal_path(paths::log_file().as_path());
+        cx.reveal_path(paths::locations::log_file());
     })
     .on_action(|_: &app_actions::ViewLicense, cx| {
         with_active_or_new_workspace(cx, |workspace, window, cx| {
@@ -182,7 +184,7 @@ pub fn init(cx: &mut App) {
     .on_action(|&app_actions::OpenKeymapFile, cx| {
         with_active_or_new_workspace(cx, |_, window, cx| {
             open_settings_file(
-                paths::keymap_file(),
+                paths::locations::keymap_file(),
                 || settings::initial_keymap_content().as_ref().into(),
                 window,
                 cx,
@@ -192,7 +194,7 @@ pub fn init(cx: &mut App) {
     .on_action(|_: &OpenSettingsFile, cx| {
         with_active_or_new_workspace(cx, |_, window, cx| {
             open_settings_file(
-                paths::settings_file(),
+                paths::locations::settings_file(),
                 || settings::initial_user_settings_content().as_ref().into(),
                 window,
                 cx,
@@ -202,7 +204,7 @@ pub fn init(cx: &mut App) {
     .on_action(|_: &OpenTasks, cx| {
         with_active_or_new_workspace(cx, |_, window, cx| {
             open_settings_file(
-                paths::tasks_file(),
+                paths::locations::tasks_file(),
                 || settings::initial_tasks_content().as_ref().into(),
                 window,
                 cx,
@@ -212,7 +214,7 @@ pub fn init(cx: &mut App) {
     .on_action(|_: &OpenDebugTasks, cx| {
         with_active_or_new_workspace(cx, |_, window, cx| {
             open_settings_file(
-                paths::debug_scenarios_file(),
+                paths::locations::debug_scenarios_file(),
                 || settings::initial_debug_tasks_content().as_ref().into(),
                 window,
                 cx,
@@ -1272,8 +1274,8 @@ fn open_log_file(workspace: &mut Workspace, window: &mut Window, cx: &mut Contex
             let fs = app_state.fs.clone();
             cx.spawn_in(window, async move |workspace, cx| {
                 let (old_log, new_log, log_language) = futures::join!(
-                    fs.load(paths::old_log_file()),
-                    fs.load(paths::log_file()),
+                    fs.load(paths::locations::old_log_file()),
+                    fs.load(paths::locations::log_file()),
                     languages.language_for_name("log")
                 );
                 let log = match (old_log, new_log) {
@@ -1305,7 +1307,7 @@ fn open_log_file(workspace: &mut Workspace, window: &mut Window, cx: &mut Contex
                                     MessageNotification::new(
                                         format!(
                                             "Unable to access/open log file at path {:?}",
-                                            paths::log_file().as_path()
+                                            paths::locations::log_file()
                                         ),
                                         cx,
                                     )
@@ -1325,7 +1327,7 @@ fn open_log_file(workspace: &mut Workspace, window: &mut Window, cx: &mut Contex
                             editor.set_breadcrumb_header(format!(
                                 "Last {} lines in {}",
                                 MAX_LINES,
-                                paths::log_file().display()
+                                paths::locations::log_file().display()
                             ));
                             editor
                         });
@@ -1727,7 +1729,7 @@ fn open_project_settings_file(
 ) {
     open_local_file(
         workspace,
-        local_settings_file_relative_path(),
+        paths::locations::local_settings_file_relative_path(),
         initial_project_settings_content(),
         window,
         cx,
@@ -1742,7 +1744,7 @@ fn open_project_tasks_file(
 ) {
     open_local_file(
         workspace,
-        local_tasks_file_relative_path(),
+        paths::locations::local_tasks_file_relative_path(),
         initial_tasks_content(),
         window,
         cx,
@@ -1757,7 +1759,7 @@ fn open_project_debug_tasks_file(
 ) {
     open_local_file(
         workspace,
-        local_debug_file_relative_path(),
+        paths::locations::local_debug_file_relative_path(),
         initial_local_debug_tasks_content(),
         window,
         cx,
@@ -1907,7 +1909,7 @@ fn open_settings_file(
                         // drag and drop from OS) still have their worktrees
                         // released on file close, causing LSP servers'
                         // restarts.
-                        project.find_or_create_worktree(paths::config_dir().as_path(), false, cx)
+                        project.find_or_create_worktree(paths::locations::config_dir(), false, cx)
                     });
                     let settings_open_task = create_and_open_local_file(abs_path, window, cx, default_content);
                     (worktree_creation_task, settings_open_task)
@@ -2024,6 +2026,7 @@ mod tests {
         VisualTestContext, WindowHandle, actions,
     };
     use language::{LanguageMatcher, LanguageRegistry};
+    use paths::rel_path::{RelPath, unix_rel_path};
     use pretty_assertions::{assert_eq, assert_ne};
     use project::{Project, ProjectPath};
     use serde_json::json;
@@ -2033,10 +2036,7 @@ mod tests {
         time::Duration,
     };
     use theme::ThemeRegistry;
-    use util::{
-        path,
-        rel_path::{RelPath, rel_path},
-    };
+    use util::path;
     use workspace::{
         NewFile, OpenOptions, OpenVisible, SERIALIZATION_THROTTLE_TIME, SaveIntent, SplitDirection, WorkspaceHandle,
         item::SaveOptions,
@@ -2785,7 +2785,7 @@ mod tests {
         cx.run_until_parked();
         cx.read(|cx| {
             let workspace = workspace.read(cx);
-            assert_project_panel_selection(workspace, Path::new(path!("/dir1")), rel_path("a.txt"), cx);
+            assert_project_panel_selection(workspace, Path::new(path!("/dir1")), unix_rel_path("a.txt"), cx);
             assert_eq!(
                 workspace
                     .active_pane()
@@ -2819,7 +2819,7 @@ mod tests {
         cx.run_until_parked();
         cx.read(|cx| {
             let workspace = workspace.read(cx);
-            assert_project_panel_selection(workspace, Path::new(path!("/dir2/b.txt")), rel_path(""), cx);
+            assert_project_panel_selection(workspace, Path::new(path!("/dir2/b.txt")), unix_rel_path(""), cx);
             let worktree_roots = workspace
                 .worktrees(cx)
                 .map(|w| w.read(cx).as_local().unwrap().abs_path().as_ref())
@@ -2864,7 +2864,7 @@ mod tests {
         cx.run_until_parked();
         cx.read(|cx| {
             let workspace = workspace.read(cx);
-            assert_project_panel_selection(workspace, Path::new(path!("/dir3")), rel_path("c.txt"), cx);
+            assert_project_panel_selection(workspace, Path::new(path!("/dir3")), unix_rel_path("c.txt"), cx);
             let worktree_roots = workspace
                 .worktrees(cx)
                 .map(|w| w.read(cx).as_local().unwrap().abs_path().as_ref())
@@ -2909,7 +2909,7 @@ mod tests {
         cx.run_until_parked();
         cx.read(|cx| {
             let workspace = workspace.read(cx);
-            assert_project_panel_selection(workspace, Path::new(path!("/d.txt")), rel_path(""), cx);
+            assert_project_panel_selection(workspace, Path::new(path!("/d.txt")), unix_rel_path(""), cx);
             let worktree_roots = workspace
                 .worktrees(cx)
                 .map(|w| w.read(cx).as_local().unwrap().abs_path().as_ref())
@@ -3034,8 +3034,8 @@ mod tests {
             opened_paths,
             vec![
                 None,
-                Some(rel_path(".git/HEAD").into()),
-                Some(rel_path("excluded_dir/file").into()),
+                Some(unix_rel_path(".git/HEAD").into()),
+                Some(unix_rel_path("excluded_dir/file").into()),
             ],
             "Excluded files should get opened, excluded dir should not get opened"
         );
@@ -3060,7 +3060,7 @@ mod tests {
                 opened_buffer_paths.sort();
                 assert_eq!(
                     opened_buffer_paths,
-                    vec![rel_path(".git/HEAD").into(), rel_path("excluded_dir/file").into()],
+                    vec![unix_rel_path(".git/HEAD").into(), unix_rel_path("excluded_dir/file").into()],
                     "Despite not being present in the worktrees, buffers for excluded files are opened and added to the pane"
                 );
             });
@@ -3249,7 +3249,7 @@ mod tests {
         window
             .update(cx, |workspace, window, cx| {
                 workspace.open_path(
-                    (worktree.read(cx).id(), rel_path("the-new-name.rs")),
+                    (worktree.read(cx).id(), unix_rel_path("the-new-name.rs")),
                     None,
                     true,
                     window,
@@ -4586,7 +4586,7 @@ mod tests {
         // 5. Critical: Verify .gram is actually excluded from worktree
         let worktree = cx.update(|cx| project.read(cx).worktrees(cx).next().unwrap());
 
-        let has_entry = cx.update(|cx| worktree.read(cx).entry_for_path(rel_path(".gram")).is_some());
+        let has_entry = cx.update(|cx| worktree.read(cx).entry_for_path(unix_rel_path(".gram")).is_some());
 
         eprintln!("Is .gram directory visible in worktree after exclusion: {has_entry}");
 

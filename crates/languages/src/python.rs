@@ -1,51 +1,52 @@
-use anyhow::{Context as _, ensure};
-use anyhow::{Result, anyhow};
+use crate::helpers::{find_cached_server_binary, verify_metadata, write_metadata};
+use anyhow::{Context as _, Result, anyhow, ensure};
 use async_trait::async_trait;
 use collections::HashMap;
-use futures::lock::OwnedMutexGuard;
-use futures::{AsyncBufReadExt, StreamExt as _};
+use command::new_smol_command;
+use futures::{AsyncBufReadExt, StreamExt as _, lock::OwnedMutexGuard};
 use gpui::{App, AsyncApp, SharedString, Task};
-use http_client::github::{AssetKind, GitHubLspBinaryVersion, latest_github_release};
-use language::language_settings::language_settings;
-use language::{ContextLocation, DynLspInstaller, LanguageToolchainStore, LspInstaller};
-use language::{ContextProvider, LspAdapter, LspAdapterDelegate};
-use language::{LanguageName, ManifestName, ManifestProvider, ManifestQuery};
-use language::{Toolchain, ToolchainList, ToolchainLister, ToolchainMetadata};
-use lsp::{LanguageServerBinary, Uri};
-use lsp::{LanguageServerBinaryOptions, LanguageServerName};
+use http_client::{
+    github::{AssetKind, GitHubLspBinaryVersion, latest_github_release},
+    github_download::{GithubBinaryMetadata, download_server_binary},
+};
+use language::{
+    ContextLocation, ContextProvider, DynLspInstaller, LanguageName, LanguageToolchainStore, LspAdapter,
+    LspAdapterDelegate, LspInstaller, ManifestName, ManifestProvider, ManifestQuery, Toolchain, ToolchainList,
+    ToolchainLister, ToolchainMetadata, language_settings::language_settings,
+};
+use lsp::{LanguageServerBinary, LanguageServerBinaryOptions, LanguageServerName, Uri};
 use node_runtime::{NodeRuntime, VersionStrategy};
-use pet_core::Configuration;
-use pet_core::os_environment::Environment;
-use pet_core::python_environment::{PythonEnvironment, PythonEnvironmentKind};
+use parking_lot::Mutex;
+use paths::{PathStyle, rel_path::RelPath};
+use pet_core::{
+    Configuration,
+    os_environment::Environment,
+    python_environment::{PythonEnvironment, PythonEnvironmentKind},
+};
 use pet_virtualenv::is_virtualenv_dir;
-use project::Fs;
-use project::lsp_store::language_server_settings;
+use project::{Fs, lsp_store::language_server_settings};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use settings::Settings;
+use shell::ShellKind;
 use smol::lock::OnceCell;
-use std::cmp::{Ordering, Reverse};
-use std::env::consts;
-use std::process::Stdio;
-use terminal::terminal_settings::TerminalSettings;
-use util::command::new_smol_command;
-use util::fs::{make_file_executable, remove_matching};
-use util::paths::PathStyle;
-use util::rel_path::RelPath;
-
-use http_client::github_download::{GithubBinaryMetadata, download_server_binary};
-use parking_lot::Mutex;
-use std::str::FromStr;
 use std::{
     borrow::Cow,
+    cmp::{Ordering, Reverse},
+    env::consts,
     fmt::Write,
     path::{Path, PathBuf},
+    process::Stdio,
+    str::FromStr,
     sync::Arc,
 };
-use task::{ShellKind, TaskTemplate, TaskTemplates, VariableName};
-use util::{ResultExt, maybe};
-
-use crate::helpers::{find_cached_server_binary, verify_metadata, write_metadata};
+use task::{TaskTemplate, TaskTemplates, VariableName};
+use terminal::terminal_settings::TerminalSettings;
+use util::{
+    ResultExt,
+    fs::{make_file_executable, remove_matching},
+    maybe,
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct PythonToolchainData {
@@ -1432,7 +1433,7 @@ impl PyLspAdapter {
         let mut path = PathBuf::from(work_dir.as_ref());
         path.push("pylsp-venv");
         if !path.exists() {
-            util::command::new_smol_command(python_path)
+            command::new_smol_command(python_path)
                 .arg("-m")
                 .arg("venv")
                 .arg("pylsp-venv")
@@ -1643,7 +1644,7 @@ impl LspInstaller for PyLspAdapter {
         let venv = self.base_venv(delegate).await.map_err(|e| anyhow!(e))?;
         let pip_path = venv.join(BINARY_DIR).join("pip3");
         ensure!(
-            util::command::new_smol_command(pip_path.as_path())
+            command::new_smol_command(pip_path.as_path())
                 .arg("install")
                 .arg("python-lsp-server[all]")
                 .arg("--upgrade")
@@ -1654,7 +1655,7 @@ impl LspInstaller for PyLspAdapter {
             "python-lsp-server[all] installation failed"
         );
         ensure!(
-            util::command::new_smol_command(pip_path)
+            command::new_smol_command(pip_path)
                 .arg("install")
                 .arg("pylsp-mypy")
                 .arg("--upgrade")
@@ -2173,7 +2174,7 @@ impl LspAdapter for RuffLspAdapter {
             .0
             .ok()?;
 
-        let mut command = util::command::new_smol_command(&binary.path);
+        let mut command = command::new_smol_command(&binary.path);
         command
             .args(["config", "--output-format", "json"])
             .stdout(Stdio::piped())

@@ -2,9 +2,10 @@ use crate::*;
 use anyhow::{Context as _, Result, anyhow};
 use collections::HashMap;
 use fs::Fs;
-use paths::{cursor_settings_file_paths, vscode_settings_file_paths};
+use paths::locations::{cursor_settings_file_paths, vscode_settings_file_paths};
 use serde_json::{Map, Value};
 use std::{
+    cell::OnceCell,
     num::{NonZeroU32, NonZeroUsize},
     path::Path,
     sync::Arc,
@@ -42,32 +43,41 @@ impl VsCodeSettings {
     }
 
     pub async fn load_user_settings(source: VsCodeSettingsSource, fs: Arc<dyn Fs>) -> Result<Self> {
-        let candidate_paths = match source {
-            VsCodeSettingsSource::VsCode => vscode_settings_file_paths(),
-            VsCodeSettingsSource::Cursor => cursor_settings_file_paths(),
-        };
-        let mut path = None;
-        for candidate_path in candidate_paths.iter() {
-            if fs.is_file(candidate_path).await {
-                path = Some(candidate_path.clone());
+        async fn find_candidate_path(
+            fs: &dyn Fs,
+            candidate_paths: impl Iterator<Item = &'static Path> + Clone,
+        ) -> Result<&'static Path> {
+            let path = OnceCell::<&Path>::new();
+            for candidate_path in candidate_paths.clone() {
+                if fs.is_file(candidate_path).await {
+                    path.set(candidate_path).expect("candidate path has already been set");
+                    break;
+                }
             }
+
+            path.into_inner().ok_or_else(|| {
+                anyhow!(
+                    "No settings file found, expected to find it in one of the following paths:\n{}",
+                    candidate_paths
+                        .map(|path| path.to_string_lossy().into_owned())
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                )
+            })
         }
-        let Some(path) = path else {
-            return Err(anyhow!(
-                "No settings file found, expected to find it in one of the following paths:\n{}",
-                candidate_paths
-                    .into_iter()
-                    .map(|path| path.to_string_lossy().into_owned())
-                    .collect::<Vec<_>>()
-                    .join("\n")
-            ));
+
+        let path = match source {
+            VsCodeSettingsSource::VsCode => find_candidate_path(fs.as_ref(), vscode_settings_file_paths()).await?,
+            VsCodeSettingsSource::Cursor => find_candidate_path(fs.as_ref(), cursor_settings_file_paths()).await?,
         };
+
         let content = fs
-            .load(&path)
+            .load(path)
             .await
             .with_context(|| format!("Error loading {} settings file from {}", source, path.display()))?;
         let content = serde_json_lenient::from_str(&content)
             .with_context(|| format!("Error parsing {} settings file from {}", source, path.display()))?;
+
         Ok(Self {
             source,
             path: path.into(),

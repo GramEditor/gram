@@ -1,9 +1,11 @@
-use crate::command::command_interceptor;
-use crate::motion::MotionKind;
-use crate::normal::repeat::Replayer;
-use crate::surrounds::SurroundsType;
-use crate::{ToggleMarksView, ToggleRegistersView, UseSystemClipboard, Vim, VimAddon, VimSettings};
-use crate::{motion::Motion, object::Object};
+use crate::{
+    ToggleMarksView, ToggleRegistersView, UseSystemClipboard, Vim, VimAddon, VimSettings,
+    command::command_interceptor,
+    motion::{Motion, MotionKind},
+    normal::repeat::Replayer,
+    object::Object,
+    surrounds::SurroundsType,
+};
 use anyhow::Result;
 use collections::HashMap;
 use command_palette_hooks::{CommandPaletteFilter, GlobalCommandPaletteInterceptor};
@@ -11,22 +13,22 @@ use db::{
     sqlez::{domain::Domain, thread_safe_connection::ThreadSafeConnection},
     sqlez_macros::sql,
 };
-use editor::display_map::{is_invisible, replacement};
-use editor::{Anchor, ClipboardSelection, Editor, MultiBuffer, ToPoint as EditorToPoint};
+use editor::{
+    Anchor, ClipboardSelection, Editor, MultiBuffer, ToPoint as EditorToPoint,
+    display_map::{is_invisible, replacement},
+};
 use gpui::{
     Action, App, AppContext, BorrowAppContext, ClipboardEntry, ClipboardItem, DismissEvent, Entity, EntityId, Global,
     HighlightStyle, StyledText, Subscription, Task, TextStyle, WeakEntity,
 };
 use language::{Buffer, BufferEvent, BufferId, Chunk, Point};
 use multi_buffer::MultiBufferRow;
+use paths::rel_path::RelPath;
 use picker::{Picker, PickerDelegate};
 use project::{Project, ProjectItem, ProjectPath};
 use serde::{Deserialize, Serialize};
 use settings::{Settings, SettingsStore};
-use std::borrow::BorrowMut;
-use std::collections::HashSet;
-use std::path::Path;
-use std::{fmt::Display, ops::Range, sync::Arc};
+use std::{borrow::BorrowMut, collections::HashSet, fmt::Display, ops::Range, path::Path, sync::Arc};
 use text::{Bias, ToPoint};
 use theme::ThemeSettings;
 use ui::{
@@ -34,9 +36,7 @@ use ui::{
     Window, h_flex, rems,
 };
 use util::ResultExt;
-use util::rel_path::RelPath;
-use workspace::searchable::Direction;
-use workspace::{Workspace, WorkspaceDb, WorkspaceId};
+use workspace::{Workspace, WorkspaceDb, WorkspaceId, searchable::Direction};
 
 #[derive(Clone, Copy, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Mode {

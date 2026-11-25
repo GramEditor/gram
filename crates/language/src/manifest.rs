@@ -1,8 +1,7 @@
-use std::{borrow::Borrow, sync::Arc};
-
 use gpui::SharedString;
+use paths::rel_path::RelPath;
 use settings::WorktreeId;
-use util::rel_path::RelPath;
+use std::{borrow::Borrow, sync::Arc};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ManifestName(SharedString);

@@ -3,15 +3,14 @@ use collections::HashMap;
 use gpui::{FontFallbacks, FontFeatures, FontWeight, Pixels, px};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-pub use settings::AlternateScroll;
-
 use settings::{
     PathHyperlinkRegex, RegisterSetting, ShowScrollbar, TerminalBlink, TerminalDockPosition, TerminalLineHeight,
     VenvSettings, WorkingDirectory, merge_from::MergeFrom,
 };
-use task::Shell;
+use shell::Shell;
 use theme::FontFamilyName;
+
+pub use settings::AlternateScroll;
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 pub struct Toolbar {

@@ -21,19 +21,20 @@ use gpui::{
     KeyContext, ParentElement as _, Render, ScrollHandle, Styled, Subscription, Task, Window, actions, div,
 };
 use language::{Language, LanguageRegistry};
+use paths::path_matcher::PathMatcher;
 use project::{
     search::SearchQuery,
     search_history::{SearchHistory, SearchHistoryCursor},
 };
+use registrar::{ForDeployed, ForDismissed, SearchActionsRegistrar};
 use schemars::JsonSchema;
 use serde::Deserialize;
 use settings::Settings;
 use std::{sync::Arc, time::Duration};
-
 use ui::{
     BASE_REM_SIZE_IN_PX, IconButton, IconButtonShape, IconName, Tooltip, h_flex, prelude::*, utils::SearchInputWidth,
 };
-use util::{ResultExt, paths::PathMatcher};
+use util::ResultExt;
 use workspace::{
     ToolbarItemEvent, ToolbarItemLocation, ToolbarItemView, Workspace,
     item::ItemHandle,
@@ -41,7 +42,6 @@ use workspace::{
 };
 
 pub use registrar::DivRegistrar;
-use registrar::{ForDeployed, ForDismissed, SearchActionsRegistrar};
 
 const MAX_BUFFER_SEARCH_HISTORY_SIZE: usize = 50;
 pub const BUFFER_SEARCH_DEBOUNCE_MS: u64 = 100;

@@ -1,14 +1,3 @@
-pub mod disconnected_overlay;
-mod remote_connections;
-mod remote_servers;
-mod ssh_config;
-
-#[cfg(target_os = "windows")]
-mod wsl_picker;
-
-use remote::RemoteConnectionOptions;
-pub use remote_connections::{RemoteConnectionModal, connect, open_remote_project};
-
 use app_actions::{OpenRecent, OpenRemote};
 use disconnected_overlay::DisconnectedOverlay;
 use fuzzy::{StringMatch, StringMatchCandidate};
@@ -17,20 +6,32 @@ use gpui::{
     WeakEntity, Window,
 };
 use ordered_float::OrderedFloat;
+use paths::PathExt;
 use picker::{
     Picker, PickerDelegate,
     highlighted_match_with_paths::{HighlightedMatch, HighlightedMatchWithPaths},
 };
-pub use remote_connections::SshSettings;
-pub use remote_servers::RemoteServerProjects;
+use remote::RemoteConnectionOptions;
 use settings::Settings;
 use std::{path::Path, sync::Arc};
 use ui::{KeyBinding, ListItem, ListItemSpacing, Tooltip, prelude::*, tooltip_container};
-use util::{ResultExt, paths::PathExt};
+use util::ResultExt;
 use workspace::{
     CloseIntent, HistoryManager, ModalView, OpenOptions, PathList, SerializedWorkspaceLocation, WORKSPACE_DB,
     Workspace, WorkspaceId, notifications::DetachAndPromptErr, with_active_or_new_workspace,
 };
+
+// TODO: Should these really be re-exported?
+pub use remote_connections::{RemoteConnectionModal, SshSettings, connect, open_remote_project};
+pub use remote_servers::RemoteServerProjects;
+
+pub mod disconnected_overlay;
+mod remote_connections;
+mod remote_servers;
+mod ssh_config;
+
+#[cfg(target_os = "windows")]
+mod wsl_picker;
 
 pub fn init(cx: &mut App) {
     #[cfg(target_os = "windows")]
@@ -53,7 +54,7 @@ pub fn init(cx: &mut App) {
             );
 
             cx.spawn_in(window, async move |workspace, cx| {
-                use util::paths::SanitizedPath;
+                use paths::sanitized_path::SanitizedPath;
 
                 let Some(paths) = paths.await.log_err().flatten() else {
                     return;

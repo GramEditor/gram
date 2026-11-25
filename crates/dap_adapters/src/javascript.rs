@@ -3,9 +3,10 @@ use collections::HashMap;
 use dap::{StartDebuggingRequestArguments, adapters::DebugTaskDefinition, settings::DapSettings};
 use gpui::AsyncApp;
 use serde_json::Value;
+use shell::ShellKind;
 use std::{path::PathBuf, sync::OnceLock};
 use task::DebugRequest;
-use util::{ResultExt, maybe, shell::ShellKind};
+use util::{ResultExt, maybe};
 
 use crate::*;
 
@@ -122,7 +123,7 @@ impl JsDebugAdapter {
         } else if settings.ignore_system_version {
             anyhow::bail!("User provided DAP binary not found and ignore_system_version set");
         } else {
-            let adapter_path = paths::debug_adapters_dir().join(self.name().as_ref());
+            let adapter_path = paths::locations::debug_adapters_dir().join(self.name().as_ref());
 
             let file_name_prefix = format!("{}_", self.name());
 

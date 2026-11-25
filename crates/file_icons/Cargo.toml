@@ -13,8 +13,8 @@ test = false
 
 [dependencies]
 gpui.workspace = true
+paths.workspace = true
 theme.workspace = true
-util.workspace = true
 
 [lints]
 workspace = true

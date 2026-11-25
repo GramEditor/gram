@@ -1,44 +1,44 @@
-use crate::persistence::DebuggerPaneItem;
-use crate::session::DebugSession;
-use crate::session::running::RunningState;
-use crate::session::running::breakpoint_list::BreakpointList;
-
 use crate::{
     ClearAllBreakpoints, Continue, CopyDebugAdapterArguments, Detach, FocusBreakpointList, FocusConsole, FocusFrames,
     FocusLoadedSources, FocusModules, FocusTerminal, FocusVariables, NewProcessModal, NewProcessMode, Pause,
     RerunSession, StepInto, StepOut, StepOver, Stop, ToggleExpandItem, ToggleSessionPicker, ToggleThreadPicker,
-    persistence, spawn_task_or_modal,
+    persistence::{self, DebuggerPaneItem},
+    session::{
+        DebugSession,
+        running::{RunningState, breakpoint_list::BreakpointList},
+    },
+    spawn_task_or_modal,
 };
 use anyhow::{Context as _, Result, anyhow};
+use app_actions::ToggleFocus;
 use collections::IndexMap;
-use dap::adapters::DebugAdapterName;
-use dap::{DapRegistry, StartDebuggingRequestArguments};
-use dap::{client::SessionId, debugger_settings::DebuggerSettings};
+use dap::{
+    DapRegistry, StartDebuggingRequestArguments, adapters::DebugAdapterName, client::SessionId,
+    debugger_settings::DebuggerSettings,
+};
 use editor::{Editor, MultiBufferOffset, ToPoint};
 use gpui::{
     Action, App, AsyncWindowContext, ClipboardItem, Context, DismissEvent, Entity, EntityId, EventEmitter, FocusHandle,
     Focusable, MouseButton, MouseDownEvent, Point, Subscription, Task, WeakEntity, anchored, deferred,
 };
-
-use app_actions::ToggleFocus;
-use itertools::Itertools as _;
+use itertools::Itertools;
 use language::Buffer;
-use project::debugger::session::{Session, SessionQuirks, SessionState, SessionStateEvent};
-use project::{DebugScenarioContext, Fs, ProjectPath, TaskSourceKind, WorktreeId};
-use project::{Project, debugger::session::ThreadStatus};
+use paths::rel_path::RelPath;
+use project::{
+    DebugScenarioContext, Fs, Project, ProjectPath, TaskSourceKind, WorktreeId,
+    debugger::session::{Session, SessionQuirks, SessionState, SessionStateEvent, ThreadStatus},
+};
 use rpc::proto::{self};
 use settings::Settings;
 use std::sync::{Arc, LazyLock};
 use task::{DebugScenario, TaskContext};
 use tree_sitter::{Query, StreamingIterator as _};
 use ui::{ContextMenu, Divider, PopoverMenuHandle, Tab, Tooltip, prelude::*};
-use util::rel_path::RelPath;
 use util::{ResultExt, debug_panic, maybe};
-use workspace::SplitDirection;
-use workspace::item::SaveOptions;
 use workspace::{
-    Item, Pane, Workspace,
+    Item, Pane, SplitDirection, Workspace,
     dock::{DockPosition, Panel, PanelEvent},
+    item::SaveOptions,
 };
 
 const DEBUG_PANEL_KEY: &str = "DebugPanel";
@@ -940,13 +940,13 @@ impl DebugPanel {
                     let serialized_scenario = serialized_scenario?;
                     let fs = workspace.read_with(cx, |workspace, _| workspace.app_state().fs.clone())?;
 
-                    path.push(paths::local_settings_folder_name());
+                    path.push(paths::locations::local_settings_folder_name());
                     if !fs.is_dir(path.as_path()).await {
                         fs.create_dir(path.as_path()).await?;
                     }
                     path.pop();
 
-                    path.push(paths::local_debug_file_relative_path().as_std_path());
+                    path.push(paths::locations::local_debug_file_relative_path().as_std_path());
                     let path = path.as_path();
 
                     if !fs.is_file(path).await {

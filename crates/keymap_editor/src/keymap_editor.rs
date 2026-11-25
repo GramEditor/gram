@@ -1,16 +1,10 @@
-use std::{
-    cell::RefCell,
-    cmp::{self},
-    ops::{Not as _, Range},
-    rc::Rc,
-    sync::Arc,
-    time::{Duration, Instant},
+use crate::{
+    action_completion_provider::ActionCompletionProvider,
+    persistence::KEYBINDING_EDITORS,
+    ui_components::keystroke_input::{ClearKeystrokes, KeystrokeInput, StartRecording, StopRecording},
 };
-
-mod action_completion_provider;
-mod ui_components;
-
 use anyhow::{Context as _, anyhow};
+use app_actions::{ChangeKeybinding, OpenKeymap};
 use collections::{HashMap, HashSet};
 use editor::{Editor, EditorEvent, EditorMode, SizingBehavior, completion::CompletionProvider};
 use fs::Fs;
@@ -26,6 +20,14 @@ use language::{Language, LanguageConfig, ToOffset as _};
 use notifications::status_toast::{StatusToast, ToastIcon};
 use project::{CompletionDisplayOptions, Project};
 use settings::{BaseKeymap, KeybindSource, KeymapFile, Settings as _, SettingsAssets, infer_json_indent_size};
+use std::{
+    cell::RefCell,
+    cmp::{self},
+    ops::{Not as _, Range},
+    rc::Rc,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 use ui::{
     ActiveTheme as _, App, Banner, BorrowAppContext, ContextMenu, IconButtonShape, Indicator, Modal, ModalFooter,
     ModalHeader, ParentElement as _, PopoverMenu, Render, Section, SharedString, Styled as _, Table, TableColumnWidths,
@@ -37,14 +39,9 @@ use workspace::{
     Item, ModalView, SerializableItem, Workspace, notifications::NotifyTaskExt as _, register_serializable_item,
 };
 
-use app_actions::{ChangeKeybinding, OpenKeymap};
+mod action_completion_provider;
+mod ui_components;
 pub use ui_components::*;
-
-use crate::{
-    action_completion_provider::ActionCompletionProvider,
-    persistence::KEYBINDING_EDITORS,
-    ui_components::keystroke_input::{ClearKeystrokes, KeystrokeInput, StartRecording, StopRecording},
-};
 
 const NO_ACTION_ARGUMENTS_TEXT: SharedString = SharedString::new_static("<no arguments>");
 const COLS: usize = 6;
@@ -486,7 +483,7 @@ impl KeymapEditor {
         cx.spawn({
             let workspace = workspace.clone();
             async move |this, cx| {
-                let temp_dir = tempfile::tempdir_in(paths::temp_dir())?;
+                let temp_dir = tempfile::tempdir_in(paths::locations::temp_dir())?;
                 let worktree = workspace
                     .update(cx, |ws, cx| {
                         ws.project()
@@ -2894,7 +2891,7 @@ impl ActionArgumentsEditor {
                 let temp_dir_backup = match temp_dir.as_ref() {
                     Some(_) => None,
                     None => {
-                        let temp_dir = paths::temp_dir();
+                        let temp_dir = paths::locations::temp_dir();
                         let sub_temp_dir = tempfile::Builder::new()
                             .tempdir_in(temp_dir)
                             .context("Failed to create temporary directory")?;
@@ -3128,7 +3125,7 @@ async fn save_keybinding_update(
     let updated_keymap_contents =
         settings::KeymapFile::update_keybinding(operation, keymap_contents, tab_size, keyboard_mapper)
             .map_err(|err| anyhow::anyhow!("Could not save updated keybinding: {}", err))?;
-    fs.write(paths::keymap_file().as_path(), updated_keymap_contents.as_bytes())
+    fs.write(paths::locations::keymap_file(), updated_keymap_contents.as_bytes())
         .await
         .context("Failed to write keymap file")?;
     Ok(())
@@ -3164,7 +3161,7 @@ async fn remove_keybinding(
     let updated_keymap_contents =
         settings::KeymapFile::update_keybinding(operation, keymap_contents, tab_size, keyboard_mapper)
             .context("Failed to update keybinding")?;
-    fs.write(paths::keymap_file().as_path(), updated_keymap_contents.as_bytes())
+    fs.write(paths::locations::keymap_file(), updated_keymap_contents.as_bytes())
         .await
         .context("Failed to write keymap file")?;
 

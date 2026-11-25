@@ -4,6 +4,7 @@ use gpui::AsyncApp;
 use language::{LspAdapter, LspAdapterDelegate, LspInstaller, Toolchain, language_settings::AllLanguageSettings};
 use lsp::{LanguageServerBinary, LanguageServerName, Uri};
 use node_runtime::{NodeRuntime, VersionStrategy};
+use paths::rel_path::RelPath;
 use project::lsp_store::language_server_settings;
 use serde_json::Value;
 use settings::{Settings, SettingsLocation};
@@ -12,7 +13,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-use util::{ResultExt, maybe, merge_json_value_into, rel_path::RelPath};
+use util::{ResultExt, maybe, merge_json_value_into};
 
 const SERVER_PATH: &str = "node_modules/yaml-language-server/bin/yaml-language-server";
 

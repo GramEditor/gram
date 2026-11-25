@@ -14,6 +14,7 @@ path = "src/lsp.rs"
 anyhow.workspace = true
 async-pipe = { workspace = true, optional = true }
 collections.workspace = true
+command.workspace = true
 futures.workspace = true
 gpui.workspace = true
 log.workspace = true

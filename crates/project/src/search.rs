@@ -2,8 +2,12 @@ use aho_corasick::{AhoCorasick, AhoCorasickBuilder};
 use anyhow::Result;
 use fancy_regex::{Captures, Regex, RegexBuilder};
 use gpui::Entity;
-use itertools::Itertools as _;
 use language::{Buffer, CharKind, LanguageBufferSnapshot};
+use paths::{
+    PathStyle,
+    path_matcher::{PathMatcher, PathMatcherSources},
+    rel_path::RelPath,
+};
 use rpc::proto;
 use smol::future::yield_now;
 use std::{
@@ -13,10 +17,6 @@ use std::{
     sync::{Arc, LazyLock},
 };
 use text::Anchor;
-use util::{
-    paths::{PathMatcher, PathStyle},
-    rel_path::RelPath,
-};
 
 #[derive(Debug)]
 pub enum SearchResult {
@@ -307,20 +307,21 @@ impl SearchQuery {
     }
 
     pub fn to_proto(&self) -> proto::SearchQuery {
-        let mut files_to_include = self.files_to_include().sources();
-        let mut files_to_exclude = self.files_to_exclude().sources();
+        let files_to_include = || self.files_to_include().sources().map(PathMatcherSources::raw);
+        let files_to_exclude = || self.files_to_exclude().sources().map(PathMatcherSources::raw);
+
         proto::SearchQuery {
             query: self.as_str().to_string(),
             regex: self.is_regex(),
             whole_word: self.whole_word(),
             case_sensitive: self.case_sensitive(),
             include_ignored: self.include_ignored(),
-            files_to_include: files_to_include.clone().map(ToOwned::to_owned).collect(),
-            files_to_exclude: files_to_exclude.clone().map(ToOwned::to_owned).collect(),
+            files_to_include: files_to_include().map(ToOwned::to_owned).collect(),
+            files_to_exclude: files_to_exclude().map(ToOwned::to_owned).collect(),
             match_full_paths: self.match_full_paths(),
             // Populate legacy fields for backwards compatibility
-            files_to_include_legacy: files_to_include.join(","),
-            files_to_exclude_legacy: files_to_exclude.join(","),
+            files_to_include_legacy: itertools::join(files_to_include(), ", "),
+            files_to_exclude_legacy: itertools::join(files_to_exclude(), ", "),
         }
     }
 
@@ -559,7 +560,7 @@ impl SearchQuery {
     /// Check match full paths to determine whether you're required to pass a fully qualified
     /// project path (starts with a project root).
     pub fn match_path(&self, file_path: &RelPath) -> bool {
-        let mut path = file_path.to_rel_path_buf();
+        let mut path = file_path.to_owned();
         loop {
             if self.files_to_exclude().is_match(&path) {
                 return false;

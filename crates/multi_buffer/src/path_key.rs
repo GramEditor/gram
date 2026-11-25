@@ -1,12 +1,12 @@
-use std::{mem, ops::Range, sync::Arc};
-
 use collections::HashSet;
 use gpui::{App, AppContext, Context, Entity};
 use itertools::Itertools;
 use language::{Buffer, LanguageBufferSnapshot};
+use paths::rel_path::RelPath;
 use rope::Point;
+use std::{mem, ops::Range, sync::Arc};
 use text::{Bias, BufferId, OffsetRangeExt, locator::Locator};
-use util::{post_inc, rel_path::RelPath};
+use util::post_inc;
 
 use crate::{Anchor, ExcerptId, ExcerptRange, ExpandExcerptDirection, MultiBuffer, build_excerpt_ranges};
 

@@ -1,10 +1,3 @@
-use std::{
-    ops::Range,
-    path::{Path, PathBuf},
-    sync::Arc,
-    time::Duration,
-};
-
 use app_actions::{ToggleEnableBreakpoint, UnsetBreakpoint};
 use dap::{Capabilities, ExceptionBreakpointsFilter, adapters::DebugAdapterName};
 use db::kvp::KEY_VALUE_STORE;
@@ -15,6 +8,7 @@ use gpui::{
 };
 use itertools::Itertools;
 use language::Point;
+use paths::rel_path::RelPath;
 use project::{
     Project,
     debugger::{
@@ -24,11 +18,16 @@ use project::{
     },
     worktree_store::WorktreeStore,
 };
+use std::{
+    ops::Range,
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Duration,
+};
 use ui::{
     Divider, DividerColor, FluentBuilder as _, Indicator, IntoElement, ListItem, Render, ScrollAxes,
     StatefulInteractiveElement, Tooltip, WithScrollbar, prelude::*,
 };
-use util::rel_path::RelPath;
 use workspace::Workspace;
 
 actions!(

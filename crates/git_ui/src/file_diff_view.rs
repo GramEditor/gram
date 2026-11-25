@@ -2,14 +2,14 @@
 
 use anyhow::Result;
 use buffer_diff::BufferDiff;
-use editor::SplittableEditor;
-use editor::{Editor, EditorEvent, MultiBuffer};
+use editor::{Editor, EditorEvent, MultiBuffer, SplittableEditor};
 use futures::{FutureExt, select_biased};
 use gpui::{
     AnyElement, App, AppContext as _, AsyncApp, Context, Entity, EventEmitter, FocusHandle, Focusable, IntoElement,
     Render, Task, Window,
 };
 use language::{Buffer, LanguageRegistry};
+use paths::PathExt;
 use project::Project;
 use std::{
     any::{Any, TypeId},
@@ -19,7 +19,6 @@ use std::{
     time::Duration,
 };
 use ui::{Color, Icon, IconName, Label, LabelCommon as _, SharedString};
-use util::paths::PathExt as _;
 use workspace::{
     Item, ItemHandle as _, ItemNavHistory, ToolbarItemLocation, Workspace,
     item::{BreadcrumbText, ItemEvent, SaveOptions, TabContentParams},

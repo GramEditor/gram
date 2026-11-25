@@ -44,6 +44,7 @@ use language::{
     proto::{deserialize_version, serialize_version},
 };
 use parking_lot::Mutex;
+use paths::{PathStyle, rel_path::RelPath, sanitized_path::SanitizedPath};
 use pending_op::{PendingOp, PendingOpId, PendingOps, PendingOpsSummary};
 use postage::stream::Stream as _;
 use rpc::{
@@ -52,6 +53,7 @@ use rpc::{
 };
 use serde::Deserialize;
 use settings::WorktreeId;
+use shell::Shell;
 use smol::future::yield_now;
 use std::{
     cmp::Ordering,
@@ -68,14 +70,8 @@ use std::{
     time::Instant,
 };
 use sum_tree::{Edit, SumTree, TreeSet};
-use task::Shell;
 use text::{Bias, BufferId};
-use util::{
-    ResultExt, debug_panic,
-    paths::{PathStyle, SanitizedPath},
-    post_inc,
-    rel_path::RelPath,
-};
+use util::{ResultExt, debug_panic, post_inc};
 use worktree::{
     File, PathChange, PathKey, PathProgress, PathSummary, PathTarget, ProjectEntryId, UpdatedGitRepositoriesSet,
     UpdatedGitRepository, Worktree,
@@ -2659,19 +2655,24 @@ impl GitStore {
         cx: &mut App,
     ) -> Task<HashMap<Entity<Repository>, Vec<RepoPath>>> {
         let path_style = worktree.read(cx).path_style();
+
         let mut repo_paths = self
             .repositories
             .values()
             .map(|repo| (repo.read(cx).work_directory_abs_path.clone(), repo.clone()))
-            .collect::<Vec<_>>();
-        let mut entries: Vec<_> = updated_entries.iter().map(|(path, _, _)| path.clone()).collect();
-        entries.sort();
-        let worktree = worktree.read(cx);
+            .collect::<Vec<(Arc<Path>, Entity<Repository>)>>();
 
+        let mut entries = updated_entries
+            .iter()
+            .map(|(path, _, _)| path.clone())
+            .collect::<Vec<Arc<RelPath>>>();
+        entries.sort();
+
+        let worktree = worktree.read(cx);
         let entries = entries
             .into_iter()
             .map(|path| worktree.absolutize(&path))
-            .collect::<Arc<[_]>>();
+            .collect::<Arc<[PathBuf]>>();
 
         let executor = cx.background_executor().clone();
         cx.background_executor().spawn(async move {

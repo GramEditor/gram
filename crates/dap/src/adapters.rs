@@ -10,6 +10,7 @@ use gpui::{AsyncApp, SharedString};
 use http_client::HttpClient;
 use language::{LanguageName, LanguageToolchainStore};
 use node_runtime::NodeRuntime;
+use paths::rel_path::RelPath;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use settings::WorktreeId;
@@ -25,7 +26,7 @@ use std::{
 };
 use task::{DebugScenario, GramDebugConfig, TcpArgumentsTemplate};
 use tokio_util::compat::FuturesAsyncReadCompatExt;
-use util::{archive::extract_zip, rel_path::RelPath};
+use util::archive::extract_zip;
 
 use crate::settings::DapSettings;
 
@@ -255,7 +256,7 @@ pub async fn download_adapter_from_github(
     delegate: &dyn DapDelegate,
     cx: &mut AsyncApp,
 ) -> Result<PathBuf> {
-    let adapter_path = paths::debug_adapters_dir().join(adapter_name.as_ref());
+    let adapter_path = paths::locations::debug_adapters_dir().join(adapter_name.as_ref());
     let version_path = adapter_path.join(format!("{}_{}", adapter_name, github_version.tag_name));
     let fs = delegate.fs();
 

@@ -5,8 +5,8 @@ use db::kvp::KEY_VALUE_STORE;
 use editor::Editor;
 use gpui::{AppContext as _, Context, Entity, SharedString, Window};
 use language::Buffer;
+use paths::rel_path::RelPath;
 use ui::prelude::*;
-use util::rel_path::RelPath;
 use workspace::notifications::simple_message_notification::MessageNotification;
 use workspace::{Workspace, notifications::NotificationId};
 
@@ -295,19 +295,19 @@ pub(crate) fn suggest(buffer: Entity<Buffer>, window: &mut Window, cx: &mut Cont
 #[cfg(test)]
 mod tests {
     use super::*;
-    use util::rel_path::rel_path;
+    use paths::rel_path::unix_rel_path;
 
     #[test]
     pub fn test_suggested_extension() {
         assert_eq!(
-            suggested_extension(rel_path("Dockerfile")),
+            suggested_extension(unix_rel_path("Dockerfile")),
             Some(SuggestedExtension {
                 extension_id: "dockerfile".into(),
                 file_name_or_extension: "Dockerfile".into()
             })
         );
         assert_eq!(
-            suggested_extension(rel_path("a/b/c/d/.gitignore")),
+            suggested_extension(unix_rel_path("a/b/c/d/.gitignore")),
             Some(SuggestedExtension {
                 extension_id: "git-firefly".into(),
                 file_name_or_extension: ".gitignore".into()

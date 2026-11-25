@@ -17,6 +17,7 @@ fuzzy.workspace = true
 gpui.workspace = true
 language.workspace = true
 ordered-float.workspace = true
+paths.workspace = true
 picker.workspace = true
 settings.workspace = true
 smol.workspace = true

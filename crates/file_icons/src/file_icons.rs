@@ -1,9 +1,8 @@
+use gpui::{App, SharedString};
+use paths::PathExt;
 use std::sync::Arc;
 use std::{path::Path, str};
-
-use gpui::{App, SharedString};
 use theme::{GlobalTheme, IconTheme, ThemeRegistry};
-use util::paths::PathExt;
 
 #[derive(Debug)]
 pub struct FileIcons {

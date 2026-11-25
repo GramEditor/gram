@@ -1,12 +1,8 @@
-use std::path::Path;
-
 use anyhow::Context as _;
+use paths::{PathStyle, path_matcher::PathMatcher, rel_path::RelPath};
 use settings::{FileWatcherMode, RegisterSetting, Settings};
-use util::{
-    ResultExt,
-    paths::{PathMatcher, PathStyle},
-    rel_path::RelPath,
-};
+use std::path::Path;
+use util::ResultExt;
 
 #[derive(Clone, PartialEq, Eq, RegisterSetting)]
 pub struct WorktreeSettings {

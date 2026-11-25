@@ -1,37 +1,36 @@
-use crate::commit::parse_git_diff_name_status;
-use crate::stash::GitStash;
-use crate::status::{DiffTreeType, GitStatus, StatusCode, TreeDiff};
-use crate::submodule::{Submodule, parse_submodule};
-use crate::{Oid, SHORT_SHA_LENGTH};
+use crate::{
+    Oid, SHORT_SHA_LENGTH,
+    commit::parse_git_diff_name_status,
+    stash::GitStash,
+    status::{DiffTreeType, GitStatus, StatusCode, TreeDiff},
+    submodule::{Submodule, parse_submodule},
+};
 use anyhow::{Context as _, Result, anyhow, bail};
 use collections::HashMap;
-use futures::channel::oneshot;
-use futures::future::BoxFuture;
-use futures::io::BufWriter;
-use futures::{AsyncWriteExt, FutureExt as _, select_biased};
+use command::new_smol_command;
+use futures::{AsyncWriteExt, FutureExt as _, channel::oneshot, future::BoxFuture, io::BufWriter, select_biased};
 use gpui::{AppContext as _, AsyncApp, BackgroundExecutor, SharedString, Task};
+use paths::{PathStyle, rel_path::RelPath};
 use rope::Rope;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use smallvec::SmallVec;
-use smol::channel::Sender;
-use smol::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
-
-use std::collections::HashSet;
-use std::ffi::{OsStr, OsString};
-use std::process::{ExitStatus, Stdio};
-use std::str::FromStr;
+use smol::{
+    channel::Sender,
+    io::{AsyncBufReadExt, AsyncReadExt, BufReader},
+};
 use std::{
     cmp::Ordering,
+    collections::HashSet,
+    ffi::{OsStr, OsString},
     path::{Path, PathBuf},
+    process::{ExitStatus, Stdio},
+    str::FromStr,
     sync::Arc,
 };
 use sum_tree::MapSeekTarget;
 use thiserror::Error;
-use util::command::new_smol_command;
-use util::paths::PathStyle;
-use util::rel_path::RelPath;
-use util::{ResultExt, paths};
+use util::ResultExt;
 use uuid::Uuid;
 
 pub use askpass::{AskPassDelegate, AskPassResult, AskPassSession};
@@ -1010,8 +1009,8 @@ pub async fn get_git_committer(cx: &AsyncApp) -> GitCommitter {
 
     let git = GitBinary::new(
         git_binary_path.unwrap_or(PathBuf::from("git")),
-        paths::home_dir().clone(),
-        paths::home_dir().join(".git"),
+        paths::locations::home_dir(),
+        paths::locations::home_dir().join(".git"),
         cx.background_executor().clone(),
     );
 
@@ -2782,15 +2781,15 @@ pub struct GitBinary {
 
 impl GitBinary {
     fn new(
-        git_binary_path: PathBuf,
-        working_directory: PathBuf,
-        git_directory: PathBuf,
+        git_binary_path: impl Into<PathBuf>,
+        working_directory: impl Into<PathBuf>,
+        git_directory: impl Into<PathBuf>,
         executor: BackgroundExecutor,
     ) -> Self {
         Self {
-            git_binary_path,
-            working_directory,
-            git_directory,
+            git_binary_path: git_binary_path.into(),
+            working_directory: working_directory.into(),
+            git_directory: git_directory.into(),
             executor,
             index_file_path: None,
             envs: HashMap::default(),

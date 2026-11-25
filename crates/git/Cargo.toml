@@ -15,12 +15,14 @@ anyhow.workspace = true
 askpass.workspace = true
 async-trait.workspace = true
 collections.workspace = true
+command.workspace = true
 derive_more.workspace = true
 futures.workspace = true
 gpui.workspace = true
 itertools.workspace = true
 log.workspace = true
 parking_lot.workspace = true
+paths.workspace = true
 rand = { workspace = true, optional = true }
 regex.workspace = true
 rope.workspace = true

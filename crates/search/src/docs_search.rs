@@ -1,53 +1,51 @@
-use assets::Docs;
-use clock::ReplicaId;
-use collections::{HashMap, HashSet};
-use fs;
-use futures::StreamExt;
-use gpui::AssetSource;
-use language::{Capability, DiskState, LocalFile};
-use smol::channel::unbounded;
-use std::cell::RefCell;
-use std::ops::Range;
-use std::path::{Path, PathBuf};
-use std::pin::pin;
-use std::sync::Arc;
-use std::time::Duration;
-use text::BufferId;
-use util::paths::PathStyle;
-use util::rel_path::RelPath;
-use worktree::WorktreeId;
-
-use crate::common::{
-    BottomResizeDrag, DEFAULT_RESULTS_HEIGHT, DragPreview, MAX_PREVIEW_HEIGHT, MIN_PANEL_HEIGHT, ResizeDrag,
-    SEARCH_DEBOUNCE_MS, SearchDrag, SearchMatch,
-};
 use crate::{
     SearchOption, SearchOptions, SelectNextMatch, SelectPreviousMatch, ToggleCaseSensitive, ToggleIncludeIgnored,
     ToggleRegex, ToggleWholeWord,
+    common::{
+        BottomResizeDrag, DEFAULT_RESULTS_HEIGHT, DragPreview, MAX_PREVIEW_HEIGHT, MIN_PANEL_HEIGHT, ResizeDrag,
+        SEARCH_DEBOUNCE_MS, SearchDrag, SearchMatch,
+    },
 };
 pub use app_actions::docs_search::Toggle;
-use editor::EditorSettings;
-use editor::{Editor, EditorEvent, EditorMode, RowHighlightOptions};
+use assets::Docs;
+use clock::ReplicaId;
+use collections::{HashMap, HashSet};
+use editor::{Editor, EditorEvent, EditorMode, EditorSettings, RowHighlightOptions};
+use fs;
+use futures::StreamExt;
+use gpui::AssetSource;
 use gpui::{
     Action, App, AsyncApp, Context, DismissEvent, DragMoveEvent, Entity, EventEmitter, FocusHandle, Focusable, Global,
     HighlightStyle, KeyContext, ParentElement, Render, Styled, StyledText, Subscription, Task, Window, actions, px,
     relative,
 };
-use language::Buffer;
-use language::language_settings::SoftWrap;
+use language::{Buffer, language_settings::SoftWrap};
+use language::{Capability, DiskState, LocalFile};
 use menu;
 use multi_buffer::{ExcerptRange, MultiBuffer};
+use paths::{PathStyle, path_matcher::PathMatcher, rel_path::RelPath};
 use picker::{Picker, PickerDelegate, PickerEditorPosition};
-use project::SearchResults;
-use project::search::{SearchQuery, SearchResult};
-use project::{Project, ProjectPath};
+use project::{
+    Project, ProjectPath, SearchResults,
+    search::{SearchQuery, SearchResult},
+};
 use settings::Settings;
+use smol::channel::unbounded;
+use std::{
+    cell::RefCell,
+    ops::Range,
+    path::{Path, PathBuf},
+    pin::pin,
+    sync::Arc,
+    time::Duration,
+};
+use text::BufferId;
 use text::{Anchor, Point};
 use theme::ActiveTheme;
-use ui::Divider;
-use ui::{IconButton, IconName, ListItem, ListItemSpacing, Tooltip, prelude::*};
-use util::{ResultExt, paths::PathMatcher};
+use ui::{Divider, IconButton, IconName, ListItem, ListItemSpacing, Tooltip, prelude::*};
+use util::ResultExt;
 use workspace::{ModalView, Workspace};
+use worktree::WorktreeId;
 
 actions!(docs_search, [ToggleFilters]);
 

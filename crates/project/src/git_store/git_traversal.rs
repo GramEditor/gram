@@ -1,9 +1,9 @@
 use collections::HashMap;
 use git::{repository::RepoPath, status::GitSummary};
+use paths::rel_path::RelPath;
 use std::{collections::BTreeMap, ops::Deref, path::Path};
 use sum_tree::Cursor;
 use text::Bias;
-use util::rel_path::RelPath;
 use worktree::{Entry, PathProgress, PathTarget, Traversal};
 
 use super::{RepositoryId, RepositorySnapshot, StatusEntry};
@@ -246,9 +246,10 @@ mod tests {
     use fs::FakeFs;
     use git::status::{FileStatus, StatusCode, TrackedSummary, UnmergedStatus, UnmergedStatusCode};
     use gpui::TestAppContext;
+    use paths::rel_path::unix_rel_path;
     use serde_json::json;
     use settings::SettingsStore;
-    use util::{path, rel_path::rel_path};
+    use util::path;
 
     const CONFLICT: FileStatus = FileStatus::Unmerged(UnmergedStatus {
         first_head: UnmergedStatusCode::Updated,
@@ -325,13 +326,13 @@ mod tests {
         pretty_assertions::assert_eq!(
             entries,
             [
-                (rel_path("x/x1.txt").into(), GitSummary::UNCHANGED),
-                (rel_path("x/x2.txt").into(), MODIFIED),
-                (rel_path("x/y/y1.txt").into(), GitSummary::CONFLICT),
-                (rel_path("x/y/y2.txt").into(), GitSummary::UNCHANGED),
-                (rel_path("x/z.txt").into(), ADDED),
-                (rel_path("z/z1.txt").into(), GitSummary::UNCHANGED),
-                (rel_path("z/z2.txt").into(), ADDED),
+                (unix_rel_path("x/x1.txt").into(), GitSummary::UNCHANGED),
+                (unix_rel_path("x/x2.txt").into(), MODIFIED),
+                (unix_rel_path("x/y/y1.txt").into(), GitSummary::CONFLICT),
+                (unix_rel_path("x/y/y2.txt").into(), GitSummary::UNCHANGED),
+                (unix_rel_path("x/z.txt").into(), ADDED),
+                (unix_rel_path("z/z1.txt").into(), GitSummary::UNCHANGED),
+                (unix_rel_path("z/z2.txt").into(), ADDED),
             ]
         )
     }
@@ -757,7 +758,7 @@ mod tests {
             .iter()
             .map(|&(path, _)| {
                 let git_entry = traversal
-                    .find(|git_entry| git_entry.path.as_ref() == rel_path(path))
+                    .find(|git_entry| git_entry.path.as_ref() == unix_rel_path(path))
                     .unwrap_or_else(|| panic!("Traversal has no entry for {path:?}"));
                 (path, git_entry.git_summary)
             })

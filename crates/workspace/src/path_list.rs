@@ -1,10 +1,9 @@
+use itertools::Itertools;
+use paths::sanitized_path::SanitizedPath;
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-
-use itertools::Itertools;
-use util::paths::SanitizedPath;
 
 /// A list of absolute paths, in a specific order.
 ///
