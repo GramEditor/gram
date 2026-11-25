@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Make the onboarding screen clearer (impl. #260) (#757) by @alex3236
 - Use DelayMs controls more consistently in settings (#763) by @ePirat
 - Paste from primary selection where appropriate (Linux/FreeBSD) (#773) by @gahooa
+- Make context menu entries consistent (#778) by @gahooa
+- Update Windows app-icon and app-icon-dev (#774) by @malgreen
 
 ## [3.5.2] - 2026-11-14
 
