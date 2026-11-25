@@ -18,11 +18,6 @@ pub const EDITORCONFIG_NAME: &str = ".editorconfig";
 /// On Windows, this is `%LOCALAPPDATA%\Gram`.
 static DATA_DIR: OnceLock<PathBuf> = OnceLock::new();
 
-/// The resolved config directory, combining custom override or platform defaults.
-/// This is set once and cached for subsequent calls.
-/// On macOS, this is `~/.config/gram`.
-/// On Linux/FreeBSD, this is `$XDG_CONFIG_HOME/gram`.
-/// On Windows, this is `%APPDATA%\Gram`.
 /// Returns the relative path to the gram_server directory on the ssh host.
 pub fn remote_server_dir_relative() -> &'static RelPath {
     static CACHED: LazyLock<&'static RelPath> = LazyLock::new(|| RelPath::unix(".gram_server").unwrap());
@@ -121,6 +116,9 @@ pub fn data_dir() -> &'static Path {
 }
 
 /// Returns the path to the configuration directory used by Gram.
+/// On macOS, this is `~/.config/gram`.
+/// On Linux/FreeBSD, this is `$XDG_CONFIG_HOME/gram`.
+/// On Windows, this is `%APPDATA%\Gram`.
 pub fn config_dir() -> &'static Path {
     static CONFIG_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
         if let Some(custom_dir) = DATA_DIR.get() {
@@ -135,6 +133,8 @@ pub fn config_dir() -> &'static Path {
                 // TODO: Consider whether supporting this completely non-standard env var is useful
                 //       (it can just be set via XDG_CONFIG_HOME, so is pretty much pointless).
                 PathBuf::from(flatpak_xdg_config)
+            } else if cfg!(target_os = "macos") {
+                home_dir().join(".config")
             } else {
                 // TODO: This should probably be `dirs::config_local_dir`.
                 //       To exemplify, using `config_dir` instead of `config_local_dir` causes the application
@@ -145,7 +145,7 @@ pub fn config_dir() -> &'static Path {
         };
 
         cfg_select! {
-            any(target_os = "windows", target_os = "macos") => platform_config_dir.join("Gram"),
+            target_os = "windows" => platform_config_dir.join("Gram"),
             _ => platform_config_dir.join("gram")
         }
     });
