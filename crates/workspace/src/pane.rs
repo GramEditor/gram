@@ -2903,6 +2903,13 @@ impl Pane {
                         let visible_in_project_panel =
                             relative_path.is_some() && worktree.is_some_and(|worktree| worktree.read(cx).is_visible());
 
+                        let is_local = pane
+                            .read(cx)
+                            .project
+                            .upgrade()
+                            .is_some_and(|project| project.read(cx).is_local());
+                        let local_abs_path = entry_abs_path.clone().filter(|_| is_local);
+
                         let entry_id = entry.to_proto();
                         menu = menu
                             .separator()
@@ -2936,7 +2943,7 @@ impl Pane {
                             .separator()
                             .when(visible_in_project_panel, |menu| {
                                 menu.entry(
-                                    "Reveal In Project Panel",
+                                    "Reveal in Project Panel",
                                     Some(Box::new(RevealInProjectPanel::default())),
                                     window.handler_for(&pane, move |pane, _, cx| {
                                         pane.project
@@ -2946,6 +2953,28 @@ impl Pane {
                                                 ))
                                             })
                                             .ok();
+                                    }),
+                                )
+                            })
+                            .when_some(local_abs_path.clone(), |menu, abs_path| {
+                                menu.entry(
+                                    if cfg!(target_os = "macos") {
+                                        "Reveal in Finder"
+                                    } else {
+                                        "Reveal in File Manager"
+                                    },
+                                    None,
+                                    window.handler_for(&pane, move |_, _, cx| {
+                                        cx.reveal_path(&abs_path);
+                                    }),
+                                )
+                            })
+                            .when_some(local_abs_path, |menu, abs_path| {
+                                menu.entry(
+                                    "Open in Default App",
+                                    Some(Box::new(app_actions::workspace::OpenWithSystem)),
+                                    window.handler_for(&pane, move |_, _, cx| {
+                                        cx.open_with_system(&abs_path);
                                     }),
                                 )
                             })

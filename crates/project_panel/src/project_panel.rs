@@ -1161,7 +1161,11 @@ impl ProjectPanel {
                             })
                             .when(has_git_repo, |menu| {
                                 menu.separator().action(
-                                    if is_dir { "Directory History" } else { "File History" },
+                                    if is_dir {
+                                        "View Directory History"
+                                    } else {
+                                        "View File History"
+                                    },
                                     Box::new(git::FileHistory),
                                 )
                             })
