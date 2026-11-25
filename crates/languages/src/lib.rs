@@ -151,6 +151,7 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
     let typescript_context = Arc::new(typescript::TypeScriptContextProvider::new(fs.clone()));
     let typescript_lsp_adapter = Arc::new(typescript::TypeScriptLspAdapter::new(node.clone(), fs.clone()));
     let typst_lsp_adapter = Arc::new(typst::TypstLspAdapter);
+    let typst_context_provider = Arc::new(typst::typst_task_context());
     let vtsls_adapter = Arc::new(vtsls::VtslsLspAdapter::new(node.clone(), fs.clone()));
     let xml_lsp_adapter = Arc::new(xml::XmlLspAdapter);
     let yaml_lsp_adapter = Arc::new(yaml::YamlLspAdapter::new(node));
@@ -322,6 +323,7 @@ pub fn init(languages: Arc<LanguageRegistry>, fs: Arc<dyn Fs>, node: NodeRuntime
         LanguageInfo {
             name: "typst",
             adapters: vec![typst_lsp_adapter],
+            context: Some(typst_context_provider),
             ..Default::default()
         },
         LanguageInfo {
