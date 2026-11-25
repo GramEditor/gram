@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Paste from primary selection where appropriate (Linux/FreeBSD) (#773) by @gahooa
 - Make context menu entries consistent (#778) by @gahooa
 - Update Windows app-icon and app-icon-dev (#774) by @malgreen
+- Fix Typst export and watch tasks (#755) by @alex3236
 
 ## [3.5.2] - 2026-11-14
 
