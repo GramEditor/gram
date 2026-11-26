@@ -2,7 +2,7 @@
 set -eu
 
 cd "$(dirname "$0")/.."
-severity=${1:-warning}
+severity=${1:-style}
 case "$severity" in
 error | warning | info | style) ;;
 *)
@@ -11,7 +11,12 @@ error | warning | info | style) ;;
 	;;
 esac
 
-files=$(git grep -lE '^#!(/bin/|/usr/bin/env )(sh|bash|dash)' -- script) || exit 0
+files=$(git ls-files -z --cached --others --exclude-standard -- script |
+	xargs -0 grep -lEs '^#!(/bin/|/usr/bin/env )(sh|bash|dash)' || true)
+if [ -z "$files" ]; then
+	echo "Error: no shell scripts found" >&2
+	exit 1
+fi
 
 # shellcheck disable=SC2086
 exec shellcheck -x -S "$severity" -C $files
