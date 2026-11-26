@@ -1,17 +1,16 @@
 #!/bin/bash
 set -eux
-version="$1"
 
+version="$1"
 bundle_target() {
 	arch="$1"
 	target="$arch-apple-darwin"
 	cargo clean
-	./script/bundle-mac.sh $target
-	cp target/$target/release/Gram-$arch.dmg ../gram-$version/Gram-$arch-$version.dmg
-	cp target/gram-remote-server-macos*.gz ../gram-$version/gram-remote-server-macos-${arch}-${version}.gz
+	./script/bundle-mac.sh "$target"
+	cp "target/$target/release/Gram-$arch.dmg" "../gram-$version/Gram-$arch-$version.dmg"
+	cp target/gram-remote-server-macos*.gz "../gram-$version/gram-remote-server-macos-$arch-$version.gz"
 }
-
-[ -d ../gram-$version ] || {
+[ -d "../gram-$version" ] || {
 	echo "../gram-$version does not exist" >&2
 	exit 1
 }

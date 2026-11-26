@@ -6,11 +6,12 @@ set -eu
 check_remaining_installations() {
 	platform="$(uname -s)"
 	if [ "$platform" = "Darwin" ]; then
-		# Check for any Gram variants in /Applications
+		# counting matches, not parse
+		# shellcheck disable=SC2012
 		remaining=$(ls -d /Applications/Gram*.app 2>/dev/null | wc -l)
 		[ "$remaining" -eq 0 ]
 	else
-		# Check for any Gram variants in ~/.local
+		# shellcheck disable=SC2012
 		remaining=$(ls -d "$HOME/.local/gram"*.app 2>/dev/null | wc -l)
 		[ "$remaining" -eq 0 ]
 	fi

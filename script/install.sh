@@ -8,7 +8,7 @@ err() {
 }
 
 has_command() {
-	if ! command -v $1; then
+	if ! command -v "$1"; then
 		err "Required command not found: $1"
 	fi
 }
@@ -21,7 +21,7 @@ Install Gram on Linux from a tar bundle.
 Options:
   -h, --help          Display this help and exit.
   --build             Build the tar bundle before installation.
-  --build-remote      Build the $(remote_server) binary
+  --build-remote      Build the remote_server binary
   --prefix PREFIX     Install into PREFIX (default ~/.local).
   "
 }
@@ -80,7 +80,7 @@ version=$(
 
 host_line="$(rustc --version --verbose | grep "host")"
 target_triple=${host_line#*: }
-arch="$(echo $target_triple | awk -F - '{print $1}')"
+arch="$(printf '%s' "$target_triple" | awk -F - '{print $1}')"
 
 target_dir="${CARGO_TARGET_DIR:-target}"
 

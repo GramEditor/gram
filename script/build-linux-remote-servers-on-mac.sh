@@ -21,20 +21,18 @@ set -euxo pipefail
 # [target.aarch64-unknown-linux-musl]
 # linker = "aarch64-linux-musl-gcc"
 
-version="$(script/get-crate-version.sh gram)"
+version="$(./script/get-crate-version.sh gram)"
 
 compile() {
 	arch="$1"
-	export CC=${arch}-linux-musl-gcc
-	export AWS_LC_SYS_CC=${arch}-linux-musl-gcc
-	cargo build \
-		--release \
-		--target ${arch}-unknown-linux-musl \
-		--package remote_server
-	cp target/${arch}-unknown-linux-musl/release/remote_server ./target/gram-remote-server-linux-${arch}-${version}
-	"${arch}-linux-musl-strip" ./target/gram-remote-server-linux-${arch}-${version}
-	gzip ./target/gram-remote-server-linux-${arch}-${version}
-	echo "./target/gram-remote-server-linux-${arch}-${version}"
+	export CC="$arch-linux-musl-gcc"
+	export AWS_LC_SYS_CC="$arch-linux-musl-gcc"
+	cargo build --release --target "$arch-unknown-linux-musl" --package remote_server
+	out="./target/gram-remote-server-linux-$arch-$version"
+	cp "target/$arch-unknown-linux-musl/release/remote_server" "$out"
+	"$arch-linux-musl-strip" "$out"
+	gzip "$out"
+	echo "$out.gz"
 }
 
 compile aarch64
