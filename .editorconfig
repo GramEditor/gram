@@ -21,6 +21,11 @@ indent_size = 2
 [*.md]
 max_line_length = 80
 
+[*.sh]
+indent_size = 4
+indent_style = tab
+max_line_length = 120
+
 [*.toml]
 indent_size = 2
 max_line_length = 255
