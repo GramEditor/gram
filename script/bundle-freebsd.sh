@@ -2,7 +2,7 @@
 set -euxo pipefail
 
 help_info() {
-    echo "
+	echo "
 Usage: ${0##*/} [options]
 Build a release .tar.gz for FreeBSD.
 
@@ -12,17 +12,17 @@ Options:
 }
 
 while getopts 'h' flag; do
-    case "${flag}" in
-    h)
-        help_info
-        exit 0
-        ;;
-    *)
-        echo "Error: Unexpected argument: $1" >&2
-        help_info
-        exit 1
-        ;;
-    esac
+	case "${flag}" in
+	h)
+		help_info
+		exit 0
+		;;
+	*)
+		echo "Error: Unexpected argument: $1" >&2
+		help_info
+		exit 1
+		;;
+	esac
 done
 
 export GRAM_BUNDLE=true
@@ -86,7 +86,7 @@ cargo build --release --target "${remote_server_triple}" --package remote_server
 
 # Ensure that remote_server does not depend on libssl nor libcrypto, as we got rid of these deps.
 if ldd "${target_dir}/${remote_server_triple}/release/remote_server" | grep -q 'libcrypto\|libssl'; then
-    echo "Error: remote_server still depends on libssl or libcrypto" && exit 1
+	echo "Error: remote_server still depends on libssl or libcrypto" && exit 1
 fi
 
 # suffix=""
@@ -154,4 +154,4 @@ fi
 # tar -czvf "${target_dir}/release/$archive" -C ${temp_dir} "gram$suffix.app"
 
 gzip -f --stdout --best "${target_dir}/${remote_server_triple}/release/remote_server" \
-    >"${target_dir}/gram-remote-server-freebsd-x86_64.gz"
+	>"${target_dir}/gram-remote-server-freebsd-x86_64.gz"

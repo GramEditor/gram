@@ -14,11 +14,11 @@ set -euo pipefail
 MOLD_VERSION="2.34.0"
 
 if [ "$(uname -s)" != "Linux" ]; then
-    echo "Error: This script is intended for Linux systems only."
-    exit 1
+	echo "Error: This script is intended for Linux systems only."
+	exit 1
 elif [ -e /usr/local/bin/mold ]; then
-    echo "Warning: existing mold found at /usr/local/bin/mold. Skipping installation."
-    exit 0
+	echo "Warning: existing mold found at /usr/local/bin/mold. Skipping installation."
+	exit 0
 fi
 
 if [ "$(whoami)" = root ]; then SUDO=; else SUDO="$(command -v sudo || command -v doas || true)"; fi
@@ -28,7 +28,7 @@ MOLD_URL="${MOLD_URL:-$MOLD_REPO}/releases/download/v$MOLD_VERSION/mold-$MOLD_VE
 
 echo "Downloading from $MOLD_URL"
 curl -fsSL --output - "$MOLD_URL" |
-    $SUDO tar -C /usr/local --strip-components=1 --no-overwrite-dir -xzf -
+	$SUDO tar -C /usr/local --strip-components=1 --no-overwrite-dir -xzf -
 
 # Note this binary depends on the system libatomic.so.1 which is usually
 # provided as a dependency of gcc so it should be available on most systems.

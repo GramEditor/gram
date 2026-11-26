@@ -3,14 +3,14 @@ set -euo pipefail
 
 WILD_VERSION="${WILD_VERSION:-${1:-0.8.0}}"
 if [ "$(uname -s)" != "Linux" ]; then
-    echo "Error: This script is intended for Linux systems only."
-    exit 1
+	echo "Error: This script is intended for Linux systems only."
+	exit 1
 elif [ -z "$WILD_VERSION" ]; then
-    echo "Usage: $0 [version]"
-    exit 1
+	echo "Usage: $0 [version]"
+	exit 1
 elif command -v wild >/dev/null 2>&1 && wild --version | grep -Fq "$WILD_VERSION"; then
-    echo "Warning: existing wild $WILD_VERSION found at $(command -v wild). Skipping installation."
-    exit 0
+	echo "Warning: existing wild $WILD_VERSION found at $(command -v wild). Skipping installation."
+	exit 0
 fi
 
 if [ "$(whoami)" = root ]; then SUDO=; else SUDO="$(command -v sudo || command -v doas || true)"; fi
@@ -23,8 +23,8 @@ DEST_DIR=/usr/local/bin
 
 echo "Downloading from $WILD_URL"
 curl -fsSL --output - "$WILD_URL" |
-    $SUDO tar -C ${DEST_DIR} --strip-components=1 --no-overwrite-dir -xzf - \
-        "${WILD_PACKAGE}/wild"
+	$SUDO tar -C ${DEST_DIR} --strip-components=1 --no-overwrite-dir -xzf - \
+		"${WILD_PACKAGE}/wild"
 
 cat <<EOF
 Wild is installed to ${DEST_DIR}/wild

@@ -3,15 +3,15 @@ set -xeuo pipefail
 
 # if root or if sudo/unavailable, define an empty variable
 if [ "$(id -u)" -eq 0 ]; then
-    maysudo=''
+	maysudo=''
 else
-    maysudo="$(command -v sudo || command -v sudo-rs || command -v doas || true)"
+	maysudo="$(command -v sudo || command -v sudo-rs || command -v doas || true)"
 fi
 
 function finalize {
-    # after packages install (curl, etc), get the rust toolchain
-    which rustup >/dev/null 2>&1 || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    cat <<EOF
+	# after packages install (curl, etc), get the rust toolchain
+	which rustup >/dev/null 2>&1 || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+	cat <<EOF
 Note: It's recommended to install and configure Wild or Mold for faster builds.
       Run script/install-wild.sh or script/install-mold.
 
@@ -22,47 +22,47 @@ EOF
 # Ubuntu, Debian, Mint, Kali, Pop!_OS, Raspbian, etc.
 apt=$(command -v apt-get || true)
 if [[ -n $apt ]]; then
-    cat /etc/os-release
-    deps=(
-        gcc
-        g++
-        libfontconfig-dev
-        libwayland-dev
-        libx11-xcb-dev
-        libxkbcommon-x11-dev
-        libssl-dev
-        libzstd-dev
-        libvulkan1
-        make
-        cmake
-        clang
-        jq
-        git
-        curl
-        gettext-base
-        elfutils
-        libsqlite3-dev
-        musl-tools
-        musl-dev
-        build-essential
-    )
-    if (grep -qP 'PRETTY_NAME="(Debian|Raspbian).+13' /etc/os-release); then
-        # libstdc++-14-dev is in build-essential
-        deps+=(mold)
-    elif (grep -qP 'PRETTY_NAME="(Ubuntu).+26' /etc/os-release); then
-        deps+=(mold)
-    elif (grep -qP 'PRETTY_NAME="(Linux Mint 22|.+24\.(04|10))' /etc/os-release); then
-        deps+=(mold libstdc++-14-dev)
-    elif (grep -qP 'PRETTY_NAME="((Debian|Raspbian).+12|Linux Mint 21|.+22\.04)' /etc/os-release); then
-        deps+=(mold libstdc++-12-dev)
-    elif (grep -qP 'PRETTY_NAME="((Debian|Raspbian).+11|Linux Mint 20|.+20\.04)' /etc/os-release); then
-        deps+=(libstdc++-10-dev)
-    fi
+	cat /etc/os-release
+	deps=(
+		gcc
+		g++
+		libfontconfig-dev
+		libwayland-dev
+		libx11-xcb-dev
+		libxkbcommon-x11-dev
+		libssl-dev
+		libzstd-dev
+		libvulkan1
+		make
+		cmake
+		clang
+		jq
+		git
+		curl
+		gettext-base
+		elfutils
+		libsqlite3-dev
+		musl-tools
+		musl-dev
+		build-essential
+	)
+	if (grep -qP 'PRETTY_NAME="(Debian|Raspbian).+13' /etc/os-release); then
+		# libstdc++-14-dev is in build-essential
+		deps+=(mold)
+	elif (grep -qP 'PRETTY_NAME="(Ubuntu).+26' /etc/os-release); then
+		deps+=(mold)
+	elif (grep -qP 'PRETTY_NAME="(Linux Mint 22|.+24\.(04|10))' /etc/os-release); then
+		deps+=(mold libstdc++-14-dev)
+	elif (grep -qP 'PRETTY_NAME="((Debian|Raspbian).+12|Linux Mint 21|.+22\.04)' /etc/os-release); then
+		deps+=(mold libstdc++-12-dev)
+	elif (grep -qP 'PRETTY_NAME="((Debian|Raspbian).+11|Linux Mint 20|.+20\.04)' /etc/os-release); then
+		deps+=(libstdc++-10-dev)
+	fi
 
-    $maysudo "$apt" update
-    $maysudo "$apt" install -y "${deps[@]}"
-    finalize
-    exit 0
+	$maysudo "$apt" update
+	$maysudo "$apt" install -y "${deps[@]}"
+	finalize
+	exit 0
 fi
 
 # Fedora, CentOS, RHEL, Alma, Amazon 2023, Oracle, etc.
@@ -71,152 +71,152 @@ dnf=$(command -v dnf || true)
 yum=$(command -v yum || true)
 
 if [[ -n $dnf ]] || [[ -n $yum ]]; then
-    pkg_cmd="${dnf:-${yum}}"
-    deps=(
-        musl-gcc
-        gcc
-        clang
-        cmake
-        fontconfig-devel
-        wayland-devel
-        libxcb-devel
-        libxkbcommon-x11-devel
-        openssl-devel
-        libzstd-devel
-        vulkan-loader
-        sqlite-devel
-        jq
-        git
-        tar
-        zlib-ng-compat-static
-    )
-    # perl used for building openssl-sys crate. See: https://docs.rs/openssl/latest/openssl
-    if grep -qP '^ID="?(fedora)' /etc/os-release; then
-        deps+=(
-            perl-FindBin
-            perl-IPC-Cmd
-            perl-File-Compare
-            perl-File-Copy
-            perl-Time-Piece
-            mold
-        )
-    elif grep -qP '^ID="?(rhel|rocky|alma|centos|ol)' /etc/os-release; then
-        deps+=(perl-interpreter)
-    fi
+	pkg_cmd="${dnf:-${yum}}"
+	deps=(
+		musl-gcc
+		gcc
+		clang
+		cmake
+		fontconfig-devel
+		wayland-devel
+		libxcb-devel
+		libxkbcommon-x11-devel
+		openssl-devel
+		libzstd-devel
+		vulkan-loader
+		sqlite-devel
+		jq
+		git
+		tar
+		zlib-ng-compat-static
+	)
+	# perl used for building openssl-sys crate. See: https://docs.rs/openssl/latest/openssl
+	if grep -qP '^ID="?(fedora)' /etc/os-release; then
+		deps+=(
+			perl-FindBin
+			perl-IPC-Cmd
+			perl-File-Compare
+			perl-File-Copy
+			perl-Time-Piece
+			mold
+		)
+	elif grep -qP '^ID="?(rhel|rocky|alma|centos|ol)' /etc/os-release; then
+		deps+=(perl-interpreter)
+	fi
 
-    # gcc-c++ is g++ on RHEL8 and 8.x clones
-    if grep -qP '^ID="?(rhel|rocky|alma|centos|ol)' /etc/os-release &&
-        grep -qP '^VERSION_ID="?(8)' /etc/os-release; then
-        deps+=(gcc-c++)
-    else
-        deps+=(g++)
-    fi
+	# gcc-c++ is g++ on RHEL8 and 8.x clones
+	if grep -qP '^ID="?(rhel|rocky|alma|centos|ol)' /etc/os-release &&
+		grep -qP '^VERSION_ID="?(8)' /etc/os-release; then
+		deps+=(gcc-c++)
+	else
+		deps+=(g++)
+	fi
 
-    # libxkbcommon-x11-devel is in a non-default repo on RHEL 8.x/9.x (except on AmazonLinux)
-    if grep -qP '^VERSION_ID="?(8|9)' /etc/os-release && grep -qP '^ID="?(rhel|rocky|centos|alma|ol)' /etc/os-release; then
-        $maysudo dnf install -y 'dnf-command(config-manager)'
-        if grep -qP '^PRETTY_NAME="(AlmaLinux 8|Rocky Linux 8)' /etc/os-release; then
-            $maysudo dnf config-manager --set-enabled powertools
-        elif grep -qP '^PRETTY_NAME="((AlmaLinux|Rocky|CentOS Stream) 9|Red Hat.+(8|9))' /etc/os-release; then
-            $maysudo dnf config-manager --set-enabled crb
-        elif grep -qP '^PRETTY_NAME="Oracle Linux Server 8' /etc/os-release; then
-            $maysudo dnf config-manager --set-enabled ol8_codeready_builder
-        elif grep -qP '^PRETTY_NAME="Oracle Linux Server 9' /etc/os-release; then
-            $maysudo dnf config-manager --set-enabled ol9_codeready_builder
-        else
-            echo "Unexpected distro" && grep 'PRETTY_NAME' /etc/os-release && exit 1
-        fi
-    fi
+	# libxkbcommon-x11-devel is in a non-default repo on RHEL 8.x/9.x (except on AmazonLinux)
+	if grep -qP '^VERSION_ID="?(8|9)' /etc/os-release && grep -qP '^ID="?(rhel|rocky|centos|alma|ol)' /etc/os-release; then
+		$maysudo dnf install -y 'dnf-command(config-manager)'
+		if grep -qP '^PRETTY_NAME="(AlmaLinux 8|Rocky Linux 8)' /etc/os-release; then
+			$maysudo dnf config-manager --set-enabled powertools
+		elif grep -qP '^PRETTY_NAME="((AlmaLinux|Rocky|CentOS Stream) 9|Red Hat.+(8|9))' /etc/os-release; then
+			$maysudo dnf config-manager --set-enabled crb
+		elif grep -qP '^PRETTY_NAME="Oracle Linux Server 8' /etc/os-release; then
+			$maysudo dnf config-manager --set-enabled ol8_codeready_builder
+		elif grep -qP '^PRETTY_NAME="Oracle Linux Server 9' /etc/os-release; then
+			$maysudo dnf config-manager --set-enabled ol9_codeready_builder
+		else
+			echo "Unexpected distro" && grep 'PRETTY_NAME' /etc/os-release && exit 1
+		fi
+	fi
 
-    $maysudo "$pkg_cmd" install -y "${deps[@]}"
-    finalize
-    exit 0
+	$maysudo "$pkg_cmd" install -y "${deps[@]}"
+	finalize
+	exit 0
 fi
 
 # openSUSE
 # https://software.opensuse.org
 zyp=$(command -v zypper || true)
 if [[ -n $zyp ]]; then
-    deps=(
-        clang
-        cmake
-        fontconfig-devel
-        gcc
-        gcc-c++
-        git
-        gzip
-        jq
-        libvulkan1
-        libx11-devel
-        libxcb-devel
-        libxkbcommon-devel
-        libxkbcommon-x11-devel
-        libzstd-devel
-        make
-        mold
-        openssl-devel
-        sqlite3-devel
-        tar
-        wayland-devel
-        xcb-util-devel
-    )
-    $maysudo "$zyp" install -y "${deps[@]}"
-    finalize
-    exit 0
+	deps=(
+		clang
+		cmake
+		fontconfig-devel
+		gcc
+		gcc-c++
+		git
+		gzip
+		jq
+		libvulkan1
+		libx11-devel
+		libxcb-devel
+		libxkbcommon-devel
+		libxkbcommon-x11-devel
+		libzstd-devel
+		make
+		mold
+		openssl-devel
+		sqlite3-devel
+		tar
+		wayland-devel
+		xcb-util-devel
+	)
+	$maysudo "$zyp" install -y "${deps[@]}"
+	finalize
+	exit 0
 fi
 
 # Arch, Manjaro, etc.
 # https://archlinux.org/packages
 pacman=$(command -v pacman || true)
 if [[ -n $pacman ]]; then
-    deps=(
-        gcc
-        clang
-        musl
-        cmake
-        fontconfig
-        wayland
-        libxcb
-        libxkbcommon-x11
-        openssl
-        zstd
-        pkgconf
-        mold
-        sqlite
-        jq
-        git
-        base-devel
-        pacman-contrib
-    )
-    $maysudo "$pacman" -S --needed "${deps[@]}"
-    finalize
-    exit 0
+	deps=(
+		gcc
+		clang
+		musl
+		cmake
+		fontconfig
+		wayland
+		libxcb
+		libxkbcommon-x11
+		openssl
+		zstd
+		pkgconf
+		mold
+		sqlite
+		jq
+		git
+		base-devel
+		pacman-contrib
+	)
+	$maysudo "$pacman" -S --needed "${deps[@]}"
+	finalize
+	exit 0
 fi
 
 # Void
 # https://voidlinux.org/packages
 xbps=$(command -v xbps-install || true)
 if [[ -n $xbps ]]; then
-    deps=(
-        gettext-devel
-        clang
-        cmake
-        jq
-        elfutils-devel
-        gcc
-        fontconfig-devel
-        libxcb-devel
-        libxkbcommon-devel
-        libzstd-devel
-        openssl-devel
-        wayland-devel
-        vulkan-loader
-        mold
-        sqlite-devel
-    )
-    $maysudo "$xbps" -Syu "${deps[@]}"
-    finalize
-    exit 0
+	deps=(
+		gettext-devel
+		clang
+		cmake
+		jq
+		elfutils-devel
+		gcc
+		fontconfig-devel
+		libxcb-devel
+		libxkbcommon-devel
+		libzstd-devel
+		openssl-devel
+		wayland-devel
+		vulkan-loader
+		mold
+		sqlite-devel
+	)
+	$maysudo "$xbps" -Syu "${deps[@]}"
+	finalize
+	exit 0
 fi
 
 # Gentoo GNU/Linux
@@ -224,27 +224,27 @@ fi
 # See: https://codeberg.org/GramEditor/gram-gentoo for .ebuild
 emerge=$(command -v emerge || true)
 if [[ -n $emerge ]]; then
-    deps=(
-        app-arch/zstd
-        app-misc/jq
-        dev-build/cmake
-        dev-db/sqlite
-        dev-libs/glib
-        dev-libs/openssl
-        dev-libs/wayland
-        dev-vcs/git
-        llvm-core/clang
-        media-libs/fontconfig
-        media-libs/libva
-        media-libs/vulkan-loader
-        sys-apps/xdg-desktop-portal
-        sys-devel/mold
-        x11-libs/libxcb
-        x11-libs/libxkbcommon
-    )
-    $maysudo "$emerge" -u "${deps[@]}"
-    finalize
-    exit 0
+	deps=(
+		app-arch/zstd
+		app-misc/jq
+		dev-build/cmake
+		dev-db/sqlite
+		dev-libs/glib
+		dev-libs/openssl
+		dev-libs/wayland
+		dev-vcs/git
+		llvm-core/clang
+		media-libs/fontconfig
+		media-libs/libva
+		media-libs/vulkan-loader
+		sys-apps/xdg-desktop-portal
+		sys-devel/mold
+		x11-libs/libxcb
+		x11-libs/libxkbcommon
+	)
+	$maysudo "$emerge" -u "${deps[@]}"
+	finalize
+	exit 0
 fi
 echo "Unsupported Linux distribution in script/linux.sh"
 exit 1

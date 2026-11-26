@@ -3,31 +3,31 @@ set -xeuo pipefail
 
 # if root or if sudo/unavailable, define an empty variable
 if [ "$(id -u)" -eq 0 ]; then
-    maysudo=''
+	maysudo=''
 else
-    maysudo="$(command -v sudo || command -v doas || true)"
+	maysudo="$(command -v sudo || command -v doas || true)"
 fi
 
 function finalize {
-    # after packages install (curl, etc), get the rust toolchain
-    which rustup >/dev/null 2>&1 || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    echo "Finished installing FreeBSD dependencies with script/freebsd.sh"
+	# after packages install (curl, etc), get the rust toolchain
+	which rustup >/dev/null 2>&1 || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+	echo "Finished installing FreeBSD dependencies with script/freebsd.sh"
 }
 
 # FreeBSD
 # https://www.freebsd.org/ports/
 pkg=$(command -v pkg || true)
 if [[ -n $pkg ]]; then
-    deps=(
-        cmake
-        gcc
-        git
-        llvm
-        protobuf
-        rustup-init
-        libx11
-    )
-    $maysudo "$pkg" install "${deps[@]}"
-    finalize
-    exit 0
+	deps=(
+		cmake
+		gcc
+		git
+		llvm
+		protobuf
+		rustup-init
+		libx11
+	)
+	$maysudo "$pkg" install "${deps[@]}"
+	finalize
+	exit 0
 fi
