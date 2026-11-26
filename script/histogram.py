@@ -5,10 +5,9 @@
 # pandas: For data manipulation and analysis.
 # matplotlib: For creating static, interactive, and animated visualizations in Python.
 # seaborn: For making statistical graphics in Python, based on matplotlib.
-
-# To install these dependencies, use the following pip command:
-# pip install pandas matplotlib seaborn
-
+#
+# To install these dependencies, use the following command: pip install pandas matplotlib seaborn
+#
 # This script is designed to parse log files for performance measurements and create histograms of these measurements.
 # It expects log files to contain lines with measurements in the format "measurement: timeunit" where timeunit can be in milliseconds (ms) or microseconds (µs).
 # Lines that do not contain a colon ':' are skipped.
