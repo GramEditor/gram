@@ -1,4 +1,3 @@
-
 function ParseGramWorkspace {
     $metadata = cargo metadata --no-deps --offline | ConvertFrom-Json
     $env:GRAM_WORKSPACE = $metadata.workspace_root

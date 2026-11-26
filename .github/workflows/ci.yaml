@@ -98,16 +98,16 @@ jobs:
         run: ./script/prepare-ci release
 
       - name: Flatpak dependencies
-        run: ./script/flatpak/deps
+        run: ./script/ci-flatpak-deps
 
       - name: Flatpak
-        run: ./script/flatpak/bundle-flatpak
+        run: ./script/ci-flatpak-bundle
 
       - name: Copy artifacts
         shell: bash
         env:
           ARCH: ${{ matrix.arch }}
-        run: ./script/ci/github-artifacts
+        run: ./script/ci-artifact-gh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7

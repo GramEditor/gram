@@ -81,7 +81,7 @@ jobs:
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
         id: set_artifact_name
         shell: bash
-        run: ./script/ci/artifact-name
+        run: ./script/ci-artifact-name
 
       - name: Upload tarball
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')

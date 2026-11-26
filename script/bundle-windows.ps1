@@ -6,7 +6,7 @@ Param(
     [Parameter()][string]$Name
 )
 
-. "$PSScriptRoot/lib/workspace.ps1"
+. "$PSScriptRoot/workspace.ps1"
 
 # https://stackoverflow.com/questions/57949031/powershell-script-stops-if-program-fails-like-bash-set-o-errexit
 $ErrorActionPreference = 'Stop'
