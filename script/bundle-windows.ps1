@@ -88,13 +88,6 @@ function PrepareForBundle {
     rustup target add $target
 }
 
-function GenerateLicenses {
-    $oldErrorActionPreference = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    . $PSScriptRoot/generate-licenses.ps1
-    $ErrorActionPreference = $oldErrorActionPreference
-}
-
 function BuildGramAndItsFriends {
     Write-Output "Building Gram and its friends, for channel: $channel"
     # Build gram.exe, cli.exe
