@@ -12,7 +12,7 @@ Clone the [Gram repository](https://codeberg.org/GramEditor/gram).
 - Install the necessary system packages and rustup:
 
   ```sh
-  script/freebsd
+  script/freebsd.sh
   ```
 
   If preferred, you can inspect

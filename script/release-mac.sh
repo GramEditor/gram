@@ -6,7 +6,7 @@ bundle_target() {
   arch="$1"
   target="$arch-apple-darwin"
   cargo clean
-  ./script/bundle-mac $target
+  ./script/bundle-mac.sh $target
   cp target/$target/release/Gram-$arch.dmg ../gram-$version/Gram-$arch-$version.dmg
   cp target/gram-remote-server-macos*.gz ../gram-$version/gram-remote-server-macos-${arch}-${version}.gz
 }

@@ -7,7 +7,7 @@ if [ $# -gt 0 ]; then
 Usage: ${0##*/}
 
 Builds and installs gram onto your system into ~/.local, making it available as ~/.local/bin/gram.
-Before running this you should ensure you have all the build dependencies installed with './script/linux'.
+Before running this you should ensure you have all the build dependencies installed with './script/linux.sh'.
 EOF
 	exit 1
 fi

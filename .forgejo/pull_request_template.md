@@ -23,12 +23,12 @@ to your Codeberg account so that it can verify the commits.
 <!--
 You can skip and remove this section if your changes do not involve Rust code.
 
-See also 'script/dev' for same.
+See also 'script/dev.sh' for same.
 -->
 
 - [ ] `cargo check --workspace --all-targets --locked` passes.
 - [ ] `cargo fmt --all -- --check` passes.
-- [ ] `./script/clippy` passes.
+- [ ] `./script/clippy.sh` passes.
 
 #### Rust tests
 

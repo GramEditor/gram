@@ -14,7 +14,7 @@ export APPLE_TEAM_ID=""
 # Apple signing key: security find-identity -p codesigning
 export APPLE_SIGNING_KEY=""
 # Build, sign and notarise the app bundle
-./script/bundle-mac
+./script/bundle-mac.sh
 ```
 
 ## Dependencies

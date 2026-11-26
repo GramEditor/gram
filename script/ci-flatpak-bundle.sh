@@ -3,7 +3,7 @@ set -eu
 
 cd "$(dirname "$0")/.."
 
-./script/bundle-linux --flatpak --tarball
+./script/bundle-linux.sh --flatpak --tarball
 
 channel=$(cat crates/gram/RELEASE_CHANNEL)
 arch=$(uname -m)

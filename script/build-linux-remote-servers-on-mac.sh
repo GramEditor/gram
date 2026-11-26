@@ -21,7 +21,7 @@ set -euxo pipefail
 # [target.aarch64-unknown-linux-musl]
 # linker = "aarch64-linux-musl-gcc"
 
-version="$(script/get-crate-version gram)"
+version="$(script/get-crate-version.sh gram)"
 
 compile() {
   arch="$1"

@@ -43,7 +43,7 @@ jobs:
 
       - name: Cleanup
         if: runner.os == 'Linux'
-        run: ./script/ci-free-space
+        run: ./script/ci-free-space.sh
 
       - name: Cargo path
         if: runner.os == 'macOS'
@@ -56,7 +56,7 @@ jobs:
 
       - name: Dependencies
         if: runner.os == 'Linux'
-        run: ./script/prepare-ci ci
+        run: ./script/prepare-ci.sh ci
 
       - name: "Nextest: Windows"
         if: runner.os == 'Windows'
@@ -95,19 +95,19 @@ jobs:
           persist-credentials: false
 
       - name: Dependencies
-        run: ./script/prepare-ci release
+        run: ./script/prepare-ci.sh release
 
       - name: Flatpak dependencies
-        run: ./script/ci-flatpak-deps
+        run: ./script/ci-flatpak-deps.sh
 
       - name: Flatpak
-        run: ./script/ci-flatpak-bundle
+        run: ./script/ci-flatpak-bundle.sh
 
       - name: Copy artifacts
         shell: bash
         env:
           ARCH: ${{ matrix.arch }}
-        run: ./script/ci-artifact-gh
+        run: ./script/ci-artifact-gh.sh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7

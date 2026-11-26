@@ -6,7 +6,7 @@ This guide covers how to uninstall Gram on different operating systems.
 
 ### Bundle compilation
 
-If you installed Gram by compiling it using the `script/bundle-mac` command:
+If you installed Gram by compiling it using the `script/bundle-mac.sh` command:
 
 1. Quit Gram if it's running
 2. Open Finder and go to your Applications folder

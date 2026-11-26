@@ -146,7 +146,7 @@ fi
 channel=$(<crates/gram/RELEASE_CHANNEL)
 target_dir="${CARGO_TARGET_DIR:-target}"
 
-version="$(script/get-crate-version gram)"
+version="$(script/get-crate-version.sh gram)"
 RELEASE_VERSION="${version}"
 export RELEASE_VERSION
 

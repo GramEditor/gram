@@ -45,10 +45,10 @@ jobs:
           persist-credentials: false
 
       - name: Dependencies
-        run: ./script/prepare-ci ci
+        run: ./script/prepare-ci.sh ci
 
       - name: Licenses
-        run: ./script/check-licenses
+        run: ./script/check-licenses.sh
 
       - name: Nextest
         run: cargo nextest run --workspace --no-fail-fast --success-output never --show-progress none
@@ -71,17 +71,17 @@ jobs:
 
       - name: Dependencies
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
-        run: ./script/prepare-ci release
+        run: ./script/prepare-ci.sh release
 
       - name: Bundle Linux
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
-        run: ./script/bundle-linux --tarball --deb --rpm
+        run: ./script/bundle-linux.sh --tarball --deb --rpm
 
       - name: Artifact name
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')
         id: set_artifact_name
         shell: bash
-        run: ./script/ci-artifact-name
+        run: ./script/ci-artifact-name.sh
 
       - name: Upload tarball
         if: github.ref_type == 'tag' || startsWith(github.ref, 'refs/heads/test-release')

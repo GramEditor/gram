@@ -11,7 +11,7 @@ fi
 function finalize {
     # after packages install (curl, etc), get the rust toolchain
     which rustup >/dev/null 2>&1 || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-    echo "Finished installing FreeBSD dependencies with script/freebsd"
+    echo "Finished installing FreeBSD dependencies with script/freebsd.sh"
 }
 
 # FreeBSD

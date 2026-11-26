@@ -11,8 +11,8 @@ ci | release) ;;
 esac
 
 cp ./.cargo/ci-config.toml ./.cargo/config.toml
-./script/linux
-./script/download-wasi-sdk
+./script/linux.sh
+./script/download-wasi-sdk.sh
 
 if [ "$mode" = ci ] && ! command -v cargo-nextest >/dev/null 2>&1; then
 	archive=$(mktemp)

@@ -11,11 +11,11 @@ Clone the [Gram repository](https://codeberg.org/GramEditor/gram).
 - Install the necessary system libraries:
 
   ```sh
-  script/linux
+  script/linux.sh
   ```
 
   If you prefer to install the system libraries manually, you can find the list
-  of required packages in the `script/linux` file.
+  of required packages in the `script/linux.sh` file.
 
 ### Linkers {#linker}
 
@@ -27,8 +27,8 @@ incremental build time.
 
 For local development Wild is recommended because it's 5-20% faster than Mold.
 
-These linkers can be installed with `script/install-mold` and
-`script/install-wild`.
+These linkers can be installed with `script/install-mold.sh` and
+`script/install-wild.sh`.
 
 To use Wild as your default, add these lines to your `~/.cargo/config.toml`:
 
@@ -112,7 +112,7 @@ This will build gram and the cli in release mode and make them available at
 >
 > **Workarounds**: Set the remote server target to `x86_64-unknown-linux-gnu`
 > like so
-> `export REMOTE_SERVER_TARGET=x86_64-unknown-linux-gnu; script/install-linux`
+> `export REMOTE_SERVER_TARGET=x86_64-unknown-linux-gnu; script/install-linux.sh`
 
 ## Wayland & X11
 
@@ -200,9 +200,9 @@ To build & install the Flatpak package locally follow the steps below:
 
 1. Install Flatpak for your distribution as outlined
    [here](https://flathub.org/setup).
-2. Run `script/linux` to install Linux dependencies.
-3. Run `script/flatpak/deps` script to install the required dependencies.
-4. Run `script/flatpak/bundle-flatpak`.
+2. Run `script/linux.sh` to install Linux dependencies.
+3. Run `script/ci-flatpak-deps.sh` script to install the required dependencies.
+4. Run `script/ci-flatpak-bundle.sh`.
 5. Now the package has been installed and has a bundle available at
    `target/release/{app-id}.flatpak`.
 

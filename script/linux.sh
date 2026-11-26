@@ -13,9 +13,9 @@ function finalize {
     which rustup >/dev/null 2>&1 || curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
     cat <<EOF
 Note: It's recommended to install and configure Wild or Mold for faster builds.
-      Run script/install-wild or script/install-mold.
+      Run script/install-wild.sh or script/install-mold.
 
-Finished installing Linux dependencies with script/linux
+Finished installing Linux dependencies with script/linux.sh
 EOF
 }
 
@@ -246,5 +246,5 @@ if [[ -n $emerge ]]; then
     finalize
     exit 0
 fi
-echo "Unsupported Linux distribution in script/linux"
+echo "Unsupported Linux distribution in script/linux.sh"
 exit 1

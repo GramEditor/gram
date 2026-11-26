@@ -5,7 +5,7 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 
 usage() {
 	cat <<'EOF'
-Usage: ./script/dev <target> [args...]
+Usage: ./script/dev.sh <target> [args...]
 
 Targets:
   debug   Run Gram with GRAM_STATELESS=1
@@ -34,11 +34,11 @@ fmt)
 check)
 	cargo fmt --all -- --check
 	cargo check --workspace --all-targets --locked
-	"$script_dir/shellcheck"
-	exec "$script_dir/clippy"
+	"$script_dir/shellcheck.sh"
+	exec "$script_dir/clippy.sh"
 	;;
 lint)
-	exec "$script_dir/clippy" "$@"
+	exec "$script_dir/clippy.sh" "$@"
 	;;
 test)
 	if command -v cargo-nextest >/dev/null 2>&1; then

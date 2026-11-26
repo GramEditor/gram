@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euxo pipefail
 
-# source script/lib/blob-store.sh
 help_info() {
     echo "
 Usage: ${0##*/} [options]
@@ -31,7 +30,7 @@ export GRAM_BUNDLE=true
 # channel=$(<crates/gram/RELEASE_CHANNEL)
 target_dir="${CARGO_TARGET_DIR:-target}"
 
-version="$(script/get-crate-version gram)"
+version="$(script/get-crate-version.sh gram)"
 # Set RELEASE_VERSION so it's compiled into GPUI and it knows about the version.
 export RELEASE_VERSION="${version}"
 

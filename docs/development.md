@@ -79,10 +79,10 @@ different versions:
 4. **Generate comparison:**
 
    ```sh
-   script/histogram version-a version-b
+   script/histogram.py version-a version-b
    ```
 
-The `script/histogram` tool can accept as many measurement files as you like and
+The `script/histogram.py` tool can accept as many measurement files as you like and
 will generate a histogram visualization comparing the frame rendering
 performance data between the provided versions.
 

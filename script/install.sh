@@ -90,7 +90,7 @@ if [[ "$GRAM_BUILD_TARBALL" = "true" ]]; then
 		no_build_flag="--no-build-remote"
 	fi
 
-	./script/bundle-linux --tarball $no_build_flag
+	./script/bundle-linux.sh --tarball $no_build_flag
 	GRAM_BUNDLE_FILE="${target_dir}/release/gram-linux-$arch.tar.gz"
 elif [ "$GRAM_BUNDLE_FILE" = "" ]; then
 	GRAM_BUNDLE_FILE="gram-linux-$arch-$version.tar.gz"
