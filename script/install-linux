@@ -1,13 +1,15 @@
-#!/usr/bin/env bash
-set -euxo pipefail
+#!/bin/sh
+set -eu
 
-if [[ $# -gt 0 ]]; then
-    echo "
-  Usage: ${0##*/}
-  Builds and installs gram onto your system into ~/.local, making it available as ~/.local/bin/gram.
+if [ $# -gt 0 ]; then
+	cat <<EOF
 
-  Before running this you should ensure you have all the build dependencies installed with './script/linux'.
-  "
-    exit 1
+Usage: ${0##*/}
+
+Builds and installs gram onto your system into ~/.local, making it available as ~/.local/bin/gram.
+Before running this you should ensure you have all the build dependencies installed with './script/linux'.
+EOF
+	exit 1
 fi
-script/install.sh --build
+
+exec ./script/install.sh --build

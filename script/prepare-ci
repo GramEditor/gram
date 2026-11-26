@@ -1,22 +1,27 @@
 #!/bin/sh
-mode="$1" # ci or release
+set -eu
+
+mode=${1:-ci}
+case "$mode" in
+ci | release) ;;
+*)
+	echo "Usage: $0 [ci|release]" >&2
+	exit 1
+	;;
+esac
 
 cp ./.cargo/ci-config.toml ./.cargo/config.toml
 ./script/linux
 ./script/download-wasi-sdk
 
-# install nextest
-if ! command -v cargo-nextest >/dev/null; then
-  curl -LsSf https://get.nexte.st/latest/linux | \
-    tar zxf - -C ~/.cargo/bin
+if [ "$mode" = ci ] && ! command -v cargo-nextest >/dev/null 2>&1; then
+	archive=$(mktemp)
+	trap 'rm -f "$archive"' EXIT
+	curl -fLsS --output "$archive" https://get.nexte.st/latest/linux
+	tar zxf "$archive" -C "$HOME/.cargo/bin"
 fi
 
-if [ "$mode" = "release" ]; then
-  if ! command -v cargo-deb >/dev/null; then
-    cargo install cargo-deb
-  fi
-  if ! command -v cargo-generate-rpm >/dev/null; then
-    cargo install cargo-generate-rpm
-  fi
+if [ "$mode" = release ]; then
+	command -v cargo-deb >/dev/null 2>&1 || cargo install cargo-deb
+	command -v cargo-generate-rpm >/dev/null 2>&1 || cargo install cargo-generate-rpm
 fi
-

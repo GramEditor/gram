@@ -1,36 +1,39 @@
-#!/usr/bin/env bash
-set -euxo pipefail
-cd "$(dirname "$0")/../.."
-shopt -s extglob
+#!/bin/sh
+set -eu
 
-script/bundle-linux --flatpak --tarball
-channel=$(<crates/gram/RELEASE_CHANNEL)
-if [[ "$channel" = "dev" ]]; then
-  archive="gram-dev-linux-$(uname -m).tar.gz"
-else
-  archive="gram-linux-$(uname -m).tar.gz"
-fi
+cd "$(dirname "$0")/.."
+
+./script/bundle-linux --flatpak --tarball
+
+channel=$(cat crates/gram/RELEASE_CHANNEL)
+arch=$(uname -m)
+
+archive="gram-linux-$arch.tar.gz"
 
 export CHANNEL="$channel"
 export ARCHIVE="$archive"
 export BRANDING_LIGHT="#b2d88f"
 export BRANDING_DARK="#4e4b5c"
-if [[ "$channel" == "dev" ]]; then
-    export APP_ID="app.liten.GramDev"
-    export APP_NAME="Gram Devel"
-    export ICON_SCALABLE="app.liten.Gram.Devel.svg"
-    export ICON_SYMBOLIC="app.liten.Gram-symbolic.svg"
-elif [[ "$channel" == "stable" ]]; then
-    export APP_ID="app.liten.Gram"
-    export APP_NAME="Gram"
-    export ICON_SCALABLE="app.liten.Gram.svg"
-    export ICON_SYMBOLIC="app.liten.Gram-symbolic.svg"
-else
-    echo "Invalid channel: '$channel'"
-    exit
-fi
+export ICON_SYMBOLIC="app.liten.Gram-symbolic.svg"
 
-envsubst < "crates/gram/resources/flatpak/manifest-template.json" > "$APP_ID.json"
+case "$channel" in
+dev)
+	export APP_ID="app.liten.GramDev"
+	export APP_NAME="Gram Devel"
+	export ICON_SCALABLE="app.liten.Gram.Devel.svg"
+	;;
+stable)
+	export APP_ID="app.liten.Gram"
+	export APP_NAME="Gram"
+	export ICON_SCALABLE="app.liten.Gram.svg"
+	;;
+*)
+	echo "Invalid channel: '$channel'" >&2
+	exit 1
+	;;
+esac
+
+envsubst <"crates/gram/resources/flatpak/manifest-template.json" >"$APP_ID.json"
 flatpak-builder --user --install --force-clean build "$APP_ID.json"
-flatpak build-bundle ~/.local/share/flatpak/repo "target/release/$APP_ID.flatpak" "$APP_ID"
+flatpak build-bundle "$HOME/.local/share/flatpak/repo" "target/release/$APP_ID.flatpak" "$APP_ID"
 echo "Created 'target/release/$APP_ID.flatpak'"

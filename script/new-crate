@@ -1,44 +1,41 @@
-#!/usr/bin/env bash
+#!/bin/sh
+set -eu
 
-# Try to make sure we are in the gram repo root
-if [ ! -d "crates" ] || [ ! -d "script" ]; then
-    echo "Error: Run from the \`gram\` repo root"
-    exit 1
-fi
-
-if [ ! -f "Cargo.toml" ]; then
-    echo "Error: Run from the \`gram\` repo root"
-    exit 1
+if [ ! -d crates ] || [ ! -d script ] || [ ! -f Cargo.toml ]; then
+	echo "Error: Run from the \`gram\` repo root" >&2
+	exit 1
 fi
 
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 <crate_name> [optional_license_flag]"
-    exit 1
+	echo "Usage: $0 <crate_name> [optional_license_flag]" >&2
+	exit 1
 fi
 
-CRATE_NAME="$1"
+CRATE_NAME=$1
+case "$CRATE_NAME" in
+'' | *[!a-z0-9_]*)
+	echo "Error: Crate name must be lowercase and contain only alphanumeric characters and underscores" >&2
+	exit 1
+	;;
+esac
 
-LICENSE_FLAG=$(echo "${2}" | tr '[:upper:]' '[:lower:]')
-if [[ "$LICENSE_FLAG" == *"apache"* ]]; then
-    LICENSE_MODE="Apache-2.0"
-    LICENSE_FILE="LICENSE-APACHE"
-else
-    LICENSE_MODE="GPL-3.0-or-later"
-    LICENSE_FILE="LICENSE-GPL"
-fi
-
-if [[ ! "$CRATE_NAME" =~ ^[a-z0-9_]+$ ]]; then
-    echo "Error: Crate name must be lowercase and contain only alphanumeric characters and underscores"
-    exit 1
-fi
+LICENSE_FLAG=$(printf '%s' "${2:-}" | tr '[:upper:]' '[:lower:]')
+case "$LICENSE_FLAG" in
+*apache*)
+	LICENSE_MODE=Apache-2.0
+	LICENSE_FILE=LICENSE-APACHE
+	;;
+*)
+	LICENSE_MODE=GPL-3.0-or-later
+	LICENSE_FILE=LICENSE-GPL
+	;;
+esac
 
 CRATE_PATH="crates/$CRATE_NAME"
 mkdir -p "$CRATE_PATH/src"
-
-# Symlink the license
 ln -sf "../../$LICENSE_FILE" "$CRATE_PATH/$LICENSE_FILE"
 
-CARGO_TOML_TEMPLATE=$(cat << 'EOF'
+sed -e "s/\$CRATE_NAME/$CRATE_NAME/g" -e "s/\$LICENSE_MODE/$LICENSE_MODE/g" >"$CRATE_PATH/Cargo.toml" <<'EOF'
 [package]
 name = "$CRATE_NAME"
 version.workspace = true
@@ -68,16 +65,8 @@ util.workspace = true
 # project.workspace = true
 # settings.workspace = true
 EOF
-)
 
-# Populate template
-CARGO_TOML_CONTENT=$(echo "$CARGO_TOML_TEMPLATE" | sed \
-    -e "s/\$CRATE_NAME/$CRATE_NAME/g" \
-    -e "s/\$LICENSE_MODE/$LICENSE_MODE/g")
-
-echo "$CARGO_TOML_CONTENT" > "$CRATE_PATH/Cargo.toml"
-
-echo "//! # $CRATE_NAME" > "$CRATE_PATH/src/$CRATE_NAME.rs"
+printf '//! # %s\n' "$CRATE_NAME" >"$CRATE_PATH/src/$CRATE_NAME.rs"
 
 echo "Created new crate: $CRATE_NAME in $CRATE_PATH"
 echo "License: $LICENSE_MODE (symlinked from $LICENSE_FILE)"

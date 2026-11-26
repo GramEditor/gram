@@ -1,9 +1,10 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/sh
+set -eu
 
-if [[ ! " $* " == *" -p "* && ! " $* " == *" --package "* ]]; then
-    set -- "$@" --workspace
-fi
+case " $* " in
+*" -p "* | *" --package "*) ;;
+*) set -- "$@" --workspace ;;
+esac
 
 set -x
-"${CARGO:-cargo}" clippy "$@" --release --all-targets --all-features -- --deny warnings
+exec "${CARGO:-cargo}" clippy "$@" --release --all-targets --all-features -- --deny warnings
