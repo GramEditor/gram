@@ -34,7 +34,7 @@ fmt)
 check)
 	cargo fmt --all -- --check
 	cargo check --workspace --all-targets --locked
-	"$script_dir/shellcheck.sh"
+	exec "$script_dir/shellcheck.sh"
 	exec "$script_dir/clippy.sh"
 	;;
 lint)
