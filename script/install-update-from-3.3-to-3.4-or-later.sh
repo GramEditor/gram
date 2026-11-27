@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# TODO: remove this script on 15 december 2026 or later. Current version is 3.5.2, I think most of users
+# is using package managers.
+#
 # One-time cleanup when upgrading a Linux tarball installation from Gram 3.3 to 3.4.
 # Install Gram 3.4 first, then preview: bash "Cleanup Script for old Linux Installer"
 # Remove the listed obsolete files: bash "Cleanup Script for old Linux Installer" --apply
