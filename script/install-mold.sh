@@ -7,7 +7,7 @@ set -euo pipefail
 # * use environment variables instead of action inputs
 # * remove make-default support
 # * use curl instead of wget
-# * support doas for sudo
+# * support doas and sudo-rs for sudo
 # * support redhat systems
 # See: https://github.com/rui314/setup-mold/blob/main/action.yml
 
@@ -21,7 +21,7 @@ elif [ -e /usr/local/bin/mold ]; then
 	exit 0
 fi
 
-if [ "$(whoami)" = root ]; then SUDO=; else SUDO="$(command -v sudo || command -v doas || true)"; fi
+if [ "$(whoami)" = root ]; then SUDO=; else SUDO="$(command -v sudo || command -v sudo-rs || command -v doas || true)"; fi
 
 MOLD_REPO="${MOLD_REPO:-https://github.com/rui314/mold}"
 MOLD_URL="${MOLD_URL:-$MOLD_REPO}/releases/download/v$MOLD_VERSION/mold-$MOLD_VERSION-$(uname -m)-linux.tar.gz"

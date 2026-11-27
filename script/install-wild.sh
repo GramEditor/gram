@@ -13,7 +13,7 @@ elif command -v wild >/dev/null 2>&1 && wild --version | grep -Fq "$WILD_VERSION
 	exit 0
 fi
 
-if [ "$(whoami)" = root ]; then SUDO=; else SUDO="$(command -v sudo || command -v doas || true)"; fi
+if [ "$(whoami)" = root ]; then SUDO=; else SUDO="$(command -v sudo || command -v sudo-rs || command -v doas || true)"; fi
 
 ARCH="$(uname -m)"
 WILD_REPO="${WILD_REPO:-https://github.com/wild-linker/wild}"
