@@ -8,12 +8,12 @@ usage() {
 Usage: ./script/dev.sh <target> [args...]
 
 Targets:
-  debug   Run Gram with GRAM_STATELESS=1
-  fmt     Format all Rust files
-  check   Check formatting
-  lint    Run clippy
-  test    Run the test suite
-  clean   Remove cargo artifacts
+	debug   Run Gram with GRAM_STATELESS=1
+	fmt     Format all Rust files
+	check   Check formatting
+	lint    Run clippy
+	test    Run the test suite
+	clean   Remove cargo artifacts
 EOF
 }
 
