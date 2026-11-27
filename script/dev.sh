@@ -8,12 +8,13 @@ usage() {
 Usage: ./script/dev.sh <target> [args...]
 
 Targets:
-	debug   Run Gram with GRAM_STATELESS=1
-	fmt     Format all Rust files
-	check   Check formatting
-	lint    Run clippy
-	test    Run the test suite
-	clean   Remove cargo artifacts
+	debug      Run Gram with GRAM_STATELESS=1
+	debug-cli  Run Gram CLI
+	fmt        Format all Rust files
+	check      Check formatting
+	lint       Run clippy
+	test       Run the test suite
+	clean      Remove cargo artifacts
 EOF
 }
 
@@ -27,6 +28,10 @@ shift
 case "$target" in
 debug)
 	GRAM_STATELESS=1 exec cargo run "$@"
+	;;
+debug-cli)
+	cargo build -p gram
+	exec cargo run -p cli -- --foreground "--gram=${CARGO_TARGET_DIR:-target}/debug/gram" "$@"
 	;;
 fmt)
 	exec cargo fmt --all "$@"
