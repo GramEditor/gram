@@ -694,5 +694,5 @@ debug = "none"
 lto = false
 
 [patch.crates-io]
-async-task = { git = "https://github.com/smol-rs/async-task", rev = "f98b30bb047426104c23b81e1c2fa083b177a567" }
-calloop = { git = "https://github.com/zed-industries/calloop", rev = "eb6b4fd17b9af5ecc226546bdd04185391b3e265" }
+async-task = { git = "https://github.com/smol-rs/async-task", rev = "3aea7f5029bf9c2694842398351d770d87032ddf" }
+calloop = { git = "https://github.com/zed-industries/calloop", rev = "3759371fee14c40066d64777e2a36b6ffcc22590" }
