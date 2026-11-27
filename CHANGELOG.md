@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add native SuperHTML support (#746) (#749) by @cyexclam
 - Docs: Using xmllint as XML formatter (#634) (#697) by @zetashift
 - Add smooth cursor animation (#722) #(731) by @pigeoneer and @krig
+- Open a file path in the terminal in the default app with ctrl-alt-click (cmd-alt-click on macOS)
 
 ## Fixed
 

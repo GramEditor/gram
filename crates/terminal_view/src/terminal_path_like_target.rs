@@ -417,6 +417,38 @@ pub(super) fn open_path_like_target(
     }
 }
 
+/// Opens the target with the system's default application instead of in the editor.
+pub(super) fn open_path_like_target_with_system(
+    workspace: &WeakEntity<Workspace>,
+    terminal_view: &mut TerminalView,
+    path_like_target: &PathLikeTarget,
+    window: &mut Window,
+    cx: &mut Context<TerminalView>,
+) {
+    // exit if workspace is gone
+    let Some(workspace_entity) = workspace.upgrade() else {
+        return;
+    };
+    // remote project: use the editor
+    if !workspace_entity.read(cx).project().read(cx).is_local() {
+        return open_path_like_target(workspace, terminal_view, path_like_target, window, cx);
+    }
+
+    let open_target_task = possible_open_target(
+        workspace,
+        path_like_target,
+        cx,
+        #[cfg(test)]
+        BackgroundFsChecks::Enabled,
+    );
+    cx.spawn(async move |_, cx| {
+        if let Some(open_target) = open_target_task.await {
+            cx.update(|cx| cx.open_with_system(&open_target.path().path)).log_err();
+        }
+    })
+    .detach();
+}
+
 fn possibly_open_target(
     workspace: &WeakEntity<Workspace>,
     terminal_view: &mut TerminalView,

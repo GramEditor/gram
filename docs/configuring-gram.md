@@ -4209,6 +4209,19 @@ Example command to set the title: `echo -e "\e]2;New Title\007";`
 }
 ```
 
+### Terminal: Opening Paths and URLs
+
+File paths and URLs printed in the terminal become links while you hold `ctrl`
+(`cmd` on macOS):
+
+- `ctrl-click` (`cmd-click` on macOS) opens a path in the editor, or a URL in
+  the browser.
+- `ctrl-alt-click` (`cmd-alt-click` on macOS) opens a path in the system's
+  default app. In remote projects it opens in the editor.
+
+When a program running in the terminal has captured the mouse (vim, tmux, htop
+and the like), add `shift` to either one.
+
 ### Terminal: Path Hyperlink Regexes
 
 - Description: Regexes used to identify path hyperlinks. The regexes can be

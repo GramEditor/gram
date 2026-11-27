@@ -126,6 +126,7 @@ pub enum Event {
     SelectionsChanged,
     NewNavigationTarget(Option<MaybeNavigationTarget>),
     Open(MaybeNavigationTarget),
+    OpenWithSystem(MaybeNavigationTarget),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -147,6 +148,17 @@ pub enum MaybeNavigationTarget {
     PathLike(PathLikeTarget),
 }
 
+/// What to do with the hyperlink found under the mouse.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum HyperlinkAction {
+    /// Mark the link as hovered so it is underlined and gets a tooltip.
+    Highlight,
+    /// Open in the editor, or in the browser for a URL.
+    Open,
+    /// Open with the system's default application rather than in the editor.
+    OpenWithSystem,
+}
+
 #[derive(Clone)]
 enum InternalEvent {
     Resize(TerminalBounds),
@@ -156,8 +168,8 @@ enum InternalEvent {
     ScrollToAlacPoint(AlacPoint),
     SetSelection(Option<(Selection, AlacPoint)>),
     UpdateSelection(Point<Pixels>),
-    FindHyperlink(Point<Pixels>, bool),
-    ProcessHyperlink((String, bool, Match), bool),
+    FindHyperlink(Point<Pixels>, HyperlinkAction),
+    ProcessHyperlink((String, bool, Match), HyperlinkAction),
     // Whether keep selection when copy
     Copy(Option<bool>),
     // Vi mode events
@@ -1139,8 +1151,8 @@ impl Terminal {
                 trace!("Performing vi motion: motion={motion:?}");
                 term.vi_motion(*motion);
             }
-            InternalEvent::FindHyperlink(position, open) => {
-                trace!("Finding hyperlink at position: position={position:?}, open={open:?}");
+            InternalEvent::FindHyperlink(position, hyperlink_action) => {
+                trace!("Finding hyperlink at position: position={position:?}, action={hyperlink_action:?}");
 
                 let point = grid_point(
                     *position,
@@ -1151,7 +1163,7 @@ impl Terminal {
 
                 match terminal_hyperlinks::find_from_grid_point(term, point, &mut self.hyperlink_regex_searches) {
                     Some(hyperlink) => {
-                        self.process_hyperlink(hyperlink, *open, cx);
+                        self.process_hyperlink(hyperlink, *hyperlink_action, cx);
                     }
                     None => {
                         self.last_content.last_hovered_word = None;
@@ -1159,13 +1171,18 @@ impl Terminal {
                     }
                 }
             }
-            InternalEvent::ProcessHyperlink(hyperlink, open) => {
-                self.process_hyperlink(hyperlink.clone(), *open, cx);
+            InternalEvent::ProcessHyperlink(hyperlink, hyperlink_action) => {
+                self.process_hyperlink(hyperlink.clone(), *hyperlink_action, cx);
             }
         }
     }
 
-    fn process_hyperlink(&mut self, hyperlink: (String, bool, Match), open: bool, cx: &mut Context<Self>) {
+    fn process_hyperlink(
+        &mut self,
+        hyperlink: (String, bool, Match),
+        hyperlink_action: HyperlinkAction,
+        cx: &mut Context<Self>,
+    ) {
         let (maybe_url_or_path, is_url, url_match) = hyperlink;
         let prev_hovered_word = self.last_content.last_hovered_word.take();
 
@@ -1189,10 +1206,12 @@ impl Terminal {
             })
         };
 
-        if open {
-            cx.emit(Event::Open(target));
-        } else {
-            self.update_selected_word(prev_hovered_word, url_match, maybe_url_or_path, target, cx);
+        match hyperlink_action {
+            HyperlinkAction::Highlight => {
+                self.update_selected_word(prev_hovered_word, url_match, maybe_url_or_path, target, cx)
+            }
+            HyperlinkAction::Open => cx.emit(Event::Open(target)),
+            HyperlinkAction::OpenWithSystem => cx.emit(Event::OpenWithSystem(target)),
         }
     }
 
@@ -1680,7 +1699,7 @@ impl Terminal {
             self.last_hyperlink_search_position = Some(position);
             self.events.push_back(InternalEvent::FindHyperlink(
                 position - self.last_content.terminal_bounds.bounds.origin,
-                false,
+                HyperlinkAction::Highlight,
             ));
         }
     }
@@ -1833,6 +1852,13 @@ impl Terminal {
                 self.copy(Some(true));
             }
 
+            // alt: default app
+            let hyperlink_action = if e.modifiers.alt {
+                HyperlinkAction::OpenWithSystem
+            } else {
+                HyperlinkAction::Open
+            };
+
             if let Some(mouse_down_hyperlink) = self.mouse_down_hyperlink.take() {
                 let point = grid_point(
                     position,
@@ -1846,7 +1872,7 @@ impl Terminal {
                 } && mouse_down_hyperlink == mouse_up_hyperlink
                 {
                     self.events
-                        .push_back(InternalEvent::ProcessHyperlink(mouse_up_hyperlink, true));
+                        .push_back(InternalEvent::ProcessHyperlink(mouse_up_hyperlink, hyperlink_action));
                     self.selection_phase = SelectionPhase::Ended;
                     self.last_mouse = None;
                     return;
@@ -1859,7 +1885,8 @@ impl Terminal {
                 if let Some(link) = self.last_content.cells[mouse_cell_index].hyperlink() {
                     cx.open_url(link.uri());
                 } else if e.modifiers.secondary() {
-                    self.events.push_back(InternalEvent::FindHyperlink(position, true));
+                    self.events
+                        .push_back(InternalEvent::FindHyperlink(position, hyperlink_action));
                 }
             }
         }
@@ -2887,8 +2914,83 @@ mod tests {
                 terminal
                     .events
                     .iter()
-                    .any(|event| matches!(event, InternalEvent::ProcessHyperlink(_, true))),
+                    .any(|event| matches!(event, InternalEvent::ProcessHyperlink(_, HyperlinkAction::Open))),
                 "Should have ProcessHyperlink event when ctrl+clicking on same hyperlink position"
+            );
+        });
+    }
+
+    /// Confirm that ctrl+alt+click (cmd+alt+click on osx) opens with the system's default app instead of the editor
+    #[gpui::test]
+    async fn test_file_path_click_opens_in_editor_or_with_system(cx: &mut TestAppContext) {
+        fn click_with(
+            terminal: &mut Terminal,
+            modifiers: Modifiers,
+            cx: &mut Context<Terminal>,
+        ) -> Option<(String, bool, HyperlinkAction)> {
+            let position = point(px(120.0), px(10.0));
+            terminal.events.clear();
+            terminal.mouse_down(
+                &MouseDownEvent {
+                    button: MouseButton::Left,
+                    position,
+                    modifiers,
+                    click_count: 1,
+                    first_mouse: true,
+                },
+                cx,
+            );
+            terminal.mouse_up(
+                &MouseUpEvent {
+                    button: MouseButton::Left,
+                    position,
+                    modifiers,
+                    click_count: 1,
+                },
+                cx,
+            );
+            terminal.events.iter().find_map(|event| match event {
+                InternalEvent::ProcessHyperlink((text, is_url, _), action) => Some((text.clone(), *is_url, *action)),
+                _ => None,
+            })
+        }
+
+        let terminal = init_ctrl_click_hyperlink_test(cx, b"Error in src/main.rs:12:3 here\r\n");
+
+        terminal.update(cx, |terminal, cx| {
+            // display-only terminals have no path regexes
+            let path_hyperlink_regexes = TerminalSettings::get_global(cx).path_hyperlink_regexes.clone();
+            terminal.hyperlink_regex_searches = RegexSearches::new(&path_hyperlink_regexes, 1000);
+
+            let ctrl_alt = Modifiers {
+                alt: true,
+                ..Modifiers::secondary_key()
+            };
+
+            assert_eq!(
+                click_with(terminal, Modifiers::secondary_key(), cx),
+                Some(("src/main.rs:12:3".to_string(), false, HyperlinkAction::Open)),
+                "ctrl+click on a file path should open it in the editor"
+            );
+            assert_eq!(
+                click_with(terminal, ctrl_alt, cx),
+                Some(("src/main.rs:12:3".to_string(), false, HyperlinkAction::OpenWithSystem)),
+                "ctrl+alt+click on a file path should open it with the system"
+            );
+
+            // shift bypasses a program (vim, tmux, ...) that has captured the mouse
+            terminal.last_content.mode.insert(TermMode::MOUSE_REPORT_CLICK);
+            assert_eq!(
+                click_with(
+                    terminal,
+                    Modifiers {
+                        shift: true,
+                        ..ctrl_alt
+                    },
+                    cx
+                ),
+                Some(("src/main.rs:12:3".to_string(), false, HyperlinkAction::OpenWithSystem)),
+                "ctrl+alt+shift+click in mouse mode should open the file path with the system"
             );
         });
     }
@@ -2932,7 +3034,7 @@ mod tests {
                 terminal
                     .events
                     .iter()
-                    .any(|event| matches!(event, InternalEvent::ProcessHyperlink(_, true))),
+                    .any(|event| matches!(event, InternalEvent::ProcessHyperlink(_, HyperlinkAction::Open))),
                 "Should have ProcessHyperlink event when dragging within hyperlink bounds"
             );
         });

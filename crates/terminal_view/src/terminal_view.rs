@@ -30,7 +30,7 @@ use terminal::{
 };
 use terminal_element::TerminalElement;
 use terminal_panel::TerminalPanel;
-use terminal_path_like_target::{hover_path_like_target, open_path_like_target};
+use terminal_path_like_target::{hover_path_like_target, open_path_like_target, open_path_like_target_with_system};
 use terminal_scrollbar::TerminalScrollHandle;
 use ui::{
     ContextMenu, Divider, ScrollAxes, Scrollbars, Tooltip, WithScrollbar,
@@ -938,6 +938,12 @@ fn subscribe_for_terminal_events(
                     MaybeNavigationTarget::Url(url) => cx.open_url(url),
                     MaybeNavigationTarget::PathLike(path_like_target) => {
                         open_path_like_target(&workspace, terminal_view, path_like_target, window, cx)
+                    }
+                },
+                Event::OpenWithSystem(maybe_navigation_target) => match maybe_navigation_target {
+                    MaybeNavigationTarget::Url(url) => cx.open_url(url),
+                    MaybeNavigationTarget::PathLike(path_like_target) => {
+                        open_path_like_target_with_system(&workspace, terminal_view, path_like_target, window, cx)
                     }
                 },
                 Event::BreadcrumbsChanged => cx.emit(ItemEvent::UpdateBreadcrumbs),
