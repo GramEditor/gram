@@ -1870,6 +1870,8 @@ mod tests {
     #[perf]
     #[cfg(target_os = "windows")]
     fn test_sanitized_path() {
+        use crate::sanitized_path::SanitizedPath;
+
         let path = Path::new("C:\\Users\\someone\\test_file.rs");
         let sanitized_path = SanitizedPath::new(path);
         assert_eq!(sanitized_path.to_string(), "C:\\Users\\someone\\test_file.rs");
@@ -2317,7 +2319,7 @@ mod tests {
     #[cfg(target_os = "windows")]
     #[test]
     fn test_wsl_path() {
-        use super::WslPath;
+        use crate::wsl_path::WslPath;
         let path = "/a/b/c";
         assert_eq!(WslPath::from_path(path), None);
 
