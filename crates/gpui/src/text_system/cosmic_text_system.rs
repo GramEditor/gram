@@ -58,7 +58,7 @@ struct LoadedFont {
 impl CosmicTextSystem {
     /// Create cosmic-text font system
     pub fn new(system_font_fallback: &str) -> Self {
-        let font_system = FontSystem::new();
+        let font_system = FontSystem::new_cached();
 
         Self(RwLock::new(CosmicTextSystemState {
             font_system,

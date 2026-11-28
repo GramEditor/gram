@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix Typst export and watch tasks (#755) by @alex3236
 - Fix `failed to load env variables` on Windows (zed#51787) (#776) by @ognevny
 - Fix Windows shell detection for uppercase executable names (zed#66387) (#772) by @ognevny
+- Improve startup time by using cosmic-text font cache
 
 ## [3.5.2] - 2026-11-14
 
